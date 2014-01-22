@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class EnvironmentUtil {
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
-    if (SystemInfo.isMac && Registry.is("idea.fix.mac.env")) {
+    if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
       ExecutorService executor = Executors.newSingleThreadExecutor();
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
@@ -152,7 +152,7 @@ public class EnvironmentUtil {
 
     File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
     try {
-      String[] command = {shell, "-l", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
@@ -229,7 +229,7 @@ public class EnvironmentUtil {
             myProcess.exitValue();
           }
           catch (IllegalThreadStateException e) {
-            UnixProcessManager.sendSigIntToProcessTree(myProcess);
+            UnixProcessManager.sendSigKillToProcessTree(myProcess);
             LOG.warn("timed out");
           }
         }

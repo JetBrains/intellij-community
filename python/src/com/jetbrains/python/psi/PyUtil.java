@@ -44,6 +44,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -60,9 +61,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
@@ -415,7 +413,7 @@ public class PyUtil {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
         String attr_name = ref.getReferencedName();
-        if (PyNames.CLASS.equals(attr_name)) {
+        if (PyNames.__CLASS__.equals(attr_name)) {
           PyType qualifierType = context.getType(qualifier);
           if (qualifierType instanceof PyClassType) {
             return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
@@ -1114,7 +1112,7 @@ public class PyUtil {
         PyExpression[] args = node.getArguments();
         if (args.length > 0) {
           String firstArg = args[0].getText();
-          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.CLASS)) {
+          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.__CLASS__)) {
             return true;
           }
           for (PyClass s : klass.getAncestorClasses()) {
@@ -1204,49 +1202,6 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PyClass getMetaClass(@NotNull final PyClass pyClass) {
-    final PyTargetExpression metaClassAttribute = pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, false);
-    if (metaClassAttribute != null) {
-      final PyExpression expression = metaClassAttribute.findAssignedValue();
-      final PyClass metaclass = getMetaFromExpression(expression);
-      if (metaclass != null) return metaclass;
-    }
-    final PsiFile containingFile = pyClass.getContainingFile();
-    if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
-      if (element instanceof PyTargetExpression) {
-        final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
-        final PyClass metaclass = getMetaFromExpression(expression);
-        if (metaclass != null) return metaclass;
-      }
-    }
-
-    if (LanguageLevel.forElement(pyClass).isPy3K()) {
-      final PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
-      for (PyExpression superClassExpression : superClassExpressions) {
-        if (superClassExpression instanceof PyKeywordArgument &&
-            PyNames.METACLASS.equals(((PyKeywordArgument)superClassExpression).getKeyword())) {
-          final PyExpression expression = ((PyKeywordArgument)superClassExpression).getValueExpression();
-          final PyClass metaclass = getMetaFromExpression(expression);
-          if (metaclass != null) return metaclass;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyClass getMetaFromExpression(final PyExpression metaclass) {
-    if (metaclass instanceof PyReferenceExpression) {
-      final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
-      if (result.getElement() instanceof PyClass) {
-        return (PyClass)result.getElement();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null || caretOffset < 0) {
@@ -1313,13 +1268,31 @@ public class PyUtil {
       final PyStatement[] statements = statementList.getStatements();
       if (toTheBeginning && statements.length > 0) {
         final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(statementList, PyDocStringOwner.class);
-        final PyStatement firstStatement = statements[0];
-        if (docStringOwner != null && firstStatement instanceof PyExpressionStatement &&
-            ((PyExpressionStatement)firstStatement).getExpression() == docStringOwner.getDocStringExpression()) {
-          element = statementList.addAfter(element, firstStatement);
+        PyStatement anchor = statements[0];
+        if (docStringOwner != null && anchor instanceof PyExpressionStatement &&
+            ((PyExpressionStatement)anchor).getExpression() == docStringOwner.getDocStringExpression()) {
+          final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+          if (next == null) {
+            return statementList.addAfter(element, anchor);
+          }
+          anchor = next;
         }
-        else
-          element = statementList.addBefore(element, firstStatement);
+        while (anchor instanceof PyExpressionStatement) {
+          final PyExpression expression = ((PyExpressionStatement)anchor).getExpression();
+          if (expression instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)expression).getCallee();
+            if ((isSuperCall((PyCallExpression)expression) || (callee != null && PyNames.INIT.equals(callee.getName())))) {
+              final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+              if (next == null) {
+                return statementList.addAfter(element, anchor);
+              }
+              anchor = next;
+            }
+            else break;
+          }
+          else break;
+        }
+        element = statementList.addBefore(element, anchor);
       }
       else {
         element = statementList.add(element);

@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -111,7 +111,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     List<VirtualFile> reducedRoots = new ArrayList<VirtualFile>();
     while (it.hasNext()) {
       VirtualFile next = it.next();
-      VirtualFile common = VfsUtil.getCommonAncestor(current, next);
+      VirtualFile common = VfsUtilCore.getCommonAncestor(current, next);
 
       if (common == null || common.getParent() == null || Comparing.equal(common.getPath(), userHome)) {
         reducedRoots.add(current);

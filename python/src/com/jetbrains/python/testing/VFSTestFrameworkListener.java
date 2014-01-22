@@ -16,22 +16,22 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -41,25 +41,17 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: catherine
  */
-@State(
-  name = "VFSTestFrameworkListener",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
-)
-public class VFSTestFrameworkListener implements ApplicationComponent, PersistentStateComponent<VFSTestFrameworkListener> {
-
+public class VFSTestFrameworkListener implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
-
   private static final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
+  private PyTestFrameworkService myService;
 
   public VFSTestFrameworkListener() {
+    myService = PyTestFrameworkService.getInstance();
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
@@ -76,8 +68,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
             if (PySdkUtil.isRemote(sdk)) {
               continue;
             }
-            for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-              if (path.contains(root)) {
+            for (VirtualFile virtualFile : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+              String root = virtualFile.getCanonicalPath();
+              if (root != null && path.contains(root)) {
                 if (containsNose) {
                   updateTestFrameworks(sdk, PyNames.NOSE_TEST);
                   return;
@@ -152,26 +145,12 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     return ServiceManager.getService(VFSTestFrameworkListener.class);
   }
 
-  public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<String, Boolean>();
-  public Map <String, Boolean> SDK_TO_NOSETEST = new HashMap<String, Boolean>();
-  public Map <String, Boolean> SDK_TO_ATTEST = new HashMap<String, Boolean>();
-
-  @Override
-  public VFSTestFrameworkListener getState() {
-    return this;
-  }
-
-  @Override
-  public void loadState(VFSTestFrameworkListener state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
-
   public void pyTestInstalled(boolean installed, String sdkHome) {
-    SDK_TO_PYTEST.put(sdkHome, installed);
+    myService.SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
   public boolean isPyTestInstalled(final Sdk sdk) {
-    Boolean isInstalled = SDK_TO_PYTEST.get(sdk.getHomePath());
+    Boolean isInstalled = myService.SDK_TO_PYTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       updateTestFrameworks(sdk, PyNames.PY_TEST);
       return true;
@@ -180,11 +159,11 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   }
 
   public void noseTestInstalled(boolean installed, String sdkHome) {
-    SDK_TO_NOSETEST.put(sdkHome, installed);
+    myService.SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
   public boolean isNoseTestInstalled(final Sdk sdk) {
-    Boolean isInstalled = SDK_TO_NOSETEST.get(sdk.getHomePath());
+    Boolean isInstalled = myService.SDK_TO_NOSETEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       updateTestFrameworks(sdk, PyNames.NOSE_TEST);
       return true;
@@ -193,11 +172,11 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   }
 
   public void atTestInstalled(boolean installed, String sdkHome) {
-    SDK_TO_ATTEST.put(sdkHome, installed);
+    myService.SDK_TO_ATTEST.put(sdkHome, installed);
   }
 
   public boolean isAtTestInstalled(final Sdk sdk) {
-    Boolean isInstalled = SDK_TO_ATTEST.get(sdk.getHomePath());
+    Boolean isInstalled = myService.SDK_TO_ATTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       updateTestFrameworks(sdk, PyNames.AT_TEST);
       return true;

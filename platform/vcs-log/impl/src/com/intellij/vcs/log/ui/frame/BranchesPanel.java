@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.collect.Ordering;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,6 +61,10 @@ public class BranchesPanel extends JPanel {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        if (!myUI.getMainFrame().areGraphActionsEnabled()) {
+          return;
+        }
+
         final RefGroup group = findRef(e);
         if (group == null) {
           return;
@@ -73,6 +78,14 @@ public class BranchesPanel extends JPanel {
           JBPopup popup = view.getPopup();
           popup.show(new RelativePoint(BranchesPanel.this, new Point(e.getX(), BranchesPanel.this.getHeight())));
         }
+      }
+    });
+
+    Project project = dataHolder.getProject();
+    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
+      @Override
+      public void run() {
+        rebuild();
       }
     });
   }

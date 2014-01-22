@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -28,8 +29,9 @@ public interface FileStatusProvider {
 
   ExtensionPointName<FileStatusProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcs.fileStatusProvider");
   
-  FileStatus getFileStatus(final VirtualFile virtualFile);
-  void refreshFileStatusFromDocument(final VirtualFile file, final Document doc);
+  FileStatus getFileStatus(@NotNull VirtualFile virtualFile);
+  void refreshFileStatusFromDocument(@NotNull VirtualFile virtualFile, @NotNull Document doc);
 
-  ThreeState getNotChangedDirectoryParentingStatus(VirtualFile vf);
+  @NotNull
+  ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile);
 }

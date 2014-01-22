@@ -38,7 +38,7 @@ public class HgExecutor extends Executor {
     final String programName = "hg";
     final String unixExec = "hg";
     final String winExec = "hg.exe";
-    String exec = findInPathEnvs(programName, Arrays.asList(HG_EXECUTABLE_ENV));
+    String exec = findEnvValue(programName, Arrays.asList(HG_EXECUTABLE_ENV));
     if (exec != null) {
       return exec;
     }

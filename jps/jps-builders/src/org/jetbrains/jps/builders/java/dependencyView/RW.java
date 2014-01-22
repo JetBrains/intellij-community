@@ -20,6 +20,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
@@ -59,7 +60,7 @@ public class RW {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -74,13 +75,13 @@ public class RW {
             return true;
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       });
     }
     catch (IOException c) {
-      throw new RuntimeException(c);
+      throw new BuildDataCorruptedException(c);
     }
   }
 
@@ -93,7 +94,7 @@ public class RW {
       }
     }
     catch (IOException c) {
-      throw new RuntimeException(c);
+      throw new BuildDataCorruptedException(c);
     }
   }
 
@@ -108,7 +109,7 @@ public class RW {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -121,7 +122,7 @@ public class RW {
       return result;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -136,7 +137,7 @@ public class RW {
       return acc;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -151,7 +152,7 @@ public class RW {
       return acc;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -174,7 +175,7 @@ public class RW {
       w.newLine();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -197,7 +198,7 @@ public class RW {
       return r.readLine();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

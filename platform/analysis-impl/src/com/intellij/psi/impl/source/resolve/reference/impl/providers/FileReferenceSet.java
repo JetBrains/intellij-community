@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,7 +225,6 @@ public class FileReferenceSet {
   protected List<FileReference> reparse(String str, int startInElement) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
 
-
     String separatorString = getSeparatorString(); // separator's length can be more then 1 char
     int sepLen = separatorString.length();
     int currentSlash = -sepLen;
@@ -246,17 +247,16 @@ public class FileReferenceSet {
     }
 
     while (true) {
-      final int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
-      final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
-      final FileReference ref = createFileReference(
-        new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length())),
-        index++,
-        subreferenceText);
+      int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
+      String subReferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
+      TextRange range = new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length()));
+      FileReference ref = createFileReference(range, index++, subReferenceText);
       referencesList.add(ref);
       if ((currentSlash = nextSlash) < 0) {
         break;
       }
     }
+
     return referencesList;
   }
 
@@ -292,19 +292,17 @@ public class FileReferenceSet {
 
     if (myOptions != null) {
       final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
-
       if (value != null) {
         final Collection<PsiFileSystemItem> roots = value.fun(file);
         if (roots != null) {
           for (PsiFileSystemItem root : roots) {
-            if (root == null) {
-              LOG.error("Default path evaluator " + value + " produced a null root for " + file);
-            }
+            LOG.assertTrue(root != null, "Default path evaluator " + value + " produced a null root for " + file);
           }
           return roots;
         }
       }
     }
+
     if (isAbsolutePathReference()) {
       return getAbsoluteTopLevelDirLocations(file);
     }
@@ -315,12 +313,10 @@ public class FileReferenceSet {
   @Nullable
   protected PsiFile getContainingFile() {
     PsiFile cf = myElement.getContainingFile();
-    final PsiFile file = InjectedLanguageManager.getInstance(cf.getProject()).getTopLevelFile(cf);
-    if (file == null) {
-      LOG.error("Invalid element: " + myElement);
-    }
-
-    return file.getOriginalFile();
+    PsiFile file = InjectedLanguageManager.getInstance(cf.getProject()).getTopLevelFile(cf);
+    if (file != null) return file.getOriginalFile();
+    LOG.error("Invalid element: " + myElement);
+    return null;
   }
 
   @NotNull
@@ -395,20 +391,16 @@ public class FileReferenceSet {
 
   @NotNull
   public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
-
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return Collections.emptyList();
-    }
-    final Project project = file.getProject();
-    PsiDirectory parent = file.getParent();
+    if (virtualFile == null) return Collections.emptyList();
+
+    final PsiDirectory parent = file.getParent();
     final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
-    if (module == null) {
-      return Collections.emptyList();
-    }
-    final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
-    final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
-    for (FileReferenceHelper helper : helpers) {
+    if (module == null) return Collections.emptyList();
+
+    final List<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+    final Project project = file.getProject();
+    for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
         if (helper.isFallback() && !list.isEmpty()) {
           continue;
@@ -420,8 +412,23 @@ public class FileReferenceSet {
         list.addAll(roots);
       }
     }
-
     return list;
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
+    return toFileSystemItems(Arrays.asList(files));
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
+    final PsiManager manager = getElement().getManager();
+    return ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, PsiFileSystemItem>() {
+      @Override
+      public PsiFileSystemItem fun(VirtualFile file) {
+        return file != null ? manager.findDirectory(file) : null;
+      }
+    });
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

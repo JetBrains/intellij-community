@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,8 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
                                       int caretOffset,
                                       Ref<Boolean> indented,
                                       final FoldingTransferableData value) {
+    if (value.getData().length == 0) return;
+
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor, true);
 

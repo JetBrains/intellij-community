@@ -57,7 +57,6 @@ public class PyStringLiteralLexer extends LexerBase {
    */
   public PyStringLiteralLexer(final IElementType originalLiteralToken) {
     myOriginalLiteralToken = originalLiteralToken;
-    myIsTriple = PyTokenTypes.TRIPLE_NODES.contains(myOriginalLiteralToken);
   }
 
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -84,6 +83,8 @@ public class PyStringLiteralLexer extends LexerBase {
     char c = buffer.charAt(i);
     assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote. Found '" + c + "' in string " + buffer;
     myQuoteChar = c;
+
+    myIsTriple = (buffer.length() > i + 2) && (buffer.charAt(i + 1) == c) && (buffer.charAt(i + 2) == c);
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);

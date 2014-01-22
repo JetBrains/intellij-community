@@ -71,7 +71,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Creates new application for each test.
+ * Creates new project for each test.
  * @author mike
  */
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {

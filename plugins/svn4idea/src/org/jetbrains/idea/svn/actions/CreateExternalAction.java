@@ -167,8 +167,12 @@ public class CreateExternalAction extends DumbAwareAction {
   private void checkState(AnActionEvent e, final ActionStateConsumer sc) {
     final DataContext dc = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dc);
+    if (project == null) {
+      sc.hide();
+      return;
+    }
     final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    if (project == null || ! manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
+    if (!manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
       sc.hide();
       return;
     }

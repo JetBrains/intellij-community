@@ -44,6 +44,7 @@ public class PsiImmediateClassType extends PsiClassType {
       return myClass;
     }
 
+    @NotNull
     @Override
     public PsiSubstitutor getSubstitutor() {
       return mySubstitutor;
@@ -118,7 +119,7 @@ public class PsiImmediateClassType extends PsiClassType {
         lst.add(substituted);
       }
     }
-    return lst.toArray(new PsiType[lst.size()]);
+    return lst.toArray(createArray(lst.size()));
   }
 
   @Override
@@ -133,6 +134,7 @@ public class PsiImmediateClassType extends PsiClassType {
     return JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createType(myClass);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     if (myPresentableText == null) {
@@ -143,6 +145,7 @@ public class PsiImmediateClassType extends PsiClassType {
     return myPresentableText;
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     if (myCanonicalText == null) {
@@ -154,6 +157,7 @@ public class PsiImmediateClassType extends PsiClassType {
     return myCanonicalText;
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     if (myInternalCanonicalText == null) {
@@ -251,7 +255,7 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     final PsiType patternType;
     try {

@@ -417,7 +417,7 @@ class Browser extends JPanel {
   public void showEmpty() {
     myCurrentEntity = null;
     try {
-      myHTMLViewer.read(new StringReader("<html><body></body></html>"), null);
+      myHTMLViewer.read(new StringReader(InspectionsBundle.message("inspection.offline.view.empty.browser.text")), null);
     }
     catch (IOException e) {
       //can't be
@@ -450,7 +450,7 @@ class Browser extends JPanel {
       if (description == null) {
         description = underConstruction;
       }
-      page.append(UIUtil.getHtmlBody(description));
+      page.append(DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description)));
 
       page.append("</td></tr></table>");
       myHTMLViewer.setText(XmlStringUtil.wrapInHtml(page));

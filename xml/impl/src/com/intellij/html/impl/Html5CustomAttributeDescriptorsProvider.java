@@ -16,6 +16,8 @@
 package com.intellij.html.impl;
 
 import com.intellij.html.index.Html5CustomAttributesIndex;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
@@ -42,9 +44,19 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
       currentAttrs.add(attribute.getName());
     }
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(tag.getProject());
     FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.INDEX_ID, new Processor<String>() {
       @Override
       public boolean process(String s) {
+        final boolean canProcessKey = !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, s,
+                                                                                  null, new FileBasedIndex.ValueProcessor<Void>() {
+            @Override
+            public boolean process(VirtualFile file, Void value) {
+              return false;
+            }
+          }, scope);
+        if (!canProcessKey) return true;
+
         boolean add = true;
         for (String attr : currentAttrs) {
           if (attr.startsWith(s)) {
@@ -56,7 +68,7 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
         }
         return true;
       }
-    }, tag.getProject());
+    }, scope, null);
 
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }

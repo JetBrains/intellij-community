@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -23,6 +24,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -34,6 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -206,7 +209,10 @@ public class FoldingUpdate {
                       " made by " + foldingBuilder +
                       " for " +language +
                       " and called on file " + psi +
-                      " is outside document range: " + docRange);
+                      " is outside document range: " + docRange,
+                      ApplicationManager.getApplication().isInternal()
+                      ? new Attachment[] {AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(psi, false, true))}
+                      : new Attachment[0]);
           }
           elementsToFoldMap.putValue(descriptor.getElement().getPsi(), descriptor);
         }

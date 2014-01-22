@@ -23,6 +23,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,44 +36,68 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   private final String myTitle;
   private final Project myProject;
 
-  private CellEditorComponentWithBrowseButton<JTextField> myComponent;
+  private FileChooserDescriptor myFileChooserDescriptor;
 
-  public LocalPathCellEditor(String title, Project project) {
+  protected CellEditorComponentWithBrowseButton<JTextField> myComponent;
+
+  public LocalPathCellEditor(@Nullable String title, @Nullable Project project) {
     myTitle = title;
     myProject = project;
   }
 
+  public LocalPathCellEditor(@Nullable Project project) {
+    this(null, project);
+  }
+
+  public LocalPathCellEditor() {
+    this(null, null);
+  }
+
+  public LocalPathCellEditor fileChooserDescriptor(@NotNull FileChooserDescriptor fileChooserDescriptor) {
+    myFileChooserDescriptor = fileChooserDescriptor;
+    return this;
+  }
+
+  @Override
   public Object getCellEditorValue() {
     return myComponent.getChildComponent().getText();
   }
 
+  @Override
   public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final FileChooserDescriptor d = getFileChooserDescriptor();
-        String initial = (String)getCellEditorValue();
-        VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
-        VirtualFile file = FileChooser.chooseFile(d, table, myProject, initialFile);
-        if (file != null) {
-          String path = file.getPresentableUrl();
-          if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
-            path += "\\"; // make path absolute
-          }
-          myComponent.getChildComponent().setText(path);
-        }
-      }
-    };
-    myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(listener), this);
+    myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(createActionListener(table)), this);
     myComponent.getChildComponent().setText((String)value);
     return myComponent;
   }
 
+  protected ActionListener createActionListener(final JTable table) {
+    return new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String initial = (String)getCellEditorValue();
+        VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
+        FileChooser.chooseFile(getFileChooserDescriptor(), myProject, table, initialFile, new Consumer<VirtualFile>() {
+          @Override
+          public void consume(VirtualFile file) {
+            String path = file.getPresentableUrl();
+            if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
+              path += "\\"; // make path absolute
+            }
+            myComponent.getChildComponent().setText(path);
+          }
+        });
+      }
+    };
+  }
+
   public FileChooserDescriptor getFileChooserDescriptor() {
-    FileChooserDescriptor d = new FileChooserDescriptor(false, true, false, true, false, false);
-    if (myTitle != null) {
-      d.setTitle(myTitle);
+    if (myFileChooserDescriptor == null) {
+      myFileChooserDescriptor = new FileChooserDescriptor(false, true, false, true, false, false);
+      if (myTitle != null) {
+        myFileChooserDescriptor.setTitle(myTitle);
+      }
+      myFileChooserDescriptor.setShowFileSystemRoots(true);
     }
-    d.setShowFileSystemRoots(true);
-    return d;
+    return myFileChooserDescriptor;
   }
 }

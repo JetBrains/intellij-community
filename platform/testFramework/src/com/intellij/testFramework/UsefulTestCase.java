@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -122,8 +124,6 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    PathManager.ensureConfigFolderExists();
 
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
@@ -337,6 +337,7 @@ public abstract class UsefulTestCase extends TestCase {
     super.runBare();
   }
 
+  @Override
   public void runBare() throws Throwable {
     if (!shouldRunTest()) return;
 
@@ -421,7 +422,7 @@ public abstract class UsefulTestCase extends TestCase {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(erroMsg, expectedString, actualString);
-      Assert.fail("Warning! 'toString' do not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
+      Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
   }
 
@@ -588,7 +589,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOneOf(T value, T... values) {
     boolean found = false;
     for (T v : values) {
-      if (value == v || (value != null && value.equals(v))) {
+      if (value == v || value != null && value.equals(v)) {
         found = true;
       }
     }
@@ -683,10 +684,14 @@ public abstract class UsefulTestCase extends TestCase {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
-        FileUtil.writeToFile(new File(filePath), actualText);
+        VfsTestUtil.overwriteTestData(filePath, actualText);
         System.out.println("File " + filePath + " created.");
       }
-      fileText = FileUtil.loadFile(new File(filePath));
+      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8);
+    }
+    catch (FileNotFoundException e) {
+      VfsTestUtil.overwriteTestData(filePath, actualText);
+      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -895,7 +900,8 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static @NotNull Test filteredSuite(@RegExp String regexp, @NotNull Test test) {
+  @NotNull
+  public static Test filteredSuite(@RegExp String regexp, @NotNull Test test) {
     final Pattern pattern = Pattern.compile(regexp);
     final TestSuite testSuite = new TestSuite();
     new Processor<Test>() {

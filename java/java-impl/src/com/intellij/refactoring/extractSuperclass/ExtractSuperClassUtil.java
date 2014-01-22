@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -31,11 +31,14 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -52,6 +55,8 @@ import java.util.Set;
  */
 public class ExtractSuperClassUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil");
+  public static final String REFACTORING_EXTRACT_SUPER_ID = "refactoring.extractSuper";
+
   private ExtractSuperClassUtil() {}
 
   public static PsiClass extractSuperClass(final Project project,
@@ -61,39 +66,57 @@ public class ExtractSuperClassUtil {
                                            final MemberInfo[] selectedMemberInfos,
                                            final DocCommentPolicy javaDocPolicy)
     throws IncorrectOperationException {
-    PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
-    final PsiModifierList superClassModifierList = superclass.getModifierList();
-    assert superClassModifierList != null;
-    superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
-    final PsiReferenceList subClassExtends = subclass.getExtendsList();
-    assert subClassExtends != null: subclass;
-    copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
 
-    // create constructors if neccesary
-    PsiMethod[] constructors = getCalledBaseConstructors(subclass);
-    if (constructors.length > 0) {
-      createConstructorsByPattern(project, superclass, constructors);
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      .refactoringStarted(REFACTORING_EXTRACT_SUPER_ID, createBeforeData(subclass, selectedMemberInfos));
+
+    try {
+      PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
+      final PsiModifierList superClassModifierList = superclass.getModifierList();
+      assert superClassModifierList != null;
+      superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
+      final PsiReferenceList subClassExtends = subclass.getExtendsList();
+      if (subClassExtends != null) {
+        copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
+      } else if (subclass instanceof PsiAnonymousClass) {
+        superclass.getExtendsList().add(((PsiAnonymousClass)subclass).getBaseClassReference());
+      }
+
+      // create constructors if neccesary
+      PsiMethod[] constructors = getCalledBaseConstructors(subclass);
+      if (constructors.length > 0) {
+        createConstructorsByPattern(project, superclass, constructors);
+      }
+
+      // clear original class' "extends" list
+      if (subClassExtends != null) {
+        clearPsiReferenceList(subclass.getExtendsList());
+      }
+
+      // make original class extend extracted superclass
+      PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos);
+      if (subClassExtends != null) {
+        subclass.getExtendsList().add(ref);
+      } else if (subclass instanceof PsiAnonymousClass) {
+        ((PsiAnonymousClass)subclass).getBaseClassReference().replace(ref);
+      }
+
+      PullUpProcessor pullUpHelper = new PullUpProcessor(subclass, superclass, selectedMemberInfos,
+                                                   javaDocPolicy
+      );
+
+      pullUpHelper.moveMembersToBase();
+      pullUpHelper.moveFieldInitializations();
+
+      Collection<MethodSignature> toImplement = OverrideImplementExploreUtil.getMethodSignaturesToImplement(superclass);
+      if (!toImplement.isEmpty()) {
+        superClassModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+      }
+      return superclass;
     }
-
-    // clear original class' "extends" list
-    clearPsiReferenceList(subclass.getExtendsList());
-
-    // make original class extend extracted superclass
-    PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos);
-    subclass.getExtendsList().add(ref);
-
-    PullUpProcessor pullUpHelper = new PullUpProcessor(subclass, superclass, selectedMemberInfos,
-                                                 javaDocPolicy
-    );
-
-    pullUpHelper.moveMembersToBase();
-    pullUpHelper.moveFieldInitializations();
-
-    Collection<MethodSignature> toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(superclass);
-    if (!toImplement.isEmpty()) {
-      superClassModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+    finally {
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_EXTRACT_SUPER_ID, createAfterData(subclass));
     }
-    return superclass;
   }
 
   private static void createConstructorsByPattern(Project project, final PsiClass superclass, PsiMethod[] patternConstructors) throws IncorrectOperationException {
@@ -230,6 +253,7 @@ public class ExtractSuperClassUtil {
 
   public static boolean showConflicts(DialogWrapper dialog, MultiMap<PsiElement, String> conflicts, final Project project) {
     if (!conflicts.isEmpty()) {
+      fireConflictsEvent(conflicts, project);
       ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
       conflictsDialog.show();
       final boolean ok = conflictsDialog.isOK();
@@ -237,5 +261,31 @@ public class ExtractSuperClassUtil {
       return ok;
     }
     return true;
+  }
+
+  private static void fireConflictsEvent(MultiMap<PsiElement, String> conflicts, Project project) {
+    final RefactoringEventData conflictUsages = new RefactoringEventData();
+    conflictUsages.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
+    project.getMessageBus()
+      .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      .conflictsDetected(REFACTORING_EXTRACT_SUPER_ID, conflictUsages);
+  }
+
+  public static RefactoringEventData createBeforeData(final PsiClass subclassClass, final MemberInfo[] members) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(subclassClass);
+    data.addMembers(members, new Function<MemberInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(MemberInfo info) {
+        return info.getMember();
+      }
+    });
+    return data;
+  }
+
+  public static RefactoringEventData createAfterData(final PsiClass subClass) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(subClass);
+    return data;
   }
 }

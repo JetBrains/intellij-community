@@ -16,7 +16,7 @@ Groovy script
       Reference expression
         PsiElement(identifier)('b')
       PsiElement())(')')
-    PsiErrorElement:')' expected
+    PsiErrorElement:'=' expected
       <empty list>
   PsiErrorElement:Unexpected symbol
     PsiElement(,)(',')

@@ -27,6 +27,8 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -96,7 +98,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected JTextField createSourceClassField() {
     JTextField result = new JTextField();
     result.setEditable(false);
-    result.setText(mySourceClass.getQualifiedName());
+    final String qualifiedName = mySourceClass.getQualifiedName();
+    result.setText(qualifiedName != null ? qualifiedName : SymbolPresentationUtil.getSymbolPresentableText(mySourceClass));
     return result;
   }
 

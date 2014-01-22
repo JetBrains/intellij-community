@@ -108,4 +108,7 @@ public abstract class XDebuggerUtil {
    * @param processor processor
    */
   public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
+
+  @Nullable
+  public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
 }

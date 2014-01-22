@@ -59,4 +59,32 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "}"
     );
   }
+
+  public void testMultiCatch() {
+    doTest("import org.slf4j.*;\n" +
+           "class X {\n" +
+           "    private static final Logger logger = LoggerFactory.getLogger( X.class );\n" +
+           "    public void multiCatch() {\n" +
+           "        try {\n" +
+           "            method();\n" +
+           "        } catch ( FirstException|SecondException e ) {\n" +
+           "            logger.info( \"failed with first or second\", e );\n" +
+           "        }\n" +
+           "    }\n" +
+           "    public void method() throws FirstException, SecondException {}\n" +
+           "    public static class FirstException extends Exception { }\n" +
+           "    public static class SecondException extends Exception { }\n" +
+           "}");
+  }
+
+  public void testNoSlf4j() {
+    doTest("class FalsePositiveSLF4J {\n" +
+           "    public void method( DefinitelyNotSLF4J definitelyNotSLF4J ) {\n" +
+           "        definitelyNotSLF4J.trace( \"not a trace message\", \"not a trace parameter\" );\n" +
+           "    }\n" +
+           "    public interface DefinitelyNotSLF4J {\n" +
+           "        void trace( String firstParameter, Object secondParameter );\n" +
+           "    }\n" +
+           "}");
+  }
 }

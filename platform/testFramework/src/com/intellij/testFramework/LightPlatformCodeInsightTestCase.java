@@ -58,9 +58,15 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
@@ -134,6 +140,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NonNls
   @NotNull
   protected String getTestDataPath() {
+    if (myTestDataPath != null) {
+      return myTestDataPath;
+    }
     return PathManagerEx.getTestDataPath();
   }
 
@@ -600,7 +609,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void unindent() {
     executeAction("EditorUnindentSelection");
   }
-  
+
+  protected static void selectLine() {
+    executeAction("EditorSelectLine");
+  }
+
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
@@ -642,4 +655,122 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
     };
   }
+
+  /**
+   * file parameterized tests support
+   * @see FileBasedTestCaseHelperEx
+   */
+
+  /**
+   * @Parameterized.Parameter fields are injected on parameterized test creation. 
+   */
+  @Parameterized.Parameter(0)
+  public String myFileSuffix;
+
+  /**
+   * path to the root of test data in case of com.intellij.testFramework.FileBasedTestCaseHelperEx 
+   * or 
+   * path to the directory with current test data in case of @TestDataPath
+   */
+  @Parameterized.Parameter(1)
+  public String myTestDataPath;
+
+  @Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params() throws Throwable {
+    return Collections.emptyList();
+  }
+
+  @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params(Class<?> klass) throws Throwable{
+    final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
+    if (!(testCase instanceof FileBasedTestCaseHelper)) {
+      fail("Parameterized test should implement FileBasedTestCaseHelper");
+    }
+
+    PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+
+    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
+    String testDataPath = testCase.getTestDataPath();
+
+    File testDir = null;
+    if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {
+      testDir = new File(testDataPath, ((FileBasedTestCaseHelperEx)fileBasedTestCase).getRelativeBasePath());
+    } else {
+      final TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
+      if (annotation == null) {
+        fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx or be annotated with com.intellij.testFramework.TestDataPath");
+      } else {
+        final String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
+        final String lastPathComponent = new File(testDataPath).getName();
+        final int idx = trimmedRoot.indexOf(lastPathComponent);
+        testDataPath = testDataPath.replace(File.separatorChar, '/') + (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
+        testDir = new File(testDataPath);
+      }
+    }
+
+    final File[] files = testDir.listFiles();
+
+    if (files == null) {
+      fail("Test files not found in " + testDir.getPath());
+    }
+
+    final List<Object[]> result = new ArrayList<Object[]>();
+    for (File file : files) {
+      final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
+      if (fileSuffix != null) {
+        result.add(new Object[] {fileSuffix, testDataPath});
+      }
+    }
+    return result;
+  }
+  
+  @Override
+  public String getName() {
+    if (myFileSuffix != null) {
+      return "test" + myFileSuffix;
+    }
+    return super.getName();
+  }
+
+  @Before
+  public void before() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          setUp();
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    });
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
+  @After
+  public void after() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDown();
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    });
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
 }

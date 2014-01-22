@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -102,7 +103,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         return;
       }
       final String escaped = StringUtil.escapeStringCharacters(literal.toString());
-      replaceExpression(literalExpression, '\"' + escaped + '"');
+      PsiReplacementUtil.replaceExpression(literalExpression, '\"' + escaped + '"');
     }
   }
 
@@ -134,7 +135,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       }
       final PsiExpression expression = (PsiExpression)element;
       final String expressionText = expression.getText();
-      replaceExpression(expression, '(' + typeText + ')' + expressionText);
+      PsiReplacementUtil.replaceExpression(expression, '(' + typeText + ')' + expressionText);
     }
   }
 

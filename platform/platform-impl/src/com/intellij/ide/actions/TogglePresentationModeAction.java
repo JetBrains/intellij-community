@@ -85,15 +85,18 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     }
 
     if (project != null) {
-      Window frame = IdeFrameImpl.getActiveFrame();
-      if (frame instanceof IdeFrameImpl) {
+      Window window = IdeFrameImpl.getActiveFrame();
+      if (window instanceof IdeFrameImpl) {
+        final IdeFrameImpl frame = (IdeFrameImpl)window;
         final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
         if (settings.PRESENTATION_MODE) {
-          propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(((IdeFrameImpl)frame).isInFullScreen()));
-          ((IdeFrameImpl)frame).toggleFullScreen(true);
+          propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
+          frame.toggleFullScreen(true);
         } else {
-          final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
-          ((IdeFrameImpl)frame).toggleFullScreen("true".equalsIgnoreCase(value));
+          if (frame.isInFullScreen()) {
+            final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
+            frame.toggleFullScreen("true".equalsIgnoreCase(value));
+          }
         }
       }
     }

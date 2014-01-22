@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jdom.Element;
@@ -46,15 +47,15 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements JDOMExternalizable, Comparator<HighlightSeverity> {
-  @NonNls private static final String INFO = "info";
-  private final Map<String, SeverityBasedTextAttributes> myMap = new THashMap<String, SeverityBasedTextAttributes>();
-  private final Map<String, Color> myRendererColors = new THashMap<String, Color>();
-  @NonNls private static final String COLOR = "color";
+  @NonNls private static final String INFO_TAG = "info";
+  @NonNls private static final String COLOR_ATTRIBUTE = "color";
+  private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<String, SeverityBasedTextAttributes>();
+  private final Map<String, Color> myRendererColors = new ConcurrentHashMap<String, Color>();
 
-  private final OrderMap myOrder = new OrderMap();
+  private volatile OrderMap myOrderMap;
   private JDOMExternalizableStringList myReadOrder;
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new THashMap<String, HighlightInfoType>();
+  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new ConcurrentHashMap<String, HighlightInfoType>();
 
   public SeverityRegistrar() {
   }
@@ -68,7 +69,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
-    STANDARD_SEVERITIES.put(highlightSeverity.toString(), highlightInfoType);
+    STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
   }
 
   @NotNull
@@ -78,22 +79,21 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
            : InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar();
   }
 
-  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor){
+  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
     final HighlightSeverity severity = info.getType().getSeverity(null);
-    myMap.put(severity.toString(), info);
-    myRendererColors.put(severity.toString(), renderColor);
-    myOrder.clear();
+    myMap.put(severity.getName(), info);
+    myRendererColors.put(severity.getName(), renderColor);
+    myOrderMap = null;
     HighlightDisplayLevel.registerSeverity(severity, renderColor);
   }
 
-
   public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity){
-    return myMap.remove(severity.toString());
+    return myMap.remove(severity.getName());
   }
 
   @NotNull
   public HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(@NotNull HighlightSeverity severity) {
-    HighlightInfoType infoType = STANDARD_SEVERITIES.get(severity.toString());
+    HighlightInfoType infoType = STANDARD_SEVERITIES.get(severity.getName());
     if (infoType != null) {
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;
     }
@@ -102,13 +102,17 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
     }
 
-    final SeverityBasedTextAttributes type = myMap.get(severity.toString());
-    return (HighlightInfoType.HighlightInfoTypeImpl)(type != null ? type.getType() : HighlightInfoType.WARNING);
+    final SeverityBasedTextAttributes type = getAttributesBySeverity(severity);
+    return (HighlightInfoType.HighlightInfoTypeImpl)(type == null ? HighlightInfoType.WARNING : type.getType());
+  }
+
+  private SeverityBasedTextAttributes getAttributesBySeverity(@NotNull HighlightSeverity severity) {
+    return myMap.get(severity.getName());
   }
 
   @Nullable
   public TextAttributes getTextAttributesBySeverity(@NotNull HighlightSeverity severity) {
-    final SeverityBasedTextAttributes infoType = myMap.get(severity.toString());
+    final SeverityBasedTextAttributes infoType = getAttributesBySeverity(severity);
     if (infoType != null) {
       return infoType.getAttributes();
     }
@@ -120,72 +124,74 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void readExternal(Element element) throws InvalidDataException {
     myMap.clear();
     myRendererColors.clear();
-    final List children = element.getChildren(INFO);
+    final List children = element.getChildren(INFO_TAG);
     for (Object child : children) {
       final Element infoElement = (Element)child;
 
-      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes();
-      highlightInfo.readExternal(infoElement);
+      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
 
       Color color = null;
-      final String colorStr = infoElement.getAttributeValue(COLOR);
+      final String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
       if (colorStr != null){
         color = new Color(Integer.parseInt(colorStr, 16));
       }
       registerSeverity(highlightInfo, color);
     }
-    myOrder.clear();
-
     myReadOrder = new JDOMExternalizableStringList();
     myReadOrder.readExternal(element);
+
+    OrderMap orderMap = new OrderMap(myReadOrder.size());
     for (int i = 0; i < myReadOrder.size(); i++) {
       String name = myReadOrder.get(i);
       HighlightSeverity severity = getSeverity(name);
       if (severity == null) continue;
-      myOrder.put(severity, i);
+      orderMap.put(severity, i);
     }
     final List<HighlightSeverity> knownSeverities = getDefaultOrder();
-    myOrder.retainEntries(new TObjectIntProcedure<HighlightSeverity>() {
+    orderMap.retainEntries(new TObjectIntProcedure<HighlightSeverity>() {
       @Override
       public boolean execute(HighlightSeverity severity, int order) {
         return knownSeverities.contains(severity);
       }
     });
 
-    if (myOrder.isEmpty()) {
-      setFromList(knownSeverities);
+    if (orderMap.isEmpty()) {
+      orderMap = fromList(knownSeverities);
     }
-    //enforce include all known
-    List<HighlightSeverity> list = getOrderAsList();
-    for (int i = 0; i < knownSeverities.size(); i++) {
-      HighlightSeverity stdSeverity = knownSeverities.get(i);
-      if (!list.contains(stdSeverity)) {
-        for (int oIdx = 0; oIdx < list.size(); oIdx++) {
-          HighlightSeverity orderSeverity = list.get(oIdx);
-          HighlightInfoType type = STANDARD_SEVERITIES.get(orderSeverity.toString());
-          if (type != null && knownSeverities.indexOf(type.getSeverity(null)) > i) {
-            list.add(oIdx, stdSeverity);
-            myReadOrder = null;
-            break;
+    else {
+      //enforce include all known
+      List<HighlightSeverity> list = getOrderAsList(orderMap);
+      for (int i = 0; i < knownSeverities.size(); i++) {
+        HighlightSeverity stdSeverity = knownSeverities.get(i);
+        if (!list.contains(stdSeverity)) {
+          for (int oIdx = 0; oIdx < list.size(); oIdx++) {
+            HighlightSeverity orderSeverity = list.get(oIdx);
+            HighlightInfoType type = STANDARD_SEVERITIES.get(orderSeverity.getName());
+            if (type != null && knownSeverities.indexOf(type.getSeverity(null)) > i) {
+              list.add(oIdx, stdSeverity);
+              myReadOrder = null;
+              break;
+            }
           }
         }
       }
+      orderMap = fromList(list);
     }
-    setFromList(list);
+    myOrderMap = orderMap;
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    List<HighlightSeverity> list = getOrderAsList();
-    for (HighlightSeverity s : list) {
-      Element info = new Element(INFO);
-      String severity = s.toString();
-      final SeverityBasedTextAttributes infoType = myMap.get(severity);
+    List<HighlightSeverity> list = getOrderAsList(getOrderMap());
+    for (HighlightSeverity severity : list) {
+      Element info = new Element(INFO_TAG);
+      String severityName = severity.getName();
+      final SeverityBasedTextAttributes infoType = getAttributesBySeverity(severity);
       if (infoType != null) {
         infoType.writeExternal(info);
-        final Color color = myRendererColors.get(severity);
+        final Color color = myRendererColors.get(severityName);
         if (color != null) {
-          info.setAttribute(COLOR, Integer.toString(color.getRGB() & 0xFFFFFF, 16));
+          info.setAttribute(COLOR_ATTRIBUTE, Integer.toString(color.getRGB() & 0xFFFFFF, 16));
         }
         element.addContent(info);
       }
@@ -195,11 +201,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       myReadOrder.writeExternal(element);
     }
     else if (!getDefaultOrder().equals(list)) {
-      final JDOMExternalizableStringList ext = new JDOMExternalizableStringList(Collections.nCopies(myOrder.size(), ""));
-      myOrder.forEachEntry(new TObjectIntProcedure<HighlightSeverity>() {
+      final JDOMExternalizableStringList ext = new JDOMExternalizableStringList(Collections.nCopies(getOrderMap().size(), ""));
+      getOrderMap().forEachEntry(new TObjectIntProcedure<HighlightSeverity>() {
         @Override
         public boolean execute(HighlightSeverity orderSeverity, int oIdx) {
-          ext.set(oIdx, orderSeverity.toString());
+          ext.set(oIdx, orderSeverity.getName());
           return true;
         }
       });
@@ -208,9 +214,9 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @NotNull
-  private List<HighlightSeverity> getOrderAsList() {
+  private List<HighlightSeverity> getOrderAsList(@NotNull OrderMap orderMap) {
     List<HighlightSeverity> list = new ArrayList<HighlightSeverity>();
-    for (Object o : getOrder().keys()) {
+    for (Object o : orderMap.keys()) {
       list.add((HighlightSeverity)o);
     }
     Collections.sort(list, this);
@@ -218,12 +224,12 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeveritiesCount() {
-    return createCurrentSeverities().size();
+    return createCurrentSeverityNames().size();
   }
 
   public HighlightSeverity getSeverityByIndex(final int i) {
     final HighlightSeverity[] found = new HighlightSeverity[1];
-    getOrder().forEachEntry(new TObjectIntProcedure<HighlightSeverity>() {
+    getOrderMap().forEachEntry(new TObjectIntProcedure<HighlightSeverity>() {
       @Override
       public boolean execute(HighlightSeverity severity, int order) {
         if (order == i) {
@@ -237,7 +243,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeverityMaxIndex() {
-    int[] values = getOrder().getValues();
+    int[] values = getOrderMap().getValues();
     int max = values[0];
     for(int i = 1; i < values.length; ++i) if (values[i] > max) max = values[i];
 
@@ -254,7 +260,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @NotNull
-  private List<String> createCurrentSeverities() {
+  private List<String> createCurrentSeverityNames() {
     List<String> list = new ArrayList<String>();
     list.addAll(STANDARD_SEVERITIES.keySet());
     list.addAll(myMap.keySet());
@@ -269,37 +275,50 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       return level.getIcon();
     }
 
-    return HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.toString()));
+    return HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName()));
   }
 
-  public boolean isSeverityValid(@NotNull String severity) {
-    return createCurrentSeverities().contains(severity);
+  public boolean isSeverityValid(@NotNull String severityName) {
+    return createCurrentSeverityNames().contains(severityName);
   }
 
   @Override
   public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
-    OrderMap order = getOrder();
-    int o1 = order.getOrder(s1, -1);
-    int o2 = order.getOrder(s2, -1);
+    OrderMap orderMap = getOrderMap();
+    int o1 = orderMap.getOrder(s1, -1);
+    int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;
   }
 
 
   @NotNull
-  private OrderMap getOrder() {
-    if (myOrder.isEmpty()) {
-      List<HighlightSeverity> order = getDefaultOrder();
-      setFromList(order);
+  private OrderMap getOrderMap() {
+    OrderMap orderMap;
+    OrderMap defaultOrder = null;
+    while ((orderMap = myOrderMap) == null) {
+      if (defaultOrder == null) {
+        defaultOrder = fromList(getDefaultOrder());
+      }
+      boolean replaced = ORDER_MAP_UPDATER.compareAndSet(this, null, defaultOrder);
+      if (replaced) {
+        orderMap = defaultOrder;
+        break;
+      }
     }
-    return myOrder;
+    return orderMap;
   }
 
-  private void setFromList(@NotNull List<HighlightSeverity> order) {
-    myOrder.clear();
-    for (int i = 0; i < order.size(); i++) {
-      HighlightSeverity severity = order.get(i);
-      myOrder.put(severity, i);
+  private static final AtomicFieldUpdater<SeverityRegistrar, OrderMap> ORDER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(SeverityRegistrar.class, OrderMap.class);
+
+  @NotNull
+  private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
+    OrderMap orderMap = new OrderMap(orderList.size());
+    for (int i = 0; i < orderList.size(); i++) {
+      HighlightSeverity severity = orderList.get(i);
+      orderMap.put(severity, i);
     }
+    orderMap.trimToSize();
+    return orderMap;
   }
 
   @NotNull
@@ -316,13 +335,13 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return order;
   }
 
-  public void setOrder(@NotNull List<HighlightSeverity> order) {
-    setFromList(order);
+  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
+    myOrderMap = fromList(orderList);
     myReadOrder = null;
   }
 
   public int getSeverityIdx(@NotNull HighlightSeverity severity) {
-    return getOrder().getOrder(severity, -1);
+    return getOrderMap().getOrder(severity, -1);
   }
 
   public boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {
@@ -337,43 +356,41 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   private static class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
+    private OrderMap(int initialCapacity) {
+      super(initialCapacity);
+    }
+
     private int getOrder(@NotNull HighlightSeverity severity, int defaultOrder) {
       int index = index(severity);
       return index < 0 ? defaultOrder : _values[index];
     }
   }
 
-  public static class SeverityBasedTextAttributes implements JDOMExternalizable {
+  public static class SeverityBasedTextAttributes {
     private final TextAttributes myAttributes;
     private final HighlightInfoType.HighlightInfoTypeImpl myType;
 
     //read external
-    public SeverityBasedTextAttributes() {
-      myAttributes = new TextAttributes();
-      myType = new HighlightInfoType.HighlightInfoTypeImpl();
+    public SeverityBasedTextAttributes(@NotNull Element element) throws InvalidDataException {
+      this(new TextAttributes(element), new HighlightInfoType.HighlightInfoTypeImpl(element));
     }
 
-    public SeverityBasedTextAttributes(final TextAttributes attributes, final HighlightInfoType.HighlightInfoTypeImpl type) {
+    public SeverityBasedTextAttributes(@NotNull TextAttributes attributes, @NotNull HighlightInfoType.HighlightInfoTypeImpl type) {
       myAttributes = attributes;
       myType = type;
     }
 
+    @NotNull
     public TextAttributes getAttributes() {
       return myAttributes;
     }
 
+    @NotNull
     public HighlightInfoType.HighlightInfoTypeImpl getType() {
       return myType;
     }
 
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-      myAttributes.readExternal(element);
-      myType.readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    private void writeExternal(@NotNull Element element) throws WriteExternalException {
       myAttributes.writeExternal(element);
       myType.writeExternal(element);
     }
@@ -389,15 +406,15 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
       final SeverityBasedTextAttributes that = (SeverityBasedTextAttributes)o;
 
-      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
-      if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+      if (!myAttributes.equals(that.myAttributes)) return false;
+      if (!myType.equals(that.myType)) return false;
 
       return true;
     }
 
     public int hashCode() {
-      int result = myAttributes != null ? myAttributes.hashCode() : 0;
-      result = 31 * result + (myType != null ? myType.hashCode() : 0);
+      int result = myAttributes.hashCode();
+      result = 31 * result + myType.hashCode();
       return result;
     }
   }
@@ -410,5 +427,4 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
-
 }

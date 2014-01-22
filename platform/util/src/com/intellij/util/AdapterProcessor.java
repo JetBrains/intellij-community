@@ -19,11 +19,13 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 public class AdapterProcessor<T, S> implements Processor<T> {
   private final Processor<S> myAdaptee;
   private final Function<T, S> myConversion;
 
-  public AdapterProcessor(Processor<S> adaptee, Function<T, S> conversion) {
+  public AdapterProcessor(@NotNull Processor<S> adaptee, @NotNull Function<T, S> conversion) {
     myAdaptee = adaptee;
     myConversion = conversion;
   }

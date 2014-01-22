@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
@@ -84,6 +85,6 @@ public class MoveClassToNewFileIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new ClassNameDiffersFromFileNamePredicate(true);
+    return new ClassNameDiffersFromFileNamePredicate(null, true);
   }
 }

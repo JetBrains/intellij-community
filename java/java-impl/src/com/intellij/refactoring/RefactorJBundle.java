@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 package com.intellij.refactoring;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
-public class RefactorJBundle{
-    private static final ResourceBundle ourBundle =
-            ResourceBundle.getBundle("com.intellij.refactoring.RefactorJBundle");
+public class RefactorJBundle {
 
-    private RefactorJBundle(){
-    }
+  public static String message(@NotNull @PropertyKey(resourceBundle = "com.intellij.refactoring.RefactorJBundle") String key,
+                               @NotNull Object... params) {
+    return CommonBundle.message(ourBundle, key, params);
+  }
 
-    public static String message(@PropertyKey(resourceBundle = "com.intellij.refactoring.RefactorJBundle")String key,
-                                 Object... params){
-        return CommonBundle.message(ourBundle, key, params);
-    }
+  private static final ResourceBundle ourBundle =
+    ResourceBundle.getBundle("com.intellij.refactoring.RefactorJBundle");
+
+  private RefactorJBundle() {
+  }
 }

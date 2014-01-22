@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
+    myClass = psiClass.getContainingFile().getVirtualFile() == null || myQualifiedName == null ? psiClass : PsiAnchor.create(psiClass);
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
@@ -85,12 +86,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @Override
   public PsiClass getObject() {
     if (myClass instanceof PsiAnchor) {
-      Reference<PsiClass> cache = myCache;
-      if (cache != null) {
-        PsiClass psiClass = cache.get();
-        if (psiClass != null) {
-          return psiClass;
-        }
+      PsiClass psiClass = SoftReference.dereference(myCache);
+      if (psiClass != null) {
+        return psiClass;
       }
 
       final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();

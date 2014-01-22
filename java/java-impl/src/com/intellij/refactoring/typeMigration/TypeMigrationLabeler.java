@@ -458,12 +458,19 @@ public class TypeMigrationLabeler {
       else if (resolved instanceof PsiExpression){
         return (((PsiExpression)resolved).getType());
       } else if (resolved instanceof PsiReferenceParameterList) {
-        final PsiElement parent = resolved.getParent();
-        LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
-        final PsiClass psiClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
-        return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, TypeConversionUtil.getSuperClassSubstitutor(psiClass, PsiTreeUtil.getParentOfType(parent,
-                                                                                                                                     PsiClass.class),
-                                                                                                         PsiSubstitutor.EMPTY));
+        PsiElement parent = resolved.getParent();
+        while (parent != null) {
+          LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
+          final PsiClass psiClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
+          final PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+          if (psiClass != null && containingClass != null) {
+           final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, containingClass, PsiSubstitutor.EMPTY);
+           if (classSubstitutor != null) {
+             return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, classSubstitutor);
+           }
+          }
+          parent = PsiTreeUtil.getParentOfType(parent, PsiJavaCodeReferenceElement.class, true);
+        }
       } else if (resolved instanceof PsiClass) {
         return JavaPsiFacade.getElementFactory(resolved.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
       }

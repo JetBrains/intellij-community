@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public interface Document extends UserDataHolder {
    *
    * @return document content.
    */
+  @NotNull
   String getText();
 
   @NotNull String getText(@NotNull TextRange range);
@@ -63,6 +64,13 @@ public interface Document extends UserDataHolder {
    * @see #getTextLength()
    */
   @NotNull CharSequence getCharsSequence();
+
+  /**
+   * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
+   * @see com.intellij.util.text.ImmutableCharSequence
+   */
+  @NotNull
+  CharSequence getImmutableCharSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.

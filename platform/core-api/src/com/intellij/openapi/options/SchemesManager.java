@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,72 +27,89 @@ import java.util.List;
 
 public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
   SchemesManager EMPTY = new SchemesManager(){
+    @Override
     @NotNull
     public Collection loadSchemes() {
       return Collections.emptySet();
     }
 
+    @Override
     @NotNull
     public Collection loadSharedSchemes() {
       return Collections.emptySet();
     }
 
-    public void exportScheme(final ExternalizableScheme scheme, final String name, final String description) {
+    @Override
+    public void exportScheme(@NotNull final ExternalizableScheme scheme, final String name, final String description) {
     }
 
+    @Override
     public boolean isImportAvailable() {
       return false;
     }
 
+    @Override
     public boolean isExportAvailable() {
       return false;
     }
 
+    @Override
     public boolean isShared(final Scheme scheme) {
       return false;
     }
 
+    @Override
     public void addNewScheme(@NotNull final Scheme scheme, final boolean replaceExisting) {
 
     }
 
+    @Override
     public void clearAllSchemes() {
     }
 
+    @Override
     @NotNull
     public List getAllSchemes() {
       return Collections.emptyList();
     }
 
+    @Override
     public Scheme findSchemeByName(final String schemeName) {
       return null;
     }
 
+    @Override
     public void save() {
     }
 
+    @Override
     public void setCurrentSchemeName(final String schemeName) {
 
     }
 
+    @Override
     public Scheme getCurrentScheme() {
       return null;
     }
 
+    @Override
     public void removeScheme(final Scheme scheme) {
 
     }
 
+    @Override
     @NotNull
     public Collection getAllSchemeNames() {
       return Collections.emptySet();
     }
 
+    @Override
     @NotNull
     public Collection loadSharedSchemes(final Collection currentSchemeList) {
       return loadSharedSchemes();
     }
 
+    @Override
     public File getRootDirectory() {
       return null;
     }
@@ -103,7 +120,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   @NotNull Collection<SharedScheme<E>> loadSharedSchemes();
   @NotNull Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
 
-  void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException, IOException;
+  void exportScheme(@NotNull E scheme, final String name, final String description) throws WriteExternalException, IOException;
 
   boolean isImportAvailable();
 

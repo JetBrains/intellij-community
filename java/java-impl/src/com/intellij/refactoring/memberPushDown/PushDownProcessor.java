@@ -82,7 +82,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   @Nullable
   @Override
   protected String getRefactoringId() {
-    return "refactoring.psuDown";
+    return "refactoring.push.down";
   }
 
   @Nullable

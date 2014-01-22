@@ -887,7 +887,7 @@ public class SvnInfoHandler extends DefaultHandler {
       if (myBase != null) {
         final String path = attributes.getValue("path");
         assertSAX(!StringUtil.isEmptyOrSpaces(path));
-        structure.myFile = new File(myBase, path);
+        structure.myFile = CommandUtil.resolvePath(myBase, path);
       }
 
       final String revision = attributes.getValue("revision");

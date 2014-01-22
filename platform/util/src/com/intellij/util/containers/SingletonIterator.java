@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,19 @@ package com.intellij.util.containers;
 
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-public class SingletonIterator<T> implements Iterator<T> {
+public class SingletonIterator<T> extends SingletonIteratorBase<T> {
   private final T myElement;
-  private boolean myVisited;
 
   public SingletonIterator(T element) {
     myElement = element;
   }
 
   @Override
-  public boolean hasNext() {
-    return !myVisited;
+  protected void checkCoModification() {
   }
 
   @Override
-  public T next() {
-    if (myVisited) throw new NoSuchElementException();
-    myVisited = true;
+  protected T getElement() {
     return myElement;
   }
 

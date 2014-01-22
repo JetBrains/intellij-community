@@ -38,6 +38,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -260,28 +261,35 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
     GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (newReturnType == null) {
+    if (newReturnType == null || newReturnType == PsiType.NULL) {
       if (typeElement != null) typeElement.delete();
+      insertPlaceHolderToModifierList();
       return null;
     }
-    GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    final GrTypeElement stub = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    GrTypeElement newTypeElement;
     if (typeElement == null) {
-      PsiElement anchor = getTypeParameterList();
-      if (anchor == null) anchor = getModifierList();
-      newTypeElement = (GrTypeElement)addAfter(newTypeElement, anchor);
+      final GrTypeParameterList typeParemeterList = getTypeParameterList();
+      PsiElement anchor = typeParemeterList != null ? typeParemeterList : getModifierList();
+      newTypeElement = (GrTypeElement)addAfter(stub, anchor);
     }
     else {
-      newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
+      newTypeElement = (GrTypeElement)typeElement.replace(stub);
     }
 
     newTypeElement.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
-        org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference(refElement);
+        GrReferenceAdjuster.shortenReference(refElement);
       }
     });
     return newTypeElement;
+  }
+
+  private void insertPlaceHolderToModifierList() {
+    final GrModifierList list = getModifierList();
+    PsiImplUtil.insertPlaceHolderToModifierListAtEndIfNeeded(list);
   }
 
   @Override

@@ -59,7 +59,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   private static boolean checkAssignmentToFieldExists(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression &&
           element.getParent() instanceof GrAssignmentExpression &&

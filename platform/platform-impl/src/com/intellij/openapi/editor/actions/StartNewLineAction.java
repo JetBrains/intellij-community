@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 
 /**
  * @author max
@@ -40,6 +41,7 @@ public class StartNewLineAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      CopyPasteManager.getInstance().stopKillRings();
       if (editor.getDocument().getLineCount() != 0) {
         editor.getSelectionModel().removeSelection();
         LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();

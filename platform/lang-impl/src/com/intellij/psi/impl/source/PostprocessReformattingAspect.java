@@ -50,6 +50,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -65,6 +66,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private volatile int myDisabledCounter = 0;
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
   private final AtomicInteger myPostponedCounter = new AtomicInteger();
+  private static final Key<Throwable> REFORMAT_ORIGINATOR = Key.create("REFORMAT_ORIGINATOR");
+  private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
 
   public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect,final CommandProcessor processor) {
     myProject = project;
@@ -257,19 +260,23 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         finally {
           myUpdatedProviders.remove(viewProvider);
           myReformatElements.remove(viewProvider);
+          viewProvider.putUserData(REFORMAT_ORIGINATOR, null);
         }
       }
     });
   }
 
-  public boolean isViewProviderLocked(final FileViewProvider fileViewProvider) {
+  public boolean isViewProviderLocked(@NotNull FileViewProvider fileViewProvider) {
     return myReformatElements.containsKey(fileViewProvider);
   }
 
-  public void beforeDocumentChanged(FileViewProvider viewProvider) {
+  public void beforeDocumentChanged(@NotNull FileViewProvider viewProvider) {
     if (isViewProviderLocked(viewProvider)) {
-      throw new RuntimeException("Document is locked by write PSI operations. " +
-                                 "Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document.");
+      Throwable cause = viewProvider.getUserData(REFORMAT_ORIGINATOR);
+      @NonNls String message = "Document is locked by write PSI operations. " +
+                               "Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document." +
+                               (cause == null ? "" : " See cause stacktrace for the reason to lock.");
+      throw cause == null ? new RuntimeException(message): new RuntimeException(message, cause);
     }
     postponedFormatting(viewProvider);
   }
@@ -278,7 +285,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return project.getComponent(PostprocessReformattingAspect.class);
   }
 
-  private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {
+  private void postponeFormatting(@NotNull FileViewProvider viewProvider, @NotNull ASTNode child) {
     if (!CodeEditUtil.isNodeGenerated(child) && child.getElementType() != TokenType.WHITE_SPACE) {
       final int oldIndent = CodeEditUtil.getOldIndentation(child);
       LOG.assertTrue(oldIndent >= 0,
@@ -288,6 +295,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     if (list == null) {
       list = new ArrayList<ASTNode>();
       myReformatElements.put(viewProvider, list);
+      if (STORE_REFORMAT_ORIGINATOR_STACKTRACE) {
+        viewProvider.putUserData(REFORMAT_ORIGINATOR, new Throwable());
+      }
     }
     list.add(child);
   }

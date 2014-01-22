@@ -21,16 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInsight.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -70,38 +66,18 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
         final PsiElement resolved = referenceExpression.resolve();
         if (!GroovyRefactoringUtil.isLocalVariable(resolved)) return;
 
-        final PsiType checked = GrReassignedLocalVarsChecker.getReassignedVarType(referenceExpression, false);
-        if (checked == null) return;
-
-        final GrControlFlowOwner varFlowOwner = ControlFlowUtils.findControlFlowOwner(resolved);
-        final GrControlFlowOwner refFlorOwner = ControlFlowUtils.findControlFlowOwner(referenceExpression);
-        if (isOtherScopeAndType(referenceExpression, checked, varFlowOwner, refFlorOwner)) {
-          String flowDescription = getFlowDescription(refFlorOwner);
-          final String message = message("local.var.0.is.reassigned.in.closure", ((GrNamedElement)resolved).getName(), flowDescription);
+        if (isOtherTypeOrDifferent(referenceExpression, (GrVariable)resolved) ) {
+          final String message = message("local.var.0.is.reassigned", ((GrNamedElement)resolved).getName());
           registerError(referenceExpression, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };
   }
 
-  private static boolean isOtherScopeAndType(GrReferenceExpression referenceExpression,
-                                             PsiType checked,
-                                             GrControlFlowOwner varFlowOwner,
-                                             GrControlFlowOwner refFlorOwner) {
-    return varFlowOwner != refFlorOwner && !TypesUtil.isAssignable(referenceExpression.getType(), checked, referenceExpression);
-  }
+  private static boolean isOtherTypeOrDifferent(@NotNull GrReferenceExpression referenceExpression, GrVariable resolved) {
+    if (ControlFlowUtils.findControlFlowOwner(referenceExpression) != ControlFlowUtils.findControlFlowOwner(resolved)) return true;
 
-  private static String getFlowDescription(GrControlFlowOwner refFlorOwner) {
-    String flowDescription;
-    if (refFlorOwner instanceof GrClosableBlock) {
-      flowDescription = message("closure");
-    }
-    else if (refFlorOwner instanceof GrAnonymousClassDefinition) {
-      flowDescription = message("anonymous.class");
-    }
-    else {
-      flowDescription = message("other.scope");
-    }
-    return flowDescription;
+    final PsiType currentType = referenceExpression.getType();
+    return currentType != null && currentType != PsiType.NULL && !ControlFlowUtils.findAccess(resolved, referenceExpression, false, true).isEmpty();
   }
 }

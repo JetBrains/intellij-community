@@ -41,6 +41,7 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,6 +175,11 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       }
     }
 
+    if (CLASS_FILTERS_ENABLED) {
+      String typeName = calculateEventClass(context, event);
+      if (!typeMatchesClassFilters(typeName)) return false;
+    }
+
     if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
       try {
         ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
@@ -208,6 +214,35 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       return true;
     }
 
+    return true;
+  }
+
+  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    return event.location().declaringType().name();
+  }
+
+  private boolean typeMatchesClassFilters(@Nullable String typeName) {
+    if (typeName == null) {
+      return true;
+    }
+    boolean matches = false, hasEnabled = false;
+    for (ClassFilter classFilter : getClassFilters()) {
+      if (classFilter.isEnabled()) {
+        hasEnabled = true;
+        if (classFilter.matches(typeName)) {
+          matches = true;
+          break;
+        }
+      }
+    }
+    if(hasEnabled && !matches) {
+      return false;
+    }
+    for (ClassFilter classFilter : getClassExclusionFilters()) {
+      if (classFilter.isEnabled() && classFilter.matches(typeName)) {
+        return false;
+      }
+    }
     return true;
   }
 

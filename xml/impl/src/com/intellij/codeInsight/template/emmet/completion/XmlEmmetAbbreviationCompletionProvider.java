@@ -17,15 +17,14 @@ package com.intellij.codeInsight.template.emmet.completion;
 
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: zolotov
- * Date: 8/9/13
- */
 public class XmlEmmetAbbreviationCompletionProvider extends EmmetAbbreviationCompletionProvider {
   @Override
   protected boolean isAvailable(CompletionParameters parameters) {
@@ -34,10 +33,8 @@ public class XmlEmmetAbbreviationCompletionProvider extends EmmetAbbreviationCom
   }
 
   @Override
-  protected LiveTemplateLookupElement createLookupElement(final TemplateImpl template) {
-    final String description = template.getDescription();
-    template.setDescription(null);
-    return new LiveTemplateLookupElement(template, description, false, true);
+  protected LiveTemplateLookupElement createLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate, @NotNull final TemplateImpl template) {
+    return new CustomLiveTemplateLookupElement(customLiveTemplate, template.getKey(), template.getDescription(), "", false, true);
   }
 
   @Override

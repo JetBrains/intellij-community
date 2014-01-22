@@ -720,7 +720,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     PsiMethod method = myValueOfMethod;
     if (method == null && isEnum() && getName() != null) {
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + " valueOf(String name) throws IllegalArgumentException {}", this);
+      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + " valueOf(String name) throws java.lang.IllegalArgumentException {}", this);
       myValueOfMethod = method = new LightMethod(getManager(), valuesMethod, this);
     }
     return method;

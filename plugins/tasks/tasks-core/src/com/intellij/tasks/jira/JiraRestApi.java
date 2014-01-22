@@ -1,6 +1,8 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.model.JiraIssue;
@@ -9,13 +11,13 @@ import com.intellij.tasks.jira.model.api20alpha1.JiraRestApi20Alpha1;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
-
-import static com.intellij.tasks.jira.JiraRepository.REST_API_PATH_SUFFIX;
 
 /**
  * @author Mikhail Golubev
@@ -63,12 +65,12 @@ public abstract class JiraRestApi {
 
   @NotNull
   protected GetMethod getSingleIssueSearchMethod(String key) {
-    return new GetMethod(myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + key);
+    return new GetMethod(myRepository.getRestUrl("issue", key));
   }
 
   @NotNull
   protected GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
-    GetMethod method = new GetMethod(myRepository.getUrl() + REST_API_PATH_SUFFIX + "/search");
+    GetMethod method = new GetMethod(myRepository.getRestUrl("search"));
     method.setQueryString(new NameValuePair[]{
       new NameValuePair("jql", jql),
       new NameValuePair("maxResults", String.valueOf(max))
@@ -92,22 +94,26 @@ public abstract class JiraRestApi {
 
   public void setTaskState(Task task, TaskState state) throws Exception {
     String requestBody = getRequestForStateTransition(state);
+    LOG.debug(String.format("Transition: %s -> %s, request: %s", task.getState(), state, requestBody));
     if (requestBody == null) {
       return;
     }
-    final String transitionsUrl = myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + task.getId() + "/transitions";
-    LOG.debug(String.format("Transition destination: %s, request: %s", state, requestBody));
-    final PostMethod method = new PostMethod(transitionsUrl);
-    method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "utf-8"));
-    try {
-      myRepository.executeMethod(method);
-    }
-    catch (Exception e) {
-      LOG.warn(String.format("Transition destination: %s, server URL: %s", state, myRepository.getUrl()), e);
-      throw e;
-    }
+    PostMethod method = new PostMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
+    method.setRequestEntity(createJsonEntity(requestBody));
+    myRepository.executeMethod(method);
   }
 
   @Nullable
   protected abstract String getRequestForStateTransition(@NotNull TaskState state);
+
+  public abstract void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception;
+
+  protected static RequestEntity createJsonEntity(String requestBody) {
+    try {
+      return new StringRequestEntity(requestBody, "application/json", CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new AssertionError("UTF-8 encoding is not supported");
+    }
+  }
 }

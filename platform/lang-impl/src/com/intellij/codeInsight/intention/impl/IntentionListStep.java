@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,11 +92,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
   //true if something changed
   boolean updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    boolean result = wrapActionsTo(intentions.errorFixesToShow, myCachedErrorFixes);
-    result &= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes);
-    result &= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions);
-    result &= wrapActionsTo(intentions.guttersToShow, myCachedGutters);
-    return !result;
+    boolean changed = wrapActionsTo(intentions.errorFixesToShow, myCachedErrorFixes);
+    changed |= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes);
+    changed |= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions);
+    changed |= wrapActionsTo(intentions.guttersToShow, myCachedGutters);
+    return changed;
   }
 
   private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
@@ -129,14 +129,14 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
     }
 
-    boolean result = true;
+    boolean changed = false;
     for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext();) {
       IntentionActionWithTextCaching cachedAction = iterator.next();
       IntentionAction action = cachedAction.getAction();
       if (!ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)
         && (hostElement == element || element != null && !ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
         iterator.remove();
-        result = false;
+        changed = true;
       }
     }
 
@@ -146,12 +146,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       if (element != null && element != hostElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action)) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
         wrappedNew.add(cachedAction);
-        result &= !cachedActions.add(cachedAction);
+        changed |= cachedActions.add(cachedAction);
       }
       else if (hostElement != null && ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
         wrappedNew.add(cachedAction);
-        result &= !cachedActions.add(cachedAction);
+        changed |= cachedActions.add(cachedAction);
       }
     }
     for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext();) {
@@ -159,12 +159,13 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       if (!wrappedNew.contains(cachedAction)) {
         // action disappeared
         iterator.remove();
-        result = false;
+        changed = true;
       }
     }
-    return result;
+    return changed;
   }
 
+  @NotNull
   IntentionActionWithTextCaching wrapAction(@NotNull HighlightInfo.IntentionActionDescriptor descriptor,
                                             @NotNull PsiElement element,
                                             @NotNull PsiFile containingFile,

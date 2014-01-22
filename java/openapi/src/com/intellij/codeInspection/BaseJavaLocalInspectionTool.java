@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,19 @@ import org.jetbrains.annotations.NotNull;
  * lie under corresponding first parameter of one method.
  *
  * @see GlobalInspectionTool
+ *
+ * Please note that if your inspection/fixes/suppressions don't need UI components (e.g. Editor) to run, consider using
+ * {@link BaseJavaBatchLocalInspectionTool} instead.
  */
 public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   @Override
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
+    String shortName = getShortName();
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) {
+      throw new AssertionError("HighlightDisplayKey.find(" + shortName + ") is null. Inspection: "+getClass());
+    }
+    return SuppressManager.getInstance().createSuppressActions(key);
   }
 
   @Override

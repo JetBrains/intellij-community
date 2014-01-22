@@ -925,10 +925,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String getChangelistName(Task task) {
-    if (task.isIssue() && myConfig.changelistNameFormat != null) {
-      return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
-    }
-    return task.getSummary();
+    String name = task.isIssue() && myConfig.changelistNameFormat != null
+               ? TaskUtil.formatTask(task, myConfig.changelistNameFormat)
+               : task.getSummary();
+    return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
 
   public String suggestBranchName(Task task) {

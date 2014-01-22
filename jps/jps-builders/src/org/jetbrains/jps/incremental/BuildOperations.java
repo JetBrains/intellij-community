@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -169,17 +170,7 @@ public class BuildOperations {
           if (outputs != null) {
             final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
             for (String output : outputs) {
-              final File outFile = new File(output);
-              final boolean deleted = outFile.delete();
-              if (deleted) {
-                deletedPaths.add(output);
-                if (shouldPruneOutputDirs) {
-                  final File parent = outFile.getParentFile();
-                  if (parent != null) {
-                    dirsToDelete.add(parent);
-                  }
-                }
-              }
+              deleteRecursively(output, deletedPaths, shouldPruneOutputDirs ? dirsToDelete : null);
             }
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
@@ -190,6 +181,7 @@ public class BuildOperations {
           }
           return true;
         }
+
       });
 
       if (context.isMake()) {
@@ -210,5 +202,31 @@ public class BuildOperations {
     catch (Exception e) {
       throw new ProjectBuildException(e);
     }
+  }
+
+  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<File> parentDirs) {
+    File file = new File(path);
+    boolean deleted = deleteRecursively(file, deletedPaths);
+    if (deleted && parentDirs != null) {
+      File parent = file.getParentFile();
+      if (parent != null) {
+        parentDirs.add(parent);
+      }
+    }
+    return deleted;
+  }
+
+  private static boolean deleteRecursively(File file, Collection<String> deletedPaths) {
+    File[] children = file.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        deleteRecursively(child, deletedPaths);
+      }
+    }
+    boolean deleted = file.delete();
+    if (deleted && children == null) {
+      deletedPaths.add(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    return deleted;
   }
 }

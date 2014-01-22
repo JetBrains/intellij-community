@@ -40,7 +40,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -332,9 +335,12 @@ public class PyExtractMethodUtil {
     }
   }
 
-  private static void setSelectionAndCaret(Editor editor, final PsiElement callElement) {
+  private static void setSelectionAndCaret(Editor editor, @Nullable final PsiElement callElement) {
     editor.getSelectionModel().removeSelection();
-    editor.getCaretModel().moveToOffset(callElement.getTextOffset());
+    if (callElement != null) {
+      final int offset = callElement.getTextOffset();
+      editor.getCaretModel().moveToOffset(offset);
+    }
   }
 
   private static PsiElement replaceElements(final List<PsiElement> elementsRange, @NotNull PsiElement callElement) {

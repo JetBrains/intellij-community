@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +44,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   @NonNls private static final String END_MARKER = "<!-- end marker -->";
@@ -136,38 +136,25 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected boolean dressDescription(@NotNull final Editor editor) {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String ref = getLinkRef(problem);
         if (ref != null) {
           String description = TooltipLinkHandlerEP.getDescription(ref, editor);
           if (description != null) {
-            description = UIUtil.getHtmlBody(description);
-            final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-            if (descriptionEnd < 0) {
-              final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-              final Matcher matcher = pattern.matcher(description);
-              int startFindIdx = 0;
-              while (matcher.find(startFindIdx)) {
-                final int end = matcher.end(1);
-                startFindIdx = end;
-                description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-              }
-            } else {
-              description = description.substring(0, descriptionEnd);
-            }
+            description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description));
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
-                    END_MARKER + "<p>" + description + BORDER_LINE;
+                    END_MARKER + "<p>" + description + UIUtil.BORDER_LINE;
           }
         }
         else {
-          text += UIUtil.getHtmlBody(problem) + BORDER_LINE;
+          text += UIUtil.getHtmlBody(problem) + UIUtil.BORDER_LINE;
         }
       }
       if (!text.isEmpty()) { //otherwise do not change anything
-        myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
+        myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text, UIUtil.BORDER_LINE));
         return true;
       }
       return false;
@@ -189,14 +176,14 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected void stripDescription() {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
-      myText = "<html><body>";
-      for (int i = 0, size = problems.size(); i < size; i++) {
-        final String problem = StringUtil.split(problems.get(i), END_MARKER).get(0);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
+      myText = "";
+      for (String problem1 : problems) {
+        final String problem = StringUtil.split(problem1, END_MARKER).get(0);
         myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
-                                                      DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
+                                                      DaemonBundle.message("inspection.extended.description")) + UIUtil.BORDER_LINE;
       }
-      myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
+      myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(myText, UIUtil.BORDER_LINE));
     }
 
     @Override

@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,9 +36,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 
 /**
- * Represents bytes as content. May has text representaion.
+ * A {@link DiffContent} represented as a byte array. It still contain a text though.
  */
 public class BinaryContent extends DiffContent {
+  @NotNull private final Project myProject;
   @NotNull
   private final FileType myFileType;
   private final byte[] myBytes;
@@ -45,11 +48,12 @@ public class BinaryContent extends DiffContent {
   private String myFilePath;
 
   /**
-   * @param charset use to convert bytes to String. null means bytes can't be converted to text.
-   * Has no sense if fileType.isBinary()
+   * @param charset use to convert bytes to String. null means bytes can't be converted to text. Has no sense if fileType.isBinary()
    * @param fileType type of content
    */
-  public BinaryContent(byte[] bytes, Charset charset, @NotNull FileType fileType) {
+  public BinaryContent(@NotNull Project project, byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType,
+                       @Nullable String filePath) {
+    myProject = project;
     myFileType = fileType;
     myBytes = bytes;
     if (fileType.isBinary()) {
@@ -58,11 +62,21 @@ public class BinaryContent extends DiffContent {
     else {
       myCharset = charset;
     }
+    myFilePath = filePath;
+  }
+
+  /**
+   * @deprecated to remove in IDEA 14. Use {@link #BinaryContent(Project, byte[], Charset, FileType, String)}.
+   */
+  public BinaryContent(byte[] bytes, Charset charset, @NotNull FileType fileType) {
+    this(bytes, charset, fileType, null);
   }
   
+  /**
+   * @deprecated to remove in IDEA 14. Use {@link #BinaryContent(Project, byte[], Charset, FileType, String)}.
+   */
   public BinaryContent(byte[] bytes, Charset charset, @NotNull FileType fileType, String filePath) {
-    this(bytes, charset, fileType);
-    myFilePath = filePath;
+    this(ProjectManager.getInstance().getDefaultProject(), bytes, charset, fileType, filePath);
   }
 
   @Override
@@ -95,19 +109,22 @@ public class BinaryContent extends DiffContent {
     return myDocument;
   }
 
-  /**
-   * @return null
-   */
   @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    return null;
+    VirtualFile file = findVirtualFile();
+    return file == null ? null : new OpenFileDescriptor(myProject, file, offset);
+  }
+
+  @Nullable
+  private VirtualFile findVirtualFile() {
+    return LocalFileSystem.getInstance().findFileByIoFile(new File(myFilePath));
   }
 
   @Override
   @Nullable
   public VirtualFile getFile() {
     if (myFileType instanceof UIBasedFileType) {
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(myFilePath));
+      final VirtualFile file = findVirtualFile();
       if (file != null) {
         final LightVirtualFile lightFile = new LightVirtualFile(file, new String(myBytes), 1);
         lightFile.setOriginalFile(file);

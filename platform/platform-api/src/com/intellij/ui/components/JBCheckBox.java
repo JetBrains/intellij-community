@@ -66,7 +66,7 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
    * @return true in case of success and false otherwise
    */
   public boolean setTextIcon(@NotNull Icon icon) {
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return false;
     }
     ButtonUI ui = getUI();

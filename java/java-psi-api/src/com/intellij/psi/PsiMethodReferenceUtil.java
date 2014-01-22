@@ -21,8 +21,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
-import com.sun.tools.javac.code.Kinds;
-import com.sun.tools.javac.tree.TreeInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

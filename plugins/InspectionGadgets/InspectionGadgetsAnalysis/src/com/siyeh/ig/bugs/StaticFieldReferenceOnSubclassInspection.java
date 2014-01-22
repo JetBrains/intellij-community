@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class StaticFieldReferenceOnSubclassInspection
       assert expression != null;
       final PsiField field = (PsiField)expression.resolve();
       assert field != null;
-      replaceExpressionWithReferenceTo(expression, field);
+      PsiReplacementUtil.replaceExpressionWithReferenceTo(expression, field);
     }
   }
 

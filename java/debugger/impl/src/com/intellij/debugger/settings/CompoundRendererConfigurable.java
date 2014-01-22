@@ -26,6 +26,7 @@ import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -136,7 +137,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         PsiClass psiClass = DebuggerUtils.getInstance()
           .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
-          myClassNameField.setText(JVMNameUtil.getNonAnonymousClassName(psiClass));
+          String qName = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          myClassNameField.setText(qName);
+          updateContext(qName);
         }
       }
     });
@@ -205,6 +208,17 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myListChildrenEditor.setContext(psiClass);
       }
     });
+
+    // Need to recreate fields documents with the new context
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myLabelEditor.setText(myLabelEditor.getText());
+        myChildrenEditor.setText(myChildrenEditor.getText());
+        myChildrenExpandedEditor.setText(myChildrenExpandedEditor.getText());
+        myListChildrenEditor.setText(myListChildrenEditor.getText());
+      }
+    }, ModalityState.any());
   }
 
   private void updateEnabledState() {

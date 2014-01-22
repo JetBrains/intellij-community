@@ -17,8 +17,10 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
@@ -94,46 +96,11 @@ public class SwitchStatementGenerator {
         final boolean isCase = labels.length > 1 || !labels[0].isDefault();
 
         if (isCase) {
-          builder.append("if (");
-          for (GrCaseLabel label : labels) {
-            if (label.isDefault()) {
-              builder.append("true");
-            }
-            else {
-              GenerationUtil.invokeMethodByName(
-                label.getValue(),
-                "isCase",
-                args,
-                GrNamedArgument.EMPTY_ARRAY,
-                GrClosableBlock.EMPTY_ARRAY,
-                new ExpressionGenerator(builder, context),
-                section
-              );
-            }
-            builder.append("||");
-          }
-          builder.delete(builder.length() - 2, builder.length());
-          builder.append(") ");
+          writeCondition(builder, context, section, labels, args);
         }
-        builder.append("{\n");
-        final ExpressionContext extended = context.extend();
-        CodeBlockGenerator generator = new CodeBlockGenerator(builder, extended);
+        writeCaseBody(builder, context, i, caseSections);
 
-        Outer:
-        for (int j = i; j < caseSections.length; j++) {
-          section = caseSections[j];
-          final GrStatement[] statements = section.getStatements();
-          for (GrStatement statement : statements) {
-            if (statement instanceof GrBreakStatement && ((GrBreakStatement)statement).getLabelIdentifier() == null) {
-              break Outer;
-            }
-            statement.accept(generator);
-            builder.append("\n");
-          }
-        }
-
-        builder.append('}');
-        if (isCase && i + 1 < caseSections.length) {
+        if (isCase && i != caseSections.length - 1) {
           builder.append("\nelse ");
           StringBuilder elseBuilder = new StringBuilder();
           final ExpressionContext elseContext = context.extend();
@@ -147,6 +114,64 @@ public class SwitchStatementGenerator {
         }
       }
     });
+  }
+
+  private static void writeCaseBody(@NotNull StringBuilder builder,
+                                    @NotNull ExpressionContext context,
+                                    int i,
+                                    @NotNull GrCaseSection[] caseSections) {
+    builder.append("{\n");
+
+    final ExpressionContext extended = context.extend();
+    CodeBlockGenerator generator = new CodeBlockGenerator(builder, extended);
+
+    Outer:
+    for (int j = i; j < caseSections.length; j++) {
+      GrCaseSection curSection = caseSections[j];
+      final GrStatement[] statements = curSection.getStatements();
+      for (GrStatement statement : statements) {
+        if (statement instanceof GrBreakStatement && ((GrBreakStatement)statement).getLabelIdentifier() == null) {
+          break Outer;
+        }
+        statement.accept(generator);
+        builder.append("\n");
+      }
+      if (brakesFlow(curSection)) break;
+    }
+
+    builder.append('}');
+  }
+
+  private static boolean brakesFlow(GrCaseSection section) {
+    final GrStatement[] statements = section.getStatements();
+    return statements.length > 0 && !ControlFlowUtils.statementMayCompleteNormally(ArrayUtil.getLastElement(statements));
+  }
+
+  private static void writeCondition(StringBuilder builder,
+                                     ExpressionContext context,
+                                     GrCaseSection section,
+                                     GrCaseLabel[] labels,
+                                     GrExpression[] args) {
+    builder.append("if (");
+    for (GrCaseLabel label : labels) {
+      if (label.isDefault()) {
+        builder.append("true");
+      }
+      else {
+        GenerationUtil.invokeMethodByName(
+          label.getValue(),
+          "isCase",
+          args,
+          GrNamedArgument.EMPTY_ARRAY,
+          GrClosableBlock.EMPTY_ARRAY,
+          new ExpressionGenerator(builder, context),
+          section
+        );
+      }
+      builder.append("||");
+    }
+    builder.delete(builder.length() - 2, builder.length());
+    builder.append(") ");
   }
 
   private static String generateConditionVar(@NotNull StringBuilder builder,

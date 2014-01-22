@@ -50,11 +50,13 @@ public class GrTupleType extends GrLiteralClassType {
     return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
   }
 
+  @Override
   @NotNull
   public String getClassName() {
     return StringUtil.getShortName(getJavaClassName());
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     return myParameters;
@@ -67,6 +69,8 @@ public class GrTupleType extends GrLiteralClassType {
     return new PsiType[]{leastUpperBound};
   }
 
+  @Override
+  @NotNull
   public String getInternalCanonicalText() {
     StringBuilder builder = new StringBuilder();
     builder.append("[");
@@ -83,6 +87,7 @@ public class GrTupleType extends GrLiteralClassType {
     return builder.toString();
   }
 
+  @Override
   public boolean isValid() {
     for (PsiType initializer : myComponentTypes) {
       if (initializer != null && !initializer.isValid()) return false;
@@ -90,6 +95,7 @@ public class GrTupleType extends GrLiteralClassType {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrTupleType(myComponentTypes, myFacade, myScope,languageLevel);
@@ -106,6 +112,7 @@ public class GrTupleType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
+  @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrTupleType) {
       PsiType[] otherComponents = ((GrTupleType) type).myComponentTypes;

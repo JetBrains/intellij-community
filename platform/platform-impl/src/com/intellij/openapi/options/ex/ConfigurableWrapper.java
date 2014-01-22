@@ -56,7 +56,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(name), new NullableFunction<ConfigurableEP<T>, T>() {
+    return ContainerUtil.mapNotNull(name.getExtensions(), new NullableFunction<ConfigurableEP<T>, T>() {
       @Override
       public T fun(ConfigurableEP<T> ep) {
         return wrapConfigurable(ep);

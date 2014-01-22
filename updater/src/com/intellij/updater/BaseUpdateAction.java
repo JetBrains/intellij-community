@@ -60,6 +60,7 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, ZipOutputStream patchOutput)
     throws IOException {
+    Runner.logger.info("writing diff");
     ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
     diffOutput.close();

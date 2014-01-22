@@ -71,7 +71,7 @@ public class GithubShareAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
 
   public GithubShareAction() {
-    super("Share project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon);
+    super("Share Project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon);
   }
 
   public void update(AnActionEvent e) {

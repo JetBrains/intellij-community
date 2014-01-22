@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,20 @@
  */
 package com.jetbrains.python.psi;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Resolves absolute paths from FS root, not content roots
@@ -41,7 +41,8 @@ public class RootFileReferenceSet extends FileReferenceSet {
                               int startInElement,
                               PsiReferenceProvider provider,
                               boolean caseSensitive,
-                              boolean endingSlashNotAllowed, @Nullable FileType[] suitableFileTypes) {
+                              boolean endingSlashNotAllowed,
+                              @Nullable FileType[] suitableFileTypes) {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes);
   }
 
@@ -49,6 +50,7 @@ public class RootFileReferenceSet extends FileReferenceSet {
     super(s, element, offset, provider, sensitive);
   }
 
+  @Override
   public boolean isAbsolutePathReference() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       return FileUtil.isAbsolute(getPathString());
@@ -61,26 +63,13 @@ public class RootFileReferenceSet extends FileReferenceSet {
   @NotNull
   @Override
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
-    final PsiFile file = getContainingFile();
-    if (file != null) {
+    PsiFile file = getContainingFile();
+    if (file == null) return ContainerUtil.emptyList();
 
-      if (isAbsolutePathReference()) {
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          VirtualFile root = LocalFileSystem.getInstance().getRoot();
-          PsiDirectory directory = file.getManager().findDirectory(root);
-          if (directory != null) {
-            return Lists.<PsiFileSystemItem>newArrayList(directory);
-          }
-        }
-        else {
-          return super.computeDefaultContexts();
-        }
-      }
-      else {
-        return super.computeDefaultContexts();
-      }
+    if (isAbsolutePathReference() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return toFileSystemItems(ManagingFS.getInstance().getLocalRoots());
     }
 
-    return Collections.emptyList();
+    return super.computeDefaultContexts();
   }
 }

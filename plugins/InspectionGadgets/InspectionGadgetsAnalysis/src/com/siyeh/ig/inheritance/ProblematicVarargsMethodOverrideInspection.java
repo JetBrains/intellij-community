@@ -66,7 +66,7 @@ public class ProblematicVarargsMethodOverrideInspection extends BaseInspection {
       }
       final PsiParameter parameter = parameters[parameters.length - 1];
       final PsiType type = parameter.getType();
-      if (!(type instanceof PsiArrayType)) {
+      if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
         return;
       }
       final PsiMethod[] superMethods = method.findDeepestSuperMethods();

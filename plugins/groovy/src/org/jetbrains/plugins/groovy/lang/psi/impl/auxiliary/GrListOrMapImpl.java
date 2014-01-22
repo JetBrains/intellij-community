@@ -22,9 +22,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
@@ -46,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +66,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitListOrMap(this);
   }
@@ -98,10 +101,12 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     super.deleteChildInternal(child);
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
+  @Override
   public boolean isMap() {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
@@ -116,15 +121,19 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildByType(GroovyTokenTypes.mRBRACK);
   }
 
+  @Override
   @NotNull
   public GrExpression[] getInitializers() {
-    List<GrExpression> result = new ArrayList<GrExpression>();
+    List<GrExpression> result = ContainerUtil.newArrayList();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (ReflectionCache.isInstance(cur, GrExpression.class)) result.add((GrExpression)cur);
+      if (cur instanceof GrExpression) {
+        result.add((GrExpression)cur);
+      }
     }
-    return result.toArray((GrExpression[]) Array.newInstance(GrExpression.class, result.size()));
+    return result.toArray(new GrExpression[result.size()]);
   }
 
+  @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
     List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
@@ -141,13 +150,21 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public PsiReference getReference() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiReference>() {
+      @Nullable
+      @Override
+      public Result<PsiReference> compute() {
+        return Result.create(getReferenceImpl(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  @Nullable
+  private PsiReference getReferenceImpl() {
     final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
     if (conversionType == null) return null;
 
-    PsiType ownType = getType();
-    if (ownType instanceof PsiClassType) {
-      ownType = ((PsiClassType)ownType).rawType();
-    }
+    PsiType ownType = getTypeWithoutGenerics();
     if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, this)) return null;
 
     final PsiClass resolved = conversionType.resolve();
@@ -159,7 +176,19 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return new LiteralConstructorReference(this, conversionType);
   }
 
+  @Nullable
+  private PsiType getTypeWithoutGenerics() {
+    PsiType ownType = getType();
+    if (ownType instanceof PsiClassType) {
+      return ((PsiClassType)ownType).rawType();
+    }
+    else {
+      return ownType;
+    }
+  }
+
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
+    @Override
     @Nullable
     public PsiType fun(GrListOrMapImpl listOrMap) {
       final GlobalSearchScope scope = listOrMap.getResolveScope();
@@ -238,7 +267,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      PsiType[] result = new PsiType[initializers.length];
+      PsiType[] result = PsiType.createArray(initializers.length);
       for (int i = 0; i < result.length; i++) {
         result[i] = initializers[i].getType();
       }

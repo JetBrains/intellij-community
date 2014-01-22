@@ -66,20 +66,22 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (fileNames == null || fileNames.isEmpty()) {
       return;
     }
-    navigate(method, point, fileNames);
+    navigate(point, fileNames, method.getProject());
   }
   
-  public static void navigate(@NotNull PsiMethod method, @NotNull final RelativePoint point, @NotNull List<String> testDataFiles) {
+  public static void navigate(@NotNull final RelativePoint point,
+                              @NotNull List<String> testDataFiles, 
+                              final Project project) {
     if (testDataFiles.size() == 1) {
-      openFileByIndex(method.getProject(), testDataFiles, 0);
+      openFileByIndex(project, testDataFiles, 0);
     }
     else if (testDataFiles.size() > 1) {
       TestDataGroupVirtualFile groupFile = getTestDataGroup(testDataFiles);
       if (groupFile != null) {
-        new OpenFileDescriptor(method.getProject(), groupFile).navigate(true);
+        new OpenFileDescriptor(project, groupFile).navigate(true);
       }
       else {
-        showNavigationPopup(method.getProject(), testDataFiles, point);
+        showNavigationPopup(project, testDataFiles, point);
       }
     }
   }

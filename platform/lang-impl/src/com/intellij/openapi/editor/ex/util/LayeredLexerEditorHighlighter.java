@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @Override
-  public void setText(final CharSequence text) {
+  public void setText(@NotNull final CharSequence text) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     updateLayers();
 
@@ -171,6 +171,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
@@ -468,7 +469,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @Override
-  public void setColorScheme(EditorColorsScheme scheme) {
+  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     super.setColorScheme(scheme);
 
     for (MappedRange mapping : getSegments().myRanges) {

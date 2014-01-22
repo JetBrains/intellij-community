@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
@@ -66,15 +67,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
-  protected static void replaceExpression(@NotNull String newExpression, @NotNull PsiExpression expression){
-    final Project project = expression.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiExpression newCall = factory.createExpressionFromText(newExpression, expression);
-    final PsiElement insertedElement = expression.replace(newCall);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(insertedElement);
-  }
 
   protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression){
     final Project project = expression.getProject();
@@ -132,27 +124,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     final PsiElement insertedElement = expressionToReplace.replace(newCall);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
-  }
-
-  protected static void replaceStatement(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement) {
-    final Project project = statement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
-    final PsiElement insertedElement = statement.replace(newStatement);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(insertedElement);
-  }
-
-  protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement) {
-    final Project project = statement.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
-    final PsiElement insertedElement = statement.replace(newStatement);
-    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final PsiElement shortenedElement = javaCodeStyleManager.shortenClassReferences(insertedElement);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(shortenedElement);
   }
 
   protected static void addStatementBefore(String newStatementText, PsiReturnStatement anchor) {

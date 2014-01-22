@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public abstract class OrderPanel<T> extends JPanel{
+public abstract class OrderPanel<T> extends JPanel {
   private String CHECKBOX_COLUMN_NAME;
 
   private final Class<T> myEntryClass;
@@ -55,25 +56,22 @@ public abstract class OrderPanel<T> extends JPanel{
     myEntryTable.setShowHorizontalLines(false);
     myEntryTable.setShowVerticalLines(false);
     myEntryTable.setIntercellSpacing(new Dimension(0, 0));
-
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          if(getCheckboxColumn() == -1) return;
+          if (getCheckboxColumn() == -1) return;
 
-          final int[] selectedRows = myEntryTable.getSelectedRows();
+          int[] selectedRows = myEntryTable.getSelectedRows();
           boolean currentlyMarked = true;
-          for (int idx = 0; idx < selectedRows.length; idx++) {
-            final int selectedRow = selectedRows[idx];
+          for (int selectedRow : selectedRows) {
             if (selectedRow < 0 || !myEntryTable.isCellEditable(selectedRow, getCheckboxColumn())) {
               return;
             }
             currentlyMarked &= ((Boolean)myEntryTable.getValueAt(selectedRow, getCheckboxColumn())).booleanValue();
           }
-          for (int idx = 0; idx < selectedRows.length; idx++) {
-            myEntryTable.setValueAt(currentlyMarked? Boolean.FALSE : Boolean.TRUE, selectedRows[idx], getCheckboxColumn());
+          for (int selectedRow : selectedRows) {
+            myEntryTable.setValueAt(currentlyMarked ? Boolean.FALSE : Boolean.TRUE, selectedRow, getCheckboxColumn());
           }
         }
       },
@@ -84,7 +82,7 @@ public abstract class OrderPanel<T> extends JPanel{
     add(ScrollPaneFactory.createScrollPane(myEntryTable), BorderLayout.CENTER);
 
     if (myEntryTable.getRowCount() > 0) {
-      myEntryTable.getSelectionModel().setSelectionInterval(0,0);
+      myEntryTable.getSelectionModel().setSelectionInterval(0, 0);
     }
   }
 
@@ -93,22 +91,20 @@ public abstract class OrderPanel<T> extends JPanel{
   }
 
   public void setCheckboxColumnName(final String name) {
-    final int width;
+    TableColumn checkboxColumn = myEntryTable.getColumnModel().getColumn(getCheckboxColumn());
     if (StringUtil.isEmpty(name)) {
       CHECKBOX_COLUMN_NAME = "";
-      width = new JCheckBox().getPreferredSize().width;
+      TableUtil.setupCheckboxColumn(checkboxColumn);
     }
     else {
       CHECKBOX_COLUMN_NAME = name;
       final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-      width = fontMetrics.stringWidth(" " + name + " ") + 4;
+      final int width = fontMetrics.stringWidth(" " + name + " ") + 4;
+      checkboxColumn.setWidth(width);
+      checkboxColumn.setPreferredWidth(width);
+      checkboxColumn.setMaxWidth(width);
+      checkboxColumn.setMinWidth(width);
     }
-
-    final TableColumn checkboxColumn = myEntryTable.getColumnModel().getColumn(getCheckboxColumn());
-    checkboxColumn.setWidth(width);
-    checkboxColumn.setPreferredWidth(width);
-    checkboxColumn.setMaxWidth(width);
-    checkboxColumn.setMinWidth(width);
   }
 
   public void moveSelectedItemsUp() {
@@ -158,26 +154,26 @@ public abstract class OrderPanel<T> extends JPanel{
   }
 
   public void clear() {
-    MyTableModel model = ((MyTableModel)myEntryTable.getModel());
-    while(model.getRowCount() > 0){
+    MyTableModel model = getModel();
+    while (model.getRowCount() > 0) {
       model.removeRow(0);
     }
   }
 
   public void remove(T orderEntry) {
-    MyTableModel model = ((MyTableModel)myEntryTable.getModel());
+    MyTableModel model = getModel();
     int rowCount = model.getRowCount();
     for (int i = 0; i < rowCount; i++) {
-        if(getValueAt(i) == orderEntry) {
-          model.removeRow(i);
-          return;
-        }
+      if (getValueAt(i) == orderEntry) {
+        model.removeRow(i);
+        return;
+      }
     }
   }
 
   public void add(T orderEntry) {
-    MyTableModel model = ((MyTableModel)myEntryTable.getModel());
-    if(getCheckboxColumn() == -1) {
+    MyTableModel model = getModel();
+    if (getCheckboxColumn() == -1) {
       model.addRow(new Object[]{orderEntry});
     }
     else {
@@ -185,12 +181,23 @@ public abstract class OrderPanel<T> extends JPanel{
     }
   }
 
+  public void addAll(Collection<T> orderEntries) {
+    for (T orderEntry : orderEntries) {
+      add(orderEntry);
+    }
+  }
+
   protected int getEntryColumn() {
-    return ((MyTableModel)myEntryTable.getModel()).getEntryColumn();
+    return getModel().getEntryColumn();
   }
 
   private int getCheckboxColumn() {
-    return ((MyTableModel)myEntryTable.getModel()).getCheckboxColumn();
+    return getModel().getCheckboxColumn();
+  }
+
+  private MyTableModel getModel() {
+    @SuppressWarnings("unchecked") MyTableModel model = (MyTableModel)myEntryTable.getModel();
+    return model;
   }
 
   private class MyTableModel extends DefaultTableModel {
@@ -248,13 +255,15 @@ public abstract class OrderPanel<T> extends JPanel{
   }
 
   public T getValueAt(int row) {
-    //noinspection unchecked
-    return (T)myEntryTable.getModel().getValueAt(row, getEntryColumn());
+    @SuppressWarnings("unchecked") T t = (T)myEntryTable.getModel().getValueAt(row, getEntryColumn());
+    return t;
   }
 
   public abstract boolean isCheckable(T entry);
-  public abstract boolean isChecked  (T entry);
-  public abstract void    setChecked (T entry, boolean checked);
+
+  public abstract boolean isChecked(T entry);
+
+  public abstract void setChecked(T entry, boolean checked);
 
   public String getCheckboxColumnName() {
     if (CHECKBOX_COLUMN_NAME == null) {

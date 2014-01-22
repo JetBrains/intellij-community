@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -120,7 +121,7 @@ public class GitMultiRootBranchConfig {
         trackingBranches = tb;
       }
       else {
-        trackingBranches.retainAll(tb);
+        trackingBranches = ContainerUtil.intersection(trackingBranches, tb);
       }
     }
     return trackingBranches == null ? Collections.<String>emptyList() : trackingBranches;

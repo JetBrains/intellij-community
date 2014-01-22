@@ -12,6 +12,9 @@
   <item name="javax.swing.tree.TreePath TreePath(javax.swing.tree.TreePath, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='javax.swing.tree.TreePath java.lang.Object[] getPath()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="javax.swing.tree.TreePath javax.swing.tree.TreePath pathByAddingChild(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

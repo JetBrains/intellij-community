@@ -37,12 +37,15 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
                                            boolean declareFinal,
                                            TIntArrayList toRemove,
                                            boolean generateDelegate,
-                                           @MagicConstant(intValues = {REPLACE_FIELDS_WITH_GETTERS_ALL, REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, REPLACE_FIELDS_WITH_GETTERS_NONE}) int replaceFieldsWithGetters,
+                                           @MagicConstant(
+                                             intValues = {REPLACE_FIELDS_WITH_GETTERS_ALL, REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
+                                               REPLACE_FIELDS_WITH_GETTERS_NONE}) int replaceFieldsWithGetters,
                                            GrExpression expr,
                                            GrVariable var,
                                            PsiType selectedType,
+                                           boolean replaceAllOccurrences,
                                            boolean forceReturn) {
-    super(info, name, declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, forceReturn, false);
+    super(info, name, declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, forceReturn, replaceAllOccurrences, false);
     myExpr = expr;
     myVar = var;
     mySelectedType = selectedType;

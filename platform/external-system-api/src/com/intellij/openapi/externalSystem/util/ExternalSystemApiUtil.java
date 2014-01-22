@@ -318,6 +318,24 @@ public class ExternalSystemApiUtil {
   }
 
   @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    return findParent(node, key, null);
+  }
+
+
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
+                                           @NotNull Key<T> key,
+                                           @Nullable BooleanFunction<DataNode<T>> predicate) {
+    DataNode<?> parent = node.getParent();
+    if (parent == null) return null;
+    return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
+           ? (DataNode<T>)parent : findParent(parent, key, predicate);
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     Collection<DataNode<T>> result = null;

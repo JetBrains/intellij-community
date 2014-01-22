@@ -19,6 +19,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="xml-psi-impl" exported="" />
     <orderEntry type="module" module-name="xml-analysis-impl" exported="" />
+    <orderEntry type="library" name="swingx" level="project" />
   </component>
   <component name="copyright">
     <Base>

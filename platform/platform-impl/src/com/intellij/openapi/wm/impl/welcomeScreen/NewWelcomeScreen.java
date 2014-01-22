@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
@@ -93,7 +93,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        CheckForUpdateAction.actionPerformed(null, true, null, UpdateSettings.getInstance());
+        UpdateChecker.updateAndShowResult(null, false, null, UpdateSettings.getInstance());
       }
     })));
     footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
@@ -108,7 +108,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
     JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()), 
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));

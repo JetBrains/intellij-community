@@ -1,6 +1,8 @@
 # #####################################################################
 ##	RELAX NG Schema for HTML 5: Accessible Rich Internet Applications #
 # #####################################################################
+#
+# history: http://hsivonen.iki.fi/aria-html5-bis/
 
 # #####################################################################
 ## ARIA
@@ -24,68 +26,128 @@ aria.global =
 	&	aria.prop.live?
 	&	aria.prop.owns?
 	&	aria.prop.relevant?
-	&	aria.prop.required?
 	)
 
 common.attrs.other &= aria.global?
 
 ## States and Properties for Native Roles
 
-# common.attrs.aria.implicit.button |=
-#	(	aria.prop.controls?
-#	)
-
-# common.attrs.aria.implicit.input |=
-#	(	aria.prop.controls?
-#	&	aria.state.invalid?
-#	&	aria.prop.required?
-#	)
-
-common.attrs.aria.implicit.region |=
+common.attrs.aria.implicit.button |=
 	(	aria.state.expanded?
-#	&	aria.prop.level?
+	&	aria.state.pressed?
 	)
+
+common.attrs.aria.implicit.checkbox |=
+	(	aria.state.checked? )
+
+common.attrs.aria.implicit.combobox |=
+	(	aria.state.expanded?
+	&	aria.prop.autocomplete?
+	&	aria.prop.required?
+	&	aria.prop.activedescendant?
+	)
+
+common.attrs.aria.implicit.dialog |=
+	(	aria.state.expanded? )
+
+common.attrs.aria.implicit.document |=
+	(	aria.state.expanded? )
 
 common.attrs.aria.implicit.group |=
 	(	aria.state.expanded?
 	&	aria.prop.activedescendant?
 	)
 
-common.attrs.aria.implicit.th |=
-	(	aria.prop.sort?
+common.attrs.aria.implicit.heading |=
+	(	aria.state.expanded?
 	&	aria.prop.level?
+	)
+
+common.attrs.aria.implicit.img |=
+	(	aria.state.expanded? )
+
+common.attrs.aria.implicit.link |=
+	(	aria.state.expanded? )
+
+common.attrs.aria.implicit.listbox |=
+	(	aria.prop.multiselectable?
+	&	aria.prop.required?
+	&	aria.prop.activedescendant?
 	&	aria.state.expanded?
-	&	aria.prop.readonly?
+	)
+
+common.attrs.aria.implicit.listitem |=
+	(	aria.prop.level?
+	&	aria.prop.posinset?
+	&	aria.prop.setsize?
+	&	aria.state.expanded?
+	)
+
+common.attrs.aria.implicit.option |=
+	(	aria.prop.posinset?
+	&	aria.prop.setsize?
+	&	aria.state.checked?
 	&	aria.state.selected?
 	)
 
-# common.attrs.aria.implicit.structure |=
-#	(	aria.prop.atomic?
-#	&	aria.state.busy?
-#	&	aria.prop.channel?
-#	&	aria.prop.live?
-#	&	aria.prop.relevant?
-#	)
-
-# common.attrs.aria.implicit.link |=
-#		(	aria.prop.controls?
-#	&	aria.state.disabled?
-#	)
-
-common.attrs.aria.implicit.listitem |=
-		(	aria.prop.posinset?
-	&	aria.prop.setsize?
-#	&	aria.prop.atomic?
+common.attrs.aria.implicit.progressbar |=
+	(	aria.prop.valuemax?
+	&	aria.prop.valuemin?
+	&	aria.prop.valuenow?
+	&	aria.prop.valuetext?
 	)
 
-# common.attrs.aria.implicit.img |=
-#		(	aria.prop.atomic?
-#	&	aria.state.busy?
-#	&	aria.prop.channel?
-#	&	aria.prop.controls?
-#	&	aria.prop.live?
-#	&	aria.prop.relevant?
-#	)
+common.attrs.aria.implicit.radio |=
+	(	aria.prop.posinset?
+	&	aria.prop.setsize?
+	&	aria.state.checked?
+	&	aria.state.selected?
+	)
+
+common.attrs.aria.implicit.slider |=
+	(	aria.prop.valuemax?
+	&	aria.prop.valuemin?
+	&	aria.prop.valuenow?
+	&	aria.prop.valuetext?
+	&	aria.prop.orientation?
+	)
+
+common.attrs.aria.implicit.spinbutton |=
+	(	aria.prop.valuemax?
+	&	aria.prop.valuemin?
+	&	aria.prop.valuenow?
+	&	aria.prop.valuetext?
+	&	aria.prop.required?
+	)
+
+common.attrs.aria.implicit.textbox |=
+	(	aria.prop.activedescendant?
+	&	aria.prop.autocomplete?
+	&	aria.prop.multiline?
+	&	aria.prop.readonly?
+	&	aria.prop.required?
+	)
+
+common.attrs.aria.implicit.toolbar |=
+	(	aria.state.expanded?
+	&	aria.prop.activedescendant?
+	)
+
+common.attrs.aria.implicit.columnheader |=
+	(	aria.prop.sort?
+	&	aria.prop.readonly?
+	&	aria.prop.required?
+	&	aria.state.selected?
+	&	aria.state.expanded?
+	)
+
+common.attrs.aria.implicit.rowheader |=
+	(	aria.prop.sort?
+	&	aria.prop.readonly?
+	&	aria.prop.required?
+	&	aria.state.selected?
+	&	aria.state.expanded?
+	)
 
 #common.attrs.aria.implicit.select |=
 #		(	aria.state.invalid?
@@ -97,6 +159,39 @@ common.attrs.aria.implicit.listitem |=
 #	&	aria.prop.live?
 #	&	aria.prop.relevant?
 #	)
+
+# section
+#   |
+#   |_ region
+#        |
+#        |_ article
+#        |
+#        |_ landmark
+#        |     |_ banner
+#        |     |_ complementary
+#        |     |_ contentinfo
+#        |     |_ main
+#        |     |_ navigation
+#        |
+#        |_ list
+#        |
+#        |_ status
+
+common.attrs.aria.implicit.section |=
+	( aria.state.expanded? )
+
+common.attrs.aria.implicit.region |= common.attrs.aria.implicit.section
+
+common.attrs.aria.implicit.article |= common.attrs.aria.implicit.region
+common.attrs.aria.implicit.landmark |= common.attrs.aria.implicit.region
+common.attrs.aria.implicit.list |= common.attrs.aria.implicit.region
+common.attrs.aria.implicit.status |= common.attrs.aria.implicit.region
+
+common.attrs.aria.implicit.banner |= common.attrs.aria.implicit.landmark
+common.attrs.aria.implicit.complementary |= common.attrs.aria.implicit.landmark
+common.attrs.aria.implicit.contentinfo |= common.attrs.aria.implicit.landmark
+common.attrs.aria.implicit.main |= common.attrs.aria.implicit.landmark
+common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 
 # #####################################################################
 ## States
@@ -139,7 +234,7 @@ common.attrs.aria.implicit.listitem |=
 				,	( string "execute" )?
 				}
 			|	list 
-				{	( string "reference" )
+				{	( string "link" )
 				,	( string "execute" )?
 				}
 			|	list 
@@ -152,7 +247,7 @@ common.attrs.aria.implicit.listitem |=
 				}
 			|	list 
 				{	( string "execute" )
-				,	( string "reference" )
+				,	( string "link" )
 				}
 			}
 
@@ -296,6 +391,13 @@ common.attrs.aria.implicit.listitem |=
 			{	string "true"
 			|	string "false" #default
 			}	
+
+## orientation
+	aria.prop.orientation =
+		attribute aria-orientation
+			{	string "vertical"
+			|	string "horizontal" #default
+			}
 
 ## owns
 	aria.prop.owns =
@@ -460,6 +562,7 @@ common.attrs.aria.implicit.listitem |=
 ## button
 	aria.button =
 		(	aria.role.button
+		&	aria.state.expanded?
 		&	aria.state.pressed? # not inherited
 		)
 		aria.role.button = 
@@ -477,6 +580,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "checkbox" }
 	
 	common.attrs.aria |= aria.checkbox
+	common.attrs.aria.role.checkbox |= aria.checkbox
 
 # columnheader
 	aria.columnheader =
@@ -485,6 +589,7 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.readonly? # not inherited
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
+		&	aria.prop.required?
 		)
 		aria.role.columnheader = 
 			attribute role { string "columnheader" }
@@ -496,6 +601,8 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.combobox
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded #required!
+		&	aria.prop.autocomplete?
+		&	aria.prop.required?
 		)
 		aria.role.combobox = 
 			attribute role { string "combobox" }
@@ -600,6 +707,7 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.readonly? # not inherited
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
+		&	aria.prop.required?
 		)
 		aria.role.gridcell = 
 			attribute role { string "gridcell" }
@@ -616,6 +724,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "group" }
 	
 	common.attrs.aria |= aria.group
+	common.attrs.aria.role.group |= aria.group
 
 ## heading
 	aria.heading =
@@ -643,6 +752,7 @@ common.attrs.aria.implicit.listitem |=
 ## link
 	aria.link =
 		(	aria.role.link
+		&	aria.state.expanded?
 		)
 		aria.role.link = 
 			attribute role { string "link" }
@@ -665,6 +775,7 @@ common.attrs.aria.implicit.listitem |=
 	aria.listbox =
 		(	aria.role.listbox
 		&	aria.prop.multiselectable? # not inherited
+		&	aria.prop.required?
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
 		)
@@ -781,6 +892,8 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.menuitemradio
 		&	aria.state.checked #required
 		&	aria.state.selected?
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
 		)
 		aria.role.menuitemradio = 
 			attribute role { string "menuitemradio" }
@@ -815,6 +928,8 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.option
 		&	aria.state.checked? # not inherited
 		&	aria.state.selected? # not inherited
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
 		)
 		aria.role.option = 
 			attribute role { string "option" }
@@ -853,6 +968,8 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.radio
 		&	aria.state.checked #required!
 		&	aria.state.selected?
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
 		)
 		aria.role.radio = 
 			attribute role { string "radio" }
@@ -865,6 +982,7 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.radiogroup
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.required?
 		)
 		aria.role.radiogroup = 
 			attribute role { string "radiogroup" }
@@ -895,6 +1013,17 @@ common.attrs.aria.implicit.listitem |=
 	
 	common.attrs.aria |= aria.row
 
+## rowgroup
+	aria.rowgroup =
+		(	aria.role.rowgroup
+		&	aria.prop.activedescendant?
+		&	aria.state.expanded?
+		)
+		aria.role.rowgroup =
+			attribute role { string "rowgroup" }
+
+	common.attrs.aria |= aria.rowgroup
+
 # rowheader
 	aria.rowheader =
 		(	aria.role.rowheader
@@ -902,11 +1031,26 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.readonly? # not inherited
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
+		&	aria.prop.required?
 		)
 		aria.role.rowheader = 
 			attribute role { string "rowheader" }
 	
 	common.attrs.aria |= aria.rowheader
+
+## scrollbar
+	aria.scrollbar =
+		(	aria.role.scrollbar
+		&	aria.prop.orientation
+		&	aria.prop.valuemax
+		&	aria.prop.valuemin
+		&	aria.prop.valuenow
+		&	aria.prop.valuetext?
+		)
+		aria.role.scrollbar =
+			attribute role { string "scrollbar" }
+
+	common.attrs.aria |= aria.scrollbar
 
 ## search
 	aria.search =
@@ -923,6 +1067,7 @@ common.attrs.aria.implicit.listitem |=
 	aria.separator =
 		(	aria.role.separator
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.separator = 
 			attribute role { string "separator" }
@@ -936,7 +1081,8 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.valuemax
 		&	aria.prop.valuemin
 		&	aria.prop.valuenow
-		&	aria.prop.valuetext
+		&	aria.prop.valuetext?
+		&	aria.prop.orientation?
 		)
 		aria.role.slider = 
 			attribute role { string "slider" }
@@ -947,11 +1093,11 @@ common.attrs.aria.implicit.listitem |=
 ## spinbutton
 	aria.spinbutton =
 		(	aria.role.spinbutton
-		&	aria.prop.activedescendant?
 		&	aria.prop.valuemax
 		&	aria.prop.valuemin
 		&	aria.prop.valuenow
-		&	aria.prop.valuetext
+		&	aria.prop.valuetext?
+		&	aria.prop.required?
 		)
 		aria.role.spinbutton = 
 			attribute role { string "spinbutton" }
@@ -962,7 +1108,6 @@ common.attrs.aria.implicit.listitem |=
 ## status
 	aria.status =
 		(	aria.role.status
-		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
 		)
 		aria.role.status = 
@@ -988,6 +1133,8 @@ common.attrs.aria.implicit.listitem |=
 		(	aria.role.tablist
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.level?
+		&	aria.prop.multiselectable?
 		)
 		aria.role.tablist = 
 			attribute role { string "tablist" }
@@ -1008,9 +1155,11 @@ common.attrs.aria.implicit.listitem |=
 ## textbox
 	aria.textbox =
 		(	aria.role.textbox
+		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete? # not inherited
 		&	aria.prop.multiline? # not inherited
 		&	aria.prop.readonly? # not inherited
+		&	aria.prop.required?
 		)
 		aria.role.textbox = 
 			attribute role { string "textbox" }
@@ -1057,6 +1206,7 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.multiselectable? # not inherited
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.required?
 		)
 		aria.role.tree = 
 			attribute role { string "tree" }
@@ -1072,6 +1222,7 @@ common.attrs.aria.implicit.listitem |=
 		&	aria.prop.level?
 		&	aria.prop.multiselectable?
 		&	aria.prop.readonly?
+		&	aria.prop.required?
 		)
 		aria.role.treegrid = 
 			attribute role { string "treegrid" }

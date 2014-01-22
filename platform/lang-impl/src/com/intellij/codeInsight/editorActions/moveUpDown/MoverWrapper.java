@@ -45,6 +45,7 @@ class MoverWrapper {
   }
 
   public final void move(Editor editor, final PsiFile file) {
+    assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
     final int start = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.startLine);

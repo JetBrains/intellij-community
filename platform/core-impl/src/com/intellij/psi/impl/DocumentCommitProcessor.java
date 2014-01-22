@@ -76,7 +76,7 @@ public abstract class DocumentCommitProcessor {
     @Override
     public String toString() {
       return "Project: " + project.getName()
-             + ", Doc: "+ document +" ("+  StringUtil.first(document.getText(), 12, true).replaceAll("\n"," ")+")"
+             + ", Doc: "+ document +" ("+  StringUtil.first(document.getImmutableCharSequence(), 12, true).toString().replaceAll("\n", " ")+")"
              +(indicator.isCanceled() ? " (Canceled)" : "") + (removed ? "Removed" : "");
     }
 
@@ -103,10 +103,9 @@ public abstract class DocumentCommitProcessor {
                                       @NotNull final PsiFile file,
                                       final boolean synchronously) {
     Document document = task.document;
-    if (PsiDocumentManager.getInstance(task.project).isCommitted(document)) return null;
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
-    final CharSequence chars = document.getCharsSequence();
+    final CharSequence chars = document.getImmutableCharSequence();
     final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) {
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
@@ -115,7 +114,7 @@ public abstract class DocumentCommitProcessor {
     final String oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getText();
     int commonPrefixLength = StringUtil.commonPrefixLength(oldPsiText, chars);
     final TextRange changedPsiRange;
-    if (commonPrefixLength == chars.length()) {
+    if (commonPrefixLength == chars.length() && chars.length() == oldPsiText.length()) {
       changedPsiRange = getChangedPsiRange(file, 0, 0, chars.length());
     } else {
       int commonSuffixLength = StringUtil.commonSuffixLength(oldPsiText, chars);
@@ -130,7 +129,8 @@ public abstract class DocumentCommitProcessor {
       public boolean process(Document document) {
         ApplicationManager.getApplication().assertWriteAccessAllowed();
         log("Finishing", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
-        if (document.getModificationStamp() != startDocModificationTimeStamp) {
+        if (document.getModificationStamp() != startDocModificationTimeStamp ||
+            ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != file.getViewProvider()) {
           return false; // optimistic locking failed
         }
 
@@ -228,7 +228,7 @@ public abstract class DocumentCommitProcessor {
     }
   }
 
-  public void log(@NonNls String msg, CommitTask task, boolean synchronously, @NonNls Object... args) {
+  public void log(@NonNls String msg, @Nullable CommitTask task, boolean synchronously, @NonNls Object... args) {
   }
 
   @NotNull

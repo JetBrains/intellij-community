@@ -45,7 +45,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -77,25 +76,9 @@ public class GradleExecutionHelper {
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
                                         @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions) {
+                                        @NotNull final List<String> vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
-    prepare(result, id, settings, listener, extraJvmArgs, connection);
-    return result;
-  }
-
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  @NotNull
-  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
-                                        @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions,
-                                        @NotNull final OutputStream standardOutput,
-                                        @NotNull final OutputStream standardError) {
-    BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
-    prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
+    prepare(result, id, settings, listener, vmOptions, connection);
     return result;
   }
 
@@ -199,7 +182,7 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(e));
     }
     finally {
       try {
@@ -226,9 +209,10 @@ public class GradleExecutionHelper {
         GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
       return;
     }
+
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, null);
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList());
       try {
         final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
         tempFile.deleteOnExit();
@@ -251,11 +235,11 @@ public class GradleExecutionHelper {
         settings.setWrapperPropertyFile(wrapperPropertyFile);
       }
       catch (IOException e) {
-        throw new ExternalSystemException(e);
+        LOG.warn("Can't update wrapper", e);
       }
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(e);
+      LOG.warn("Can't update wrapper", e);
     }
     finally {
       try {
@@ -371,22 +355,46 @@ public class GradleExecutionHelper {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static void setInitScript(LongRunningOperation longRunningOperation) {
+  public static boolean setInitScript(@NotNull LongRunningOperation longRunningOperation, boolean isBuildSrcProject) {
     try {
       InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
-      if (stream == null) return;
+      if (stream == null) return isBuildSrcProject;
 
       String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(GradleProjectResolver.class));
       String s = FileUtil.loadTextAndClose(stream).replace("${JAR_PATH}", jarPath);
+
+      if(isBuildSrcProject) {
+        String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
+        if(buildSrcDefaultInitScript == null) return false;
+        s += buildSrcDefaultInitScript;
+      }
 
       final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
       FileUtil.writeToFile(tempFile, s);
 
       String[] buildExecutorArgs = new String[]{"--init-script", tempFile.getAbsolutePath()};
       longRunningOperation.withArguments(buildExecutorArgs);
+
+      return true;
     }
     catch (Exception e) {
       LOG.warn("Can't use IJ gradle init script", e);
+      return false;
+    }
+  }
+
+  @Nullable
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static String getBuildSrcDefaultInitScript() {
+    try {
+      InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/buildSrcInit.gradle");
+      if (stream == null) return null;
+
+      return FileUtil.loadTextAndClose(stream);
+    }
+    catch (Exception e) {
+      LOG.warn("Can't use IJ gradle init script", e);
+      return null;
     }
   }
 

@@ -40,6 +40,7 @@ public class GrClassReferenceType extends PsiClassType {
     myReferenceElement = referenceElement;
   }
 
+  @Override
   @Nullable
   public PsiClass resolve() {
     ResolveResult[] results = multiResolve();
@@ -56,6 +57,7 @@ public class GrClassReferenceType extends PsiClassType {
     return myReferenceElement.multiResolve(false);
   }
 
+  @Override
   @Nullable
   public String getClassName() {
     final PsiClass resolved = resolve();
@@ -63,47 +65,58 @@ public class GrClassReferenceType extends PsiClassType {
     return myReferenceElement.getReferenceName();
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     return myReferenceElement.getTypeArguments();
   }
 
+  @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
     final GroovyResolveResult resolveResult = myReferenceElement.advancedResolve();
     return new ClassResolveResult() {
+      @Override
       public PsiClass getElement() {
         final PsiElement resolved = resolveResult.getElement();
         return resolved instanceof PsiClass ? (PsiClass)resolved : null;
       }
 
+      @Override
+      @NotNull
       public PsiSubstitutor getSubstitutor() {
         return resolveResult.getSubstitutor();
       }
 
+      @Override
       public boolean isPackagePrefixPackageReference() {
         return false;
       }
 
+      @Override
       public boolean isAccessible() {
         return resolveResult.isAccessible();
       }
 
+      @Override
       public boolean isStaticsScopeCorrect() {
         return resolveResult.isStaticsOK();
       }
 
+      @Override
       @Nullable
       public PsiElement getCurrentFileResolveScope() {
         return resolveResult.getCurrentFileResolveContext();
       }
 
+      @Override
       public boolean isValidResult() {
         return isStaticsScopeCorrect() && isAccessible();
       }
     };
   }
 
+  @Override
   @NotNull
   public PsiClassType rawType() {
     final PsiClass clazz = resolve();
@@ -115,38 +128,48 @@ public class GrClassReferenceType extends PsiClassType {
     return this;
   }
 
+  @NotNull
+  @Override
   public String getPresentableText() {
     return PsiNameHelper.getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myReferenceElement.getCanonicalText();
   }
 
+  @NotNull
+  @Override
   public String getInternalCanonicalText() {
     return getCanonicalText();
   }
 
+  @Override
   public boolean isValid() {
     return myReferenceElement.isValid();
   }
 
-  public boolean equalsToText(@NonNls String text) {
+  @Override
+  public boolean equalsToText(@NotNull @NonNls String text) {
     return text.endsWith(getPresentableText()) && //optimization
         text.equals(getCanonicalText());
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return myReferenceElement.getResolveScope();
   }
 
+  @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
+  @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrClassReferenceType(myReferenceElement,languageLevel);

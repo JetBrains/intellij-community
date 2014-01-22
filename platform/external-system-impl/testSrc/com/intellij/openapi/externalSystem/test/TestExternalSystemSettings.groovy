@@ -34,17 +34,17 @@ TestExternalSystemSettingsListener>
   }
 
   @Override
-  void subscribe(@NotNull @NotNull ExternalSystemSettingsListener<TestExternalProjectSettings> listener) {
+  void subscribe(@NotNull ExternalSystemSettingsListener<TestExternalProjectSettings> listener) {
     throw new UnsupportedOperationException()
   }
 
   @Override
-  protected void copyExtraSettingsFrom(@NotNull @NotNull TestExternalSystemSettings settings) {
+  protected void copyExtraSettingsFrom(@NotNull TestExternalSystemSettings settings) {
     throw new UnsupportedOperationException() 
   }
 
   @Override
-  protected void checkSettings(@NotNull @NotNull TestExternalProjectSettings old, @NotNull @NotNull TestExternalProjectSettings current) {
+  protected void checkSettings(@NotNull TestExternalProjectSettings old, @NotNull TestExternalProjectSettings current) {
     throw new UnsupportedOperationException() 
   }
 }

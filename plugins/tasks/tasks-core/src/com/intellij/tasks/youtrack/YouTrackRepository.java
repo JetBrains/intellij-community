@@ -307,7 +307,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
 
   @Override
-  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     checkVersion();
     final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
     if (method.getStatusCode() != 200) {

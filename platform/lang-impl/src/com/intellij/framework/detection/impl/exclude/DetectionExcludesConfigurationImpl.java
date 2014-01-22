@@ -54,6 +54,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   private Set<String> myExcludedFrameworks;
   private final Project myProject;
   private VirtualFilePointerManager myPointerManager;
+  private boolean myDetectionEnabled = true;
   private boolean myConverted;
 
   public DetectionExcludesConfigurationImpl(Project project, VirtualFilePointerManager pointerManager) {
@@ -143,7 +144,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   @Override
   public boolean isExcludedFromDetection(@NotNull FrameworkType frameworkType) {
     ensureOldSettingsLoaded();
-    return myExcludedFrameworks.contains(frameworkType.getId());
+    return !myDetectionEnabled || myExcludedFrameworks.contains(frameworkType.getId());
   }
 
   private boolean isFileExcluded(@NotNull VirtualFile file, @Nullable String typeId) {
@@ -170,7 +171,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
   public void removeExcluded(@NotNull Collection<VirtualFile> files, final FrameworkType frameworkType) {
     ensureOldSettingsLoaded();
-    if (myExcludedFrameworks.contains(frameworkType.getId())) {
+    if (!myDetectionEnabled || myExcludedFrameworks.contains(frameworkType.getId())) {
       files.clear();
       return;
     }
@@ -187,11 +188,12 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   @Nullable
   public ExcludesConfigurationState getActualState() {
     ensureOldSettingsLoaded();
-    if (myExcludedFiles.isEmpty() && myExcludedFrameworks.isEmpty()) {
+    if (myExcludedFiles.isEmpty() && myExcludedFrameworks.isEmpty() && myDetectionEnabled) {
       return null;
     }
 
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
+    state.setDetectionEnabled(myDetectionEnabled);
     state.getFrameworkTypes().addAll(myExcludedFrameworks);
     Collections.sort(state.getFrameworkTypes(), String.CASE_INSENSITIVE_ORDER);
 
@@ -219,7 +221,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   @Override
   public void loadState(@Nullable ExcludesConfigurationState state) {
     doLoadState(state);
-    if (!myExcludedFiles.isEmpty() || !myExcludedFrameworks.isEmpty()) {
+    if (!myExcludedFiles.isEmpty() || !myExcludedFrameworks.isEmpty() || !myDetectionEnabled) {
       markAsConverted();
     }
   }
@@ -229,6 +231,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     for (VirtualFilePointerContainer container : myExcludedFiles.values()) {
       container.clear();
     }
+    myDetectionEnabled = state == null || state.isDetectionEnabled();
     if (state != null) {
       myExcludedFrameworks.addAll(state.getFrameworkTypes());
       for (ExcludedFileState fileState : state.getFiles()) {

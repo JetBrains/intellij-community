@@ -26,6 +26,7 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 
@@ -50,7 +51,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
           return collection == null? NULL_COLLECTION : collection;
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new BuildDataCorruptedException(e);
         }
       }
     };
@@ -62,7 +63,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       return myMap.containsMapping(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -84,7 +85,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -116,7 +117,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -131,7 +132,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -153,7 +154,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -174,7 +175,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -185,7 +186,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myMap.remove(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -218,7 +219,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myMap.close();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -243,13 +244,13 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
             return procedure.execute(key, myMap.get(key));
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

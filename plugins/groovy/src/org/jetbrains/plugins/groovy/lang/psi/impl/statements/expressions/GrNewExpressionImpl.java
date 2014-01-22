@@ -17,9 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -85,6 +88,16 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       return null;
     }
   };
+
+  private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
+    @NotNull
+    @Override
+    public GroovyResolveResult[] resolve(@NotNull MyFakeReference reference, boolean incompleteCode) {
+      return reference.getElement().resolveImpl(incompleteCode);
+    }
+  };
+
+  private final MyFakeReference myFakeReference = new MyFakeReference();
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -208,6 +221,14 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    if (getArrayCount() > 0 || getReferenceElement() == null) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    return TypeInferenceHelper.getCurrentContext().multiResolve(myFakeReference, incompleteCode, RESOLVER);
+  }
+
+  private GroovyResolveResult[] resolveImpl(boolean incompleteCode) {
     GrCodeReferenceElement ref = getReferenceElement();
     if (ref == null) return GroovyResolveResult.EMPTY_ARRAY;
 
@@ -258,5 +279,61 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       }
     }
     return null;
+  }
+
+  private class MyFakeReference implements PsiPolyVariantReference {
+    @NotNull
+    @Override
+    public ResolveResult[] multiResolve(boolean incompleteCode) {
+      return GrNewExpressionImpl.this.multiResolve(incompleteCode);
+    }
+
+    @Override
+    public GrNewExpressionImpl getElement() {
+      return GrNewExpressionImpl.this;
+    }
+
+    @Override
+    public TextRange getRangeInElement() {
+      return TextRange.EMPTY_RANGE;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement resolve() {
+      return resolveMethod();
+    }
+
+    @NotNull
+    @Override
+    public String getCanonicalText() {
+      return "new expression";
+    }
+
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      throw new UnsupportedOperationException("unsupported!");
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      throw new UnsupportedOperationException("unsupported!");
+    }
+
+    @Override
+    public boolean isReferenceTo(PsiElement element) {
+      return getManager().areElementsEquivalent(element, resolve());
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Override
+    public boolean isSoft() {
+      return false;
+    }
   }
 }

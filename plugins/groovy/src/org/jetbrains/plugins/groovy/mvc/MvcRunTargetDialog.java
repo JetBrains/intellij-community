@@ -168,7 +168,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory(), -1);
+    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory());
     myTargetField.setLightWeightPopupEnabled(false);
 
     EditorComboBoxEditor editor = new StringComboboxEditor(myModule.getProject(), PlainTextFileType.INSTANCE, myTargetField);

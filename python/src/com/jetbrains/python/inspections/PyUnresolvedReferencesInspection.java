@@ -29,7 +29,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -51,7 +53,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -60,6 +61,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,10 +127,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private Set<PsiElement> myUsedImports = Collections.synchronizedSet(new HashSet<PsiElement>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
+    private volatile Boolean myIsEnabled = null;
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
+    }
+
+    public boolean isEnabled(@NotNull PsiElement anchor) {
+      if (myIsEnabled == null) {
+        final boolean isPyCharm = PlatformUtils.isPyCharm();
+        myIsEnabled = (isPyCharm && PythonSdkType.getSdk(anchor) != null || !isPyCharm) &&
+                      !PySkeletonRefresher.isGeneratingSkeletons();
+      }
+      return myIsEnabled;
     }
 
     @Override
@@ -174,7 +186,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
-      if (fromImport == null || !fromImport.isFromFuture()) {
+      if (isEnabled(node) && (fromImport == null || !fromImport.isFromFuture())) {
         myAllImports.add(node);
       }
     }
@@ -182,7 +194,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyStarImportElement(PyStarImportElement node) {
       super.visitPyStarImportElement(node);
-      myAllImports.add(node);
+      if (isEnabled(node)) {
+        myAllImports.add(node);
+      }
     }
 
     @Nullable
@@ -298,7 +312,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void processReference(PyElement node, @Nullable PsiReference reference) {
-      if (reference == null || reference.isSoft()) return;
+      if (!isEnabled(node) || reference == null || reference.isSoft()) {
+        return;
+      }
       HighlightSeverity severity = HighlightSeverity.ERROR;
       if (reference instanceof PsiReferenceEx) {
         severity = ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
@@ -679,7 +695,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
-        if (cls.findProperty(name) != null) {
+        if (cls.findProperty(name, true) != null) {
           return true;
         }
         if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {
@@ -968,6 +984,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = importElement.resolve();
             if (element == null) {
+              if (importElement.getImportedQName() != null) {
+                //Mark import as unused even if it can't be resolved
+                result.add(importElement.getParent());
+              }
               continue;
             }
             if (dunderAll != null && dunderAll.contains(importElement.getVisibleName())) {

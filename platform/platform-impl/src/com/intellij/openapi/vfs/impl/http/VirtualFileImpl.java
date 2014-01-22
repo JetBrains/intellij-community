@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +29,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 
 class VirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
-  private final @Nullable RemoteFileInfoImpl myFileInfo;
+  @Nullable private final RemoteFileInfoImpl myFileInfo;
   private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
 
-  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, final @Nullable RemoteFileInfoImpl fileInfo) {
+  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, @Nullable final RemoteFileInfoImpl fileInfo) {
     myFileSystem = fileSystem;
     myPath = path;
     myFileInfo = fileInfo;
@@ -55,9 +52,7 @@ class VirtualFileImpl extends HttpVirtualFile {
               VirtualFileImpl file = VirtualFileImpl.this;
               FileDocumentManager.getInstance().reloadFiles(file);
               if (!localFile.getFileType().equals(myInitialFileType)) {
-                VFilePropertyChangeEvent event = new VFilePropertyChangeEvent(this, file, PROP_NAME, file.getName(), file.getName(), false);
-                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-                publisher.after(Collections.singletonList(event));
+                FileContentUtilCore.reparseFiles(file);
               }
             }
           });

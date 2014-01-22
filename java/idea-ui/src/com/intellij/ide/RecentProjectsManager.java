@@ -21,7 +21,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
     )}
 )
 public class RecentProjectsManager extends RecentProjectsManagerBase {
-  public RecentProjectsManager(final ProjectManager projectManager, final MessageBus messageBus) {
-    super(projectManager, messageBus);
+  public RecentProjectsManager(MessageBus messageBus) {
+    super(messageBus);
   }
 
   protected String getProjectPath(@NotNull Project project) {

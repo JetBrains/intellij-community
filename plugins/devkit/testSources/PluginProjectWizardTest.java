@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectWizard.ProjectWizardTestCase;
+import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -28,7 +28,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
  * @author Dmitry Avdeev
  *         Date: 11/8/12
  */
-public class PluginProjectWizardTest extends ProjectWizardTestCase {
+public class PluginProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
     createSdk("devkit", IdeaJdk.getInstance());

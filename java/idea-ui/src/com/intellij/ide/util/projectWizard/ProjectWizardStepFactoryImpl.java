@@ -19,6 +19,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -138,7 +139,9 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   @Override
   public ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider) {
     Map<String,Boolean> availableFrameworks = builder.getAvailableFrameworks();
-    if (FrameworkSupportUtil.getProviders(builder).isEmpty() || availableFrameworks != null && availableFrameworks.isEmpty()) {
+    if ((FrameworkSupportUtil.getProviders(builder).isEmpty() ||
+        availableFrameworks != null && availableFrameworks.isEmpty()) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);

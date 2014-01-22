@@ -55,13 +55,12 @@ public abstract class AbstractBundle {
     myPathToBundle = pathToBundle;
   }
 
-  public String getMessage(@NotNull String key, Object... params) {
+  public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
   private ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (myBundle != null) bundle = myBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
       myBundle = new SoftReference<ResourceBundle>(bundle);

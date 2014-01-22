@@ -32,7 +32,10 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -278,11 +281,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     });
   }
 
-  public final void updateUI() {
-    updateUI(EmptyRunnable.getInstance());
-  }
-
-  public void updateUI(@NotNull Runnable afterUpdate) {
+  public void updateUI() {
   }
 
   public void delete() {

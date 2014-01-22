@@ -23,6 +23,8 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -35,6 +37,10 @@ public class FileReferenceHelperRegistrar {
     return Extensions.getExtensions(FileReferenceHelper.EP_NAME);
   }
 
+  /**
+   * @deprecated this method is broken, please avoid using it, use getHelpers() instead
+   */
+  @Deprecated
   @NotNull
   public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
     FileReferenceHelper helper = getHelper(psiFileSystemItem);
@@ -45,11 +51,27 @@ public class FileReferenceHelperRegistrar {
     return helpers[helpers.length-1];
   }
 
+  /**
+   * @deprecated this method is broken, please avoid using it, use getHelpers() instead
+   */
+  @Deprecated
   public static <T extends PsiFileSystemItem> FileReferenceHelper getHelper(@NotNull final T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();
     return ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
+      @Override
+      public boolean value(final FileReferenceHelper fileReferenceHelper) {
+        return fileReferenceHelper.isMine(project, file);
+      }
+    });
+  }
+
+  public static <T extends PsiFileSystemItem> List<FileReferenceHelper> getHelpers(@NotNull final T psiFileSystemItem) {
+    final VirtualFile file = psiFileSystemItem.getVirtualFile();
+    if (file == null) return null;
+    final Project project = psiFileSystemItem.getProject();
+    return ContainerUtil.findAll(getHelpers(), new Condition<FileReferenceHelper>() {
       @Override
       public boolean value(final FileReferenceHelper fileReferenceHelper) {
         return fileReferenceHelper.isMine(project, file);

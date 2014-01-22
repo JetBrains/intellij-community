@@ -186,9 +186,9 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
+  private static DiffContent createContent(@NotNull Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
     if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
-    return new BinaryContent(content1, charset, fileType, filePath);
+    return new BinaryContent(project, content1, charset, fileType, filePath);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

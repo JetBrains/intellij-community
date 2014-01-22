@@ -77,14 +77,20 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
             final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
             final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
-            String message = "";
+            final PsiAnnotation annotation;
+            String message = "Not \'";
             if (annotated.isDeclaredNullable) {
               message += nullable.getQualifiedName();
+              annotation = nullable;
             } else {
               message += notNull.getQualifiedName();
+              annotation = notNull;
             }
-            message += " contradicts to configured defaults";
-            holder.registerProblem(field.getNameIdentifier(), message,
+            message += "\' but \'" + anno + "\' would be used for code generation.";
+            final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
+            holder.registerProblem(annotationNameReferenceElement != null ? annotationNameReferenceElement : field.getNameIdentifier(),
+                                   message,
+                                   ProblemHighlightType.WEAK_WARNING,
                                    new ChangeNullableDefaultsFix(notNull, nullable, manager));
             return;
           }

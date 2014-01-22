@@ -275,7 +275,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static PsiType[] typesByTypeElements(@NotNull PsiTypeElement[] typeElements) {
-    PsiType[] types = new PsiType[typeElements.length];
+    PsiType[] types = PsiType.createArray(typeElements.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
     }

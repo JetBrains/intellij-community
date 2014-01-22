@@ -74,6 +74,7 @@ public class GrAnonymousClassType extends GrLiteralClassType {
     return new GrAnonymousClassType(languageLevel, myScope, myFacade, myAnonymous);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getCanonicalText();

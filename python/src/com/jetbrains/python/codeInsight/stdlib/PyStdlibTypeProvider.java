@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -30,6 +32,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +40,8 @@ import java.util.Set;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
+                                                                    "pathlib.Path.open");
   private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
   private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
 
@@ -53,6 +57,103 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+    PyType type = getNamedTupleType(referenceTarget, anchor);
+    if (type != null) {
+      return type;
+    }
+    type = getEnumType(referenceTarget, context, anchor);
+    if (type != null) {
+      return type;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
+                                    @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
+      if (owner instanceof PyClass) {
+        final PyClass cls = (PyClass)owner;
+        final List<PyClassLikeType> types = cls.getAncestorTypes(context);
+        for (PyClassLikeType type : types) {
+          if (type != null && "enum.Enum".equals(type.getClassQName())) {
+            final PyType classType = context.getType(cls);
+            if (classType instanceof PyClassType) {
+              return ((PyClassType)classType).toInstance();
+            }
+          }
+        }
+      }
+    }
+    if (referenceTarget instanceof PyQualifiedNameOwner) {
+      final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
+      final String name = qualifiedNameOwner.getQualifiedName();
+      if ("enum.Enum.name".equals(name)) {
+        return PyBuiltinCache.getInstance(referenceTarget).getStrType();
+      }
+      else if ("enum.Enum.value".equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
+        final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
+        final PyExpression qualifier = anchorExpr.getQualifier();
+        if (qualifier instanceof PyReferenceExpression) {
+          final PyReferenceExpression qualifierExpr = (PyReferenceExpression)qualifier;
+          final PsiElement resolvedQualifier = qualifierExpr.getReference().resolve();
+          if (resolvedQualifier instanceof PyTargetExpression) {
+            final PyTargetExpression qualifierTarget = (PyTargetExpression)resolvedQualifier;
+            // Requires switching to AST, we cannot use getType(qualifierTarget) here, because its type is overridden by this type provider
+            if (context.maySwitchToAST(qualifierTarget)) {
+              final PyExpression value = qualifierTarget.findAssignedValue();
+              if (value != null) {
+                return context.getType(value);
+              }
+            }
+          }
+        }
+      }
+      else if ("enum.EnumMeta.__members__".equals(name)) {
+        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]");
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+    final String qname = getQualifiedName(function, callSite);
+    if (qname != null) {
+      if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {
+        final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+        if (results != null) {
+          final PyType type = getOpenFunctionType(qname, results.getArguments(), callSite);
+          if (type != null) {
+            return type;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getContextManagerVariableType(@NotNull PyClass contextManager, @NotNull PyExpression withExpression, @NotNull TypeEvalContext context) {
+    if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
+      PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
+      if (closee != null) {
+        return context.getType(closee);
+      }
+    }
+    final String name = contextManager.getName();
+    if ("FileIO".equals(name) || "TextIOWrapper".equals(name) || "IOBase".equals(name) || "_IOBase".equals(name)) {
+      return context.getType(withExpression);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final QualifiedName calleeName = target.getCalleeName();
@@ -81,52 +182,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
-    final String qname = getQualifiedName(function, callSite);
-    if (qname != null) {
-      if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {
-        final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-        if (results != null) {
-          final PyType type = getOpenFunctionType(qname, results.getArguments(), callSite);
-          if (type != null) {
-            return type;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PyType getIterationType(@NotNull PyClass iterable) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(iterable);
-    if (builtinCache.hasInBuiltins(iterable)) {
-      if ("file".equals(iterable.getName())) {
-        return builtinCache.getStrType();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PyType getContextManagerVariableType(@NotNull PyClass contextManager, @NotNull PyExpression withExpression, @NotNull TypeEvalContext context) {
-    if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
-      PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
-      if (closee != null) {
-        return context.getType(closee);
-      }
-    }
-    final String name = contextManager.getName();
-    if ("FileIO".equals(name) || "TextIOWrapper".equals(name) || "IOBase".equals(name) || "_IOBase".equals(name)) {
-      return context.getType(withExpression);
-    }
-    return null;
-  }
-
-  @Nullable
   private static PyType getOpenFunctionType(@NotNull String callQName,
                                             @NotNull Map<PyExpression, PyNamedParameter> arguments,
                                             @NotNull PsiElement anchor) {
@@ -134,7 +189,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
       if ("mode".equals(parameter.getName())) {
-        final PyExpression argument = entry.getKey();
+        PyExpression argument = entry.getKey();
+        if (argument instanceof PyKeywordArgument) {
+          argument = ((PyKeywordArgument)argument).getValueExpression();
+        }
         if (argument instanceof PyStringLiteralExpression) {
           mode = ((PyStringLiteralExpression)argument).getStringValue();
           break;

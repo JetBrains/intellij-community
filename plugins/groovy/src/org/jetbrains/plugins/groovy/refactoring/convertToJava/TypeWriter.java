@@ -53,13 +53,13 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
                                @Nullable PsiType type,
                                @NotNull final PsiElement context,
                                @NotNull final ClassNameProvider classNameProvider) {
-    if (type instanceof PsiPrimitiveType) {
-      builder.append(type.getCanonicalText());
+    if (type == null || PsiType.NULL.equals(type)) {
+      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
       return;
     }
 
-    if (type == null) {
-      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
+    if (type instanceof PsiPrimitiveType) {
+      builder.append(type.getCanonicalText());
       return;
     }
 

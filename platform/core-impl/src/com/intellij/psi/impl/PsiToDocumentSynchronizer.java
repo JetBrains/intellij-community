@@ -69,20 +69,34 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event);
   }
 
+  private void checkPsiModificationAllowed(@NotNull final PsiTreeChangeEvent event, boolean force) {
+    if (!toProcessPsiEvent()) return;
+    final PsiFile psiFile = event.getFile();
+    if (psiFile == null || psiFile.getNode() == null) return;
+
+    final Document document = getCachedDocument(psiFile, force);
+    if (document == null) return;
+
+    if (myPsiDocumentManager.isUncommited(document)) {
+      throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
+    }
+  }
+
+  private DocumentEx getCachedDocument(PsiFile psiFile, boolean force) {
+    final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
+    if (document == null || document instanceof DocumentWindow || !force && getTransaction(document) == null) {
+      return null;
+    }
+    return document;
+  }
+
   private void doSync(@NotNull final PsiTreeChangeEvent event, boolean force, @NotNull final DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
-    final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
-    if (document == null || document instanceof DocumentWindow) return;
-    if (!force && getTransaction(document) == null) {
-      return;
-    }
-
-    if (myPsiDocumentManager.isUncommited(document)) {
-      throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
-    }
+    final DocumentEx document = getCachedDocument(psiFile, force);
+    if (document == null) return;
 
     performAtomically(psiFile, new Runnable() {
       @Override
@@ -116,6 +130,26 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     finally {
       file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, null);
     }
+  }
+
+  @Override
+  public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
+    checkPsiModificationAllowed(event, false);
+  }
+
+  @Override
+  public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
+    checkPsiModificationAllowed(event, false);
+  }
+
+  @Override
+  public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
+    checkPsiModificationAllowed(event, false);
+  }
+
+  @Override
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
+    checkPsiModificationAllowed(event, false);
   }
 
   @Override
@@ -223,6 +257,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
       fakeEvent.setParent(changeScope);
       fakeEvent.setFile(changeScope.getContainingFile());
+      checkPsiModificationAllowed(fakeEvent, true);
       doSync(fakeEvent, true, new DocSyncAction() {
         @Override
         public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {

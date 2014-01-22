@@ -28,6 +28,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
@@ -38,6 +39,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -130,11 +132,9 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     TableColumnModel columnModel = myTable.getColumnModel();
 //    columnModel.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MemberSelectionTable.MyTableRenderer());
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    columnModel.getColumn(CHECK_COLUMN).setCellRenderer(new BooleanTableCellRenderer());
-    columnModel.getColumn(CHECK_COLUMN).setMaxWidth(checkBoxWidth);
-    columnModel.getColumn(CHECK_COLUMN).setMinWidth(checkBoxWidth);
-
+    TableColumn checkboxColumn = columnModel.getColumn(CHECK_COLUMN);
+    TableUtil.setupCheckboxColumn(checkboxColumn);
+    checkboxColumn.setCellRenderer(new BooleanTableCellRenderer());
 
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();

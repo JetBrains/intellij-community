@@ -18,6 +18,7 @@ public class CreateAction extends PatchAction {
   }
 
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
+    Runner.logger.info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
 
     writeExecutableFlag(patchOutput, newerFile);
@@ -28,6 +29,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected ValidationResult doValidate(File toFile) {
+    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 

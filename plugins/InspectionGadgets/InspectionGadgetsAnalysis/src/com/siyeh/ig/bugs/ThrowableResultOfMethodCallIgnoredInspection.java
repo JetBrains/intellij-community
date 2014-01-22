@@ -84,6 +84,13 @@ public class ThrowableResultOfMethodCallIgnoredInspection
           return;
         }
       }
+
+      if ("propagate".equals(method.getName())
+          && method.getContainingClass() != null
+          && "com.google.common.base.Throwables".equals(method.getContainingClass().getQualifiedName())) {
+        return;
+      }
+
       final PsiLocalVariable variable;
       if (parent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -713,12 +713,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (cycleUsed) {
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
-        final EditorNotificationPanel comp = new EditorNotificationPanel() {
-          {
-            myLabel.setIcon(AllIcons.General.ExclMark);
-            myLabel.setText("Too much output to process");
-          }
-        };
+        final EditorNotificationPanel comp = new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
         add(comp, BorderLayout.NORTH);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
@@ -1070,9 +1065,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       final int lEnd = line - 1;
       int lStart = lEnd;
       while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
-      if (lStart == lEnd) {
-        return;
-      }
 
       for (int i = lStart; i <= lEnd; i++) {
         myFolding.remove(i);
@@ -1133,6 +1125,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private class MyHighlighter extends DocumentAdapter implements EditorHighlighter {
     private HighlighterClient myEditor;
 
+    @NotNull
     @Override
     public HighlighterIterator createIterator(final int startOffset) {
       final int startIndex = ConsoleUtil.findTokenInfoIndexByOffset(myTokens, startOffset);
@@ -1187,17 +1180,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Override
-    public void setText(final CharSequence text) {
+    public void setText(@NotNull final CharSequence text) {
     }
 
     @Override
-    public void setEditor(final HighlighterClient editor) {
+    public void setEditor(@NotNull final HighlighterClient editor) {
       LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
       myEditor = editor;
     }
 
     @Override
-    public void setColorScheme(EditorColorsScheme scheme) {
+    public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     }
   }
 

@@ -50,7 +50,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
-  public LinkedHashMap(EqualityPolicy hashingStrategy) {
+  public LinkedHashMap(EqualityPolicy<K> hashingStrategy) {
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 

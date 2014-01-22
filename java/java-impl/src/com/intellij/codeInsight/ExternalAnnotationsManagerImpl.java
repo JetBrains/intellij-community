@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -544,27 +544,35 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
             final XmlTag rootTag = document.getRootTag();
             final String externalName = getExternalName(listOwner, false);
             if (rootTag != null) {
+              XmlTag anchor = null;
               for (XmlTag item : rootTag.getSubTags()) {
-                if (Comparing.strEqual(StringUtil.unescapeXml(item.getAttributeValue("name")), externalName)) {
+                int compare = Comparing.compare(externalName, StringUtil.unescapeXml(item.getAttributeValue("name")));
+                if (compare == 0) {
+                  anchor = null;
                   for (XmlTag annotation : item.getSubTags()) {
-                    if (Comparing.strEqual(annotation.getAttributeValue("name"), annotationFQName)) {
+                    compare = Comparing.compare(annotationFQName, annotation.getAttributeValue("name"));
+                    if (compare == 0) {
                       annotation.delete();
                       break;
                     }
+                    if (compare < 0) break;
+                    anchor = annotation;
                   }
                   XmlTag newTag = XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
                     createAnnotationTag(annotationFQName, values));
-                  item.add(newTag);
+                  item.addAfter(newTag, anchor);
                   commitChanges(xmlFile);
                   notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
                   return;
                 }
+                if (compare < 0) break;
+                anchor = item;
               }
               @NonNls String text =
                 "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n";
               text += createAnnotationTag(annotationFQName, values);
               text += "</item>";
-              rootTag.add(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text));
+              rootTag.addAfter(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text), anchor);
             }
           }
           commitChanges(xmlFile);
@@ -604,7 +612,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
     }
 
-    Collections.sort(itemTags, new Comparator<XmlTag>() {
+    List<XmlTag> sorted = new ArrayList<XmlTag>(itemTags);
+    Collections.sort(sorted, new Comparator<XmlTag>() {
       @Override
       public int compare(XmlTag item1, XmlTag item2) {
         String externalName1 = item1.getAttributeValue("name");
@@ -613,9 +622,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         return externalName1.compareTo(externalName2);
       }
     });
-    for (XmlTag item : itemTags) {
-      rootTag.addAfter(item, null);
-      item.delete();
+    if (!sorted.equals(itemTags)) {
+      for (XmlTag item : sorted) {
+        rootTag.addAfter(item, null);
+        item.delete();
+      }
     }
   }
 

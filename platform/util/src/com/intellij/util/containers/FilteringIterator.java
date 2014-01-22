@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -132,7 +132,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     }
 
     public boolean isClassAcceptable(Class hintClass) {
-      return ReflectionCache.isAssignable(myInstancesClass, hintClass);
+      return ReflectionUtil.isAssignable(myInstancesClass, hintClass);
     }
 
     public T cast(Object object) {

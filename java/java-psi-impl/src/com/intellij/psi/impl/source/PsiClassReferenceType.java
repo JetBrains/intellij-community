@@ -60,7 +60,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return Comparing.equal(text, getCanonicalText());
   }
 
@@ -92,10 +92,11 @@ public class PsiClassReferenceType extends PsiClassType {
   private static class DelegatingClassResolveResult implements ClassResolveResult {
     private final JavaResolveResult myDelegate;
 
-    private DelegatingClassResolveResult(JavaResolveResult delegate) {
+    private DelegatingClassResolveResult(@NotNull JavaResolveResult delegate) {
       myDelegate = delegate;
     }
 
+    @NotNull
     @Override
     public PsiSubstitutor getSubstitutor() {
       return myDelegate.getSubstitutor();
@@ -178,16 +179,19 @@ public class PsiClassReferenceType extends PsiClassType {
     return element == null ? this : new PsiImmediateClassType(element, resolveResult.getSubstitutor());
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return getAnnotationsTextPrefix(false, false, true) + PsiNameHelper.getPresentableText(myReference);
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return myReference.getCanonicalText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getAnnotationsTextPrefix(true, false, true) + getCanonicalText();

@@ -3,17 +3,12 @@ package com.intellij.tasks.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.tasks.impl.ssl.CertificatesManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -23,22 +18,7 @@ import java.net.URLEncoder;
  * @author Dmitry Avdeev
  */
 public abstract class BaseRepositoryImpl extends BaseRepository {
-  public static final String EASY_HTTPS = "easyhttps";
-
   private static final Logger LOG = Logger.getInstance(BaseRepositoryImpl.class);
-
-  static {
-    try {
-      SSLContext context = CertificatesManager.createDefault().createSslContext();
-      SSLContext.setDefault(context);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
-    // Protocol.registerProtocol("https", CertificatesManager.createDefault().createProtocol());
-    Protocol.registerProtocol(EASY_HTTPS, new Protocol(EASY_HTTPS, (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
-  }
 
   protected BaseRepositoryImpl() {
   }

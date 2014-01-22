@@ -31,7 +31,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -50,7 +49,6 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -73,7 +71,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   @Nullable
-  private OwnerMethod myOwnerMethod;
+  private String myOwnerMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project) {
@@ -138,7 +136,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final RangeHighlighter highlighter = getHighlighter();
       offset = highlighter != null? highlighter.getStartOffset() : -1;
     }
-    myOwnerMethod = findOwnerMethod(file, offset);
+    myOwnerMethodName = findOwnerMethod(file, offset);
   }
 
   @Override
@@ -211,18 +209,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    final OwnerMethod owner = myOwnerMethod;
-    if (owner != null && owner.isJavaFile) {
-      // Additional filtering applicable to java files only.
-      // Consider:
-      //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
-      //
-      // there will be 3 locations for this line: one corresponding to calling method, and two locations from
-      // the lambda expression implementation methods.
-      // Without additional filtering, breakpoint request will be set on each location,
-      // while we do not need to stop in lambda expressions here
-      return owner.matches(loc);
-    }
     return true;
   }
 
@@ -333,38 +319,19 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   @Override
-  public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    if(CLASS_FILTERS_ENABLED){
-      String className = null;
-      final ObjectReference thisObject = (ObjectReference)context.getThisObject();
-      if(thisObject != null) {
-        className = thisObject.referenceType().name();
-      }
-      else {
-        final StackFrameProxyImpl frame = context.getFrameProxy();
-        if (frame != null) {
-          className = frame.location().declaringType().name();
-        }
-      }
-      if (className != null) {
-        boolean matches = false;
-        for (ClassFilter classFilter : getClassFilters()) {
-          if (classFilter.isEnabled() && classFilter.matches(className)) {
-            matches = true;
-            break;
-          }
-        }
-        if(!matches) {
-          return false;
-        }
-        for (ClassFilter classFilter : getClassExclusionFilters()) {
-          if (classFilter.isEnabled() && classFilter.matches(className)) {
-            return false;
-          }
-        }
+  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.getThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
+    }
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
       }
     }
-    return super.evaluateCondition(context, event);
+    return className;
   }
 
   public String toString() {
@@ -438,16 +405,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   @Nullable
-  private static OwnerMethod findOwnerMethod(final PsiFile file, final int offset) {
+  private static String findOwnerMethod(final PsiFile file, final int offset) {
     if (offset < 0 || file instanceof JspFile) {
       return null;
     }
     if (file instanceof PsiClassOwner) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<OwnerMethod>() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override
-        public OwnerMethod compute() {
+        public String compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-          return method != null? new OwnerMethod(method, file instanceof PsiJavaFile && JavaLanguage.INSTANCE.equals(file.getLanguage())) : null;
+          return method != null? method.getName() : null;
         }
       });
     }
@@ -577,28 +544,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   @Nullable
   public String getMethodName() {
-    final OwnerMethod owner = myOwnerMethod;
-    return owner != null? owner.name : null;
+    return myOwnerMethodName;
   }
 
-  private static final class OwnerMethod {
-    @NotNull
-    final String name;
-    final boolean isConstructor;
-    final boolean isJavaFile;
-
-    OwnerMethod(@NotNull PsiMethod method, boolean isJavaFile) {
-      this(method.getName(), method.isConstructor(), isJavaFile);
-    }
-
-    OwnerMethod(@NotNull String name, boolean isConstructor, boolean isJavaFile) {
-      this.name = name;
-      this.isConstructor = isConstructor;
-      this.isJavaFile = isJavaFile;
-    }
-
-    boolean matches(Location loc) {
-      return isConstructor? loc.method().isConstructor() : name.equals(loc.method().name());
-    }
-  }
 }

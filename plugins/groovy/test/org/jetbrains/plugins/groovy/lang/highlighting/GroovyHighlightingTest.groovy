@@ -1704,6 +1704,11 @@ class E {
   <error>private foo()</error>{}
   <error>def foo(int x)</error> {}
 }
+
+class Z {
+ private Z() {}   //correct
+ private Z(x) {}  //correct
+}
 ''')
   }
 
@@ -1764,6 +1769,23 @@ class A {
 
   int <error descr="Repetitive method name 'getImmutable'">getImmutable</error>() {1}
 }
+''')
+  }
+
+  void testMinusInAnnotationArg() {
+    testHighlighting('''\
+@interface Xx {
+    int value()
+}
+
+@Xx(-1)
+public class Bar1 { }
+
+@Xx(+1)
+public class Bar2 { }
+
+@Xx(<error descr="Expected '++1' to be an inline constant">++1</error>)
+public class Bar3 { }
 ''')
   }
 

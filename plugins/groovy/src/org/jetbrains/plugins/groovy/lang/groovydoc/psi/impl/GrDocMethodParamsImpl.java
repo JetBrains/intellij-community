@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -53,10 +52,12 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return "GrDocMethodParameterList";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocMethodParameterList(this);
   }
 
+  @Override
   public PsiType[] getParameterTypes() {
     ArrayList<PsiType> types = new ArrayList<PsiType>();
     PsiManagerEx manager = getManager();
@@ -73,17 +74,19 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
         types.add(null);
       }
     }
-    return types.toArray(new PsiType[types.size()]);
+    return types.toArray(PsiType.createArray(types.size()));
   }
 
+  @Override
   public GrDocMethodParameter[] getParameters() {
     List<GrDocMethodParameter> result = new ArrayList<GrDocMethodParameter>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (ReflectionCache.isInstance(cur, GrDocMethodParameter.class)) result.add((GrDocMethodParameter)cur);
+      if (GrDocMethodParameter.class.isInstance(cur)) result.add((GrDocMethodParameter)cur);
     }
     return result.toArray(new GrDocMethodParameter[result.size()]);
   }
 
+  @Override
   @NotNull
   public PsiElement getLeftParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN);
@@ -91,6 +94,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return paren.getPsi();
   }
 
+  @Override
   @Nullable
   public PsiElement getRightParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -485,26 +485,18 @@ public class ActionsTreeUtil {
         if (filter == null) return true;
         if (action == null) return false;
         final String insensitiveFilter = filter.toLowerCase();
-        final String text = action.getTemplatePresentation().getText();
-        if (text != null) {
-          final String lowerText = text.toLowerCase();
-          if (SearchUtil
-            .isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
-            return true;
-          }
-          else if (lowerText.contains(insensitiveFilter)) {
-            return true;
-          }
-        }
-        final String description = action.getTemplatePresentation().getDescription();
-        if (description != null) {
-          final String insensitiveDescription = description.toLowerCase();
-          if (SearchUtil
-            .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, null)) {
-            return true;
-          }
-          else if (insensitiveDescription.contains(insensitiveFilter)) {
-            return true;
+        for (String text : new String[]{action.getTemplatePresentation().getText(),
+                                        action.getTemplatePresentation().getDescription(),
+                                        action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
+          if (text != null) {
+            final String lowerText = text.toLowerCase();
+
+            if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
+              return true;
+            }
+            else if (lowerText.contains(insensitiveFilter)) {
+              return true;
+            }
           }
         }
         return false;

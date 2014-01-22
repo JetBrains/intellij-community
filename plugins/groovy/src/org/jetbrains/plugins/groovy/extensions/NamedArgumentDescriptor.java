@@ -142,7 +142,7 @@ public class NamedArgumentDescriptor {
     @NotNull
     @Override
     public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-      return new GroovyResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, null, null, mySubstitutor, true, true, false)};
+      return new GroovyResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, null, null, mySubstitutor, true, true)};
     }
   }
 

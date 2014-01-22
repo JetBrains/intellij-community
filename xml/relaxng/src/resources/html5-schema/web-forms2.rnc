@@ -437,7 +437,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.required? 
 		&	shared-form.attrs.placeholder?
 		&	input.number.attrs.value? 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.spinbutton
+			|	common.attrs.aria.role.spinbutton
+			)?
 		)	
 		input.number.attrs.type = 
 			attribute type {
@@ -473,7 +475,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.range.attrs.max? 
 		&	input.attrs.step.float? 
 		&	input.range.attrs.value? 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.slider
+			|	common.attrs.aria.role.slider
+			)?
 		)	
 		input.range.attrs.type = 
 			attribute type {
@@ -516,7 +520,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 				)
 			|	input.email.attrs.value.single?
 			)?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.textbox
+			|	common.attrs.aria.implicit.combobox
+			|	common.attrs.aria.role.textbox
+			|	common.attrs.aria.role.combobox
+			)?
 		)	
 		input.email.attrs.type = 
 			attribute type {
@@ -551,7 +559,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.size?
 		&	shared-form.attrs.placeholder?
 		&	input.url.attrs.value? 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.textbox
+			|	common.attrs.aria.implicit.combobox
+			|	common.attrs.aria.role.textbox
+			|	common.attrs.aria.role.combobox
+			)?
 		)	
 		input.url.attrs.type = 
 			attribute type {
@@ -583,7 +595,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.dirname?
 		&	input.search.attrs.value? 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.textbox
+			|	common.attrs.aria.implicit.combobox
+			|	common.attrs.aria.role.textbox
+			|	common.attrs.aria.role.combobox
+			)?
 		)	
 		input.search.attrs.type = 
 			attribute type {
@@ -614,7 +630,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.size?
 		&	shared-form.attrs.placeholder?
 		&	input.tel.attrs.value? 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.textbox
+			|	common.attrs.aria.implicit.combobox
+			|	common.attrs.aria.role.textbox
+			|	common.attrs.aria.role.combobox
+			)?
 		)	
 		input.tel.attrs.type = 
 			attribute type {
@@ -661,7 +681,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs.name?
 		&	common-form.attrs.form?
 		&	output.attrs.for?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.status
+			|	common.attrs.aria
+			)?
 		)
 		output.attrs.for = 
 			attribute for {

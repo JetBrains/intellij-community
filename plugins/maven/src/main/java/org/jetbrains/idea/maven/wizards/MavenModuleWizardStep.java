@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -34,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
@@ -197,11 +200,21 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return true;
   }
 
+  public MavenProject findPotentialParentProject(Project project) {
+    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
+
+    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(), "pom.xml"));
+    if (parentPom == null) return null;
+
+    return MavenProjectsManager.getInstance(project).findProject(parentPom);
+  }
+
   @Override
   public void updateStep() {
+    if (myArchetypes != null && myArchetypes.isSkipUpdateUI()) return;
 
     if (isMavenizedProject()) {
-      MavenProject parent = myBuilder.findPotentialParentProject(myProjectOrNull);
+      MavenProject parent = findPotentialParentProject(myProjectOrNull);
       myAggregator = parent;
       myParent = parent;
     }
@@ -279,6 +292,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
                                        myVersionField.getText()));
     myBuilder.setInheritedOptions(myInheritGroupIdCheckBox.isSelected(),
                                   myInheritVersionCheckBox.isSelected());
+
+    if (myContext.getProjectName() == null) {
+      myContext.setProjectName(myBuilder.getProjectId().getArtifactId());
+    }
 
     if (myArchetypes != null) {
       myBuilder.setArchetype(myArchetypes.getSelectedArchetype());

@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,8 +99,8 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
       final String containingClassName =
         containingClass.getQualifiedName();
       final String argText = argumentList.getText();
-      replaceExpressionAndShorten(call, containingClassName + '.' +
-                                        methodName + argText);
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' +
+                                                           methodName + argText);
     }
   }
 

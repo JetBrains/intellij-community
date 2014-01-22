@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
@@ -82,13 +83,12 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
       usedComments.add(element);
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
+        if (PsiImplUtil.isWhiteSpaceOrNls(current)) continue;
+
         IElementType elementType = current.getNode().getElementType();
         if (elementType == mSL_COMMENT) {
           end = current;
           usedComments.add(current);
-          continue;
-        }
-        if (WHITE_SPACES_SET.contains(elementType)) {
           continue;
         }
         break;
@@ -121,8 +121,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
         if (lbrace != null && rbrace != null) {
           final PsiElement next = lbrace.getNextSibling();
           final PsiElement prev = rbrace.getPrevSibling();
-          if (next != null && WHITE_SPACES_SET.contains(next.getNode().getElementType()) &&
-              prev != null && WHITE_SPACES_SET.contains(prev.getNode().getElementType())) {
+          if (next != null && PsiImplUtil.isWhiteSpaceOrNls(next) &&
+              prev != null && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
             descriptors.add(new NamedFoldingDescriptor(psi.getNode(), lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
             descriptors.add(new NamedFoldingDescriptor(psi.getNode(), prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));

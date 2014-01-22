@@ -18,6 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
@@ -30,6 +31,7 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +39,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
 
+  private static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
+  private static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
+  private static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
   /**
    * @noinspection PublicField
    */
@@ -45,6 +50,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreEmptyMethods = true;
+  public boolean m_ignoreDefaultMethods = true;
 
   @Override
   @NotNull
@@ -60,20 +66,31 @@ public class MethodMayBeStaticInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ChangeModifierFix(PsiModifier.STATIC);
+    return new ChangeModifierFix(PsiModifier.STATIC, PsiModifier.DEFAULT);
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), "m_onlyPrivateOrFinal");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), "m_ignoreEmptyMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
+    optionsPanel.addCheckbox("Ignore default methods", IGNORE_DEFAULT_METHODS_ATTR_NAME);
     return optionsPanel;
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodCanBeStaticVisitor();
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", ONLY_PRIVATE_OR_FINAL_ATTR_NAME).setAttribute("value", String.valueOf(m_onlyPrivateOrFinal)));
+    node.addContent(new Element("option").setAttribute("name", IGNORE_EMPTY_METHODS_ATTR_NAME).setAttribute("value", String.valueOf(
+      m_ignoreEmptyMethods)));
+    if (!m_ignoreDefaultMethods) {
+      node.addContent(new Element("option").setAttribute("name", IGNORE_DEFAULT_METHODS_ATTR_NAME).setAttribute("value", "false"));
+    }
   }
 
   private class MethodCanBeStaticVisitor extends BaseInspectionVisitor {
@@ -90,6 +107,9 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       if (method.isConstructor() || method.getNameIdentifier() == null) {
         return;
       }
+      if (m_ignoreDefaultMethods && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+        return;
+      }
       if (m_ignoreEmptyMethods && MethodUtils.isEmpty(method)) {
         return;
       }
@@ -104,7 +124,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
         }
       }
       final PsiElement scope = containingClass.getScope();
-      if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface()) {
         return;
       }
       if (m_onlyPrivateOrFinal && !method.hasModifierProperty(PsiModifier.FINAL) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
   protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
     mySubstitutor = substitutor;
     assert substitutor.isValid();
-    myParameterTypes = parameterTypes.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameterTypes.length];
+    myParameterTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
       if (type != null) {
@@ -52,7 +52,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     }
     else {
       final PsiParameter[] parameters = parameterList.getParameters();
-      myParameterTypes = parameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameters.length];
+      myParameterTypes = PsiType.createArray(parameters.length);
       for (int i = 0; i < parameters.length; i++) {
         PsiType type = parameters[i].getType();
         if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();

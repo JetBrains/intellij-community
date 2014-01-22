@@ -140,7 +140,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
-    UIUtil.setAutoRequestFocus(this, false);
   }
 
   private void updateBorder() {
@@ -481,7 +480,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   public void storeFullScreenStateIfNeeded() {
-    storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    if (myFrameDecorator != null) {
+      storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    }
   }
 
   public void storeFullScreenStateIfNeeded(boolean state) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,6 +277,28 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () -> { '
+  }
+
+  public void "test closure folding after paste"() {
+    def text = """\
+class Test {
+<caret>// comment
+  void test() {
+    Runnable r = new Runnable() {
+      public void run() {
+        System.out.println();
+      }
+    };
+  }
+}
+"""
+    configure text
+    myFixture.performEditorAction("EditorCut")
+    myFixture.performEditorAction("EditorPaste")
+
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() -> { '
   }
 
   public void "test closure folding when overriding one method of many"() {

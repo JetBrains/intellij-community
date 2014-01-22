@@ -175,6 +175,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
 
   @Override
   protected void applyEditorTo(DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
+    updateDeploymentSettingsEditor();
+
     configuration.setServerName(myServerListModel.getSelectedItem());
     DeploymentSource deploymentSource = mySourceListModel.getSelectedItem();
     configuration.setDeploymentSource(deploymentSource);

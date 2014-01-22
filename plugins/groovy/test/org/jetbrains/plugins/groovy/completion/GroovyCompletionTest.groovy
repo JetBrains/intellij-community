@@ -238,10 +238,6 @@ class Foo<A, B> {
     doBasicTest();
   }
 
-  public void testGStringConcatenationCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
-  }
-
   public void testPropertyWithSecondUpperLetter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
   }

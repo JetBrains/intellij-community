@@ -18,12 +18,11 @@ package com.intellij.codeInsight.template.emmet.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -53,6 +52,11 @@ abstract public class EmmetAbbreviationCompletionProvider extends CompletionProv
 
     final ZenCodingGenerator generator = getGenerator();
     if (!generator.isMyContext(parameters.getPosition(), false) || !generator.isAppliedByDefault(parameters.getPosition())) {
+      return;
+    }
+
+    ZenCodingTemplate zenCodingTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
+    if (zenCodingTemplate == null) {
       return;
     }
 
@@ -89,13 +93,13 @@ abstract public class EmmetAbbreviationCompletionProvider extends CompletionProv
       final TemplateImpl template = generatedTemplate.get();
       template.setKey(templatePrefix);
       template.setDescription(template.getTemplateText());
-      result.addElement(createLookupElement(template));
+      result.addElement(createLookupElement(zenCodingTemplate, template));
       result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
     }
   }
 
-  protected LiveTemplateLookupElement createLookupElement(TemplateImpl template) {
-    return new LiveTemplateLookupElement(template, null, true, true);
+  protected LiveTemplateLookupElement createLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate, @NotNull TemplateImpl template) {
+    return new CustomLiveTemplateLookupElement(customLiveTemplate, template.getKey(), template.getKey(), template.getDescription(), true, true);
   }
 
   protected abstract ZenCodingGenerator getGenerator();

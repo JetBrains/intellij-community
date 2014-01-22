@@ -69,6 +69,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     myWideSelectionCondition = wideSelectionCondition;
   }
 
+  @Override
+  public int getRightChildIndent() {
+    return isSkinny() ? 8 : super.getRightChildIndent();
+  }
+
+  private static boolean isSkinny() {
+    return UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderAquaLookAndFeel();
+  }
+
   private final MouseListener mySelectionListener = new MouseAdapter() {
     boolean handled = false;
     @Override
@@ -241,6 +250,11 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   private abstract static class TreeUIAction extends AbstractAction implements UIResource {
+  }
+
+  @Override
+  protected int getRowX(int row, int depth) {
+    return isSkinny() ? 8 * depth + 8 : super.getRowX(row, depth);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -488,7 +488,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       for (int i = 0; i < myComponentInterfaces.size(); i++) {
         Class interfaceClass = myComponentInterfaces.get(i);
         final Class implClass = myInterfaceToClassMap.get(interfaceClass);
-        if (ReflectionCache.isAssignable(baseClass, implClass)) {
+        if (ReflectionUtil.isAssignable(baseClass, implClass)) {
           array.add((T)getComponent(interfaceClass));
         }
       }

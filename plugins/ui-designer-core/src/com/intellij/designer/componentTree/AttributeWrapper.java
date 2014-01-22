@@ -28,5 +28,12 @@ public interface AttributeWrapper {
     }
   };
 
+  AttributeWrapper REGULAR = new AttributeWrapper() {
+    @Override
+    public SimpleTextAttributes getAttribute(SimpleTextAttributes attributes) {
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+  };
+
   SimpleTextAttributes getAttribute(SimpleTextAttributes attributes);
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -396,6 +395,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                 return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                                argumentList != null ? argumentList.getExpressionTypes() : null, typeParameters.length > 0 ? typeParameters : null,
                                                getLanguageLevel()) {
+                  @NotNull
                   @Override
                   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
                     return inferTypeArgumentsFromInterfaceMethod(signature, interfaceMethodReturnType, method, substitutor, languageLevel);
@@ -423,6 +423,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return JavaResolveResult.EMPTY_ARRAY;
     }
 
+    @NotNull
     private PsiSubstitutor inferTypeArgumentsFromInterfaceMethod(@Nullable MethodSignature signature,
                                                                  @Nullable PsiType interfaceMethodReturnType,
                                                                  PsiMethod method,
@@ -467,7 +468,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                             languageLevel, getProject());
     }
 
-    private PsiSubstitutor getSubstitutor(PsiType type) {
+    @NotNull
+    private PsiSubstitutor getSubstitutor(@NotNull PsiType type) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(type));
       PsiSubstitutor psiSubstitutor = resolveResult.getSubstitutor();
       if (type instanceof PsiClassType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.List;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -41,11 +39,11 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
 
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final Project project = aClass.getProject();    
+    final Project project = aClass.getProject();
     final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
     final Module module = ModuleUtil.findModuleForPsiElement(aClass);
 
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiatable(aClass)) return null;
+    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, GlobalSearchScope.allScope(project));
 
@@ -75,7 +73,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
       .createProblemDescriptor(problem == null ? nameIdentifier : problem,
                                "Inspection does not have a description", isOnTheFly, new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module, false)},
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-    return new ProblemDescriptor[]{problemDescriptor};    
+    return new ProblemDescriptor[]{problemDescriptor};
   }
 
   @Nullable

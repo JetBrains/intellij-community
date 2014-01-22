@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -124,7 +123,7 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              injected = psiFile == null || psiFile instanceof PsiCompiledElement || isReallyDisposed(editor, project)
+              injected = psiFile == null || psiFile instanceof PsiCompiledElement || psiFile instanceof PsiBinaryFile || isReallyDisposed(editor, project)
                      ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
             catch (RuntimeException e) {
@@ -422,7 +421,8 @@ public class BraceHighlightingHandler {
       highlightBrace(lBrace, matched);
     }
 
-    if (!myEditor.equals(FileEditorManager.getInstance(myProject).getSelectedTextEditor())) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject); // null in default project
+    if (fileEditorManager == null || !myEditor.equals(fileEditorManager.getSelectedTextEditor())) {
       return;
     }
 

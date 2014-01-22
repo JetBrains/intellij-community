@@ -28,7 +28,8 @@ public class ConsoleHistoryModel implements ModificationTracker {
       myHistoryCursor = -1;
 
       myHistory.remove(statement);
-      if (myHistory.size() >= maxHistorySize) {
+      int size = myHistory.size();
+      if (size >= maxHistorySize && size > 0) {
         myHistory.removeLast();
       }
       myHistory.addFirst(statement);

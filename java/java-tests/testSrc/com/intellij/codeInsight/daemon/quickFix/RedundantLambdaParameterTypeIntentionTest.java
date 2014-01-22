@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixTestCase {
+public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

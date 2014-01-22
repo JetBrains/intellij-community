@@ -2,13 +2,15 @@ package com.intellij.tasks.jira.model.api2;
 
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRestApi;
-import com.intellij.tasks.jira.JiraUtil;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.tasks.jira.model.JiraResponseWrapper;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,7 @@ public class JiraRestApi2 extends JiraRestApi {
   @NotNull
   @Override
   protected List<JiraIssue> parseIssues(String response) {
-    JiraResponseWrapper.Issues<JiraIssueApi2> wrapper = JiraUtil.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
+    JiraResponseWrapper.Issues<JiraIssueApi2> wrapper = JiraRepository.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
     return new ArrayList<JiraIssue>(wrapper.getIssues());
   }
 
@@ -57,7 +59,7 @@ public class JiraRestApi2 extends JiraRestApi {
   @Nullable
   @Override
   protected JiraIssue parseIssue(String response) {
-    return JiraUtil.GSON.fromJson(response, JiraIssueApi2.class);
+    return JiraRepository.GSON.fromJson(response, JiraIssueApi2.class);
   }
 
   @Nullable
@@ -75,6 +77,20 @@ public class JiraRestApi2 extends JiraRestApi {
       default:
         return null;
     }
+  }
+
+  @Override
+  public void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception {
+    LOG.debug(String.format("Time spend: %s, comment: %s", timeSpent, comment));
+    PostMethod method = new PostMethod(myRepository.getRestUrl("issue", task.getId(), "worklog"));
+    String request;
+    if (StringUtil.isEmpty(comment)) {
+      request = String.format("{\"timeSpent\" : \"" + timeSpent + "\"}", timeSpent);
+    } else {
+      request = String.format("{\"timeSpent\": \"%s\", \"comment\": \"%s\"}", timeSpent, StringUtil.escapeQuotes(comment));
+    }
+    method.setRequestEntity(createJsonEntity(request));
+    myRepository.executeMethod(method);
   }
 
   @NotNull

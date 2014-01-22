@@ -105,4 +105,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   @NotNull
   ExternalSystemException getUserFriendlyError(@NotNull Throwable error, @NotNull String projectPath, @Nullable String buildFilePath);
+
+  /**
+   * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
+   */
+  void preImportCheck();
 }

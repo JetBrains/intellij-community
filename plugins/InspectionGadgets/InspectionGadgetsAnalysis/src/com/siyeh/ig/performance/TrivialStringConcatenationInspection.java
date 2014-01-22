@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -91,7 +92,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         replaced = true;
         continue;
       }
-      if (operand == expression) {
+      if (ParenthesesUtils.stripParentheses(operand) == expression) {
         seenEmpty = true;
         continue;
       }
@@ -114,6 +115,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     return text.toString();
   }
 
+  @NonNls
   static String buildReplacement(@NotNull PsiExpression operandToReplace, boolean seenString) {
     if (ExpressionUtils.isNullLiteral(operandToReplace)) {
       if (seenString) {
@@ -162,7 +164,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         return;
       }
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression((PsiExpression)parent, newExpression);
+      PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression);
     }
   }
 

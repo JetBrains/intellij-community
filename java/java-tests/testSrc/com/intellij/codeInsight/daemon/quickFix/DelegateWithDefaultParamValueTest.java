@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 /**
  * @author anna
  */
-public class DelegateWithDefaultParamValueTest extends LightQuickFixTestCase {
+public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName)
     throws Exception {

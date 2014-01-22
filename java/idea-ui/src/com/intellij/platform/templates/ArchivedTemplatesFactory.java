@@ -15,9 +15,8 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.impl.UrlUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -48,22 +48,21 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
       MultiMap<String, Pair<URL, ClassLoader>> map = new MultiMap<String, Pair<URL, ClassLoader>>();
-      IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
       Map<URL, ClassLoader> urls = new HashMap<URL, ClassLoader>();
-      for (IdeaPluginDescriptor plugin : plugins) {
-        if (!plugin.isEnabled()) continue;
-        try {
-          ClassLoader loader = plugin.getPluginClassLoader();
-          Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
-          ArrayList<URL> list = Collections.list(resources);
-          for (URL url : list) {
-            urls.put(url, loader);
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      //for (IdeaPluginDescriptor plugin : plugins) {
+      //  if (!plugin.isEnabled()) continue;
+      //  try {
+      //    ClassLoader loader = plugin.getPluginClassLoader();
+      //    Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
+      //    ArrayList<URL> list = Collections.list(resources);
+      //    for (URL url : list) {
+      //      urls.put(url, loader);
+      //    }
+      //  }
+      //  catch (IOException e) {
+      //    LOG.error(e);
+      //  }
+      //}
 
       URL configURL = getCustomTemplatesURL();
       if (configURL != null) {
@@ -147,6 +146,11 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public int getGroupWeight(String group) {
     return CUSTOM_GROUP.equals(group) ? -2 : 0;
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    return CUSTOM_GROUP.equals(group) ? AllIcons.Modules.Types.UserDefined : super.getGroupIcon(group);
   }
 
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);

@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
+  @NotNull
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
@@ -1079,7 +1080,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
-          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, true, false)) {
+          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
             myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
           }
         }

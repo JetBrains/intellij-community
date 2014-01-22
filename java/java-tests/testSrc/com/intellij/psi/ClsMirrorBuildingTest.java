@@ -47,6 +47,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testMiddle$Buck() { doTest(); }
   public void testDefaultPackage() { doTest(); }
   public void testLocalClass() { doTest(); }
+  public void testBounds() { doTest(); }
 
   private void doTest() {
     doTest(getTestName(false));

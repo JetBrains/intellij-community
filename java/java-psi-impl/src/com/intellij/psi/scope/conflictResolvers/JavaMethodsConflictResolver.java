@@ -454,8 +454,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final PsiSubstitutor classSubstitutor2 = info2.getSubstitutor();
 
     final int max = Math.max(params1.length, params2.length);
-    PsiType[] types1 = new PsiType[max];
-    PsiType[] types2 = new PsiType[max];
+    PsiType[] types1 = PsiType.createArray(max);
+    PsiType[] types2 = PsiType.createArray(max);
     final boolean varargsPosition = applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
     for (int i = 0; i < max; i++) {
       ProgressManager.checkCanceled();
@@ -509,8 +509,22 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor2);
       final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1);
 
-      final boolean applicable12 = isApplicableTo(types2AtSite, method1, typeParameters1, languageLevel, varargsPosition, types1, siteSubstitutor1);
-      final boolean applicable21 = isApplicableTo(types1AtSite, method2, typeParameters2, languageLevel, varargsPosition, types2, siteSubstitutor2);
+      final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite, languageLevel);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1);
+
+      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, languageLevel);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2);
+
+      final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
+      final boolean typeArgsApplicable21 = GenericsUtil.isTypeArgumentsApplicable(typeParameters2, methodSubstitutor2, myArgumentsList, !applicable12);
+
+      if (!typeArgsApplicable12) {
+        applicable12 = false;
+      }
+
+      if (!typeArgsApplicable21) {
+        applicable21 = false;
+      }
 
       if (applicable12 || applicable21) {
 
@@ -538,8 +552,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
 
         if (toCompareFunctional) {
-          final boolean applicable12ignoreFunctionalType = isApplicableTo(types2AtSite, method1, typeParameters1, languageLevel, varargsPosition, types1, siteSubstitutor1);
-          final boolean applicable21ignoreFunctionalType = isApplicableTo(types1AtSite, method2, typeParameters2, languageLevel, varargsPosition, types2, siteSubstitutor2);
+          final boolean applicable12ignoreFunctionalType = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition,
+                                                                          calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite, languageLevel));
+          final boolean applicable21ignoreFunctionalType = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition,
+                                                                          calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, languageLevel));
 
           if (applicable12ignoreFunctionalType || applicable21ignoreFunctionalType) {
             Specifics specifics = null;
@@ -616,22 +632,17 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.NEITHER;
   }
 
-  private boolean isApplicableTo(PsiType[] types2AtSite,
-                                 PsiMethod method1,
-                                 PsiTypeParameter[] typeParameters1,
-                                 LanguageLevel languageLevel,
-                                 boolean varargsPosition, PsiType[] types1, PsiSubstitutor siteSubstitutor1) {
-    final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite, languageLevel);
+  private static boolean isApplicableTo(PsiType[] types2AtSite,
+                                        PsiMethod method1,
+                                        LanguageLevel languageLevel,
+                                        boolean varargsPosition,
+                                        final PsiSubstitutor methodSubstitutor1) {
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method1, methodSubstitutor1, types2AtSite, languageLevel, false, varargsPosition);
-    final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
-    if (applicable && !GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, false)) {
-      return false;
-    }
-    return applicable;
+    return applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   private static PsiType[] typesAtSite(PsiType[] types1, PsiSubstitutor siteSubstitutor1) {
-    final PsiType[] types = new PsiType[types1.length];
+    final PsiType[] types = PsiType.createArray(types1.length);
     for (int i = 0; i < types1.length; i++) {
       types[i] = siteSubstitutor1.substitute(types1[i]);
     }
@@ -650,7 +661,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       ProgressManager.checkCanceled();
       LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
-        substitutor = substitutor.put(typeParameter, siteSubstitutor.substitute(typeParameter));
+        substitutor = substitutor.put(typeParameter, TypeConversionUtil.erasure(siteSubstitutor.substitute(typeParameter), substitutor));
       }
     }
     return substitutor;

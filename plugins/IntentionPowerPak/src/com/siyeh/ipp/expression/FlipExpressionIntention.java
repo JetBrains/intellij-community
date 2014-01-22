@@ -23,6 +23,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
@@ -77,7 +78,7 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
       prevOperand = operand.getText();
     }
     newExpression.append(prevOperand);
-    replaceExpression(newExpression.toString(), polyadicExpression);
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
   }
 
   @Override

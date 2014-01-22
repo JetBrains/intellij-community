@@ -218,7 +218,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       myClasspathAndJDKPanel.setVisible(ALLOW_CHOOSING_SDK);
       updateOutputState();
 
-      myFileType.setRenderer(new FileTypeRenderer(myFileType.getRenderer()) {
+      myFileType.setRenderer(new FileTypeRenderer() {
         @Override
         public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
           if (type == null) {

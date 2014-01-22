@@ -30,6 +30,11 @@ public class MutableCollectionComboBoxModel extends AbstractCollectionComboBoxMo
     myItems = items;
   }
 
+  public MutableCollectionComboBoxModel(List items) {
+    super(items.isEmpty() ? null : items.get(0));
+    myItems = items;
+  }
+
   @NotNull
   @Override
   final protected List getItems() {

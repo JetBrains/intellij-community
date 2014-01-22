@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -89,6 +90,14 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     }
     if (sb != null) {
       sb.append("File is valid\n");
+    }
+
+    if (!(myXmlFile.getFileType() instanceof DomSupportEnabled)) {
+      return null;
+    }
+
+    if (sb != null) {
+      sb.append("File is of dom file type\n");
     }
 
     final DomFileDescription<T> description = findFileDescription(rootTagName, sb);

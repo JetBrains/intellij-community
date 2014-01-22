@@ -13,6 +13,7 @@
   <xi:include href="/META-INF/ManifestSupport.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/PostfixTemplates.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -292,19 +293,6 @@
 
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
-
-    <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
-                     groupName="IntelliJ IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.internal.UndesirableClassUsageInspection"/>
-    <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage"
-                     groupName="IntelliJ IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.internal.FileEqualsUsageInspection"/>
-    <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
-                     groupName="IntelliJ IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.internal.GtkPreferredJComboBoxRendererInspection"/>
-    <localInspection language="JAVA" shortName="UnsafeVfsRecursion" displayName="Unsafe VFS recursion"
-                     groupName="IntelliJ IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.internal.UnsafeVfsRecursionInspection"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -1484,6 +1472,10 @@
     <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>
     <projectTemplate projectType="Java" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.codeInspection.ex.AdditionalAnnotationsRefactoringElementListener"/>
+    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
+    <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
+                    serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
   </extensions>
 
   <actions>

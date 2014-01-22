@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -72,7 +73,7 @@ class XmlSerializerImpl {
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
 
-  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
+  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, @Nullable Accessor accessor) {
     final Pair<Type, Accessor> p = new Pair<Type, Accessor>(originalType, accessor);
 
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
@@ -88,8 +89,7 @@ class XmlSerializerImpl {
   }
 
   private static Map<Pair<Type, Accessor>, Binding> getBindingCacheMap() {
-    SoftReference<Map<Pair<Type, Accessor>, Binding>> ref = ourBindings;
-    Map<Pair<Type, Accessor>, Binding> map = ref == null ? null : ref.get();
+    Map<Pair<Type, Accessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
       map = new ConcurrentHashMap<Pair<Type, Accessor>, Binding>();
       ourBindings = new SoftReference<Map<Pair<Type, Accessor>, Binding>>(map);
@@ -97,7 +97,7 @@ class XmlSerializerImpl {
     return map;
   }
 
-  private static Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
+  private static Binding _getNonCachedClassBinding(final Class<?> aClass, @Nullable Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
       return Element.class.isAssignableFrom(aClass.getComponentType())
@@ -179,5 +179,24 @@ class XmlSerializerImpl {
     }
 
     return result.toArray(new Content[result.size()]);
+  }
+
+  /**
+   * {@link Class#newInstance()} cannot instantiate private classes
+   */
+  static <T> T newInstance(Class<T> aClass) {
+    try {
+      Constructor<T> constructor = aClass.getDeclaredConstructor();
+      try {
+        constructor.setAccessible(true);
+      }
+      catch (SecurityException e) {
+        return aClass.newInstance();
+      }
+      return constructor.newInstance();
+    }
+    catch (Exception e) {
+      throw new XmlSerializationException(e);
+    }
   }
 }

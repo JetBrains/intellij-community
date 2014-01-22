@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @Override
-  public void setEditor(HighlighterClient editor) {
+  public void setEditor(@NotNull HighlighterClient editor) {
     Lexer l = getLexer();
     if (l instanceof LayeredLexer) {
       editor.getDocument().putUserData(KEY, editor.getDocument().getText().indexOf(PyNames.UNICODE_LITERALS) == -1);

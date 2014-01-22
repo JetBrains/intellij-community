@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -101,14 +100,14 @@ public interface HighlightInfoType {
 
   TextAttributesKey getAttributesKey();
 
-  class HighlightInfoTypeImpl implements HighlightInfoType, JDOMExternalizable {
+  class HighlightInfoTypeImpl implements HighlightInfoType {
     private final HighlightSeverity mySeverity;
     private final TextAttributesKey myAttributesKey;
 
     //read external only
-    public HighlightInfoTypeImpl() {
-      mySeverity = new HighlightSeverity();
-      myAttributesKey = new TextAttributesKey();
+    HighlightInfoTypeImpl(@NotNull Element element) throws InvalidDataException {
+      mySeverity = new HighlightSeverity(element);
+      myAttributesKey = new TextAttributesKey(element);
     }
 
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey) {
@@ -132,18 +131,10 @@ public interface HighlightInfoType {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
 
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-      mySeverity.readExternal(element);
-      myAttributesKey.readExternal(element);
-    }
-
-    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       mySeverity.writeExternal(element);
       myAttributesKey.writeExternal(element);
     }
-
 
     public boolean equals(final Object o) {
       if (this == o) return true;

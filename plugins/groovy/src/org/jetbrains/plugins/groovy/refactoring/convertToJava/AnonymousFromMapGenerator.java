@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,10 @@ public class AnonymousFromMapGenerator {
       final GrExpression expression = arg.getExpression();
       if (name == null || expression == null || !(expression instanceof GrClosableBlock)) continue;
 
-      final GrParameter[] allParameters = ((GrClosableBlock)expression).getAllParameters();
+      final GrClosableBlock closure = (GrClosableBlock)expression;
+      final GrParameter[] allParameters = closure.getAllParameters();
       List<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(allParameters));
-      final PsiType clReturnType = ((GrClosableBlock)expression).getReturnType();
+      final PsiType clReturnType = context.typeProvider.getReturnType(closure);
 
       GrExpression[] args = new GrExpression[allParameters.length];
       for (int i = 0; i < allParameters.length; i++) {

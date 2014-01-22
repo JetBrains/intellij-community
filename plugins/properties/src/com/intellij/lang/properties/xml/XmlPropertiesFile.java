@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.xml;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -31,8 +32,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.reference.SoftLazyValue;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -71,7 +72,7 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   @Nullable
   public static PropertiesFile getPropertiesFile(final PsiFile file) {
-    return file instanceof XmlFile ? getPropertiesFile((XmlFile)file) : null;
+    return file instanceof XmlFile && file.getFileType() == XmlFileType.INSTANCE ? getPropertiesFile((XmlFile)file) : null;
   }
 
   public static PropertiesFile getPropertiesFile(final XmlFile file) {
@@ -80,7 +81,7 @@ public class XmlPropertiesFile implements PropertiesFile {
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
-                                      PropertiesFile value = !XmlPropertiesIndex.isAccepted(file.getText()) ? null : new XmlPropertiesFile(file);
+                                      PropertiesFile value = XmlPropertiesIndex.isPropertiesFile(file) ? new XmlPropertiesFile(file) : null;
                                       return Result.create(value, file);
                                     }
                                   }, false);

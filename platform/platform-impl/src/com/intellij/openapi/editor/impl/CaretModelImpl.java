@@ -67,6 +67,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private int myVisualLineEnd;
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
+  private boolean isDocumentChanged;
   private RangeMarker savedBeforeBulkCaretMarker;
   private boolean myIgnoreWrongMoves = false;
   private boolean mySkipChangeRequests;
@@ -152,8 +153,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    final LogicalPosition position = myEditor.visualToLogicalPosition(pos);
-    if (!myEditor.isStickySelection() && myEditor.logicalPositionToOffset(position) != myOffset) {
+    if (!myEditor.isStickySelection() && !isDocumentChanged && !pos.equals(myVisibleCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
 
@@ -197,8 +197,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
 
     myEditor.getFoldingModel().flushCaretPosition();
 
@@ -272,7 +271,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    if (!myEditor.isStickySelection() && (columnShift != 0 || lineShift != 0)) {
+    if (!myEditor.isStickySelection() && !isDocumentChanged) {
       CopyPasteManager.getInstance().stopKillRings();
     }
     SelectionModelImpl selectionModel = myEditor.getSelectionModel();
@@ -442,7 +441,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    if (!myEditor.isStickySelection() && myOffset != myEditor.logicalPositionToOffset(pos)) {
+    if (!myEditor.isStickySelection() && !isDocumentChanged && !pos.equals(myLogicalCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
 
@@ -581,8 +580,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
 
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
@@ -714,18 +712,26 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void documentChanged(DocumentEvent e) {
-    finishUpdate();
+    isDocumentChanged = true;
+    try {
+      updateCaretPosition((DocumentEventImpl)e);
+    }
+    finally {
+      isDocumentChanged = false;
+    }
+  }
 
-    DocumentEventImpl event = (DocumentEventImpl)e;
+  private void updateCaretPosition(@NotNull final DocumentEventImpl event) {
+    finishUpdate();
     final DocumentEx document = myEditor.getDocument();
-    boolean performSoftWrapAdjustment = e.getNewLength() > 0 // We want to put caret just after the last added symbol
+    boolean performSoftWrapAdjustment = event.getNewLength() > 0 // We want to put caret just after the last added symbol
                                         // There is a possible case that the user removes text just before the soft wrap. We want to keep caret
                                         // on a visual line with soft wrap start then.
-                                        || myEditor.getSoftWrapModel().getSoftWrap(e.getOffset()) != null;
+                                        || myEditor.getSoftWrapModel().getSoftWrap(event.getOffset()) != null;
 
     if (event.isWholeTextReplaced()) {
       int newLength = document.getTextLength();
-      if (myOffset == newLength - e.getNewLength() + e.getOldLength() || newLength == 0) {
+      if (myOffset == newLength - event.getNewLength() + event.getOldLength() || newLength == 0) {
         moveToOffset(newLength, performSoftWrapAdjustment);
       }
       else {
@@ -741,16 +747,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
     else {
       if (document.isInBulkUpdate()) return;
-      int startOffset = e.getOffset();
-      int oldEndOffset = startOffset + e.getOldLength();
+      int startOffset = event.getOffset();
+      int oldEndOffset = startOffset + event.getOldLength();
 
       int newOffset = myOffset;
 
-      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(e)) {
-        newOffset += e.getNewLength() - e.getOldLength();
+      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(event)) {
+        newOffset += event.getNewLength() - event.getOldLength();
       }
       else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
-        newOffset = Math.min(newOffset, startOffset + e.getNewLength());
+        newOffset = Math.min(newOffset, startOffset + event.getNewLength());
       }
 
       newOffset = Math.min(newOffset, document.getTextLength());
@@ -763,8 +769,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       //}
     }
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
   }
 
   private void finishUpdate() {
@@ -823,6 +828,25 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void dispose() {
     releaseBulkCaretMarker();
+  }
+
+  /**
+   * Recalculates caret visual position without changing its logical position (called when soft wraps are changing)
+   */
+  public void updateVisualPosition() {
+    VerticalInfo oldInfo = myCaretInfo;
+    LogicalPosition visUnawarePos = new LogicalPosition(myLogicalCaret.line, myLogicalCaret.column);
+    setCurrentLogicalCaret(visUnawarePos);
+    myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
+    updateVisualLineInfo();
+
+    myEditor.updateCaretCursor();
+    requestRepaint(oldInfo);
+  }
+
+  private void updateVisualLineInfo() {
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
   /**

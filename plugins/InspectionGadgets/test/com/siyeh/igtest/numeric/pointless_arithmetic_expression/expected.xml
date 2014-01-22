@@ -140,4 +140,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
     <description>&lt;code&gt;i % i&lt;/code&gt; can be replaced with '0' #loc</description>
   </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>111</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;(CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8))&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
 </problems>

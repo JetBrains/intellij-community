@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,35 +89,61 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   @Nullable
   @NonNls
   public String getQualifiedName() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getQualifiedName();
+    }
+
     final GrCodeReferenceElement nameRef = getClassReference();
     final PsiElement resolved = nameRef.resolve();
-    if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
+    if (resolved instanceof PsiClass) return ((PsiClass)resolved).getQualifiedName();
     return null;
   }
 
   @Nullable
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
+    final GroovyResolveResult resolveResult = resolveWithStub();
 
-    if (resolved instanceof PsiClass) {
-      return new LightClassReference(getManager(), getClassReference().getText(), (PsiClass)resolved, resolveResult.getSubstitutor());
-    }
-    else {
-      return null;
-    }
+    final PsiElement resolved = resolveResult.getElement();
+    if (!(resolved instanceof PsiClass)) return null;
+
+    return new LightClassReference(getManager(), getClassReference().getText(), (PsiClass)resolved, resolveResult.getSubstitutor());
   }
 
+  @NotNull
+  private GroovyResolveResult resolveWithStub() {
+    final GrAnnotationStub stub = getStub();
+    final GrCodeReferenceElement reference = stub != null ? stub.getPsiElement().getClassReference() : getClassReference();
+    return reference.advancedResolve();
+  }
+
+  @Nullable
   public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      final GrAnnotation stubbedPsi = stub.getPsiElement();
+      final PsiAnnotationMemberValue value = PsiImplUtil.findAttributeValue(stubbedPsi, attributeName);
+      if (value == null || !PsiTreeUtil.isAncestor(stubbedPsi, value, true)) {         // if value is a default value we can use it
+        return value;
+      }
+    }
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Nullable
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      final GrAnnotation stubbedPsi = stub.getPsiElement();
+      final PsiAnnotationMemberValue value = PsiImplUtil.findDeclaredAttributeValue(stubbedPsi, attributeName);
+      if (value == null) {
+        return null;
+      }
+    }
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
+  public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
 
@@ -127,6 +154,11 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   @NotNull
   public GrCodeReferenceElement getClassReference() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getClassReference();
+    }
+
     return findNotNullChildByClass(GrCodeReferenceElement.class);
   }
 
@@ -134,13 +166,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public String getShortName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
-      return stub.getAnnotationName();
+      return stub.getPsiElement().getShortName();
     }
-    else {
-      return getClassReference().getReferenceName();
-    }
+
+    final String referenceName = getClassReference().getReferenceName();
+    assert referenceName != null;
+    return referenceName;
   }
 
+  @Nullable
   public PsiAnnotationOwner getOwner() {
     return (PsiAnnotationOwner)getParent();
   }

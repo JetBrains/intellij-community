@@ -507,8 +507,8 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return super.getPreferredSize();
   }
 
-  public SimpleNodeRenderer getRenderer() {
-    return (SimpleNodeRenderer)getCellRenderer();
+  public NodeRenderer getRenderer() {
+    return (NodeRenderer)getCellRenderer();
   }
 
   public String toString() {

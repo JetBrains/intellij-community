@@ -330,13 +330,17 @@ public final class LoadTextUtil {
     return charset;
   }
 
+  /**
+   * @deprecated use {@link #charsetFromContentOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, CharSequence)}
+   */
   @Nullable("returns null if cannot determine from content")
   public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
-    }
-    return null;
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
+  }
+
+  @Nullable("returns null if cannot determine from content")
+  public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
   @NotNull

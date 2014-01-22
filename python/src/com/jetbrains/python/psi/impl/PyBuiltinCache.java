@@ -16,7 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -24,9 +24,8 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -53,11 +52,28 @@ import java.util.Map;
  * Provides access to Python builtins via skeletons.
  */
 public class PyBuiltinCache {
-  public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
-  @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
+  public static final String BUILTIN_FILE = "__builtin__.py";
+  public static final String BUILTIN_FILE_3K = "builtins.py";
   public static final String EXCEPTIONS_FILE = "exceptions.py";
 
-  private PyType STRING_TYPE_PY2 = null;
+  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
+
+  /**
+   * Stores the most often used types, returned by getNNNType().
+   */
+  @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
+
+  @Nullable private PyFile myBuiltinsFile;
+  @Nullable private PyFile myExceptionsFile;
+  private long myModStamp = -1;
+
+  public PyBuiltinCache() {
+  }
+
+  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
+    myBuiltinsFile = builtins;
+    myExceptionsFile = exceptions;
+  }
 
   /**
    * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -80,7 +96,7 @@ public class PyBuiltinCache {
     if (psifile == null) {
       return null;
     }
-    Module module = ModuleUtil.findModuleForPsiElement(psifile);
+    Module module = ModuleUtilCore.findModuleForPsiElement(psifile);
     if (module != null) {
       return PythonSdkType.findPythonSdk(module);
     }
@@ -124,7 +140,7 @@ public class PyBuiltinCache {
       for (String url : urls) {
         if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
           final String builtins_url = url + "/" + name;
-          File builtins = new File(VfsUtil.urlToPath(builtins_url));
+          File builtins = new File(VfsUtilCore.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
             VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
@@ -140,8 +156,6 @@ public class PyBuiltinCache {
     return null;
   }
 
-  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
-
   @Nullable
   static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
     final PyBuiltinCache builtinCache = getInstance(sequence);
@@ -152,26 +166,13 @@ public class PyBuiltinCache {
     return null;
   }
 
-
-  @Nullable private PyFile myBuiltinsFile;
-  @Nullable private PyFile myExceptionsFile;
-
-
-  public PyBuiltinCache() {
-  }
-
-  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
-    myBuiltinsFile = builtins;
-    myExceptionsFile = exceptions;
-  }
-
   @Nullable
   public PyFile getBuiltinsFile() {
     return myBuiltinsFile;
   }
 
   public boolean isValid() {
-    return myBuiltinsFile == null || myBuiltinsFile.isValid();
+    return myBuiltinsFile != null && myBuiltinsFile.isValid();
   }
 
   /**
@@ -194,13 +195,6 @@ public class PyBuiltinCache {
     }
     return null;
   }
-
-  /**
-   * Stores the most often used types, returned by getNNNType().
-   */
-  private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
-  private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
-  private long myModStamp = -1;
 
   @Nullable
   public PyClassTypeImpl getObjectType(@NonNls String name) {
@@ -316,10 +310,7 @@ public class PyBuiltinCache {
   }
 
   private PyType getStrOrUnicodeType() {
-    if (STRING_TYPE_PY2 == null) {
-      STRING_TYPE_PY2 = PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
-    }
-    return STRING_TYPE_PY2;
+    return PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
   }
 
   @Nullable
@@ -340,51 +331,6 @@ public class PyBuiltinCache {
   @Nullable
   public PyClassType getStaticMethodType() {
     return getObjectType("staticmethod");
-  }
-
-  @Nullable
-  public Ref<PyType> getStdlibType(@NotNull String key, @NotNull TypeEvalContext context) {
-    synchronized (myStdlibTypeCache) {
-      final Ref<PyType> ref = myStdlibTypeCache.get(key);
-      if (ref != null) {
-        if (!isValid(ref.get(), context)) {
-          myStdlibTypeCache.clear();
-          return null;
-        }
-      }
-      return ref;
-    }
-  }
-
-  private static boolean isValid(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyCollectionType) {
-      final PyType elementType = ((PyCollectionType)type).getElementType(context);
-      if (!isValid(elementType, context)) {
-        return false;
-      }
-    }
-
-    if (type instanceof PyClassType) {
-      return ((PyClassType)type).isValid();
-    }
-    else if (type instanceof PyUnionType) {
-      for (PyType member : ((PyUnionType)type).getMembers()) {
-        if (!isValid(member, context)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    else if (type instanceof PyFunctionType) {
-      return ((PyFunctionType)type).getCallable().isValid();
-    }
-    return true;
-  }
-
-  public void storeStdlibType(@NotNull String key, @Nullable PyType result) {
-    synchronized (myStdlibTypeCache) {
-      myStdlibTypeCache.put(key, new Ref<PyType>(result));
-    }
   }
 
   /**

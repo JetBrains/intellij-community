@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedLabelInspection extends BaseInspection {
@@ -81,7 +82,7 @@ public class UnusedLabelInspection extends BaseInspection {
         return;
       }
       final String statementText = statement.getText();
-      replaceStatement(labeledStatement, statementText);
+      PsiReplacementUtil.replaceStatement(labeledStatement, statementText);
     }
   }
 

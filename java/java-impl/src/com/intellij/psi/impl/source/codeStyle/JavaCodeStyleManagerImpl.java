@@ -209,6 +209,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Override
+  public SuggestedNameInfo suggestCompiledParameterName(@NotNull PsiType type) {
+    // avoid hang due to nice name evaluation that uses indices for resolve (IDEA-116803)
+    return new SuggestedNameInfo(suggestVariableNameByType(type, VariableKind.PARAMETER, true, true)) {
+    };
+  }
+
+  @Override
   public SuggestedNameInfo suggestVariableName(@NotNull final VariableKind kind,
                                                @Nullable final String propertyName,
                                                @Nullable final PsiExpression expr,
@@ -301,7 +308,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private String[] suggestVariableNameByType(PsiType type, final VariableKind variableKind, boolean correctKeywords) {
-    String longTypeName = getLongTypeName(type);
+    return suggestVariableNameByType(type, variableKind, correctKeywords, false);
+  }
+
+  private String[] suggestVariableNameByType(PsiType type, final VariableKind variableKind, boolean correctKeywords, boolean skipIndices) {
+    String longTypeName = skipIndices ? type.getCanonicalText():getLongTypeName(type);
     CodeStyleSettings.TypeToNameMap map = getMapByVariableKind(variableKind);
     if (map != null && longTypeName != null) {
       if (type.equals(PsiType.NULL)) {
@@ -315,11 +326,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Collection<String> suggestions = new LinkedHashSet<String>();
 
-    suggestNamesForCollectionInheritors(type, variableKind, suggestions, correctKeywords);
-    suggestNamesFromGenericParameters(type, variableKind, suggestions, correctKeywords);
+    if (!skipIndices) {
+      suggestNamesForCollectionInheritors(type, variableKind, suggestions, correctKeywords);
+      suggestNamesFromGenericParameters(type, variableKind, suggestions, correctKeywords);
+    }
 
-    String typeName = normalizeTypeName(getTypeName(type));
+    String typeName = getTypeName(type, !skipIndices);
+
     if (typeName != null) {
+      typeName = normalizeTypeName(typeName);
       ContainerUtil.addAll(suggestions, getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType, correctKeywords));
     }
 
@@ -376,11 +391,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Nullable
   private static String getTypeName(PsiType type) {
+    return getTypeName(type, true);
+  }
+
+  @Nullable
+  private static String getTypeName(PsiType type, boolean withIndices) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final String className = classType.getClassName();
-      if (className != null) return className;
+      if (className != null || !withIndices) return className;
       final PsiClass aClass = classType.resolve();
       return aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassType().getClassName() : null;
     }
@@ -388,16 +408,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       return type.getPresentableText();
     }
     else if (type instanceof PsiWildcardType) {
-      return getTypeName(((PsiWildcardType)type).getExtendsBound());
+      return getTypeName(((PsiWildcardType)type).getExtendsBound(), withIndices);
     }
     else if (type instanceof PsiIntersectionType) {
-      return getTypeName(((PsiIntersectionType)type).getRepresentative());
+      return getTypeName(((PsiIntersectionType)type).getRepresentative(), withIndices);
     }
     else if (type instanceof PsiCapturedWildcardType) {
-      return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
+      return getTypeName(((PsiCapturedWildcardType)type).getWildcard(), withIndices);
     }
     else if (type instanceof PsiDisjunctionType) {
-      return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
+      return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound(), withIndices);
     }
     else {
       return null;

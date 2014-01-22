@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,8 +52,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
  * @author max
  */
 public class FileWatcher {
-  @NonNls public static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
-  @NonNls public static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
   public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
     @NotNull @Override
@@ -75,11 +73,10 @@ public class FileWatcher {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
-
-  @NonNls private static final String ROOTS_COMMAND = "ROOTS";
-  @NonNls private static final String EXIT_COMMAND = "EXIT";
-
+  private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
+  private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+  private static final String ROOTS_COMMAND = "ROOTS";
+  private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
 
   private final ManagingFS myManagingFS;

@@ -54,10 +54,16 @@
       </action>
     </group>
 
+    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
     <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
       <reference ref="task.actions"/>
       <separator/>
       <reference ref="working.context"/>
+      <!-- <reference ref="tasks.util"/> -->
     </group>
 
     <group id="tasks.group">
@@ -123,6 +129,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
 
     <!-- JQL support -->
     <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>

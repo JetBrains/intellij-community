@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
@@ -158,7 +159,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
       final PsiExpression expression =
         (PsiExpression)descriptor.getPsiElement();
       final String newExpression = calculateReplacementShift(expression);
-      replaceExpression(expression, newExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }
 

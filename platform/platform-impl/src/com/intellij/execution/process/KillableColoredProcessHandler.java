@@ -79,8 +79,8 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   @Override
   protected void destroyProcessImpl() {
-    // call super.closeStreams() after process termination, because
-    // otherwise process's output stream can also be closed for no reason
+    // Don't close streams, because a process may survive graceful termination.
+    // Streams will be closed after the process is really terminated.
     try {
       myProcess.getOutputStream().flush();
     }
@@ -106,21 +106,26 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   protected void doDestroyProcess() {
     boolean gracefulTerminationAttempted = false;
     if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
-      if (SystemInfo.isWindows) {
-        if (myProcess instanceof RunnerWinProcess) {
-          RunnerWinProcess runnerWinProcess = (RunnerWinProcess) myProcess;
-          runnerWinProcess.destroyGracefully(true);
-          gracefulTerminationAttempted = true;
-        }
-      }
-      else if (SystemInfo.isUnix) {
-        gracefulTerminationAttempted = UnixProcessManager.sendSigIntToProcessTree(myProcess);
-      }
+      gracefulTerminationAttempted = destroyProcessGracefully();
     }
     if (!gracefulTerminationAttempted) {
       // execute default process destroy
       super.doDestroyProcess();
     }
+  }
+
+  protected boolean destroyProcessGracefully() {
+    if (SystemInfo.isWindows) {
+      if (myProcess instanceof RunnerWinProcess) {
+        RunnerWinProcess runnerWinProcess = (RunnerWinProcess) myProcess;
+        runnerWinProcess.destroyGracefully(true);
+        return true;
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+    }
+    return false;
   }
 
   /**

@@ -16,13 +16,12 @@
 
 package com.intellij.tasks.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import org.jdom.Element;
@@ -30,11 +29,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,12 +46,24 @@ import java.util.regex.Pattern;
  */
 public class TaskUtil {
   private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+  static {
+    // Use UTC time zone by default (for formatting)
+    ISO8601_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
     "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                  // date
     "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
     "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
+
+  private static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<Date>() {
+    @Override
+    public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      return parseDate(json.getAsString());
+    }
+  };
+
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -112,8 +127,12 @@ public class TaskUtil {
     }
   }
 
+  public static String formatDate(@NotNull Date date) {
+    return ISO8601_DATE_FORMAT.format(date);
+  }
+
   /**
-   * {@link Task#equals(Object)} implementation compares tasks by they unique IDs only.
+   * {@link Task#equals(Object)} implementation compares tasks by their unique IDs only.
    * This method should be used when full comparison is necessary.
    */
   public static boolean tasksEqual(@NotNull Task t1, @NotNull Task t2) {
@@ -191,8 +210,32 @@ public class TaskUtil {
    */
   public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull String json) {
     if (logger.isDebugEnabled()) {
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      try {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      }
+      catch (JsonSyntaxException e) {
+        logger.debug("Malformed JSON\n" + json);
+      }
+    }
+  }
+
+  public static GsonBuilder installDateDeserializer(GsonBuilder builder) {
+    return builder.registerTypeAdapter(Date.class, DATE_DESERIALIZER);
+  }
+
+  /**
+   * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
+   *
+   * @return urlencoded string
+   */
+  @NotNull
+  public static String encodeUrl(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s, CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new AssertionError("UTF-8 is not supported");
     }
   }
 }

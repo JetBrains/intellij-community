@@ -190,7 +190,7 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected String getProjectName(@NotNull String path) {
     File file = new File(path);
-    return file.isDirectory() ? file.getName() : file.getParentFile().getName();
+    return file.isDirectory() || file.getParentFile() == null ? file.getName() : file.getParentFile().getName();
   }
 
   private void prepareSystemSettings(@NotNull SystemSettings s) {
@@ -233,6 +233,11 @@ public abstract class AbstractExternalSystemConfigurable<
         projectSettings.add(s);
       }
       systemSettings.setLinkedProjectsSettings(projectSettings);
+      for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+        if(control instanceof AbstractExternalProjectSettingsControl){
+          AbstractExternalProjectSettingsControl.class.cast(control).updateInitialSettings();
+        }
+      }
       if (mySystemSettingsControl != null) {
         mySystemSettingsControl.apply(systemSettings);
       }

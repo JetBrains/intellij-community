@@ -21,14 +21,19 @@ import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
     return ServiceManager.getService(WebBrowserService.class);
   }
 
-  public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
+  @NotNull
+  public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
   @NotNull
-  public abstract Collection<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
+    OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
+    return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
+  }
 }

@@ -25,7 +25,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Object ANY_VALUE = new Object();
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
-  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = new MultiMapBasedOnSet<PushInstruction, Object>();
+  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -237,7 +236,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     finally {
       memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
       if (instruction.shouldFlushFields()) {
-        memState.flushFields(runner.getFields());
+        memState.flushFields();
       }
     }
   }

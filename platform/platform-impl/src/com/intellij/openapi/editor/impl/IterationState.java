@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,14 +87,14 @@ public final class IterationState {
   private int myEndOffset;
   private final int myEnd;
 
-  private final int mySelectionStart;
+  private final int[] mySelectionStarts;
+  private final int[] mySelectionEnds;
+  private int myCurrentSelectionIndex = 0;
 
-  private final int mySelectionEnd;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
   private final FoldingModelEx myFoldingModel;
 
-  private final boolean hasSelection;
   private FoldRegion myCurrentFold = null;
   private final TextAttributes myFoldTextAttributes;
   private final TextAttributes mySelectionAttributes;
@@ -121,9 +122,9 @@ public final class IterationState {
     LOG.assertTrue(myStartOffset <= myEnd);
     myHighlighterIterator = editor.getHighlighter().createIterator(start);
 
-    hasSelection = useCaretAndSelection && editor.getSelectionModel().hasSelection();
-    mySelectionStart = hasSelection ? editor.getSelectionModel().getSelectionStart() : -1;
-    mySelectionEnd = hasSelection ? editor.getSelectionModel().getSelectionEnd() : -1;
+    boolean hasSelection = useCaretAndSelection && (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection());
+    mySelectionStarts = hasSelection ? editor.getSelectionModel().getBlockSelectionStarts() : ArrayUtilRt.EMPTY_INT_ARRAY;
+    mySelectionEnds = hasSelection ? editor.getSelectionModel().getBlockSelectionEnds() : ArrayUtilRt.EMPTY_INT_ARRAY;
 
     myFoldingModel = editor.getFoldingModel();
     myFoldTextAttributes = myFoldingModel.getPlaceholderAttributes();
@@ -235,13 +236,14 @@ public final class IterationState {
   public void advance() {
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
+    advanceCurrentSelectionIndex();
 
     myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
     if (myCurrentFold != null) {
       myEndOffset = myCurrentFold.getEndOffset();
     }
     else {
-      myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd(myStartOffset));
+      myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd());
       myEndOffset = Math.min(myEndOffset, getMinSegmentHighlightersEnd());
       myEndOffset = Math.min(myEndOffset, getFoldRangesEnd(myStartOffset));
       myEndOffset = Math.min(myEndOffset, getCaretEnd(myStartOffset));
@@ -290,17 +292,26 @@ public final class IterationState {
     return min;
   }
 
-  private int getSelectionEnd(int start) {
-    if (!hasSelection) {
+  private void advanceCurrentSelectionIndex() {
+    while (myCurrentSelectionIndex < mySelectionEnds.length && myStartOffset >= mySelectionEnds[myCurrentSelectionIndex]) {
+      myCurrentSelectionIndex++;
+    }
+  }
+
+  private int getSelectionEnd() {
+    if (myCurrentSelectionIndex >= mySelectionStarts.length) {
       return myEnd;
     }
-    if (mySelectionStart > start) {
-      return mySelectionStart;
+    if (myStartOffset < mySelectionStarts[myCurrentSelectionIndex]) {
+      return mySelectionStarts[myCurrentSelectionIndex];
     }
-    if (mySelectionEnd > start) {
-      return mySelectionEnd;
+    else {
+      return mySelectionEnds[myCurrentSelectionIndex];
     }
-    return myEnd;
+  }
+
+  private boolean isInSelection() {
+    return myCurrentSelectionIndex < mySelectionStarts.length && myStartOffset >= mySelectionStarts[myCurrentSelectionIndex];
   }
 
   private void advanceSegmentHighlighters() {
@@ -362,7 +373,7 @@ public final class IterationState {
       return;
     }
 
-    boolean isInSelection = hasSelection && myStartOffset >= mySelectionStart && myStartOffset < mySelectionEnd;
+    boolean isInSelection = isInSelection();
     boolean isInCaretRow = myStartOffset >= myCaretRowStart && myStartOffset < myCaretRowEnd;
     boolean isInGuardedBlock = myDocument.getOffsetGuard(myStartOffset) != null;
 

@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="jam-support-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-community-tests" />
     <orderEntry type="module" module-name="python-community-plugin" />

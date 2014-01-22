@@ -135,6 +135,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
   void collectItems() {
     if (!myBreakpointsPanelProviders.isEmpty()) {
+      disposeItems();
       myBreakpointItems.clear();
       for (BreakpointPanelProvider panelProvider : myBreakpointsPanelProviders) {
         panelProvider.provideBreakpointItems(myProject, myBreakpointItems);
@@ -220,7 +221,12 @@ public class BreakpointsDialog extends DialogWrapper {
         myDetailController.updateDetailView();
       }
     };
-    JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController);
+    JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
+      @Override
+      protected void onDoubleClick(CheckedTreeNode node) {
+        navigate(false);
+      }
+    };
 
     new AnAction("BreakpointDialog.GoToSource") {
       @Override
@@ -233,7 +239,8 @@ public class BreakpointsDialog extends DialogWrapper {
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        navigate(false);
+        navigate(true);
+        close(OK_EXIT_CODE);
       }
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree);
 
@@ -362,7 +369,14 @@ public class BreakpointsDialog extends DialogWrapper {
     saveCurrentItem();
     Disposer.dispose(myListenerDisposable);
     saveBreakpointsDialogState();
+    disposeItems();
     super.dispose();
+  }
+
+  private void disposeItems() {
+    for (BreakpointItem item : myBreakpointItems) {
+      item.dispose();
+    }
   }
 
   private void saveCurrentItem() {

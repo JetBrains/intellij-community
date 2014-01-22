@@ -21,13 +21,19 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
@@ -124,6 +130,20 @@ public class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatch
       final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
       final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
       if (psiIdentifier != null) {
+        final Collection<RefElement> inReferences = refMethod.getInReferences();
+        if (inReferences.size() == 1) {
+          final RefElement refElement = inReferences.iterator().next();
+          final PsiElement usagesContainer = refElement.getElement();
+          if (usagesContainer == null) return null;
+          if (ReferencesSearch.search(psiMethod, new LocalSearchScope(usagesContainer)).forEach(new Processor<PsiReference>() {
+            private final Set<PsiReference> myFoundRefs = new HashSet<PsiReference>();
+            @Override
+            public boolean process(PsiReference reference) {
+              myFoundRefs.add(reference);
+              return myFoundRefs.size() < 2;
+            }
+          })) return null;
+        }
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier,
                                                                        InspectionsBundle
                                                                          .message("boolean.method.is.always.inverted.problem.descriptor"),

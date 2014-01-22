@@ -30,10 +30,10 @@ import java.nio.charset.Charset;
 public class CapturingProcessHandler extends OSProcessHandler {
   private static final Logger LOG = Logger.getInstance(CapturingProcessHandler.class);
   private final ProcessOutput myOutput = new ProcessOutput();
-
+  
   public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    addProcessListener(new CapturingProcessAdapter(myOutput));
+    addProcessListener(createProcessAdapter(myOutput));
   }
 
   public CapturingProcessHandler(final Process process) {
@@ -46,9 +46,13 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   public CapturingProcessHandler(final Process process, final Charset charset, final String commandLine) {
     super(process, commandLine, charset);
-    addProcessListener(new CapturingProcessAdapter(myOutput));
+    addProcessListener(createProcessAdapter(myOutput));
   }
 
+  protected CapturingProcessAdapter createProcessAdapter(ProcessOutput processOutput) {
+    return new CapturingProcessAdapter(processOutput);
+  }
+  
   public ProcessOutput runProcess() {
     startNotify();
     if (waitFor()) {

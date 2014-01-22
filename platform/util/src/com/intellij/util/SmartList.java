@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -208,8 +210,7 @@ public class SmartList<E> extends AbstractList<E> {
     return super.iterator();
   }
 
-  private class SingletonIterator implements Iterator<E> {
-    private boolean myVisited;
+  private class SingletonIterator extends SingletonIteratorBase<E> {
     private final int myInitialModCount;
 
     public SingletonIterator() {
@@ -217,25 +218,20 @@ public class SmartList<E> extends AbstractList<E> {
     }
 
     @Override
-    public boolean hasNext() {
-      return !myVisited;
-    }
-
-    @Override
-    public E next() {
-      if (myVisited) throw new NoSuchElementException();
-      myVisited = true;
-      if (modCount != myInitialModCount) {
-        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
-      }
+    protected E getElement() {
       return (E)myElem;
     }
 
     @Override
-    public void remove() {
+    protected void checkCoModification() {
       if (modCount != myInitialModCount) {
         throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
       }
+    }
+
+    @Override
+    public void remove() {
+      checkCoModification();
       clear();
     }
   }
@@ -253,18 +249,29 @@ public class SmartList<E> extends AbstractList<E> {
   @NotNull
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
+    int aLength = a.length;
     if (mySize == 1) {
-      int length = a.length;
-      if (length != 0) {
+      if (aLength != 0) {
         a[0] = (T)myElem;
-        if (length > 1) {
-          a[1] = null;
-        }
-        return a;
+      }
+      else {
+        T[] r = (T[])Array.newInstance(a.getClass().getComponentType(), 1);
+        r[0] = (T)myElem;
+        return r;
       }
     }
-    //noinspection SuspiciousToArrayCall
-    return super.toArray(a);
+    else if (aLength < mySize) {
+      return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
+    }
+    else if (mySize != 0) {
+      //noinspection SuspiciousSystemArraycopy
+      System.arraycopy(myElem, 0, a, 0, mySize);
+    }
+
+    if (aLength > mySize) {
+      a[mySize] = null;
+    }
+    return a;
   }
 
   /**

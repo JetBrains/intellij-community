@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 public interface GrWhileStatement extends GrStatement, GrControlStatement, GrLoopStatement {
 
   @Nullable
-  GrCondition getCondition();
+  GrExpression getCondition();
 
   @Nullable
   GrStatement getBody();

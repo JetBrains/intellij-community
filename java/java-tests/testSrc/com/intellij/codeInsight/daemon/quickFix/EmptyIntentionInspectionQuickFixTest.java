@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
+public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase {
   @Override
   @NonNls
   protected String getBasePath() {

@@ -613,6 +613,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 ? new MyDialogWrapper(myParentWindow, myShouldShowCancel)
                 : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
+      if (SystemInfo.isAppleJvm) {
+        // With Apple JDK we look for MacMessage parent by the window title.
+        // Let's set just the title as the window title for simplicity.
+        myPopup.setTitle(myTitle);
+      }
       if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
         ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
       }

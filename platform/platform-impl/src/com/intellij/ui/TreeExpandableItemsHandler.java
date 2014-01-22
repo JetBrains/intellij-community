@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   protected TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         updateSelection(tree);
       }
@@ -97,14 +98,16 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
 
   private void updateSelection(JTree tree) {
     int selection = tree.getSelectionCount() == 1 ? tree.getSelectionModel().getLeadSelectionRow() : -1;
-    handleSelectionChange(selection == -1 ? null : new Integer(selection));
+    handleSelectionChange(selection == -1 ? null : selection);
   }
 
+  @Override
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.getRowForLocation(point.x, point.y);
-    return rowIndex != -1 ? new Integer(rowIndex) : null;
+    return rowIndex != -1 ? rowIndex : null;
   }
 
+  @Override
   protected Pair<Component, Rectangle> getCellRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
 

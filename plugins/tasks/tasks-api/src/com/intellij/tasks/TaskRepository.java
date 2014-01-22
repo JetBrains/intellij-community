@@ -217,7 +217,7 @@ public abstract class TaskRepository {
     return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
-  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     throw new UnsupportedOperationException();
   }
 

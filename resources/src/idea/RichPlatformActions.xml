@@ -426,9 +426,5 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </group>
 
-    <action internal="true" class="com.intellij.ide.projectWizard.NewProjectWizardAction" text="Launch New Project Wizard">
-      <add-to-group group-id="ToolsBasicGroup"/>
-    </action>
-
   </actions>
 </component>

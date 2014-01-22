@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,21 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
-public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerInfo<T> {
+public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
   private final NotNullLazyValue<Collection<? extends GotoRelatedItem>> myTargets;
 
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
@@ -65,6 +70,39 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerI
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
     return new RelatedItemLineMarkerGutterIconRenderer<T>(this);
+  }
+
+  @Override
+  public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
+    return myIcon == info.myIcon;
+  }
+
+  @Override
+  public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+    return myIcon;
+  }
+
+  @Override
+  public Function<? super PsiElement, String> getCommonTooltip(@NotNull final List<MergeableLineMarkerInfo> infos) {
+    return new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        Set<String> tooltips = ContainerUtil.map2Set(infos, new Function<MergeableLineMarkerInfo, String>() {
+          @Override
+          public String fun(MergeableLineMarkerInfo info) {
+            return info.getLineMarkerTooltip();
+          }
+        });
+        StringBuilder tooltip = new StringBuilder();
+        for (String info : tooltips) {
+          if (tooltip.length() > 0) {
+            tooltip.append(UIUtil.BORDER_LINE);
+          }
+          tooltip.append(UIUtil.getHtmlBody(info));
+        }
+        return XmlStringUtil.wrapInHtml(tooltip);
+      }
+    };
   }
 
   private static class RelatedItemLineMarkerGutterIconRenderer<T extends PsiElement> extends LineMarkerGutterIconRenderer<T> {

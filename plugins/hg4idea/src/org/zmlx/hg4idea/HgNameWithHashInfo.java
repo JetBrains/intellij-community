@@ -38,11 +38,11 @@ public class HgNameWithHashInfo {
   }
 
   /**
-   * <p>Returns the hash on which this branch or bookmark or tag is reference to.</p>
+   * <p>Returns the hash on which this bookmark or tag is reference to.</p>
    */
   @NotNull
-  public String getHash() {
-    return myHash.asString();
+  public Hash getHash() {
+    return myHash;
   }
 
   @NotNull

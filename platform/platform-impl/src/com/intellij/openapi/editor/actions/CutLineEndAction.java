@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +75,9 @@ public class CutLineEndAction extends EditorAction {
     private void delete(@NotNull Editor editor, int start, int end) {
       if (myCopyToClipboard) {
         KillRingUtil.copyToKillRing(editor, start, end, true);
+      }
+      else {
+        CopyPasteManager.getInstance().stopKillRings();
       }
       editor.getDocument().deleteString(start, end);
     }

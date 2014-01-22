@@ -126,6 +126,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testTwoLinesBetweenTopLevelDeclarationsWithComment() { // PY-9923
+    doTest();
+  }
+
   public void testSpecialSlice() {  // PY-1928
     doTest();
   }
@@ -196,6 +200,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testContinuationIndent() {
+    doTest();
+  }
+
+  public void testContinuationIndentInIndentingStatement() { // PY-9573
     doTest();
   }
 
@@ -355,6 +363,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapOnDot() {  // PY-6359
+    doTest();
+  }
+
+  public void testIndentParensInImport() { // PY-9075
     doTest();
   }
 

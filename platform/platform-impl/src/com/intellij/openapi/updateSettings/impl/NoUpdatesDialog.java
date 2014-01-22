@@ -17,64 +17,44 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author pti
  */
 class NoUpdatesDialog extends AbstractUpdateDialog {
-  protected NoUpdatesDialog(final boolean canBeParent, final List<PluginDownloader> updatePlugins, boolean enableLink) {
-    super(canBeParent, enableLink, updatePlugins);
-    setTitle(IdeBundle.message("updates.info.dialog.title"));
+  protected NoUpdatesDialog(boolean enableLink) {
+    super(enableLink);
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return new NoUpdatesPanel().myPanel;
   }
 
   @Override
   protected String getOkButtonText() {
-    return myUploadedPlugins == null ? CommonBundle.getCloseButtonText() : IdeBundle.message("update.plugins.update.action");
+    return CommonBundle.getCloseButtonText();
   }
 
   @NotNull
+  @Override
   protected Action[] createActions() {
-    final Action cancelAction = getCancelAction();
-    if (myUploadedPlugins != null) {
-      return new Action[] {getOKAction(), cancelAction};
-    }
-    return new Action[] {getOKAction()};
+    return new Action[]{getOKAction()};
   }
 
-  @Override
-  protected boolean doDownloadAndPrepare() {
-    boolean hasSmthToUpdate = super.doDownloadAndPrepare();
-    if (hasSmthToUpdate && isShowConfirmation() && PluginManagerConfigurable.showRestartIDEADialog() != Messages.YES) {
-      hasSmthToUpdate = false;
-    }
-    return hasSmthToUpdate;
-  }
-  
   private class NoUpdatesPanel {
     private JPanel myPanel;
-    private JPanel myPluginsPanel;
-    private JEditorPane myEditorPane;
-    private JLabel myNothingFoundToUpdateLabel;
-    private JLabel myPluginsToUpdateLabel;
+    private JLabel myNothingToUpdateLabel;
+    private JEditorPane myMessageArea;
 
     public NoUpdatesPanel() {
-      initPluginsPanel(myPanel, myPluginsPanel, myEditorPane);
-      myPluginsToUpdateLabel.setVisible(myUploadedPlugins != null);
-      myNothingFoundToUpdateLabel.setVisible(myUploadedPlugins == null);
-      myNothingFoundToUpdateLabel.setText("You already have the latest version of " +
-                                          ApplicationInfo.getInstance().getVersionName()+ " installed.");
+      myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.message", ApplicationInfo.getInstance().getVersionName()));
+      configureMessageArea(myMessageArea);
     }
   }
 }

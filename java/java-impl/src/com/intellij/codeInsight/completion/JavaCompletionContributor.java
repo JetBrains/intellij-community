@@ -462,18 +462,30 @@ public class JavaCompletionContributor extends CompletionContributor {
       final PsiNameValuePair[] existingPairs = parameterList.getAttributes();
 
       methods: for (PsiMethod method : annoClass.getMethods()) {
+        if (!(method instanceof PsiAnnotationMethod)) continue;
+        
         final String attrName = method.getName();
         for (PsiNameValuePair apair : existingPairs) {
           if (Comparing.equal(apair.getName(), attrName)) continue methods;
         }
-        result.addElement(new LookupItem<PsiMethod>(method, attrName).setInsertHandler(new InsertHandler<LookupElement>() {
+        LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
           }
-        }));
+        });
+
+        PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
+        if (defaultValue != null) {
+          Object constant = JavaPsiFacade.getInstance(method.getProject()).getConstantEvaluationHelper().computeConstantExpression(defaultValue);
+          if (constant != null) {
+            element = element.withTailText(" default " + (constant instanceof String ? "\"" + constant + "\"" : constant), true);
+          }
+        }
+
+        result.addElement(element);
       }
     }
   }
@@ -624,7 +636,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
 
       if (context.getCompletionType() == CompletionType.BASIC) {
-        if (semicolonNeeded(context)) {
+        if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
           return;
         }
@@ -657,8 +669,15 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean semicolonNeeded(CompletionInitializationContext context) {
-    HighlighterIterator iterator = ((EditorEx) context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
+  public static boolean semicolonNeeded(final Editor editor, PsiFile file,  final int startOffset) {
+    final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
+    if (ref != null && !(ref instanceof PsiReferenceExpression)) {
+      if (ref.getParent() instanceof PsiTypeElement) {
+        return true;
+      }
+    }
+
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
     if (iterator.atEnd()) return false;
 
     if (iterator.getTokenType() == JavaTokenType.IDENTIFIER) {

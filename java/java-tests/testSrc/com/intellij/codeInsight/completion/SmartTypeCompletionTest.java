@@ -994,6 +994,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCaseMissingEnumValue() throws Throwable { doTest(); }
   public void testCaseMissingEnumValue2() throws Throwable { doTest(); }
+  
+  public void testNoHiddenParameter() { doTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
@@ -1018,6 +1020,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
   public void testInnerAfterNew() throws Throwable { doTest(); }
+  public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
 
   public void testMemberImportStatically() {
     configureByTestName();
@@ -1106,7 +1109,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     complete();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(Lookup.NORMAL_SELECT_CHAR);
   }
 

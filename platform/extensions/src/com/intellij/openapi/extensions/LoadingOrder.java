@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -116,15 +117,19 @@ public class LoadingOrder {
     return new LoadingOrder(AFTER_STR + id);
   }
 
-  public static void sort(final Orderable[] orderables) {
-    // our graph is pretty sparse so do benefit from the fact
-    final Map<String,Orderable> map = new HashMap<String, Orderable>();
-    final HashMap<Orderable, LoadingOrder> cachedMap = new HashMap<Orderable, LoadingOrder>(orderables.length);
-    final HashSet<Orderable> first = new HashSet<Orderable>(1);
-    final HashSet<Orderable> hasBefore = new HashSet<Orderable>(orderables.length);
+  public static void sort(@NotNull Orderable... orderable) {
+    sort(Arrays.asList(orderable));
+  }
 
-    for(Orderable o:orderables) {
-      final String id = o.getOrderId();
+  public static void sort(@NotNull final List<? extends Orderable> orderable) {
+    // our graph is pretty sparse so do benefit from the fact
+    final Map<String, Orderable> map = ContainerUtil.newHashMap();
+    final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newHashMap();
+    final Set<Orderable> first = ContainerUtil.newHashSet(1);
+    final Set<Orderable> hasBefore = ContainerUtil.newHashSet(orderable.size());
+
+    for (Orderable o : orderable) {
+      String id = o.getOrderId();
       if (StringUtil.isNotEmpty(id)) map.put(id, o);
       LoadingOrder order = o.getOrder();
       cachedMap.put(o, order);
@@ -132,61 +137,61 @@ public class LoadingOrder {
       if (order.myBefore.size() != 0) hasBefore.add(o);
     }
 
-    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
+    GraphGenerator.SemiGraph<Orderable> graph = new GraphGenerator.SemiGraph<Orderable>() {
       @Override
       public Collection<Orderable> getNodes() {
-        final ArrayList<Orderable> list = new ArrayList<Orderable>(Arrays.asList(orderables));
+        List<Orderable> list = ContainerUtil.newArrayList(orderable);
         Collections.reverse(list);
         return list;
       }
 
       @Override
-      public Iterator<Orderable> getIn(final Orderable n) {
-        final LoadingOrder order = cachedMap.get(n);
+      public Iterator<Orderable> getIn(Orderable n) {
+        LoadingOrder order = cachedMap.get(n);
 
         Set<Orderable> predecessors = new LinkedHashSet<Orderable>();
-        for (final String id : order.myAfter) {
-          final Orderable orderable = map.get(id);
-          if (orderable != null) {
-            predecessors.add(orderable);
+        for (String id : order.myAfter) {
+          Orderable o = map.get(id);
+          if (o != null) {
+            predecessors.add(o);
           }
         }
 
         String id = n.getOrderId();
         if (StringUtil.isNotEmpty(id)) {
-          for (final Orderable orderable : hasBefore) {
-            final LoadingOrder hisOrder = cachedMap.get(orderable);
+          for (Orderable o : hasBefore) {
+            LoadingOrder hisOrder = cachedMap.get(o);
             if (hisOrder.myBefore.contains(id)) {
-              predecessors.add(orderable);
+              predecessors.add(o);
             }
           }
         }
 
         if (order.myLast) {
-          for (final Orderable orderable : orderables) {
-            final LoadingOrder hisOrder = cachedMap.get(orderable);
+          for (Orderable o : orderable) {
+            LoadingOrder hisOrder = cachedMap.get(o);
             if (!hisOrder.myLast) {
-              predecessors.add(orderable);
+              predecessors.add(o);
             }
           }
         }
 
         if (!order.myFirst) {
-          for(Orderable orderable:first) {
-            predecessors.add(orderable);
-          }
+          predecessors.addAll(first);
         }
 
         return predecessors.iterator();
       }
-    })));
+    };
+
+    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(graph)));
 
     if (!builder.isAcyclic()) {
-      final Pair<Orderable,Orderable> dependency = builder.getCircularDependency();
-      throw new SortingException("Could not satisfy sorting requirements", new Element[]{dependency.first.getDescribingElement(), dependency.second.getDescribingElement()});
+      Pair<Orderable, Orderable> p = builder.getCircularDependency();
+      throw new SortingException("Could not satisfy sorting requirements", p.first.getDescribingElement(), p.second.getDescribingElement());
     }
 
-    Arrays.sort(orderables, builder.comparator());
+    Collections.sort(orderable, builder.comparator());
   }
 
   public static LoadingOrder readOrder(@NonNls String orderAttr) {

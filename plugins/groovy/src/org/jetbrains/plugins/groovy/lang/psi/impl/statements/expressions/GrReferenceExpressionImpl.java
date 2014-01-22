@@ -711,7 +711,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
 
       final PsiType inferred = getInferredTypes(refExpr, resolved);
-      if (inferred == null || PsiType.NULL.equals(inferred)) {
+      if (inferred == null) {
         if (nominal == null) {
           //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
           if (resolved instanceof GrVariable) {

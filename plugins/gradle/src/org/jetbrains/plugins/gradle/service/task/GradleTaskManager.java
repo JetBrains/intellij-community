@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.service.task;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,45 +27,63 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
  * @author Denis Zhdanov
  * @since 3/14/13 5:09 PM
  */
-public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleExecutionSettings>
+  implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
+
+  /**
+   * TODO: remove the method in 13.1
+   */
+  @Override
+  public void executeTasks(@NotNull ExternalSystemTaskId id,
+                           @NotNull List<String> taskNames,
+                           @NotNull String projectPath,
+                           @Nullable GradleExecutionSettings settings,
+                           @Nullable String vmOptions,
+                           @Nullable String debuggerSetup,
+                           @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,
                            @NotNull String projectPath,
                            @Nullable final GradleExecutionSettings settings,
-                           @Nullable final String vmOptions,
+                           @NotNull final List<String> vmOptions,
+                           @NotNull final List<String> scriptParameters,
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-    if(settings != null) {
-      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-    }
+//    if (settings != null) {
+//      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+//    }
 
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if(gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup, listener)) return;
+        if (gradleTaskManagerExtension.executeTasks(
+          id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, listener)) {
+          return;
+        }
       }
     }
 
@@ -84,11 +102,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
               "}}",
             };
             FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
-            launcher.withArguments("--init-script", tempFile.getAbsolutePath());
+
+            scriptParameters.add("--init-script");
+            scriptParameters.add(tempFile.getAbsolutePath());
           }
           catch (IOException e) {
             throw new ExternalSystemException(e);
           }
+        }
+
+        if (!scriptParameters.isEmpty()) {
+          launcher.withArguments(ArrayUtil.toStringArray(scriptParameters));
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();
@@ -103,7 +127,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     throws ExternalSystemException {
 
     for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-      if(gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+      if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
     }
 
     // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539

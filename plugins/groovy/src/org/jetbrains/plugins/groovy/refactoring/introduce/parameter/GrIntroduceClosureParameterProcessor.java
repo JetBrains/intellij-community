@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -178,7 +177,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (!mySettings.generateDelegate() && toSearchFor != null) {
       Collection<PsiReference> refs;
       if (toSearchFor instanceof GrField) {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
+        refs = ReferencesSearch.search(toSearchFor).findAll();
         final GrAccessorMethod[] getters = ((GrField)toSearchFor).getGetters();
         for (GrAccessorMethod getter : getters) {
           refs.addAll(MethodReferencesSearch.search(getter, getter.getResolveScope(), true).findAll());
@@ -188,7 +187,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         refs = findUsagesForLocal(toReplaceIn, ((GrVariable)toSearchFor));
       }
       else {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
+        refs = ReferencesSearch.search(toSearchFor).findAll();
       }
 
       for (PsiReference ref1 : refs) {
@@ -364,7 +363,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (block.getArrow() == null) {
       final PsiElement arrow = block.addAfter(factory.createClosureFromText("{->}").getArrow().copy(), parameterList);
       final PsiElement child = block.getFirstChild().getNextSibling();
-      if (TokenSets.WHITE_SPACES_SET.contains(child.getNode().getElementType())) {
+      if (PsiImplUtil.isWhiteSpaceOrNls(child)) {
         final String text = child.getText();
         child.delete();
         block.addAfter(factory.createLineTerminator(text), arrow);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SharedScheme<E extends ExternalizableScheme> {
   private final String myUserName;
   private final String myDescription;
   private final E myScheme;
 
-  public SharedScheme(final String userName, final String description, final E scheme) {
+  public SharedScheme(@NotNull String userName, final String description, @NotNull E scheme) {
     myUserName = userName;
     myDescription = description;
     myScheme = scheme;
   }
 
+  @NotNull
   public String getUserName() {
     return myUserName;
   }
@@ -34,6 +37,7 @@ public class SharedScheme<E extends ExternalizableScheme> {
     return myDescription;
   }
 
+  @NotNull
   public E getScheme() {
     return myScheme;
   }

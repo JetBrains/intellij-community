@@ -73,6 +73,10 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testFieldWithClassName() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(null, true, true, PsiModifier.PUBLIC);
   }

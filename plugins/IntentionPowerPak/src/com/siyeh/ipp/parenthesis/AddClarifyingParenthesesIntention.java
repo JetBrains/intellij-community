@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +46,11 @@ public class AddClarifyingParenthesesIntention extends Intention {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
       final PsiExpression condition = conditionalExpression.getCondition();
       if (expression == condition) {
-        replaceExpression('(' + newExpression.toString() + ')', expression);
+        PsiReplacementUtil.replaceExpression(expression, '(' + newExpression.toString() + ')');
         return;
       }
     }
-    replaceExpression(newExpression.toString(), expression);
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
   }
 
   @Nullable

@@ -66,6 +66,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +114,6 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
 
   private volatile boolean breakpointsInitialized;
-  private boolean autoInitBreakpoints = true;
 
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager) {
@@ -159,11 +159,6 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setPauseActionSupported(final boolean isSupported) {
     myPauseActionSupported = isSupported;
-  }
-
-  @Override
-  public void setAutoInitBreakpoints(boolean value) {
-    autoInitBreakpoints = value;
   }
 
   public List<AnAction> getRestartActions() {
@@ -235,7 +230,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess = process;
     mySessionData = sessionData;
 
-    if (autoInitBreakpoints) {
+    if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
 
@@ -295,7 +290,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
     Set<XBreakpoint<?>> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
-    Set<XBreakpointType<?, ?>> breakpointTypes = new HashSet<XBreakpointType<?, ?>>();
+    if (slaveBreakpoints.isEmpty()) {
+      return;
+    }
+
+    Set<XBreakpointType<?, ?>> breakpointTypes = new THashSet<XBreakpointType<?, ?>>();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       breakpointTypes.add(getBreakpointTypeClass(handler));
     }

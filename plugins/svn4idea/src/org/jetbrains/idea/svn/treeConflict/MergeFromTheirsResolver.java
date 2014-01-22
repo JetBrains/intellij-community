@@ -587,8 +587,8 @@ public class MergeFromTheirsResolver {
 
   private boolean getAddedFilesPlaceOption() {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    boolean add = Boolean.TRUE.equals(configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE);
-    if (configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE != null) {
+    boolean add = Boolean.TRUE.equals(configuration.isKeepNewFilesAsIsForTreeConflictMerge());
+    if (configuration.isKeepNewFilesAsIsForTreeConflictMerge() != null) {
       return add;
     }
     if (!containAdditions(myTheirsChanges) && !containAdditions(myTheirsBinaryChanges)) {
@@ -606,10 +606,10 @@ public class MergeFromTheirsResolver {
           if (!value) {
             if (exitCode == 0) {
               // yes
-              configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = true;
+              configuration.setKeepNewFilesAsIsForTreeConflictMerge(true);
             }
             else {
-              configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = false;
+              configuration.setKeepNewFilesAsIsForTreeConflictMerge(false);
             }
           }
         }

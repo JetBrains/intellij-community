@@ -10,4 +10,9 @@ class Test<T> {
   class B extends ArrayList<T> {
       void foo(T r){}
   }
+  
+  static class C extends Test<<error descr="'Test.this' cannot be referenced from a static context">T</error>> {}
+  static class D extends Test {
+    <error descr="'Test.this' cannot be referenced from a static context">T</error> t;
+  }
 }

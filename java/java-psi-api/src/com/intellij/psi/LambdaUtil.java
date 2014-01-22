@@ -22,8 +22,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -579,10 +577,11 @@ public class LambdaUtil {
     return null;
   }
 
-  public static PsiSubstitutor inferFromReturnType(final PsiTypeParameter[] typeParameters,
+  @NotNull
+  public static PsiSubstitutor inferFromReturnType(@NotNull PsiTypeParameter[] typeParameters,
                                                    final PsiType returnType,
                                                    @Nullable final PsiType interfaceMethodReturnType,
-                                                   PsiSubstitutor psiSubstitutor,
+                                                   @NotNull PsiSubstitutor psiSubstitutor,
                                                    final LanguageLevel languageLevel,
                                                    final Project project) {
     if (interfaceMethodReturnType == null) return psiSubstitutor;

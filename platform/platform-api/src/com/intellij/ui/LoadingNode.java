@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -24,11 +25,12 @@ public class LoadingNode extends DefaultMutableTreeNode {
     this(getText());
   }
 
+  @NotNull
   public static String getText() {
     return IdeBundle.message("treenode.loading");
   }
 
-  public LoadingNode(String text) {
+  public LoadingNode(@NotNull String text) {
     super(text);
   }
 }

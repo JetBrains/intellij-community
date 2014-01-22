@@ -28,7 +28,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -46,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -157,8 +161,12 @@ public abstract class PassExecutorService implements Disposable {
     List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size()*5);
     List<ScheduledPass> dependentPasses = new ArrayList<ScheduledPass>(documentToEditors.size()*10);
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
-    for (List<FileEditor> fileEditors : documentToEditors.values()) {
-      List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
+    for (Map.Entry<Document, List<FileEditor>> entry : documentToEditors.entrySet()) {
+      final List<FileEditor> fileEditors = entry.getValue();
+      List<TextEditorHighlightingPass> passes = textPasses.get(getPreferredFileEditor(entry.getKey(), fileEditors));
+      if (passes == null) {
+        continue;
+      }
       threadsToStartCountdown.addAndGet(passes.size());
 
       // create one scheduled pass per unique id (possibly for multiple file editors. they all will be applied at the pass finish)
@@ -192,6 +200,23 @@ public abstract class PassExecutorService implements Disposable {
     for (ScheduledPass freePass : freePasses) {
       submit(freePass);
     }
+  }
+
+  @Nullable
+  private FileEditor getPreferredFileEditor(Document document, @NotNull List<FileEditor> fileEditors) {
+    if (document != null) {
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null) {
+        final FileEditor selected = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+        if (fileEditors.contains(selected)) {
+          return selected;
+        }
+      }
+    }
+    if (!fileEditors.isEmpty()) {
+      return fileEditors.get(0);
+    }
+    return null;
   }
 
   @NotNull

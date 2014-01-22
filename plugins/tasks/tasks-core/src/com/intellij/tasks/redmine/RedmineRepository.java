@@ -244,7 +244,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
   private HttpMethod doREST(String request, boolean post) throws Exception {
     final HttpClient client = getHttpClient();
     client.getParams().setContentCharset("UTF-8");
-    String uri = getUrl().replace("https://", EASY_HTTPS + "://") + request;
+    String uri = getUrl() + request;
     HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     configureHttpMethod(method);
     client.executeMethod(method);

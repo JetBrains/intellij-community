@@ -153,8 +153,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
           public void run() {
             try {
-              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-                .refactoringStarted("refactoring.extract.method", new RefactoringEventData());
+              final RefactoringEventData beforeData = new RefactoringEventData();
+              beforeData.addElements(processor.myElements);
+              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
               
               processor.doRefactoring();
 

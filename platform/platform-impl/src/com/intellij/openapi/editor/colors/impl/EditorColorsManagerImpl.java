@@ -157,6 +157,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return loadSchemeFromDocument(document, false);
   }
 
+  @NotNull
   private static EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
                                                                final boolean isEditable)
     throws InvalidDataException {
@@ -369,14 +370,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
     @Override
-    public EditorColorsSchemeImpl readScheme(final Document document)
+    public EditorColorsSchemeImpl readScheme(@NotNull final Document document)
       throws InvalidDataException {
 
       return loadSchemeFromDocument(document, true);
     }
 
     @Override
-    public Document writeScheme(final EditorColorsSchemeImpl scheme) {
+    public Document writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
       Element root = new Element(SCHEME_NODE_NAME);
       try {
         scheme.writeExternal(root);
@@ -394,7 +395,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     }
 
     @Override
-    public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
+    public boolean shouldBeSaved(@NotNull final EditorColorsSchemeImpl scheme) {
       return !(scheme instanceof ReadOnlyColorsScheme);
     }
 

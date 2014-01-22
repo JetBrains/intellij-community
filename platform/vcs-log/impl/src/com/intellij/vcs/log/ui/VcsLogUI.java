@@ -3,6 +3,10 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
@@ -21,12 +25,14 @@ import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -82,17 +88,57 @@ public class VcsLogUI {
     });
   }
 
-  public void setModel(@NotNull TableModel model) {
-    myMainFrame.getGraphTable().setModel(model);
+  public void setModel(@NotNull AbstractVcsLogTableModel model) {
+    VcsLogGraphTable table = getTable();
+    int[] selectedRows = table.getSelectedRows();
+    TableModel previousModel = table.getModel();
+
+    table.setModel(model);
+
+    if (previousModel instanceof AbstractVcsLogTableModel) { // initially it is an empty DefaultTableModel
+      restoreSelection(table, (AbstractVcsLogTableModel)previousModel, selectedRows, model);
+    }
+    table.setPaintBusy(false);
+  }
+
+  private static void restoreSelection(@NotNull VcsLogGraphTable table, @NotNull AbstractVcsLogTableModel previousModel,
+                                       int[] previousSelectedRows, @NotNull AbstractVcsLogTableModel newModel) {
+    Set<Hash> selectedHashes = getHashesAtRows(previousModel, previousSelectedRows);
+    Set<Integer> rowsToSelect = findNewRowsToSelect(newModel, selectedHashes);
+    for (Integer row : rowsToSelect) {
+      table.addRowSelectionInterval(row, row);
+    }
+  }
+
+  @NotNull
+  private static Set<Hash> getHashesAtRows(@NotNull AbstractVcsLogTableModel model, int[] rows) {
+    Set<Hash> hashes = ContainerUtil.newHashSet();
+    for (int row : rows) {
+      Hash hash = model.getHashAtRow(row);
+      if (hash != null) {
+        hashes.add(hash);
+      }
+    }
+    return hashes;
+  }
+
+  @NotNull
+  private static Set<Integer> findNewRowsToSelect(@NotNull AbstractVcsLogTableModel model, @NotNull Set<Hash> selectedHashes) {
+    Set<Integer> rowsToSelect = ContainerUtil.newHashSet();
+    for (int row = 0; row < model.getRowCount() && rowsToSelect.size() < selectedHashes.size(); row++) {//stop iterating if found all hashes
+      Hash hash = model.getHashAtRow(row);
+      if (hash != null && selectedHashes.contains(hash)) {
+        rowsToSelect.add(row);
+      }
+    }
+    return rowsToSelect;
   }
 
   public void updateUI() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
-        myMainFrame.refresh();
       }
     });
   }
@@ -191,33 +237,68 @@ public class VcsLogUI {
     updateUI();
   }
 
-  public void jumpToCommit(final Hash commitHash) {
-    int row = myLogDataHolder.getDataPack().getRowByHash(commitHash);
-    if (row != -1) {
+  public void jumpToCommit(@NotNull Hash commitHash) {
+    jumpTo(commitHash, new PairFunction<AbstractVcsLogTableModel, Hash, Integer>() {
+      @Override
+      public Integer fun(AbstractVcsLogTableModel model, Hash hash) {
+        return model.getRowOfCommit(hash);
+      }
+    });
+  }
+
+  public void jumpToCommitByPartOfHash(@NotNull String commitHash) {
+    jumpTo(commitHash, new PairFunction<AbstractVcsLogTableModel, String, Integer>() {
+      @Override
+      public Integer fun(AbstractVcsLogTableModel model, String hash) {
+        return model.getRowOfCommitByPartOfHash(hash);
+      }
+    });
+  }
+
+  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<AbstractVcsLogTableModel, T, Integer> rowGetter) {
+    AbstractVcsLogTableModel model = getModel();
+    if (model == null) {
+      return;
+    }
+
+    int row = rowGetter.fun(model, commitId);
+    if (row >= 0) {
       jumpToRow(row);
     }
-    else {
-      myLogDataHolder.showFullLog(new Runnable() {
+    else if (model.canRequestMore()) {
+      model.requestToLoadMore(new Runnable() {
         @Override
         public void run() {
-          jumpToCommit(commitHash);
+          jumpTo(commitId, rowGetter);
         }
       });
+    }
+    else {
+      commitNotFound(commitId.toString());
     }
   }
 
-  public void jumpToCommitByPartOfHash(final String hash) {
-    Node node = myLogDataHolder.getDataPack().getNodeByPartOfHash(hash);
-    if (node != null) {
-      jumpToRow(node.getRowIndex());
+  @Nullable
+  private AbstractVcsLogTableModel getModel() {
+    TableModel model = getTable().getModel();
+    if (model instanceof AbstractVcsLogTableModel) {
+      return (AbstractVcsLogTableModel)model;
     }
-    else if (!myLogDataHolder.isFullLogShowing()) {
-      myLogDataHolder.showFullLog(new Runnable() {
-        @Override
-        public void run() {
-          jumpToCommitByPartOfHash(hash);
-        }
-      });
+    showMessage(MessageType.WARNING, "The log is not ready to search yet");
+    return null;
+  }
+
+  private void showMessage(@NotNull MessageType messageType, @NotNull String message) {
+    LOG.info(message);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, messageType);
+  }
+
+  private void commitNotFound(@NotNull String commitHash) {
+    if (collectFilters().isEmpty()) {
+      showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
+    }
+    else {
+      showMessage(MessageType.WARNING, "Commit " + commitHash + " doesn't exist or doesn't match the active filters");
     }
   }
 

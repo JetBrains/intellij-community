@@ -90,4 +90,15 @@ public interface Rearranger<E extends ArrangementEntry> {
    *                  negative as an indication that no blank lines adjustment is necessary
    */
   int getBlankLines(@NotNull CodeStyleSettings settings, @Nullable E parent, @Nullable E previous, @NotNull E target);
+
+
+  /**
+   * @return serializer to save {@link com.intellij.psi.codeStyle.arrangement.ArrangementSettings arrangement settings}.
+   * Serializer is expected to be lazy and don't save
+   * {@link com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware.getDefaultSettings() default settings}.
+   * <p/>
+   * @see com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer
+   */
+  @NotNull
+  ArrangementSettingsSerializer getSerializer();
 }

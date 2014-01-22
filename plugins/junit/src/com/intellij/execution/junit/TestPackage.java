@@ -160,18 +160,7 @@ public class TestPackage extends TestObject {
     configureClasspath();
 
     try {
-      myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
-      myTempFile.deleteOnExit();
-      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-
-    try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
-      myWorkingDirsFile.deleteOnExit();
-      myJavaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+      createTempFiles();
     }
     catch (IOException e) {
       LOG.error(e);

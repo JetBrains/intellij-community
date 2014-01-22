@@ -136,11 +136,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
    *
+   *
    * @param name of the property
+   * @param inherited
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
-  Property findProperty(@NotNull String name);
+  Property findProperty(@NotNull String name, boolean inherited);
 
   /**
    * Apply a processor to every method, looking at superclasses in method resolution order as needed.
@@ -216,4 +218,19 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
+
+  /**
+   * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
+   */
+  @Nullable
+  PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context);
+
+  /**
+   * Returns the expression that defines the metaclass of the class.
+   *
+   * It might be defined outside the class in case of file-level __metaclass__ attributes.
+   * Operates at the AST level.
+   */
+  @Nullable
+  PyExpression getMetaClassExpression();
 }

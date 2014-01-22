@@ -18,7 +18,6 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -294,21 +293,15 @@ public class VcsUtil {
     });
   }
 
-  //  FileDocumentManager has difficulties in loading the content for files
-  //  which are outside the project structure?
-  public static byte[] getFileByteContent(final File file) throws IOException {
-    return ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
-      public byte[] compute() {
-        byte[] content;
-        try {
-          content = FileUtil.loadFileBytes(file);
-        }
-        catch (IOException e) {
-          content = null;
-        }
-        return content;
-      }
-    });
+  @Nullable
+  public static byte[] getFileByteContent(@NotNull File file) throws IOException {
+    try {
+      return FileUtil.loadFileBytes(file);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   public static FilePath getFilePath(String path) {
@@ -321,6 +314,10 @@ public class VcsUtil {
 
   public static FilePath getFilePath(String path, boolean isDirectory) {
     return getFilePath(new File(path), isDirectory);
+  }
+
+  public static FilePath getFilePathOnNonLocal(String path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(path, isDirectory);
   }
 
   public static FilePath getFilePath(File file, boolean isDirectory) {

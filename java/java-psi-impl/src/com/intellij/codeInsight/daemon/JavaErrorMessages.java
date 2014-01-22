@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,15 @@ import org.jetbrains.annotations.PropertyKey;
  * @author max
  */
 public class JavaErrorMessages extends AbstractBundle {
-  public static final JavaErrorMessages INSTANCE = new JavaErrorMessages();
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
+  }
+
+  public static final JavaErrorMessages INSTANCE = new JavaErrorMessages();
   @NonNls public static final String BUNDLE = "messages.JavaErrorMessages";
 
   private JavaErrorMessages() {
     super(BUNDLE);
-  }
-
-  @NotNull
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return INSTANCE.getMessage(key, params);
   }
 }

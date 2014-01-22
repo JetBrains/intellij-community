@@ -46,6 +46,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -69,7 +70,13 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * A collection of methods for retrieving history information from native Git.
  */
 public class GitHistoryUtils {
-  private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
+
+  /**
+   * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
+   */
+  public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
 
   private GitHistoryUtils() {
   }
@@ -197,9 +204,8 @@ public class GitHistoryUtils {
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags",
-                    "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
-                    "--sparse");
+    h.addParameters(LOG_ALL);
+    h.addParameters("--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history", "--sparse");
     h.endOptions();
 
     final OutputStream[] stream = new OutputStream[1];
@@ -479,39 +485,11 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(final Project project, final VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, AUTHOR_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
-    h.addParameters("--full-history", "--sparse");
-    h.endOptions();
-
-    String output = h.run();
-
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
-      @Override
-      public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<Hash>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-
-        return vcsObjectsFactory(project).createShortDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
-                                             record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
-      }
-    });
-  }
-
   public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -544,7 +522,7 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
+    h.addParameters(LOG_ALL);
     h.addParameters("--full-history", "--sparse");
     h.addParameters("--date-order");
     h.endOptions();
@@ -758,7 +736,7 @@ public class GitHistoryUtils {
                                            AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY, RAW_BODY);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
@@ -1027,7 +1005,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
@@ -1043,20 +1021,11 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
                                                @NotNull final Collection<String> hashes) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(hashes));
-
-    String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record));
-    }
-    return rc;
+    List<String> params = new ArrayList<String>(hashes);
+    GitVcs vcs = GitVcs.getInstance(project);
+    String noWalk = vcs != null && GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    params.add(0, noWalk);
+    return getAllDetails(project, root, params);
   }
 
   @NotNull
@@ -1066,7 +1035,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(parameters);
 

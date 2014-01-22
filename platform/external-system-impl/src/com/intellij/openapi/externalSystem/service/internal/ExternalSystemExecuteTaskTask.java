@@ -26,7 +26,9 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTa
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,16 +50,19 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
+  @Nullable private String myScriptParameters;
   @Nullable private final String myDebuggerSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
+                                       @Nullable String scriptParameters,
                                        @Nullable String debuggerSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
+    myScriptParameters = scriptParameters;
     myDebuggerSetup = debuggerSetup;
   }
 
@@ -97,7 +102,10 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myDebuggerSetup);
+    final List<String> vmOptions = parseCmdParameters(myVmOptions);
+    final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);
+
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, vmOptions, scriptParametersList, myDebuggerSetup);
   }
 
   @Override
@@ -107,5 +115,9 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
 
     return taskManager.cancelTask(getId());
+  }
+
+  private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.<String>newArrayList();
   }
 }

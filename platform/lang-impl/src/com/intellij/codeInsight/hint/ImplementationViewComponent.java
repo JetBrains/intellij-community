@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
@@ -87,7 +85,7 @@ public class ImplementationViewComponent extends JPanel {
   private final ActionToolbar myToolbar;
   private JLabel myLabel;
 
-  public void setHint(final JBPopup hint, final String title) {
+  public void setHint(final JBPopup hint, @NotNull String title) {
     myHint = hint;
     myTitle = title;
   }
@@ -173,7 +171,7 @@ public class ImplementationViewComponent extends JPanel {
     toolbarPanel.add(myToolbar.getComponent(), gc);
 
     setPreferredSize(new Dimension(600, 400));
-    
+
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
       public Boolean fun(final PsiElement[] psiElements, final List<FileDescriptor> fileDescriptors) {
@@ -273,7 +271,7 @@ public class ImplementationViewComponent extends JPanel {
       @Override
       public Boolean fun(PsiElement[] psiElements, List<FileDescriptor> fileDescriptors) {
         if (psiElements.length == 0) return false;
-        
+
         final Project project = psiElements[0].getProject();
         myElements = psiElements;
 
@@ -302,7 +300,7 @@ public class ImplementationViewComponent extends JPanel {
         else {
           myFileChooser.setVisible(false);
           myCountLabel.setVisible(false);
-          
+
           VirtualFile file = psiFile.getVirtualFile();
           if (file != null) {
             myLabel.setIcon(getIconForFile(psiFile));
@@ -321,9 +319,9 @@ public class ImplementationViewComponent extends JPanel {
         return true;
       }
     });
-    
+
   }
-  
+
   private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
     List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
@@ -333,6 +331,15 @@ public class ImplementationViewComponent extends JPanel {
         names.add(((PsiNamedElement)element).getName());
       }
     }
+    Arrays.sort(elements, new Comparator<PsiElement>() {
+      @Override
+      public int compare(PsiElement e1, PsiElement e2) {
+        if (e1 instanceof PsiNamedElement && e2 instanceof PsiNamedElement) {
+          return Comparing.compare(((PsiNamedElement)e1).getName(), ((PsiNamedElement)e2).getName());
+        }
+        return e1.hashCode() - e2.hashCode();
+      }
+    });
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;

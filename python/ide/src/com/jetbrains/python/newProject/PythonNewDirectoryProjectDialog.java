@@ -16,10 +16,12 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -172,20 +174,28 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
           return manager.showRemoteProjectSettingsDialog(baseDir, (RemoteSdkData)getSdk().getSdkAdditionalData());
         }
         else {
-          return null;
+          return new PyNewProjectSettings();
         }
       }
 
       @Override
-      public void generateProject(@NotNull Project project,
+      public void generateProject(@NotNull final Project project,
                                   @NotNull VirtualFile baseDir,
-                                  Object settings,
-                                  @NotNull Module module) {
+                                  final Object settings,
+                                  @NotNull final Module module) {
         if (settings instanceof RemoteProjectSettings) {
           PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
           assert manager != null;
           manager.createDeployment(project, baseDir, (RemoteProjectSettings)settings,
                                    (RemoteSdkData)getSdk().getSdkAdditionalData());
+        }
+        else if (settings instanceof PyNewProjectSettings) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              ModuleRootModificationUtil.setModuleSdk(module, ((PyNewProjectSettings)settings).getSdk());
+            }
+          });
         }
       }
 

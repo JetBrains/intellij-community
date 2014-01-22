@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,14 +100,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     setToolsJar(params);
 
     String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
-    if (groovyHome != null) {
-      groovyHome = FileUtil.toSystemDependentName(groovyHome);
-    }
-    if (groovyHome != null) {
-      setGroovyHome(params, groovyHome);
+    String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
+
+    if (groovyHomeDependentName != null) {
+      setGroovyHome(params, groovyHomeDependentName);
     }
 
-    final String confPath = getConfPath(groovyHome);
+    final String confPath = getConfPath(groovyHomeDependentName);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
     params.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
 
@@ -118,6 +117,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
+
+    addClasspathFromRootModel(module, tests, params, true);
 
     if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
       String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);

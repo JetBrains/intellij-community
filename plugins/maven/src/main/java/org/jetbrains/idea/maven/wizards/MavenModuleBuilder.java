@@ -21,7 +21,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -130,17 +129,6 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     };
   }
 
-  public MavenProject findPotentialParentProject(Project project) {
-    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
-
-    File parentDir = new File(getContentEntryPath()).getParentFile();
-    if (parentDir == null) return null;
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
-    if (parentPom == null) return null;
-
-    return MavenProjectsManager.getInstance(project).findProject(parentPom);
-  }
-
   private VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
     new File(path).mkdirs();
@@ -220,7 +208,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getGroupName() {
-    return JavaModuleType.JAVA_GROUP;
+    return "Maven";
   }
 
   private MavenArchetypesPanel myPanel;

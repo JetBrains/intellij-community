@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -142,7 +144,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInStatement() {
-    doTestEnter("if a <caret>and b: pass", "if a \\\n    and b: pass");
+    doTestEnter("if a <caret>and b: pass", "if a \\\n        and b: pass");
   }
 
   public void testEnterBeforeStatement() {
@@ -202,10 +204,17 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterStubInDocstring() {  // CR-PY-144
-    doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
-                                               "  \"\"\"\n" +
-                                               "  \n" +
-                                               "  \"\"\"");
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    final String oldFormat = documentationSettings.getFormat();
+    documentationSettings.setFormat(DocStringFormat.PLAIN);
+    try {
+      doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
+                                                 "  \"\"\"\n" +
+                                                 "  \n" +
+                                                 "  \"\"\"");
+    } finally {
+      documentationSettings.setFormat(oldFormat);
+    }
   }
 
   public void testEnterInString() {  // PY-1738
@@ -216,7 +225,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInImportWithParens() {  // PY-2661
     doTestEnter("from django.http import (HttpResponse,<caret>)",
                 "from django.http import (HttpResponse,\n" +
-                "                         )");
+                ")");
   }
 
   public void testEnterInKeyword() {

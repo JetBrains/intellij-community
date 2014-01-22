@@ -37,12 +37,14 @@ import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
+import groovy.lang.GroovyObject;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleTask;
@@ -50,9 +52,9 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
-import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
-import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
+import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.model.data.ClasspathEntry;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -149,6 +151,19 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
+    BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    if (buildScriptClasspathModel != null) {
+      List<ClasspathEntry> classpathEntries =
+        ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, ClasspathEntry>() {
+          @Override
+          public ClasspathEntry fun(ClasspathEntryModel model) {
+            return new ClasspathEntry(model.getClassesFile(), model.getSourcesFile(), model.getJavadocFile());
+          }
+        });
+      BuildScriptClasspathData buildScriptClasspathData =
+        new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
+      ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
+    }
   }
 
   @Override
@@ -288,7 +303,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(ModuleExtendedModel.class, ProjectDependenciesModel.class);
+    return ContainerUtil.<Class>set(ModuleExtendedModel.class, ProjectDependenciesModel.class, BuildScriptClasspathModel.class);
   }
 
   @NotNull
@@ -306,6 +321,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
     return myErrorHandler.getUserFriendlyError(error, projectPath, buildFilePath);
+  }
+
+  @Override
+  public void preImportCheck() {
   }
 
   @Override
@@ -337,6 +356,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     List<String> additionalEntries = ContainerUtilRt.newArrayList();
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(GroovyObject.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaProjectData.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(LanguageLevel.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(StdModuleTypes.class));

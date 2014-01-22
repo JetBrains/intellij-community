@@ -336,7 +336,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
   }
 
   public static class ProjectRootNode extends ConvenientNode<Project> {
-    private VirtualFileFilter myFilter;
+    private final VirtualFileFilter myFilter;
 
     public ProjectRootNode(@NotNull Project project) {
       this(project, VirtualFileFilter.ALL);
@@ -437,7 +437,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   public static class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
-    private VirtualFileFilter myFilter;
+    private final VirtualFileFilter myFilter;
 
     public FileNode(@NotNull VirtualFile file, @NotNull final Project project) {
       this(file, project, VirtualFileFilter.ALL);

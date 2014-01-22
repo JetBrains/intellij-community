@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,10 +135,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
 
-  private void handlePossibleReturn(@NotNull GrStatement possibleReturn) {
+  @Nullable
+  private InstructionImpl handlePossibleReturn(@NotNull GrStatement possibleReturn) {
     if (possibleReturn instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyReturnStatement(possibleReturn)) {
-      addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
+      return addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
     }
+    return null;
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope) {
@@ -411,8 +413,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     GrExpression rValue = expression.getRValue();
     if (rValue != null) {
       rValue.accept(this);
-      lValue.accept(this);
     }
+    lValue.accept(this);
   }
 
   @Override
@@ -617,12 +619,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addNode(new InstanceOfInstruction(expression, cond));
     NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
     addNode(negation);
-    handlePossibleReturn(expression);
-    addPendingEdge(expression, negation);
+    InstructionImpl possibleReturn = handlePossibleReturn(expression);
+    addPendingEdge(expression, possibleReturn != null ? possibleReturn : negation);
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
-    handlePossibleReturn(expression);
+    //handlePossibleReturn(expression);
     myConditions.removeFirstOccurrence(cond);
   }
 

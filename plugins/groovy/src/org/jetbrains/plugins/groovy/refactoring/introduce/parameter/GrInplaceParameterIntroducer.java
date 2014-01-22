@@ -191,7 +191,7 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
     GrVariable _var = GroovyIntroduceParameterUtil.findVar(info);
     return new GrIntroduceExpressionSettingsImpl(info, parameter.getName(), false, removeList, myDelegateCB.isSelected(),
                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, _expr, _var,
-                                                 parameter.getType(), false);
+                                                 parameter.getType(), false, false);
   }
 
   @Override

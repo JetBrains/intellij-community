@@ -65,7 +65,7 @@ public class GrRemoveExplicitTypeDeclarationIntention extends Intention {
             return ((GrVariable)parent).getTypeElementGroovy() != null;
           }
 
-          if (parent instanceof GrMethod) {
+          if (parent instanceof GrMethod && ((GrMethod)parent).findSuperMethods().length == 0 ) {
             return ((GrMethod)parent).getReturnTypeElementGroovy() != null;
           }
         }

@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,11 +138,11 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
         else {
           newExpression = "this." + fieldName + " = " + argument.getText();
         }
-        replaceExpression(call, newExpression);
+        PsiReplacementUtil.replaceExpression(call, newExpression);
       }
       else {
         final String newExpression = qualifier.getText() + '.' + fieldName + " = " + argument.getText();
-        replaceExpression(call, newExpression);
+        PsiReplacementUtil.replaceExpression(call, newExpression);
       }
     }
   }

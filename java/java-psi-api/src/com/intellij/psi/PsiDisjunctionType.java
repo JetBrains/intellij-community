@@ -81,6 +81,7 @@ public class PsiDisjunctionType extends PsiType {
     return new PsiDisjunctionType(types, myManager);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
@@ -88,6 +89,7 @@ public class PsiDisjunctionType extends PsiType {
     }, " | ");
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
@@ -95,6 +97,7 @@ public class PsiDisjunctionType extends PsiType {
     }, " | ");
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
@@ -111,7 +114,7 @@ public class PsiDisjunctionType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls final String text) {
+  public boolean equalsToText(@NotNull @NonNls final String text) {
     return Comparing.equal(text, getCanonicalText());
   }
 

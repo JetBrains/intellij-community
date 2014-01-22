@@ -216,11 +216,12 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     if (documentWindow == null) return true;
     Place places = InjectedLanguageUtil.getShreds(injectedPsi);
     for (PsiLanguageInjectionHost.Shred place : places) {
-      TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
+      PsiLanguageInjectionHost host = place.getHost();
+      TextRange textRange = place.getRangeInsideHost().shiftRight(host.getTextRange().getStartOffset());
       if (textRange.isEmpty()) continue;
       String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
-      if (injectedAttributes != null) {
+      if (injectedAttributes != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
         builder.textAttributes(injectedAttributes);
       }
       builder.unescapedToolTip(desc);

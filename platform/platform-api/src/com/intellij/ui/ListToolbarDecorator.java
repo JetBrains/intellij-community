@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
  */
 class ListToolbarDecorator extends ToolbarDecorator {
   private final JList myList;
-  private EditableModel myEditableModel;
+  private final EditableModel myEditableModel;
 
   ListToolbarDecorator(JList list, @Nullable EditableModel editableModel) {
     myList = list;
@@ -83,31 +83,34 @@ class ListToolbarDecorator extends ToolbarDecorator {
   protected void updateButtons() {
     final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
+      boolean someElementSelected;
       if (myList.isEnabled()) {
         final int index = myList.getSelectedIndex();
-        if (0 <= index && index < myList.getModel().getSize()) {
+        someElementSelected = 0 <= index && index < myList.getModel().getSize();
+        if (someElementSelected) {
           final boolean downEnable = myList.getMaxSelectionIndex() < myList.getModel().getSize() - 1;
           final boolean upEnable = myList.getMinSelectionIndex() > 0;
           final boolean editEnabled = myList.getSelectedIndices().length == 1;
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
         }
         else {
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
           p.setEnabled(CommonActionsPanel.Buttons.UP, false);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
         }
         p.setEnabled(CommonActionsPanel.Buttons.ADD, true);
       }
       else {
+        someElementSelected = false;
         p.setEnabled(CommonActionsPanel.Buttons.ADD, false);
-        p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
         p.setEnabled(CommonActionsPanel.Buttons.UP, false);
         p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
       }
+
+      p.setEnabled(CommonActionsPanel.Buttons.REMOVE, someElementSelected);
+      updateExtraElementActions(someElementSelected);
     }
   }
 

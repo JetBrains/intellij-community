@@ -21,6 +21,7 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,6 +41,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
@@ -476,6 +478,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setRegularExpressions(true);
     FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text);
+  }
+
+  public void testFindInCurrentFileOutsideProject() throws Exception {
+    final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
+    tempDirFixture.setUp();
+    try {
+      VirtualFile file = tempDirFixture.createFile("a.txt", "foo bar foo");
+      FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+      findModel.setWholeWordsOnly(true);
+      findModel.setCustomScope(new LocalSearchScope(PsiManager.getInstance(myProject).findFile(file)));
+      assertSize(2, findUsages(findModel));
+    }
+    finally {
+      tempDirFixture.tearDown();
+    }
   }
 
   public void testFindInJavaDocs() {

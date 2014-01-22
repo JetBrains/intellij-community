@@ -65,6 +65,8 @@ public final class HgCommandExecutor {
   @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
+
+  private boolean myOutputAlwaysSuppressed = false;    //for command with enormous output, like log or cat
   private List<String> myOptions = DEFAULT_OPTIONS;
   @Nullable private ModalityState myState;
 
@@ -100,6 +102,10 @@ public final class HgCommandExecutor {
 
   public void setShowOutput(boolean showOutput) {
     myShowOutput = showOutput;
+  }
+
+  public void setOutputAlwaysSuppressed(boolean outputAlwaysSuppressed) {
+    myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
   public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
@@ -206,7 +212,10 @@ public final class HgCommandExecutor {
     try {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
-      result = shellCommand.execute();
+      long startTime = System.currentTimeMillis();
+      LOG.debug(String.format("hg %s started", operation));
+      result = shellCommand.execute(myShowOutput);
+      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
@@ -227,7 +236,6 @@ public final class HgCommandExecutor {
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
-
     logResult(result);
     return result;
   }
@@ -269,12 +277,14 @@ public final class HgCommandExecutor {
       if (unitTestMode) {
         System.out.print(result.getRawOutput() + "\n");
       }
-      if (!myIsSilent && myShowOutput) {
-        LOG.info(result.getRawOutput());
-        myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-      }
-      else {
-        LOG.debug(result.getRawOutput());
+      else if (!myOutputAlwaysSuppressed) {
+        if (!myIsSilent && myShowOutput) {
+          LOG.info(result.getRawOutput());
+          myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
+        else {
+          LOG.debug(result.getRawOutput());
+        }
       }
     }
 

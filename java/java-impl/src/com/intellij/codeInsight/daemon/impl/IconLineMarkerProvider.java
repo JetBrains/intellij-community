@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +188,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     Pair<Long, Icon> iconInfo = iconsCache.get(path);
     if (iconInfo == null || iconInfo.getFirst() < stamp) {
       try {
-        final Icon icon = createOrFindBetterIcon(file, PlatformUtils.isIdeaProject(project));
+        final Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
         iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
         iconsCache.put(file.getPath(), iconInfo);
       }
@@ -201,7 +200,13 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return iconInfo == null ? null : iconInfo.getSecond();
   }
 
-  private Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
+  private static boolean isIdeaProject(Project project) {
+    if (project == null) return false;
+    VirtualFile baseDir = project.getBaseDir();
+    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null);
+  }
+
+  private static Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
     if (tryToFindBetter) {
       VirtualFile parent = file.getParent();
       String name = file.getNameWithoutExtension();
@@ -233,7 +238,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return new ImageIcon(file.contentsToByteArray());
   }
 
-  private ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
+  private static ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
     return new ImageIcon(ImageLoader.loadFromStream(file.getInputStream(), scale));
   }
 

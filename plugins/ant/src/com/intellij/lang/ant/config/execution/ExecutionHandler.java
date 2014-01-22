@@ -25,6 +25,9 @@ import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
@@ -34,16 +37,17 @@ import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,12 +110,10 @@ public final class ExecutionHandler {
       }
     }
 
-    final boolean startInBackground = buildFile.isRunInBackground();
-    
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {
-        return startInBackground;
+        return true;
       }
 
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -170,30 +172,47 @@ public final class ExecutionHandler {
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
-    final boolean isBackground = buildFile.isRunInBackground();
-
     handler.addProcessListener(new ProcessAdapter() {
+      private final StringBuilder myUnprocessedStdErr = new StringBuilder();
+
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR) {
+          final String text = event.getText();
+          synchronized (myUnprocessedStdErr) {
+            myUnprocessedStdErr.append(text);
+          }
+        }
+      }
+
       public void processTerminated(ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);
+
         final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
-        errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (project.isDisposed()) {
-              return;
-            }
-            errorView.removeProgressPanel();
-            final boolean shouldActivate = !isBackground || errorView.hasMessagesOfType(AntBuildMessageView.MessageType.ERROR);
-            if (shouldActivate) {
-              ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-              if (toolWindow != null) { // can be null if project is closed
-                toolWindow.activate(null, false);
-              }
-            }
+
+        if (event.getExitCode() != 0) {
+          // in case process exits abnormally, provide all unprocessed stderr content
+          final String unprocessed;
+          synchronized (myUnprocessedStdErr) {
+            unprocessed = myUnprocessedStdErr.toString();
+            myUnprocessedStdErr.setLength(0);
           }
-        }, ModalityState.NON_MODAL);
+          if (!unprocessed.isEmpty()) {
+            dispatcher.processOutput(new Printable() {
+              public void printOn(Printer printer) {
+                errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
+              }
+            });
+          }
+        }
+        else {
+          synchronized (myUnprocessedStdErr) {
+            myUnprocessedStdErr.setLength(0);
+          }
+        }
+
+        errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
       }
     });
     handler.startNotify();

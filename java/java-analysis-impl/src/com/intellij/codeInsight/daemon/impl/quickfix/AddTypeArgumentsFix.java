@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
 
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length > 0) {
-            PsiType[] mappings = new PsiType[typeParameters.length];
+            PsiType[] mappings = PsiType.createArray(typeParameters.length);
             PsiResolveHelper helper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
             LanguageLevel level = PsiUtil.getLanguageLevel(expression);
             for (int i = 0; i < typeParameters.length; i++) {

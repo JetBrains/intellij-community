@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
   private final EditorColorsScheme myEditorColorsScheme;
   private final int myPassId;
   @NotNull private final TextRange myRestrictRange;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final Document myDocument;
   private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
 
@@ -74,6 +74,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myEditor;
   }
 
+  @NotNull
   @Override
   public Document getDocument() {
     return myDocument;
@@ -85,6 +86,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myProgressIndicator;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;

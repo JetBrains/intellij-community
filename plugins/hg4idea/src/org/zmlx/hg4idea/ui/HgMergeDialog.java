@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -158,7 +157,7 @@ public class HgMergeDialog extends DialogWrapper {
               otherHeadRadioButton.setVisible(true);
               otherHeadLabel.setVisible(true);
               otherHead = heads.get(0);
-              otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
+              otherHeadLabel.setText("  " + otherHead.asString());
             }
           });
         }

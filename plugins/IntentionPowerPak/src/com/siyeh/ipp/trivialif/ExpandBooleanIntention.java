@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -61,7 +62,7 @@ public class ExpandBooleanIntention extends Intention {
         conditionText = rhsText;
       }
       @NonNls final String statement = "if(" + conditionText + ") " + lhsText + " = true; else " + lhsText + " = false;";
-      replaceStatement(statement, containingStatement);
+      PsiReplacementUtil.replaceStatement(containingStatement, statement);
     }
     else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
       final PsiReturnStatement returnStatement = (PsiReturnStatement)containingStatement;
@@ -74,7 +75,7 @@ public class ExpandBooleanIntention extends Intention {
       }
       final String valueText = returnValue.getText();
       @NonNls final String statement = "if(" + valueText + ") return true; else return false;";
-      replaceStatement(statement, containingStatement);
+      PsiReplacementUtil.replaceStatement(containingStatement, statement);
     }
     else if (ExpandBooleanPredicate.isBooleanDeclaration(containingStatement)) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)containingStatement;

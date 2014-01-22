@@ -87,11 +87,16 @@ public class InferenceSession {
     initBounds(typeParams);
   }
 
-  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
-    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent, PsiMethod method) {
+    if (method == null) {
+      final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+      if (pair != null) {
+        method = pair.first;
+      }
+    }
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
-        if (args[i] != null && (pair == null || isPertinentToApplicability(args[i], pair.first))) {
+        if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
           myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
@@ -310,7 +315,7 @@ public class InferenceSession {
                 if (argumentList != null) {
                   final PsiExpression[] expressions = argumentList.getExpressions();
                   final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
-                  final PsiType[] types = new PsiType[expressions.length];
+                  final PsiType[] types = PsiType.createArray(expressions.length);
                   for (int i = 0; i < expressions.length; i++) {
                     if (i != idx) {
                       types[i] = expressions[i].getType();

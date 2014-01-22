@@ -20,19 +20,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilter;
-import com.intellij.vcs.log.data.VcsLogDateFilter;
-import com.intellij.vcs.log.data.VcsLogStructureFilter;
-import com.intellij.vcs.log.data.VcsLogUserFilter;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
+import com.intellij.vcs.log.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -103,18 +97,22 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     repository.update();
-    Collection<HgNameWithHashInfo> branches = repository.getBranches();
+    Map<String, Set<Hash>> branches = repository.getBranches();
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
 
     Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
 
-    for (HgNameWithHashInfo branchInfo : branches) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
+    for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
+      String branchName = entry.getKey();
+      for (Hash hash : entry.getValue()) {
+        refs.add(myVcsObjectsFactory.createRef(hash, branchName, HgRefManager.BRANCH, root));
+      }
     }
+
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(bookmarkInfo.getHash()), bookmarkInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(bookmarkInfo.getHash(), bookmarkInfo.getName(),
                          HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
@@ -122,10 +120,10 @@ public class HgLogProvider implements VcsLogProvider {
       refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "tip", HgRefManager.HEAD, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
+      refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
     }
     for (HgNameWithHashInfo localTagInfo : localTags) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(localTagInfo.getHash()), localTagInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
                               HgRefManager.LOCAL_TAG, root));
     }
     return refs;
@@ -158,32 +156,28 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+                                                                 @NotNull Collection<VcsLogBranchFilter> branchFilters,
+                                                                 @NotNull Collection<VcsLogUserFilter> userFilters,
+                                                                 @NotNull Collection<VcsLogDateFilter> dateFilters,
+                                                                 @NotNull Collection<VcsLogTextFilter> textFilters,
+                                                                 @NotNull Collection<VcsLogStructureFilter> structureFilters,
+                                                                 int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
+    // branch filter and user filter may be used several times without delimiter
+    // or -r options with appropriate revset arguments delimited by '|' or 'and'.
     if (!branchFilters.isEmpty()) {
-      String branchFilter = joinFilters(branchFilters, new Function<VcsLogBranchFilter, String>() {
-        @Override
-        public String fun(VcsLogBranchFilter filter) {
-          return filter.getBranchName();
-        }
-      });
-      filterParameters.add(prepareParameter("branch", branchFilter));
+      for (VcsLogBranchFilter branchFilter : branchFilters) {
+        filterParameters.add(prepareParameter("branch", branchFilter.getBranchName()));
+      }
     }
 
-    List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
     if (!userFilters.isEmpty()) {
-      String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
-        @Override
-        public String fun(VcsLogUserFilter filter) {
-          return filter.getUserName(root);
-        }
-      });
-      filterParameters.add(prepareParameter("user", authorFilter));
+      for (VcsLogUserFilter authorFilter : userFilters) {
+        filterParameters.add(prepareParameter("user", authorFilter.getUserName(root)));
+      }
     }
 
-    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
     if (!dateFilters.isEmpty()) {
       StringBuilder args = new StringBuilder();
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -203,7 +197,6 @@ public class HgLogProvider implements VcsLogProvider {
       filterParameters.add(args.toString());
     }
 
-    List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
     if (textFilters.size() > 1) {
       LOG.warn("Expected only one text filter: " + textFilters);
     }
@@ -212,7 +205,6 @@ public class HgLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("keyword", textFilter));
     }
 
-    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
     if (!structureFilters.isEmpty()) {
       for (VcsLogStructureFilter filter : structureFilters) {
         for (VirtualFile file : filter.getFiles(root)) {
@@ -221,7 +213,7 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.history(myProject, root, -1, filterParameters);
+    return HgHistoryUtil.history(myProject, root, maxCount, filterParameters);
   }
 
   @Nullable
@@ -241,14 +233,10 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
-    return ContainerUtil.emptyList(); // TODO
+    return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
   }
 
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
-  }
-
-  private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
-    return StringUtil.join(filters, toString, "\\|");
   }
 }

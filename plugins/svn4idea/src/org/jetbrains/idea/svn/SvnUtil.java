@@ -73,6 +73,7 @@ public class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
+  public static final int DEFAULT_PORT_INDICATOR = -1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
@@ -348,12 +349,7 @@ public class SvnUtil {
 
   public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
     List<T> committables, Convertor<T, File> convertor) {
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, T>() {
-      @Override
-      protected Collection<T> createCollection() {
-        return new ArrayList<T>();
-      }
-    };
+    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = MultiMap.create();
     for (T committable : committables) {
       final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
       if (path == null) {
@@ -743,7 +739,7 @@ public class SvnUtil {
     }
   }
 
-  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) throws SVNException {
+  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
     if (StringUtil.isEmpty(subPath)) return base;
     final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
     String result = base;
@@ -771,6 +767,31 @@ public class SvnUtil {
     ClientFactory factory = target.isFile() ? vcs.getFactory(target.getFile()) : vcs.getFactory();
 
     return factory.createContentClient().getContent(target, revision, pegRevision);
+  }
+
+  public static boolean hasDefaultPort(@NotNull SVNURL result) {
+    return !result.hasPort() || SVNURL.getDefaultPortNumber(result.getProtocol()) == result.getPort();
+  }
+
+  /**
+   * When creating SVNURL with default port, some negative value should be specified as port number, otherwise specified port value (even
+   * if equals to default) will occur in toString() result.
+   */
+  public static int resolvePort(@NotNull SVNURL url) {
+    return !hasDefaultPort(url) ? url.getPort() : DEFAULT_PORT_INDICATOR;
+  }
+
+  @NotNull
+  public static SVNURL createUrl(@NotNull String url) throws SVNException {
+    SVNURL result = SVNURL.parseURIEncoded(url);
+
+    // explicitly check if port corresponds to default port and recreate url specifying default port indicator
+    if (result.hasPort() && hasDefaultPort(result)) {
+      result = SVNURL
+        .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+    }
+
+    return result;
   }
 
   public static SVNURL parseUrl(@NotNull String url) {

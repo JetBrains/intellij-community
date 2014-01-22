@@ -39,4 +39,8 @@ public class UnnecessaryUnboxing {
         System.out.println((byte)b.byteValue());
     }
 
+
+    byte cast(Integer v) {
+       return (byte)v.intValue();
+    }
 }

@@ -43,16 +43,21 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     }
 
     // skip inners & anonymous
+    if (isInnerClass(vFile)) return null;
+
+    return new ClsFileImpl(PsiManager.getInstance(project), this);
+  }
+
+  public static boolean isInnerClass(VirtualFile vFile) {
     String name = vFile.getNameWithoutExtension();
     int index = name.lastIndexOf('$', name.length());
     if (index > 0 && index < name.length() - 1) {
       String supposedParentName = name.substring(0, index) + ".class";
       if (vFile.getParent().findChild(supposedParentName) != null) {
-        return null;
+        return true;
       }
     }
-
-    return new ClsFileImpl(PsiManager.getInstance(project), this);
+    return false;
   }
 
   @NotNull

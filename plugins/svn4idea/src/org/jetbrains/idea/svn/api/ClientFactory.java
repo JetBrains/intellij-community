@@ -14,6 +14,7 @@ import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
+import org.jetbrains.idea.svn.diff.DiffClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
@@ -55,6 +56,7 @@ public abstract class ClientFactory {
   protected ExportClient myExportClient;
   protected UpgradeClient myUpgradeClient;
   protected BrowseClient myBrowseClient;
+  protected DiffClient myDiffClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -178,6 +180,11 @@ public abstract class ClientFactory {
   @NotNull
   public BrowseClient createBrowseClient() {
     return prepare(myBrowseClient);
+  }
+
+  @NotNull
+  public DiffClient createDiffClient() {
+    return prepare(myDiffClient);
   }
 
   @NotNull

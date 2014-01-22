@@ -97,7 +97,9 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       if (myExpression instanceof PsiLambdaExpression) {
         PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
-        thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
+        if (body != null) {
+          thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
+        }
       } else {
         if (((PsiMethodReferenceExpression)myExpression).isExact()) {
           final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).resolve();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,5 +196,22 @@ def a(foo.User<String> f){}
 
 a(new foo.User<String>()<caret>)
 ''')
+  }
+
+  void testBinaryExpr() {
+    doSmartTest('''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new <caret>
+''', '''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new String(<caret>)
+'''
+)
   }
 }

@@ -103,6 +103,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       new ZipFile(newerFile).close();
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted target file: " + newerFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
@@ -115,6 +117,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       olderZip = new ZipFile(olderFile);
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted source file: " + olderFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted source file: " + olderFile, e);
     }
 
@@ -137,6 +141,8 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
+            Runner.logger.error("Error building patch for .zip entry " + name);
+            Runner.printStackTrace(e);
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }

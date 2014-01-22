@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpression stringBuilderExpression = getCompleteExpression(parent);
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, new StringBuilder());
           if (stringExpression != null && stringBuilderExpression != null) {
-            replaceExpression(stringBuilderExpression, stringExpression.toString());
+            PsiReplacementUtil.replaceExpression(stringBuilderExpression, stringExpression.toString());
           }
         }
         return;
@@ -144,7 +145,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         expression.getParent().delete();
       }
       final PsiMethodCallExpression lastExpression = expressions.get(expressions.size() - 1);
-      replaceExpression(lastExpression, stringExpression.toString());
+      PsiReplacementUtil.replaceExpression(lastExpression, stringExpression.toString());
     }
 
     @Nullable

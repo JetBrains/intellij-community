@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,122 +17,84 @@ package com.intellij.ide.browsers;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.util.xmlb.Converter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.UUID;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
-/*
- This class is a temporary solution that allows to use browser not listed in the BrowserFamily enum.
- TODO Vladimir Krivosheev: get rid of BrowserFamily enum usage, allow to create custom browsers at Web Browsers page in Settings (WEB-2093). 
- */
-public class WebBrowser {
+public abstract class WebBrowser {
+  protected @NotNull BrowserFamily family;
+  protected @NotNull String name;
+  private final UUID id;
 
-  public static final WebBrowser CHROME = createStandardBrowser(BrowserFamily.CHROME);
-  public static final WebBrowser FIREFOX = createStandardBrowser(BrowserFamily.FIREFOX);
-  public static final WebBrowser EXPLORER = createStandardBrowser(BrowserFamily.EXPLORER);
-  public static final WebBrowser OPERA = createStandardBrowser(BrowserFamily.OPERA);
-  public static final WebBrowser SAFARI = createStandardBrowser(BrowserFamily.SAFARI);
-
-  private final @NotNull BrowserFamily myFamily;
-  private final @NotNull String myName;
-  private final @NotNull Icon myIcon;
-  private final @NotNull Computable<String> myPathComputable;
-  private final @NotNull String myBrowserNotFoundMessage;
-
-  @NotNull
-  public static WebBrowser getStandardBrowser(final @NotNull BrowserFamily browserFamily) {
-    switch (browserFamily) {
-      case CHROME:
-        return CHROME;
-      case FIREFOX:
-        return FIREFOX;
-      case EXPLORER:
-        return EXPLORER;
-      case OPERA:
-        return OPERA;
-      case SAFARI:
-        return SAFARI;
-      default:
-        assert false : browserFamily;
-        return null;
-    }
-  }
-
-  private WebBrowser(final @NotNull BrowserFamily family,
-                     final @NotNull String name,
-                     final @NotNull Icon icon,
-                     final @NotNull NullableComputable<String> pathComputable,
-                     final @NotNull String browserNotFoundMessage) {
-    myFamily = family;
-    myName = name;
-    myIcon = icon;
-    myPathComputable = pathComputable;
-    myBrowserNotFoundMessage = browserNotFoundMessage;
+  protected WebBrowser(@NotNull UUID id, @NotNull BrowserFamily family, @NotNull String name) {
+    this.id = id;
+    this.family = family;
+    this.name = name;
   }
 
   @NotNull
   public String getName() {
-    return myName;
+    return name;
+  }
+
+  @NotNull
+  public final UUID getId() {
+    return id;
   }
 
   @NotNull
   public BrowserFamily getFamily() {
-    return myFamily;
+    return family;
   }
 
   @NotNull
-  public Icon getIcon() {
-    return myIcon;
-  }
+  public abstract Icon getIcon();
 
   @Nullable
-  public String getPath() {
-    return myPathComputable.compute();
-  }
+  public abstract String getPath();
 
   @NotNull
   public String getBrowserNotFoundMessage() {
-    return myBrowserNotFoundMessage;
+    return IdeBundle.message("error.0.browser.path.not.specified", getFamily().getName(), CommonBundle.settingsActionPath());
   }
 
   @Nullable
-  public BrowserSpecificSettings getBrowserSpecificSettings() {
+  public BrowserSpecificSettings getSpecificSettings() {
     return null;
   }
 
-  private static WebBrowser createStandardBrowser(final BrowserFamily family) {
-    final String browserNotFoundMessage = IdeBundle.message("error.0.browser.path.not.specified", family.getName(),
-                                                            CommonBundle.settingsActionPath());
-    return new WebBrowser(family, family.getName(), family.getIcon(), new NullableComputable<String>() {
-      @Override
-      @NotNull
-      public String compute() {
-        return BrowsersConfiguration.getInstance().getBrowserSettings(family).getPath();
-      }
-    }, browserNotFoundMessage) {
-      @Override
-      @Nullable
-      public BrowserSpecificSettings getBrowserSpecificSettings() {
-        return BrowsersConfiguration.getInstance().getBrowserSettings(getFamily()).getBrowserSpecificSettings();
-      }
-    };
-  }
-
-  public static WebBrowser createCustomBrowser(final @NotNull BrowserFamily family,
-                                               final @NotNull String name,
-                                               final @NotNull Icon icon,
-                                               final @NotNull NullableComputable<String> pathComputable,
-                                               final @NotNull String browserNotFoundMessage) {
-    return new WebBrowser(family, name, icon, pathComputable, browserNotFoundMessage);
+  @NotNull
+  public static WebBrowser createCustomBrowser(@NotNull BrowserFamily family,
+                                               @NotNull String name,
+                                               @NotNull UUID id,
+                                               @NotNull Icon icon,
+                                               @NotNull NullableComputable<String> pathComputable,
+                                               @Nullable String browserNotFoundMessage) {
+    return new CustomWebBrowser(id, family, name, icon, pathComputable, browserNotFoundMessage);
   }
 
   @Override
   public String toString() {
     return getName() + " (" + getPath() + ")";
+  }
+
+  public static final class ReferenceConverter extends Converter<WebBrowser> {
+    @Nullable
+    @Override
+    public WebBrowser fromString(@NotNull String value) {
+      return WebBrowserManager.getInstance().findBrowserById(value);
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull WebBrowser browser) {
+      return browser.getId().toString();
+    }
   }
 }

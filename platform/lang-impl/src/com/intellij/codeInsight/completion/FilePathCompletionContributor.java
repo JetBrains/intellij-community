@@ -125,7 +125,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
             final Module contextModule = index.getModuleForFile(contextFile);
             if (contextModule != null) {
-              final FileReferenceHelper contextHelper = FileReferenceHelperRegistrar.getNotNullHelper(originalFile);
+              final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers(originalFile);
 
               final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
               for (final String name : resultNames) {
@@ -139,10 +139,14 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                     final VirtualFile virtualFile = file.getVirtualFile();
                     if (virtualFile != null && virtualFile.isValid() && !Comparing.equal(virtualFile, contextFile)) {
-                      if (contextHelper.isMine(project, virtualFile)) {
-                        if (pathPrefixParts == null ||
-                            fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts)) {
-                          __result.addElement(new FilePathLookupItem(file, contextHelper));
+                      for (FileReferenceHelper contextHelper : helpers) {
+                        ProgressManager.checkCanceled();
+
+                        if (contextHelper.isMine(project, virtualFile)) {
+                          if (pathPrefixParts == null ||
+                              fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts)) {
+                            __result.addElement(new FilePathLookupItem(file, contextHelper));
+                          }
                         }
                       }
                     }

@@ -185,6 +185,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myPositionConverter;
   }
 
+  @NotNull
   @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return myBreakpointHandlers;
@@ -662,7 +663,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(this.getSession().getProject(), this, frameInfo,
+    return new PyStackFrame(getSession().getProject(), this, frameInfo,
                             getPositionConverter().convertFromPython(frameInfo.getPosition()));
   }
 

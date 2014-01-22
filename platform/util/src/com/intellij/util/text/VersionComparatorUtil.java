@@ -169,14 +169,7 @@ public class VersionComparatorUtil {
   }
 
   private static int comparePriorities(VersionTokenType t1, VersionTokenType t2) {
-    final int p1 = t1.getPriority();
-    final int p2 = t2.getPriority();
-
-    if (p1 == p2) {
-      return 0;
-    } else {
-      return p1 > p2 ? 1 : -1;
-    }
+    return Integer.signum(t1.getPriority() - t2.getPriority());
   }
 
   private static int compareNumbers(String n1, String n2) {

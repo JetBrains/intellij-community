@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -52,6 +53,16 @@ public class EditorNotificationPanel extends JPanel {
 
   public void setText(String text) {
     myLabel.setText(text);
+  }
+
+  public EditorNotificationPanel text(@NotNull String text) {
+    myLabel.setText(text);
+    return this;
+  }
+
+  public EditorNotificationPanel icon(@NotNull Icon icon) {
+    myLabel.setIcon(icon);
+    return this;
   }
 
   @Override

@@ -45,6 +45,27 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightInspection
            "}\n");
   }
 
+  public void testCanNotHideFromStaticContext() {
+    doTest("class Y<T> {\n" +
+           "    static class X<T> {\n" +
+           "        T t;\n" +
+           "    }\n" +
+           "    static <T>  T go() {\n" +
+           "        return null;\n" +
+           "    }\n" +
+           "}");
+  }
+
+  public void testCannotHideFromImplicitStaticContext() {
+    doTest("interface G<T> {\n" +
+           "    class I {\n" +
+           "        class H<T>  {\n" +
+           "             T t;\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new TypeParameterHidesVisibleTypeInspection();

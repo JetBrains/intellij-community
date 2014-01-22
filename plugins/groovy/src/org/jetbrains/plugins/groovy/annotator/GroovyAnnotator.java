@@ -207,7 +207,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
       if (typeElement instanceof GrDisjunctionTypeElement) {
         final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
-        PsiType[] types = new PsiType[elements.length];
+        PsiType[] types = PsiType.createArray(elements.length);
         for (int i = 0; i < elements.length; i++) {
           types[i] = elements[i].getType();
         }
@@ -399,7 +399,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static void checkSameNameMethodsWithDifferentAccessModifiers(AnnotationHolder holder, GrMethod[] methods) {
     MultiMap<String, GrMethod> map = MultiMap.create();
     for (GrMethod method : methods) {
-      map.putValue(method.getName(), method);
+      if (!method.isConstructor()) {
+        map.putValue(method.getName(), method);
+      }
     }
 
     for (Map.Entry<String, Collection<GrMethod>> entry : map.entrySet()) {
@@ -1424,6 +1426,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
 
+  @Override
   public void visitAnnotation(GrAnnotation annotation) {
     final GrCodeReferenceElement ref = annotation.getClassReference();
     final PsiElement resolved = ref.resolve();
@@ -1498,11 +1501,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
 
     final GrAnnotationMemberValue value = nameValuePair.getValue();
-
-    checkAnnotationAttributeValue(value, value);
+    if (value != null) {
+      checkAnnotationAttributeValue(value, value);
+    }
   }
 
-  private boolean checkAnnotationAttributeValue(GrAnnotationMemberValue value, PsiElement toHighlight) {
+  private boolean checkAnnotationAttributeValue(@Nullable GrAnnotationMemberValue value, @NotNull PsiElement toHighlight) {
+    if (value == null) return false;
+
     if (value instanceof GrLiteral) return false;
     if (value instanceof GrClosableBlock) return false;
     if (value instanceof GrAnnotation) return false;
@@ -1541,6 +1547,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         if (checkAnnotationAttributeValue(expression, toHighlight)) return true;
       }
       return false;
+    }
+    if (value instanceof GrUnaryExpression) {
+      final IElementType tokenType = ((GrUnaryExpression)value).getOperationTokenType();
+      if (tokenType == GroovyTokenTypes.mMINUS || tokenType == GroovyTokenTypes.mPLUS) {
+        return checkAnnotationAttributeValue(((GrUnaryExpression)value).getOperand(), toHighlight);
+      }
     }
 
     myHolder.createErrorAnnotation(toHighlight, GroovyBundle.message("expected.0.to.be.inline.constant", value.getText()));
@@ -2081,7 +2093,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     String packageName = "<default package>";
     if (file instanceof GroovyFile) {
       final String name = ((GroovyFile)file).getPackageName();
-      if (name.length() > 0) packageName = name;
+      if (!name.isEmpty()) packageName = name;
     }
     return packageName;
   }

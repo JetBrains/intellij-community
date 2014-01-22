@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,55 +29,57 @@ public class CandidateInfo implements JavaResolveResult {
   private final PsiElement myPlace;
   private final PsiClass myAccessClass;
   private final PsiElement myCandidate;
-  private Boolean myAccessProblem = null;
   private final boolean myStaticsProblem;
   protected final PsiSubstitutor mySubstitutor;
   private final PsiElement myCurrentFileResolveContext;
-  private boolean myPackagePrefixPackageReference;
+  private final boolean myPackagePrefixPackageReference;
+  private Boolean myAccessible; // benign datarace
 
   private CandidateInfo(PsiElement candidate,
-                        PsiSubstitutor substitutor,
-                        Boolean accessProblem,
+                        @NotNull PsiSubstitutor substitutor,
+                        Boolean accessible,
                         boolean staticsProblem,
                         PsiElement currFileContext,
                         PsiElement place,
-                        PsiClass accessClass) {
+                        PsiClass accessClass,
+                        boolean packagePrefixPackageReference) {
     myCandidate = candidate;
-    myAccessProblem = accessProblem;
+    myAccessible = accessible;
     myStaticsProblem = staticsProblem;
     mySubstitutor = substitutor;
     myCurrentFileResolveContext = currFileContext;
     myAccessClass = accessClass;
     myPlace = place;
+    myPackagePrefixPackageReference = packagePrefixPackageReference;
   }
-  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext) {
-    this(candidate, substitutor, accessProblem ? Boolean.TRUE : Boolean.FALSE, staticsProblem, currFileContext, null, null);
+  public CandidateInfo(PsiElement candidate, @NotNull PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext) {
+    this(candidate, substitutor, !accessProblem, staticsProblem, currFileContext, null, null, false);
   }
 
-  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem){
+  public CandidateInfo(PsiElement candidate, @NotNull PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem){
     this(candidate, substitutor, accessProblem, staticsProblem, null);
   }
 
-  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, PsiElement place, boolean staticsProblem){
-    this(candidate, substitutor, place, null, staticsProblem, null);
-  }
-
   public CandidateInfo(PsiElement candidate,
-                       PsiSubstitutor substitutor,
+                       @NotNull PsiSubstitutor substitutor,
                        PsiElement place,
                        PsiClass accessClass,
                        boolean staticsProblem,
                        PsiElement currFileContext){
-    this(candidate, substitutor, null, staticsProblem, currFileContext, place, accessClass);
+    this(candidate, substitutor, null, staticsProblem, currFileContext, place, accessClass, false);
   }
 
-  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor){
+  public CandidateInfo(PsiElement candidate, @NotNull PsiSubstitutor substitutor, PsiElement place, boolean staticsProblem){
+    this(candidate, substitutor, place, null, staticsProblem, null);
+  }
+
+  public CandidateInfo(PsiElement candidate, @NotNull PsiSubstitutor substitutor){
     this(candidate, substitutor, null, null, false, null);
   }
 
-  public CandidateInfo(@NotNull CandidateInfo candidate, PsiSubstitutor newSubstitutor){
-    this(candidate.myCandidate, newSubstitutor, candidate.myPlace, null, candidate.myStaticsProblem, candidate.myCurrentFileResolveContext);
-    myAccessProblem = candidate.myAccessProblem;
+  public CandidateInfo(CandidateInfo candidate, @NotNull PsiSubstitutor newSubstitutor){
+    this(candidate.myCandidate, newSubstitutor, candidate.myAccessible, candidate.myStaticsProblem, candidate.myCurrentFileResolveContext, candidate.myPlace,
+         null, false);
   }
 
   @Override
@@ -95,26 +97,31 @@ public class CandidateInfo implements JavaResolveResult {
     return myCandidate;
   }
 
+  @NotNull
   @Override
   public PsiSubstitutor getSubstitutor(){
     return mySubstitutor;
   }
 
   @Override
-  public boolean isAccessible(){
-    if(myAccessProblem == null){
-      boolean accessProblem = false;
+  public boolean isAccessible() {
+    Boolean Accessible = myAccessible;
+    boolean accessible = true;
+    if(Accessible == null) {
       if (myPlace != null && myCandidate instanceof PsiMember) {
         final PsiMember member = (PsiMember)myCandidate;
-        accessProblem = !JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper()
+        accessible = JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper()
           .isAccessible(member, member.getModifierList(), myPlace, myAccessClass, myCurrentFileResolveContext);
-        if (!accessProblem && member.hasModifierProperty(PsiModifier.PRIVATE) && myPlace instanceof PsiReferenceExpression && JavaVersionService.getInstance().isAtLeast(myPlace, JavaSdkVersion.JDK_1_7)) {
-          accessProblem = isAccessedThroughTypeParameterBound();
+        if (accessible && member.hasModifierProperty(PsiModifier.PRIVATE) && myPlace instanceof PsiReferenceExpression && JavaVersionService.getInstance().isAtLeast(myPlace, JavaSdkVersion.JDK_1_7)) {
+          accessible = !isAccessedThroughTypeParameterBound();
         }
       }
-      myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
+      myAccessible = accessible;
     }
-    return !myAccessProblem.booleanValue();
+    else {
+      accessible = Accessible;
+    }
+    return accessible;
   }
 
   private boolean isAccessedThroughTypeParameterBound() {
@@ -143,16 +150,6 @@ public class CandidateInfo implements JavaResolveResult {
     return myCurrentFileResolveContext;
   }
 
-  private void setPackagePrefixPackageReference(boolean packagePrefixPackageReference) {
-    myPackagePrefixPackageReference = packagePrefixPackageReference;
-  }
-
-  public static CandidateInfo createCandidateInfoForPackagePrefixPart() {
-    final CandidateInfo candidateInfo = new CandidateInfo(null, PsiSubstitutor.EMPTY, false, false);
-    candidateInfo.setPackagePrefixPackageReference(true);
-    return candidateInfo;
-  }
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -162,7 +159,7 @@ public class CandidateInfo implements JavaResolveResult {
     if (myPackagePrefixPackageReference != that.myPackagePrefixPackageReference) return false;
     if (myStaticsProblem != that.myStaticsProblem) return false;
     if (myAccessClass != null ? !myAccessClass.equals(that.myAccessClass) : that.myAccessClass != null) return false;
-    if (myAccessProblem != null ? !myAccessProblem.equals(that.myAccessProblem) : that.myAccessProblem != null) return false;
+    if (isAccessible() != that.isAccessible()) return false;
     if (myCandidate != null ? !myCandidate.equals(that.myCandidate) : that.myCandidate != null) return false;
     if (myCurrentFileResolveContext != null
         ? !myCurrentFileResolveContext.equals(that.myCurrentFileResolveContext)
@@ -170,22 +167,23 @@ public class CandidateInfo implements JavaResolveResult {
       return false;
     }
     if (myPlace != null ? !myPlace.equals(that.myPlace) : that.myPlace != null) return false;
-    if (mySubstitutor != null ? !mySubstitutor.equals(that.mySubstitutor) : that.mySubstitutor != null) return false;
-
-    return true;
+    return mySubstitutor.equals(that.mySubstitutor);
   }
+
 
   public int hashCode() {
     int result = myPlace != null ? myPlace.hashCode() : 0;
     result = 31 * result + (myAccessClass != null ? myAccessClass.hashCode() : 0);
     result = 31 * result + (myCandidate != null ? myCandidate.hashCode() : 0);
-    result = 31 * result + (myAccessProblem != null ? myAccessProblem.hashCode() : 0);
+    result = 31 * result + (isAccessible() ? 1 : 0);
     result = 31 * result + (myStaticsProblem ? 1 : 0);
-    result = 31 * result + (mySubstitutor != null ? mySubstitutor.hashCode() : 0);
+    result = 31 * result + mySubstitutor.hashCode();
     result = 31 * result + (myCurrentFileResolveContext != null ? myCurrentFileResolveContext.hashCode() : 0);
     result = 31 * result + (myPackagePrefixPackageReference ? 1 : 0);
     return result;
   }
 
-  public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE = {createCandidateInfoForPackagePrefixPart()};
+  @NotNull
+  public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE =
+    {new CandidateInfo(null, PsiSubstitutor.EMPTY, Boolean.TRUE, false, null, null, null, true)};
 }

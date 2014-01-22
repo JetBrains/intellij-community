@@ -15,8 +15,15 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +43,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       "this is a <caret>"
     );
   }
-
+  
   public void testInTheMiddle() throws IOException {
     doTest(
       "th<caret>is is a string",
@@ -109,16 +116,223 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     assertEquals(" second", string);
   }
 
-  public void testDoubleAction() throws Exception {
-    String text = "<caret>first\n" +
-                  "second\n" +
-                  "third";
+  public void testSubsequentKills() throws Exception {
+    String text = "<caret>first second third";
     configureFromFileText(getTestName(false) + ".txt", text);
     killToWordEnd();
     killToWordEnd();
+    checkResultByText(" third");
+
     Transferable contents = CopyPasteManager.getInstance().getContents();
     assertTrue(contents instanceof KillRingTransferable);
     Object string = contents.getTransferData(DataFlavor.stringFlavor);
-    assertEquals("first\nsecond\n", string);
+    assertEquals("first second", string);
   }
+
+  public void testSubsequentKillsInterruptedBySave() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    cutToLineEnd();
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
+    manager.saveAllDocuments();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("Component c) {\n        }\n", string);
+  }
+
+  public void testSubsequentKillsWithFolding() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
+        assertNotNull(foldRegion);
+        foldRegion.setExpanded(false);
+        assertFalse(foldRegion.isExpanded());
+      }
+    });
+
+    cutToLineEnd();
+    cutToLineEnd();
+    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+      @Override
+      public void run() {
+        final FoldRegion[] regions = model.getAllFoldRegions();
+        for (FoldRegion region : regions) {
+          assertNotNull(region);
+          region.setExpanded(true);
+        }
+
+      }
+    });
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("Component c) {\n        }\n", string);
+  }
+
+  public void testDoubleEditors() throws Exception {
+    String text = "<caret>first second third";
+    configureFromFileText(getTestName(false) + ".txt", text);
+    final Document document = myEditor.getDocument();
+    final CaretModelImpl caretModel = new CaretModelImpl((EditorImpl)myEditor);
+    try {
+      document.addDocumentListener(caretModel);
+      caretModel.moveToOffset(document.getTextLength()-1);
+      killToWordEnd();
+      killToWordEnd();
+      checkResultByText(" third");
+
+      Transferable contents = CopyPasteManager.getInstance().getContents();
+      assertTrue(contents instanceof KillRingTransferable);
+      Object string = contents.getTransferData(DataFlavor.stringFlavor);
+      assertEquals("first second", string);
+    }
+    finally {
+      Disposer.dispose(caretModel);
+    }
+  }
+
+
+  public void testKillsInterruptedByDelete() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    deleteLine();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "    }", string);
+  }
+
+  public void testKillsInterruptedByDeleteLine() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    deleteLine();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "    }", string);
+  }
+
+  public void testKillsInterruptedByDeleteLineEnd() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorDeleteToLineEnd");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("        }\n", string);
+  }
+
+  public void testKillsInterruptedByDeleteWord() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorDeleteToWordEnd");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("}\n", string);
+  }
+
+  public void testKillsInterruptedBySplit() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorSplitLine");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(        }\n" +
+                      "    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "                \n", string);
+  }
+
+  public void testKillsInterruptedByStartNewLine() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorStartNewLine");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(\n" +
+                      "                \n" +
+                      "    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "        }", string);
+  }
+
 }

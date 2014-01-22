@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,22 @@ public interface ArtifactCompilerInstructionCreator {
 
   void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter);
 
+  /**
+   * Add instruction to extract directory from a jar file into the current place in the artifact layout.
+   *
+   * @param jarFile         jar file to extract
+   * @param pathInJar       relative path to directory inside {@code jarFile} which need to be extracted. Use "/" to extract the whole jar contents
+   */
   void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar);
+
+  /**
+   * Add instruction to extract directory from a jar file into the current place in the artifact layout.
+   * @param jarFile jar file to extract
+   * @param pathInJar relative path to directory inside {@code jarFile} which need to be extracted. Use "/" to extract the whole jar contents
+   * @param pathInJarFilter a filter instance specifying which entries should be extracted. It should accept paths inside the jar file
+   *                        relative to {@code pathInJar} root and return {@code true} if the entry should be extracted and {@code false} otherwise
+   */
+  void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar, @NotNull Condition<String> pathInJarFilter);
 
   ArtifactCompilerInstructionCreator subFolder(@NotNull String directoryName);
 

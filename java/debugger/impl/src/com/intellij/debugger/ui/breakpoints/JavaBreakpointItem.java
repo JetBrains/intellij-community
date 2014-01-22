@@ -18,7 +18,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -72,7 +71,10 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     //saveState();
-    myBreakpointPropertiesPanel = null;
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.dispose();
+      myBreakpointPropertiesPanel = null;
+    }
 
     if (!editorOnly) {
       myBreakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
@@ -126,13 +128,14 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public void removed(Project project) {
+    dispose();
     DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().removeBreakpoint(myBreakpoint);
   }
 
   @Override
   public void saveState() {
     if (myBreakpointPropertiesPanel != null) {
-      myBreakpointPropertiesPanel.saveTo(myBreakpoint, EmptyRunnable.INSTANCE);
+      myBreakpointPropertiesPanel.saveTo(myBreakpoint);
     }
   }
 
@@ -156,6 +159,14 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   public boolean isDefaultBreakpoint() {
     return myBreakpoint.getCategory().equals(ExceptionBreakpoint.CATEGORY);
+  }
+
+  @Override
+  protected void dispose() {
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.dispose();
+      myBreakpointPropertiesPanel = null;
+    }
   }
 
   @Override

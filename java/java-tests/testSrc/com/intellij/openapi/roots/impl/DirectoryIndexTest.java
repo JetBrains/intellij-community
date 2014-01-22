@@ -225,8 +225,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testDirsByPackageName() throws IOException {
-    checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
-    checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibSrc, myFileLibCls, mySrcDir2, myLibSrcDir, myLibClsDir);
+    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibCls, mySrcDir2, myLibClsDir);
     
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
@@ -239,7 +239,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     VirtualFile libClsPack = myLibClsDir.createChildDirectory(this, "pack1");
     VirtualFile libSrcPack = myLibSrcDir.createChildDirectory(this, "pack1");
-    checkPackage("pack1", true, myPack1Dir, libClsPack, libSrcPack);
+    fireRootsChanged();
+    checkPackage("pack1", true, myPack1Dir, libSrcPack, libClsPack);
     checkPackage("pack1", false, myPack1Dir, libClsPack);
   }
 
@@ -488,8 +489,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2TestOutput);
     
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
 
     excluded.delete(this);
@@ -507,12 +508,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
         
         String fileName = e.getFileName();
         if (fileName.equals("projectOutput")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2Output")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2TestOutput")) {
           assertFalse(myIndex.isProjectExcludeRoot(file));
@@ -525,10 +524,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
     
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
     
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
@@ -541,8 +540,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertEquals(created.toString(), 4, created.size());
 
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
   }
 
@@ -670,12 +669,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
     fireRootsChanged();
 
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
     
     projectOutputUnderContent.delete(this);
     projectOutputUnderContent = myModule1Dir.createChildDirectory(this, "projectOutputUnderContent");
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
   }
 
   private void checkInfo(VirtualFile dir,
@@ -722,7 +721,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
-    assertSameElements(actualDirs, expectedDirs);
+    assertOrderedEquals(actualDirs, expectedDirs);
   }
 
   public void testFileLibraryInsideFolderLibrary() throws IOException {

@@ -98,6 +98,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
     @NotNull
     T getSettings();
 
+    // null if ok
     @Nullable
     ValidationInfo validate();
 

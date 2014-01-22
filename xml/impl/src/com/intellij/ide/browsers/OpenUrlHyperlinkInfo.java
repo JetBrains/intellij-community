@@ -57,8 +57,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
   @Override
   public ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
     DefaultActionGroup group = new DefaultActionGroup();
-    for (BrowsersConfiguration.BrowserFamily browserFamily : BrowsersConfiguration.getInstance().getActiveBrowsers()) {
-      final WebBrowser browser = WebBrowser.getStandardBrowser(browserFamily);
+    for (final WebBrowser browser : WebBrowserManager.getInstance().getActiveBrowsers()) {
       if (browserCondition == null ? browser.equals(this.browser) : browserCondition.value(browser)) {
         group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
           @Override

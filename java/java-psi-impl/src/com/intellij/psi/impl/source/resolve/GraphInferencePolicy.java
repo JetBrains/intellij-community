@@ -73,7 +73,7 @@ public class GraphInferencePolicy extends ProcessCandidateParameterTypeInference
       protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
-          final PsiType[] types = new PsiType[expressions.length];
+          final PsiType[] types = PsiType.createArray(expressions.length);
           for (int i = 0; i < expressions.length; i++) {
             if (i != exprIdx) {
               types[i] = expressions[i].getType();

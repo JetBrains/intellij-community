@@ -442,7 +442,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private ExportedNameCache getExportedNameCache() {
     ExportedNameCache cache;
     synchronized (myENCLock) {
-      cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+      cache = SoftReference.dereference(myExportedNameCache);
       final long modificationStamp = getModificationStamp();
       if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
         myExportedNameCache.clear();

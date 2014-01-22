@@ -42,7 +42,7 @@ final MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
 
 long start = java.lang.System.currentTimeMillis();
 
-org.codehaus.groovy.runtime.DefaultGroovyMethods.eachByte(f, MB, new groovy.lang.Closure<java.lang.Void>(this, this) {
+org.codehaus.groovy.runtime.DefaultGroovyMethods.eachByte(f, MB, new groovy.lang.Closure<java.lang.Object>(this, this) {
 public void doCall(java.lang.Byte[] buf, int bytesRead) {
 messageDigest.update(buf, 0, bytesRead);
 }

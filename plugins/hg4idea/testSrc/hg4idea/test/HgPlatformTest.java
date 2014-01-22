@@ -109,6 +109,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     File hgrc = new File(new File(repositoryRoot.getPath(), ".hg"), "hgrc");
     FileUtil.appendToFile(hgrc, text);
     assertTrue(hgrc.exists());
+    repositoryRoot.refresh(false,true);
   }
 
 

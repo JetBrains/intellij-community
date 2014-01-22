@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,7 +106,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
       else {
         parseMethodCall = "Boolean.valueOf(" + argText + ')';
       }
-      replaceExpression(call, parseMethodCall);
+      PsiReplacementUtil.replaceExpression(call, parseMethodCall);
     }
   }
 
@@ -157,7 +158,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
                             + argText + "))";
         }
       }
-      replaceExpression(call, parseMethodCall);
+      PsiReplacementUtil.replaceExpression(call, parseMethodCall);
     }
   }
 

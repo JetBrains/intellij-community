@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -48,7 +47,7 @@ import java.util.Locale;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = Bootstrap.NO_SPLASH;
+  @NonNls public static final String NO_SPLASH = "nosplash";
 
   private static SocketLock ourLock;
   private static String myDefaultLAF;
@@ -131,6 +130,12 @@ public class StartupUtil {
         Main.showMessage("JDK Required", message, true);
         return false;
       }
+
+      if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
+        String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
+        Main.showMessage("Unsupported JVM", message, true);
+        return false;
+      }
     }
 
     return true;
@@ -209,6 +214,9 @@ public class StartupUtil {
   }
 
   private static void fixProcessEnvironment(Logger log) {
+    if (!Main.isCommandLine()) {
+      System.setProperty("__idea.mac.env.lock", "unlocked");
+    }
     boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
     if (!envReady) {
       log.info("initializing environment");

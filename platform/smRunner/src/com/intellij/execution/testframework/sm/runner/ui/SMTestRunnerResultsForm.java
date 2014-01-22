@@ -19,10 +19,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeBuilder;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -77,10 +74,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private final Project myProject;
 
-  private int myTestsCurrentCount;
-  private int myTestsTotal = 0;
-  private int myTestsFailuresCount;
-  private boolean myContainsIgnoredTests;
+  private int myTotalTestCount = 0;
+  private int myStartedTestCount = 0;
+  private int myFinishedTestCount = 0;
+  private int myFailedTestCount = 0;
+  private int myIgnoredTestCount = 0;
   private long myStartTime;
   private long myEndTime;
   private StatisticsPanel myStatisticsPane;
@@ -216,9 +214,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     selectAndNotify(myTestsRootNode);
 
     myStartTime = System.currentTimeMillis();
-    myTestsRootNode.addSystemOutput("Testing started at "
-                                    + DateFormatUtil.formatTime(myStartTime)
-                                    + " ...\n");
+    boolean printTestingStartedTime = true;
+    if (myConsoleProperties instanceof SMTRunnerConsoleProperties) {
+      printTestingStartedTime = ((SMTRunnerConsoleProperties) myConsoleProperties).isPrintTestingStartedTime();
+    }
+    if (printTestingStartedTime) {
+      myTestsRootNode.addSystemOutput("Testing started at "
+                                      + DateFormatUtil.formatTime(myStartTime)
+                                      + " ...\n");
+    }
 
     updateStatusLabel(false);
 
@@ -230,8 +234,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
 
-    if (myTestsTotal == 0) {
-      myTestsTotal = myTestsCurrentCount;
+    if (myTotalTestCount == 0) {
+      myTotalTestCount = myStartedTestCount;
       myStatusLine.setFraction(1);
     }
 
@@ -262,15 +266,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @param testProxy Proxy
    */
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    updateCountersAndProgressOnTestStarted(false);
-
+    updateOnTestStarted(false);
     _addTestOrSuite(testProxy);
-
     fireOnTestNodeAdded(testProxy);
   }
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
-    updateCountersAndProgressOnTestFailed(false);
+    updateOnTestFailed(false);
     updateIconProgress();
   }
 
@@ -295,15 +297,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public void onCustomProgressTestStarted() {
-    updateCountersAndProgressOnTestStarted(true);
+    updateOnTestStarted(true);
   }
 
   public void onCustomProgressTestFailed() {
-    updateCountersAndProgressOnTestFailed(true);
+    updateOnTestFailed(true);
   }
 
   public void onTestFinished(@NotNull final SMTestProxy test) {
-    //Do nothing
+    updateOnTestFinished(false);
     updateIconProgress();
   }
 
@@ -406,20 +408,28 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  protected int getTestsCurrentCount() {
-    return myTestsCurrentCount;
+  protected int getTotalTestCount() {
+    return myTotalTestCount;
   }
 
-  protected int getTestsFailuresCount() {
-    return myTestsFailuresCount;
+  protected int getStartedTestCount() {
+    return myStartedTestCount;
+  }
+
+  protected int getFinishedTestCount() {
+    return myFinishedTestCount;
+  }
+
+  protected int getFailedTestCount() {
+    return myFailedTestCount;
+  }
+
+  protected int getIgnoredTestCount() {
+    return myIgnoredTestCount;
   }
 
   protected Color getTestsStatusColor() {
     return myStatusLine.getStatusColor();
-  }
-
-  protected int getTestsTotal() {
-    return myTestsTotal;
   }
 
   public Set<String> getMentionedCategories() {
@@ -480,15 +490,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   private void updateStatusLabel(final boolean testingFinished) {
-    if (myTestsFailuresCount > 0) {
+    if (myFailedTestCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    else if (myContainsIgnoredTests) {
+    else if (myIgnoredTestCount > 0) {
       myStatusLine.setStatusColor(DARK_YELLOW);
     }
 
     if (testingFinished) {
-      if (myTestsTotal == 0) {
+      if (myTotalTestCount == 0) {
         myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
                                     ? JBColor.LIGHT_GRAY
                                     : ColorProgressBar.RED);
@@ -500,8 +510,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
-                                                                      myTestsTotal, myTestsCurrentCount,
-                                                                      myTestsFailuresCount, myMentionedCategories,
+                                                                      myTotalTestCount, myFinishedTestCount,
+                                                                      myFailedTestCount, myMentionedCategories,
                                                                       launchedAndFinished));
   }
 
@@ -513,10 +523,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   private void updateIconProgress() {
-    final boolean isIndeterminate = myTestsTotal == 0;
-    final int total = isIndeterminate ? 2 : myTestsTotal;
-    final int count = isIndeterminate ? 1 : myTestsCurrentCount;
-    TestsUIUtil.showIconProgress(myProject, count, total, myTestsFailuresCount);
+    final int totalTestCount, doneTestCount;
+    if (myTotalTestCount == 0) {
+      totalTestCount = 2;
+      doneTestCount = 1;
+    }
+    else {
+      totalTestCount = myTotalTestCount;
+      doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
+    }
+    TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount);
   }
 
   /**
@@ -557,47 +573,57 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //This is for better support groups of TestSuites
     //Each group notifies about it's size
-    myTestsTotal += count;
+    myTotalTestCount += count;
     updateStatusLabel(false);
   }
 
-  private void updateCountersAndProgressOnTestStarted(final boolean isCustomMessage) {
+  private void updateOnTestStarted(final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;
 
     // for mixed tests results : mention category only if it contained tests
     myMentionedCategories
       .add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
 
-    // Counters
-    myTestsCurrentCount++;
+    myStartedTestCount++;
 
     // fix total count if it is corrupted
     // but if test count wasn't set at all let's process such case separately
-    if (myTestsCurrentCount > myTestsTotal && myTestsTotal != 0) {
-      myTestsTotal = myTestsCurrentCount;
+    if (myStartedTestCount > myTotalTestCount && myTotalTestCount != 0) {
+      myTotalTestCount = myStartedTestCount;
     }
 
+    updateStatusLabel(false);
+  }
+
+  private void updateProgressOnTestDone() {
+    int doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
     // update progress
-    if (myTestsTotal != 0) {
+    if (myTotalTestCount != 0) {
       // if total is set
-      myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
+      myStatusLine.setFraction((double) doneTestCount / myTotalTestCount);
     }
     else {
       // if at least one test was launcher than just set progress in the middle to show user that tests are running
-      myStatusLine.setFraction(myTestsCurrentCount > 1 ? 0.5 : 0); // > 1 because count already ++
+      myStatusLine.setFraction(doneTestCount > 0 ? 0.5 : 0);
     }
+  }
+
+  private void updateOnTestFailed(final boolean isCustomMessage) {
+    if (!isModeConsistent(isCustomMessage)) return;
+    myFailedTestCount++;
+    updateProgressOnTestDone();
     updateStatusLabel(false);
   }
 
-  private void updateCountersAndProgressOnTestFailed(final boolean isCustomMessage) {
+  private void updateOnTestFinished(final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;
-
-    myTestsFailuresCount++;
-    updateStatusLabel(false);
+    myFinishedTestCount++;
+    updateProgressOnTestDone();
   }
 
   private void updateOnTestIgnored() {
-    myContainsIgnoredTests = true;
+    myIgnoredTestCount++;
+    updateProgressOnTestDone();
     updateStatusLabel(false);
   }
 

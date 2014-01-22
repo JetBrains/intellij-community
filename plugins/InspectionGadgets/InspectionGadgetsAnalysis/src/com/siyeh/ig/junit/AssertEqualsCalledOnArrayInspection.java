@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -72,10 +73,10 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null && ImportUtils.addStaticImport("org.junit.Assert", "assertArrayEquals", methodExpression)) {
-        replaceExpression(methodExpression, "assertArrayEquals");
+        PsiReplacementUtil.replaceExpression(methodExpression, "assertArrayEquals");
       }
       else {
-        replaceExpression(methodExpression, "org.junit.Assert.assertArrayEquals");
+        PsiReplacementUtil.replaceExpression(methodExpression, "org.junit.Assert.assertArrayEquals");
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,11 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
 
     RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
 
+    startRunProfile(env, callback, project, state);
+  }
+
+  protected void startRunProfile(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
+    throws ExecutionException {
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override
       public RunContentDescriptor execute(@NotNull Project project,
@@ -81,19 +86,21 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-        final RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
+        RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
         if (descriptor != null) {
           descriptor.setExecutionId(env.getExecutionId());
         }
-        if (callback != null) callback.processStarted(descriptor);
+        if (callback != null) {
+          callback.processStarted(descriptor);
+        }
         return descriptor;
       }
-    }, state, env);
+    }, state, environment);
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(final Project project, final RunProfileState state,
-                                                    final RunContentDescriptor contentToReuse,
-                                                    final ExecutionEnvironment env) throws ExecutionException;
+  protected abstract RunContentDescriptor doExecute(@NotNull Project project, @NotNull RunProfileState state,
+                                                    @Nullable RunContentDescriptor contentToReuse,
+                                                    @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException;
 
 }

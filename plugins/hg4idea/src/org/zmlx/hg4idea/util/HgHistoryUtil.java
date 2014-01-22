@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -33,6 +34,7 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.log.HgContentRevisionFactory;
 import org.zmlx.hg4idea.provider.HgCommittedChangeList;
 
@@ -75,15 +77,15 @@ public class HgHistoryUtil {
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
-
+    List<String> args = new ArrayList<String>(parameters);
     hgLogCommand.setLogFile(false);
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
       if (!hgvcs.getVersion().isParentRevisionTemplateSupported()) {
-        parameters.add("--debug");
+        args.add("--debug");
       }
-      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, parameters);
+      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, args);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
@@ -204,5 +206,29 @@ public class HgHistoryUtil {
       hashArgs.add(hash);
     }
     return hashArgs;
+  }
+
+  @NotNull
+  public static Collection<String> getDescendingHeadsOfBranches(@NotNull Project project, @NotNull VirtualFile root, @NotNull Hash hash)
+    throws VcsException {
+    //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head()" --template "{branch}{bookmarks}"
+    Set<String> branchHeads = new HashSet<String>();
+    List<String> params = new ArrayList<String>();
+    params.add("-r");
+    params.add("descendants(" + hash.asString() + ") and head()");
+    HgLogCommand hgLogCommand = new HgLogCommand(project);
+    hgLogCommand.setLogFile(false);
+    String template = HgChangesetUtil.makeTemplate("{branch}", "{bookmarks}");
+    HgCommandResult logResult = hgLogCommand.execute(root, template, -1, null, params);
+    if (logResult == null || logResult.getExitValue() != 0) {
+      throw new VcsException("Couldn't get commit details: log command execution error.");
+    }
+    String output = logResult.getRawOutput();
+    List<String> changeSets = StringUtil.split(output, HgChangesetUtil.CHANGESET_SEPARATOR);
+    for (String line : changeSets) {
+      List<String> attributes = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR);
+      branchHeads.addAll(attributes);
+    }
+    return branchHeads;
   }
 }

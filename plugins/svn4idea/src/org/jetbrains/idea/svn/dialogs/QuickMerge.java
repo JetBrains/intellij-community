@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +116,12 @@ public class QuickMerge {
 
     @Override
     public void run(ContinuationContext continuationContext) {
-      if (SVNPathUtil.isAncestor(mySourceUrl, myWcInfo.getRootUrl()) || SVNPathUtil.isAncestor(myWcInfo.getRootUrl(), mySourceUrl)) {
+      SVNURL url = parseUrl(continuationContext);
+      if (url == null) {
+        return;
+      }
+
+      if (SVNURLUtil.isAncestor(url, myWcInfo.getUrl()) || SVNURLUtil.isAncestor(myWcInfo.getUrl(), url)) {
         finishWithError(continuationContext, "Cannot merge from self", true);
         return;
       }
@@ -123,6 +129,20 @@ public class QuickMerge {
       if (! checkForSwitchedRoots()) {
         continuationContext.cancelEverything();
       }
+    }
+
+    @Nullable
+    private SVNURL parseUrl(ContinuationContext continuationContext) {
+      SVNURL url = null;
+
+      try {
+        url = SvnUtil.createUrl(mySourceUrl);
+      }
+      catch (SVNException e) {
+        finishWithError(continuationContext, e.getMessage(), true);
+      }
+
+      return url;
     }
   }
 

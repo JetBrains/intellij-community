@@ -27,6 +27,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -41,6 +42,7 @@ import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,14 +90,20 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
 
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
+    final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
+    if (locations != null) {
+      List<PsiElement> elements = new ArrayList<PsiElement>();
+      for (Location<?> location : locations) {
+        final PsiElement psiElement = location.getPsiElement();
+        classes.add(getQName(psiElement, location));
+        elements.add(psiElement);
+      }
+      return elements.toArray(new PsiElement[elements.size()]);
+    }
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
       for (PsiMember psiMember : collectTestMembers(elements)) {
-        if (psiMember instanceof PsiClass) {
-          classes.add(((PsiClass)psiMember).getQualifiedName());
-        } else {
-          classes.add(psiMember.getContainingClass().getQualifiedName() + "," + psiMember.getName());
-        }
+        classes.add(getQName(psiMember, null));
       }
       return elements;
     } else {
@@ -107,6 +115,22 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
         return new PsiElement[]{file};
       }
     }
+    return null;
+  }
+
+  public static String getQName(PsiElement psiMember, Location location) {
+    if (psiMember instanceof PsiClass) {
+      return ((PsiClass)psiMember).getQualifiedName();
+    }
+    else if (psiMember instanceof PsiMember) {
+      final PsiClass containingClass = location instanceof MethodLocation
+                                       ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
+      assert containingClass != null;
+      return containingClass.getQualifiedName() + "," + ((PsiMember)psiMember).getName();
+    } else if (psiMember instanceof PsiPackage) {
+      return ((PsiPackage)psiMember).getQualifiedName();
+    }
+    assert false;
     return null;
   }
 

@@ -105,7 +105,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           types.add(PsiType.NULL);
         }
       }
-      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(new PsiType[types.size()]),
+      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(PsiType.createArray(types.size())),
                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
                                                                   name.equals(scope.getName()));
     }

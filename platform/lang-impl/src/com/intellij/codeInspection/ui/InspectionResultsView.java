@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     public int compare(HighlightDisplayLevel o1, HighlightDisplayLevel o2) {
       final int severityDiff = o1.getSeverity().compareTo(o2.getSeverity());
       if (severityDiff == 0) {
-        return o1.toString().compareTo(o2.toString());
+        return o1.getName().compareTo(o2.getName());
       }
       return severityDiff;
     }
@@ -173,6 +173,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
 
     createActionsToolbar();
+    TreeUtil.selectFirstNode(myTree);
   }
 
   private void initTreeListeners() {
@@ -218,6 +219,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isResolved()) {
+          return null;
+        }
         if (node instanceof RefElementNode) {
           final RefElementNode refNode = (RefElementNode)node;
           if (refNode.hasDescriptorsUnder()) return null;

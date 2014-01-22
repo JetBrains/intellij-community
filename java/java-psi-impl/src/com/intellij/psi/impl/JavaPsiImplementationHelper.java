@@ -34,6 +34,7 @@ public abstract class JavaPsiImplementationHelper {
 
   public abstract PsiClass getOriginalClass(PsiClass psiClass);
 
+  @NotNull
   public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
 
   /**
@@ -50,5 +51,6 @@ public abstract class JavaPsiImplementationHelper {
   @Nullable
   public abstract PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
 
-  public abstract void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection element);
+  public abstract void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType,
+                                       @Nullable PsiElement context, @NotNull PsiCatchSection element);
 }

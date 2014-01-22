@@ -20,10 +20,13 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryContinueInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
+import org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyCatchBlockInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnconditionalWaitInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 /**
@@ -149,7 +152,7 @@ boolean bar(def list) {
 test() {
     def var = "abc"
     def cl = {
-        <warning descr="Local variable var is reassigned in closure with other type">var</warning> = new Date()
+        <warning descr="Local variable 'var' is reassigned">var</warning> = new Date()
     }
     cl()
     var.toUpperCase()
@@ -158,7 +161,7 @@ test() {
 test2() {
     def var = "abc"
     def cl = {
-        var = 'cde'
+        <warning descr="Local variable 'var' is reassigned">var</warning> = 'cde'
     }
     cl()
     var.toUpperCase()
@@ -277,4 +280,71 @@ def with6(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Obj
 
 ''', DelegatesToInspection)
   }
+
+  void testUnnecessaryContinue() {
+    testHighlighting('''
+for(i in []) {
+  print 2
+  <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+}
+
+for(i in []) {
+  print 2
+  continue
+  print 3
+}
+
+for(i in []) {
+  print 2
+  switch(i) {
+    case not_last:
+      continue
+    case last:
+      <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+  }
+}
+
+for(i in []) {
+  if (cond) {
+      print 2
+      <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+  }
+  else {
+    continue
+    print 4
+  }
+}
+''', GroovyUnnecessaryContinueInspection)
+  }
+
+  void testEmptyCatchBlock1() {
+    testHighlighting('''
+try{} <warning descr="Empty 'catch' block">catch</warning>(IOException e) {}
+try{} catch(IOException ignored) {}
+try{} catch(IOException ignore) {}
+try{} catch(IOException e) {/*comment*/}
+''', GroovyEmptyCatchBlockInspection)
+  }
+
+  void testEmptyCatchBlock2() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock3() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock4() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myCountCommentsAsContent = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
+  }
+
 }

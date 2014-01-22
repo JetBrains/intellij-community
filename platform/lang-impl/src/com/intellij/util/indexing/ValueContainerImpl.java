@@ -20,10 +20,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
-import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
-import gnu.trove.TObjectObjectProcedure;
+import gnu.trove.*;
 
 import java.util.*;
 
@@ -34,6 +31,7 @@ import java.util.*;
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
   private final static Object myNullValue = new Object();
+  private static final int MAX_FILES = 20000;
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
   // when there are several value mapped, myInputIdMapping is THashMap<Value, Data>, myInputIdMappingValue = null
@@ -52,12 +50,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       if (input instanceof Integer) {
         idSet = new IdSet(3);
         idSet.add(((Integer)input).intValue());
+        idSet.add(inputId);
         resetFileSetForValue(value, idSet);
       }
-      else {
+      else if (input instanceof TIntHashSet) {
         idSet = (TIntHashSet)input;
+        idSet.add(inputId);
+
+        if (idSet.size() > MAX_FILES) {
+          resetFileSetForValue(value, new IdBitSet(idSet));
+        }
+      } else if (input instanceof IdBitSet) {
+        ((IdBitSet)input).set(inputId);
       }
-      idSet.add(inputId);
     }
   }
 
@@ -113,6 +118,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       if (((Integer)input).intValue() != inputId) {
         return false;
       }
+    } else if (input instanceof IdBitSet) {
+      IdBitSet bitSet = (IdBitSet)input;
+      boolean removed = bitSet.remove(inputId);
+      if (bitSet.numberOfBitsSet() > 0) return removed;
     }
 
     if (!(myInputIdMapping instanceof THashMap)) {
@@ -201,6 +210,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     if (input instanceof Integer ){
       return inputId == ((Integer)input).intValue();
     }
+    if (input instanceof IdBitSet) {
+      return ((IdBitSet)input).get(inputId);
+    }
     return false;
   }
 
@@ -214,6 +226,15 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         @Override
         public boolean contains(int id) {
           return id == myId;
+        }
+      };
+    }
+    if (input instanceof IdBitSet) {
+      return new IntPredicate() {
+        final IdBitSet myIdBitSet = (IdBitSet)input;
+        @Override
+        boolean contains(int id) {
+          return myIdBitSet.get(id);
         }
       };
     }
@@ -235,6 +256,28 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
     else if (input instanceof Integer ){
       it = new SingleValueIterator(((Integer)input).intValue());
+    } else if (input instanceof IdBitSet) {
+      it = new IntIterator() {
+        private final IdBitSet myIdBitSet = (IdBitSet)input;
+        private int nextSetBit = myIdBitSet.nextSetBit(0);
+
+        @Override
+        public boolean hasNext() {
+          return nextSetBit != -1;
+        }
+
+        @Override
+        public int next() {
+          int setBit = nextSetBit;
+          nextSetBit = myIdBitSet.nextSetBit(setBit + 1);
+          return setBit;
+        }
+
+        @Override
+        public int size() {
+          return myIdBitSet.numberOfBitsSet();
+        }
+      };
     }
     else {
       it = EMPTY_ITERATOR;
@@ -265,6 +308,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         clone.myInputIdMapping = mapCopy((THashMap<Value, Object>)myInputIdMapping);
       } else if (myInputIdMappingValue instanceof TIntHashSet) {
         clone.myInputIdMappingValue = ((TIntHashSet)myInputIdMappingValue).clone();
+      } else if (myInputIdMappingValue instanceof IdBitSet) {
+        clone.myInputIdMappingValue = ((IdBitSet)myInputIdMappingValue).clone();
       }
       return clone;
     }
@@ -303,6 +348,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         public boolean execute(Value key, Object val) {
           if (val instanceof TIntHashSet) {
             newMapping.put(key, ((TIntHashSet)val).clone());
+          } else if (val instanceof IdBitSet) {
+            newMapping.put(key, ((IdBitSet)val).clone());
           }
           else {
             newMapping.put(key, val);
@@ -313,7 +360,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     } else {
       container.myInputIdMapping = myInputIdMapping;
       container.myInputIdMappingValue = myInputIdMappingValue instanceof TIntHashSet ?
-                                        ((TIntHashSet)myInputIdMappingValue).clone():myInputIdMappingValue;
+                                        ((TIntHashSet)myInputIdMappingValue).clone():
+                                        myInputIdMappingValue instanceof IdBitSet ?
+                                        ((IdBitSet)myInputIdMappingValue).clone():myInputIdMappingValue;
     }
     return container;
   }
@@ -323,17 +372,23 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     Object input = getInput(value);
 
     if (input != null) {
-      if (input instanceof IdSet) {
-        ((IdSet)input).ensureCapacity(count);
-      } else if (input instanceof Integer) {
+      if (input instanceof Integer) {
         IdSet idSet = new IdSet(count + 1);
         idSet.add(((Integer)input).intValue());
         resetFileSetForValue(value, idSet);
+      } else if (input instanceof IdSet) {
+        IdSet idSet = (IdSet)input;
+        int nextSize = idSet.size() + count;
+        if (nextSize <= MAX_FILES) idSet.ensureCapacity(count);
+        else {
+          resetFileSetForValue(value, new IdBitSet(idSet));
+        }
       }
       return;
     }
 
-    attachFileSetForNewValue(value, new IdSet(count));
+    final Object fileSet = count > MAX_FILES ? new IdBitSet(count): new IdSet(count);
+    attachFileSetForNewValue(value, fileSet);
   }
 
   private void attachFileSetForNewValue(Value value, Object fileSet) {
@@ -413,6 +468,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       public boolean execute(Value key, Object val) {
         if (val instanceof TIntHashSet) {
           cloned.put(key, ((TIntHashSet)val).clone());
+        } else if (val instanceof IdBitSet) {
+          cloned.put(key, ((IdBitSet)val).clone());
         }
         return true;
       }
@@ -442,4 +499,134 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
+  private static class IdBitSet implements Cloneable {
+    private static final int SHIFT = 6;
+    private static final int BITS_PER_WORD = 1 << SHIFT;
+    private static final int MASK = BITS_PER_WORD - 1;
+    private long[] myBitMask;
+    private int myBitsSet;
+    private int myLastUsedSlot;
+    private BitSet myShadowSet;
+
+    public IdBitSet(TIntHashSet set) {
+      this(calcMax(set));
+      set.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          set(value);
+          return true;
+        }
+      });
+    }
+
+    private static int calcMax(TIntHashSet set) {
+      final int[] minMax = new int[2];
+      minMax[0] = set.iterator().next();
+      minMax[1] = minMax[0];
+      set.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          minMax[0] = Math.min(minMax[0], value);
+          minMax[1] = Math.max(minMax[1], value);
+          return true;
+        }
+      });
+      return minMax[1];
+    }
+
+    public IdBitSet(int max) {
+      myBitMask = new long[(calcCapacity(max) >> SHIFT) + 1];
+      //myShadowSet = new BitSet(max);
+    }
+
+    public void set(int bitIndex) {
+      if (myShadowSet != null) myShadowSet.set(bitIndex);
+
+      boolean set = get(bitIndex);
+      if (!set) {
+        ++myBitsSet;
+        int wordIndex = bitIndex >> SHIFT;
+        if (wordIndex >= myBitMask.length) {
+          long[] n = new long[Math.max(calcCapacity(myBitMask.length), wordIndex + 1)];
+          System.arraycopy(myBitMask, 0, n, 0, myBitMask.length);
+          myBitMask = n;
+        }
+        myBitMask[wordIndex] |= 1L << (bitIndex & MASK);
+        myLastUsedSlot = Math.max(myLastUsedSlot, wordIndex);
+      }
+    }
+
+    private static int calcCapacity(int length) {
+      return length + 3 * (length / 5);
+    }
+
+    int numberOfBitsSet() {
+      return myBitsSet;
+    }
+
+    boolean remove(int bitIndex) {
+      if (!get(bitIndex)) return false;
+      --myBitsSet;
+      if (myShadowSet != null) myShadowSet.clear(bitIndex);
+      int wordIndex = bitIndex >> SHIFT;
+      myBitMask[wordIndex] &= ~(1L << (bitIndex & MASK));
+      if (wordIndex == myLastUsedSlot) {
+        while(myLastUsedSlot >= 0 && myBitMask[myLastUsedSlot] == 0) --myLastUsedSlot;
+      }
+      return true;
+    }
+
+    boolean get(int bitIndex) {
+      int wordIndex = bitIndex >> SHIFT;
+      boolean result = false;
+      if (wordIndex < myBitMask.length) {
+        result = (myBitMask[wordIndex] & (1L << (bitIndex & MASK))) != 0;
+      }
+
+      if (myShadowSet != null && myShadowSet.get(bitIndex) != result) {
+        get(bitIndex);
+      }
+      return result;
+    }
+
+    public IdBitSet clone() {
+      try {
+        IdBitSet clone = (IdBitSet)super.clone();
+        if (myBitMask.length != myLastUsedSlot + 1) { // trim to size
+          long[] longs = new long[myLastUsedSlot + 1];
+          System.arraycopy(myBitMask, 0, longs, 0, longs.length);
+          myBitMask = longs;
+        }
+        clone.myBitMask = myBitMask.clone();
+        if (myShadowSet != null) clone.myShadowSet = (BitSet)clone.myShadowSet.clone();
+        return clone;
+      } catch (CloneNotSupportedException ex) {
+        LOG.error(ex);
+        return null;
+      }
+    }
+
+    public int nextSetBit(int bitIndex) {
+      int wordIndex = bitIndex >> SHIFT;
+      if (wordIndex >= myBitMask.length) {
+        return -1;
+      }
+
+      long word = myBitMask[wordIndex] & (-1L << bitIndex);
+
+      while (true) {
+        if (word != 0) {
+          int i = (wordIndex * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
+          if (myShadowSet != null && i != myShadowSet.nextSetBit(bitIndex)) {
+            myShadowSet.nextSetBit(bitIndex);
+          }
+          return i;
+        }
+        if (++wordIndex == myBitMask.length) {
+          return -1;
+        }
+        word = myBitMask[wordIndex];
+      }
+    }
+  }
 }

@@ -23,12 +23,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +56,9 @@ public class PyStatementMover extends LineMover {
     PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
     PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
     if (elementToMove1 == null || elementToMove2 == null) return false;
+
+    if (ifInsideString(document, lineNumber, elementToMove1, down)) return false;
+
     elementToMove1 = getCommentOrStatement(document, elementToMove1);
     elementToMove2 = getCommentOrStatement(document, elementToMove2);
 
@@ -72,6 +77,24 @@ public class PyStatementMover extends LineMover {
     return true;
   }
 
+  private static boolean ifInsideString(@NotNull final Document document, int lineNumber, @NotNull final PsiElement elementToMove1, boolean down) {
+    int start = document.getLineStartOffset(lineNumber);
+    final int end = document.getLineEndOffset(lineNumber);
+    int nearLine = down ? lineNumber + 1 : lineNumber - 1;
+    if (nearLine >= document.getLineCount() || nearLine <= 0) return false;
+    final PyStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyStringLiteralExpression.class);
+    if (stringLiteralExpression != null) {
+      final Pair<String,String> quotes = PythonStringUtil.getQuotes(stringLiteralExpression.getText());
+      if (quotes != null && (quotes.first.equals("'''") || quotes.first.equals("\"\"\""))) {
+        final String text1 = document.getText(TextRange.create(start, end)).trim();
+        final String text2 = document.getText(TextRange.create(document.getLineStartOffset(nearLine), document.getLineEndOffset(nearLine))).trim();
+        if (!text1.startsWith(quotes.first) && !text1.endsWith(quotes.second) && !text2.startsWith(quotes.first) && !text2.endsWith(quotes.second))
+          return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private static LineRange getDestinationScope(@NotNull final PsiFile file, @NotNull final Editor editor,
                                                @NotNull final PsiElement elementToMove, boolean down) {
@@ -80,7 +103,7 @@ public class PyStatementMover extends LineMover {
 
     final int offset = down ? elementToMove.getTextRange().getEndOffset() : elementToMove.getTextRange().getStartOffset();
     int lineNumber = down ? document.getLineNumber(offset) + 1 : document.getLineNumber(offset) - 1;
-    if (moveOutsideFile(elementToMove, document, lineNumber)) return null;
+    if (moveOutsideFile(document, lineNumber)) return null;
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     final int startOffset = document.getLineStartOffset(lineNumber);
     lineEndOffset = startOffset != lineEndOffset ? lineEndOffset - 1 : lineEndOffset;
@@ -118,24 +141,8 @@ public class PyStatementMover extends LineMover {
     return new LineRange(startLine, endLine + 1);
   }
 
-  private static boolean moveOutsideFile(@NotNull final PsiElement elementToMove, @NotNull final Document document, int lineNumber) {
-    if (lineNumber < 0) return true;
-    if (lineNumber >= document.getLineCount()) {
-      final int elementOffset = elementToMove.getTextRange().getStartOffset();
-      final int lineStartOffset = document.getLineStartOffset(document.getLineNumber(elementOffset));
-      final int insertIndex = lineNumber < 0 ? 0 : document.getTextLength();
-      if (elementOffset != lineStartOffset) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.insertString(insertIndex, "\n");
-            PsiDocumentManager.getInstance(elementToMove.getProject()).commitAllDocuments();
-          }
-        });
-      }
-      else return true;
-    }
-    return false;
+  private static boolean moveOutsideFile(@NotNull final Document document, int lineNumber) {
+    return lineNumber < 0 || lineNumber >= document.getLineCount();
   }
 
   private static boolean moveToEmptyLine(@NotNull final PsiElement elementToMove, boolean down) {

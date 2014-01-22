@@ -37,12 +37,11 @@ import java.util.*;
  */
 public class ContainedInBranchesConfigDialog extends DialogWrapper {
   private JPanel myPanel;
-  private CheckBoxList myLocalBranches;
-  private CheckBoxList myRemoteBranches;
+  private CheckBoxList<String> myLocalBranches;
+  private CheckBoxList<String> myRemoteBranches;
   private final Project myProject;
   private boolean myChanged;
   private JRadioButton myHighlight;
-  private JRadioButton myFilter;
 
   public ContainedInBranchesConfigDialog(final Project project, final Collection<String> localBranches,
                                          Collection<String> remoteBranches, final String currentLocal, final String currentRemote) {
@@ -74,15 +73,15 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
 
     final ButtonGroup bg = new ButtonGroup();
     myHighlight = new JRadioButton("Highlight them");
-    myFilter = new JRadioButton("Filter others out");
+    JRadioButton filter = new JRadioButton("Filter others out");
     bg.add(myHighlight);
-    bg.add(myFilter);
+    bg.add(filter);
     gb.gridwidth = 1;
     gb.gridx = 0;
     ++ gb.gridy; 
     myPanel.add(myHighlight, gb);
     ++ gb.gridy;
-    myPanel.add(myFilter, gb);
+    myPanel.add(filter, gb);
 
     gb.insets.top = 10;
     gb.gridwidth = 1;
@@ -108,7 +107,7 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     setItems(remoteBranches, gitLogSettings.getRemoteBranchesCopy(), myRemoteBranches);
 
     myHighlight.setSelected(gitLogSettings.isHighlight());
-    myFilter.setSelected(! gitLogSettings.isHighlight());
+    filter.setSelected(!gitLogSettings.isHighlight());
 
     new ListSpeedSearch(myLocalBranches);
     new ListSpeedSearch(myRemoteBranches);
@@ -134,7 +133,7 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     return myChanged;
   }
 
-  private static void setItems(Collection<String> localBranches, Set<String> localBranchesCopy, final CheckBoxList list) {
+  private static void setItems(Collection<String> localBranches, Set<String> localBranchesCopy, final CheckBoxList<String> list) {
     // order
     final Map<String, Boolean> localBranchesState = new TreeMap<String, Boolean>();
     for (String localBranch : localBranches) {
@@ -163,9 +162,9 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     final GitLogSettings gitLogSettings = GitLogSettings.getInstance(myProject);
     final ArrayList<String> local = gatherSelected((DefaultListModel)myLocalBranches.getModel());
     final ArrayList<String> remote = gatherSelected((DefaultListModel)myRemoteBranches.getModel());
-    boolean hightlightChanged = gitLogSettings.isHighlight() != myHighlight.isSelected();
+    boolean highlightChanged = gitLogSettings.isHighlight() != myHighlight.isSelected();
     gitLogSettings.setHighlight(myHighlight.isSelected());
-    if (gitLogSettings.setIfChanged(local, remote) || hightlightChanged) {
+    if (gitLogSettings.setIfChanged(local, remote) || highlightChanged) {
       myChanged = true;
     }
     super.doOKAction();
@@ -183,7 +182,7 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     return selected;
   }
 
-  private static class MyCheckBoxList extends CheckBoxList {
+  private static class MyCheckBoxList extends CheckBoxList<String> {
     private final String myBold;
     private final static Border FOCUSED_BORDER = UIManager.getBorder("List.focusCellHighlightBorder");
     private final EmptyBorder myEmptyBorder;

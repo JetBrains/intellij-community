@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -77,9 +77,9 @@ public class DomImplUtil {
       if (method.getAnnotation(SubTag.class) != null) return false;
       if (method.getAnnotation(SubTagList.class) != null) return false;
       if (method.getAnnotation(Convert.class) != null || method.getAnnotation(Resolve.class) != null) {
-        return !ReflectionCache.isAssignable(GenericDomValue.class, method.getReturnType());
+        return !ReflectionUtil.isAssignable(GenericDomValue.class, method.getReturnType());
       }
-      if (ReflectionCache.isAssignable(DomElement.class, method.getReturnType())) return false;
+      if (ReflectionUtil.isAssignable(DomElement.class, method.getReturnType())) return false;
       return true;
     }
     return false;

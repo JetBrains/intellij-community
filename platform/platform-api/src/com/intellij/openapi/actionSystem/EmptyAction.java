@@ -22,10 +22,17 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 /**
+ * This class purpose is to reserve action-id in a plugin.xml so the action appears in Keymap.
+ * Then Keymap assignments can be used for non-registered actions created on runtime.
+ *
+ * Another usage is to override (hide) already registered actions by means of plugin.xml, see {@link EmptyActionGroup} as well.
+ *
+ * @see EmptyActionGroup
+ *
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
-public class EmptyAction extends AnAction {
+public final class EmptyAction extends AnAction {
   private boolean myEnabled;
 
   public EmptyAction() {
@@ -67,8 +74,9 @@ public class EmptyAction extends AnAction {
   }
 
   public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
+    @SuppressWarnings("unchecked")
     final ArrayList<AnAction> actionList =
-      (ArrayList<AnAction>)fromComponent.getClientProperty(ourClientProperty);
+    (ArrayList<AnAction>)fromComponent.getClientProperty(ourClientProperty);
     if (actionList != null) {
       for (AnAction anAction : actionList) {
         anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);

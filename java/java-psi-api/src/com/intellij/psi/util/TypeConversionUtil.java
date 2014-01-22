@@ -71,6 +71,7 @@ public class TypeConversionUtil {
       return true;
     }
 
+    @NotNull
     @Override
     @NonNls
     public String getPresentableText() {
@@ -1023,7 +1024,7 @@ public class TypeConversionUtil {
    * <code>InheritanceUtil.isInheritor(derivedClass, superClass, true)</code>
    *
    * @return substitutor (never returns <code>null</code>)
-   * @see PsiClass#isInheritor(PsiClass, PsiClass, boolean)
+   * @see PsiClass#isInheritor(PsiClass, boolean)
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
@@ -1057,7 +1058,7 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName())) {
+      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
         final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
         msg.append("visited:\n");
         for (PsiClass aClass : visited) {

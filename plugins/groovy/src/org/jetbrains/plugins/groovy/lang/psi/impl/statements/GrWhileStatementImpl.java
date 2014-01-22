@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -50,13 +51,13 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
   }
 
   @Nullable
-  public GrCondition getCondition() {
+  public GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
 
     if (lParenth == null) return null;
     PsiElement afterLParenth = PsiUtil.skipWhitespacesAndComments(lParenth.getNextSibling(), true);
 
-    if (afterLParenth instanceof GrCondition) return ((GrCondition) afterLParenth);
+    if (afterLParenth instanceof GrExpression) return ((GrExpression) afterLParenth);
 
     return null;
   }

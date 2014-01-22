@@ -101,4 +101,9 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public boolean isTextModified() {
     return !getText().equals(getDefaultText());
   }
+
+  @Override
+  public String toString() {
+    return myDefaultTemplate.getTemplateURL() == null ? "" : myDefaultTemplate.getTemplateURL().toString();
+  }
 }

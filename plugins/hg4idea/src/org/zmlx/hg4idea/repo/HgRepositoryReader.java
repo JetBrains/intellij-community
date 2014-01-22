@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,10 +57,7 @@ public class HgRepositoryReader {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
     myCacheDir = new File(myHgDir, "cache");
-    File branchesFile = new File(myCacheDir, "branchheads-served");  //branchheads-served exist after mercurial 2.5,
-    //before 2.5 only branchheads exist
-    HgVcs vcs = HgVcs.getInstance(project);
-    myBranchHeadsFile = vcs != null && vcs.getVersion().hasBranchHeadsServed() ? branchesFile : new File(myCacheDir, "branchheads");
+    myBranchHeadsFile = identifyBranchHeadFile(project, myCacheDir);
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
@@ -69,13 +67,28 @@ public class HgRepositoryReader {
   }
 
   /**
+   * Identify file with branches and heads information depends on hg version;
+   *
+   * @param project
+   * @param parentCacheFile
+   * @return
+   */
+  @NotNull
+  private static File identifyBranchHeadFile(@NotNull Project project, @NotNull File parentCacheFile) {
+    File branchesFile = new File(parentCacheFile, "branchheads-served");  //branchheads-served exist after mercurial 2.5,
+    //before 2.5 only branchheads exist
+    HgVcs vcs = HgVcs.getInstance(project);
+    return vcs != null && vcs.getVersion().hasBranchHeadsServed() ? branchesFile : new File(parentCacheFile, "branchheads");
+  }
+
+  /**
    * Finds current revision value.
    *
    * @return The current revision hash, or <b>{@code null}</b> if current revision is unknown - it is the initial repository state.
    */
   @Nullable
   public String readCurrentRevision() {
-    if (checkIsFresh() || !myBranchHeadsFile.exists()) return null;
+    if (!isBranchInfoAvailable()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
@@ -83,6 +96,10 @@ public class HgRepositoryReader {
       return (matcher.group(1));
     }
     return null;
+  }
+
+  private boolean isBranchInfoAvailable() {
+    return !isFresh() && myBranchHeadsFile.exists();
   }
 
   /**
@@ -94,23 +111,28 @@ public class HgRepositoryReader {
   }
 
   @NotNull
-  public Collection<HgNameWithHashInfo> readBranches() {
-    List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
+  public Map<String, Set<Hash>> readBranches() {
+    Map<String, Set<Hash>> branchesWithHashes = new HashMap<String, Set<Hash>>();
     // Set<String> branchNames = new HashSet<String>();
-    if (!checkIsFresh() && myBranchHeadsFile.exists()) {
+    if (isBranchInfoAvailable()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
         Matcher matcher = HASH_NAME.matcher(branchesWithHeads[i]);
         if (matcher.matches()) {
           String name = matcher.group(2);
-          // if (branchNames.add(name)) {
-          branches.add(new HgNameWithHashInfo(name, myVcsObjectsFactory.createHash(matcher.group(1))));
-          //}
+          if (branchesWithHashes.containsKey(name)) {
+            branchesWithHashes.get(name).add(myVcsObjectsFactory.createHash(matcher.group(1)));
+          }
+          else {
+            Set<Hash> hashes = new HashSet<Hash>();
+            hashes.add(myVcsObjectsFactory.createHash(matcher.group(1)));
+            branchesWithHashes.put(name, hashes);
+          }
         }
       }
     }
-    return branches;
+    return branchesWithHashes;
   }
 
   public boolean isMergeInProgress() {
@@ -122,7 +144,7 @@ public class HgRepositoryReader {
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
 
-  public boolean checkIsFresh() {
+  public boolean isFresh() {
     return !myCacheDir.exists();
   }
 

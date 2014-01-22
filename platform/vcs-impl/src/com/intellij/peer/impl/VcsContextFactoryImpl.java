@@ -16,9 +16,7 @@
 package com.intellij.peer.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -46,41 +44,24 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        return new FilePathImpl(virtualFile);
-      }
-    });
+    return new FilePathImpl(virtualFile);
   }
 
   public FilePath createFilePathOn(final File file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        return FilePathImpl.create(file);
-      }
-    });
+    return FilePathImpl.create(file);
   }
 
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-        if (virtualFile != null) {
-          // detector information (loaded here lazily) is not needed - we have real file
-          return FilePathImpl.create(file);
-        }
-
-        return FilePathImpl.create(file, detector.fun(file).booleanValue());
-      }
-    });
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    if (virtualFile != null) {
+      // detector information (loaded here lazily) is not needed - we have real file
+      return FilePathImpl.create(file);
+    }
+    return FilePathImpl.create(file, detector.fun(file).booleanValue());
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        return FilePathImpl.create(file, isDirectory);
-      }
-    });
+    return FilePathImpl.create(file, isDirectory);
   }
 
   @NotNull
@@ -89,19 +70,11 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        return FilePathImpl.createForDeletedFile(file, isDirectory);
-      }
-    });
+    return FilePathImpl.createForDeletedFile(file, isDirectory);
   }
 
   public FilePath createFilePathOn(final VirtualFile parent, final String name) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-      public FilePath compute() {
-        return new FilePathImpl(parent, name, false);
-      }
-    });
+    return new FilePathImpl(parent, name, false);
   }
 
   public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {

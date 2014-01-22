@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.reference.SoftReference;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
@@ -86,31 +87,26 @@ public final class DomManagerImpl extends DomManager {
   private final SemService mySemService;
   private final ConverterManager myConverterManager;
   private final DomApplicationComponent myApplicationComponent;
-  private final PsiFileFactory myFileFactory;
-  private final ProjectFileIndex myFileIndex;
 
   private long myModificationCount;
   private boolean myChanging;
 
   public DomManagerImpl(Project project,
-                        final XmlAspect xmlAspect,
                         SemService semService,
                         ConverterManager converterManager,
-                        DomApplicationComponent appComponent,
-                        PsiFileFactory fileFactory,
-                        ProjectFileIndex fileIndex) {
+                        DomApplicationComponent appComponent) {
     myProject = project;
     mySemService = semService;
     myConverterManager = converterManager;
     myApplicationComponent = appComponent;
-    myFileFactory = fileFactory;
-    myFileIndex = fileIndex;
 
-    PomModel pomModel = PomManager.getModel(project);
+    final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
-        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null && !myChanging) {
+        if (myChanging) return;
+        
+        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
+        if (changeSet != null) {
           for (XmlFile file : changeSet.getChangedFiles()) {
             DomFileElementImpl<DomElement> element = getCachedFileElement(file);
             if (element != null) {
@@ -121,7 +117,7 @@ public final class DomManagerImpl extends DomManager {
       }
 
       public boolean isAspectChangeInteresting(PomModelAspect aspect) {
-        return xmlAspect.equals(aspect);
+        return aspect instanceof XmlAspect;
       }
     }, project);
 
@@ -234,7 +230,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   private void processFileOrDirectoryChange(final VirtualFile file) {
-    if (!myFileIndex.isInContent(file)) return;
+    if (!ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) return;
     if (!file.isDirectory()) {
       processFileChange(file);
     } else {
@@ -377,7 +373,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
     WeakReference<DomFileElementImpl> ref = file.getUserData(CACHED_FILE_ELEMENT);
-    return ref == null ? null : ref.get();
+    return SoftReference.dereference(ref);
   }
 
   @Nullable
@@ -444,7 +440,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)myFileFactory.createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
+    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
     file.putUserData(MOCK, new Object());
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();

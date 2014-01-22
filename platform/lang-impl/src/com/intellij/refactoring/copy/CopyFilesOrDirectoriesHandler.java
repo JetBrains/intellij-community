@@ -302,7 +302,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  public static boolean checkFileExist(PsiDirectory targetDirectory, int[] choice, PsiFile file, String name, String title) {
+  public static boolean checkFileExist(@Nullable PsiDirectory targetDirectory, int[] choice, PsiFile file, String name, String title) {
+    if (targetDirectory == null) return false;
     final PsiFile existing = targetDirectory.findFile(name);
     if (existing != null && !existing.equals(file)) {
       int selection;

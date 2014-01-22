@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -186,9 +201,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @NotNull @Override public List<RangeMarker> getGuardedBlocks() { return Collections.emptyList(); }
     @Override public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) { return myRangeMarkers.process(processor); }
     @Override public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) { return myRangeMarkers.processOverlappingWith(start, end, processor); }
+    @NotNull
     @Override public String getText() { return myString; }
     @NotNull @Override public String getText(@NotNull TextRange range) { return range.substring(getText()); }
     @NotNull @Override public CharSequence getCharsSequence() { return myString; }
+    @NotNull @Override public CharSequence getImmutableCharSequence() { return getText(); }
     @NotNull @Override public char[] getChars() { return myChars; }
     @Override public int getTextLength() { return myChars.length; }
     @Override public int getLineCount() { return myLineSet.findLineIndex(myChars.length) + 1; }

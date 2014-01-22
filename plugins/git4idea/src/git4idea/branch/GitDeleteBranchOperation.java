@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
@@ -199,7 +200,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         mergedToBranches = branches;
       } 
       else {
-        mergedToBranches.retainAll(branches);
+        mergedToBranches = new ArrayList<String>(ContainerUtil.intersection(mergedToBranches, branches));
       }
     }
     return mergedToBranches != null ? mergedToBranches : new ArrayList<String>();

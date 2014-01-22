@@ -203,8 +203,8 @@ public class HgLogCommand {
   }
 
   @Nullable
-  private HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
-                                  @Nullable List<String> argsForCmd) {
+  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                                 @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<String>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
@@ -231,11 +231,14 @@ public class HgLogCommand {
     }
     if (argsForCmd != null) {
       arguments.addAll(argsForCmd);
-    }
-    if (myLogFile) {
+    }  //to do  double check the same condition should be simplified
+
+    if (myLogFile && hgFile != null) {
       arguments.add(hgFile.getRelativePath());
     }
-    return new HgCommandExecutor(myProject).executeInCurrentThread(repo, "log", arguments);
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    commandExecutor.setOutputAlwaysSuppressed(true);
+    return commandExecutor.executeInCurrentThread(repo, "log", arguments);
   }
 
   private static Set<String> parseFileList(String fileListString) {

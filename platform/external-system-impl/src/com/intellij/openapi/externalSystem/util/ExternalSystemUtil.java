@@ -34,10 +34,12 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -74,6 +76,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -456,20 +459,41 @@ public class ExternalSystemUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         if(project.isDisposed()) return;
 
+        ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
+        if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
+          callback.onFailure(ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+          return;
+        }
+
         ExternalSystemResolveProjectTask task
           = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
 
         task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         final Throwable error = task.getError();
         if (error == null) {
+          ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+          assert manager != null;
           long stamp = getTimeStamp(externalProjectPath, externalSystemId);
           if (stamp > 0) {
-            ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-            assert manager != null;
             if(project.isDisposed()) return;
             manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
           }
           DataNode<ProjectData> externalProject = task.getExternalProject();
+
+          if(externalProject != null) {
+            Set<String> externalModulePaths = ContainerUtil.newHashSet();
+            Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
+            for (DataNode<ModuleData> node : moduleNodes) {
+              externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+            }
+
+            String projectPath = externalProject.getData().getLinkedExternalProjectPath();
+            ExternalProjectSettings linkedProjectSettings = manager.getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
+            if (linkedProjectSettings != null) {
+              linkedProjectSettings.setModules(externalModulePaths);
+            }
+          }
+
           callback.onSuccess(externalProject);
           return;
         }

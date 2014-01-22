@@ -16,4 +16,12 @@ public class DuplicateCondition {
     {
         return true;
     }
+
+    void incompleteCode(String s) {
+      if (s.contains(A)) {
+
+      } else if (s.contains(B)) {
+
+      }
+    }
 }

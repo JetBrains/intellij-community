@@ -152,4 +152,8 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
   @Override
   public void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
+
+  @Override
+  public void preImportCheck() {
+  }
 }

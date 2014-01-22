@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -89,8 +90,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         if (newExpression == null) {
           return;
         }
-        replaceStatementAndShortenClassNames(forStatement,
-                                             newExpression);
+        PsiReplacementUtil.replaceStatementAndShortenClassNames(forStatement,
+                                                                newExpression);
       }
       else {
         final PsiForeachStatement foreachStatement =
@@ -99,8 +100,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         if (newExpression == null) {
           return;
         }
-        replaceStatementAndShortenClassNames(foreachStatement,
-                                             newExpression);
+        PsiReplacementUtil.replaceStatementAndShortenClassNames(foreachStatement,
+                                                                newExpression);
       }
     }
 

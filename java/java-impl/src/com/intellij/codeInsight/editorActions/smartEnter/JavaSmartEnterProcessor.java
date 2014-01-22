@@ -75,6 +75,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new ParenthesizedFixer());
     fixers.add(new SemicolonFixer());
     fixers.add(new MissingArrayInitializerBraceFixer());
+    fixers.add(new MissingArrayConstructorBracketFixer());
     fixers.add(new EnumFieldFixer());
     //ourFixers.add(new CompletionFixer());
     ourFixers = fixers.toArray(new Fixer[fixers.size()]);

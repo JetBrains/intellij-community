@@ -117,7 +117,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
               try {
                 myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
                 for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                  if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), false))) {
+                  if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), loadedPlugin.getName(), false))) {
                     myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
                   }
                 }
@@ -138,7 +138,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           });
         }
       });
-    } else if (PluginsAdvertiser.hasBundledNotInstalledPlugin(plugins)){
+    } else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null){
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         return null;
       }

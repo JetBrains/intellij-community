@@ -42,23 +42,26 @@ public class PsiEllipsisType extends PsiArrayType {
     return new PsiEllipsisType(componentType, annotations);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(getComponentType().getPresentableText(), getAnnotationsTextPrefix(false, true, true), "...");
+    return StringUtil.join(getComponentType().getPresentableText(), getAnnotationsTextPrefix(false, true, true), "...");
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
-    return StringUtil.joinOrNull(getComponentType().getCanonicalText(), "...");
+    return StringUtil.join(getComponentType().getCanonicalText(), "...");
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(getComponentType().getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "...");
+    return StringUtil.join(getComponentType().getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "...");
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3)) ||
            super.equalsToText(text);
   }

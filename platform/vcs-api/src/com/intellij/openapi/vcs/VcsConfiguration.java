@@ -135,6 +135,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
 
+  public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
+
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 

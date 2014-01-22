@@ -44,7 +44,7 @@ public class GenerateByPatternAction extends AnAction {
         patterns = ArrayUtil.mergeArrays(patterns, extension.getDescriptors());
       }
     }
-    GenerateByPatternDialog dialog = new GenerateByPatternDialog(e.getProject(), patterns, e.getDataContext());
+    GenerateByPatternDialog dialog = new GenerateByPatternDialog(e.getProject(), patterns);
     dialog.show();
     if (dialog.isOK()) {
       dialog.getSelectedDescriptor().actionPerformed(e.getDataContext());

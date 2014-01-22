@@ -24,7 +24,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,7 +100,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     }
   }
 
-  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint) {
     if (breakpoint instanceof MethodBreakpoint) {
       MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
       methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
@@ -112,6 +111,6 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
       methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
       methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
     }
-    super.saveTo(breakpoint, afterUpdate);
+    super.saveTo(breakpoint);
   }
 }

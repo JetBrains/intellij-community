@@ -18,30 +18,20 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
@@ -51,7 +41,6 @@ import java.util.EventObject;
  */
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint");
-  @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private static final Icon COLLAPSED_TREE_ICON = IconUtil.getAddIcon();
   private static final int HINT_TIMEOUT = 7000; // ms
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
@@ -74,14 +63,14 @@ public abstract class AbstractValueHint {
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
-  private Point myPoint;
+  private final Point myPoint;
   private LightweightHint myCurrentHint;
-  private JBPopup myPopup;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
 
-  public AbstractValueHint(Project project, Editor editor, Point point, ValueHintType type, final TextRange textRange) {
+  public AbstractValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
+                           final TextRange textRange) {
     myPoint = point;
     myProject = project;
     myEditor = editor;
@@ -92,41 +81,6 @@ public abstract class AbstractValueHint {
   protected abstract boolean canShowHint();
 
   protected abstract void evaluateAndShowHint();
-
-  private void resize(final TreePath path, JTree tree) {
-    if (myPopup == null || !myPopup.isVisible()) return;
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
-    if (popupWindow == null) return;
-    final Dimension size = tree.getPreferredSize();
-    final Point location = popupWindow.getLocation();
-    final Rectangle windowBounds = popupWindow.getBounds();
-    final Rectangle bounds = tree.getPathBounds(path);
-    if (bounds == null) return;
-
-    final Rectangle targetBounds = new Rectangle(location.x,
-                                                 location.y,
-                                                 Math.max(Math.max(size.width, bounds.width) + 20, windowBounds.width),
-                                                 Math.max(tree.getRowCount() * bounds.height + 55, windowBounds.height));
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
-  }
-
-  private void updateInitialBounds(final Tree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
-    final Dimension size = tree.getPreferredSize();
-    final Point location = popupWindow.getLocation();
-    final Rectangle windowBounds = popupWindow.getBounds();
-    final Rectangle targetBounds = new Rectangle(location.x,
-                                                 location.y,
-                                                 Math.max(size.width + 250, windowBounds.width),
-                                                 Math.max(size.height, windowBounds.height));
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
-  }
 
   public boolean isKeepHint(Editor editor, Point point) {
     if (myCurrentHint != null && myCurrentHint.canControlAutoHide()) return true;
@@ -205,15 +159,6 @@ public abstract class AbstractValueHint {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   }
 
-  public void shiftLocation() {
-    if (myPopup != null) {
-      final Window window = SwingUtilities.getWindowAncestor(myPopup.getContent());
-      if (window != null) {
-        myPoint = new RelativePoint(window, new Point(2, 2)).getPoint(myEditor.getContentComponent());
-      }
-    }
-  }
-
   public Project getProject() {
     return myProject;
   }
@@ -226,31 +171,6 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
-  public void showTreePopup(final AbstractValueHintTreeComponent<?> component, final Tree tree, final String title) {
-    if (myPopup != null) {
-      myPopup.cancel();
-    }
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(component.getMainPanel(), tree)
-      .setRequestFocus(true)
-      .setTitle(title)
-      .setResizable(true)
-      .setMovable(true)
-      .setDimensionServiceKey(getProject(), DIMENSION_SERVICE_KEY, false)
-      .createPopup();
-
-    if (tree instanceof Disposable) {
-      Disposer.register(myPopup, (Disposable)tree);
-    }
-    
-    //Editor may be disposed before later invokator process this action
-    if (getEditor().getComponent().getRootPane() == null) {
-      myPopup.cancel();
-      return;
-    }
-    myPopup.show(new RelativePoint(getEditor().getContentComponent(), myPoint));
-
-    updateInitialBounds(tree);
-  }
 
   protected boolean showHint(final JComponent component) {
     myCurrentHint = new LightweightHint(component);
@@ -311,15 +231,6 @@ public abstract class AbstractValueHint {
     return myCurrentRange;
   }
 
-  protected TreeModelListener createTreeListener(final Tree tree) {
-    return new TreeModelAdapter() {
-      @Override
-      public void treeStructureChanged(TreeModelEvent e) {
-        resize(e.getTreePath(), tree);
-      }
-    };
-  }
-
   private static boolean isAltMask(@JdkConstants.InputEventMask int modifiers) {
     return modifiers == InputEvent.ALT_MASK;
   }
@@ -330,5 +241,9 @@ public abstract class AbstractValueHint {
 
   public boolean isInsideHint(Editor editor, Point point) {
     return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
+  }
+
+  protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject());
   }
 }

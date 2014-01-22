@@ -39,7 +39,7 @@ public class PsiIntersectionType extends PsiType {
 
   @NotNull
   public static PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
-    return createIntersection(conjuncts.toArray(new PsiType[conjuncts.size()]));
+    return createIntersection(conjuncts.toArray(createArray(conjuncts.size())));
   }
 
   @NotNull
@@ -53,7 +53,7 @@ public class PsiIntersectionType extends PsiType {
   private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
     try {
       Set<PsiType> flattened = flatten(conjuncts, new THashSet<PsiType>());
-      return flattened.toArray(new PsiType[flattened.size()]);
+      return flattened.toArray(createArray(flattened.size()));
     }
     catch (NoSuchElementException e) {
       throw new RuntimeException(Arrays.toString(conjuncts), e);
@@ -71,7 +71,7 @@ public class PsiIntersectionType extends PsiType {
       }
     }
     if (types.size() > 1) {
-      PsiType[] array = types.toArray(new PsiType[types.size()]);
+      PsiType[] array = types.toArray(createArray(types.size()));
       for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext(); ) {
         PsiType type = iterator.next();
 
@@ -97,6 +97,7 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
@@ -107,11 +108,13 @@ public class PsiIntersectionType extends PsiType {
     }, " & ");
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return myConjuncts[0].getCanonicalText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     StringBuilder buffer = new StringBuilder();
@@ -131,7 +134,7 @@ public class PsiIntersectionType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 

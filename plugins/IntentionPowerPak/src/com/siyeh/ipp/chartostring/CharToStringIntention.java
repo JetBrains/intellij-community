@@ -18,6 +18,7 @@ package com.siyeh.ipp.chartostring;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class CharToStringIntention extends Intention {
       (PsiLiteralExpression)element;
     final String charLiteralText = charLiteral.getText();
     final String stringLiteral = stringForCharLiteral(charLiteralText);
-    replaceExpression(stringLiteral, charLiteral);
+    PsiReplacementUtil.replaceExpression(charLiteral, stringLiteral);
   }
 
   private static String stringForCharLiteral(String charLiteral) {

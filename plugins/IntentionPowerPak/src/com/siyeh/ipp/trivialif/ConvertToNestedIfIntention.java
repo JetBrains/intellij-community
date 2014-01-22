@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -69,7 +70,7 @@ public class ConvertToNestedIfIntention extends Intention {
     for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
       CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
     }
-    replaceStatement("return false;", returnStatement);
+    PsiReplacementUtil.replaceStatement(returnStatement, "return false;");
   }
 
   private static StringBuilder buildIf(@Nullable PsiExpression expression, StringBuilder out) {

@@ -230,4 +230,31 @@ public class SmartListTest {
     assertEquals(42, l.get(1).intValue());
     assertEquals(1, l.get(2).intValue());
   }
+
+  @Test
+  public void testEmptyToArray() {
+    SmartList<Integer> l = new SmartList<Integer>();
+    assertArrayEquals(l.toArray(), new Integer[]{});
+    assertArrayEquals(l.toArray(new Integer[]{}), new Integer[]{});
+  }
+
+  @Test
+  public void testSingleToArray() {
+    SmartList<String> l = new SmartList<String>("foo");
+    assertArrayEquals(l.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY), new String[]{"foo"});
+  }
+
+  @Test
+  public void testToArray() {
+    SmartList<Integer> l = new SmartList<Integer>(0, 1);
+    assertArrayEquals(l.toArray(), new Object[]{0, 1});
+    assertArrayEquals(l.toArray(), new Integer[]{0, 1});
+    assertArrayEquals(l.toArray(new Integer[0]), new Integer[]{0, 1});
+
+    assertArrayEquals(l.toArray(new Integer[4]), new Integer[]{0, 1, null, null});
+
+    l.remove(1);
+    assertArrayEquals(l.toArray(new Integer[4]), new Integer[]{0, null, null, null});
+    assertArrayEquals(l.toArray(), new Integer[]{0});
+  }
 }

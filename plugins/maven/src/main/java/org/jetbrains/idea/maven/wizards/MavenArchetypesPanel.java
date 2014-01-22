@@ -263,6 +263,10 @@ public class MavenArchetypesPanel implements Disposable {
     });
   }
 
+  public boolean isSkipUpdateUI() {
+    return skipUpdateUI;
+  }
+
   private void archetypeMayBeChanged() {
     MavenArchetype selectedArchetype = getSelectedArchetype();
     if (((myBuilder.getArchetype() == null) != (selectedArchetype == null))) {

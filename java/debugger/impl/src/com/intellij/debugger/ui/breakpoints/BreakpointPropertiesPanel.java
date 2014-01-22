@@ -50,7 +50,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointChooser;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointNoneItem;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -631,7 +630,7 @@ public abstract class BreakpointPropertiesPanel {
   /**
    * Save values in the UI components to the breakpoint object
    */
-  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint) {
 
     saveMasterBreakpoint();
     try {
@@ -667,7 +666,7 @@ public abstract class BreakpointPropertiesPanel {
 
     myConditionCombo.addRecent(myConditionCombo.getText());
     myLogExpressionCombo.addRecent(myLogExpressionCombo.getText());
-    breakpoint.updateUI(afterUpdate);
+    breakpoint.updateUI();
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
@@ -875,6 +874,12 @@ public abstract class BreakpointPropertiesPanel {
           myEditor.setText(myTargetEditor.getText());
           panel.add(myEditor, BorderLayout.CENTER);
           return panel;
+        }
+
+        @Override
+        protected void dispose() {
+          super.dispose();
+          myEditor.dispose();
         }
 
         @Override

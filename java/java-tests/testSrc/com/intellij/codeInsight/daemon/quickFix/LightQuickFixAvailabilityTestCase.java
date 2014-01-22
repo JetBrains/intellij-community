@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
  * tests corresponding intention for availability only, does not invoke action
  * @author cdr
  */
-public abstract class LightQuickFixAvailabilityTestCase extends LightQuickFixTestCase {
+public abstract class LightQuickFixAvailabilityTestCase extends LightQuickFixParameterizedTestCase {
   @Override
   protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {

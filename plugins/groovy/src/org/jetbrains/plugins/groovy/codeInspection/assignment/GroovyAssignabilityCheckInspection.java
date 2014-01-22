@@ -18,12 +18,14 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
@@ -80,6 +82,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +92,10 @@ import java.util.Map;
  */
 public class GroovyAssignabilityCheckInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
+
+  private static final String SHORT_NAME = "GroovyAssignabilityCheck";
+
+  public boolean myHighlightAssignmentsFromVoid = true;
 
   @Nls
   @NotNull
@@ -100,6 +107,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.assignments.from.void"), "myHighlightAssignmentsFromVoid");
+    return optionsPanel;
   }
 
   @Nls
@@ -127,6 +142,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiType rType = expression.getType();
       if (rType == null) return;
 
+      if (PsiUtil.isVoidMethodCall(expression)) {
+        if (isHighlightAssignmentsFromVoid(expression)) {
+          registerError(toHighlight, GroovyBundle.message("cannot.assign", PsiType.VOID.getPresentableText(),
+                                                          expectedType.getPresentableText()));
+        }
+        return;
+      }
+
       if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
         final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
         fixes.add(new GrCastFix(expectedType));
@@ -140,6 +163,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         registerError(toHighlight, message, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }
+
+    private static boolean isHighlightAssignmentsFromVoid(PsiElement place) {
+      final GroovyAssignabilityCheckInspection instance = getInspectionInstance(place.getContainingFile(), place.getProject());
+      if (instance != null) {
+        return instance.myHighlightAssignmentsFromVoid;
+      }
+
+      return false;
+    }
+
+    private static GroovyAssignabilityCheckInspection getInspectionInstance(PsiFile file, Project project) {
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      return (GroovyAssignabilityCheckInspection)profile.getUnwrappedTool(SHORT_NAME, file);
+    }
+
 
     @Nullable
     private static String getLValueVarName(PsiElement highlight) {
@@ -221,7 +259,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         if (flowOwner != null && returnType != null && returnType != PsiType.VOID) {
           if (ControlFlowUtils.isReturnValue(expression, flowOwner) &&
               !isNewInstanceInitialingByTuple(expression) &&
-              expression.getType() != PsiType.VOID) {
+              !PsiUtil.isVoidMethodCall(expression)) {
             checkAssignability(returnType, expression, getExpressionPartToHighlight(expression));
           }
         }

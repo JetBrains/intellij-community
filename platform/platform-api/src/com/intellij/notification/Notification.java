@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,8 +130,7 @@ public class Notification {
     balloon.addListener(new JBPopupAdapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        WeakReference<Balloon> ref = myBalloonRef;
-        if (ref != null && ref.get() == balloon) {
+        if (SoftReference.dereference(myBalloonRef) == balloon) {
           myBalloonRef = null;
         }
       }
@@ -139,7 +139,7 @@ public class Notification {
 
   @Nullable
   public Balloon getBalloon() {
-    return myBalloonRef == null ? null : myBalloonRef.get();
+    return SoftReference.dereference(myBalloonRef);
   }
 
   public void notify(@Nullable Project project) {

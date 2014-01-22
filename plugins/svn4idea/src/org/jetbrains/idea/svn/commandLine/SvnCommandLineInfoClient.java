@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -124,13 +125,15 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       final String text = e.getMessage();
       final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
       if (notEmpty && text.contains("W155010")) {
-        // just null
-        return null;
+        // if "svn info" is executed for several files at once, then this warning could be printed only for some files, but info for other
+        // files should be parsed from output
+        return output.getStdout();
       }
       // not a working copy exception
       // "E155007: '' is not a working copy"
       if (notEmpty && text.contains("is not a working copy")) {
         if (StringUtil.isNotEmpty(output.getStdout())) {
+          // TODO: Seems not reproducible in 1.8.4
           // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
           // if there are files with conflicts.
           // but the requested info is still in the output except root closing tag
@@ -152,7 +155,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
   }
 
-  private void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result) throws SVNException {
+  private static void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result) throws SVNException {
     if (StringUtil.isEmpty(result)) {
       return;
     }
@@ -245,5 +248,27 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       }
     });
     return infoArr[0];
+  }
+
+  @Override
+  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException {
+    File base = ContainerUtil.getFirstItem(paths);
+
+    if (base != null) {
+      base = CommandUtil.correctUpToExistingParent(base);
+
+      List<String> parameters = ContainerUtil.newArrayList();
+      for (File file : paths) {
+        CommandUtil.put(parameters, file);
+      }
+      CommandUtil.put(parameters, true, "--xml");
+
+      // Currently do not handle exceptions here like in SvnVcs.handleInfoException - just continue with parsing in case of warnings for
+      // some of the requested items
+      String result = execute(parameters, base);
+      if (handler != null) {
+        parseResult(handler, base, result);
+      }
+    }
   }
 }

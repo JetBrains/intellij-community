@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public class InjectedLanguageUtil {
       }
     }
     if (!documentWindow.isValid()) return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
-    return EditorWindow.create(documentWindow, (EditorImpl)hostEditor, injectedFile);
+    return EditorWindowImpl.create(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
   @Nullable
@@ -377,7 +377,7 @@ public class InjectedLanguageUtil {
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
     if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
     if (document instanceof DocumentWindowImpl) {
-      return EditorWindow.create((DocumentWindowImpl)document, (EditorImpl)editor, file);
+      return EditorWindowImpl.create((DocumentWindowImpl)document, (EditorImpl)editor, file);
     }
     return editor;
   }
@@ -410,27 +410,6 @@ public class InjectedLanguageUtil {
     }
 
     return combinedEdiablesLength != elementRange.getLength();
-  }
-
-  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor) {
-    int selStart = injectedEditor.getSelectionModel().getSelectionStart();
-    int selEnd = injectedEditor.getSelectionModel().getSelectionEnd();
-
-    DocumentWindow document = injectedEditor.getDocument();
-
-    boolean isStartOverflows = selStart == 0;
-    if (!isStartOverflows) {
-      int hostPrev = document.injectedToHost(selStart - 1);
-      isStartOverflows = document.hostToInjected(hostPrev) == selStart;
-    }
-
-    boolean isEndOverflows = selEnd == document.getTextLength();
-    if (!isEndOverflows) {
-      int hostNext = document.injectedToHost(selEnd + 1);
-      isEndOverflows = document.hostToInjected(hostNext) == selEnd;
-    }
-
-    return isStartOverflows && isEndOverflows;
   }
 
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
@@ -495,5 +474,28 @@ public class InjectedLanguageUtil {
 
   public static boolean isInjectableLanguage(Language language) {
     return LanguageUtil.isInjectableLanguage(language);
+  }
+
+  public static boolean isHighlightInjectionBackground(@Nullable PsiLanguageInjectionHost host) {
+    return !(host instanceof InjectionBackgroundSuppressor);
+  }
+
+  public static int getInjectedStart(@NotNull List<PsiLanguageInjectionHost.Shred> places) {
+    PsiLanguageInjectionHost.Shred shred = places.get(0);
+    PsiLanguageInjectionHost host = shred.getHost();
+    assert host != null;
+    return shred.getRangeInsideHost().getStartOffset() + host.getTextOffset();
+  }
+
+  @Nullable
+  public static PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
+    final Ref<PsiElement> ref = Ref.create();
+    enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places)));
+      }
+    });
+    return ref.get();
   }
 }

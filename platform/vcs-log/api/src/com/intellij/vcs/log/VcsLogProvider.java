@@ -74,11 +74,22 @@ public interface VcsLogProvider {
   void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
-   * Return commits with full details, which correspond to the given filters.
+   * <p>Return commits with full details, which correspond to the given filters.</p>
+   *
+   * <p>There can be several filters of a single type (e.g. several filters by users).<br/>
+   *    Filters of different types are concatenated with {@code AND}, while filters of a single type are concatenated with {@code OR}.
+   *    E.g.: (branch1 OR branch2) AND (user1 OR user2).</p>
+   *
+   * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
    */
   @NotNull
   List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
-                                                          @NotNull Collection<VcsLogFilter> filters) throws VcsException;
+                                                          @NotNull Collection<VcsLogBranchFilter> branchFilters,
+                                                          @NotNull Collection<VcsLogUserFilter> userFilters,
+                                                          @NotNull Collection<VcsLogDateFilter> dateFilters,
+                                                          @NotNull Collection<VcsLogTextFilter> textFilters,
+                                                          @NotNull Collection<VcsLogStructureFilter> structureFilters,
+                                                          int maxCount) throws VcsException;
 
   /**
    * Returns the name of current user as specified for the given root,

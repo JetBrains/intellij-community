@@ -110,7 +110,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel myListenersPanel;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
-  private ArrayList<Map.Entry> propertiesList;
+  private final ArrayList<Map.Entry> propertiesList = new ArrayList<Map.Entry>();
   private TestNGListenersTableModel listenerModel;
 
   private TestNGConfiguration config;
@@ -200,6 +200,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       else if (field instanceof EditorTextFieldWithBrowseButton) {
         final com.intellij.openapi.editor.Document componentDocument =
           ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
+        
         model.setDocument(i, componentDocument);
       }
       else {
@@ -303,7 +304,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       packagesInProject.setSelected(true);
     }
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
-    propertiesList = new ArrayList<Map.Entry>();
+    propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
 

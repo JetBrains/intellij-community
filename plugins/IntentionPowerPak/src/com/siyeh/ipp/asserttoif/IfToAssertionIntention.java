@@ -16,7 +16,9 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +48,7 @@ public class IfToAssertionIntention extends Intention {
       newStatementText.append(':').append(message);
     }
     newStatementText.append(';');
-    replaceStatement(newStatementText.toString(), ifStatement);
+    PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
   }
 
   private static String getMessage(PsiElement element) {
@@ -57,18 +59,16 @@ public class IfToAssertionIntention extends Intention {
       if (statements.length != 1) {
         return null;
       }
-      final PsiStatement statement = statements[0];
-      return getMessage(statement);
+      return getMessage(statements[0]);
     }
     else if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      final PsiExpression exception = throwStatement.getException();
+      final PsiExpression exception = ParenthesesUtils.stripParentheses(throwStatement.getException());
       if (!(exception instanceof PsiNewExpression)) {
         return null;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)exception;
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return null;
       }
@@ -76,8 +76,7 @@ public class IfToAssertionIntention extends Intention {
       if (arguments.length != 1) {
         return null;
       }
-      final PsiExpression argument = arguments[0];
-      return argument.getText();
+      return arguments[0].getText();
     }
     return null;
   }

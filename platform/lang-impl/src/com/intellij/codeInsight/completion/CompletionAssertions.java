@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.List;
 
@@ -120,7 +121,7 @@ class CompletionAssertions {
   }
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {
-    assert hostCopy.isValid() : "file became invalid: " + hostCopy.getClass();
+    PsiUtilCore.ensureValid(hostCopy);
     if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostCopy.getTextLength()) {
       throw new AssertionError("startOffset outside the host file: " + hostMap.getOffset(CompletionInitializationContext.START_OFFSET) + "; " + hostCopy);
     }
@@ -145,8 +146,9 @@ class CompletionAssertions {
     }
 
     final TextRange range = insertedElement.getTextRange();
-    String fileCopyText = fileCopy.getText();
-    if ((range.getEndOffset() > fileCopyText.length()) || !range.substring(fileCopyText).equals(insertedElement.getText())) {
+    CharSequence fileCopyText = fileCopy.getViewProvider().getContents();
+    if ((range.getEndOffset() > fileCopyText.length()) ||
+        !fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()).toString().equals(insertedElement.getText())) {
       throw new LogEventException("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
                                          createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
                                          new Attachment("Element at caret.txt", insertedElement.getText()));

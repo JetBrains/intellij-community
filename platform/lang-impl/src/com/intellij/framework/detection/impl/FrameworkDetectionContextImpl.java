@@ -23,12 +23,12 @@ import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMapBasedOnSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,9 +57,9 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
   @Override
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
                                                                                                                                       @NotNull Collection<VirtualFile> files) {
-    MultiMapBasedOnSet<Module, VirtualFile> filesByModule = new MultiMapBasedOnSet<Module, VirtualFile>();
+    MultiMap<Module, VirtualFile> filesByModule = MultiMap.createSet();
     for (VirtualFile file : files) {
-      final Module module = ModuleUtil.findModuleForFile(file, myProject);
+      final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
       if (module != null) {
         filesByModule.putValue(module, file);
       }

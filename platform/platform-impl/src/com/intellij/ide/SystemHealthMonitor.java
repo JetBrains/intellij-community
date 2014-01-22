@@ -17,10 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsConfiguration;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -31,9 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
@@ -52,6 +47,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
+
+  private static final NotNullLazyValue<NotificationGroup> LOG_GROUP = new AtomicNotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return NotificationGroup.logOnlyGroup("System Health Log Messages");
+    }
+  };
 
   @NotNull private final PropertiesComponent myProperties;
 
@@ -86,9 +89,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(new Runnable() {
           public void run() {
+            String message = IdeBundle.message(key) + IdeBundle.message("unsupported.jvm.link");
+
             JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
             if (component != null) {
-              String message = IdeBundle.message(key) + IdeBundle.message("unsupported.jvm.link");
               Rectangle rect = component.getVisibleRect();
               JBPopupFactory.getInstance()
                 .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
@@ -104,6 +108,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                 .createBalloon()
                 .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
             }
+
+            Notification notification = LOG_GROUP.getValue().createNotification(message, NotificationType.WARNING);
+            notification.setImportant(true);
+            Notifications.Bus.notify(notification);
           }
         });
       }
@@ -131,13 +139,13 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
               }
             }));
           }
-          if (!future.isDone()) {
+          if (!future.isDone() || future.isCancelled()) {
             JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
             return;
           }
 
           try {
-            final long fileUsableSpace = future.isCancelled() ? 0 : future.get();
+            final long fileUsableSpace = future.get();
             final long timeout = Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS);
             ourFreeSpaceCalculation.set(null);
 

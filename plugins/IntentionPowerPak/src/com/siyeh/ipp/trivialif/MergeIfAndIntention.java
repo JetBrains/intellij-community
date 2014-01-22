@@ -17,10 +17,10 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ConditionalUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class MergeIfAndIntention extends Intention {
     }
     final PsiStatement parentThenBranch = parentStatement.getThenBranch();
     final PsiIfStatement childStatement =
-      (PsiIfStatement)ConditionalUtils.stripBraces(parentThenBranch);
+      (PsiIfStatement)com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(parentThenBranch);
     final PsiExpression childCondition = childStatement.getCondition();
     if (childCondition == null) {
       return;
@@ -74,6 +74,6 @@ public class MergeIfAndIntention extends Intention {
     }
     @NonNls final String statement = "if(" + parentConditionText + "&&" +
                                      childConditionText + ')' + childThenBranch.getText();
-    replaceStatement(statement, parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, statement);
   }
 }

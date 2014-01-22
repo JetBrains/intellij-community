@@ -30,6 +30,15 @@ public class HtmlDocumentationTest extends CodeInsightTestCase {
            "</html>");
   }
 
+  public void testQuickDocumentationHtml5TagDialog() throws Exception {
+    doTest("<!DOCTYPE html>\n" +
+           "<html>\n" +
+           "<body onload=\"\">\n" +
+           "<dia<caret>log></dialog\n" +
+           "</body>\n" +
+           "</html>");
+  }
+
   public void testQuickDocumentationHtml5Attr() throws Exception {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +

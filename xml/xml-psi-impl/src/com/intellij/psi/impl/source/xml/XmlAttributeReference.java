@@ -98,7 +98,7 @@ public class XmlAttributeReference implements PsiReference {
 
   @NotNull
   public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // moved to XmlCompletionContributor.addAttributeReferenceCompletionVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // moved to XmlAttributeReferenceCompletionProvider
   }
 
   public boolean isSoft() {

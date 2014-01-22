@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,6 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     else {
       newExpression = expString;
     }
-    replaceExpression(expression, newExpression);
+    PsiReplacementUtil.replaceExpression(expression, newExpression);
   }
 }

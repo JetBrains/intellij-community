@@ -17,6 +17,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -63,7 +64,10 @@ public class InheritorChooser {
         if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           return false;
         }
+      } else if (location instanceof PsiMemberParameterizedLocation) {
+        return false;
       }
+
       final List<PsiClass> classes = new ArrayList<PsiClass>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override

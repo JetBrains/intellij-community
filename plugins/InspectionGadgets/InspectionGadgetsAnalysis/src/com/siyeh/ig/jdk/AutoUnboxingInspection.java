@@ -31,6 +31,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
@@ -145,18 +146,18 @@ public class AutoUnboxingInspection extends BaseInspection {
       final String expressionText = expression.getText();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-        replaceExpression(typeCastExpression, newExpressionText);
+        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpressionText);
       }
       else if (parent instanceof PsiPrefixExpression && !unboxedType.equalsToText("boolean")) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
         final IElementType tokenType = prefixExpression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-          replaceExpression(prefixExpression, expressionText + '=' + newExpressionText + "+1");
+          PsiReplacementUtil.replaceExpression(prefixExpression, expressionText + '=' + newExpressionText + "+1");
         }
         else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
-          replaceExpression(prefixExpression, expressionText + '=' + newExpressionText + "-1");
+          PsiReplacementUtil.replaceExpression(prefixExpression, expressionText + '=' + newExpressionText + "-1");
         } else {
-          replaceExpression(prefixExpression, prefixExpression.getOperationSign().getText() + newExpressionText);
+          PsiReplacementUtil.replaceExpression(prefixExpression, prefixExpression.getOperationSign().getText() + newExpressionText);
         }
       }
       else if (parent instanceof PsiPostfixExpression) {
@@ -165,10 +166,10 @@ public class AutoUnboxingInspection extends BaseInspection {
         final PsiElement grandParent = postfixExpression.getParent();
         if (grandParent instanceof PsiExpressionStatement) {
           if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-            replaceExpression(postfixExpression, expressionText + '=' + newExpressionText + "+1");
+            PsiReplacementUtil.replaceExpression(postfixExpression, expressionText + '=' + newExpressionText + "+1");
           }
           else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
-            replaceExpression(postfixExpression, expressionText + '=' + newExpressionText + "-1");
+            PsiReplacementUtil.replaceExpression(postfixExpression, expressionText + '=' + newExpressionText + "-1");
           }
         }
         else {
@@ -204,11 +205,11 @@ public class AutoUnboxingInspection extends BaseInspection {
           assignmentExpression.replace(newExpression);
         }
         else {
-          replaceExpression(expression, newExpressionText);
+          PsiReplacementUtil.replaceExpression(expression, newExpressionText);
         }
       }
       else {
-        replaceExpression(expression, newExpressionText);
+        PsiReplacementUtil.replaceExpression(expression, newExpressionText);
       }
     }
 

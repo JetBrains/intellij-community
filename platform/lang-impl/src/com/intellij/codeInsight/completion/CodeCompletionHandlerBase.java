@@ -109,6 +109,10 @@ public class CodeCompletionHandlerBase {
   }
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
+    if (invokedExplicitly) {
+      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    }
+
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
@@ -116,17 +120,14 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.checkEditorValid(editor);
 
-    if (editor.isViewer()) {
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
+      CodeInsightUtilBase.showReadOnlyViewWarning(editor);
       return;
     }
 
-    if (invokedExplicitly) {
-      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
-    }
-
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor) ||
-        !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 
@@ -781,7 +782,11 @@ public class CodeCompletionHandlerBase {
         final Document document = cached.second;
         assert document != null;
         file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
-        document.setText(file.getText());
+
+        Document originalDocument = file.getViewProvider().getDocument();
+        assert originalDocument != null;
+        assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
+        document.setText(originalDocument.getImmutableCharSequence());
         return copy;
       }
     }

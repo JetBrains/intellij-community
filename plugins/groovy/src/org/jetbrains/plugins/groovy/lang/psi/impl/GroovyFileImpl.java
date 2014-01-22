@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -562,6 +563,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     return this;
+  }
+
+  @Override
+  public String toString() {
+    if (ApplicationManager.getApplication().isUnitTestMode()){
+      return super.toString();
+    }
+    return "GroovyFileImpl:" + getName();
   }
 }
 

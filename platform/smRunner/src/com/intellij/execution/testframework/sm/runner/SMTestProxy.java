@@ -143,6 +143,13 @@ public class SMTestProxy extends AbstractTestProxy {
     return false;
   }
 
+  /**
+   * @return true if the state is final (PASSED, FAILED, IGNORED, TERMINATED)
+   */
+  public boolean isFinal() {
+    return myState.isFinal();
+  }
+
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
@@ -397,8 +404,7 @@ public class SMTestProxy extends AbstractTestProxy {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestIgnored(@NotNull final String ignoreComment,
-                             @Nullable final String stackTrace) {
+  public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
     setStacktraceIfNotSet(stackTrace);
     myState = new TestIgnoredState(ignoreComment, stackTrace);
     fireOnNewPrintable(myState);

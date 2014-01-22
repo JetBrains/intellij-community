@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,15 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.LanguageSurrounders;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,9 +130,31 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     doTest(getTestName(false), new JavaWithNullCheckSurrounder());
   }
+  
+  public void testSurroundExpressionWithIf() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+  }
+
+  public void testSurroundExpressionWithIfForBoxedBooleans() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+  }
+  
+  public void testSurroundExpressionWithNotForBoxedBooleans() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithNotSurrounder());
+  }
 
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");
+    
+    SurroundDescriptor item = ContainerUtil.getFirstItem(LanguageSurrounders.INSTANCE.allForLanguage(JavaLanguage.INSTANCE));
+    assertNotNull(item);
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    PsiElement[] elements = item.getElementsToSurround(getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    assertTrue(surrounder.isApplicable(elements));
+
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
@@ -144,5 +172,4 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     templateState.nextTab();
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
-
 }

@@ -49,14 +49,19 @@ public class CompletionInitializationContext {
     myCompletionType = completionType;
     myOffsetMap = new OffsetMap(editor.getDocument());
 
-    final int caretOffset = editor.getCaretModel().getOffset();
+    myOffsetMap.addOffset(START_OFFSET, calcStartOffset(editor));
+    myOffsetMap.addOffset(SELECTION_END_OFFSET, calcSelectionEnd(editor));
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(editor)));
+  }
+
+  private static int calcSelectionEnd(Editor editor) {
     final SelectionModel selectionModel = editor.getSelectionModel();
-    myOffsetMap.addOffset(START_OFFSET, selectionModel.hasSelection() ? selectionModel.getSelectionStart() : caretOffset);
+    return selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : editor.getCaretModel().getOffset();
+  }
 
-    final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
-    myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
-
-    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, selectionEndOffset));
+  public static int calcStartOffset(Editor editor) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
   }
 
   static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {

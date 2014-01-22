@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -32,6 +33,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.DirectoryData;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +41,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -83,7 +83,6 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testFindFileByUrl() throws Exception {
-
     File file1 = new File(PathManagerEx.getTestDataPath());
     file1 = new File(file1, "vfs");
     file1 = new File(file1, "findFileByUrl");
@@ -165,14 +164,18 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }
   }
 
+  @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.JANUARY, day = 21)
   public void testAsyncRefresh() throws Throwable {
+    final File tempDir = createTempDirectory();
+
     final Throwable[] ex = {null};
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), true, new Processor<Object>() {
+      Arrays.asList(new Object[8]),
+      ProgressManager.getInstance().getProgressIndicator(), true, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         try {
-          doAsyncRefreshTest();
+          doAsyncRefreshTest(tempDir);
         }
         catch (Throwable t) {
           ex[0] = t;
@@ -180,21 +183,15 @@ public class VfsUtilTest extends PlatformLangTestCase {
         return true;
       }
     });
+
     if (ex[0] != null) throw ex[0];
-    if (!success) System.out.println("!success");
+    if (!success) fail("!success");
   }
 
-  private void doAsyncRefreshTest() throws Exception {
+  private static void doAsyncRefreshTest(File temp) throws Exception {
     final int N = 1000;
-    final byte[] data = "xxx".getBytes();
+    final byte[] data = "xxx".getBytes("UTF-8");
 
-    File temp = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);
     assertNotNull(vTemp);
@@ -222,7 +219,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
     for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, "xxx".getBytes());
+      FileUtil.writeToFile(file, data);
       assertTrue(file.setLastModified(timestamp[i] - 2000));
       long modified = file.lastModified();
       assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
@@ -238,11 +235,11 @@ public class VfsUtilTest extends PlatformLangTestCase {
           latch.countDown();
         }
       });
+      TimeoutUtil.sleep(10);
     }
-    while (true) {
+    while (latch.getCount() > 0) {
       latch.await(100, TimeUnit.MILLISECONDS);
       UIUtil.pump();
-      if (latch.getCount() == 0) break;
     }
 
     for (int i = 0; i < N; i++) {
@@ -296,6 +293,19 @@ public class VfsUtilTest extends PlatformLangTestCase {
     VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
+  }
+
+  public void testPresentableUrlSurvivesDeletion() throws IOException {
+    final VirtualFile file = createTempFile("txt", null, "content", Charset.defaultCharset());
+    String url = file.getPresentableUrl();
+    assertNotNull(url);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.delete(this);
+      }
+    }.execute();
+    assertEquals(url, file.getPresentableUrl());
   }
 
   public void testToUri() {

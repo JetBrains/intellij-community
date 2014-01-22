@@ -99,6 +99,10 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
     }
   }
 
+  public void onWizardFinished() throws CommitStepException {
+    _commit(true);
+  }
+
   public JComponent getComponent() {
     return mySupportForFrameworksPanel.getMainPanel();
   }

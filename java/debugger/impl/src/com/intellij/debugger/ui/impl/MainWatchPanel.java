@@ -184,8 +184,13 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         }
 
         TextWithImports text = comboBox.getText();
-        WatchDebuggerTree.setWatchNodeText(node, text);
-        comboBox.addRecent(text);
+        if (!text.isEmpty()) {
+          WatchDebuggerTree.setWatchNodeText(node, text);
+          comboBox.addRecent(text);
+        }
+        else {
+          getWatchTree().removeWatch(node);
+        }
         try {
           super.doOKAction();
         }
@@ -196,6 +201,9 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
 
       public void cancelEditing() {
         comboBox.setPopupVisible(false);
+        if (((WatchItemDescriptor)node.getDescriptor()).getEvaluationText().isEmpty()) {
+          getWatchTree().removeWatch(node);
+        }
 
         try {
           super.cancelEditing();

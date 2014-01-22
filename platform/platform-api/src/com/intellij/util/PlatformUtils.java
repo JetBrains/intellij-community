@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,73 +16,110 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PlatformUtils extends PlatformUtilsCore {
-  private PlatformUtils() {
-  }
+@SuppressWarnings({"deprecation", "UnusedDeclaration"})
+public class PlatformUtils {
+  public static final String PLATFORM_PREFIX_KEY = PlatformUtilsCore.PLATFORM_PREFIX_KEY;
+
+  public static final String IDEA_PREFIX = PlatformUtilsCore.IDEA_PREFIX;
+  public static final String IDEA_CE_PREFIX = PlatformUtilsCore.COMMUNITY_PREFIX;
+  public static final String APPCODE_PREFIX = PlatformUtilsCore.APPCODE_PREFIX;
+  public static final String CPP_PREFIX = PlatformUtilsCore.CPP_PREFIX;
+  public static final String PYCHARM_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX;
+  public static final String PYCHARM_CE_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX2;
+  public static final String RUBY_PREFIX = PlatformUtilsCore.RUBY_PREFIX;
+  public static final String PHP_PREFIX = PlatformUtilsCore.PHP_PREFIX;
+  public static final String WEB_PREFIX = PlatformUtilsCore.WEB_PREFIX;
+
+  private PlatformUtils() { }
 
   public static String getPlatformPrefix() {
-    return getPlatformPrefix(IDEA_PREFIX);
+    return PlatformUtilsCore.getPlatformPrefix();
   }
 
   public static String getPlatformPrefix(String defaultPrefix) {
-    return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
+    return PlatformUtilsCore.getPlatformPrefix(defaultPrefix);
   }
 
-  public static boolean isIdea() {
-    return IDEA_PREFIX.equals(getPlatformPrefix());
+  public static boolean isIntelliJ() {
+    return PlatformUtilsCore.isIntelliJ();
   }
 
-  public static boolean isCommunity() {
-    return COMMUNITY_PREFIX.equals(getPlatformPrefix());
+  public static boolean isIdeaUltimate() {
+    return PlatformUtilsCore.isIdea();
+  }
+
+  public static boolean isIdeaCommunity() {
+    return PlatformUtilsCore.isCommunity();
   }
 
   public static boolean isRubyMine() {
-    return RUBY_PREFIX.equals(getPlatformPrefix());
+    return PlatformUtilsCore.isRubyMine();
+  }
+
+  public static boolean isAppCode() {
+    return PlatformUtilsCore.isAppCode();
+  }
+
+  public static boolean isCppIde() {
+    return PlatformUtilsCore.isCppIde();
   }
 
   public static boolean isCidr() {
     return isAppCode() || isCppIde();
   }
 
-  public static boolean isAppCode() {
-    return APPCODE_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isCppIde() {
-    return CPP_PREFIX.equals(getPlatformPrefix());
-  }
-
   public static boolean isPyCharm() {
-    String prefix = getPlatformPrefix();
-    return PYCHARM_PREFIX.equals(prefix) || (prefix != null && prefix.startsWith(PYCHARM_PREFIX2));
+    return PlatformUtilsCore.isPyCharm();
+  }
+
+  public static boolean isPyCharmPro() {
+    return PlatformUtilsCore.isPyCharmPro();
+  }
+
+  public static boolean isPyCharmCommunity() {
+    return PlatformUtilsCore.isPyCharmCommunity();
   }
 
   public static boolean isPhpStorm() {
-    return PHP_PREFIX.equals(getPlatformPrefix());
+    return PlatformUtilsCore.isPhpStorm();
   }
 
   public static boolean isWebStorm() {
-    return WEB_PREFIX.equals(getPlatformPrefix());
+    return PlatformUtilsCore.isWebStorm();
   }
 
-  public static boolean isFlexIde() {
-    return FLEX_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isIntelliJ() {
-    return isIdea() || isCommunity();
-  }
-
+  /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return false;
-    return baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null;
+    return false;
   }
+
+  /** @deprecated use {@link #IDEA_CE_PREFIX} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String COMMUNITY_PREFIX = IDEA_CE_PREFIX;
+
+  /** @deprecated use {@link #isIdeaUltimate()} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isIdea() { return isIdeaUltimate(); }
+
+  /** @deprecated use {@link #isIdeaCommunity()} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isCommunity() { return isIdeaCommunity(); }
+
+  /** @deprecated use {@link #PYCHARM_CE_PREFIX} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String PYCHARM_PREFIX2 = PYCHARM_CE_PREFIX;
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String FLEX_PREFIX = PlatformUtilsCore.FLEX_PREFIX;
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isFlexIde() { return false; }
 }

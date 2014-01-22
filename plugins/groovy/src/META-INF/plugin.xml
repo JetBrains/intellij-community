@@ -1410,6 +1410,13 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.other.GrCopyStringConcatenationContentIntention</className>
     </intentionAction>
+
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.other.GrSortMapKeysIntention</className>
+    </intentionAction>
+
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>

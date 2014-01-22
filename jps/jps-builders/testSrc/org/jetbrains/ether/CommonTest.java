@@ -118,4 +118,8 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddClassHidingImportedClass2() throws Exception {
+    doTest();
+  }
+
 }

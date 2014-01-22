@@ -48,8 +48,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiElement container = myFix instanceof AbstractBatchSuppressByNoInspectionCommentFix
-                           ? ((AbstractBatchSuppressByNoInspectionCommentFix )myFix).getContainer(element) : null;
+    PsiElement container = getContainer(element);
     boolean caretWasBeforeStatement = editor != null && container != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
     ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(element, element, "", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
@@ -58,6 +57,11 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
     if (caretWasBeforeStatement) {
       editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
     }
+  }
+
+  public PsiElement getContainer(PsiElement element) {
+    return myFix instanceof AbstractBatchSuppressByNoInspectionCommentFix
+                           ? ((AbstractBatchSuppressByNoInspectionCommentFix )myFix).getContainer(element) : null;
   }
 
   @Override

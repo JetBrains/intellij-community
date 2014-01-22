@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -39,14 +39,16 @@ import java.util.Set;
 
 public class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
   private final PsiFile myFile;
+  @NotNull private final Editor myEditor;
   private final int myStartOffset;
   private final int myEndOffset;
 
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
-  public SlowLineMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
-    super(project, document, false);
+  public SlowLineMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
+    super(project, editor.getDocument(), false);
     myFile = file;
+    myEditor = editor;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
@@ -65,7 +67,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
       LineMarkersPass.collectLineMarkersForInjected(markers, elements, this, myFile, progress);
     }
 
-    myMarkers = markers;
+    myMarkers = LineMarkersPass.mergeLineMarkers(markers, myEditor);
   }
 
   @Override

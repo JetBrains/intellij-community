@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -750,9 +750,10 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   projectBuilder.stage("winLauncher")
 
   if (pathsSelector != null) {
-    ant.replace(file: launcherProperties) {
-      replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: pathsSelector)
-    }
+    def paths = getProperty("paths")
+    def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    launcherProperties = launcherPropertiesTemp
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
@@ -773,10 +774,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       }
     }
   }
-  /*File outputFile = new File(outputPath)
-  def outputFileName = outputFile.getName()
-  def outputDir = outputPath.substring(0, outputPath.length() - outputFileName.length())
-  executeExternalAnt(["dirName": outputDir, "fileName": outputFileName], "$home/build/signBuild.xml")*/
 })
 
 binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->

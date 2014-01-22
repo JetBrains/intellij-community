@@ -64,7 +64,7 @@ import java.io.Writer;
  * @version 5.3, January 10, 2007
  */
 @SuppressWarnings("AssignmentToForLoopParameter")
-public final class ImmutableText implements CharSequence {
+public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable {
 
   /**
    * Holds the default size for primitive blocks of characters.
@@ -120,38 +120,24 @@ public final class ImmutableText implements CharSequence {
    * @return the textual representation of the specified object.
    */
   public static ImmutableText valueOf(@NotNull Object obj) {
-    if (obj instanceof Number) // Use faster primitive formatting.
-      return valueOfNumber(obj);
+    if (obj instanceof ImmutableText) return (ImmutableText)obj;
+    if (obj instanceof CharSequence) return ((CharSequence)obj).length() == 0 ? EMPTY : valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
   }
 
-  // For Integer, Long, Float and Double use direct formatting.
-  private static ImmutableText valueOfNumber(Object num) {
-    if (num instanceof Integer)
-      return valueOf(((Integer)num).intValue());
-    if (num instanceof Long)
-      return valueOf(((Long)num).longValue());
-    if (num instanceof Float)
-      return valueOf(((Float)num).floatValue());
-    if (num instanceof Double)
-      return valueOf(((Double)num).doubleValue());
-    return valueOf(String.valueOf(num));
-  }
-
-  private static ImmutableText valueOf(@NotNull String str) {
+  private static ImmutableText valueOf(@NotNull CharSequence str) {
     return valueOf(str, 0, str.length());
   }
 
-  private static ImmutableText valueOf(@NotNull String str, int start, int end) {
+  private static ImmutableText valueOf(@NotNull CharSequence str, int start, int end) {
     int length = end - start;
     if (length <= BLOCK_SIZE) {
-      char[] chars = new char[length];
-      str.getChars(start, end, chars, 0);
-      return new ImmutableText(chars);
-    } else { // Splits on a block boundary.
-      int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
-      return new ImmutableText(valueOf(str, start, start + half), valueOf(str, start + half, end));
+      return new ImmutableText(CharArrayUtil.fromSequence(str, start, end));
     }
+
+    // Splits on a block boundary.
+    int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
+    return new ImmutableText(valueOf(str, start, start + half), valueOf(str, start + half, end));
   }
 
   /**
@@ -268,6 +254,10 @@ public final class ImmutableText implements CharSequence {
    * @return <code>this + that</code>
    */
   public ImmutableText concat(ImmutableText that) {
+    if (that.length() == 0) {
+      return this;
+    }
+
     // All Text instances are maintained balanced:
     //   (head < tail * 2) & (tail < head * 2)
 
@@ -352,6 +342,10 @@ public final class ImmutableText implements CharSequence {
     return subtext(0, index).concat(txt).concat(subtext(index));
   }
 
+  public ImmutableText insert(int index, CharSequence seq) {
+    return insert(index, valueOf(seq));
+  }
+
   /**
    * Returns the text without the characters between the specified indexes.
    *
@@ -362,6 +356,7 @@ public final class ImmutableText implements CharSequence {
    *         (start > end) || (end > this.length()</code>
    */
   public ImmutableText delete(int start, int end) {
+    if (start == end) return this;
     if (start > end)
       throw new IndexOutOfBoundsException();
     return subtext(0, start).concat(subtext(end));
@@ -384,15 +379,8 @@ public final class ImmutableText implements CharSequence {
   }
 
   public CharSequence subSequence(final int start, final int end) {
-    return new CharSequenceSubSequence(this, start, end) {
-      @NotNull
-      @Override
-      public String toString() {
-        char[] chars = new char[end - start];
-        getChars(start, end, chars, 0);
-        return StringFactory.createShared(chars);
-      }
-    };
+    if (start == 0 && end == length()) return this;
+    return new CharSequenceSubSequence(this, start, end);
   }
 
   /**
@@ -826,7 +814,7 @@ public final class ImmutableText implements CharSequence {
    * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
    *         (start > end) || (end > this.length())</code>
    */
-  public void getChars(int start, int end, char[] dest, int destPos) {
+  public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
     if (_data != null) { // Primitive.
       if ((start < 0) || (end > _count) || (start > end))
         throw new IndexOutOfBoundsException();

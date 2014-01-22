@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.*;
 
 public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsListener, HierarchyListener, ComponentListener {
 
-  private Component myComponent;
+  private final Component myComponent;
   private Client<T> myClient;
 
   public PositionTracker(Component component) {
@@ -45,30 +46,37 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
     return myComponent;
   }
 
+  @Override
   public final void ancestorMoved(HierarchyEvent e) {
     revalidate();
   }
 
+  @Override
   public final void ancestorResized(HierarchyEvent e) {
     revalidate();
   }
 
+  @Override
   public final void hierarchyChanged(HierarchyEvent e) {
     revalidate();
   }
 
+  @Override
   public void componentResized(ComponentEvent e) {
     revalidate();
   }
 
+  @Override
   public void componentMoved(ComponentEvent e) {
     revalidate();
   }
 
+  @Override
   public void componentShown(ComponentEvent e) {
     revalidate();
   }
 
+  @Override
   public void componentHidden(ComponentEvent e) {
     revalidate();
   }
@@ -79,6 +87,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
 
   public abstract RelativePoint recalculateLocation(T object);
 
+  @Override
   public final void dispose() {
     myComponent.removeHierarchyBoundsListener(this);
     myComponent.removeHierarchyListener(this);
@@ -87,7 +96,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
 
   public static final class Static<T> extends PositionTracker<T> {
 
-    private RelativePoint myPoint;
+    private final RelativePoint myPoint;
 
     public Static(RelativePoint point) {
       super(point.getComponent());
@@ -103,7 +112,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
   public interface Client<T> extends Disposable {
     
     void revalidate();
-    void revalidate(PositionTracker<T> tracker);
+    void revalidate(@NotNull PositionTracker<T> tracker);
 
   }
 

@@ -35,8 +35,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,17 +49,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final List<EqClass> myEqClasses;
   private final Stack<DfaValue> myStack;
   private final TLongHashSet myDistinctClasses;
-  private final Map<DfaVariableValue,DfaVariableState> myVariableStates;
+  private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
-  private final Set<DfaVariableValue> myUnknownVariables;
+  private final LinkedHashSet<DfaVariableValue> myUnknownVariables;
   private boolean myEphemeral;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
     myDefaultVariableStates = ContainerUtil.newTroveMap();
     myEqClasses = ContainerUtil.newArrayList();
-    myUnknownVariables = ContainerUtil.newTroveSet();
-    myVariableStates = ContainerUtil.newTroveMap();
+    myUnknownVariables = ContainerUtil.newLinkedHashSet();
+    myVariableStates = ContainerUtil.newLinkedHashMap();
     myDistinctClasses = new TLongHashSet();
     myStack = new Stack<DfaValue>();
   }
@@ -73,10 +71,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     
     myStack = new Stack<DfaValue>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
-    myUnknownVariables = new THashSet<DfaVariableValue>(toCopy.myUnknownVariables);
+    myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
-    myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>(toCopy.myVariableStates);
+    myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
     
     myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
@@ -118,22 +116,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myVariableStates.equals(that.myVariableStates);
   }
 
-  private Set<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
-  Set<UnorderedPair<EqClass>> getDistinctClassPairs() {
+  private LinkedHashSet<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
+  LinkedHashSet<UnorderedPair<EqClass>> getDistinctClassPairs() {
     if (myCachedDistinctClassPairs != null) return myCachedDistinctClassPairs;
 
-    Set<UnorderedPair<EqClass>> result = ContainerUtil.newHashSet();
+    LinkedHashSet<UnorderedPair<EqClass>> result = ContainerUtil.newLinkedHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
       result.add(new UnorderedPair<EqClass>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
     }
     return myCachedDistinctClassPairs = result;
   }
 
-  private Set<EqClass> myCachedNonTrivialEqClasses;
-  Set<EqClass> getNonTrivialEqClasses() {
+  private LinkedHashSet<EqClass> myCachedNonTrivialEqClasses;
+  LinkedHashSet<EqClass> getNonTrivialEqClasses() {
     if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
-    
-    Set<EqClass> result = ContainerUtil.newHashSet();
+
+    LinkedHashSet<EqClass> result = ContainerUtil.newLinkedHashSet();
     for (EqClass eqClass : myEqClasses) {
       if (eqClass != null && eqClass.size() > 1) {
         result.add(eqClass);
@@ -268,6 +266,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myEqClasses.add(aClass);
 
     return myEqClasses.size() - 1;
+  }
+
+  boolean areEquivalent(DfaValue val1, DfaValue val2) {
+    int index = getEqClassIndex(val1);
+    return index >= 0 && index == getEqClassIndex(val2);
   }
 
   @NotNull
@@ -811,7 +814,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void flushFields(DfaVariableValue[] fields) {
+  public void flushFields() {
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         for (DfaVariableValue value : aClass.getVariables()) {

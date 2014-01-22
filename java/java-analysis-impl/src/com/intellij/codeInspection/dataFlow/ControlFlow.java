@@ -27,7 +27,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.TObjectIntHashMap;
@@ -40,7 +39,6 @@ public class ControlFlow {
   private final List<Instruction> myInstructions = new ArrayList<Instruction>();
   private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
   private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private DfaVariableValue[] myFields;
   private final DfaValueFactory myFactory;
 
   public ControlFlow(final DfaValueFactory factory) {
@@ -100,15 +98,6 @@ public class ControlFlow {
       }
     };
   }
-
-  public DfaVariableValue[] getFields() {
-    return myFields;
-  }
-
-  public void setFields(DfaVariableValue[] fields) {
-    myFields = fields;
-  }
-
 
   public String toString() {
     StringBuilder result = new StringBuilder();

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable, EditableModel {
+public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
@@ -36,6 +36,10 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {
     this(columnNames, items, selectedColumn, SortOrder.ASCENDING);
+  }
+
+  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items) {
+    this(columnNames, items, 0);
   }
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn, @NotNull SortOrder order) {
@@ -87,7 +91,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   }
 
   @Override
-  public Object getRowValue(int row) {
+  public Item getRowValue(int row) {
     return myItems.get(row);
   }
 
@@ -104,21 +108,18 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    return myColumnInfos[columnIndex].valueOf(myItems.get(rowIndex));
+    return myColumnInfos[columnIndex].valueOf(getItem(rowIndex));
   }
 
   @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     if (rowIndex < myItems.size()) {
-      myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
+      myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
     }
   }
 
   /**
    * true if changed
-   *
-   * @param columnInfos
-   * @return
    */
   public boolean setColumnInfos(ColumnInfo[] columnInfos) {
     if (myColumnInfos != null && Arrays.equals(columnInfos, myColumnInfos)) {
@@ -198,7 +199,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     }
   }
 
-  public Object getItem(final int rowIndex) {
-    return getItems().get(rowIndex);
+  public Item getItem(final int rowIndex) {
+    return myItems.get(rowIndex);
   }
 }

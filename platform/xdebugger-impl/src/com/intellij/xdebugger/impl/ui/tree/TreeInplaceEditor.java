@@ -214,12 +214,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     }
 
     final int id = mouseEvent.getID();
-    if (id == MouseEvent.MOUSE_WHEEL) {
-      cancelEditing();
-      return;
-    }
-
-    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED) {
+    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED && id != MouseEvent.MOUSE_WHEEL) {
       return;
     }
     
@@ -246,7 +241,9 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component componentAtPoint = SwingUtilities.getDeepestComponentAt(sourceComponent, originalPoint.x, originalPoint.y);
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
-        doOKAction();
+        if (id != MouseEvent.MOUSE_WHEEL) {
+          doOKAction();
+        }
         return;
       }
     }

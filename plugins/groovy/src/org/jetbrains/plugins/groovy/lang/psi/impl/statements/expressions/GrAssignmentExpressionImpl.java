@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -27,7 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -39,34 +37,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryFacade;
 
 /**
  * @author ilyas
  */
 public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAssignmentExpression {
 
-  private static final Function<GrAssignmentExpressionImpl, PsiType> TYPE_CALCULATOR =
-    new NullableFunction<GrAssignmentExpressionImpl, PsiType>() {
-      @Override
-      public PsiType fun(GrAssignmentExpressionImpl assignment) {
-        final GroovyResolveResult[] results = assignment.multiResolve(false);
+  private GrBinaryFacade getFacade() {
+    return myFacade;
+  }
 
-        if (results.length == 0) {
-          final GrExpression rValue = assignment.getRValue();
-          return rValue == null ? null : rValue.getType();
-        }
-
-
-        PsiType returnType = null;
-        final PsiManager manager = assignment.getManager();
-        for (GroovyResolveResult result : results) {
-          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result, assignment, new PsiType[]{getRValueType(assignment)});
-          returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
-        }
-        return returnType;
-      }
-    };
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -89,10 +72,12 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return null;
   }
 
+  @NotNull
   public IElementType getOperationTokenType() {
     return getOperationToken().getNode().getElementType();
   }
 
+  @NotNull
   public PsiElement getOperationToken() {
     return findNotNullChildByType(TokenSets.ASSIGN_OP_SET);
   }
@@ -119,7 +104,6 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   @Override
   public TextRange getRangeInElement() {
     final PsiElement token = getOperationToken();
-    assert token != null;
     final int offset = token.getStartOffsetInParent();
     return new TextRange(offset, offset + token.getTextLength());
   }
@@ -169,38 +153,78 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return this;
   }
 
-  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl> RESOLVER =
-    new ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl>() {
-      @NotNull
-      @Override
-      public GroovyResolveResult[] resolve(@NotNull GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
-        final IElementType opType = assignmentExpression.getOperationTokenType();
-        if (opType == null || opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
+  private final GrBinaryFacade myFacade = new GrBinaryFacade() {
+    @NotNull
+    @Override
+    public GrExpression getLeftOperand() {
+      return getLValue();
+    }
 
-        final GrExpression lValue = assignmentExpression.getLValue();
-        final PsiType lType;
-        if (lValue instanceof GrIndexProperty) {
+    @Nullable
+    @Override
+    public GrExpression getRightOperand() {
+      return getRValue();
+    }
+
+    @NotNull
+    @Override
+    public IElementType getOperationTokenType() {
+      return GrAssignmentExpressionImpl.this.getOperationTokenType();
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getOperationToken() {
+      return GrAssignmentExpressionImpl.this.getOperationToken();
+    }
+
+    @NotNull
+    @Override
+    public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+      return GrAssignmentExpressionImpl.this.multiResolve(false);
+    }
+
+    @NotNull
+    @Override
+    public GrExpression getPsiElement() {
+      return GrAssignmentExpressionImpl.this;
+    }
+  };
+
+
+  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl> RESOLVER = new ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl>() {
+    @NotNull
+    @Override
+    public GroovyResolveResult[] resolve(@NotNull GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
+      final IElementType opType = assignmentExpression.getOperationTokenType();
+      if (opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
+
+      final GrExpression lValue = assignmentExpression.getLValue();
+      final PsiType lType;
+      if (lValue instanceof GrIndexProperty) {
           /*
           now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
           by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
            */
-          lType = ((GrIndexProperty)lValue).getGetterType();
-        }
-        else {
-          lType = lValue.getType();
-        }
-        if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-        PsiType rType = getRValueType(assignmentExpression);
-
-        final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
-        return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, lValue, new PsiType[]{rType});
+        lType = ((GrIndexProperty)lValue).getGetterType();
       }
-    };
+      else {
+        lType = lValue.getType();
+      }
+      if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-  @Nullable
-  private static PsiType getRValueType(GrAssignmentExpressionImpl assignmentExpression) {
-    final GrExpression rightOperand = assignmentExpression.getRValue();
-    return rightOperand == null ? null : rightOperand.getType();
-  }
+      PsiType rType = GrBinaryExpressionUtil.getRightType(assignmentExpression.getFacade());
+
+      final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
+      return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, lValue, new PsiType[]{rType});
+    }
+  };
+
+  private static final Function<GrAssignmentExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrAssignmentExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrAssignmentExpressionImpl expression) {
+      final Function<GrBinaryFacade, PsiType> calculator = GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade());
+      return calculator.fun(expression.getFacade());
+    }
+  };
 }

@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -50,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -616,21 +616,8 @@ public class GrClassImplUtil {
   }
 
   private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {
-    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      final String name = attribute.getName();
-      if ("interfaces".equals(name)) {
-        final PsiAnnotationMemberValue value = attribute.getValue();
-        if (value instanceof GrLiteral) {
-          final Object innerValue = ((GrLiteral)value).getValue();
-          if (innerValue instanceof Boolean) {
-            return (Boolean)innerValue;
-          }
-        }
-      }
-    }
-    return true;
+    final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "interfaces");
+    return result != null ? result.booleanValue() : true;
   }
 
   public static void addExpandingReflectedMethods(List<PsiMethod> result, PsiMethod method) {

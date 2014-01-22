@@ -94,23 +94,14 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
         return;
       }
 
-      if (!(continuedStatement instanceof GrLoopStatement)) {
-        return;
-      }
-      final GrCondition body = ((GrLoopStatement) continuedStatement).getBody();
-      if (body == null) {
-        return;
-      }
-      if (body instanceof GrBlockStatement) {
-        if (ControlFlowUtils.blockCompletesWithStatement((GrBlockStatement) body,
-            continueStatement)) {
-          registerStatementError(continueStatement);
-        }
-      } else if (body instanceof GrStatement) {
-        if (ControlFlowUtils.statementCompletesWithStatement((GrStatement) body,
-            continueStatement)) {
-          registerStatementError(continueStatement);
-        }
+      if (!(continuedStatement instanceof GrLoopStatement)) return;
+      final GrStatement body = ((GrLoopStatement)continuedStatement).getBody();
+      if (body == null) return;
+
+
+      if (body instanceof GrBlockStatement && ControlFlowUtils.blockCompletesWithStatement((GrBlockStatement)body, continueStatement) ||
+          !(body instanceof GrBlockStatement) && ControlFlowUtils.statementCompletesWithStatement(body, continueStatement)){
+        registerStatementError(continueStatement);
       }
     }
   }

@@ -1,0 +1,7 @@
+<html>
+<body>
+This inspection detects calls of VirtualFile.getChildren() inside recursive methods.
+Such code may cause dead loops when iterating over cyclic symlinks -
+so please use VfsUtilCore.visitChildrenRecursively() instead.
+</body>
+</html>

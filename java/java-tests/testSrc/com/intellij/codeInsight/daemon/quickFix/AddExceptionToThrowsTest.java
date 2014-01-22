@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class AddExceptionToThrowsTest extends LightQuickFixTestCase {
+public class AddExceptionToThrowsTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
       @Override
-      public AbstractFileType readScheme(final Document document) throws InvalidDataException {
+      public AbstractFileType readScheme(@NotNull final Document document) throws InvalidDataException {
         if (document == null) {
           throw new InvalidDataException();
         }
@@ -195,12 +195,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       @Override
-      public boolean shouldBeSaved(final AbstractFileType fileType) {
+      public boolean shouldBeSaved(@NotNull final AbstractFileType fileType) {
         return shouldBeSavedToFile(fileType);
       }
 
       @Override
-      public Document writeScheme(final AbstractFileType fileType) throws WriteExternalException {
+      public Document writeScheme(@NotNull final AbstractFileType fileType) throws WriteExternalException {
         Element root = new Element(ELEMENT_FILETYPE);
 
         writeHeader(root, fileType);
@@ -221,7 +221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       @Override
-      public void onSchemeAdded(final AbstractFileType scheme) {
+      public void onSchemeAdded(@NotNull final AbstractFileType scheme) {
         fireBeforeFileTypesChanged();
         if (scheme instanceof ReadFileType) {
           loadFileType((ReadFileType)scheme);
@@ -230,7 +230,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       @Override
-      public void onSchemeDeleted(final AbstractFileType scheme) {
+      public void onSchemeDeleted(@NotNull final AbstractFileType scheme) {
         fireBeforeFileTypesChanged();
         myPatternsTable.removeAllAssociations(scheme);
         fireFileTypesChanged();
@@ -1072,7 +1072,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public static String getFileTypeComponentName() {
-    return PlatformUtils.isCommunity() ? "CommunityFileTypes" : "FileTypeManager";
+    return PlatformUtils.isIdeaCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
 
   public FileTypeAssocTable getExtensionMap() {

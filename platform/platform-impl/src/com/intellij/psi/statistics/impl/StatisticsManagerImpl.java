@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,11 +138,9 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
   private StatisticsUnit getUnit(int unitNumber) {
     SoftReference ref = myUnits[unitNumber];
-    if (ref != null){
-      StatisticsUnit unit = (StatisticsUnit)ref.get();
-      if (unit != null) return unit;
-    }
-    StatisticsUnit unit = loadUnit(unitNumber);
+    StatisticsUnit unit = (StatisticsUnit)SoftReference.dereference(ref);
+    if (unit != null) return unit;
+    unit = loadUnit(unitNumber);
     if (unit == null){
       unit = new StatisticsUnit(unitNumber);
     }

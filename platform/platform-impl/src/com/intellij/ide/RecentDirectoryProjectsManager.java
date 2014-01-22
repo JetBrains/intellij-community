@@ -20,7 +20,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
     )}
 )
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
-  public RecentDirectoryProjectsManager(ProjectManager projectManager, MessageBus messageBus) {
-    super(projectManager, messageBus);
+  public RecentDirectoryProjectsManager(MessageBus messageBus) {
+    super(messageBus);
   }
 
   @Nullable

@@ -227,7 +227,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
           (sp == StaticProblem.staticAfterInstance ? myFilteredResults : myResults).add(element1);
         }
       }
+    } else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      myResultNames.add(CompletionElement.getVariableUniqueId((PsiVariable)element));
     }
+
     return true;
   }
 

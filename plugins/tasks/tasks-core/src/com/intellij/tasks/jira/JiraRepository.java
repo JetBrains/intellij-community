@@ -1,13 +1,18 @@
 package com.intellij.tasks.jira;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,9 +33,10 @@ import java.util.List;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
+  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
   public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
-  public static final String REST_API_PATH_SUFFIX = "/rest/api/latest";
+  public static final String REST_API_PATH = "/rest/api/latest";
 
   /**
    * Default JQL query
@@ -105,7 +111,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    String uri = getUrl() + REST_API_PATH_SUFFIX + "/search?maxResults=1&jql=" + encodeUrl(mySearchQuery);
+    String uri = getUrl() + REST_API_PATH + "/search?maxResults=1&jql=" + encodeUrl(mySearchQuery);
     return new HttpTestConnection<GetMethod>(new GetMethod(uri)) {
       @Override
       public void doTest(GetMethod method) throws Exception {
@@ -135,16 +141,20 @@ public class JiraRepository extends BaseRepositoryImpl {
   public JiraRestApi discoverRestApiVersion() throws Exception {
     String responseBody;
     try {
-      responseBody = executeMethod(new GetMethod(getUrl() + REST_API_PATH_SUFFIX + "/serverInfo"));
+      responseBody = executeMethod(new GetMethod(getRestUrl("serverInfo")));
     }
     catch (Exception e) {
       LOG.warn("Can't find out JIRA REST API version");
       throw e;
     }
-    JsonObject object = JiraUtil.GSON.fromJson(responseBody, JsonObject.class);
+    JsonObject object = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
-    return JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+    JiraRestApi version = JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+    if (version == null) {
+      throw new Exception("JIRA below 4.0.0 doesn't have REST API and is no longer supported.");
+    }
+    return version;
   }
 
   @Override
@@ -152,17 +162,22 @@ public class JiraRepository extends BaseRepositoryImpl {
     myRestApiVersion.setTaskState(task, state);
   }
 
+  @Override
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
+    myRestApiVersion.updateTimeSpend(task, timeSpent, comment);
+  }
+
   @NotNull
-  public String executeMethod(HttpMethod method) throws Exception {
-    LOG.debug("URI is " + method.getURI());
+  public String executeMethod(@NotNull HttpMethod method) throws Exception {
+    LOG.debug("URI: " + method.getURI());
     int statusCode;
     String entityContent;
     try {
       statusCode = getHttpClient().executeMethod(method);
-      LOG.debug("Status code is " + statusCode);
+      LOG.debug("Status code: " + statusCode);
       // may be null if 204 No Content received
       final InputStream stream = method.getResponseBodyAsStream();
-      entityContent = stream == null ? "" : StreamUtil.readText(stream, "utf-8");
+      entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
       LOG.debug(entityContent);
     }
     finally {
@@ -170,14 +185,14 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus
-    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
-      //if (statusCode >= 200 && statusCode < 300) {
+    //if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
+    if (statusCode >= 200 && statusCode < 300) {
       return entityContent;
     }
     else if (method.getResponseHeader("Content-Type") != null) {
       Header header = method.getResponseHeader("Content-Type");
       if (header.getValue().startsWith("application/json")) {
-        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
+        JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
         if (object.has("errorMessages")) {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
           // something meaningful to user, e.g. invalid field name in JQL query
@@ -196,12 +211,17 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
     }
-    throw new Exception("Request failed with HTTP error: " + HttpStatus.getStatusText(method.getStatusCode()));
+    String statusText = HttpStatus.getStatusText(method.getStatusCode());
+    throw new Exception(String.format("Request failed with HTTP error: %d %s", statusCode, statusText));
   }
 
   @Override
   public void setUrl(String url) {
     myRestApiVersion = null;
     super.setUrl(url);
+  }
+
+  public String getRestUrl(String... parts) {
+    return getUrl() + REST_API_PATH + "/" + StringUtil.join(parts, "/");
   }
 }

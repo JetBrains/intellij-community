@@ -19,15 +19,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.indexing.FileContent;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * @author max
@@ -35,11 +33,17 @@ import java.util.Comparator;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
-  public static final int STUB_VERSION = 7;
+  public static final int STUB_VERSION = 8;
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    return true;
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    for (ClsStubBuilderFactory factory : factories) {
+      if (!factory.isInnerClass(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -68,8 +72,9 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @Override
   public int getStubVersion() {
     int version = STUB_VERSION;
-    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
-    Arrays.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order
+    List<ClsStubBuilderFactory> factories = new ArrayList<ClsStubBuilderFactory>(Arrays.asList(
+      Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME)));
+    Collections.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order in copy
       @Override
       public int compare(ClsStubBuilderFactory o1, ClsStubBuilderFactory o2) {
         return o1.getClass().getName().compareTo(o2.getClass().getName());

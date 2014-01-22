@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,26 +330,27 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
     for (PsiTypeParameter parameter : parametersIterable) {
       PsiType substitutedType = substitutor.substitute(parameter);
-      if (substitutedType == null) {
-        substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
-      }
+
+      PsiType type = substitutedType != null ? substitutedType : TypeConversionUtil.erasure(factory.createType(parameter));
 
       PsiElement scopeElement = member instanceof GrField ? member.getParent() : member;
       for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(scopeElement))) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
-          replacement.put(parent, factory.createTypeElement(substitutedType));
+          replacement.put(parent, factory.createTypeElement(type));
         }
-        else if (element instanceof GrCodeReferenceElement && substitutedType instanceof PsiClassType) {
-          replacement.put(element, factory.createReferenceElementByType((PsiClassType)substitutedType));
+        else if (element instanceof GrCodeReferenceElement && type instanceof PsiClassType) {
+          replacement.put(element, factory.createReferenceElementByType((PsiClassType)type));
         }
       }
     }
 
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(member.getProject());
     for (PsiElement element : replacement.keySet()) {
       if (element.isValid()) {
-        element.replace(replacement.get(element));
+        final PsiElement replaced = element.replace(replacement.get(element));
+        codeStyleManager.shortenClassReferences(replaced);
       }
     }
   }
@@ -593,12 +594,12 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
   private static void addSpacesAround(@NotNull GrReferenceList list) {
     PsiElement prev = list.getPrevSibling();
-    if (!PsiImplUtil.isWhiteSpace(prev)) {
+    if (!PsiImplUtil.isWhiteSpaceOrNls(prev)) {
       list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode());
     }
 
     PsiElement next = list.getNextSibling();
-    if (!PsiImplUtil.isWhiteSpace(next)) {
+    if (!PsiImplUtil.isWhiteSpaceOrNls(next)) {
       list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode().getTreeNext());
     }
   }

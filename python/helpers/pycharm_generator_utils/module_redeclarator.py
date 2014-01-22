@@ -1,6 +1,7 @@
+import keyword
+
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.constants import *
-import keyword, re
 
 
 class emptylistdict(dict):
@@ -49,6 +50,11 @@ class Buf(object):
         return len(self.data) == 0
 
 
+class ClassBuf(Buf):
+    def __init__(self, name, indenter):
+        super(ClassBuf, self).__init__(indenter)
+        self.name = name
+
 #noinspection PyUnresolvedReferences,PyBroadException
 class ModuleRedeclarator(object):
     def __init__(self, module, outfile, mod_filename, indent_size=4, doing_builtins=False):
@@ -67,6 +73,7 @@ class ModuleRedeclarator(object):
         self.imports_buf = Buf(self)
         self.functions_buf = Buf(self)
         self.classes_buf = Buf(self)
+        self.classes_buffs = list()
         self.footer_buf = Buf(self)
         self.indent_size = indent_size
         self._indent_step = " " * self.indent_size
@@ -106,8 +113,43 @@ class ModuleRedeclarator(object):
         return self._indent_step * level
 
     def flush(self):
-        for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf, self.footer_buf):
-            buf.flush(self.outfile)
+        init = None
+        try:
+            if self.mod_filename and len(self.classes_buffs) >= 30:
+                mod_path = self.outfile.strip(".py")
+
+                fname = build_output_name(mod_path, "__init__")
+                init = fopen(fname, "w")
+                for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
+                    buf.flush(init)
+
+                data = ""
+                for buf in self.classes_buffs:
+                    fname = build_output_name(mod_path, buf.name)
+                    dummy = fopen(fname, "w")
+                    self.header_buf.flush(dummy)
+                    buf.flush(dummy)
+                    data += "from "
+                    if version[0] >= 3:
+                        data += "."
+                    data += buf.name + " import " + buf.name + "\n"
+                    dummy.close()
+
+                init.write(data)
+                self.footer_buf.flush(init)
+            else:
+                init = fopen(self.outfile, "w")
+                for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
+                    buf.flush(init)
+
+                for buf in self.classes_buffs:
+                    buf.flush(init)
+
+                self.footer_buf.flush(init)
+
+        finally:
+            if init is not None and not init.closed:
+                init.close()
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -150,7 +192,7 @@ class ModuleRedeclarator(object):
         for initializer_type, r in self._initializers:
             if initializer_type == a_type:
                 return r
-            # NOTE: here we could handle things like defaultdict, sets, etc if we wanted
+                # NOTE: here we could handle things like defaultdict, sets, etc if we wanted
         return "None"
 
 
@@ -224,7 +266,7 @@ class ModuleRedeclarator(object):
                                 seen_values.append(value)
                             if isinstance(k, SIMPLEST_TYPES):
                                 self.fmt_value(out, value, indent + 1, prefix=repr(k) + ": ", postfix=",",
-                                              seen_values=seen_values)
+                                               seen_values=seen_values)
                             else:
                                 # both key and value need fancy formatting
                                 self.fmt_value(out, k, indent + 1, postfix=": ", seen_values=seen_values)
@@ -244,9 +286,15 @@ class ModuleRedeclarator(object):
                     if self._defined.get(found_name, False):
                         out(indent, prefix, found_name, postfix)
                     else:
-                    # a forward / circular declaration happens
+                        # a forward / circular declaration happens
                         notice = ""
-                        real_value = cleanup(repr(p_value))
+                        try:
+                            representation = repr(p_value)
+                        except Exception:
+                            import traceback
+                            traceback.print_exc(file=sys.stderr)
+                            return
+                        real_value = cleanup(representation)
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % real_value
@@ -409,7 +457,7 @@ class ModuleRedeclarator(object):
 
     def is_predefined_builtin(self, module_name, class_name, func_name):
         return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (
-        class_name, func_name) in PREDEFINED_BUILTIN_SIGS
+            class_name, func_name) in PREDEFINED_BUILTIN_SIGS
 
 
     def redo_function(self, out, p_func, p_name, indent, p_class=None, p_modname=None, classname=None, seen=None):
@@ -434,7 +482,7 @@ class ModuleRedeclarator(object):
                 return
             else:
                 seen[id(p_func)] = p_name
-            # real work
+                # real work
         if classname is None:
             classname = p_class and p_class.__name__ or None
         if p_class and hasattr(p_class, '__mro__'):
@@ -492,7 +540,7 @@ class ModuleRedeclarator(object):
             out(indent, "def ", p_name, sig, ": # known case of ", ofwhat)
             out_doc_attr(out, p_func, indent + 1, p_class)
         else:
-        # __doc__ is our best source of arglist
+            # __doc__ is our best source of arglist
             sig_note = "real signature unknown"
             spec = ""
             is_init = (p_name == "__init__" and p_class is not None)
@@ -508,17 +556,17 @@ class ModuleRedeclarator(object):
             action("parsing doc of func %r of class %r", p_name, p_class)
             if isinstance(funcdoc, STR_TYPES):
                 (spec, ret_literal, more_notes) = self.parse_func_doc(funcdoc, p_name, p_name, classname, deco,
-                                                                    sip_generated)
+                                                                      sip_generated)
                 if spec is None and p_name == '__init__' and classname:
                     (spec, ret_literal, more_notes) = self.parse_func_doc(funcdoc, classname, p_name, classname, deco,
-                                                                        sip_generated)
+                                                                          sip_generated)
                 sig_restored = spec is not None
                 if more_notes:
                     if sig_note:
                         sig_note += "; "
                     sig_note += more_notes
             if not sig_restored:
-            # use an allow-all declaration
+                # use an allow-all declaration
                 decl = []
                 if p_class:
                     first_param = propose_first_param(deco)
@@ -531,7 +579,7 @@ class ModuleRedeclarator(object):
             # to reduce size of stubs, don't output same docstring twice for class and its __init__ method
             if not is_init or funcdoc != p_class.__doc__:
                 out_docstring(out, funcdoc, indent + 1)
-            # body
+                # body
         if ret_literal and not is_init:
             out(indent + 1, "return ", ret_literal)
         else:
@@ -646,7 +694,7 @@ class ModuleRedeclarator(object):
                 self.redo_function(out, item, item_name, indent + 1, p_class, p_modname, classname=p_name, seen=seen_funcs)
             except:
                 handle_error_func(item_name, out)
-            #
+                #
         known_props = KNOWN_PROPS.get(p_modname, {})
         a_setter = "lambda self, v: None"
         a_deleter = "lambda self: None"
@@ -782,7 +830,7 @@ class ModuleRedeclarator(object):
         for item_name in module_dict:
             note("looking at %s", item_name)
             if item_name in (
-            "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
+                "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
             try:
                 item = getattr(self.module, item_name) # let getters do the magic
@@ -806,7 +854,7 @@ class ModuleRedeclarator(object):
                     mod_name = getattr(item, '__module__', None)
                 except:
                     pass
-                # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
+                    # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
             maybe_import_mod_name = mod_name or ""
             import_is_from_top = len(p_name) > len(maybe_import_mod_name) and p_name.startswith(maybe_import_mod_name)
             note("mod_name = %s, prospective = %s,  from top = %s", mod_name, maybe_import_mod_name, import_is_from_top)
@@ -906,9 +954,8 @@ class ModuleRedeclarator(object):
             self.functions_buf.out(0, "# no functions")
             #
         if classes:
-            out = self.functions_buf.out
-            out(0, "# classes")
-            out(0, "")
+            self.classes_buf.out(0, "# classes")
+            self.classes_buf.out(0, "")
             seen_classes = {}
             # sort classes so that inheritance order is preserved
             cls_list = [] # items are (class_name, mro_tuple)
@@ -922,6 +969,9 @@ class ModuleRedeclarator(object):
                         break         # ...and need not go fartehr than first known child
                 cls_list.insert(ins_index, (cls_name, get_mro(cls)))
             for item_name in [cls_item[0] for cls_item in cls_list]:
+                buf = ClassBuf(item_name, self)
+                self.classes_buffs.append(buf)
+                out = buf.out
                 if item_name in omitted_names:
                     out(0, "# definition of ", item_name, " omitted")
                     continue
@@ -974,7 +1024,7 @@ class ModuleRedeclarator(object):
             self.footer_buf.out(0, "# intermittent names")
             for value in values_to_add:
                 self.footer_buf.out(0, value)
-            # imports: last, because previous parts could alter used_imports or hidden_imports
+                # imports: last, because previous parts could alter used_imports or hidden_imports
         self.output_import_froms()
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "# no imports")
@@ -1009,7 +1059,7 @@ class ModuleRedeclarator(object):
                             names_pack.append(n)
                             names_pack.append(", ")
                             right_pos += (len_n + 2)
-                        # last line is...
+                            # last line is...
                     if indent_level == 0: # one line
                         names_pack[0] = names_pack[0][:-1] # cut off lpar
                         names_pack[-1] = "" # cut last comma

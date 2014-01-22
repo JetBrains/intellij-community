@@ -47,6 +47,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testLocalClasses() {
+    doTest();
+  }
+
   public void testNoFunctionalInterfaceFound() {
     assertIntentionNotAvailable();
   }

@@ -144,17 +144,17 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement before = importStatement;
-    while (isWhiteSpace(before.getPrevSibling())) {
+    while (isWhiteSpaceOrNls(before.getPrevSibling())) {
       before = before.getPrevSibling();
     }
 
     if (hasElementType(before.getPrevSibling(), GroovyTokenTypes.mSEMI)) before = before.getPrevSibling();
-    if (isWhiteSpace(before.getPrevSibling())) before = before.getPrevSibling();
+    if (isWhiteSpaceOrNls(before.getPrevSibling())) before = before.getPrevSibling();
 
     PsiElement after = importStatement;
-    if (isWhiteSpace(after.getNextSibling())) after = after.getNextSibling();
+    if (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
     if (hasElementType(after.getNextSibling(), GroovyTokenTypes.mSEMI)) after = after.getNextSibling();
-    while (isWhiteSpace(after.getNextSibling())) after = after.getNextSibling();
+    while (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
 
 
     if (before == null) before = importStatement;
@@ -243,8 +243,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public Instruction[] getControlFlow() {
     assert isValid();
-    SoftReference<Instruction[]> flow = myControlFlow;
-    Instruction[] result = flow != null ? flow.get() : null;
+    Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
       result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
       myControlFlow = new SoftReference<Instruction[]>(result);
@@ -272,11 +271,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement prev = result.getPrevSibling();
-    while (isWhiteSpace(prev)) {
+    while (isWhiteSpaceOrNls(prev)) {
       prev = prev.getPrevSibling();
     }
     if (hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
-    if (isWhiteSpace(prev)) prev = prev.getPrevSibling();
+    if (isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
     if (prev instanceof GrImportStatement) {
       final int idx_before = getPackageEntryIdx(entries, (GrImportStatement)prev);
@@ -284,9 +283,9 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       final int spaceCount = getMaxSpaceCount(entries, idx_before, idx);
 
       //skip space and semicolon after import
-      if (isWhiteSpace(prev.getNextSibling()) && hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
+      if (isWhiteSpaceOrNls(prev.getNextSibling()) && hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
       final FileASTNode node = getNode();
-      while (isWhiteSpace(prev.getNextSibling())) {
+      while (isWhiteSpaceOrNls(prev.getNextSibling())) {
         node.removeChild(prev.getNextSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
@@ -299,9 +298,9 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement next = result.getNextSibling();
-    if (isWhiteSpace(next)) next = next.getNextSibling();
+    if (isWhiteSpaceOrNls(next)) next = next.getNextSibling();
     if (hasElementType(next, GroovyTokenTypes.mSEMI)) next = next.getNextSibling();
-    while (isWhiteSpace(next)) {
+    while (isWhiteSpaceOrNls(next)) {
       next = next.getNextSibling();
     }
     if (next instanceof GrImportStatement) {
@@ -311,7 +310,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
 
       final FileASTNode node = getNode();
-      while (isWhiteSpace(next.getPrevSibling())) {
+      while (isWhiteSpaceOrNls(next.getPrevSibling())) {
         node.removeChild(next.getPrevSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), next.getNode());

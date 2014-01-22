@@ -1,6 +1,7 @@
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.IconProvider;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import icons.PropertiesIcons;
@@ -16,6 +17,8 @@ public class XmlPropertiesIconProvider extends IconProvider {
 
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    return element instanceof XmlFile && XmlPropertiesFile.getPropertiesFile((XmlFile)element) != null ? PropertiesIcons.XmlProperties : null;
+    return element instanceof XmlFile &&
+           ((XmlFile)element).getFileType() == XmlFileType.INSTANCE &&
+           XmlPropertiesFile.getPropertiesFile((XmlFile)element) != null ? PropertiesIcons.XmlProperties : null;
   }
 }

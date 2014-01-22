@@ -14,6 +14,7 @@ import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
 import org.jetbrains.idea.svn.content.SvnKitContentClient;
 import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
 import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
+import org.jetbrains.idea.svn.diff.SvnKitDiffClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
@@ -57,6 +58,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myExportClient = new SvnKitExportClient();
     myUpgradeClient = new SvnKitUpgradeClient();
     myBrowseClient = new SvnKitBrowseClient();
+    myDiffClient = new SvnKitDiffClient();
     statusClient = new SvnkitSvnStatusClient(myVcs, null);
     infoClient = new SvnkitSvnWcClient(myVcs);
   }

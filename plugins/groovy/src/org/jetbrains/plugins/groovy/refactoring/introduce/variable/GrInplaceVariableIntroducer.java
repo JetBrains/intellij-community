@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
                        var != null ? var.getType() :
                        stringPart != null ? stringPart.getLiteral().getType() :
                        null;
-        myType = type != null ? CanonicalTypes.createTypeWrapper(type) : null;
+        myType = type != null && !PsiType.NULL.equals(type)? CanonicalTypes.createTypeWrapper(type) : null;
       }
 
 
@@ -164,8 +164,10 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     GrVariable variable = getVariable();
-    assert variable != null;
-    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getInitializerGroovy().getType())};
+    assert variable != null && variable.getInitializerGroovy() != null;
+    final PsiType initializerType = variable.getInitializerGroovy().getType();
+    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiType.NULL) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
+                                                                                                    : TypeConstraint.EMPTY_ARRAY;
     ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = variable.getTypeElementGroovy() != null ? variable.getTypeElementGroovy()
                                                                  : PsiUtil.findModifierInList(variable.getModifierList(), GrModifier.DEF);

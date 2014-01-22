@@ -16,19 +16,17 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
+import java.util.Collections;
+import java.util.List;
+
 public abstract class BrowserSpecificSettings {
-
+  @NotNull
   public abstract Configurable createConfigurable();
 
-  @NotNull @NonNls
-  public String[] getAdditionalParameters() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  @NotNull
+  public List<String> getAdditionalParameters() {
+    return Collections.emptyList();
   }
 }

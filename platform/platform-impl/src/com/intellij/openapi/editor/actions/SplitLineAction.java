@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -50,6 +51,7 @@ public class SplitLineAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =
         document.createRangeMarker(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset() );

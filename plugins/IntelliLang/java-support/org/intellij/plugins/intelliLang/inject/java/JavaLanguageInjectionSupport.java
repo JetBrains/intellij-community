@@ -55,7 +55,6 @@ import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
-import org.intellij.plugins.intelliLang.inject.config.ui.configurables.MethodParameterInjectionConfigurable;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
@@ -175,10 +174,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   public BaseInjection createInjection(final Element element) {
-    if (element.getName().equals(MethodParameterInjection.class.getSimpleName())) {
-      return new MethodParameterInjection();
-    }
-    else return new BaseInjection(JAVA_SUPPORT_ID);
+    return new BaseInjection(JAVA_SUPPORT_ID);
   }
 
   private static boolean doInjectInJava(final Project project,
@@ -371,16 +367,21 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
-    if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(methodParameterInjection, null, project))) {
-      final BaseInjection newInjection = new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
-      if (originalInjection != null) {
-        newInjection.mergeOriginalPlacesFrom(originalInjection, true);
-      }
-      configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection),
-        ContainerUtil.createMaybeSingletonList(originalInjection),
-        Collections.<PsiElement>emptyList());
+    mergePlacesAndAddToConfiguration(project, configuration, methodParameterInjection, originalInjection);
+  }
+
+  private static void mergePlacesAndAddToConfiguration(@NotNull Project project,
+                                                       @NotNull Configuration configuration,
+                                                       @NotNull MethodParameterInjection injection,
+                                                       @Nullable BaseInjection originalInjection) {
+    BaseInjection newInjection = new BaseInjection(injection.getSupportId()).copyFrom(injection);
+    if (originalInjection != null) {
+      newInjection.mergeOriginalPlacesFrom(originalInjection, true);
     }
+    configuration.replaceInjectionsWithUndo(
+      project, Collections.singletonList(newInjection),
+      ContainerUtil.createMaybeSingletonList(originalInjection),
+      Collections.<PsiElement>emptyList());
   }
 
   private static void collectInjections(PsiLiteralExpression host,

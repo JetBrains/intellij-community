@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -120,7 +122,7 @@ public class AppUIUtil {
     if ("true".equals(System.getProperty("idea.debug.mode"))) {
       wmClass += "-debug";
     }
-    return PlatformUtils.isCommunity() ? wmClass + "-ce" : wmClass;
+    return PlatformUtils.isIdeaCommunity() ? wmClass + "-ce" : wmClass;
   }
 
   public static void registerBundledFonts() {
@@ -162,5 +164,43 @@ public class AppUIUtil {
         }
       }
     });
+  }
+
+  @Deprecated
+  /**
+   * to remove in IDEA 14
+   */
+  public static JTextField createUndoableTextField() {
+    return GuiUtils.createUndoableTextField();
+  }
+
+  private static final int MIN_ICON_SIZE = 32;
+
+  @Nullable
+  public static String findIcon(final String iconsPath) {
+    final File iconsDir = new File(iconsPath);
+
+    // 1. look for .svg icon
+    for (String child : iconsDir.list()) {
+      if (child.endsWith(".svg")) {
+        return iconsPath + '/' + child;
+      }
+    }
+
+    // 2. look for .png icon of max size
+    int max = 0;
+    String iconPath = null;
+    for (String child : iconsDir.list()) {
+      if (!child.endsWith(".png")) continue;
+      final String path = iconsPath + '/' + child;
+      final Icon icon = new ImageIcon(path);
+      final int size = icon.getIconHeight();
+      if (size >= MIN_ICON_SIZE && size > max && size == icon.getIconWidth()) {
+        max = size;
+        iconPath = path;
+      }
+    }
+
+    return iconPath;
   }
 }

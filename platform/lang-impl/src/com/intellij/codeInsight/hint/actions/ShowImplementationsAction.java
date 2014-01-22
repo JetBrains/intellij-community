@@ -44,6 +44,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -226,18 +227,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     final Ref<UsageView> usageView = new Ref<UsageView>();
     final String title = CodeInsightBundle.message("implementation.view.title", text);
-    if (myPopupRef != null) {
-      final JBPopup popup = myPopupRef.get();
-      if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
-        final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
-        ((AbstractPopup)popup).setCaption(title);
-        component.update(impls, index);
-        updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
-        if (invokedByShortcut) {
-          ((AbstractPopup)popup).focusPreferredComponent();
-        }
-        return;
+    JBPopup popup = SoftReference.dereference(myPopupRef);
+    if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
+      final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
+      ((AbstractPopup)popup).setCaption(title);
+      component.update(impls, index);
+      updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
+      if (invokedByShortcut) {
+        ((AbstractPopup)popup).focusPreferredComponent();
       }
+      return;
     }
 
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
@@ -250,7 +249,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         }
       };
 
-      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
+      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
         .addListener(updateProcessor)
@@ -284,11 +283,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                   ImplementationViewComponent component,
                                   String title,
                                   AbstractPopup popup, Ref<UsageView> usageView) {
-    if (myTaskRef != null) {
-      final BackgroundUpdaterTask updaterTask = myTaskRef.get();
-      if (updaterTask != null) {
-        updaterTask.setCanceled();
-      }
+    final BackgroundUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
+    if (updaterTask != null) {
+      updaterTask.setCanceled();
     }
 
     if (element == null) return; //already found

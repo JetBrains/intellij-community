@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -34,13 +35,25 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
 
   private final FileTypeListProvider myFileTypeListProvider;
 
-  public FileTypeRenderer(final ListCellRenderer renderer) {
-    this(renderer, new DefaultFileTypeListProvider());
+  public FileTypeRenderer() {
+    this(new DefaultFileTypeListProvider());
   }
 
-  public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
+  public FileTypeRenderer(@NotNull FileTypeListProvider fileTypeListProvider) {
     super();
     myFileTypeListProvider = fileTypeListProvider;
+  }
+
+  /** @deprecated use {@link #FileTypeRenderer()} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public FileTypeRenderer(final ListCellRenderer renderer) {
+    this();
+  }
+
+  /** @deprecated use {@link #FileTypeRenderer(FileTypeListProvider)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
+    this(fileTypeListProvider);
   }
 
   @Override
@@ -78,10 +91,6 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
     }
     return false;
   }
-
-  //public Dimension getPreferredSize() {
-  //  return new Dimension(0, 20);
-  //}
 
   private static class DefaultFileTypeListProvider implements FileTypeListProvider {
     private final List<FileType> myFileTypes;

@@ -185,7 +185,9 @@ public class GrIntroduceConstantProcessor {
   private static GrReferenceExpression createRefExpression(@NotNull GrField field, @NotNull PsiElement place) {
     final PsiClass containingClass = field.getContainingClass();
     assert containingClass != null;
-    final String refText = containingClass.getQualifiedName() != null ? containingClass.getQualifiedName() + "." + field.getName() : field.getName();
+    final String qname = containingClass.getQualifiedName();
+    final String fieldName = field.getName();
+    final String refText = qname != null && !qname.equals(fieldName) ? qname + "." + fieldName : fieldName;
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }
 

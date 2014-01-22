@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,10 +191,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   private static String getProductPrefix() {
     String prefix = null;
-    if (PlatformUtils.isCommunity()) {
+    if (PlatformUtils.isIdeaCommunity()) {
       prefix = "IC";
     }
-    else if (PlatformUtils.isIdea()) {
+    else if (PlatformUtils.isIdeaUltimate()) {
       prefix = "IU";
     }
     return prefix;

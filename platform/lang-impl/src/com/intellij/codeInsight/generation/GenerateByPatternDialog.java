@@ -3,8 +3,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
@@ -31,6 +30,7 @@ import java.util.Collection;
  */
 public class GenerateByPatternDialog extends DialogWrapper {
 
+  private final Project myProject;
   private JPanel myPanel;
   private Splitter mySplitter;
   private Tree myTree = new Tree();
@@ -38,8 +38,9 @@ public class GenerateByPatternDialog extends DialogWrapper {
 
   private final MultiMap<String,PatternDescriptor> myMap;
 
-  public GenerateByPatternDialog(Project project, PatternDescriptor[] descriptors, DataContext context) {
+  public GenerateByPatternDialog(Project project, PatternDescriptor[] descriptors) {
     super(project);
+    myProject = project;
     setTitle("Generate by Pattern");
     setOKButtonText("Generate");
 
@@ -122,19 +123,20 @@ public class GenerateByPatternDialog extends DialogWrapper {
   }
 
   private void updateDetails(final PatternDescriptor descriptor) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction.Simple(myProject) {
       @Override
-      public void run() {
+      protected void run() throws Throwable {
         final Template template = descriptor.getTemplate();
         if (template instanceof TemplateImpl) {
           String text = ((TemplateImpl)template).getString();
           myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
           TemplateEditorUtil.setHighlighter(myEditor, ((TemplateImpl)template).getTemplateContext());
-        } else {
+        }
+        else {
           myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
         }
       }
-    });
+    }.execute();
   }
 
   private DefaultMutableTreeNode createNode(@Nullable PatternDescriptor descriptor) {

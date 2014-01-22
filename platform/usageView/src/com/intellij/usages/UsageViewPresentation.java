@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,19 +97,21 @@ public class UsageViewPresentation {
     myShowCancelButton = showCancelButton;
   }
 
+  @NotNull
   public String getNonCodeUsagesString() {
     return myNonCodeUsagesString;
   }
 
-  public void setNonCodeUsagesString(String nonCodeUsagesString) {
+  public void setNonCodeUsagesString(@NotNull String nonCodeUsagesString) {
     myNonCodeUsagesString = nonCodeUsagesString;
   }
 
+  @NotNull
   public String getCodeUsagesString() {
     return myCodeUsagesString;
   }
 
-  public void setCodeUsagesString(String codeUsagesString) {
+  public void setCodeUsagesString(@NotNull String codeUsagesString) {
     myCodeUsagesString = codeUsagesString;
   }
 
@@ -137,11 +140,12 @@ public class UsageViewPresentation {
     return myNotFoundActions;
   }
 
+  @NotNull
   public String getUsagesWord() {
     return myUsagesWord;
   }
 
-  public void setUsagesWord(final String usagesWord) {
+  public void setUsagesWord(@NotNull String usagesWord) {
     myUsagesWord = usagesWord;
   }
 
@@ -177,11 +181,12 @@ public class UsageViewPresentation {
     return myDynamicCodeUsagesString;
   }
 
+  @NotNull
   public String getUsagesInGeneratedCodeString() {
     return myUsagesInGeneratedCodeString;
   }
 
-  public void setUsagesInGeneratedCodeString(String usagesInGeneratedCodeString) {
+  public void setUsagesInGeneratedCodeString(@NotNull String usagesInGeneratedCodeString) {
     myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
   }
 

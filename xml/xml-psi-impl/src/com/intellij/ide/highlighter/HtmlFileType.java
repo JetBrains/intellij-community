@@ -79,7 +79,7 @@ public class HtmlFileType extends XmlLikeFileType {
     catch (UnsupportedEncodingException e) {
       return null;
     }
-    Charset c = HtmlUtil.detectCharsetFromMetaHttpEquiv(strContent);
+    Charset c = HtmlUtil.detectCharsetFromMetaTag(strContent);
     return c == null ? null : c.name();
   }
 
@@ -91,6 +91,6 @@ public class HtmlFileType extends XmlLikeFileType {
     if (charset != null) {
       return charset;
     }
-    return HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
+    return HtmlUtil.detectCharsetFromMetaTag(content);
   }
 }

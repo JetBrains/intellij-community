@@ -376,7 +376,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(PsiElement element) {
+  public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiElement element) {
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
       return getUnhandledExceptions(expression, null);
@@ -421,8 +421,12 @@ public class ExceptionUtil {
             @Override
             public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
               PsiElement element = info.getElement();
-              return element instanceof PsiMethod && MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element)
-                     ? Pair.create((PsiMethod)element, info.getSubstitutor()) : null;
+              if (element instanceof PsiMethod &&
+                  MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
+                  !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
+                return Pair.create((PsiMethod)element, info.getSubstitutor());
+              }
+              return null;
             }
           });
           if (candidates.size() > 1) {
@@ -456,8 +460,10 @@ public class ExceptionUtil {
           found = true;
           break;
         } else if (classType.isAssignableFrom(psiClassType)) {
-          replacement.add(psiClassType);
-          iterator.remove();
+          if (isUncheckedException(classType) == isUncheckedException(psiClassType)) {
+            replacement.add(psiClassType);
+            iterator.remove();
+          }
           found = true;
           break;
         }

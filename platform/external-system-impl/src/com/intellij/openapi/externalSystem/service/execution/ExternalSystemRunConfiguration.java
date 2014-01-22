@@ -16,7 +16,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -33,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -109,10 +109,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   }
 
   public static class MyRunnableState implements RunProfileState {
-    
+
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
     @NotNull private final Project myProject;
-    
+
     private final int myDebugPort;
 
     public MyRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings, @NotNull Project project, boolean debug) {
@@ -164,6 +164,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    myProject,
                                                                                    tasks,
                                                                                    mySettings.getVmOptions(),
+                                                                                   mySettings.getScriptParameters(),
                                                                                    debuggerSetup);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
@@ -192,6 +193,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                 myResetGreeting = false;
               }
               processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            }
+
+            @Override
+            public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+              String exceptionMessage = ExceptionUtil.getMessage(e);
+              String text = exceptionMessage == null ? e.toString() : exceptionMessage;
+              processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+              processHandler.notifyProcessTerminated(0);
             }
 
             @Override

@@ -125,7 +125,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
-  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
   public void testSkipAssertions() {
@@ -297,6 +297,22 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
   public void testDontForgetEqInfoWhenMergingByType() { doTest(); }
   public void testDontMakeNullableAfterInstanceof() { doTest(); }
+  public void testDontMakeUnrelatedVariableNotNullWhenMerging() { doTest(); }
+  public void testDontMakeUnrelatedVariableFalseWhenMerging() { doTest(); }
+  public void testDontLoseInequalityInformation() { doTest(); }
+  
+  public void testNotEqualsTypo() { doTest(); }
+  public void testAndEquals() { doTest(); }
+
+  public void testParametersAreNonnullByDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+    
+    doTest(); 
+  }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }
