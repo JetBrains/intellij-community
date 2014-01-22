@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
@@ -40,7 +41,8 @@ import java.util.*;
  * @since 7/17/12 11:24 AM
  */
 public class ArrangementUtil {
-  
+  private static final Logger LOG = Logger.getInstance(ArrangementUtil.class);
+
   private ArrangementUtil() {
   }
 
@@ -49,20 +51,28 @@ public class ArrangementUtil {
   @Nullable
   public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return null;
+    }
+
     return serializer.deserialize(element);
   }
 
   public static void writeExternal(@NotNull Element element, @NotNull ArrangementSettings settings, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return;
+    }
+
     serializer.serialize(settings, element);
   }
 
+  @Nullable
   private static ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
-    if (rearranger instanceof ArrangementSettingsSerializer) {
-      return (ArrangementSettingsSerializer)rearranger;
-    }
-    return DefaultArrangementSettingsSerializer.INSTANCE;
+    return rearranger == null ? null : rearranger.getSerializer();
   }
   
   //endregion

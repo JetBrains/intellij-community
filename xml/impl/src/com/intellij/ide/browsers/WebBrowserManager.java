@@ -64,6 +64,15 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     return ServiceManager.getService(WebBrowserManager.class);
   }
 
+  boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
+    UUID id = browser.getId();
+    return id.equals(DEFAULT_CHROME_ID) ||
+           id.equals(DEFAULT_FIREFOX_ID) ||
+           id.equals(DEFAULT_SAFARI_ID) ||
+           id.equals(DEFAULT_OPERA_ID) ||
+           id.equals(DEFAULT_EXPLORER_ID);
+  }
+
   public enum DefaultBrowser {
     SYSTEM, FIRST, ALTERNATIVE
   }

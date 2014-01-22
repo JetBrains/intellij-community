@@ -51,7 +51,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("Spock SetUp Method.groovy");
+    return new FileTemplateDescriptor("Spock_SetUp_Method.groovy");
   }
 
   @Override

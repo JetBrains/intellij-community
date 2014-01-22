@@ -25,7 +25,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -34,14 +33,11 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author dsl
@@ -104,34 +100,6 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       if (myManager.areElementsEquivalent(field, info.getMember())) return true;
     }
     return false;
-  }
-
-  @Nullable
-  @Override
-  protected String getRefactoringId() {
-    return "refactoring.extractSuper";
-  }
-
-  @Nullable
-  @Override
-  protected RefactoringEventData getBeforeData() {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myClass);
-    data.addMembers(myMemberInfos, new Function<MemberInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfo info) {
-        return info.getMember();
-      }
-    });
-    return data;
-  }
-
-  @Nullable
-  @Override
-  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myClass);
-    return data;
   }
 
   @NotNull

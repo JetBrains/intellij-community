@@ -46,6 +46,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -129,7 +130,8 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
           }
         }
 
-        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo = localSettings.getProjectBuildClasspath().get(linkedExternalProjectPath);
+        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo =
+          localSettings.getProjectBuildClasspath().get(linkedExternalProjectPath);
         if (projectBuildClasspathPojo == null) {
           projectBuildClasspathPojo = new ExternalProjectBuildClasspathPojo(
             moduleDataNode.getData().getExternalName(),
@@ -138,8 +140,13 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
           localSettings.getProjectBuildClasspath().put(linkedExternalProjectPath, projectBuildClasspathPojo);
         }
 
-        projectBuildClasspathPojo
-          .setProjectBuildClasspath(ContainerUtil.newArrayList(externalProjectGradleSdkLibs.get(linkedExternalProjectPath)));
+        List<String> projectBuildClasspath = ContainerUtil.newArrayList(externalProjectGradleSdkLibs.get(linkedExternalProjectPath));
+        // add main java root of buildSrc project
+        projectBuildClasspath.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
+        // add main groovy root of buildSrc project
+        projectBuildClasspath.add(linkedExternalProjectPath + "/buildSrc/src/main/groovy");
+
+        projectBuildClasspathPojo.setProjectBuildClasspath(projectBuildClasspath);
         projectBuildClasspathPojo.getModulesBuildClasspath().put(
           externalModulePath, new ExternalModuleBuildClasspathPojo(externalModulePath, ContainerUtil.newArrayList(buildClasspath)));
       }

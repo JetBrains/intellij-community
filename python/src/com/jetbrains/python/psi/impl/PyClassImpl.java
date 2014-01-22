@@ -1169,6 +1169,64 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return manager.getParameterizedCachedValue(this, myCachedValueKey, myCachedAncestorsProvider, false, context);
   }
 
+  @Nullable
+  @Override
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
+    if (context.maySwitchToAST(this)) {
+      final PyExpression expression = getMetaClassExpression();
+      if (expression != null) {
+        final PyType type = context.getType(expression);
+        if (type instanceof PyClassLikeType) {
+          return (PyClassLikeType)type;
+        }
+      }
+    }
+    else {
+      final PyClassStub stub = getStub();
+      final QualifiedName name = stub != null ? stub.getMetaClass() : PyQualifiedNameFactory.fromExpression(getMetaClassExpression());
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        if (name != null) {
+          return classTypeFromQName(name, pyFile, context);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getMetaClassExpression() {
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      // Requires AST access
+      for (PyExpression expression : getSuperClassExpressions()) {
+        if (expression instanceof PyKeywordArgument) {
+          final PyKeywordArgument argument = (PyKeywordArgument)expression;
+          if (PyNames.METACLASS.equals(argument.getKeyword())) {
+            return argument.getValueExpression();
+          }
+        }
+      }
+    }
+    else {
+      final PyTargetExpression attribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
+      if (attribute != null) {
+        return attribute;
+      }
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element instanceof PyExpression) {
+          return (PyExpression)element;
+        }
+      }
+    }
+    return null;
+  }
+
   @NotNull
   private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) {
     final PyType thisType = context.getType(this);

@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PythonLookupElement;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.PyTryExceptStatement;
@@ -34,10 +35,10 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
  * User: dcheryasov
  * Date: Mar 2, 2010 6:48:40 PM
  */
-public class UnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
-  public final static UnindentingInsertHandler INSTANCE = new UnindentingInsertHandler();
+public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
+  public final static PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();
 
-  private UnindentingInsertHandler() {
+  private PyUnindentingInsertHandler() {
   }
 
   public void handleInsert(InsertionContext context, PythonLookupElement item) {
@@ -46,6 +47,7 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
   /**
    * Unindent current line to be flush with a starting part, detecting the part if necessary.
+   *
    * @param project
    * @param editor
    * @param file
@@ -56,7 +58,9 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
     final Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     CharSequence text = document.getCharsSequence();
-    if (offset >= text.length()) offset = text.length() - 1;
+    if (offset >= text.length()) {
+      offset = text.length() - 1;
+    }
 
     int line_start_offset = document.getLineStartOffset(document.getLineNumber(offset));
     int nonspace_offset = findBeginning(line_start_offset, text);
@@ -64,26 +68,29 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
     Class<? extends PsiElement> parentClass = null;
 
-    int last_offset = nonspace_offset + "finally".length(); // the longest of all
+    int last_offset = nonspace_offset + PyNames.FINALLY.length(); // the longest of all
     if (last_offset > offset) last_offset = offset;
     int local_length = last_offset - nonspace_offset + 1;
     if (local_length > 0) {
-      String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
-      final int else_len = "else".length();
+      String piece = text.subSequence(nonspace_offset, last_offset + 1).toString();
+      final int else_len = PyNames.ELSE.length();
       if (local_length >= else_len) {
-        if ((piece.startsWith("else") || piece.startsWith("elif")) && (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
+        if ((piece.startsWith(PyNames.ELSE) || piece.startsWith(PyNames.ELIF)) &&
+            (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
           parentClass = PyStatementWithElse.class;
         }
       }
-      final int except_len = "except".length();
+      final int except_len = PyNames.EXCEPT.length();
       if (local_length >= except_len) {
-        if (piece.startsWith("except") && (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
+        if (piece.startsWith(PyNames.EXCEPT) &&
+            (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }
       }
-      final int finally_len = "finally".length();
+      final int finally_len = PyNames.FINALLY.length();
       if (local_length >= finally_len) {
-        if (piece.startsWith("finally") && (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
+        if (piece.startsWith(PyNames.FINALLY) &&
+            (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }
       }
@@ -94,14 +101,17 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
     PsiDocumentManager.getInstance(project).commitDocument(document); // reparse
 
-    PsiElement token = file.findElementAt(offset-2); // -1 is our ':'; -2 is even safer.
+    PsiElement token = file.findElementAt(offset - 2); // -1 is our ':'; -2 is even safer.
     PsiElement outer = PsiTreeUtil.getParentOfType(token, parentClass);
     if (outer != null) {
       int outer_offset = outer.getTextOffset();
       int outer_indent = outer_offset - document.getLineStartOffset(document.getLineNumber(outer_offset));
       assert outer_indent >= 0;
       int current_indent = nonspace_offset - line_start_offset;
-      EditorActionUtil.indentLine(project, editor, document.getLineNumber(offset), outer_indent - current_indent);
+      int indent = outer_indent - current_indent;
+      EditorActionUtil.indentLine(project, editor, document.getLineNumber(offset), editor.getSettings().isUseTabCharacter(project)
+                                                                                   ? indent * editor.getSettings().getTabSize(project)
+                                                                                   : indent);
       return true;
     }
     return false;

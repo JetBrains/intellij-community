@@ -27,12 +27,29 @@ allprojects {
 
 project(":service") {
   dependencies {
-    compile  (project(':api'))
+    compile(project(':api'))
   }
 }
 
 project(":api") {
   dependencies {
     provided(project(':lib'))
+  }
+}
+
+project(":withIdeaModelCustomisations") {
+  dependencies {
+    //compile 'org.slf4j:slf4j-api:1.7.5'
+    //testCompile 'junit:junit:4.11'
+
+    compile files("lib/someDep.jar")
+    testCompile files("lib/someTestDep.jar")
+  }
+
+  idea {
+    module {
+      scopes.COMPILE.plus += scopes.TEST.plus
+      scopes.TEST.plus = []
+    }
   }
 }

@@ -210,11 +210,11 @@ final class Stripe extends JPanel{
 
   private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith, boolean noDrop) {
     final LayoutData data = new LayoutData();
-    final int horizontaloffset = getHeight();
+    final int horizontaloffset = getHeight() - 2;
 
     data.eachY = 0;
     data.size = new Dimension();
-    data.gap = 1;
+    data.gap = 0;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {

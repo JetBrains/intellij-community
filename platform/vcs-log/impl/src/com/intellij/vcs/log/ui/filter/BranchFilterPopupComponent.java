@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ class BranchFilterPopupComponent extends FilterPopupComponent {
   protected Collection<VcsLogFilter> getFilters() {
     String value = getValue();
     Collection<VcsRef> allBranches = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
-    return value == ALL ? null : Collections.<VcsLogFilter>singleton(new VcsLogBranchFilter(allBranches, value));
+    return value == ALL ? null : Collections.<VcsLogFilter>singleton(new VcsLogBranchFilterImpl(allBranches, value));
   }
 
 }

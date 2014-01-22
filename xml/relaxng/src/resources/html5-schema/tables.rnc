@@ -59,12 +59,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 	table.inner =
 		(	caption.elem?
+		,	common.elem.script-supporting*
 		,	colgroup.elem*
+		,	common.elem.script-supporting*
 		,	thead.elem?
+		,	common.elem.script-supporting*
 		,	(	(	tfoot.elem
+				,	common.elem.script-supporting*
 				,	( tbody.elem* | tr.elem+ )
+				,	common.elem.script-supporting*
 				)
 			|	(	( tbody.elem* | tr.elem+ )
+				,	common.elem.script-supporting*
 				,	tfoot.elem?
 				)
 			)
@@ -78,8 +84,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element caption { caption.inner & caption.attrs }
 	caption.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.implicit.region
-			|	common.attrs.aria.role.presentation
+		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?
 		)
@@ -104,8 +109,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 				common.data.integer.positive
 			}
 	colgroup.inner =
-		(	col.elem*
-		|	colgroup.attrs.span?
+		(	(	col.elem*
+			&	common.elem.script-supporting*
+			)
+			|	colgroup.attrs.span?
 		)
 
 ## Table Column: <col>
@@ -137,7 +144,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		)
 	thead.inner =
-		( tr.elem* )
+		(	tr.elem*
+		&	common.elem.script-supporting*
+		)
 
 ## Table Footer Row Group
 
@@ -150,7 +159,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		)
 	tfoot.inner =
-		( tr.elem* )
+		(	tr.elem*
+		&	common.elem.script-supporting*
+		)
 
 ## Table Row Group
 
@@ -163,7 +174,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		)
 	tbody.inner =
-		( tr.elem* )
+		(	tr.elem*
+		&	common.elem.script-supporting*
+		)
 
 # #####################################################################
 ## Cell Structure
@@ -177,7 +190,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.aria?
 		)
 	tr.inner =
-		( ( td.elem | th.elem )* )
+		( ( td.elem | th.elem | common.elem.script-supporting )* )
 
 ## Common Table Cell Attributes
 
@@ -240,10 +253,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	tables.attrs.scope?
 		&	tables.attrs.headers?
 #		&	tables.attrs.alignment
-		&	(	common.attrs.aria.implicit.th
-			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 	th.inner =
 		( common.inner.flow )

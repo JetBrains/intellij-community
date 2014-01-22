@@ -184,7 +184,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
         case WRAP_ALL_EXCEPT_FIRST:
         case WRAP_ALL_INDENT_EXCEPT_FIRST:
         case WRAP_ALL_ON_NEW_LINE_EACH:
-          return CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+          return CommonCodeStyleSettings.WRAP_AS_NEEDED | CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
       }
       return CommonCodeStyleSettings.DO_NOT_WRAP;
     }
@@ -329,6 +329,14 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
       settings.RESOURCE_LIST_WRAP = decoder.getWrapType();
       settings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE = decoder.isFirstElementWrapped();
       return true;
+    }
+    else if (OPTION_ALIGN_CHAINED_CALLS.equals(key)) {
+      settings.METHOD_CALL_CHAIN_WRAP = decoder.getWrapType();
+      settings.ALIGN_MULTILINE_CHAINED_METHODS = decoder.isAlignmentOn();
+    }
+    else if (OPTION_ALIGN_CONDITIONALS.equals(key)) {
+      settings.TERNARY_OPERATION_WRAP = decoder.getWrapType();
+      settings.ALIGN_MULTILINE_TERNARY_OPERATION = decoder.isAlignmentOn();
     }
     return false;
   }

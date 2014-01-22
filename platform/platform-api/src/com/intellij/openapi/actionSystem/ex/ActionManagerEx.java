@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public abstract class ActionManagerEx extends ActionManager {
     return (ActionManagerEx)getInstance();
   }
 
-  public abstract ActionToolbar createActionToolbar(String place, ActionGroup group, boolean horizontal, boolean decorateButtons);
+  public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
@@ -88,6 +89,7 @@ public abstract class ActionManagerEx extends ActionManager {
   }
 
 
+  @NotNull
   public abstract String[] getPluginActions(PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
@@ -96,10 +98,12 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
+  @NotNull
   public List<String> getAbbreviations() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<String> findActionIdsByAbbreviation(String abbreviation) {
     return Collections.emptyList();
   }

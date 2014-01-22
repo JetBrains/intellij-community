@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection/";
+public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   public void testSelfReference() {
     doTest();
@@ -77,11 +76,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   public void testTypeAssertions() {
     doTest();
   }
-  
+
   public void testUnresolvedImportedModule() {  // PY-2075
     doTest();
   }
-  
+
   public void testSuperType() {  // PY-2320
     doTest();
   }
@@ -89,7 +88,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   public void testImportFunction() {  // PY-1896
     doTest();
   }
-  
+
   public void testSuperclassAsLocal() {  // PY-5427
     doTest();
   }
@@ -336,17 +335,34 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-6955
+  public void testUnusedUnresolvedModuleImported() {
+    doTest();
   }
 
-  private void doMultiFileTest(@NotNull String filename) {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
-    myFixture.configureFromTempProjectFile(filename);
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-6955
+  public void testUnusedUnresolvedNameImported() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUnusedUnresolvedNameImportedSeveralTimes() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUsedUnresolvedNameImportedSeveralTimes() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUnusedUnresolvedPackageImported() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnresolvedReferencesInspection.class;
   }
 }

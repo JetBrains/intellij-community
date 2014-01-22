@@ -299,16 +299,21 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
 
   private void restartRunProfile(@NotNull final Project project,
-                                @Nullable final DataContext context,
-                                @Nullable ProgramRunner r,
-                                @Nullable final RunProfile runProfile,
-                                @Nullable final RunnerSettings runnerSettings,
-                                @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
-                                @NotNull final Executor executor,
-                                @NotNull final ExecutionTarget target,
-                                @Nullable final RunnerAndConfigurationSettings configuration,
-                                @Nullable final RunContentDescriptor currentDescriptor) {
-    final ProgramRunner runner = r != null ? r : ProgramRunnerUtil.getRunner(executor.getId(), configuration);
+                                 @Nullable final DataContext context,
+                                 @Nullable ProgramRunner r,
+                                 @Nullable final RunProfile runProfile,
+                                 @Nullable final RunnerSettings runnerSettings,
+                                 @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+                                 @NotNull final Executor executor,
+                                 @NotNull final ExecutionTarget target,
+                                 @Nullable final RunnerAndConfigurationSettings configuration,
+                                 @Nullable final RunContentDescriptor currentDescriptor) {
+    final ProgramRunner runner = r != null ?
+                                 r :
+                                 RunnerRegistry.getInstance().getRunner(executor.getId(),
+                                                                        configuration != null && configuration.getConfiguration() != null
+                                                                        ? configuration.getConfiguration()
+                                                                        : runProfile);
     if (configuration != null && runner == null) {
       LOG.error("Cannot find runner for " + configuration.getName());
       return;

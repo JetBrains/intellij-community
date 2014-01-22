@@ -21,20 +21,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LabeledJavaBlock extends AbstractJavaBlock{
-  public LabeledJavaBlock(final ASTNode node,
-                          final Wrap wrap,
-                          final Alignment alignment,
-                          final Indent indent,
-                          final CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public LabeledJavaBlock(ASTNode node,
+                          Wrap wrap,
+                          Alignment alignment,
+                          Indent indent,
+                          CommonCodeStyleSettings settings,
+                          JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, alignment, indent, settings, javaSettings);
   }
 
   @Override
@@ -45,7 +46,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     Wrap currentWrap = null;
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, AlignmentStrategy.getNullStrategy()));
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, currentIndent, currentWrap, AlignmentStrategy.getNullStrategy()));
         if (child.getElementType() == JavaTokenType.COLON) {
           currentIndent = Indent.getNoneIndent();
           currentWrap =Wrap.createWrap(WrapType.ALWAYS, true);

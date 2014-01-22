@@ -83,16 +83,26 @@ public class PyABCUtil {
     return false;
   }
 
-  public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName) {
+  public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName, @NotNull TypeEvalContext context) {
     if (type instanceof PyClassType) {
-      final PyClass pyClass = ((PyClassType)type).getPyClass();
-      return isSubclass(pyClass, superClassName, true);
+      final PyClassType classType = (PyClassType)type;
+      final PyClass pyClass = classType.getPyClass();
+      if (classType.isDefinition()) {
+        final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
+        if (metaClassType instanceof PyClassType) {
+          final PyClassType metaClass = (PyClassType)metaClassType;
+          return isSubclass(metaClass.getPyClass(), superClassName, true);
+        }
+      }
+      else {
+        return isSubclass(pyClass, superClassName, true);
+      }
     }
     if (type instanceof PyUnionType) {
       final PyUnionType unionType = (PyUnionType)type;
       for (PyType m : unionType.getMembers()) {
         if (m != null) {
-          if (!isSubtype(m, superClassName)) {
+          if (!isSubtype(m, superClassName, context)) {
             return false;
           }
         }

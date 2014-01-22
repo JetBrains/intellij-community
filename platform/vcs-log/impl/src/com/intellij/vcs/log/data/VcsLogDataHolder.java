@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -485,11 +486,25 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
+        List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
+        List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
+        List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+        List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
+        List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
 
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
         final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(entry.getKey(), filters, maxCount);
+          VirtualFile root = entry.getKey();
+
+          List<VcsLogStructureFilter> rootMatchingStructureFilters = filterStructureFiltersByRoot(root, structureFilters);
+          if (rootMatchingStructureFilters.isEmpty() && !structureFilters.isEmpty()) {
+            // there were structure filters but none matches the root
+            continue;
+          }
+
+          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(
+            root, branchFilters, userFilters, dateFilters, textFilters, rootMatchingStructureFilters, maxCount);
           logs.add(getCommitsFromDetails(details));
           for (VcsFullCommitDetails detail : details) {
             allDetails.put(detail.getHash(), detail);
@@ -527,6 +542,17 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Looking for more results...");
+  }
+
+  @NotNull
+  private static List<VcsLogStructureFilter> filterStructureFiltersByRoot(@NotNull final VirtualFile root,
+                                                                          @NotNull List<VcsLogStructureFilter> structureFilters) {
+    return ContainerUtil.filter(structureFilters, new Condition<VcsLogStructureFilter>() {
+      @Override
+      public boolean value(VcsLogStructureFilter filter) {
+        return !filter.getFiles(root).isEmpty();
+      }
+    });
   }
 
   @NotNull

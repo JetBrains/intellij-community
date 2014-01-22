@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class StreamUtil {
   }
 
   public static byte[] loadFromStream(InputStream inputStream) throws IOException {
-    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    final UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     try {
       copyStreamContent(inputStream, outputStream);
     }

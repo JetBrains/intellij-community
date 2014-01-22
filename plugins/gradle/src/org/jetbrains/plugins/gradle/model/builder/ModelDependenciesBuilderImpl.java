@@ -24,6 +24,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.internal.IdeDependenciesExtractor;
 import org.gradle.tooling.model.idea.IdeaDependency;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleDependencyScope;
 import org.jetbrains.plugins.gradle.model.ModelBuilderService;
@@ -148,12 +149,39 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             versionId.getClassifier()
           );
           libraryDependency.setFile(fileDependency.getFile());
+          attachGradleSdkSources(libraryDependency, fileDependency);
           dependencies.add(libraryDependency);
         }
       }
     }
 
     return new ProjectDependenciesModelImpl(project.getPath(), dependencies);
+  }
+
+  private static void attachGradleSdkSources(IdeaSingleEntryLibraryDependencyImpl libraryDependency,
+                                             IdeDependenciesExtractor.IdeLocalFileDependency localFileDependency) {
+    final String libName = localFileDependency.getFile().getName();
+    if (localFileDependency.getFile() == null || !libName.startsWith("gradle-")) return;
+
+    File libOrPluginsFile = localFileDependency.getFile().getParentFile();
+    if (libOrPluginsFile != null && ("plugins".equals(libOrPluginsFile.getName()))) {
+      libOrPluginsFile = libOrPluginsFile.getParentFile();
+    }
+
+    if (libOrPluginsFile != null && "lib".equals(libOrPluginsFile.getName()) && libOrPluginsFile.getParentFile() != null) {
+      File srcDir = new File(libOrPluginsFile.getParentFile(), "src");
+      if (GradleVersion.current().compareTo(GradleVersion.version("1.9")) >= 0) {
+        int endIndex = libName.indexOf(GradleVersion.current().getVersion() + ".jar");
+        if (endIndex != -1) {
+          String srcDirChild = libName.substring("gradle-".length(), endIndex - 1);
+          srcDir = new File(srcDir, srcDirChild);
+        }
+      }
+
+      if (srcDir.isDirectory()) {
+        libraryDependency.setSource(srcDir);
+      }
+    }
   }
 
   @Nullable
@@ -261,15 +289,13 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
   private static GradleDependencyScope deduceScope(String configurationName,
                                                    Map<String, Map<String, Collection<Configuration>>> userScopes) {
     GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
-    if (scope == null) {
-      for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
-        Collection<Configuration> plusConfigurations = entry.getValue().get("plus");
-        if (plusConfigurations == null) continue;
+    for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
+      Collection<Configuration> plusConfigurations = entry.getValue().get("plus");
+      if (plusConfigurations == null) continue;
 
-        for (Configuration plus : plusConfigurations) {
-          if (plus.getName().equals(configurationName)) {
-            return GradleDependencyScope.fromIdeaMappingName(entry.getKey());
-          }
+      for (Configuration plus : plusConfigurations) {
+        if (plus.getName().equals(configurationName)) {
+          return GradleDependencyScope.fromIdeaMappingName(entry.getKey().toLowerCase());
         }
       }
     }

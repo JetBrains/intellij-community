@@ -25,7 +25,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,7 +107,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }, false);
 
     final ExtractSuperclassDialog dialog =
-      new ExtractSuperclassDialog(project, mySubclass, memberInfos, ExtractSuperclassHandler.this);
+      new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
 

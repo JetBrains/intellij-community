@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -749,16 +749,11 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
-  // replace in temporary file, otherwise path selector will stuck until next clean build
-  File launcherPropertiesTempFile = null;
   if (pathsSelector != null) {
-    String propertiesContent = new File(launcherProperties).text
-    if (propertiesContent.contains("__PRODUCT_PATHS_SELECTOR__")) {
-      propertiesContent = propertiesContent.replace("__PRODUCT_PATHS_SELECTOR__", pathsSelector)
-      launcherPropertiesTempFile = File.createTempFile("launcher", ".properties")
-      launcherPropertiesTempFile.write(propertiesContent)
-      launcherProperties = launcherPropertiesTempFile.getAbsolutePath()
-    }
+    def paths = getProperty("paths")
+    def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    launcherProperties = launcherPropertiesTemp
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
@@ -779,14 +774,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       }
     }
   }
-
-  if (launcherPropertiesTempFile != null) {
-    launcherPropertiesTempFile.delete()
-  }
-  /*File outputFile = new File(outputPath)
-  def outputFileName = outputFile.getName()
-  def outputDir = outputPath.substring(0, outputPath.length() - outputFileName.length())
-  executeExternalAnt(["dirName": outputDir, "fileName": outputFileName], "$home/build/signBuild.xml")*/
 })
 
 binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->

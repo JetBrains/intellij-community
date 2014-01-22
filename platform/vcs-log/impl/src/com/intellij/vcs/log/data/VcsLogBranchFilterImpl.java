@@ -2,17 +2,18 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class VcsLogBranchFilter implements VcsLogGraphFilter {
+public class VcsLogBranchFilterImpl implements VcsLogBranchFilter, VcsLogGraphFilter {
 
   @NotNull private final Collection<Integer> myMatchingHeads;
   @NotNull private final String myBranchName;
 
-  public VcsLogBranchFilter(@NotNull Collection<VcsRef> allRefs, @NotNull final String selectedBranchName) {
+  public VcsLogBranchFilterImpl(@NotNull Collection<VcsRef> allRefs, @NotNull final String selectedBranchName) {
     myBranchName = selectedBranchName;
     myMatchingHeads = ContainerUtil.mapNotNull(allRefs, new Function<VcsRef, Integer>() {
       @Override
@@ -35,6 +36,7 @@ public class VcsLogBranchFilter implements VcsLogGraphFilter {
     return "on: " + myBranchName;
   }
 
+  @Override
   @NotNull
   public String getBranchName() {
     return myBranchName;

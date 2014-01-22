@@ -22,11 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * @since 11/25/13
  */
 public enum GradleDependencyScope {
-  // Implicit scopes
-  PROVIDED("provided", "provided", true, true, true, true),
-  OPTIONAL("optional", "compile", true, true, true, true),
-
-
   // Java Plugin Scopes
   /**
    * Compile time dependencies
@@ -74,7 +69,11 @@ public enum GradleDependencyScope {
   /**
    * Compiles test Scala source files.
    */
-  COMPILE_TEST_SCALA("compileTestScala", "test", false, false, true, true);
+  COMPILE_TEST_SCALA("compileTestScala", "test", false, false, true, true),
+
+  // Implicit scopes
+  PROVIDED("provided", "provided", true, true, true, true),
+  OPTIONAL("optional", "compile", true, true, true, true),;
 
   private final String myGradleName;
   private final String myIdeaMappingName;
@@ -124,7 +123,7 @@ public enum GradleDependencyScope {
   @Nullable
   public static GradleDependencyScope fromIdeaMappingName(final String ideaMappingName) {
     for (GradleDependencyScope scope : values()) {
-      if (scope.myIdeaMappingName.equals(ideaMappingName.toLowerCase())) return scope;
+      if (scope.myIdeaMappingName.equals(ideaMappingName)) return scope;
     }
     return null;
   }

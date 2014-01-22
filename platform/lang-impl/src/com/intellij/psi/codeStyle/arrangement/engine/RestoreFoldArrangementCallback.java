@@ -18,16 +18,10 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,34 +31,48 @@ import java.util.List;
 public class RestoreFoldArrangementCallback implements ArrangementCallback {
 
   @NotNull private final  Editor           myEditor;
-  @Nullable private final CodeFoldingState myCodeFoldingState;
 
   public RestoreFoldArrangementCallback(@NotNull Editor editor) {
     myEditor = editor;
-
-    Project project = editor.getProject();
-    if (project == null) {
-      myCodeFoldingState = null;
-    }
-    else {
-      final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(editor.getProject());
-      myCodeFoldingState = foldingManager.saveFoldingState(editor);
-    }
   }
 
   @Override
   public void afterArrangement(@NotNull final List<ArrangementMoveInfo> moveInfos) {
     // Restore state for the PSI elements not affected by arrangement.
     Project project = myEditor.getProject();
-    if (myCodeFoldingState != null && project != null) {
+    if (project != null) {
+      final FoldRegion[] regions = myEditor.getFoldingModel().getAllFoldRegions();
+      final List<FoldRegionInfo> foldRegionsInfo = new ArrayList<FoldRegionInfo>();
+      for (FoldRegion region : regions) {
+        final FoldRegionInfo info = new FoldRegionInfo(region.getStartOffset(), region.getEndOffset(), region.isExpanded());
+        foldRegionsInfo.add(info);
+      }
+
       final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
       foldingManager.updateFoldRegions(myEditor);
       myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
         @Override
         public void run() {
-          foldingManager.restoreFoldingState(myEditor, myCodeFoldingState);
+          for (FoldRegionInfo info : foldRegionsInfo) {
+            final FoldRegion foldRegion = foldingManager.findFoldRegion(myEditor, info.myStart, info.myEnd);
+            if (foldRegion != null) {
+              foldRegion.setExpanded(info.myIsExpanded);
+            }
+          }
         }
       });
+    }
+  }
+
+  private static class FoldRegionInfo {
+    private int myStart;
+    private int myEnd;
+    private boolean myIsExpanded;
+
+    private FoldRegionInfo(int start, int end, boolean expanded) {
+      myStart = start;
+      myEnd = end;
+      myIsExpanded = expanded;
     }
   }
 }

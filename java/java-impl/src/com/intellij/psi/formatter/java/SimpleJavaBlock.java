@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -38,8 +39,13 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   private int myStartOffset = -1;
   private final Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
 
-  public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignment, final Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent,settings);
+  public SimpleJavaBlock(ASTNode node,
+                         Wrap wrap,
+                         AlignmentStrategy alignment,
+                         Indent indent,
+                         CommonCodeStyleSettings settings,
+                         JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, alignment, indent, settings, javaSettings);
   }
 
   @Override
@@ -51,7 +57,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     Indent indent = null;
     while (child != null) {
       if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
         indent = Indent.getNoneIndent();
       }
       else if (!FormatterUtil.containsWhiteSpacesOnly(child)) {

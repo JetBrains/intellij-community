@@ -72,7 +72,7 @@ public abstract class ActionManager implements ApplicationComponent {
    *
    * @return An instance of <code>ActionToolbar</code>
    */
-  public abstract ActionToolbar createActionToolbar(@NonNls String place, ActionGroup group, boolean horizontal);
+  public abstract ActionToolbar createActionToolbar(@NonNls String place, @NotNull ActionGroup group, boolean horizontal);
 
   /**
    * Returns action associated with the specified actionId.
@@ -151,7 +151,7 @@ public abstract class ActionManager implements ApplicationComponent {
    * @return the created panel.
    * @since 5.1
    */
-  public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
+  public abstract JComponent createButtonToolbar(final String actionPlace, @NotNull ActionGroup messageActionGroup);
 
   public abstract AnAction getActionOrStub(@NonNls String id);
 

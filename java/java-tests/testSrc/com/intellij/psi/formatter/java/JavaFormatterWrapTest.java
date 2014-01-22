@@ -331,4 +331,66 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "int j = 2;";
     doMethodTest(text, text);
   }
+
+  public void testEnforceIndent_MethodCallParamWrap() throws Exception {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 140;
+    getSettings().PREFER_PARAMETERS_WRAP = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+
+    String before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString()));";
+
+    String afterFirstReformat = "processingEnv.getMessenger().printMessage(\n" +
+                                "        Diagnostic.Kind.ERROR, String.format(\n" +
+                                "        \"Could not process annotations: %s%n%s\",\n" +
+                                "        e.toString(),\n" +
+                                "        writer.toString()\n" +
+                                ")\n" +
+                                ");";
+
+    String after = "processingEnv.getMessenger().printMessage(\n" +
+                   "        Diagnostic.Kind.ERROR, String.format(\n" +
+                   "                \"Could not process annotations: %s%n%s\",\n" +
+                   "                e.toString(),\n" +
+                   "                writer.toString()\n" +
+                   "        )\n" +
+                   ");";
+
+    doMethodTest(afterFirstReformat, after);
+
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    doMethodTest(before, after);
+
+    before = "processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, call(\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"));\n";
+    after = "processingEnv.getMessager().printMessage(\n" +
+            "        Diagnostic.Kind.ERROR, call(\n" +
+            "                \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"\n" +
+            "        )\n" +
+            ");\n";
+
+    doMethodTest(before, after);
+  }
+
+  public void testDoNotWrap_MethodsWithMethodCallAsParameters() throws Exception {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 140;
+    getSettings().PREFER_PARAMETERS_WRAP = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+
+    String before = "   processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage());";
+    String after = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage());";
+
+    doMethodTest(before, after);
+
+    before = "   processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage(loooooooooooooooooongParamName));";
+    after = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage(loooooooooooooooooongParamName));";
+
+    doMethodTest(before, after);
+  }
+
+
+
 }

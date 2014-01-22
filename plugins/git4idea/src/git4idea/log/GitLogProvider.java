@@ -29,12 +29,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilter;
-import com.intellij.vcs.log.data.VcsLogDateFilter;
-import com.intellij.vcs.log.data.VcsLogStructureFilter;
-import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
@@ -189,7 +184,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogFilter> filters,
+                                                                 @NotNull Collection<VcsLogBranchFilter> branchFilters,
+                                                                 @NotNull Collection<VcsLogUserFilter> userFilters,
+                                                                 @NotNull Collection<VcsLogDateFilter> dateFilters,
+                                                                 @NotNull Collection<VcsLogTextFilter> textFilters,
+                                                                 @NotNull Collection<VcsLogStructureFilter> structureFilters,
                                                                  int maxCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
@@ -197,21 +196,19 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
     if (!branchFilters.isEmpty()) {
       // git doesn't support filtering by several branches very well (--branches parameter give a weak pattern capabilities)
       // => by now assuming there is only one branch filter.
       if (branchFilters.size() > 1) {
         LOG.warn("More than one branch filter was passed. Using only the first one.");
       }
-      VcsLogBranchFilter branchFilter = branchFilters.get(0);
+      VcsLogBranchFilter branchFilter = branchFilters.iterator().next();
       filterParameters.add(branchFilter.getBranchName());
     }
     else {
       filterParameters.addAll(GitHistoryUtils.LOG_ALL);
     }
 
-    List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
     if (!userFilters.isEmpty()) {
       String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
         @Override
@@ -222,7 +219,6 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("author", authorFilter));
     }
 
-    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
     if (!dateFilters.isEmpty()) {
       // assuming there is only one date filter, until filter expressions are defined
       VcsLogDateFilter filter = dateFilters.iterator().next();
@@ -234,7 +230,6 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
     if (textFilters.size() > 1) {
       LOG.warn("Expected only one text filter: " + textFilters);
     }
@@ -249,8 +244,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
     filterParameters.add("--date-order");
 
-    // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
-    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
+    // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (!structureFilters.isEmpty()) {
       filterParameters.add("--");
       for (VcsLogStructureFilter filter : structureFilters) {
@@ -281,7 +275,7 @@ public class GitLogProvider implements VcsLogProvider {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 
-  private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
+  private static <T> String joinFilters(Collection<T> filters, Function<T, String> toString) {
     return StringUtil.join(filters, toString, "\\|");
   }
 

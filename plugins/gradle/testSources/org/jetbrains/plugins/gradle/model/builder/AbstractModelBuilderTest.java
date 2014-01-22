@@ -73,7 +73,7 @@ public abstract class AbstractModelBuilderTest {
     final ProjectImportAction projectImportAction = new ProjectImportAction(true);
     projectImportAction.addExtraProjectModelClasses(getModels());
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-    GradleExecutionHelper.setInitScript(buildActionExecutor);
+    GradleExecutionHelper.setInitScript(buildActionExecutor, false);
 
     allModels = buildActionExecutor.run();
     assertNotNull(allModels);

@@ -106,11 +106,6 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
-  @Override
-  public PyType getIterationType(@NotNull PyClass iterable) {
-    return null;
-  }
-
   @Nullable
   @Override
   public PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context) {

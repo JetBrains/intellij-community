@@ -33,7 +33,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.UnindentingInsertHandler;
+import com.jetbrains.python.codeInsight.PyUnindentingInsertHandler;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -286,9 +286,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     psiElement()
       .inside(PyConditionalStatementPart.class)
       .andOr(
-        psiElement().afterLeaf(psiElement().withText("if")),
-        psiElement().afterLeaf(psiElement().withText("elif")),
-        psiElement().afterLeaf(psiElement().withText("while"))
+        psiElement().afterLeaf(psiElement().withText(PyNames.IF)),
+        psiElement().afterLeaf(psiElement().withText(PyNames.ELIF)),
+        psiElement().afterLeaf(psiElement().withText(PyNames.WHILE))
       );
 
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_STMT =
@@ -378,8 +378,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, TailType.NONE, "def", "class", "for", "if", "while", "with");
-          putKeywords(result, TailType.CASE_COLON, "try");
+          putKeywords(result, TailType.NONE, PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
+          putKeywords(result, TailType.CASE_COLON, PyNames.TRY);
         }
       }
     );
@@ -402,13 +402,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, TailType.SPACE, "assert", "del", "exec", "from", "import", "raise");
+          putKeywords(result, TailType.SPACE, PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailType.NONE, PyNames.PASS);
         }
       }
     );
 
-    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailType.SPACE, "print"));
+    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailType.SPACE, PyNames.PRINT));
   }
 
   private void addBreak() {
@@ -421,7 +421,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_ARG_LIST)
       .and(IN_LOOP)
       ,
-      new PyKeywordCompletionProvider(TailType.NONE, "break")
+      new PyKeywordCompletionProvider(TailType.NONE, PyNames.BREAK)
     );
   }
 
@@ -436,7 +436,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_FINALLY_NO_LOOP)
       .and(IN_LOOP)
       ,
-      new PyKeywordCompletionProvider(TailType.NONE, "continue")
+      new PyKeywordCompletionProvider(TailType.NONE, PyNames.CONTINUE)
     );
   }
 
@@ -448,7 +448,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .and(IN_BEGIN_STMT)
       .andNot(AFTER_QUALIFIER)
       ,
-      new PyKeywordCompletionProvider("global", "return", "yield")
+      new PyKeywordCompletionProvider(PyNames.GLOBAL, PyNames.RETURN, PyNames.YIELD)
     );
 
     extend(
@@ -459,7 +459,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .and(PY3K)
       .andNot(AFTER_QUALIFIER)
       ,
-      new PyKeywordCompletionProvider("nonlocal")
+      new PyKeywordCompletionProvider(PyNames.NONLOCAL)
     );
   }
 
@@ -471,7 +471,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andOr(IN_IF_BODY, AFTER_IF)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider(TailType.NONE, UnindentingInsertHandler.INSTANCE, "elif"));
+      new PyKeywordCompletionProvider(TailType.NONE, PyUnindentingInsertHandler.INSTANCE, PyNames.ELIF));
   }
 
   private void addWithinTry() {
@@ -487,8 +487,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeyword("except", UnindentingInsertHandler.INSTANCE, TailType.NONE, result);
-          putKeyword("finally", UnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
+          putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailType.NONE, result);
+          putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
       }
     );
@@ -502,7 +502,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andOr(IN_COND_STMT, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_LOOP_NO_ELSE, AFTER_EXCEPT)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider(TailType.CASE_COLON, UnindentingInsertHandler.INSTANCE, "else"));
+      new PyKeywordCompletionProvider(TailType.CASE_COLON, PyUnindentingInsertHandler.INSTANCE, PyNames.ELSE));
   }
 
   private void addInfixOperators() {
@@ -516,7 +516,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER).
         andNot(IN_STRING_LITERAL).and(IN_BEGIN_STMT)
       ,
-      new PyKeywordCompletionProvider("and", "or", "is", "in")
+      new PyKeywordCompletionProvider(PyNames.AND, PyNames.OR, PyNames.IS, PyNames.IN)
     );
   }
 
@@ -530,7 +530,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_FUNCTION_HEADER)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider("not", "lambda")
+      new PyKeywordCompletionProvider(PyNames.NOT, PyNames.LAMBDA)
     );
   }
 
@@ -545,7 +545,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_FUNCTION_HEADER)
       ,
-      new PyKeywordCompletionProvider(TailType.NONE, "True", "False", "None")
+      new PyKeywordCompletionProvider(TailType.NONE, PyNames.TRUE, PyNames.FALSE, PyNames.NONE)
     );
   }
 
@@ -556,7 +556,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andOr(IN_IMPORT_AFTER_REF, IN_WITH_AFTER_REF, IN_EXCEPT_AFTER_REF)
       .andNot(AFTER_QUALIFIER)
       ,
-      new PyKeywordCompletionProvider("as")
+      new PyKeywordCompletionProvider(PyNames.AS)
     );
   }
 
@@ -567,7 +567,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .and(IN_FROM_IMPORT_AFTER_REF)
       .andNot(AFTER_QUALIFIER)
       ,
-      new PyKeywordCompletionProvider("import")
+      new PyKeywordCompletionProvider(PyNames.IMPORT)
     );
   }
 
@@ -603,9 +603,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .withLanguage(PythonLanguage.getInstance())
       .afterLeafSkipping(psiElement().whitespace(),
                          psiElement().inside(psiElement(PyConditionalExpression.class))
-                           .and(psiElement().afterLeaf("if")))
+                           .and(psiElement().afterLeaf(PyNames.IF)))
       ,
-      new PyKeywordCompletionProvider(TailType.SPACE, "else"));
+      new PyKeywordCompletionProvider(TailType.SPACE, PyNames.ELSE));
   }
 
   private void addRaiseFrom() {
@@ -614,7 +614,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
              .withLanguage(PythonLanguage.getInstance())
              .and(PY3K)
              .afterLeaf(psiElement().inside(PyRaiseStatement.class)),
-           new PyKeywordCompletionProvider("from"));
+           new PyKeywordCompletionProvider(PyNames.FROM));
   }
 
   private void addYieldFrom() {
@@ -623,7 +623,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
              .withLanguage(PythonLanguage.getInstance())
              .and(PY3K)
              .afterLeaf(psiElement().withElementType(PyTokenTypes.YIELD_KEYWORD)),
-           new PyKeywordCompletionProvider("from"));
+           new PyKeywordCompletionProvider(PyNames.FROM));
   }
 
   public PyKeywordCompletionContributor() {
@@ -654,14 +654,14 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
              .withLanguage(PythonLanguage.getInstance())
              .inside(psiElement(PySequenceExpression.class))
              .andNot(psiElement().afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR)))),
-           new PyKeywordCompletionProvider("for"));
+           new PyKeywordCompletionProvider(PyNames.FOR));
   }
 
   private void addInToFor() {
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
-             .and(psiElement()).afterLeaf(psiElement().afterLeaf("for")),
+             .and(psiElement()).afterLeaf(psiElement().afterLeaf(PyNames.FOR)),
            new PyKeywordCompletionProvider("in"));
 
   }

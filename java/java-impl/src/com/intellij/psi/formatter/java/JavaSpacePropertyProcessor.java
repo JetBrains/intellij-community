@@ -29,6 +29,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
@@ -54,6 +55,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private int myRole1;
   private int myRole2;
   private CommonCodeStyleSettings mySettings;
+  private JavaCodeStyleSettings myJavaSettings;
 
   private Spacing myResult;
   private ASTNode myChild1;
@@ -66,9 +68,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
 
-  private void doInit(final ASTNode child, final CommonCodeStyleSettings settings) {
+  private void doInit(ASTNode child, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     init(child);
     mySettings = settings;
+    myJavaSettings = javaSettings;
 
     if (myChild1 == null) {
       // Given node corresponds to the first document block.
@@ -408,7 +411,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     else if (myRole2 == ChildRole.TYPE_PARAMETER_LIST) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
+      createSpaceInCode(myJavaSettings.SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER);
     }
 
     else if (myRole2 == ChildRole.ARGUMENT_LIST) {
@@ -1151,7 +1154,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      if (JavaFormatterUtil.hasMultilineArguments(list) && JavaFormatterUtil.isMultilineExceptArguments(list)) {
+      PsiExpression[] arguments = list.getExpressions();
+      if (JavaFormatterUtil.hasMultilineArguments(arguments) && JavaFormatterUtil.isMultilineExceptArguments(arguments)) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
       else {
@@ -1321,17 +1325,18 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitReferenceParameterList(PsiReferenceParameterList list) {
-    if (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST
-        || myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.GT_IN_TYPE_LIST
-        || myRole1 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST && myRole2 == ChildRole.COMMA)
-    {
+    if (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.GT_IN_TYPE_LIST
+        || myRole1 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST && myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
+    }
+    else if (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
+      createSpaceInCode(myJavaSettings.SPACES_WITHIN_ANGLE_BRACKETS);
     }
     else if (myRole1 == ChildRole.COMMA && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
     else if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
-      createSpaceInCode(false);
+      createSpaceInCode(myJavaSettings.SPACES_WITHIN_ANGLE_BRACKETS);
     }
   }
 
@@ -1372,10 +1377,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
     }
+    else if (myRole1 == ChildRole.AMPERSAND_IN_BOUNDS_LIST || myRole2 == ChildRole.AMPERSAND_IN_BOUNDS_LIST) {
+      createSpaceInCode(myJavaSettings.SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS);
+    }
     else if (myRole1 == ChildRole.EXTENDS_KEYWORD
              || myRole2 == ChildRole.EXTENDS_KEYWORD
-             || myRole1 == ChildRole.AMPERSAND_IN_BOUNDS_LIST
-             || myRole2 == ChildRole.AMPERSAND_IN_BOUNDS_LIST
              || myRole1 == ChildRole.IMPLEMENTS_KEYWORD
              || myRole2 == ChildRole.IMPLEMENTS_KEYWORD
              || myRole1 == ChildRole.THROWS_KEYWORD)
@@ -1459,16 +1465,19 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitTypeParameterList(PsiTypeParameterList list) {
-    if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
-      createSpaceInCode(false);
+    if (myRole1 == ChildRole.LT_IN_TYPE_LIST || myRole2 == ChildRole.GT_IN_TYPE_LIST) {
+      createSpaceInCode(myJavaSettings.SPACES_WITHIN_ANGLE_BRACKETS);
     }
     else if (myRole1 == ChildRole.COMMA) {
-      createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
   }
 
   @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-    if (myRole2 == ChildRole.REFERENCE_PARAMETER_LIST) {
+    if (myRole1 == ChildRole.REFERENCE_PARAMETER_LIST && myRole2 == ChildRole.REFERENCE_NAME) {
+      createSpaceInCode(myJavaSettings.SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT);
+    }
+    else if (myRole2 == ChildRole.REFERENCE_PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
     }
     else if (myRole2 == ChildRole.DOT){
@@ -1596,14 +1605,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  public static Spacing getSpacing(ASTNode node, CommonCodeStyleSettings settings) {
+  public static Spacing getSpacing(ASTNode node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     JavaSpacePropertyProcessor spacePropertyProcessor = mySharedProcessorAllocator.get();
     try {
       if (spacePropertyProcessor == null) {
         spacePropertyProcessor = new JavaSpacePropertyProcessor();
         mySharedProcessorAllocator.set(spacePropertyProcessor);
       }
-      spacePropertyProcessor.doInit(node, settings);
+      spacePropertyProcessor.doInit(node, settings, javaSettings);
       return spacePropertyProcessor.getResult();
     }
     finally {

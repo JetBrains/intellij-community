@@ -26,6 +26,7 @@ import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -217,7 +218,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenExpandedEditor.setText(myChildrenExpandedEditor.getText());
         myListChildrenEditor.setText(myListChildrenEditor.getText());
       }
-    });
+    }, ModalityState.any());
   }
 
   private void updateEnabledState() {

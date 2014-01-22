@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  * User: dcheryasov
  * Date: May 29, 2009 4:42:03 AM
  */
-public class KeywordTypedHandler extends TypedHandlerDelegate {
+public class PyKeywordTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
@@ -51,7 +51,7 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
         editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
         return Result.STOP;
       }
-      UnindentingInsertHandler.unindentAsNeeded(project, editor, file);
+      PyUnindentingInsertHandler.unindentAsNeeded(project, editor, file);
     }
 
     return Result.CONTINUE; // the default

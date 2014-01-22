@@ -194,7 +194,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
-            engine.arrange(finalFile, Collections.singleton(rangeToUse));
+            engine.arrange(editor, finalFile, Collections.singleton(rangeToUse));
           }
         }, getTemplatePresentation().getText(), null);
       }

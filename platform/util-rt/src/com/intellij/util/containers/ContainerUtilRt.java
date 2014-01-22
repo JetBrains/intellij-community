@@ -126,7 +126,7 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
-    ArrayList<T> list = newArrayListWithCapacity(elements.length);
+    ArrayList<T> list = new ArrayList<T>(elements.length);
     Collections.addAll(list, elements);
     return list;
   }
