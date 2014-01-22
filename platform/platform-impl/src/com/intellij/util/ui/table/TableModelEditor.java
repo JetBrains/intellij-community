@@ -62,6 +62,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
     model = new MyListTableModel<T>(columns, new ArrayList<T>(items), this);
     table = new TableView<T>(model);
+    table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
     new TableSpeedSearch(table);
     if (columns[0].getColumnClass() == Boolean.class && columns[0].getName().isEmpty()) {

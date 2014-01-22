@@ -34,7 +34,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
-import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
 import org.jetbrains.annotations.NotNull;
@@ -128,12 +127,6 @@ public class BrowserSettingsPanel {
     @Override
     public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
       return IconTableCellRenderer.ICONABLE;
-    }
-
-    @Nullable
-    @Override
-    public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-      return ComboBoxTableCellEditor.INSTANCE;
     }
   }, PATH_COLUMN_INFO};
 
