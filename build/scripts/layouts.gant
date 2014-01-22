@@ -218,7 +218,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         }
 
         jar("embedder.jar") {
-          module("FXBuilderEmbedder")
+          module("FxBuilderEmbedder")
         }
       }
     }
