@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -53,8 +54,10 @@ public class HgAnnotationProvider implements AnnotationProvider {
       throw new VcsException("vcs root is null for " + file);
     }
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
-    HgFile fileToAnnotate = revision instanceof HgFileRevision ? HgUtil
-      .getFileNameInTargetRevision(myProject, ((HgFileRevision)revision).getRevisionNumber(), hgFile) : hgFile;
+    HgFile fileToAnnotate = revision instanceof HgFileRevision
+                            ? HgUtil.getFileNameInTargetRevision(myProject, ((HgFileRevision)revision).getRevisionNumber(), hgFile)
+                            : new HgFile(vcsRoot,
+                                         HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject)));
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(fileToAnnotate, revision);
     final List<HgFileRevision> logResult;
     try {
