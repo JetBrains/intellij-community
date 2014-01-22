@@ -18,6 +18,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -100,7 +101,13 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
   private PsiMethod rebuildMethod(@NotNull Project project, @NotNull PsiMethod fromMethod) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    final PsiMethod resultMethod = elementFactory.createMethod(fromMethod.getName(), fromMethod.getReturnType());
+    final PsiMethod resultMethod;
+    final PsiType returnType = fromMethod.getReturnType();
+    if (null == returnType) {
+      resultMethod = elementFactory.createConstructor(fromMethod.getName());
+    } else {
+      resultMethod = elementFactory.createMethod(fromMethod.getName(), returnType);
+    }
 
     for (PsiParameter parameter : fromMethod.getParameterList().getParameters()) {
       PsiParameter param = elementFactory.createParameter(parameter.getName(), parameter.getType());

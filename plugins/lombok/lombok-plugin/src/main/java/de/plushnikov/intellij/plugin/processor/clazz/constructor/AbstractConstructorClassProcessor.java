@@ -8,6 +8,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
@@ -211,7 +213,27 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       UserMapKeys.addWriteUsageFor(param);
       method.withParameter(param.getName(), param.getType());
     }
+
+    final String paramsText = joinParameters(method.getParameterList());
+    final String blockText = String.format("return new %s(%s);", psiClass.getName(), paramsText);
+    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
+
     return method;
+  }
+
+  private String joinParameters(PsiParameterList parameterList) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      for (PsiParameter psiParameter : parameterList.getParameters()) {
+        builder.append(psiParameter.getName()).append(',');
+      }
+      if (parameterList.getParameters().length > 0) {
+        builder.deleteCharAt(builder.length() - 1);
+      }
+      return builder.toString();
+    } finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   private StringBuilder appendParamDeclaration(Collection<PsiField> params, StringBuilder builder) {
