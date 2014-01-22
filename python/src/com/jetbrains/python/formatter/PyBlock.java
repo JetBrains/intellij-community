@@ -468,6 +468,10 @@ public class PyBlock implements ASTBlock {
           }
         }
       }
+
+      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1)) {
+        return Spacing.createSpacing(2, 0, 0, false, 0);
+      }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
