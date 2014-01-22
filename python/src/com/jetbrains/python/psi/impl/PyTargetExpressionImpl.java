@@ -569,7 +569,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @NotNull
   public PsiPolyVariantReference getReference(final PyResolveContext resolveContext) {
-    if (getQualifier() != null) {
+    if (isQualified()) {
       return new PyQualifiedReference(this, resolveContext);
     }
     return new PyTargetReference(this, resolveContext);
@@ -594,7 +594,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     while(true) {
       PyElement parentContainer = PsiTreeUtil.getParentOfType(container, PyFunction.class, PyClass.class);
       if (parentContainer instanceof PyClass) {
-        if (getQualifier() != null) {
+        if (isQualified()) {
           return super.getUseScope();
         }
         break;
