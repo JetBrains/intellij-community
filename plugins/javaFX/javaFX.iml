@@ -23,17 +23,6 @@
     <orderEntry type="module" module-name="common-javaFX-plugin" />
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/FxBuilderStub.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/FxBuilderStub.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
   </component>
 </module>
 
