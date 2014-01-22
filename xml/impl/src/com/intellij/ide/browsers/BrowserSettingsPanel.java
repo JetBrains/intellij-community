@@ -107,7 +107,7 @@ public class BrowserSettingsPanel {
     public void setValue(ConfigurableWebBrowser item, String value) {
       item.setName(value);
     }
-  }, new EditableColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+  }, new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
     @Override
     public Class getColumnClass() {
       return BrowserFamily.class;
@@ -127,6 +127,11 @@ public class BrowserSettingsPanel {
     @Override
     public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
       return IconTableCellRenderer.ICONABLE;
+    }
+
+    @Override
+    public boolean isCellEditable(ConfigurableWebBrowser item) {
+      return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
     }
   }, PATH_COLUMN_INFO};
 
@@ -261,7 +266,7 @@ public class BrowserSettingsPanel {
 
       @Override
       public boolean isRemovable(@NotNull ConfigurableWebBrowser item) {
-        return !WebBrowserManager.isPredefinedBrowser(item);
+        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
     };
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
