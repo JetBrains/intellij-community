@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     return getWindowInfo().getAnchor();
   }
 
+  @NotNull
   WindowInfoImpl getWindowInfo() {
     return myDecorator.getWindowInfo();
   }
@@ -290,7 +291,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     myPressedWhenSelected = false;
   }
 
-  public void apply(final WindowInfoImpl info) {
+  public void apply(@NotNull WindowInfoImpl info) {
     setSelected(info.isVisible() || info.isActive());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
   private boolean myActive;
+  @NotNull
   private ToolWindowAnchor myAnchor;
   private boolean myAutoHide;
   /**
@@ -85,35 +86,37 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private boolean myWasRead;
 
   /**
-   * Creates <code>WindowInfo</code> for tool window with wpecified <code>ID</code>.
+   * Creates <code>WindowInfo</code> for tool window with specified <code>ID</code>.
    */
-  WindowInfoImpl(final String id){
-    myActive=false;
-    myAnchor=ToolWindowAnchor.LEFT;
-    myAutoHide=false;
-    myFloatingBounds=null;
-    myId=id;
+  WindowInfoImpl(@NotNull String id) {
+    myActive = false;
+    myAnchor = ToolWindowAnchor.LEFT;
+    myAutoHide = false;
+    myFloatingBounds = null;
+    myId = id;
     setType(ToolWindowType.DOCKED);
-    myVisible=false;
-    myWeight=DEFAULT_WEIGHT;
+    myVisible = false;
+    myWeight = DEFAULT_WEIGHT;
     mySideWeight = DEFAULT_SIDE_WEIGHT;
-    myOrder=-1;
-    mySplitMode =false;
+    myOrder = -1;
+    mySplitMode = false;
   }
 
   /**
    * Creates copy of <code>WindowInfo</code> object.
    */
-  @SuppressWarnings({"EmptyCatchBlock"})
-  public WindowInfoImpl copy(){
-    WindowInfoImpl info=null;
-    try{
-      info=(WindowInfoImpl)clone();
-      if(myFloatingBounds!=null){
-        info.myFloatingBounds=(Rectangle)myFloatingBounds.clone();
+  @NotNull
+  public WindowInfoImpl copy() {
+    try {
+      WindowInfoImpl info = (WindowInfoImpl)clone();
+      if (myFloatingBounds != null) {
+        info.myFloatingBounds = (Rectangle)myFloatingBounds.clone();
       }
-    }catch(CloneNotSupportedException ignored){}
-    return info;
+      return info;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -137,6 +140,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * @return tool window's anchor in internal mode.
    */
+  @NotNull
   @Override
   public ToolWindowAnchor getAnchor(){
     return myAnchor;
@@ -162,6 +166,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * @return <code>ID</code> of the tool window.
    */
+  @NotNull
   String getId(){
     return myId;
   }
@@ -258,6 +263,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     throw new IllegalArgumentException(text);
   }
 
+  @NotNull
   private static ToolWindowAnchor parseToolWindowAnchor(final String text) {
     if (ToolWindowAnchor.TOP.toString().equalsIgnoreCase(text)) {
       return ToolWindowAnchor.TOP;
@@ -422,22 +428,19 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append(getClass().getName()).append('[');
-    buffer.append("myId=").append(myId).append("; ");
-    buffer.append("myVisible=").append(myVisible).append("; ");
-    buffer.append("myActive=").append(myActive).append("; ");
-    buffer.append("myAnchor=").append(myAnchor).append("; ");
-    buffer.append("myOrder=").append(myOrder).append("; ");
-    buffer.append("myAutoHide=").append(myAutoHide).append("; ");
-    buffer.append("myWeight=").append(myWeight).append("; ");
-    buffer.append("mySideWeight=").append(mySideWeight).append("; ");    
-    buffer.append("myType=").append(myType).append("; ");
-    buffer.append("myInternalType=").append(myInternalType).append("; ");
-    buffer.append("myFloatingBounds=").append(myFloatingBounds).append("; ");
-    buffer.append("mySplitMode=").append(mySplitMode);
-    buffer.append(']');
-    return buffer.toString();
+    return getClass().getName() + "[myId=" + myId
+           + "; myVisible=" + myVisible
+           + "; myActive=" + myActive
+           + "; myAnchor=" + myAnchor
+           + "; myOrder=" + myOrder
+           + "; myAutoHide=" + myAutoHide
+           + "; myWeight=" + myWeight
+           + "; mySideWeight=" + mySideWeight
+           + "; myType=" + myType
+           + "; myInternalType=" + myInternalType
+           + "; myFloatingBounds=" + myFloatingBounds
+           + "; mySplitMode=" + mySplitMode +
+           ']';
   }
 
   public boolean wasRead() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
   private ToolWindowHeader myHeader;
 
-  InternalDecorator(final Project project, final WindowInfoImpl info, final ToolWindowImpl toolWindow) {
+  InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
     myProject = project;
     myToolWindow = toolWindow;
@@ -156,7 +156,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   /**
    * Applies specified decoration.
    */
-  public final void apply(final WindowInfoImpl info) {
+  public final void apply(@NotNull WindowInfoImpl info) {
     if (Comparing.equal(myInfo, info) || myProject == null || myProject.isDisposed()) {
       return;
     }
@@ -498,6 +498,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   /**
    * @return last window info applied to the decorator.
    */
+  @NotNull
   final WindowInfoImpl getWindowInfo() {
     return myInfo;
   }
