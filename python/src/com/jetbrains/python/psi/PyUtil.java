@@ -1348,7 +1348,7 @@ public class PyUtil {
   private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
     int n = 0;
     for (PyParameter parameter : parameters) {
-      if (parameter.getDefaultValue() != null) {
+      if (parameter.hasDefaultValue()) {
         n++;
       }
     }
