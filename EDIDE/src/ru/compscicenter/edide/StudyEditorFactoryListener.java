@@ -47,7 +47,9 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                         PsiFile psiOpenFile = PsiManager.getInstance(event.getEditor().getProject()).findFile(vfOpenedFile);
                         TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
                         for (int i = 0; i < replaceNum; i++) {
-                            int startOffset = Integer.parseInt(metaReader.readLine());
+                            int line = Integer.parseInt(metaReader.readLine()) - 1;
+                            int lineOffset = event.getEditor().getDocument().getLineStartOffset(line);
+                            int startOffset = lineOffset + Integer.parseInt(metaReader.readLine());
                             if (i == 0) {
                                 startOffset0 = startOffset;
                             }
