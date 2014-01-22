@@ -557,7 +557,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     MatchingHandler _handler = nameElement != null ? myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(nameElement) : null;
     if (!(_handler instanceof SubstitutionHandler)) _handler = myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(reference);
 
-    PsiElement other = PsiUtil.skipParenthesizedExprUp(myMatchingVisitor.getElement());
+    final PsiElement element = myMatchingVisitor.getElement();
+    PsiElement other = element instanceof PsiExpression ? PsiUtil.skipParenthesizedExprDown((PsiExpression)element) : element;
     if (_handler instanceof SubstitutionHandler &&
         !(myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
         !(qualifier instanceof PsiThisExpression)
