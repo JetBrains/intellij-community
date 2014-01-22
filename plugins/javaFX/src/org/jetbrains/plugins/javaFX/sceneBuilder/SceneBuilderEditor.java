@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.PathUtil;
-import javafx.embed.swing.JFXPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +154,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       throw new Exception(info.libPath + " no jar found");
     }
 
-    urls.add(new File(PathUtil.getJarPathForClass(JFXPanel.class)).toURI().toURL());
+    urls.add(new File(PathUtil.getJarPathForClass(Class.forName("javafx.embed.swing.JFXPanel"))).toURI().toURL());
     urls.add(new File(PathUtil.getJarPathForClass(SceneBuilderWrapper.class)).toURI().toURL());
 
     return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
