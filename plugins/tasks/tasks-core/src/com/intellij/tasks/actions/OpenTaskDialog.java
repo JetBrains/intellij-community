@@ -134,7 +134,7 @@ public class OpenTaskDialog extends DialogWrapper {
         repository.setTaskState(myTask, TaskState.IN_PROGRESS);
       }
       catch (Exception ex) {
-        Messages.showErrorDialog(myProject, "Could not set state for " + myTask.getId(), "Error");
+        Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
         LOG.warn(ex);
       }
     }
