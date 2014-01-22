@@ -757,6 +757,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+    sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)
     arg(value: "$ch/native/WinLauncher/WinLauncher/resource.h")
