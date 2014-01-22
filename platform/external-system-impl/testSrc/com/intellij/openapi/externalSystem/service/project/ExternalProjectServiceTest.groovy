@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.OrderRootType
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
@@ -98,5 +99,44 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
+  }
+
+  void 'test library dependency with sources path added on subsequent refresh'() {
+    applyProjectState([
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: ["bin_path"]) } } },
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: ["bin_path"], src: ["source_path"]) } } }
+    ])
+
+    def helper = ServiceManager.getService(ProjectStructureHelper.class)
+    def module = helper.findIdeModule('module', project)
+    assertNotNull(module)
+
+    def facade = ServiceManager.getService(PlatformFacade.class)
+    def entries = facade.getOrderEntries(module)
+    def dependencies = [:].withDefault { 0 }
+    entries.each { OrderEntry entry ->
+      if (entry instanceof LibraryOrderEntry) {
+        def name = (entry as LibraryOrderEntry).libraryName
+        dependencies[name]++
+        if ("Test_external_system_id: lib1".equals(name)) {
+          def classesUrls = entry.getUrls(OrderRootType.CLASSES)
+          assertEquals(1, classesUrls.length)
+          assertTrue(classesUrls[0].endsWith("bin_path"))
+          def sourceUrls = entry.getUrls(OrderRootType.SOURCES)
+          assertEquals(1, sourceUrls.length)
+          assertTrue(sourceUrls[0].endsWith("source_path"))
+        }
+        else {
+          fail()
+        }
+      }
+    }
+    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
   }
 }
