@@ -35,9 +35,12 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -468,8 +471,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     if (element instanceof PyTargetExpression) {
-      return ((PyTargetExpression)element).getQualifier() == null &&
-             PsiTreeUtil.getParentOfType(element, ScopeOwner.class) instanceof PyFunction;
+      final PyTargetExpression target = (PyTargetExpression)element;
+      return !target.isQualified() && ScopeUtil.getScopeOwner(target) instanceof PyFunction;
     }
     return false;
   }
