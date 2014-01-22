@@ -115,7 +115,11 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
   @Nullable
   private HierarchyProvider getProvider(final AnActionEvent e) {
-    return findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getDataContext());
+    final HierarchyProvider provider = findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getDataContext());
+    if (provider == null) {
+      return findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+    }
+    return provider;
   }
 
   @Nullable
