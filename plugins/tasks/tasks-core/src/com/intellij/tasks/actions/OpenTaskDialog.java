@@ -107,7 +107,9 @@ public class OpenTaskDialog extends DialogWrapper {
       myCreateChangelist.setSelected(manager.getState().createChangelist);
       myCreateBranch.setSelected(manager.getState().createBranch);
 
-      if (vcs.getType() != VcsType.distributed) {
+      // In git 'master' branch appears (in .git/refs/heads/master) only after at least one commit was made in it.
+      // Before that feature branches can't be created normally.
+      if (vcs.getType() != VcsType.distributed || !branchesExist(project)) {
         myCreateBranch.setSelected(false);
         myCreateBranch.setVisible(false);
         myBranchName.setVisible(false);
@@ -160,6 +162,15 @@ public class OpenTaskDialog extends DialogWrapper {
       updateFields();
     }
     init();
+  }
+
+  private static boolean branchesExist(Project project) {
+    for (VcsTaskHandler handler : VcsTaskHandler.getAllHandlers(project)) {
+      if (handler.getCurrentTasks().length != 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void updateFields() {
