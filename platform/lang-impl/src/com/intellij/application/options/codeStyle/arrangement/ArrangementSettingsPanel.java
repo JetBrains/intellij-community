@@ -162,9 +162,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
     else {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
-      if (!groupings.isEmpty()) {
-        myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
-      }
+      myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
       myMatchingRulesPanel.setRules(copy(s.getRules()));
       if (myForceArrangementPanel != null) {
         myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
