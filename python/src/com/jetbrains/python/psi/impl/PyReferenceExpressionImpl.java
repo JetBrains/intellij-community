@@ -180,7 +180,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Nullable
   public QualifiedName asQualifiedName() {
     if (myQualifiedName == null) {
-      myQualifiedName = PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+      myQualifiedName = PyPsiUtils.asQualifiedName(this);
     }
     return myQualifiedName;
   }

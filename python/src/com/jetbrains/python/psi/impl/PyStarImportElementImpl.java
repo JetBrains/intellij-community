@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -101,7 +100,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
         if (elt != null) { // always? who knows :)
           PyReferenceExpression imp_src = elt.getImportSource();
           if (imp_src != null) {
-            return PyResolveUtil.toPath(imp_src);
+            return PyPsiUtils.toPath(imp_src);
           }
         }
         return "<?>";
