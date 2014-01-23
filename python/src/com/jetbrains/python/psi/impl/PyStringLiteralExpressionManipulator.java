@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.jetbrains.python.PythonStringUtil;
-import com.jetbrains.python.psi.PyElementGenerator;
 
 /**
  * @author traff
@@ -34,9 +33,8 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
     }
 
     String newName = range.replace(element.getText(), newContent);
-
-    return (PyStringLiteralExpressionImpl)element
-      .replace(PyElementGenerator.getInstance(element.getProject()).createStringLiteralAlreadyEscaped(newName));
+    element.updateText(newName);
+    return element;
   }
 
   @Override
