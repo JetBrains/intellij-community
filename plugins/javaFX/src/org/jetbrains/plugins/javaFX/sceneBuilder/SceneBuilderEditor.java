@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +114,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private void loadSceneBuilder(SceneBuilderInfo info) throws Exception {
     mySceneLoader = createSceneLoader(info);
 
-    System.out.println(mySceneLoader.loadClass("com.oracle.javafx.scenebuilder.app.SceneBuilderApp"));
-
-    Class<?> wrapperClass = mySceneLoader.loadClass("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper");
+    Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper", false, mySceneLoader);
     myFxPanel = (JComponent)wrapperClass.getMethod("create", String.class).invoke(null, myFile.getPath());
 
     myPanel.add(myFxPanel, SCENE_CARD);
@@ -155,6 +156,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       throw new Exception(info.libPath + " no jar found");
     }
 
+    final String parent = new File(PathUtil.getJarPathForClass(SceneBuilderEditor.class)).getParent();
+    if (SceneBuilderEditor.class.getClassLoader() instanceof PluginClassLoader) {
+      urls.add(new File(new File(parent).getParent(), "embedder.jar").toURI().toURL());
+    } else {
+      urls.add(new File(parent, "FXBuilderEmbedder").toURI().toURL());
+    }
     return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
 

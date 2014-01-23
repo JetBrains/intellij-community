@@ -35,7 +35,13 @@ import java.util.List;
  * to implement your own <code>ActionGroup</code>.
  *
  * @see Constraints
- * @see ComputableActionGroup
+ *
+ * @see com.intellij.openapi.actionSystem.ComputableActionGroup
+ *
+ * @see com.intellij.ide.actions.NonEmptyActionGroup
+ * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see com.intellij.ide.actions.SmartPopupActionGroup
+ *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");

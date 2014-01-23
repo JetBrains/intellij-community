@@ -1849,13 +1849,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    PsiExpression qualifier = refExpr.getQualifierExpression();
-    if (qualifier == null) {
+    if (DfaValueFactory.isEffectivelyUnqualified(refExpr)) {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
     }
 
     if (!(var instanceof PsiField) || !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE)) {
-      DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
+      DfaVariableValue qualifierValue = createChainedVariableValue(refExpr.getQualifierExpression());
       if (qualifierValue != null) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue);
       }

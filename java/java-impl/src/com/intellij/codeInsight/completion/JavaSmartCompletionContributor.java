@@ -302,10 +302,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     });
 
     final Key<PsiTryStatement> tryKey = Key.create("try");
-    extend(CompletionType.SMART, psiElement().afterLeaf(
-      psiElement().withText("("))
-      .withSuperParent(3, psiElement(PsiCatchSection.class).withParent(
-        psiElement(PsiTryStatement.class).save(tryKey))), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, psiElement().insideStarting(
+      psiElement(PsiTypeElement.class).withParent(
+        psiElement(PsiCatchSection.class).withParent(
+          psiElement(PsiTryStatement.class).save(tryKey)))), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();

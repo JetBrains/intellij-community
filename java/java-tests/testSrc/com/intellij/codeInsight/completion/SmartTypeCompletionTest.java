@@ -317,7 +317,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testInsideCatch() throws Exception { doTest(); }
+  public void testInsideCatch() { doTest(); }
+  public void testInsideCatchFinal() { doTest(); }
 
   public void testGenerics6() throws Exception {
     String path = "/generics";

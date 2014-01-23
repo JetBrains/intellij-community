@@ -28,6 +28,9 @@ import java.util.Set;
 
 /**
  * Represents a group of actions.
+ *
+ * @see com.intellij.openapi.actionSystem.DefaultActionGroup
+ * @see com.intellij.openapi.actionSystem.ComputableActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;

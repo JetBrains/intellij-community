@@ -16,8 +16,15 @@
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.codeInsight.editorActions.BraceMatcherBasedSelectioner;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -26,5 +33,27 @@ public class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectione
   @Override
   public boolean canSelect(PsiElement e) {
     return e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType;
+  }
+
+  @Override
+  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+    List<TextRange> superResult = super.select(e, editorText, cursorOffset, editor);
+
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(cursorOffset);
+    if (CustomFileTypeQuoteHandler.isQuotedToken(iterator.getTokenType())) {
+      List<TextRange> result = ContainerUtil.newArrayList();
+      int start = iterator.getStart();
+      int end = iterator.getEnd();
+      if (end - start > 2) {
+        result.add(new TextRange(start + 1, end - 1));
+      }
+      result.add(new TextRange(start, end));
+      if (superResult != null) {
+        result.addAll(superResult);
+      }
+      return result;
+    }
+    
+    return superResult;
   }
 }

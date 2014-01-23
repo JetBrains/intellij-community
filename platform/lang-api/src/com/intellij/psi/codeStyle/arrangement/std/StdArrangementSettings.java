@@ -52,6 +52,30 @@ public class StdArrangementSettings implements ArrangementSettings {
     return myRules;
   }
 
+  @NotNull
+  protected List<ArrangementGroupingRule> cloneGroupings() {
+    final ArrayList<ArrangementGroupingRule> groupings = new ArrayList<ArrangementGroupingRule>();
+    for (ArrangementGroupingRule grouping : myGroupings) {
+      groupings.add(grouping.clone());
+    }
+    return groupings;
+  }
+
+  @NotNull
+  protected List<StdArrangementMatchRule> cloneMatchRules() {
+    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    for (StdArrangementMatchRule rule : myRules) {
+      rules.add(rule.clone());
+    }
+    return rules;
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettings clone() {
+    return new StdArrangementSettings(cloneGroupings(), cloneMatchRules());
+  }
+
   @Override
   @NotNull
   public List<ArrangementGroupingRule> getGroupings() {

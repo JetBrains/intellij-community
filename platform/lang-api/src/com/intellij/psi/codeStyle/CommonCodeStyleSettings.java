@@ -148,7 +148,7 @@ public class CommonCodeStyleSettings {
       targetIndentOptions.copyFrom(myIndentOptions);
     }
     if (myArrangementSettings != null) {
-      rootSettings.setArrangementSettings(myArrangementSettings);
+      commonSettings.setArrangementSettings(myArrangementSettings.clone());
     }
     return commonSettings;
   }

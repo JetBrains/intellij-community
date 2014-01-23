@@ -69,6 +69,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     VirtualFile myFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = myFile != null && checkEnabled(myFile);
     e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(myFile != null);
   }
 
   @Override
