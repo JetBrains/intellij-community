@@ -21,6 +21,7 @@ public class StructuralSearchAction extends AnAction {
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
+    //StructuralSearchPlugin.getInstance(searchContext.getProject());
     final SearchDialog searchDialog = new SearchDialog(searchContext);
 
     if (config!=null) {
@@ -40,7 +41,7 @@ public class StructuralSearchAction extends AnAction {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     final StructuralSearchPlugin plugin = project==null ? null:StructuralSearchPlugin.getInstance( project );
 
-    if (plugin == null || plugin.isSearchInProgress()) {
+    if (plugin == null || plugin.isSearchInProgress() || plugin.isDialogVisible()) {
       presentation.setEnabled( false );
     } else {
       presentation.setEnabled( true );

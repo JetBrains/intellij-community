@@ -43,7 +43,7 @@ public class StructuralReplaceAction extends AnAction {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     final StructuralSearchPlugin plugin = (project == null)? null:StructuralSearchPlugin.getInstance( project );
 
-    if (plugin== null || plugin.isSearchInProgress() || plugin.isReplaceInProgress()) {
+    if (plugin== null || plugin.isSearchInProgress() || plugin.isReplaceInProgress() || plugin.isDialogVisible()) {
       presentation.setEnabled( false );
     } else {
       presentation.setEnabled( true );

@@ -809,6 +809,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   @Override
   public void show() {
+    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
     Configuration.setActiveCreator(this);
     searchCriteriaEdit.putUserData(
       SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY,
@@ -966,6 +967,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     myAlarm.cancelAllRequests();
 
     super.dispose();
+    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
   }
 
   protected void disposeEditorContent() {

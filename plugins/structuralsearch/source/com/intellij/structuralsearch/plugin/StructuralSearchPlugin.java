@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class StructuralSearchPlugin implements ProjectComponent, JDOMExternalizable {
   private boolean searchInProgress;
   private boolean replaceInProgress;
+  private boolean myDialogVisible;
   private final ConfigurationManager myConfigurationManager = new ConfigurationManager();
   private ExistingTemplatesComponent myExistingTemplatesComponent;
 
@@ -33,6 +34,14 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
 
   public void setReplaceInProgress(boolean replaceInProgress) {
     this.replaceInProgress = replaceInProgress;
+  }
+
+  public boolean isDialogVisible() {
+    return myDialogVisible;
+  }
+
+  public void setDialogVisible(boolean dialogVisible) {
+    myDialogVisible = dialogVisible;
   }
 
   public StructuralSearchPlugin(UltimateVerifier verifier) {
