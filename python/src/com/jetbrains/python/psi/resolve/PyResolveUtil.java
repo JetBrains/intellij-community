@@ -62,7 +62,7 @@ public class PyResolveUtil {
    * @return previous statement, or null.
    */
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt, TokenSet elementTypes) {
+  private static PsiElement getPrevNodeOf(PsiElement elt, TokenSet elementTypes) {
     ASTNode seeker = elt.getNode();
     while (seeker != null) {
       ASTNode feeler = seeker.getTreePrev();
@@ -89,7 +89,7 @@ public class PyResolveUtil {
   }
 
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt) {
+  private static PsiElement getPrevNodeOf(PsiElement elt) {
     if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
     return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
   }
@@ -231,7 +231,7 @@ public class PyResolveUtil {
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
    * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
-  protected static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
+  private static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
     if (innerFunction == null) {
       return false;
     }
