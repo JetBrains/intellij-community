@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,21 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.ide.DataManager;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class FindInProjectManager {
   private final Project myProject;
@@ -87,151 +78,68 @@ public class FindInProjectManager {
       @Override
       public void run() {
         findModel.setOpenInNewTabVisible(false);
-        final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-        if (findModel.getDirectoryName() != null && psiDirectory == null){
-          return;
-        }
         if (isOpenInNewTabEnabled) {
           myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
         }
 
-        com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
-
-        if (manager == null) return;
-        findManager.getFindInProjectModel().copyFrom(findModel);
-        final FindModel findModelCopy = (FindModel)findModel.clone();
-        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
-        final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
-
-        final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-        UsageTarget usageTarget = StringUtil.isEmpty(findModel.getStringToFind()) ? createFileByTypeTarget(findModel)
-                                                         : new FindInProjectUtil.StringUsageTarget(myProject, findModel.getStringToFind());
-        manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
-          new Factory<UsageSearcher>() {
-            @Override
-            public UsageSearcher create() {
-              return new UsageSearcher() {
-                @Override
-                public void generate(@NotNull final Processor<Usage> processor) {
-                  myIsFindInProgress = true;
-
-                  try {
-                    Processor<UsageInfo> consumer = new Processor<UsageInfo>() {
-                      @Override
-                      public boolean process(UsageInfo info) {
-                        Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-                        usage.getPresentation().getIcon(); // cache icon
-                        return processor.process(usage);
-                      }
-                    };
-                    FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, true, consumer, processPresentation);
-                  }
-                  finally {
-                    myIsFindInProgress = false;
-                  }
-                }
-              };
-            }
-          },
-          processPresentation,
-          presentation,
-          null
-        );
+        startFindInProject(findModel);
       }
+
     });
     findModel.setOpenInNewTabVisible(false);
   }
 
-  @NotNull
-  private ConfigurableUsageTarget createFileByTypeTarget(@NotNull FindModel model) {
-    final String filter = model.getFileFilter();
-    return new ConfigurableUsageTarget() {
-      @Override
-      public void showSettings() {
-        Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
-        JComponent component = selectedContent == null ? null : selectedContent.getComponent();
-        findInProject(DataManager.getInstance().getDataContext(component));
-      }
+  public void startFindInProject(@NotNull FindModel findModel) {
+    final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
+    if (findModel.getDirectoryName() != null && psiDirectory == null){
+      return;
+    }
 
-      @Override
-      public void findUsages() {
-        throw new IncorrectOperationException();
-      }
+    com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
 
-      @Override
-      public void findUsagesInEditor(@NotNull FileEditor editor) {
-        throw new IncorrectOperationException();
-      }
+    if (manager == null) return;
+    final FindManager findManager = FindManager.getInstance(myProject);
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = (FindModel)findModel.clone();
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
+    final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
-      @Override
-      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
-        throw new IncorrectOperationException();
-      }
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+    ConfigurableUsageTarget usageTarget = new FindInProjectUtil.StringUsageTarget(myProject, findModel);
 
-      @Override
-      public boolean isValid() {
-        return true;
-      }
+    ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);
 
-      @Override
-      public boolean isReadOnly() {
-        return false;
-      }
+    manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
+      new Factory<UsageSearcher>() {
+        @Override
+        public UsageSearcher create() {
+          return new UsageSearcher() {
+            @Override
+            public void generate(@NotNull final Processor<Usage> processor) {
+              myIsFindInProgress = true;
 
-      @Nullable
-      @Override
-      public VirtualFile[] getFiles() {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-
-      @Override
-      public void update() {
-      }
-
-      @Nullable
-      @Override
-      public String getName() {
-        return "Files with mask \""+filter+"\"";
-      }
-
-      @Nullable
-      @Override
-      public ItemPresentation getPresentation() {
-        return new ItemPresentation() {
-          @Nullable
-          @Override
-          public String getPresentableText() {
-            return getName();
-          }
-
-          @Nullable
-          @Override
-          public String getLocationString() {
-            return null;
-          }
-
-          @Nullable
-          @Override
-          public Icon getIcon(boolean unused) {
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public void navigate(boolean requestFocus) {
-      }
-
-      @Override
-      public boolean canNavigate() {
-        return false;
-      }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
-    };
+              try {
+                Processor<UsageInfo> consumer = new Processor<UsageInfo>() {
+                  @Override
+                  public boolean process(UsageInfo info) {
+                    Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+                    usage.getPresentation().getIcon(); // cache icon
+                    return processor.process(usage);
+                  }
+                };
+                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, true, consumer, processPresentation);
+              }
+              finally {
+                myIsFindInProgress = false;
+              }
+            }
+          };
+        }
+      },
+      processPresentation,
+      presentation,
+      null
+    );
   }
 
   public boolean isWorkInProgress() {

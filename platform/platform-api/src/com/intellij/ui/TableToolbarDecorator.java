@@ -141,24 +141,11 @@ class TableToolbarDecorator extends ToolbarDecorator {
     myRemoveAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < table.getModel().getRowCount()) {
-          tableModel.removeRow(index);
-          if (index < table.getModel().getRowCount()) {
-            table.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              table.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
+        if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
+          table.requestFocus();
+          TableUtil.updateScroller(table, false);
         }
-
-        table.requestFocus();
-
-        TableUtil.updateScroller(table, false);
       }
     };
 

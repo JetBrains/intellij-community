@@ -35,6 +35,8 @@ import java.util.regex.Pattern;
 
 /**
  * @author Dennis.Ushakov
+ *
+ * TODO: update to REST APIv5
  */
 @Tag("PivotalTracker")
 public class PivotalTrackerRepository extends BaseRepositoryImpl {
@@ -333,20 +335,40 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Override
   public void setTaskState(Task task, TaskState state) throws Exception {
-    if (state != TaskState.IN_PROGRESS) super.setTaskState(task, state);
     final String realId = getRealId(task.getId());
     if (realId == null) return;
+    final String stateName;
+    switch (state) {
+      case IN_PROGRESS:
+        stateName = "started";
+        break;
+      case RESOLVED:
+        stateName = "finished";
+        break;
+      // may add some others in future
+      default:
+        return;
+    }
     String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
-    url +="?" + encodeUrl("story[current_state]") + "=" + encodeUrl("started");
+    url += "?" + encodeUrl("story[current_state]") + "=" + encodeUrl(stateName);
     LOG.info("Updating issue state by id: " + url);
     final HttpMethod method = doREST(url, HTTPMethod.PUT);
     final InputStream stream = method.getResponseBodyAsStream();
     final Element element = new SAXBuilder(false).build(stream).getRootElement();
-    final Task story = element.getName().equals("story") ? createIssue(element) : null;
-    if (story == null) {
-      throw new Exception("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                                "\n" + element.getText());
+    if (!element.getName().equals("story")) {
+      if (element.getName().equals("errors")) {
+        throw new Exception(extractErrorMessage(element));
+      } else {
+        // unknown error, probably our fault
+        LOG.warn("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode());
+        throw new Exception(String.format("Cannot set state '%s' for issue.", stateName));
+      }
     }
+  }
+
+  @NotNull
+  private static String extractErrorMessage(@NotNull Element element) {
+    return StringUtil.notNullize(element.getChild("error").getText());
   }
 
   @Override

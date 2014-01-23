@@ -130,7 +130,7 @@ public abstract class TaskRepository {
    * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
    */
   public void setTaskState(Task task, TaskState state) throws Exception {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }
 
   // for serialization

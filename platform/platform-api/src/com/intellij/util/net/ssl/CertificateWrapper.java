@@ -153,12 +153,13 @@ public class CertificateWrapper {
 
   /**
    * Find out full list of names from specification.
+   * See http://tools.ietf.org/html/rfc5280#section-4.1.2.2 for details.
    */
   public enum CommonField {
     COMMON_NAME("CN", "Common Name"),
     ORGANIZATION("O", "Organization"),
-    ORGANIZATION_UNIT("OU", "Organization Unit"),
-    LOCATION("L", "Location"),
+    ORGANIZATION_UNIT("OU", "Organizational Unit"),
+    LOCATION("L", "Locality"),
     COUNTRY("C", "Country"),
     STATE("ST", "State or Province");
 

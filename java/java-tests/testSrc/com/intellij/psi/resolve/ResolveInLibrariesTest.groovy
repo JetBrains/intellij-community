@@ -125,8 +125,8 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assert other0.isInheritor(i0, true)
     assert !other0.isInheritor(i0, false)
 
-    assert ClassInheritorsSearch.search(i0).findAll() == [m0, b1, other0]
-    assert ClassInheritorsSearch.search(m0).findAll() == [b1, other0]
+    assert ClassInheritorsSearch.search(i0).findAll() == [m0, b1, other0] as Set
+    assert ClassInheritorsSearch.search(m0).findAll() == [b1, other0] as Set
 
     assert fooInheritors(i0) == [fooMethod(m0), fooMethod(other0)] as Set
     assert fooInheritors(m0) == [fooMethod(other0), fooMethod(b1)] as Set

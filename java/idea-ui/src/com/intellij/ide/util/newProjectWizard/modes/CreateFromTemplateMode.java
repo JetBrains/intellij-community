@@ -49,7 +49,8 @@ public class CreateFromTemplateMode extends WizardMode {
         List<ProjectTemplate> values = Arrays.asList(templates);
         if (!values.isEmpty()) {
           Icon icon = factory.getGroupIcon(group);
-          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), null, group);
+          String parentGroup = factory.getParentGroup(group);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group);
           groups.putValues(templatesGroup, values);
         }
       }

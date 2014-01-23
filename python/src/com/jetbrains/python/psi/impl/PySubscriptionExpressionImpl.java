@@ -37,8 +37,19 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     super(astNode);
   }
 
+  @NotNull
   public PyExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+  }
+
+  @NotNull
+  @Override
+  public PyExpression getRootOperand() {
+    PyExpression operand = getOperand();
+    while (operand instanceof PySubscriptionExpression) {
+      operand = ((PySubscriptionExpression)operand).getOperand();
+    }
+    return operand;
   }
 
   @Nullable
@@ -74,7 +85,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
           res = ((PySubscriptableType)type).getElementType(indexExpression, context);
         }
         else if (type instanceof PyCollectionType) {
-          res = ((PyCollectionType) type).getElementType(context);
+          res = ((PyCollectionType)type).getElementType(context);
         }
       }
     }

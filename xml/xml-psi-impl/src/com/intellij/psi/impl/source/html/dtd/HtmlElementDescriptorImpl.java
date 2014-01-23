@@ -23,6 +23,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.HashMap;
@@ -109,6 +110,9 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
             XmlUtil.findLocalNameByQualifiedName(caseSensitiveAttributeName), XmlUtil.XML_NAMESPACE_URI, context);
         }
       }
+    }
+    if (descriptor == null && HtmlUtil.isHtml5Context(context)) {
+      descriptor = myDelegate.getAttributeDescriptor(attributeName, context);
     }
     return descriptor;
   }

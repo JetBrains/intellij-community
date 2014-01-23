@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +44,32 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     myPropertyName = propertyName;
     myOldValue = oldValue;
     myNewValue = newValue;
+    checkPropertyValuesCorrect(requestor, propertyName, oldValue, newValue);
+  }
+
+  public static void checkPropertyValuesCorrect(Object requestor, @NotNull String propertyName, Object oldValue, Object newValue) {
+    if (Comparing.equal(oldValue, newValue) && FileContentUtilCore.FORCE_RELOAD_REQUESTOR != requestor) {
+      throw new IllegalArgumentException("Values must be different, got the same: " + oldValue);
+    }
+    if (VirtualFile.PROP_NAME.equals(propertyName)) {
+      if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
+      if (newValue == null) throw new IllegalArgumentException("newName must not be null");
+    }
+    else if (VirtualFile.PROP_ENCODING.equals(propertyName)) {
+      if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
+    }
+    else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
+      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got "+oldValue);
+      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newWriteable must be boolean, got "+newValue);
+    }
+    else if (VirtualFile.PROP_HIDDEN.equals(propertyName)) {
+      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldHidden must be boolean, got "+oldValue);
+      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newHidden must be boolean, got "+newValue);
+    }
+    else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
+      if (oldValue != null && !(oldValue instanceof String)) throw new IllegalArgumentException("oldSymTarget must be String, got "+oldValue);
+      if (newValue != null && !(newValue instanceof String)) throw new IllegalArgumentException("newSymTarget must be String, got "+newValue);
+    }
   }
 
   @NotNull

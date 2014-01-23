@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
 
-  private static final String ELEMENT_DELETED_TEMPLATES = "deleted_templates";
-  private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
-  private static final String ELEMENT_RECENT_TEMPLATES = "recent_templates";
-  private static final String ELEMENT_TEMPLATES = "templates";
+  @NonNls private static final String ELEMENT_DELETED_TEMPLATES = "deleted_templates";
+  @NonNls private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
+  @NonNls private static final String ELEMENT_RECENT_TEMPLATES = "recent_templates";
+  @NonNls private static final String ELEMENT_TEMPLATES = "templates";
 
   private final FileTypeManagerEx myTypeManager;
 
@@ -131,12 +131,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   @Override
-  @TestOnly
-  public FileTemplate addInternal(@NotNull String name, @NotNull String extension) {
-    return myInternalTemplatesManager.addTemplate(name, extension);
-  }
-
-  @Override
   @NotNull
   public Properties getDefaultProperties() {
     @NonNls Properties props = new Properties();
@@ -165,6 +159,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return props;
   }
 
+  @NotNull
   private static String getCalendarValue(final Calendar calendar, final int field) {
     int val = calendar.get(field);
     if (field == Calendar.MONTH) val++;
@@ -189,7 +184,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-
     final Element recentElement = element.getChild(ELEMENT_RECENT_TEMPLATES);
     if (recentElement != null) {
       myRecentList.readExternal(recentElement);
@@ -250,7 +244,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   // need this to support options from older format
-  private static void applyReformatState(Set<String> templateNamesWithReformatOff, Collection<FileTemplateBase> templates) {
+  private static void applyReformatState(@NotNull Set<String> templateNamesWithReformatOff, @NotNull Collection<FileTemplateBase> templates) {
     for (FileTemplateBase template : templates) {
       if (templateNamesWithReformatOff.contains(template.getName())) {
         template.setReformatCode(false);
@@ -259,7 +253,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   // need this to support options from older format
-  private static void applyDeletedState(DeletedTemplatesManager deletedDefaults, Collection<FileTemplateBase> templates) {
+  private static void applyDeletedState(@NotNull DeletedTemplatesManager deletedDefaults, @NotNull Collection<FileTemplateBase> templates) {
     for (FileTemplateBase template : templates) {
       if (template instanceof BundledFileTemplate && deletedDefaults.contains(template.getQualifiedName())) {
         ((BundledFileTemplate)template).setEnabled(false);
@@ -353,7 +347,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return template;
   }
 
-  private static String normalizeText(String text) {
+  @NotNull
+  private static String normalizeText(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
     text = StringUtil.replace(text, "$NAME$", "${NAME}");
     text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
@@ -364,6 +359,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   @NonNls
+  @NotNull
   private String getTestClassTemplateText(@NotNull @NonNls String templateName) {
     return "package $PACKAGE_NAME$;\npublic " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
@@ -387,6 +383,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   @NonNls
+  @NotNull
   private String getDefaultClassTemplateText(@NotNull @NonNls String templateName) {
     return IdeBundle.message("template.default.class.comment", ApplicationNamesInfo.getInstance().getFullProductName()) +
            "package $PACKAGE_NAME$;\n" + "public " + internalTemplateToSubject(templateName) + " $NAME$ { }";
@@ -403,7 +400,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   @Nullable
-  private static FileTemplate getTemplateFromManager(final @NotNull String templateName, final @NotNull FTManager ftManager) {
+  private static FileTemplate getTemplateFromManager(@NotNull final String templateName, @NotNull final FTManager ftManager) {
     FileTemplateBase template = ftManager.getTemplate(templateName);
     if (template != null) {
       return template;
@@ -423,7 +420,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
   @Override
   @NotNull
-  public FileTemplate getDefaultTemplate(final @NotNull String name) {
+  public FileTemplate getDefaultTemplate(@NotNull final String name) {
     final String templateQName = myTypeManager.getExtension(name).isEmpty()? FileTemplateBase.getQualifiedName(name, "java") : name;
 
     for (FTManager manager : myAllManagers) {
@@ -467,7 +464,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   @Override
-  public void setTemplates(@NotNull String templatesCategory, Collection<FileTemplate> templates) {
+  public void setTemplates(@NotNull String templatesCategory, @NotNull Collection<FileTemplate> templates) {
     for (FTManager manager : myAllManagers) {
       if (templatesCategory.equals(manager.getName())) {
         manager.updateTemplates(templates);

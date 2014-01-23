@@ -116,7 +116,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     try {
       final String[] visibleFiles = component.getVisibleFiles();
       Assert.assertArrayEquals(Arrays.toString(visibleFiles),
-                               new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo3 in AFoo)", "a.java (AFoo2 in AFoo)"}, visibleFiles);
+                               new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
     }
     finally {
       component.removeNotify();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -582,7 +582,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  public void execute(final ArrayList<FinalizableCommand> commandList) {
+  public void execute(@NotNull List<FinalizableCommand> commandList) {
     for (FinalizableCommand each : commandList) {
       if (each.willChangeState()) {
         fireStateChanged();
@@ -647,7 +647,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateEditorComponentImpl(EditorsSplitters splitters,
-                                           final ArrayList<FinalizableCommand> commandList,
+                                           List<FinalizableCommand> commandList,
                                            final boolean forced) {
     final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
@@ -725,7 +725,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void showAndActivate(final String id,
                                final boolean dirtyMode,
-                               final ArrayList<FinalizableCommand> commandsList,
+                               List<FinalizableCommand> commandsList,
                                boolean autoFocusContents,
                                boolean forcedFocusRequest) {
     if (!getToolWindow(id).isAvailable()) {
@@ -767,7 +767,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateToolWindowImpl(final String id,
-                                      final ArrayList<FinalizableCommand> commandList,
+                                      List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
     if (!FocusManagerImpl.getInstance().isUnforcedRequestAllowed() && !forced) return;
@@ -1182,7 +1182,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
     myId2StripeButton.put(id, button);
-    final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
+    List<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
     appendAddButtonCmd(button, info, commandsList);
 
     if (canWorkInDumbMode) {
@@ -1352,7 +1352,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void invokeLater(final Runnable runnable) {
-    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    List<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     commandList.add(new InvokeLaterCmd(runnable, myWindowManager.getCommandProcessor()));
     execute(commandList);
   }
@@ -1796,7 +1796,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private ActionCallback appendRequestFocusInEditorComponentCmd(EditorsSplitters splitters,
-                                                                final ArrayList<FinalizableCommand> commandList,
+                                                                List<FinalizableCommand> commandList,
                                                                 boolean forced) {
     if (myProject.isDisposed()) return new ActionCallback.Done();
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
@@ -1806,7 +1806,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return command.getDoneCallback();
   }
 
-  private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced) {
+  private void appendRequestFocusInToolWindowCmd(final String id, List<FinalizableCommand> commandList, boolean forced) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
     commandList

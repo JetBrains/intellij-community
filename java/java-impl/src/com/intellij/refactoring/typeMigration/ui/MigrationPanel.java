@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       final MigrationNode migrationNode = (MigrationNode)userObject;
       final UsageInfo[] failedUsages = myLabeler.getFailedUsages();
       if (failedUsages.length > 0) {
-        myConflictsPanel.showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(new PsiElement[0]), failedUsages);
+        myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);
       }
       final AbstractTreeNode rootNode = migrationNode.getParent();
       if (rootNode instanceof MigrationNode) {
@@ -450,7 +450,7 @@ public class MigrationPanel extends JPanel implements Disposable {
           }
           if (typeElement == null) typeElement = element;
           PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments();
-          final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(typeElement), new UsageInfo(typeElement)).getPresentation();
+          final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new PsiElement[]{typeElement}, new UsageInfo(typeElement)).getPresentation();
           boolean isPrefix = true;  //skip usage position
           for (TextChunk chunk : presentation.getText()) {
             if (!isPrefix) append(chunk.getText(), patchAttrs(usageInfo, chunk.getSimpleAttributesIgnoreBackground()));
