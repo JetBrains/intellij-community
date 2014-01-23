@@ -124,8 +124,8 @@ public class PythonKeywordCompletionTest extends PyTestCase {
 
   public void testNoElseBeforeExcept() {
     final List<String> lookupElementStrings = doTestByText("try:\n" +
-                                              "  a = 1\n" +
-                                              "<caret>");
+                                                           "  a = 1\n" +
+                                                           "<caret>");
     assertNotNull(lookupElementStrings);
     assertDoesntContain(lookupElementStrings, "else");
   }
@@ -167,6 +167,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     assertTrue(doTestByText("for item in range(10):\n" +
                             "    pass\n" +
                             "el<caret>").contains("else"));
+  }
+
+  public void testFinallyInElse() {  // PY-6755
+    doTest();
   }
 
   public void testForInComprehension() {  // PY-3687
