@@ -39,7 +39,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
@@ -375,7 +374,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    QualifiedName qualifierPath = PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
+    final QualifiedName qualifierPath = qualifier.asQualifiedName();
     if (qualifierPath != null) {
       AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
       PyResolveUtil.treeCrawlUp(proc, qualifier);

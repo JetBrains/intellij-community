@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -63,12 +62,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         continue;
       }
       expression = PyClassImpl.unfoldClass(expression);
-      superClasses.add(PyQualifiedNameFactory.fromExpression(expression));
+      superClasses.add(PyPsiUtils.asQualifiedName(expression));
     }
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new QualifiedName[superClasses.size()]),
-                               PyQualifiedNameFactory.fromExpression(psi.getMetaClassExpression()),
+                               PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(docStringExpression),
                                getStubElementType());

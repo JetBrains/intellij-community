@@ -85,7 +85,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         initializer = ((PyReferenceExpression) callee).asQualifiedName();
       }
     }
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.getQualifier() != null, parentStub);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), parentStub);
   }
 
   public void serialize(@NotNull final PyTargetExpressionStub stub, @NotNull final StubOutputStream stream)

@@ -550,10 +550,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private boolean haveQualifiers(PsiElement element) {
-    if (myElement.getQualifier() != null) {
+    if (myElement.isQualified()) {
       return true;
     }
-    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
+    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).isQualified()) {
       return true;
     }
     return false;

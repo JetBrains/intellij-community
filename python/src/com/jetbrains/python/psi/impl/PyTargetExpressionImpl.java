@@ -60,6 +60,7 @@ import java.util.List;
  * @author yole
  */
 public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
+
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -463,6 +464,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return qualifier != null ? (PyExpression) qualifier.getPsi() : null;
   }
 
+  @Nullable
+  @Override
+  public QualifiedName asQualifiedName() {
+    return PyPsiUtils.asQualifiedName(this);
+  }
+
   public String toString() {
     return super.toString() + ": " + getName();
   }
@@ -505,7 +512,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
       return null;
     }
-    return PyQualifiedNameFactory.fromExpression(findAssignedValue());
+    return PyPsiUtils.asQualifiedName(findAssignedValue());
   }
 
   @Nullable
@@ -556,7 +563,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     final PyExpression value = findAssignedValue();
     if (value instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)value).getCallee();
-      return PyQualifiedNameFactory.fromExpression(callee);
+      return PyPsiUtils.asQualifiedName(callee);
     }
     return null;
   }
