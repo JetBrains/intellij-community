@@ -164,7 +164,10 @@ public class PyResolveUtil {
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param elt       element from which we start (not checked by processor); if null, the search immediately returns null.
    * @return first element that the processor accepted.
+   *
+   * @deprecated Use {@link #scopeCrawlUp} instead.
    */
+  @Deprecated
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
     if (elt == null || !elt.isValid()) return null; // can't find anyway.
