@@ -33,3 +33,7 @@ except \
 while value \
         in values:  # <- missing continuation indent here
     do_smth()
+
+if (1 + x.
+        value()):
+    pass

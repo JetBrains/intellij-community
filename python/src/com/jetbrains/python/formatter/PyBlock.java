@@ -253,6 +253,11 @@ public class PyBlock implements ASTBlock {
     else if (parentType == PyElementTypes.REFERENCE_EXPRESSION) {
       if (child != _node.getFirstChildNode()) {
         childIndent = Indent.getNormalIndent();
+        if (hasLineBreaksBefore(child, 1)) {
+          if (isIndentNext(child)) {
+            childIndent = Indent.getContinuationIndent();
+          }
+        }
       }
     }
 
