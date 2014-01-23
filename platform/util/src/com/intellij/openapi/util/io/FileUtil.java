@@ -1354,13 +1354,31 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return loadLines(file.getPath(), encoding);
+  }
+
+  @NotNull
   public static List<String> loadLines(@NotNull String path) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(path));
+    return loadLines(path, null);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
+    InputStream stream = new FileInputStream(path);
     try {
-      return loadLines(reader);
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+      BufferedReader reader = new BufferedReader(in);
+      try {
+        return loadLines(reader);
+      }
+      finally {
+        reader.close();
+      }
     }
     finally {
-      reader.close();
+      stream.close();
     }
   }
 
