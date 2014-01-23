@@ -284,7 +284,8 @@ public class PyBlock implements ASTBlock {
            psi instanceof PyFunction ||
            psi instanceof PyTryExceptStatement ||
            psi instanceof PyElsePart ||
-           psi instanceof PyIfPart;
+           psi instanceof PyIfPart ||
+           psi instanceof PyWhileStatement;
   }
 
   private static boolean isSubscriptionOperand(ASTNode child) {
