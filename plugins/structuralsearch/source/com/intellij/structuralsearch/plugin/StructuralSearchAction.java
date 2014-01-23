@@ -8,8 +8,6 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 
 public class StructuralSearchAction extends AnAction {
-  // context of the search
-  private final SearchContext searchContext = new SearchContext();
 
   public StructuralSearchAction() {
     super(SSRBundle.message("structuralsearch.action"));
@@ -19,16 +17,7 @@ public class StructuralSearchAction extends AnAction {
    * @param event the event of action
    */
   public void actionPerformed(AnActionEvent event) {
-    try {
-      searchContext.configureFromDataContext(event.getDataContext());
-
-      triggerAction(null,searchContext);
-    }
-    finally {
-      searchContext.setProject(null);
-      searchContext.setFile(null);
-      searchContext.setCurrentFile(null);
-    }
+    triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {

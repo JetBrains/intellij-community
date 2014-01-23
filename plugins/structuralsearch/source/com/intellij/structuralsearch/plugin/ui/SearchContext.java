@@ -15,43 +15,34 @@ import com.intellij.structuralsearch.impl.matcher.DataProvider;
  * Context of the search to be done
  */
 public final class SearchContext implements DataProvider, Cloneable {
-  private PsiFile file;
-  private Project project;
-  private VirtualFile currentFile;
+  private final PsiFile file;
+  private final Project project;
 
-  public void setCurrentFile(VirtualFile currentFile) {
-    this.currentFile = currentFile;
+  private SearchContext(Project project, PsiFile file) {
+    this.project = project;
+    this.file = file;
   }
 
   public PsiFile getFile() {
-    if (currentFile != null && (file == null || !currentFile.equals(file.getContainingFile().getVirtualFile()))) {
-      file = PsiManager.getInstance(project).findFile(currentFile);
-    }
-
     return file;
-  }
-
-  public void setFile(PsiFile file) {
-    this.file = file;
   }
 
   public Project getProject() {
     return project;
   }
 
-  public void setProject(Project project) {
-    this.project = project;
-  }
-
-  public void configureFromDataContext(DataContext context) {
+  public static SearchContext buildFromDataContext(DataContext context) {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    setProject(project);
 
-    setFile(CommonDataKeys.PSI_FILE.getData(context));
-    setCurrentFile(CommonDataKeys.VIRTUAL_FILE.getData(context));
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
+    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    if (vFile != null && (file == null || !vFile.equals(file.getContainingFile().getVirtualFile()))) {
+      file = PsiManager.getInstance(project).findFile(vFile);
+    }
+    return new SearchContext(project, file);
   }
 
   public Editor getEditor() {

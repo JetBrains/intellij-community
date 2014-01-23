@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,7 @@ public class SSBasedInspectionOptions {
   private static SearchContext createSearchContext() {
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
                                             "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
-    SearchContext searchContext = new SearchContext();
-    searchContext.configureFromDataContext(event.getDataContext());
-    return searchContext;
+    return SearchContext.buildFromDataContext(event.getDataContext());
   }
 
   public void configurationsChanged(final SearchContext searchContext) {
