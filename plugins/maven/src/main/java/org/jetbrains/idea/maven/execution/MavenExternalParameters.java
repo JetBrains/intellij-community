@@ -118,6 +118,8 @@ public class MavenExternalParameters {
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
 
+    params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));

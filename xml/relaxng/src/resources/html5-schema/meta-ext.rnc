@@ -55,3 +55,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.elem.metadata |= meta.http-equiv.x-ua-compatible.elem # not quite right per spec
                                                                # if the definition is
                                                                # reused in another language
+
+     html.inner |= (
+                     head.inner,
+                     body.inner
+                   )

@@ -181,7 +181,7 @@ public class ScopeImpl implements Scope {
       @Override
       public void visitPyTargetExpression(PyTargetExpression node) {
         final PsiElement parent = node.getParent();
-        if (node.getQualifier() == null && !(parent instanceof PyImportElement)) {
+        if (!node.isQualified() && !(parent instanceof PyImportElement)) {
           super.visitPyTargetExpression(node);
         }
       }

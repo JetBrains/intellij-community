@@ -93,7 +93,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
     }
 
     private static boolean isInBuiltins(PyExpression callee) {
-      if (callee instanceof PyQualifiedExpression && (((PyQualifiedExpression)callee).getQualifier() != null)) {
+      if (callee instanceof PyQualifiedExpression && (((PyQualifiedExpression)callee).isQualified())) {
         return false;
       }
       PsiReference reference = callee.getReference();

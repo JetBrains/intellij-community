@@ -20,10 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -147,6 +151,17 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @Override
   public PyExpression getQualifier() {
     return getLeftExpression();
+  }
+
+  @Nullable
+  @Override
+  public QualifiedName asQualifiedName() {
+    return PyPsiUtils.asQualifiedName(this);
+  }
+
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
   }
 
   @Override

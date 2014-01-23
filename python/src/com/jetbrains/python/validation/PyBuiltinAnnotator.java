@@ -36,7 +36,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     final String name = node.getName();
     if (name == null) return; 
     boolean highlighted_as_attribute = highlightAsAttribute(node, name);
-    if (! highlighted_as_attribute && node.getQualifier() == null) {
+    if (! highlighted_as_attribute && !node.isQualified()) {
       // things like len()
       ResolveResult[] resolved = node.getReference().multiResolve(false); // constructors, etc may give multiple results...
       if (resolved.length > 0) {
@@ -71,7 +71,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
       // things like __len__
       if (
-        (node.getQualifier() != null) // foo.__len__
+        node.isQualified() // foo.__len__
         || (PyUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
       ) {
         final ASTNode astNode = node.getNode();

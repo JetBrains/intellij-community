@@ -28,7 +28,7 @@ import java.util.HashSet;
  * @author Alexander Lobas
  */
 public class SceneBuilderKitWrapper {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderKitWrapper");
 
   public static JComponent create(final String path) throws Exception {
     Field identifier = DataFormat.class.getDeclaredField("identifier");

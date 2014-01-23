@@ -24,6 +24,7 @@ import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
@@ -100,18 +101,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
   }
 
   protected String createPropertiesString() {
-    final StringBuffer buffer = new StringBuffer();
-    for (final String property : myValues) {
-      if (buffer.length() == 0) {
-        buffer.append(property);
-      }
-      else {
-        buffer.append(',');
-        buffer.append(property);
-      }
-    }
-
-    return buffer.toString();
+    return StringUtil.join(myValues, ",");
   }
 
   @Override

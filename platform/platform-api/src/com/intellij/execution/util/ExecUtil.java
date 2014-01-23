@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class ExecUtil {
@@ -160,9 +161,17 @@ public class ExecUtil {
 
   @Nullable
   public static String execAndReadLine(final String... command) {
+    return execAndReadLine(null, command);
+  }
+
+  @Nullable
+  public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
       final Process process = new GeneralCommandLine(command).createProcess();
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      InputStream inputStream = process.getInputStream();
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      InputStreamReader in = charset == null ? new InputStreamReader(inputStream) : new InputStreamReader(inputStream, charset);
+      final BufferedReader reader = new BufferedReader(in);
       try {
         return reader.readLine();
       }

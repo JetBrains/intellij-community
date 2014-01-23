@@ -60,7 +60,10 @@ public class ProgressIndicatorUtils {
   }
 
   public static void runWithWriteActionPriority(@NotNull final ReadTask task) {
-    final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
+    runWithWriteActionPriority(new ProgressIndicatorBase(), task);
+  }
+
+  public static void runWithWriteActionPriority(final ProgressIndicator progressIndicator, final ReadTask task) {
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
@@ -97,12 +100,16 @@ public class ProgressIndicatorUtils {
       application.removeApplicationListener(listener);
     }
   }
-  
+
   public static void scheduleWithWriteActionPriority(@NotNull final ReadTask task) {
+    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
+  }
+
+  public static void scheduleWithWriteActionPriority(final ProgressIndicator indicator, final ReadTask task) {
     JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       @Override
       public void run() {
-        runWithWriteActionPriority(task);
+        runWithWriteActionPriority(indicator, task);
       }
     });
   }
