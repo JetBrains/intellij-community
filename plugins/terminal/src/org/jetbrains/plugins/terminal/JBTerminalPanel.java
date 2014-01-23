@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -74,7 +73,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     registerKeymapActions(this);
 
     addFocusListener(this);
-    
+
     mySettingsProvider.addListener(this);
   }
 
@@ -170,11 +169,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected String getClipboardContent() throws IOException, UnsupportedFlavorException {
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    if (contents == null) {
-      return null;
-    }
-    return (String)contents.getTransferData(DataFlavor.stringFlavor);
+    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   @Override

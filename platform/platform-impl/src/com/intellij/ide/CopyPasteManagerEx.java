@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -68,8 +67,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public boolean isDataFlavorAvailable(@Nullable DataFlavor flavor) {
-    return flavor != null && myClipboardSynchronizer.isDataFlavorAvailable(flavor);
+  public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+    return flavors.length > 0 &&  myClipboardSynchronizer.areDataFlavorsAvailable(flavors);
   }
 
   public void setContents(@NotNull final Transferable content) {
@@ -209,8 +208,13 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
-  private static String getStringContent(Transferable content) throws UnsupportedFlavorException, IOException {
-    return (String)content.getTransferData(DataFlavor.stringFlavor);
+  private static String getStringContent(Transferable content) {
+    try {
+      return (String)content.getTransferData(DataFlavor.stringFlavor);
+    }
+    catch (UnsupportedFlavorException ignore) { }
+    catch (IOException ignore) { }
+    return null;
   }
 
   private void deleteAfterAllowedMaximum() {
@@ -220,50 +224,47 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
+  @Override
   public Transferable getContents() {
     return myClipboardSynchronizer.getContents();
   }
 
-  public Transferable[] getAllContents() {
-    deleteAfterAllowedMaximum();
-
-    Transferable content = getContents();
-    if (content != null) {
+  @Nullable
+  @Override
+  public <T> T getContents(@NotNull DataFlavor flavor) {
+    if (areDataFlavorsAvailable(flavor)) {
       try {
-        String clipString = getStringContent(content);
-        String dataString = null;
-
-        if (!myData.isEmpty()) {
-          dataString = getStringContent(myData.get(0));
-        }
-
-        if (clipString != null && clipString.length() > 0 && !Comparing.equal(clipString, dataString)) {
-          myData.add(0, content);
+        Transferable contents = getContents();
+        if (contents != null) {
+          @SuppressWarnings("unchecked") T data = (T)contents.getTransferData(flavor);
+          return data;
         }
       }
       catch (UnsupportedFlavorException ignore) { }
       catch (IOException ignore) { }
     }
 
+    return null;
+  }
+
+  @Override
+  public Transferable[] getAllContents() {
+    String clipString = getContents(DataFlavor.stringFlavor);
+    if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
+      addToTheTopOfTheStack(new StringSelection(clipString));
+    }
     return myData.toArray(new Transferable[myData.size()]);
   }
 
   public void removeContent(Transferable t) {
-    Transferable old = getContents();
-    boolean isCurrentClipboardContent = myData.indexOf(t) == 0;
+    boolean isCurrentClipboardContent = !myData.isEmpty() && Comparing.equal(t, myData.get(0));
     myData.remove(t);
-    Transferable _new = null;
     if (isCurrentClipboardContent) {
-      if (!myData.isEmpty()) {
-        _new = myData.get(0);
-        setSystemClipboardContent(_new);
-      }
-      else {
-        _new = new StringSelection("");
-        setSystemClipboardContent(_new);
-      }
+      Transferable old = getContents();
+      Transferable _new = !myData.isEmpty() ? myData.get(0) : new StringSelection("");
+      setSystemClipboardContent(_new);
+      fireContentChanged(old, _new);
     }
-    fireContentChanged(old, _new);
   }
 
   public void moveContentTopStackTop(Transferable t) {

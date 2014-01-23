@@ -39,10 +39,19 @@ public abstract class CopyPasteManager {
 
   public abstract void removeContentChangedListener(ContentChangedListener listener);
 
-  public abstract boolean isDataFlavorAvailable(@Nullable DataFlavor flavor);
+  /** @deprecated use {@link #getContents(DataFlavor)} or {@link #areDataFlavorsAvailable(DataFlavor...)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
+  public boolean isDataFlavorAvailable(@Nullable DataFlavor flavor) {
+    return flavor != null && areDataFlavorsAvailable(flavor);
+  }
+
+  public abstract boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors);
 
   @Nullable
   public abstract Transferable getContents();
+
+  @Nullable
+  public abstract <T> T getContents(@NotNull DataFlavor flavor);
 
   public abstract Transferable[] getAllContents();
 

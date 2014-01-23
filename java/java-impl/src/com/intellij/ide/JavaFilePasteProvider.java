@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author yole
@@ -127,20 +126,7 @@ public class JavaFilePasteProvider implements PasteProvider {
 
   @Nullable
   private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
-    PsiJavaFile file = null;
-    Transferable content = CopyPasteManager.getInstance().getContents();
-    if (content != null) {
-      String text = null;
-      try {
-        text = (String)content.getTransferData(DataFlavor.stringFlavor);
-      }
-      catch (Exception e) {
-        // ignore;
-      }
-      if (text != null) {
-        file = (PsiJavaFile) PsiFileFactory.getInstance(project).createFileFromText("A.java", StdLanguages.JAVA, text);
-      }
-    }
-    return file;
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return text != null ? (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, text) : null;
   }
 }

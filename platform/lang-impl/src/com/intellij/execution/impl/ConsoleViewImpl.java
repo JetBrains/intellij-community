@@ -79,7 +79,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
@@ -661,7 +660,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (cycleUsed) {
       clearHyperlinkAndFoldings();
     }
-    
+
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -1262,15 +1261,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static class PasteHandler extends ConsoleAction {
     @Override
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
-      final Transferable content = CopyPasteManager.getInstance().getContents();
-      if (content == null) return;
-      String s = null;
-      try {
-        s = (String)content.getTransferData(DataFlavor.stringFlavor);
-      }
-      catch (Exception e) {
-        consoleView.getToolkit().beep();
-      }
+      String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (s == null) return;
       ApplicationManager.getApplication().assertIsDispatchThread();
       Editor editor = consoleView.myEditor;
