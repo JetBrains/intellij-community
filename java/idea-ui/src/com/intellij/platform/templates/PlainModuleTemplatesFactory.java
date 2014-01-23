@@ -70,6 +70,16 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @Override
+  public String getParentGroup(String group) {
+    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
+      if (group.equals(builder.getGroupName())) {
+        return builder.getParentGroup();
+      }
+    }
+    return null;
+  }
+
+  @Override
   public Icon getGroupIcon(String group) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     builders.add(new EmptyModuleBuilder());

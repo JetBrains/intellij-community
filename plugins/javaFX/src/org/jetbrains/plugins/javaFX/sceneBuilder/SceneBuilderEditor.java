@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,7 +113,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private void loadSceneBuilder(SceneBuilderInfo info) throws Exception {
     mySceneLoader = createSceneLoader(info);
 
-    Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper", false, mySceneLoader);
+    Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderKitWrapper", false, mySceneLoader);
     myFxPanel = (JComponent)wrapperClass.getMethod("create", String.class).invoke(null, myFile.getPath());
 
     myPanel.add(myFxPanel, SCENE_CARD);

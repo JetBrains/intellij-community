@@ -9,16 +9,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="lang-impl" exported="" />
   </component>
 </module>
 
