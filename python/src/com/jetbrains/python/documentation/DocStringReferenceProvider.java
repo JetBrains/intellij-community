@@ -59,22 +59,22 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = DocStringUtil.parse(text);
         if (docString != null) {
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
                                             StructuredDocStringBase.ReferenceType.PARAMETER));
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
                                             StructuredDocStringBase.ReferenceType.PARAMETER_TYPE));
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.ReferenceType.KEYWORD));
 
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getTagArguments("var"),
                                             StructuredDocStringBase.ReferenceType.VARIABLE));
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getTagArguments("cvar"),
                                             StructuredDocStringBase.ReferenceType.CLASS_VARIABLE));
-          result.addAll(referencesFromNames(element, offset, docString,
+          result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getTagArguments("ivar"),
                                             StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
@@ -96,7 +96,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     }
     return result;
   }
-  private static List<PsiReference> referencesFromNames(PsiElement element,
+  private static List<PsiReference> referencesFromNames(PyStringLiteralExpression element,
                                                         int offset,
                                                         StructuredDocString docString,
                                                         List<Substring> paramNames,
