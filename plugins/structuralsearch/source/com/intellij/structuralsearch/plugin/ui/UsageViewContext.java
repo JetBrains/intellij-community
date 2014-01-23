@@ -1,12 +1,15 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.usages.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -168,6 +171,17 @@ public class UsageViewContext {
     @Override
     public void showSettings() {
       UIUtil.invokeAction(myConfiguration, mySearchContext);
+    }
+
+    @Override
+    public KeyboardShortcut getShortcut() {
+      return ActionManager.getInstance().getKeyboardShortcut(getCommand() instanceof ReplaceCommand ? "StructuralSearchPlugin.StructuralReplaceAction":"StructuralSearchPlugin.StructuralSearchAction");
+    }
+
+    @NotNull
+    @Override
+    public String getLongDescriptiveName() {
+      return _getPresentableText();
     }
   }
 }
