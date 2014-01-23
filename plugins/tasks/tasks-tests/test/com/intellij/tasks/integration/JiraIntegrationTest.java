@@ -119,8 +119,10 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     JsonObject object = new Gson().fromJson(response, JsonObject.class);
     JsonArray worklogs = object.get("worklogs").getAsJsonArray();
     JsonObject last = worklogs.get(worklogs.size() - 1).getAsJsonObject();
+
     assertEquals(comment, last.get("comment").getAsString());
-    assertEquals(duration, last.get("timeSpent").getAsString());
+    // don't depend on concrete response format: zero hours stripping, zero padding and so on
+    assertEquals(minutes * 60, last.get("timeSpentSeconds").getAsInt());
   }
 
   private void changeStateAndCheck(String url, String key) throws Exception {
