@@ -110,11 +110,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, String.valueOf(true));
     }
 
-    final CreateTestDialog d = new CreateTestDialog(project,
-                                                    getText(),
-                                                    srcClass,
-                                                    srcPackage,
-                                                    srcModule);
+    final CreateTestDialog d = getCreateTestDialog(project, srcModule, srcClass, srcPackage);
     d.show();
     if (!d.isOK()) return;
 
@@ -126,6 +122,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         generator.generateTest(project, d);
       }
     }, CodeInsightBundle.message("intention.create.test"), this);
+  }
+
+  protected CreateTestDialog getCreateTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
+    return new CreateTestDialog(project, getText(), srcClass, srcPackage, srcModule);
   }
 
   protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
