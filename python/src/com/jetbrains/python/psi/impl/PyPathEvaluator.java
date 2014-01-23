@@ -85,7 +85,7 @@ public class PyPathEvaluator extends PyEvaluator {
     else if (PyNames.CURDIR.equals(expr.getName())) {
       return ".";
     }
-    if (expr.getQualifier() == null && PyNames.FILE.equals(expr.getReferencedName())) {
+    if (!expr.isQualified() && PyNames.FILE.equals(expr.getReferencedName())) {
       return myContainingFilePath;
     }
     return super.evaluateReferenceExpression(expr);

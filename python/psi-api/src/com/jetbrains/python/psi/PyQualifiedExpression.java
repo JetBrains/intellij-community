@@ -31,6 +31,13 @@ public interface PyQualifiedExpression extends PyExpression {
   PyExpression getQualifier();
 
   /**
+   * Checks if the expression is qualified.
+   *
+   * Unlike {@link #getQualifier()}, it may not require AST access.
+   */
+  boolean isQualified();
+
+  /**
    * Returns the name to the right of the qualifier.
    *
    * @return the name referenced by the expression.

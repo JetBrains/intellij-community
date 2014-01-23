@@ -54,7 +54,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     if (parameters.isExtendedCompletion()) {
       final PsiElement element = parameters.getPosition();
       final PsiElement parent = element.getParent();
-      if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).getQualifier() != null) {
+      if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).isQualified()) {
         return;
       }
       if (parent instanceof PyStringLiteralExpression) {

@@ -100,6 +100,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
 
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
+
   @Nullable
   public String getReferencedName() {
     final ASTNode nameElement = getNameElement();
@@ -190,8 +195,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null;
     }
     try {
-      final PyExpression qualifier = getQualifier();
-      if (qualifier == null) {
+      final boolean qualified = isQualified();
+      if (!qualified) {
         String name = getReferencedName();
         if (PyNames.NONE.equals(name)) {
           return PyNoneType.INSTANCE;
@@ -201,7 +206,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (type != null) {
         return type;
       }
-      if (qualifier != null) {
+      if (qualified) {
         PyType maybe_type = PyUtil.getSpecialAttributeType(this, context);
         if (maybe_type != null) return maybe_type;
         Ref<PyType> typeOfProperty = getTypeOfProperty(context);
