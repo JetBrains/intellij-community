@@ -56,7 +56,10 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -728,21 +731,23 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     private final LogicalPosition myPosition;
     private BrowseMode myBrowseMode;
     private boolean myDisposed;
+    private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
-    public TooltipProvider(Editor editor, LogicalPosition pos) {
+    TooltipProvider(Editor editor, LogicalPosition pos) {
       myEditor = editor;
       myPosition = pos;
     }
 
-    public void dispose() {
+    void dispose() {
       myDisposed = true;
+      myProgress.cancel();
     }
 
     public BrowseMode getBrowseMode() {
       return myBrowseMode;
     }
 
-    public void execute(BrowseMode browseMode) {
+    void execute(BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
       Document document = myEditor.getDocument();
@@ -760,15 +765,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       int selEnd = myEditor.getSelectionModel().getSelectionEnd();
 
       if (offset >= selStart && offset < selEnd) return;
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
         @Override
-        public void run() {
-          ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
-            @Override
-            public void run() {
-              doExecute(file, offset);
-            }
-          });
+        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+          doExecute(file, offset);
+        }
+
+        @Override
+        public void onCanceled(@NotNull ProgressIndicator indicator) {
         }
       });
     }
@@ -784,7 +789,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       if (info == null) return;
 
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
