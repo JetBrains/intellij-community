@@ -342,12 +342,20 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public String getPresentableName() {
+    return getModuleTypeName();
+  }
+
+  protected String getModuleTypeName() {
     String name = getModuleType().getName();
     return StringUtil.trimEnd(name, " Module");
   }
 
   public String getGroupName() {
     return getPresentableName().split(" ")[0];
+  }
+
+  public String getParentGroup() {
+    return null;
   }
 
   public void updateFrom(ModuleBuilder from) {

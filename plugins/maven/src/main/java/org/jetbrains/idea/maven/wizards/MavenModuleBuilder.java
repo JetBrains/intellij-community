@@ -97,6 +97,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
+  public String getParentGroup() {
+    return getModuleTypeName();
+  }
+
+  @Override
   public String getDescription() {
     return "Maven modules are used for developing <b>JVM-based</b> applications with dependencies managed by <b>Maven</b>. " +
            "You can create either a blank Maven module or a module based on a <b>Maven archetype</b>.";
