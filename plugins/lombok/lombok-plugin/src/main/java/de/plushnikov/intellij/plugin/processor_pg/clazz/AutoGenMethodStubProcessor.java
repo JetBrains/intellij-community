@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.processor.clazz;
+package de.plushnikov.intellij.plugin.processor_pg.clazz;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import lombok.AutoGenMethodStub;

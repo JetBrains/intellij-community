@@ -64,7 +64,6 @@
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.LazyGetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
 
@@ -72,12 +71,12 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodInnerClassProcessor"/>
 
     <!-- lombok-pg-->
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.FluentSetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SingletonProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SingletonProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.clazz.FluentSetterProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.clazz.SingletonProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.EnumIdFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.FluentSetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.EnumIdFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.LazyGetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.FluentSetterFieldProcessor"/>
   </extensions>
 
   <actions>
@@ -113,16 +112,25 @@
               text="Everything" description="Action to replace all lombok annotations with vanilla java methods">
       </action>
       <separator/>
+      <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
+              text="@Data" description="Action to replace lombok @Data annotation with vanilla getter methods">
+      </action>
+      <separator/>
+      <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
+              text="@Constructors"
+              description="Action to replace lombok @NoArgsConstructor, @RequiredArgsConstructor and @AllArgsConstructor annotations with vanilla java methods">
+      </action>
       <action id="delombokGetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokGetterAction"
               text="@Getter" description="Action to replace lombok @Getter annotation with vanilla getter methods">
       </action>
       <action id="delombokSetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSetterAction"
               text="@Setter" description="Action to replace lombok @Setter annotation with vanilla setter methods">
       </action>
-      <separator/>
-      <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
-              text="@Constructors"
-              description="Action to replace lombok @NoArgsConstructor, @RequiredArgsConstructor and @AllArgsConstructor annotations with vanilla methods">
+      <action id="delombokEqualsAndHashCode" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEqualsAndHashCodeAction"
+              text="@EqualsAndHashCode" description="Action to replace lombok @EqualsAndHashCode annotation with vanilla java methods">
+      </action>
+      <action id="delombokToString" class="de.plushnikov.intellij.plugin.action.delombok.DelombokToStringAction"
+              text="@ToString" description="Action to replace lombok @ToString annotation with vanilla java methods">
       </action>
       <separator/>
       <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
@@ -138,12 +146,11 @@
 		<li>0.8
 				<ol>
 				    <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-				    <!--<li>TODO: Add delombok actions for @Data, Logger and Constructor annotations</li>-->
-				    <!--<li>TODO: Add delombok action for all annotations</li>-->
+				    <!--<li>TODO: Add delombok action for all other annotations</li>-->
 
 				    <li>Added refactoring action for Lombok @Log and friends</li>
 				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
-				    <li>Added refactoring actions for Delombok @Getter and @Setter methods</li>
+				    <li>Added refactoring actions for Delombok @Data, @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString, @Log annotations</li>
 				    <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
 				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>

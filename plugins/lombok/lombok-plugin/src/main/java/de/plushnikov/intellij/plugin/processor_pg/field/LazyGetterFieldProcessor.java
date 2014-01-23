@@ -1,7 +1,8 @@
-package de.plushnikov.intellij.plugin.processor.field;
+package de.plushnikov.intellij.plugin.processor_pg.field;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
+import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import lombok.LazyGetter;
 import org.jetbrains.annotations.NotNull;
 

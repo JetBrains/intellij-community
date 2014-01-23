@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.processor.field;
+package de.plushnikov.intellij.plugin.processor_pg.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.field.AbstractFieldProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import lombok.EnumId;
 import org.jetbrains.annotations.NotNull;

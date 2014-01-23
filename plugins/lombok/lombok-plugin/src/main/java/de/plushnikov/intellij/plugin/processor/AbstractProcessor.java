@@ -82,7 +82,5 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @NotNull
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
-    return Collections.emptySet();
-  }
+  public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
 }

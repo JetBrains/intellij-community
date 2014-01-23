@@ -1,8 +1,9 @@
-package de.plushnikov.intellij.plugin.processor.clazz;
+package de.plushnikov.intellij.plugin.processor_pg.clazz;
 
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.processor.field.FluentSetterFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
+import de.plushnikov.intellij.plugin.processor_pg.field.FluentSetterFieldProcessor;
 import lombok.FluentSetter;
 
 /**

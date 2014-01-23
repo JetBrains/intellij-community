@@ -1,9 +1,10 @@
-package de.plushnikov.intellij.plugin.processor.field;
+package de.plushnikov.intellij.plugin.processor_pg.field;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.FluentSetter;
 import org.jetbrains.annotations.NotNull;
