@@ -546,58 +546,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return IdeaTestUtil.getMockJdk17(versionName);
   }
 
-  protected void compileModules(final String... moduleNames) throws Exception {
-    final List<Module> modules = new ArrayList<Module>();
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (String each : moduleNames) {
-          setupJdkForModule(each);
-          modules.add(getModule(each));
-        }
-        if (useJps()) {
-          new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
-            .generateBuildConfiguration(false);
-        }
-      }
-    });
-
-    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
-    CompilerManagerImpl.testSetup();
-
-    List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
-    TranslatingCompilerFilesMonitor.getInstance()
-      .scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
-
-    final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            //assertFalse(aborted);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
-            semaphore.up();
-          }
-        });
-      }
-    });
-    while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-  }
-
   protected static AtomicInteger configConfirmationForYesAnswer() {
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {

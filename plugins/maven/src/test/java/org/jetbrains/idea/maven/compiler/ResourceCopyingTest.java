@@ -25,11 +25,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 
-public class ResourceCopyingTest extends MavenImportingTestCase {
+public class ResourceCopyingTest extends MavenCompilingTestCase {
   @Override
   protected boolean useJps() {
     return true;

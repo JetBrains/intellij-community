@@ -17,16 +17,12 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
-public abstract class ResourceFilteringTest extends MavenImportingTestCase {
+public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
 
   public static class IdeaModeTest extends ResourceFilteringTest {
     @Override
@@ -1001,19 +997,5 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"));
-  }
-
-  private void assertResult(String relativePath, String content) throws IOException {
-    assertResult(myProjectPom, relativePath, content);
-  }
-
-  private static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
-    assertEquals(content, loadResult(pomFile, relativePath));
-  }
-
-  private static String loadResult(VirtualFile pomFile, String relativePath) throws IOException {
-    File file = new File(pomFile.getParent().getPath(), relativePath);
-    assertTrue("file not found: " + relativePath, file.exists());
-    return new String(FileUtil.loadFileText(file));
   }
 }
