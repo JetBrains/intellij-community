@@ -265,7 +265,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode()) {
-      if (ourGrailsTestFlag) {
+      if (ourGrailsTestFlag && !myProject.isInitialized()) {
         runActions(computeRawActions(takeOrderSnapshot()));
       }
       return;
