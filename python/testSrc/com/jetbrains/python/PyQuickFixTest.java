@@ -342,6 +342,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
   }
 
+  public void testDictComprehensionToCall() {
+    doInspectionTest("DictComprehensionToCall.py", PyCompatibilityInspection.class,
+                         PyBundle.message("INTN.convert.dict.comp.to"), true, true);
+  }
+
   public void testDocstringParams() {                      //PY-3394
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
