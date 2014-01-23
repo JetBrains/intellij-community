@@ -2,8 +2,6 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -56,25 +54,8 @@ public final class SearchContext implements DataProvider, Cloneable {
     setCurrentFile(CommonDataKeys.VIRTUAL_FILE.getData(context));
   }
 
-  private Editor selectedEditor() {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor();
-  }
-  public boolean hasSelection() {
-    final Editor editor = selectedEditor();
-
-    return editor != null && editor.getSelectionModel().hasSelection();
-  }
-
-  public int selectionStart() {
-    return selectedEditor().getSelectionModel().getSelectionStart();
-  }
-
-  public int selectionEnd() {
-    return selectedEditor().getSelectionModel().getSelectionEnd();
-  }
-
   public Editor getEditor() {
-    return selectedEditor();
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   protected Object clone() {
