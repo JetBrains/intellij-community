@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class ReplaceInProjectManager {
                                   final FindManager findManager) {
     presentation.setMergeDupLinesAvailable(false);
     final ReplaceContext[] context = new ReplaceContext[1];
-    manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(myProject, findModelCopy.getStringToFind())},
+    manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(myProject, findModelCopy)},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.UsagesPanel;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +39,7 @@ public class MigrationConflictsPanel extends UsagesPanel{
   }
 
   @Override
-  public void showUsages(@NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, @NotNull final UsageInfo[] usageInfos) {
-    super.showUsages(descriptor, usageInfos);
+  public void showUsages(@NotNull final PsiElement[] primaryElements, @NotNull final UsageInfo[] usageInfos) {
+    super.showUsages(primaryElements, usageInfos);
   }
 }
