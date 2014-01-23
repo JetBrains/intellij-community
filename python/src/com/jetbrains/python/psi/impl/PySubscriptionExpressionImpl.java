@@ -108,6 +108,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   }
 
   @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
+
+  @Override
   public String getReferencedName() {
     String res = PyNames.GETITEM;
     switch (AccessDirection.of(this)) {

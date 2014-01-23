@@ -211,7 +211,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null && element.isValid()) {
             PyReferenceExpression ref = (PyReferenceExpression)element;
-            if (ref.getQualifier() == null) {
+            if (!ref.isQualified()) {
               ResolveResult[] resolved = ref.getReference().multiResolve(false);
               for (ResolveResult rr : resolved) {
                 if (rr.isValidResult()) {

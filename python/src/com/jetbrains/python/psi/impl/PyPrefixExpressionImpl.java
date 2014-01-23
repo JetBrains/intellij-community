@@ -99,6 +99,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
+
+  @Override
   public String getReferencedName() {
     PyElementType t = getOperator();
     if (t == PyTokenTypes.PLUS) {

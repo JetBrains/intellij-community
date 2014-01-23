@@ -105,7 +105,7 @@ public class PyEvaluator {
   }
 
   protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
-    if (expr.getQualifier() == null) {
+    if (!expr.isQualified()) {
       if (myNamespace != null) {
         return myNamespace.get(expr.getReferencedName());
       }
