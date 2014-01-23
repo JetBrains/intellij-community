@@ -31,6 +31,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -298,9 +300,9 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    PyFunction func = PsiTreeUtil.getParentOfType(this, PyFunction.class);
-    if (func != null) {
-      return new LocalSearchScope(func);
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
+    if (owner instanceof PyFunction) {
+      return new LocalSearchScope(owner);
     }
     return new LocalSearchScope(getContainingFile());
   }

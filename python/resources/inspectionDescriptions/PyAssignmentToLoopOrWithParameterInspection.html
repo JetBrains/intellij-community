@@ -1,7 +1,7 @@
 <html>
 <body>
 <span style="font-family: verdana,serif;">
-  This inspection checks for cases when loop variable is redeclared inside of loop:
+  Checks for cases when you rewrite loop variable with inner loop
 </span>
 <pre style="font-family: monospace">
     for i in xrange(5):
@@ -15,7 +15,7 @@
 <pre style="font-family: monospace">
     with open("file") as f:
       f.read()
-      f = open("another file")
+      with open("file") as f:
   </pre>
 </body>
 </html>

@@ -55,6 +55,7 @@ public class ExportToHTMLAction extends AnAction {
     }
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null && psiFile.getContainingDirectory() != null);
+    presentation.setVisible(psiFile != null);
   }
 
 }

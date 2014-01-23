@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +27,31 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
+  private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
+
+    @Override
+    public void layoutContainer(Container parent) {
+      super.layoutContainer(parent);
+      JBViewport viewPort = (JBViewport)parent;
+      Component view = viewPort.getView();
+      if (view == null) return;
+
+      Dimension size = view.getSize();
+
+      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, parent);
+      if (scrollPane == null) return;
+
+      Dimension visible = viewPort.getExtentSize();
+      if (scrollPane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+        size.width = visible.width;
+      }
+      if (scrollPane.getVerticalScrollBarPolicy() == ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER) {
+        size.height = visible.height;
+      }
+      view.setSize(size);
+    }
+  };
+
   private StatusText myEmptyText;
   private ZoomingDelegate myZoomer;
 
@@ -49,6 +75,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         }
       }
     });
+  }
+
+  @Override
+  protected LayoutManager createLayoutManager() {
+    return ourLayoutManager;
   }
 
   @Override

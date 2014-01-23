@@ -20,9 +20,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -67,20 +68,20 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
       final String name = node.getName();
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
-        final PyClass parentClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+        final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
           final PsiReference reference = node.getReference();
           final PsiElement resolvedExpression = reference.resolve();
-          final PyClass resolvedClass = PsiTreeUtil.getParentOfType(resolvedExpression, PyClass.class);
+          final PyClass resolvedClass = getClassOwner(resolvedExpression);
           if (parentClass.isSubclass(resolvedClass))
             return;
 
-          PyClass outerClass = PsiTreeUtil.getParentOfType(parentClass, PyClass.class);
+          PyClass outerClass = getClassOwner(parentClass);
           while (outerClass != null) {
             if (outerClass.isSubclass(resolvedClass))
               return;
 
-            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class);
+            outerClass = getClassOwner(outerClass);
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
@@ -91,5 +92,14 @@ public class PyProtectedMemberInspection extends PyInspection {
       }
     }
 
+    @Nullable
+    private static PyClass getClassOwner(@Nullable PsiElement element) {
+      for (ScopeOwner owner = ScopeUtil.getScopeOwner(element); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
+        if (owner instanceof PyClass) {
+          return (PyClass)owner;
+        }
+      }
+      return null;
+    }
   }
 }
