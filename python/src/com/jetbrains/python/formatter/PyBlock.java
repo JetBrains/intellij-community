@@ -161,6 +161,9 @@ public class PyBlock implements ASTBlock {
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
         childAlignment = getAlignmentForChildren();
       }
+      if (childType == PyTokenTypes.END_OF_LINE_COMMENT) {
+        childIndent = Indent.getNormalIndent();
+      }
     }
     else if (parentType == PyElementTypes.BINARY_EXPRESSION &&
              (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType) ||
