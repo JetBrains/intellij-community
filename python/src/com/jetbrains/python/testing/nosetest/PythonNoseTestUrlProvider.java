@@ -43,11 +43,14 @@ public class PythonNoseTestUrlProvider implements TestLocationProvider {
     }
     final int listSize = list.size();
 
-    // parse path as [ns.]*fileName.className[.methodName]
+    // parse path as [ns.]*fileName[.className][.methodName]
     if (listSize == 2) {
     final List<Location> classes = PythonUnitTestUtil.findLocations(project, list.get(0), list.get(1), null);
     if (classes.size() > 0)
       return classes;
+    final List<Location> functions = PythonUnitTestUtil.findLocations(project, list.get(0), null, list.get(1));
+    if (functions.size() > 0)
+      return functions;
     }
     
     if (listSize > 2) {
