@@ -67,3 +67,9 @@ kw['customerPaymentProfileId'] = kw.get("customerPaymentProfileId",
 
 {1: 2}.get('foo', None) #pass
 {1: 2}.pop('foo', None) #pass
+
+def a(foo=1*1024):
+    print foo
+
+a( 1024*1024)
+
