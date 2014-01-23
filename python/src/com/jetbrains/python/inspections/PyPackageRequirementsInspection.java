@@ -41,7 +41,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,9 +147,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
           return;
         }
       }
-      final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
-      if (!expressions.isEmpty()) {
-        final PyExpression packageReferenceExpression = expressions.get(0);
+      final PyExpression packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression);
+      if (packageReferenceExpression != null) {
         final String packageName = packageReferenceExpression.getName();
         if (packageName != null && !myIgnoredPackages.contains(packageName)) {
           if (!ApplicationManager.getApplication().isUnitTestMode() && !PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {

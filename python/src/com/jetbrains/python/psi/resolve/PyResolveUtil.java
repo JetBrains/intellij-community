@@ -35,13 +35,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Ref resolution routines.
@@ -244,49 +239,6 @@ public class PyResolveUtil {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Unwinds a multi-level qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
-   *
-   * @param expr an expression to unwind.
-   * @return path as a list of ref expressions.
-   */
-  @NotNull
-  public static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
-    final List<PyExpression> path = new LinkedList<PyExpression>();
-    PyQualifiedExpression e = expr;
-    while (e != null) {
-      path.add(0, e);
-      final PyExpression q = e.getQualifier();
-      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
-    }
-    return path;
-  }
-
-  public static List<String> unwindQualifiersAsStrList(final PyQualifiedExpression expr) {
-    final List<String> path = new LinkedList<String>();
-    PyQualifiedExpression e = expr;
-    while (e != null) {
-      path.add(0, e.getText());
-      final PyExpression q = e.getQualifier();
-      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
-    }
-    return path;
-  }
-
-  public static String toPath(PyQualifiedExpression expr) {
-    if (expr == null) return "";
-    List<PyExpression> path = unwindQualifiers(expr);
-    final QualifiedName qName = PyQualifiedNameFactory.fromReferenceChain(path);
-    if (qName != null) {
-      return qName.toString();
-    }
-    String name = expr.getName();
-    if (name != null) {
-      return name;
-    }
-    return "";
   }
 
   /**

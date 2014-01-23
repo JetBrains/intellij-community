@@ -17,6 +17,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,12 @@ public interface PyQualifiedExpression extends PyExpression {
    * Unlike {@link #getQualifier()}, it may not require AST access.
    */
   boolean isQualified();
+
+  /**
+   * Returns the qualified name for the expression if all the qualifiers are qualified expressions.
+   */
+  @Nullable
+  QualifiedName asQualifiedName();
 
   /**
    * Returns the name to the right of the qualifier.
