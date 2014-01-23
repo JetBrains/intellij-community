@@ -51,6 +51,7 @@ import java.util.*;
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
+  private QualifiedName myQualifiedName = null;
 
   public PyReferenceExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -174,7 +175,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public QualifiedName asQualifiedName() {
-    return PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+    if (myQualifiedName == null) {
+      myQualifiedName = PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+    }
+    return myQualifiedName;
   }
 
   @Override
@@ -403,6 +407,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return null;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myQualifiedName = null;
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
