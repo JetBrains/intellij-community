@@ -299,6 +299,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testAlignInCallExpression() {  
+    doTest();
+  }
+
   public void testContinuationIndentForCallInStatementPart() {  // PY-8577
     doTest();
   }
@@ -307,7 +311,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void _testIndentInNestedCall() {  // PY-8195
+  public void _testIndentInNestedCall() {  // PY-11906 TODO: fix indent
     doTest();
   }
 
@@ -375,6 +379,14 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testIndentParensInImport() { // PY-9075
+    doTest();
+  }
+  
+  public void testAlignInParenthesizedExpression() {
+    doTest();
+  }
+
+  public void testAlignInParameterList() {
     doTest();
   }
 
