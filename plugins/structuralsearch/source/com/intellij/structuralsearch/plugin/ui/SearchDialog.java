@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -954,12 +953,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     options.setCaseSensitiveMatch(caseSensitiveMatch.isSelected());
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.structuralsearch.plugin.ui.SearchDialog";
@@ -988,8 +981,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("find.structuredSearch");
+  protected String getHelpId() {
+    return "find.structuredSearch";
   }
 
   public SearchContext getSearchContext() {
