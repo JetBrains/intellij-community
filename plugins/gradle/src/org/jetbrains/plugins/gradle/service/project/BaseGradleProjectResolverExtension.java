@@ -35,6 +35,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
@@ -133,14 +134,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), moduleConfigPath
       ));
     }
-    ModuleData moduleData = new ModuleData(gradleModule.getGradleProject().getPath(),
+
+    final String path = gradleModule.getGradleProject().getPath();
+    final ModuleData moduleData = new ModuleData(StringUtil.isEmpty(path) || ":".equals(path) ? moduleName : path,
                                            GradleConstants.SYSTEM_ID,
                                            StdModuleTypes.JAVA.getId(),
                                            moduleName,
                                            moduleConfigPath,
                                            moduleConfigPath);
 
-    ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+    final ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
     if (moduleExtendedModel != null) {
       moduleData.setGroup(moduleExtendedModel.getGroup());
       moduleData.setVersion(moduleExtendedModel.getVersion());
