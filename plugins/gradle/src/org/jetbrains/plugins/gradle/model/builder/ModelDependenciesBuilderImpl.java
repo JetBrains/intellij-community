@@ -55,7 +55,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
   public Object buildAll(final String modelName, final Project project) {
     final List<IdeaDependency> dependencies = new ArrayList<IdeaDependency>();
 
-    final Map<DependencyVersionId, Scopes> scopesMap = new HashMap<DependencyVersionId, Scopes>();
+    final Map<DependencyVersionId, Scopes> scopesMap = new LinkedHashMap<DependencyVersionId, Scopes>();
     final IdeDependenciesExtractor dependenciesExtractor = new IdeDependenciesExtractor();
 
     boolean offline = false;
