@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.RulePriorityAwareSettings;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
@@ -58,5 +59,11 @@ public class StdRulePriorityAwareSettings extends StdArrangementSettings impleme
       ContainerUtil.sort(myRulesByPriority);
     }
     return myRulesByPriority;
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettings clone() {
+    return new StdRulePriorityAwareSettings(cloneGroupings(), cloneMatchRules());
   }
 }
