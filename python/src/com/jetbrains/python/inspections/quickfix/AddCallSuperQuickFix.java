@@ -149,15 +149,15 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     for (int i = 1; i != parameters.length; i++) {
       PyParameter p = parameters[i];
       if (p.getDefaultValue() != null) continue;
-      String param;
-      param = p.getText();
-      if (param.startsWith("**")) {
+      final String param = p.getName();
+      String paramText = p.getText();
+      if (paramText.startsWith("**")) {
         addDouble = true;
         if (doubleStarName == null)
           doubleStarName = p.getText();
         continue;
       }
-      if (param.startsWith("*")) {
+      if (paramText.startsWith("*")) {
         addStar = true;
         if (starName == null)
           starName = p.getText();
