@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,8 @@ public abstract class TokenSets {
 
   public static final TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   public static final TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
+
+  public static final TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(NUMBERS, KEYWORDS, TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL, mGSTRING_BEGIN, mREGEX_BEGIN, mDOLLAR_SLASH_REGEX_BEGIN, mAT));
 
 
   public static final TokenSet VISIBILITY_MODIFIERS = TokenSet.create(

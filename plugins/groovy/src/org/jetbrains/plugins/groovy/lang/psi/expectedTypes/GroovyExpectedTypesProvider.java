@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -220,14 +221,7 @@ public class GroovyExpectedTypesProvider {
         final String name = nameValuePair.getName();
         if (name == null) return;
 
-        final PsiMethod[] attrs = annot.findMethodsByName(name, false);
-        if (attrs.length > 0) {
-          PsiType type = attrs[0].getReturnType();
-          while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-          if (type != null && isAcceptableAnnotationValueType(type)) {
-            myResult = createSimpleSubTypeResult(type);
-          }
-        }
+        createResultFromAttrName(annot, name);
       }
       else {
         final GrAnnotationMethod method = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationMethod.class);
@@ -259,34 +253,40 @@ public class GroovyExpectedTypesProvider {
         if (annot != null) {
           final String name = nameValuePair.getName();
           if (name != null) {
-            final PsiMethod[] attrs = annot.findMethodsByName(name, false);
-            if (attrs.length > 0) {
-              PsiType type = attrs[0].getReturnType();
-              while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-              if (type != null && isAcceptableAnnotationValueType(type)) {
-                myResult = createSimpleSubTypeResult(type);
-              }
-            }
+            createResultFromAttrName(annot, name);
           }
           else {
             final PsiMethod[] valueAttr = annot.findMethodsByName("value", false);
-            boolean canHaveSimpleExpr = valueAttr.length > 0;
-            final PsiMethod[] methods = annot.getMethods();
-            for (PsiMethod method : methods) {
-              if (!("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null)) {
-                canHaveSimpleExpr = false;
-              }
-            }
+            if (valueAttr.length > 0) {
+              boolean canHaveSimpleExpr = ContainerUtil.find(annot.getMethods(), new Condition<PsiMethod>() {
+                @Override
+                public boolean value(PsiMethod method) {
+                  return !("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null);
+                }
+              }) == null;
 
-            if (canHaveSimpleExpr) {
-              PsiType type = valueAttr[0].getReturnType();
-              while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-              if (type != null && isAcceptableAnnotationValueType(type)) {
-                myResult = createSimpleSubTypeResult(type);
+
+              if (canHaveSimpleExpr) {
+                createResultFromAnnotationAttribute(valueAttr[0]);
               }
             }
           }
         }
+      }
+    }
+
+    private void createResultFromAttrName(PsiClass annotation, String attrName) {
+      final PsiMethod[] attrs = annotation.findMethodsByName(attrName, false);
+      if (attrs.length > 0) {
+        createResultFromAnnotationAttribute(attrs[0]);
+      }
+    }
+
+    private void createResultFromAnnotationAttribute(PsiMethod attr) {
+      PsiType type = attr.getReturnType();
+      while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
+      if (type != null && isAcceptableAnnotationValueType(type)) {
+        myResult = createSimpleSubTypeResult(type);
       }
     }
 
@@ -513,7 +513,8 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitCaseLabel(GrCaseLabel caseLabel) {
       final PsiElement parent = caseLabel.getParent().getParent();
-      assert parent instanceof GrSwitchStatement : parent + " of class " + parent.getClass();
+      if (!(parent instanceof GrSwitchStatement)) return;
+
       final GrExpression condition = ((GrSwitchStatement)parent).getCondition();
       if (condition == null) return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,11 +77,13 @@ def foo(newName) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 import foo.bar.Zoo
 SomeClass c = new SomeClass()
+Zoo zoo
 """)
     myFixture.renameElement(someClass, "NewClass")
     myFixture.checkResult """
 import foo.bar.Zoo
 NewClass c = new NewClass()
+Zoo zoo
 """
   }
 

@@ -356,6 +356,11 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
+    if (component instanceof JComboBox) {
+      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+      // Disabling these children results in ugly UI. See WEB-10733
+      return;
+    }
     if (component instanceof JLabel) {
       Color color = enabled ? getLabelForeground() : getLabelDisabledForeground();
       if (color != null) {
@@ -2668,7 +2673,7 @@ public class UIUtil {
     }
   }
 
-  private static final Color DECORATED_ROW_BG_COLOR = new JBColor(new Color(242, 245, 249), new Color(65, 69, 71));
+  private static final Color DECORATED_ROW_BG_COLOR = new JBColor(new Color(242, 245, 249), new Color(79, 83, 84));
 
   public static Color getDecoratedRowColor() {
     return DECORATED_ROW_BG_COLOR;

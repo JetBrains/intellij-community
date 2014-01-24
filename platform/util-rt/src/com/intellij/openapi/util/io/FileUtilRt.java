@@ -25,6 +25,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -379,6 +381,50 @@ public class FileUtilRt {
       System.arraycopy(chars, 0, newChars, 0, count);
       return newChars;
     }
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return loadLines(file.getPath(), encoding);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path) throws IOException {
+    return loadLines(path, null);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
+    InputStream stream = new FileInputStream(path);
+    try {
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+      BufferedReader reader = new BufferedReader(in);
+      try {
+        return loadLines(reader);
+      }
+      finally {
+        reader.close();
+      }
+    }
+    finally {
+      stream.close();
+    }
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
+    List<String> lines = new ArrayList<String>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      lines.add(line);
+    }
+    return lines;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,9 +118,10 @@ public class PrimaryExpression implements GroovyElementTypes {
     }
 
     PsiBuilder.Marker anonymousMarker = builder.mark();
-    String name = null;
+    String name;
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
+      name = null;
     }
     else if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(builder.getTokenType())) {
       name = builder.getTokenText();

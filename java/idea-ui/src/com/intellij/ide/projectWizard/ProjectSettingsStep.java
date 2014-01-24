@@ -165,7 +165,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
     if (!validateModulePaths()) return false;
     if (!myWizardContext.isCreatingNewProject()) {
-      validateExistingModuleName();
+      validateExistingModuleName(myWizardContext.getProject());
     }
 
     if (mySettingsStep != null) {
@@ -359,15 +359,15 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
   }
 
-  private void validateExistingModuleName() throws ConfigurationException {
+  private void validateExistingModuleName(Project project) throws ConfigurationException {
     final String moduleName = getModuleName();
     final Module module;
-    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(myWizardContext.getProject());
+    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
     if (fromConfigurable != null) {
       module = fromConfigurable.getModulesConfig().getModule(moduleName);
     }
     else {
-      module = ModuleManager.getInstance(myWizardContext.getProject()).findModuleByName(moduleName);
+      module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     }
     if (module != null) {
       throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");

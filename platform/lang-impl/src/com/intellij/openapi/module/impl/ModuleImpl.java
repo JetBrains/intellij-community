@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
@@ -53,7 +52,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
+public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
@@ -79,7 +78,6 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
     init(filePath);
-
   }
 
   @Override
@@ -113,9 +111,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   public void loadModuleComponents() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
       loadComponentsConfiguration(plugin.getModuleComponents(), plugin, false);
     }
   }

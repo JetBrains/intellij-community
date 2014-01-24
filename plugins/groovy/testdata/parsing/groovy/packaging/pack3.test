@@ -7,16 +7,14 @@ Groovy script
     Modifiers
       <empty list>
     PsiElement(package)('package')
-    PsiErrorElement:Identifier expected
-      <empty list>
-  PsiWhiteSpace(' ')
-  Reference expression
-    Reference expression
-      Reference expression
-        PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
+        Reference element
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(new line)('\n')
+        PsiElement(identifier)('b')
       PsiElement(.)('.')
       PsiElement(new line)('\n')
-      PsiElement(identifier)('b')
-    PsiElement(.)('.')
-    PsiElement(new line)('\n')
-    PsiElement(identifier)('c')
+      PsiElement(identifier)('c')
