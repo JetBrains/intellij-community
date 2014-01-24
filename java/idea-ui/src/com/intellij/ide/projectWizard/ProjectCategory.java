@@ -64,6 +64,9 @@ public abstract class ProjectCategory {
     return new FrameworkRole[] {createModuleBuilder().getDefaultAcceptableRole()};
   }
 
+  /**
+   * Describes "main" frameworks to be shown on top of the tree
+   */
   @NotNull
   public String[] getAssociatedFrameworkIds() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
