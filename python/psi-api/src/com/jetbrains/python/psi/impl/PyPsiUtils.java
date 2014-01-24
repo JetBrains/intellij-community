@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -373,6 +375,65 @@ public class PyPsiUtils {
   public static boolean isBefore(@NotNull final PsiElement element, @NotNull final PsiElement element2) {
     // TODO: From RubyPsiUtil, should be moved to PsiTreeUtil
     return element.getTextOffset() <= element2.getTextOffset();
+  }
+
+  @Nullable
+  public static QualifiedName asQualifiedName(@Nullable PyExpression expr) {
+    return expr instanceof PyQualifiedExpression ? ((PyQualifiedExpression)expr).asQualifiedName() : null;
+  }
+
+  @Nullable
+  public static PyExpression getFirstQualifier(@NotNull PyQualifiedExpression expr) {
+    final List<PyExpression> expressions = unwindQualifiers(expr);
+    if (!expressions.isEmpty()) {
+      return expressions.get(0);
+    }
+    return null;
+  }
+
+  @NotNull
+  public static String toPath(@Nullable PyQualifiedExpression expr) {
+    if (expr != null) {
+      final QualifiedName qName = expr.asQualifiedName();
+      if (qName != null) {
+        return qName.toString();
+      }
+      final String name = expr.getName();
+      if (name != null) {
+        return name;
+      }
+    }
+    return "";
+  }
+
+  @Nullable
+  protected static QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
+    return fromReferenceChain(unwindQualifiers(expr));
+  }
+
+  @NotNull
+  private static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
+    final List<PyExpression> path = new LinkedList<PyExpression>();
+    PyQualifiedExpression e = expr;
+    while (e != null) {
+      path.add(0, e);
+      final PyExpression q = e.getQualifier();
+      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
+    }
+    return path;
+  }
+
+  @Nullable
+  private static QualifiedName fromReferenceChain(@NotNull List<PyExpression> components) {
+    final List<String> componentNames = new ArrayList<String>(components.size());
+    for (PyExpression component : components) {
+      final String refName = (component instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)component).getReferencedName() : null;
+      if (refName == null) {
+        return null;
+      }
+      componentNames.add(refName);
+    }
+    return QualifiedName.fromComponents(componentNames);
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

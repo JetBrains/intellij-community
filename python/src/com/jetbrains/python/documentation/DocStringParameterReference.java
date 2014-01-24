@@ -17,14 +17,17 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -37,10 +40,10 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class DocStringParameterReference extends PsiReferenceBase<PsiElement> implements PsiReferenceEx {
+public class DocStringParameterReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
   private final StructuredDocStringBase.ReferenceType myType;
 
-  public DocStringParameterReference(PsiElement element, TextRange range, StructuredDocStringBase.ReferenceType refType) {
+  public DocStringParameterReference(PyStringLiteralExpression element, TextRange range, StructuredDocStringBase.ReferenceType refType) {
     super(element, range);
     myType = refType;
   }
@@ -158,5 +161,19 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
       return "Function '" + function.getName() + "' does not have a parameter '" + getCanonicalText() + "'";
     }
     return null;
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    TextRange range = getRangeInElement();
+    Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(myElement.getText()));
+
+    if (quotes != null) {
+      range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());
+    }
+
+    String newName = range.replace(myElement.getText(), newElementName);
+    myElement.updateText(newName);
+    return myElement;
   }
 }

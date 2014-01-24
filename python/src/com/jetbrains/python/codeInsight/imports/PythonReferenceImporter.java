@@ -69,7 +69,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     for (PsiElement element : elements) {
       if (element instanceof PyReferenceExpression && isImportable(element)) {
         final PyReferenceExpression refExpr = (PyReferenceExpression)element;
-        if (refExpr.getQualifier() == null) {
+        if (!refExpr.isQualified()) {
           final PsiPolyVariantReference reference = refExpr.getReference();
           if (reference.resolve() == null) {
             AutoImportQuickFix fix = proposeImportFix(refExpr, reference);
@@ -92,7 +92,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiReference element = file.findReferenceAt(offset);
     if (element instanceof PyReferenceExpression && isImportable((PsiElement)element)) {
       final PyReferenceExpression refExpr = (PyReferenceExpression)element;
-      if (refExpr.getQualifier() == null) {
+      if (!refExpr.isQualified()) {
         final PsiPolyVariantReference reference = refExpr.getReference();
         if (reference.resolve() == null) {
           AutoImportQuickFix fix = proposeImportFix(refExpr, reference);

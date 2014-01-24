@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,21 +44,18 @@ public class FileDropHandler implements EditorDropHandler {
     myEditor = editor;
   }
 
-
   @Override
   public boolean canHandleDrop(final DataFlavor[] transferFlavors) {
-    return transferFlavors != null && FileCopyPasteUtil.isFileListFlavorSupported(transferFlavors);
+    return transferFlavors != null && FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors);
   }
 
   @Override
   public void handleDrop(@NotNull final Transferable t, @Nullable final Project project, EditorWindow editorWindow) {
-    if (project == null || !FileCopyPasteUtil.isFileListFlavorSupported(t)) {
-      return;
-    }
-
-    final List<File> fileList = FileCopyPasteUtil.getFileList(t);
-    if (fileList != null) {
-      openFiles(project, fileList, editorWindow);
+    if (project != null) {
+      final List<File> fileList = FileCopyPasteUtil.getFileList(t);
+      if (fileList != null) {
+        openFiles(project, fileList, editorWindow);
+      }
     }
   }
 

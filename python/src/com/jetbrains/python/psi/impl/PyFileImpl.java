@@ -614,7 +614,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     @Nullable
     private List<String> getStringListFromValue(PyExpression expression) {
-      if (expression instanceof PyReferenceExpression && ((PyReferenceExpression)expression).getQualifier() == null) {
+      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
         return myDunderLike.get(((PyReferenceExpression)expression).getReferencedName());
       }
       return PyUtil.strListValue(expression);

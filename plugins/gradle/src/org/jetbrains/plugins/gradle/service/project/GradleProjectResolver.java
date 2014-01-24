@@ -248,8 +248,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
-      final Collection<TaskData> moduleTasks = projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
-      allTasks.addAll(moduleTasks);
+      if(!isBuildSrcProject) {
+        final Collection<TaskData> moduleTasks = projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
+        allTasks.addAll(moduleTasks);
+      }
     }
 
     // populate root project tasks

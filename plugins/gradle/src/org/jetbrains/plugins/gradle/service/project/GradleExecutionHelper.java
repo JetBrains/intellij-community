@@ -182,7 +182,8 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(ExceptionUtil.getMessage(e));
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
     finally {
       try {

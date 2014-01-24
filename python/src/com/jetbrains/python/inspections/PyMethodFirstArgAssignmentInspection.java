@@ -57,7 +57,7 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     private void handleTarget(PyQualifiedExpression target, String name) {
-      if (target.getQualifier() == null && name.equals(target.getText())) {
+      if (!target.isQualified() && name.equals(target.getText())) {
         complain(target, name);
       }
     }

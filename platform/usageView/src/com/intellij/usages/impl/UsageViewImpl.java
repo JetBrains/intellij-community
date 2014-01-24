@@ -755,13 +755,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 
-  private static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
-    //if (targets.length != 0) {
-    //  NavigationItem target = targets[0];
-    //  if (target instanceof ConfigurableUsageTarget) {
-    //    return ((ConfigurableUsageTarget)target).getShortcut();
-    //  }
-    //}
+  static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
+    if (targets.length != 0) {
+      NavigationItem target = targets[0];
+      if (target instanceof ConfigurableUsageTarget) {
+        return ((ConfigurableUsageTarget)target).getShortcut();
+      }
+    }
     return getShowUsagesWithSettingsShortcut();
   }
 

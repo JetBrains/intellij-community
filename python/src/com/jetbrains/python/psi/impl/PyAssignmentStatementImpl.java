@@ -209,7 +209,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());
     List<PyElement> result = new ArrayList<PyElement>();
     for (PyExpression expression : expressions) {
-      if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).getQualifier() != null) {
+      if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).isQualified()) {
         continue;
       }
       result.add(expression);
@@ -223,7 +223,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     PyExpression[] targets = getTargets();
     if (targets.length == 1 && targets[0] instanceof PyTargetExpression) {
       PyTargetExpression target = (PyTargetExpression)targets[0];
-      return target.getQualifier() == null && the_name.equals(target.getName()) ? target : null;
+      return !target.isQualified() && the_name.equals(target.getName()) ? target : null;
     }
     return IterHelper.findName(iterateNames(), the_name);
   }

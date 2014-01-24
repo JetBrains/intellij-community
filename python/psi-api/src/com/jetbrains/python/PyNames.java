@@ -137,8 +137,8 @@ public class PyNames {
 
   public static final String FORMAT = "format";
 
-  public static final String ABSTRACTMETHOD = "abc.abstractmethod";
-  public static final String ABSTRACTPROPERTY = "abc.abstractproperty";
+  public static final String ABSTRACTMETHOD = "abstractmethod";
+  public static final String ABSTRACTPROPERTY = "abstractproperty";
 
   public static final String TUPLE = "tuple";
   public static final String SET = "set";

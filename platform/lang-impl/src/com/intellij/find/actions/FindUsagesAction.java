@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -73,7 +72,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   protected void startFindUsages(@NotNull PsiElement element) {
-    new PsiElement2UsageTargetAdapter(element).findUsages();
+    FindManager.getInstance(element.getProject()).findUsages(element);
   }
 
   @Override

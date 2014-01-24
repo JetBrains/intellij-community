@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
-  private JPanel myButtonPanel;
+  private final JPanel myButtonPanel;
   private final ToolWindowHeader.ActionButton myGearButton;
 
-  public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
+  public ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
 
     myToolWindow = toolWindow;
@@ -380,10 +380,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {
     private final InplaceButton myButton;
     private final AnAction myAction;
-    private AnAction myAlternativeAction;
-    private Icon myActiveIcon;
-    private Icon myInactiveIcon;
-    private Icon myAlternativeIcon;
+    private final AnAction myAlternativeAction;
+    private final Icon myActiveIcon;
+    private final Icon myInactiveIcon;
+    private final Icon myAlternativeIcon;
 
     private AnAction myCurrentAction;
 

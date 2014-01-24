@@ -28,7 +28,6 @@ import com.intellij.util.containers.EmptyIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * The "import foo" or "import foo as bar" parts.
@@ -150,7 +148,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
             buf.append("from ");
             PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
             if (imp_src != null) {
-              buf.append(PyResolveUtil.toPath(imp_src));
+              buf.append(PyPsiUtils.toPath(imp_src));
             }
             else {
               buf.append("<?>");
@@ -185,10 +183,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (ret == null) {
       final PyReferenceExpression importReference = getImportReferenceExpression();
       if (importReference != null) {
-        final List<PyExpression> qualifiers = PyResolveUtil.unwindQualifiers(importReference);
-        if (qualifiers.size() > 0) {
-          ret = qualifiers.get(0);
-        }
+        ret = PyPsiUtils.getFirstQualifier(importReference);
       }
     }
     if (ret == null) {

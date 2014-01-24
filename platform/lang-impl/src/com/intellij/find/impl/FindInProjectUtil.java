@@ -20,11 +20,10 @@ import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramIndex;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -459,7 +458,8 @@ public class FindInProjectUtil {
                                                                               @NotNull final Project project,
                                                                               @Nullable final PsiDirectory psiDirectory,
                                                                               final Pattern fileMaskRegExp,
-                                                                              @Nullable final Module module, FileIndex fileIndex) {
+                                                                              @Nullable final Module module,
+                                                                              @NotNull FileIndex fileIndex) {
     if (DumbService.getInstance(project).isDumb()) {
       return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
@@ -577,7 +577,7 @@ public class FindInProjectUtil {
   }
 
   private static int addToUsages(@NotNull Document document, @NotNull Processor<UsageInfo> consumer, @NotNull FindModel findModel,
-                                 @NotNull final PsiFile psiFile, int[] offsetRef, int maxUsages) {
+                                 @NotNull final PsiFile psiFile, @NotNull int[] offsetRef, int maxUsages) {
     int count = 0;
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -616,39 +616,40 @@ public class FindInProjectUtil {
     return count;
   }
 
+  @NotNull
   private static String getTitleForScope(@NotNull final FindModel findModel) {
-    String result;
-
+    String scopeName;
     if (findModel.isProjectScope()) {
-      result = FindBundle.message("find.scope.project.title");
+      scopeName = FindBundle.message("find.scope.project.title");
     }
     else if (findModel.getModuleName() != null) {
-      result = FindBundle.message("find.scope.module.title", findModel.getModuleName());
+      scopeName = FindBundle.message("find.scope.module.title", findModel.getModuleName());
     }
     else if(findModel.getCustomScopeName() != null) {
-      result = findModel.getCustomScopeName();
+      scopeName = findModel.getCustomScopeName();
     }
     else {
-      result = FindBundle.message("find.scope.directory.title", findModel.getDirectoryName());
+      scopeName = FindBundle.message("find.scope.directory.title", findModel.getDirectoryName());
     }
 
+    String result = scopeName;
     if (findModel.getFileFilter() != null) {
-      result = FindBundle.message("find.scope.files.with.mask", result, findModel.getFileFilter());
+      result += " "+FindBundle.message("find.scope.files.with.mask", findModel.getFileFilter());
     }
 
     return result;
   }
 
   @NotNull
-  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull final FindModel findModelCopy) {
+  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
 
-    final String scope = getTitleForScope(findModelCopy);
-    final String stringToFind = findModelCopy.getStringToFind();
+    final String scope = getTitleForScope(findModel);
+    final String stringToFind = findModel.getStringToFind();
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       presentation.setTabText("Files");
-      presentation.setToolwindowTitle(BundleBase.format("Files in ''{0}''", scope));
+      presentation.setToolwindowTitle(BundleBase.format("Files in {0}", scope));
       presentation.setUsagesString("files");
     }
     else {
@@ -668,7 +669,6 @@ public class FindInProjectUtil {
                                                                        @NotNull final UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(true);
-    processPresentation.setShowFindOptionsPrompt(false);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
@@ -682,34 +682,43 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
     @NotNull private final Project myProject;
-    private final String myStringToFind;
+    @NotNull private final FindModel myFindModel;
 
-    private final ItemPresentation myItemPresentation = new ItemPresentation() {
-      @Override
-      public String getPresentableText() {
-        return FindBundle.message("find.usage.target.string.text", myStringToFind);
-      }
-
-      @Override
-      public String getLocationString() {
-        return myStringToFind + "!!";
-      }
-
-      @Override
-      public Icon getIcon(boolean open) {
-        return null;
-      }
-    };
-
-    public StringUsageTarget(@NotNull Project project, @NotNull String _stringToFind) {
+    public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
-      myStringToFind = _stringToFind;
+      myFindModel = findModel;
     }
 
     @Override
-    public void findUsages() {}
+    @NotNull
+    public String getPresentableText() {
+      UsageViewPresentation presentation = setupViewPresentation(false, myFindModel);
+      return presentation.getToolwindowTitle();
+    }
+
+    @NotNull
+    @Override
+    public String getLongDescriptiveName() {
+      return getPresentableText();
+    }
+
+    @Override
+    public String getLocationString() {
+      return myFindModel + "!!";
+    }
+
+    @Override
+    public Icon getIcon(boolean open) {
+      return AllIcons.Actions.Menu_find;
+    }
+
+    @Override
+    public void findUsages() {
+      FindInProjectManager.getInstance(myProject).startFindInProject(myFindModel);
+    }
+
     @Override
     public void findUsagesInEditor(@NotNull FileEditor editor) {}
     @Override
@@ -737,12 +746,12 @@ public class FindInProjectUtil {
 
     @Override
     public String getName() {
-      return myStringToFind;
+      return myFindModel.getStringToFind().isEmpty() ? myFindModel.getFileFilter() : myFindModel.getStringToFind();
     }
 
     @Override
     public ItemPresentation getPresentation() {
-      return myItemPresentation;
+      return this;
     }
 
     @Override
@@ -766,6 +775,11 @@ public class FindInProjectUtil {
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
       findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component));
+    }
+
+    @Override
+    public KeyboardShortcut getShortcut() {
+      return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
   }
 }

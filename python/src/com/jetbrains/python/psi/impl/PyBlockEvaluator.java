@@ -93,7 +93,7 @@ public class PyBlockEvaluator {
       public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
         PyExpression target = node.getTarget();
         String name = target.getName();
-        if (target instanceof PyReferenceExpression && ((PyReferenceExpression)target).getQualifier() == null && name != null) {
+        if (target instanceof PyReferenceExpression && !((PyReferenceExpression)target).isQualified() && name != null) {
           Object currentValue = myNamespace.get(name);
           if (currentValue != null) {
             Object rhs = prepareEvaluator().evaluate(node.getValue());
@@ -121,7 +121,7 @@ public class PyBlockEvaluator {
           PyExpression qualifier = calleeRef.getQualifier();
           if (qualifier instanceof PyReferenceExpression) {
             PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
-            if (qualifierRef.getQualifier() == null) {
+            if (!qualifierRef.isQualified()) {
               if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
                 processExtendCall(node, qualifierRef.getReferencedName());
               }

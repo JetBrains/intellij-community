@@ -71,6 +71,8 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
   private JPanel myNotificationsPlaceholder;
   private PythonPathEditor myPathEditor;
   private boolean mySdkListChanged = false;
+  private boolean myMakeActiveAdded = false;
+  private Sdk myAddedSdk;
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
   private final PyInstalledPackagesPanel myPackagesPanel;
@@ -241,7 +243,8 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
             ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
           }
         }
-        addCreatedSdk(sdk, true, setAsProjectInterpreter);
+        myMakeActiveAdded = setAsProjectInterpreter;
+        addCreatedSdk(sdk, true);
       }
     };
     final List<Sdk> allSdks = PyConfigurableInterpreterList.getInstance(myProject).getAllPythonSdks();
@@ -288,6 +291,11 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     myModifiedModificators.clear();
     myProjectSdksModel.apply();
     mySdkListChanged = false;
+    if (myMakeActiveAdded) {
+      SdkConfigurationUtil.setDirectoryProjectSdk(myProject, myAddedSdk);
+      myProjectSdksModel.setProjectSdk(myAddedSdk);
+      myInterpreterList.setSelectedSdk(myAddedSdk);
+    }
   }
 
   /**
@@ -361,13 +369,15 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
       .show(myProject, myProjectSdksModel.getSdks(), button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
-          addCreatedSdk(sdk, false, false);
+          myMakeActiveAdded = false;
+          addCreatedSdk(sdk, false);
         }
       });
   }
 
-  private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv, boolean makeActive) {
+  private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
+      myAddedSdk = sdk;
       boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
       boolean askSetAsProjectInterpreter = !myProject.isDefault() && !myNewProject;
       if (askSetAsProjectInterpreter && isVirtualEnv && !newVirtualEnv) {
@@ -379,7 +389,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
         SdkModificator modificator = myModificators.get(sdk);
         setSdkAssociated(modificator, !dialog.makeAvailableToAll());
         myModifiedModificators.add(modificator);
-        makeActive = dialog.useForThisProject();
+        myMakeActiveAdded = dialog.useForThisProject();
       }
       myProjectSdksModel.addSdk(sdk);
       refreshSdkList();
@@ -387,16 +397,11 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
       mySdkListChanged = true;
       if (askSetAsProjectInterpreter && !isVirtualEnv && !PythonSdkType.isInvalid(sdk) && !PythonSdkType.isIncompleteRemote(sdk)) {
         //TODO: make native mac dialog work
-        makeActive = Messages.showIdeaMessageDialog(myProject, "Do you want to set this interpreter as Project Interpreter?",
+        myMakeActiveAdded = Messages.showIdeaMessageDialog(myProject, "Do you want to set this interpreter as Project Interpreter?",
                                                     "Project Interpreter",
                                                     new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0, null,
                                                     null
         ) == Messages.YES;
-      }
-      if (makeActive) {
-        SdkConfigurationUtil.setDirectoryProjectSdk(myProject, sdk);
-        myProjectSdksModel.setProjectSdk(sdk);
-        myInterpreterList.setSelectedSdk(sdk);
       }
     }
   }

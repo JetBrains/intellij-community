@@ -183,7 +183,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       if (oldElement instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
         return;
       }
-      if (expr.getQualifier() != null) {
+      if (expr.isQualified()) {
         final PyElementGenerator generator = PyElementGenerator.getInstance(expr.getProject());
         final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expr), expr.getName());
         final PsiElement newExpr = expr.replace(generated);

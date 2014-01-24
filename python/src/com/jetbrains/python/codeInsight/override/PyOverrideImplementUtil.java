@@ -156,7 +156,8 @@ public class PyOverrideImplementUtil {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
     for (PyStatement statement: statementList.getStatements()) {
-      if (statement.getTextRange().getStartOffset() < offset) {
+      if (statement.getTextRange().getStartOffset() < offset ||
+          (statement instanceof PyExpressionStatement && ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
         anchor = statement;
       }
     }

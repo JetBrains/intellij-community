@@ -5981,6 +5981,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               try {
                 editor.getSelectionModel().removeSelection();
+
                 final int offset;
                 if (myDraggedRange != null) {
                   editor.getCaretModel().moveToOffset(caretOffset);
@@ -5989,16 +5990,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 else {
                   offset = editor.getCaretModel().getOffset();
                 }
-                if (editor.getDocument().getRangeGuard(offset, offset) != null) return;
-
-                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
+                if (editor.getDocument().getRangeGuard(offset, offset) != null) {
+                  return;
+                }
 
                 editor.putUserData(LAST_PASTED_REGION, null);
 
+                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
                 LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
-
-                EditorTextInsertHandler handler = (EditorTextInsertHandler)pasteHandler;
-                handler.execute(editor, editor.getDataContext(), new Producer<Transferable>() {
+                ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), new Producer<Transferable>() {
                   @Override
                   public Transferable produce() {
                     return t;

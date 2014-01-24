@@ -38,7 +38,7 @@ public class ForeachPostfixTemplate extends PostfixTemplate {
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
-    return expr != null && PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(expr.getType());
+    return expr != null && (PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(expr.getType()));
   }
 
   @Override

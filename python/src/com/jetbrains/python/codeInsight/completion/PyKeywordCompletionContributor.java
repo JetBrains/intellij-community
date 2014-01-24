@@ -308,6 +308,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyExceptPart.class)));
 
+  private static final PsiElementPattern.Capture<PsiElement> IN_ELSE_BODY_OF_TRY =
+    psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyElsePart.class).inside(PyTryExceptStatement.class)));
+
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class).withLastChild(
     psiElement(PyIfPart.class)));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
@@ -479,7 +482,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
       .and(FIRST_ON_LINE)
-      .andOr(IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_TRY)
+      .andOr(IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_TRY, IN_ELSE_BODY_OF_TRY)
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,

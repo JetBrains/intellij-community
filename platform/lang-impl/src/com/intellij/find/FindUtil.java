@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,7 +307,7 @@ public class FindUtil {
   public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
     List<Usage> usages = findAll(project, editor, findModel);
     if (usages == null) return;
-    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel.getStringToFind())};
+    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
@@ -931,23 +931,20 @@ public class FindUtil {
     final UsageTarget[] usageTargets =
       sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
-    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor =
-      sourceElement != null ? new UsageInfoToUsageConverter.TargetElementsDescriptor(sourceElement)
-                            : new UsageInfoToUsageConverter.TargetElementsDescriptor(PsiElement.EMPTY_ARRAY);
-    final Usage[] usages = {UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(targets[0]))};
+    final PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
+    final Usage[] usages = {UsageInfoToUsageConverter.convert(primary, new UsageInfo(targets[0]))};
     final UsageView view =
       UsageViewManager.getInstance(project).showUsages(usageTargets, usages, presentation);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-
         for (int i = 1; i < targets.length; i++) {
           if (((UsageViewImpl)view).isDisposed()) break;
           final PsiElement target = targets[i];
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              final Usage usage = UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(target));
+              final Usage usage = UsageInfoToUsageConverter.convert(primary, new UsageInfo(target));
               view.appendUsage(usage);
             }
           });

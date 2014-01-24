@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,7 +418,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions.isEmpty()) {
-                String[] lines = myProcessPresentation.isShowFindOptionsPrompt() ? new String[] {StringUtil.escapeXml(message), createOptionsHtml()} : new String[]{StringUtil.escapeXml(message)};
+                String[] lines = myProcessPresentation.isShowFindOptionsPrompt() ? new String[] {StringUtil.escapeXml(message), createOptionsHtml(mySearchFor)} : new String[]{StringUtil.escapeXml(message)};
                 notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
                                     MessageType.INFO, myProcessPresentation, UsageViewManagerImpl.this.myProject, lines);
                 findStartedBalloonShown.set(false);
@@ -453,7 +453,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
               flashUsageScriptaculously(usage);
             }
             notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
-                                MessageType.INFO, myProcessPresentation, UsageViewManagerImpl.this.myProject,"Only one usage found.", createOptionsHtml());
+                                MessageType.INFO, myProcessPresentation, UsageViewManagerImpl.this.myProject,"Only one usage found.", createOptionsHtml(
+              mySearchFor));
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -593,9 +594,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  private static String createOptionsHtml() {
+  private static String createOptionsHtml(@NonNls UsageTarget[] searchFor) {
+    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     String shortcutText = "";
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       shortcutText = "&nbsp;(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }

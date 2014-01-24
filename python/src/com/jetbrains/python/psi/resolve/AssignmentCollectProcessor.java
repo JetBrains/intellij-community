@@ -19,11 +19,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -56,15 +55,12 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
       for (PyExpression ex : assignment.getTargets()) {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
-          List<PyExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
-          QualifiedName qualifiedName = PyQualifiedNameFactory.fromReferenceChain(qualsExpr);
+          final QualifiedName qualifiedName = target.asQualifiedName();
           if (qualifiedName != null) {
             if (qualifiedName.getComponentCount() == myQualifier.getComponentCount() + 1 && qualifiedName.matchesPrefix(myQualifier)) {
-              // a new attribute follows last qualifier; collect it.
-              PyExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
-              String last_elt_name = last_elt.getName();
+              String last_elt_name = target.getName();
               if (!mySeenNames.contains(last_elt_name)) { // no dupes, only remember the latest
-                myResult.add(last_elt);
+                myResult.add(target);
                 mySeenNames.add(last_elt_name);
               }
             }

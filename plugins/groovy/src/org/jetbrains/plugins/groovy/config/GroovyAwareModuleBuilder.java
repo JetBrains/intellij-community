@@ -90,6 +90,11 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     return "Groovy";
   }
 
+  @Override
+  public String getParentGroup() {
+    return getModuleTypeName();
+  }
+
   @Nullable
   protected MvcFramework getFramework() {
     return null;
