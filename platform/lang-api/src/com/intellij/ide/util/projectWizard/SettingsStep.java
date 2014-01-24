@@ -35,5 +35,5 @@ public interface SettingsStep {
   void addExpertField(@NotNull String label, @NotNull JComponent field);
 
   @NotNull
-  JTextField getModuleNameField();
+  JTextField getNameField();
 }
