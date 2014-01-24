@@ -26,11 +26,13 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -64,16 +66,27 @@ public class ThreadDumpPanel extends JPanel {
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO, Daemon_sign);
   private final JBList myThreadList;
   private final List<ThreadState> myThreadDump;
+  private final JPanel myFilterPanel;
+  private final SearchTextField myFilterField;
 
   public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
-    final ThreadState[] data = threadDump.toArray(new ThreadState[threadDump.size()]);
-    final DefaultListModel model = new DefaultListModel();
 
-    final SearchTextField filterField = new SearchTextField();
+    myFilterField = new SearchTextField();
+    myFilterField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        updateThreadList();
+      }
+    });
 
-    myThreadList = new JBList(model);
+    myFilterPanel = new JPanel(new BorderLayout());
+    myFilterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+    myFilterPanel.add(myFilterField);
+    myFilterPanel.setVisible(false);
+
+    myThreadList = new JBList(new DefaultListModel());
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myThreadList.addListSelectionListener(new ListSelectionListener() {
@@ -90,60 +103,56 @@ public class ThreadDumpPanel extends JPanel {
       }
     });
 
-    DocumentAdapter filterListener = new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        String text = filterField.getText();
-        model.clear();
-        for (ThreadState state : data) {
-          if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-            //noinspection unchecked
-            model.addElement(state);
-          }
-        }
-        if (!model.isEmpty()) {
-          myThreadList.setSelectedIndex(0);
-        }
-        myThreadList.revalidate();
-        myThreadList.repaint();
-      }
-    };
-    filterField.addDocumentListener(filterListener);
-    filterListener.changedUpdate(null);
-
+    FilterAction filterAction = new FilterAction();
+    filterAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet(), myThreadList);
+    toolbarActions.add(filterAction);
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
     //toolbarActions.add(new ShowRecentlyChanged());
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
-    
-    JPanel filterPanel = new JPanel(new BorderLayout());
-    filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
-    filterPanel.add(filterField);
-    
+
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(filterPanel, BorderLayout.NORTH);
+    leftPanel.add(myFilterPanel, BorderLayout.NORTH);
     leftPanel.add(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(consoleView.getComponent());
-
     add(splitter, BorderLayout.CENTER);
 
     new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+
+    updateThreadList();
 
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
       editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
         @Override
         public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-          String filter = filterField.getText();
+          String filter = myFilterField.getText();
           if (StringUtil.isNotEmpty(filter)) {
             highlightOccurrences(filter, project, editor);
           }
         }
-      });
+      }, consoleView);
     }
+  }
+
+  private void updateThreadList() {
+    String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
+    DefaultListModel model = (DefaultListModel)myThreadList.getModel();
+    model.clear();
+    for (ThreadState state : myThreadDump) {
+      if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
+        //noinspection unchecked
+        model.addElement(state);
+      }
+    }
+    if (!model.isEmpty()) {
+      myThreadList.setSelectedIndex(0);
+    }
+    myThreadList.revalidate();
+    myThreadList.repaint();
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
@@ -322,6 +331,28 @@ public class ThreadDumpPanel extends JPanel {
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
 
       GROUP.createNotification("Full thread dump was successfully copied to clipboard", MessageType.INFO).notify(myProject);
+    }
+  }
+
+  private class FilterAction extends ToggleAction implements DumbAware {
+
+    FilterAction() {
+      super("Filter", "Show only threads containing a specific string", AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myFilterPanel.isVisible();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myFilterPanel.setVisible(state);
+      if (state) {
+        IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField, true);
+        myFilterField.selectText();
+      }
+      updateThreadList();
     }
   }
 }
