@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Bas Leijdekkers
+ * Copyright 2013-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,27 +91,14 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
           return;
         }
         final PsiExpression secondArgument = arguments[1];
-        if (!ExpressionUtils.hasStringType(secondArgument)) {
-          return;
-        }
-        final String value = (String)ExpressionUtils.computeConstantExpression(secondArgument);
-        if (value == null) {
-          return;
-        }
-        placeholderCount = countPlaceholders(value);
-        argumentCount = hasThrowableType(arguments[arguments.length - 1]) ? arguments.length - 3 : arguments.length - 2;
+        placeholderCount = countPlaceholders(secondArgument);
+        argumentCount = countArguments(arguments, 2);
       }
-      else if (ExpressionUtils.hasStringType(firstArgument)) {
-        final String value = (String)ExpressionUtils.computeConstantExpression(firstArgument);
-        if (value == null) {
-          return;
-        }
-        placeholderCount = countPlaceholders(value);
-        argumentCount = hasThrowableType(arguments[arguments.length - 1]) ? arguments.length - 2 : arguments.length - 1;
-      } else {
-        return;
+      else {
+        placeholderCount = countPlaceholders(firstArgument);
+        argumentCount = countArguments(arguments, 1);
       }
-      if (placeholderCount == argumentCount) {
+      if (placeholderCount < 0 || argumentCount < 0 || placeholderCount == argumentCount) {
         return;
       }
       registerMethodCallError(expression, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount));
@@ -131,16 +118,44 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
-    public static int countPlaceholders(String value) {
+    public static int countPlaceholders(PsiExpression argument) {
+      final Object value = ExpressionUtils.computeConstantExpression(argument);
+      if (!(value instanceof String)) {
+        return -1;
+      }
+      final String string = (String)value;
       int count = 0;
-      int index = value.indexOf("{}");
+      int index = string.indexOf("{}");
       while (index >= 0) {
-        if (index <= 0 || value.charAt(index - 1) != '\\') {
+        if (index == 0 || string.charAt(index - 1) != '\\') {
           count++;
         }
-        index = value.indexOf("{}", index + 1);
+        index = string.indexOf("{}", index + 1);
       }
       return count;
+    }
+
+    private static int countArguments(PsiExpression[] arguments, int countFrom) {
+      if (arguments.length <= countFrom) {
+        return 0;
+      }
+      final int count = arguments.length - countFrom;
+      if (count == 1) {
+        final PsiExpression argument = arguments[countFrom];
+        final PsiType argumentType = argument.getType();
+        if (argumentType instanceof PsiArrayType) {
+          if (argumentType.equalsToText("java.lang.Object[]") && argument instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+            final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
+            if (arrayInitializerExpression != null) {
+              return arrayInitializerExpression.getInitializers().length;
+            }
+          }
+          return -1;
+        }
+      }
+      final PsiExpression lastArgument = arguments[arguments.length - 1];
+      return hasThrowableType(lastArgument) ? count - 1 : count;
     }
   }
 }
