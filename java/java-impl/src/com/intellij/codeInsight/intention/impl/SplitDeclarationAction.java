@@ -119,15 +119,13 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
       PsiExpression initializer = var.getInitializer();
-      PsiExpression rExpression;
-      if (initializer instanceof PsiArrayInitializerExpression) {
+      PsiExpression rExpression = initializer;
+      if (initializer instanceof PsiArrayInitializerExpression && var.getType() instanceof PsiArrayType) {
         rExpression = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(
           "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
         );
       }
-      else {
-        rExpression = initializer;
-      }
+
       assignment.getRExpression().replace(rExpression);
       initializer.delete();
 
