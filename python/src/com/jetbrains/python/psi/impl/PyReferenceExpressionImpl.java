@@ -416,6 +416,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Override
   public void subtreeChanged() {
+    super.subtreeChanged();
     myQualifiedName = null;
   }
 
