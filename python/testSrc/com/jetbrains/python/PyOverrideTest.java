@@ -130,6 +130,10 @@ public class PyOverrideTest extends PyTestCase {
     doTest3k();
   }
 
+  public void testDocstring() {
+    doTest();
+  }
+
   // PY-10229
   public void testInstanceCheck() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
