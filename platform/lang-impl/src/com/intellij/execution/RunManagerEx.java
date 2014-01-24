@@ -74,7 +74,6 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
-  public abstract void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();

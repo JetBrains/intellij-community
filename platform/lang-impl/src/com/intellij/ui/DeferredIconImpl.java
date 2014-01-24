@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
+  private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   @NotNull
   private volatile Icon myDelegateIcon;
@@ -54,6 +55,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
   private final boolean myNeedReadAction;
   private boolean myDone;
+  private final boolean myAutoUpdatable;
+  private long myLastCalcTime = 0L;
+  private long myLastTimeSpent = 0L;
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = new TransferToEDTQueue<Runnable>("Deferred icon later invocator", new Processor<Runnable>() {
@@ -64,19 +68,21 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }, Condition.FALSE, 200);
 
-  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener) {
-    this(baseIcon, param, true, evaluator, listener);
+  public DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
+    this(baseIcon, param, true, evaluator, listener, autoUpdatable);
   }
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
-    this(baseIcon, param, needReadAction, evaluator, null);
+    this(baseIcon, param, needReadAction, evaluator, null, false);
   }
-  private DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator, IconListener<T> listener) {
+
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, final Function<T, Icon> evaluator, IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
     myNeedReadAction = needReadAction;
     myEvalListener = listener;
+    myAutoUpdatable = autoUpdatable;
   }
 
   @NotNull
@@ -90,7 +96,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
     }
 
-    if (myIsScheduled || isDone() || PowerSaveMode.isEnabled()) {
+    if (isDone() || myIsScheduled || PowerSaveMode.isEnabled()) {
       return;
     }
     myIsScheduled = true;
@@ -119,11 +125,16 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           }
         };
 
+        final long startTime = System.currentTimeMillis();
         if (myNeedReadAction) {
           if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
             @Override
             public void run() {
               IconDeferrerImpl.evaluateDeferred(evalRunnable);
+              if (myAutoUpdatable) {
+                myLastCalcTime = System.currentTimeMillis();
+                myLastTimeSpent = myLastCalcTime - startTime;
+              }
             }
           })) {
             myIsScheduled = false;
@@ -132,6 +143,10 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         }
         else {
           IconDeferrerImpl.evaluateDeferred(evalRunnable);
+          if (myAutoUpdatable) {
+            myLastCalcTime = System.currentTimeMillis();
+            myLastTimeSpent = myLastCalcTime - startTime;
+          }
         }
         final Icon result = evaluated[0];
         myDelegateIcon = result;
@@ -215,8 +230,10 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
 
     myDone = true;
-    myEvaluator = null;
-    myParam = null;
+    if (!myAutoUpdatable) {
+      myEvaluator = null;
+      myParam = null;
+    }
   }
 
   @NotNull
@@ -271,6 +288,10 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   public boolean isDone() {
+    if (myAutoUpdatable && myDone && myLastCalcTime > 0 && (System.currentTimeMillis() - myLastCalcTime) > Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * myLastTimeSpent)) {
+      myDone = false;
+      myIsScheduled = false;
+    }
     return myDone;
   }
 
