@@ -1,6 +1,7 @@
 import java.yyy.*
+import java.zzz as Abc
 
 class ScriptRunnerProxyy {
   private static ClassLoader scriptLoader
-  Abc f;
+  private Abc f;
 }
