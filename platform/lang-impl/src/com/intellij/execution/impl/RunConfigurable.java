@@ -1099,7 +1099,7 @@ class RunConfigurable extends BaseConfigurable {
           @Override
           @NotNull
           public String getTextFor(final ConfigurationType type) {
-            return type != null ? type.getDisplayName() :  hiddenCount + " items more (unused)...";
+            return type != null ? type.getDisplayName() :  hiddenCount + " items more (irrelevant)...";
           }
 
           @Override
