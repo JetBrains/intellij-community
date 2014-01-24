@@ -522,7 +522,8 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitCaseLabel(GrCaseLabel caseLabel) {
       final PsiElement parent = caseLabel.getParent().getParent();
-      assert parent instanceof GrSwitchStatement : parent + " of class " + parent.getClass();
+      if (!(parent instanceof GrSwitchStatement)) return;
+
       final GrExpression condition = ((GrSwitchStatement)parent).getCondition();
       if (condition == null) return;
 
