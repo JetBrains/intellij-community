@@ -39,12 +39,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
 
-  private static final String MESSAGE = PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.name");
+  private static final String NAME = PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.name");
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return MESSAGE;
+    return NAME;
   }
 
 
@@ -80,7 +80,8 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
         Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
         PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
         if (firstParent != null && isRequiredStatement(firstParent)) {
-          registerProblem(declaredVar, MESSAGE);
+          registerProblem(declaredVar,
+                          PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.message", declaredVar.getText()));
         }
       }
     }

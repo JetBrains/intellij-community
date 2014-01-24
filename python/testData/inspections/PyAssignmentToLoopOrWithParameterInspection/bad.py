@@ -1,44 +1,44 @@
 i = []
 for i[0] in xrange(5):
-    for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i[0]</warning> in xrange(20, 25):
+    for <weak_warning descr="Variable 'i[0]' already declared in 'for' loop or 'with' statement above">i[0]</weak_warning> in xrange(20, 25):
         print("Inner", i)
-        for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i</warning> in xrange(20, 25):
+        for <weak_warning descr="Variable 'i' already declared in 'for' loop or 'with' statement above">i</weak_warning> in xrange(20, 25):
             pass
     print("Outer", i)
 
 for i in xrange(5):
-    for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i</warning> in xrange(20, 25):
+    for <weak_warning descr="Variable 'i' already declared in 'for' loop or 'with' statement above">i</weak_warning> in xrange(20, 25):
         print("Inner", i)
     print("Outer", i)
 
 for i in xrange(5):
     i = []
-    for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i[0]</warning> in xrange(20, 25):
+    for <weak_warning descr="Variable 'i[0]' already declared in 'for' loop or 'with' statement above">i[0]</weak_warning> in xrange(20, 25):
         print("Inner", i)
     print("Outer", i)
 
 i = [0]
 for i[0] in xrange(5):
-    for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i[0]</warning> in xrange(20, 25):
+    for <weak_warning descr="Variable 'i[0]' already declared in 'for' loop or 'with' statement above">i[0]</weak_warning> in xrange(20, 25):
         print("Inner", i)
     print("Outer", i)
 
 i = [[]]
 for i[0] in xrange(5):
-    for <warning descr="Assignment to 'for' loop or 'with' statement parameter">i</warning> in xrange(20, 25):
+    for <weak_warning descr="Variable 'i' already declared in 'for' loop or 'with' statement above">i</weak_warning> in xrange(20, 25):
         print("Inner", i)
     print("Outer", i)
 
 with open("a") as f:
     spam(f)
     f.eggs()
-    with open("b") as <warning descr="Assignment to 'for' loop or 'with' statement parameter">f</warning>: #
+    with open("b") as <weak_warning descr="Variable 'f' already declared in 'for' loop or 'with' statement above">f</weak_warning>: #
         pass
 
 with open("a") as z, open("A") as f:
     spam(f)
     f.eggs()
-    for (a,b,c,d,(e,<warning descr="Assignment to 'for' loop or 'with' statement parameter">f</warning>)) in []:
+    for (a,b,c,d,(e,<weak_warning descr="Variable 'f' already declared in 'for' loop or 'with' statement above">f</weak_warning>)) in []:
         pass
 
 
@@ -47,7 +47,7 @@ with open("a") as f:
     f.eggs()
     for z in []:
         with open("b") as q:
-            with open("a") as <warning descr="Assignment to 'for' loop or 'with' statement parameter">f</warning>: #
+            with open("a") as <weak_warning descr="Variable 'f' already declared in 'for' loop or 'with' statement above">f</weak_warning>: #
                 pass
 
 
@@ -58,5 +58,5 @@ class Foo(object):
 
     def foo(self):
         for self.data in [1,2,3]:
-            for <warning descr="Assignment to 'for' loop or 'with' statement parameter">self.data</warning> in [1,2,3]:
+            for <weak_warning descr="Variable 'self.data' already declared in 'for' loop or 'with' statement above">self.data</weak_warning> in [1,2,3]:
                 pass
