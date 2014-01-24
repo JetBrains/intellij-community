@@ -521,7 +521,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   @NotNull
-  public JTextField getModuleNameField() {
+  public JTextField getNameField() {
     return myModuleName;
   }
 

@@ -142,7 +142,9 @@ public final class NavigationUtil {
     }
 
     if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
-      ((NavigationItem)element).navigate(requestFocus);
+      final NavigationItem navigationItem = (NavigationItem)element;
+      if (!navigationItem.canNavigate()) return false;
+      navigationItem.navigate(requestFocus);
       return true;
     }
 
