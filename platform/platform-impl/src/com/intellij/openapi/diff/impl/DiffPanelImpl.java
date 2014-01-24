@@ -111,10 +111,17 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
         toolbar.addAction(actionManager.getAction("ContextHelp"));
-        toolbar.addAction(new EditSourceWithIconAction());
+        toolbar.addAction(getEditSourceAction());
         toolbar.addSeparator();
         toolbar.addAction(new DiffMergeSettingsAction(Arrays.asList(getEditor1(), getEditor2()),
                                                       ServiceManager.getService(myProject, DiffToolSettings.class)));
+      }
+
+      @NotNull
+      private AnAction getEditSourceAction() {
+        AnAction editSourceAction = new EditSourceAction();
+        editSourceAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+        return editSourceAction;
       }
     };
   }
