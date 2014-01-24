@@ -35,6 +35,9 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -374,15 +377,28 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    final QualifiedName qualifierPath = qualifier.asQualifiedName();
-    if (qualifierPath != null) {
-      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
-      PyResolveUtil.treeCrawlUp(proc, qualifier);
-      return proc.getResult();
+    final Set<String> names = new HashSet<String>();
+    final QualifiedName qualifierQName = qualifier.asQualifiedName();
+    if (qualifierQName != null) {
+      final List<PyExpression> results = new ArrayList<PyExpression>();
+      for (ScopeOwner owner = ScopeUtil.getScopeOwner(qualifier); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
+        final Scope scope = ControlFlowCache.getScope(owner);
+        for (PyTargetExpression target : scope.getTargetExpressions()) {
+          final QualifiedName targetQName = target.asQualifiedName();
+          if (targetQName != null) {
+            if (targetQName.getComponentCount() == qualifierQName.getComponentCount() + 1 && targetQName.matchesPrefix(qualifierQName)) {
+              final String name = target.getName();
+              if (!names.contains(name)) {
+                names.add(name);
+                results.add(target);
+              }
+            }
+          }
+        }
+      }
+      return results;
     }
-    else {
-      return Collections.emptyList();
-    }
+    return Collections.emptyList();
   }
 
   @Override
