@@ -1,0 +1,77 @@
+diff -r dd84d714a0da build.py
+--- a/build.py	Fri Oct 25 13:00:39 2013 +0900
++++ b/build.py	Fri Jan 24 13:53:06 2014 +0400
+@@ -147,8 +147,8 @@
+ 
+ moduleNames = [
+   "syntax",
+-  "util",
+-  "xmlparser",
++  # "util",
++  # "xmlparser",
+   "validator",
+ ]
+ 
+@@ -875,19 +875,19 @@
+     downloadDependency(url, md5sum)
+ 
+ def buildAll():
+-  if 'JAVA_HOME' not in os.environ:
+-    print "Error: The JAVA_HOME environment variable is not set."
+-    print "Set the JAVA_HOME environment variable to the pathname of the directory where your JDK is installed."
+-    sys.exit(1)
+-  prepareLocalEntityJar()
+-  buildJing()
+-  buildDatatypeLibrary()
+-  buildNonSchema()
++  # if 'JAVA_HOME' not in os.environ:
++  #   print "Error: The JAVA_HOME environment variable is not set."
++  #   print "Set the JAVA_HOME environment variable to the pathname of the directory where your JDK is installed."
++  #   sys.exit(1)
++  # prepareLocalEntityJar()
++  # buildJing()
++  # buildDatatypeLibrary()
++  # buildNonSchema()
+   buildSchemaDrivers()
+-  buildHtmlParser()
+-  buildUtil()
+-  buildXmlParser()
+-  buildValidator()
++  # buildHtmlParser()
++  # buildUtil()
++  # buildXmlParser()
++  # buildValidator()
+ 
+ def hgCloneOrUpdate(mod, baseUrl):
+   if os.path.exists(mod):
+@@ -925,18 +925,18 @@
+   # XXX root dir
+   for mod in moduleNames:
+     hgCloneOrUpdate(mod, hgRoot)
+-  gitCloneOrUpdate("nu-validator-site", gitRoot)
+-  runCmd('"%s" co http://jing-trang.googlecode.com/svn/branches/validator-nu jing-trang' % (svnCmd))
+-  hgCloneOrUpdate("htmlparser", parserHgRoot)
+-  testsRemote = "https://github.com/validator/tests.git"
+-  testsBranch = "master"
+-  testsDir = "tests"
+-  if os.path.exists(testsDir):
+-    os.chdir(testsDir)
+-    runCmd('"%s" pull %s %s' % (gitCmd, testsRemote, testsBranch))
+-    os.chdir("..")
+-  else:
+-    runCmd('"%s" clone %s %s' % (gitCmd, testsRemote, testsDir))
++  # gitCloneOrUpdate("nu-validator-site", gitRoot)
++  # runCmd('"%s" co http://jing-trang.googlecode.com/svn/branches/validator-nu jing-trang' % (svnCmd))
++  # hgCloneOrUpdate("htmlparser", parserHgRoot)
++  # testsRemote = "https://github.com/validator/tests.git"
++  # testsBranch = "master"
++  # testsDir = "tests"
++  # if os.path.exists(testsDir):
++  #   os.chdir(testsDir)
++  #   runCmd('"%s" pull %s %s' % (gitCmd, testsRemote, testsBranch))
++  #   os.chdir("..")
++  # else:
++  #   runCmd('"%s" clone %s %s' % (gitCmd, testsRemote, testsDir))
+ 
+ def selfUpdate():
+   hgCloneOrUpdate("build", hgRoot)
