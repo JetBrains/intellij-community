@@ -1072,11 +1072,11 @@ public class FileUtil extends FileUtilRt {
     while (!queue.isEmpty()) {
       final File file = queue.removeFirst();
       if (!processor.process(file)) return false;
-      if (file.isDirectory() && (directoryFilter == null || directoryFilter.process(file))) {
-        final File[] children = file.listFiles();
-        if (children != null) {
-          ContainerUtil.addAll(queue, children);
-        }
+      if (directoryFilter != null && (!file.isDirectory() || !directoryFilter.process(file))) continue;
+
+      final File[] children = file.listFiles();
+      if (children != null) {
+        ContainerUtil.addAll(queue, children);
       }
     }
     return true;
