@@ -140,7 +140,13 @@ public class NanoXmlUtil {
 
   @NotNull
   public static XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
-    return parseHeader(new MyXMLReader(file.getInputStream()));
+    final InputStream stream = file.getInputStream();
+    try {
+      return parseHeader(new MyXMLReader(stream));
+    }
+    finally {
+      stream.close();
+    }
   }
 
   @Deprecated  // TODO: remove
