@@ -1,5 +1,5 @@
 <Assembla shared="false" url="http://www.assembla.com">
-  <commitMessageFormat>{id} {summary}</commitMessageFormat>
+  <commitMessageFormat>#{id} {summary}</commitMessageFormat>
   <option name="downloadTasksInSeparateRequests" value="false" />
   <password/>
   <option name="loginAnonymously" value="false" />
@@ -9,7 +9,7 @@
     <XPathResponseHandler>
       <selectors>
         <selector name="tasks" path="/tickets/ticket" />
-        <selector name="id" path="id" />
+        <selector name="id" path="number" />
         <selector name="summary" path="summary" />
         <selector name="description" path="description" />
         <selector name="updated" path="updated-at" />

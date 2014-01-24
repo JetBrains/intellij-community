@@ -74,7 +74,7 @@ public class AssemblaIntegrationTest extends GenericSubtypeTestCase {
     Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
     assertTasksEqual(
       new Task[]{
-        new TaskBuilder("50351983", "\u041F\u0440\u0438\u0432\u0435\u0442", myRepository)
+        new TaskBuilder("1", "\u041F\u0440\u0438\u0432\u0435\u0442", myRepository)
           .withDescription("")
           .withUpdated("2013-04-01T10:48:19+03:00")
           .withCreated("2013-04-01T10:45:06+03:00")
