@@ -20,10 +20,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
@@ -52,15 +54,29 @@ class LanguageResolvingUtil {
   }
 
   private static List<LanguageDefinition> collectLanguageDefinitions(final ConvertContext context) {
-    final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context);
-    final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(context, libraryDefinitions);
+    final PsiClass languageClass = DomJavaUtil.findClass(Language.class.getName(), context.getInvocationElement());
+    if (languageClass == null) {
+      return Collections.emptyList();
+    }
+
+    final Project project = context.getProject();
+    final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+    GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
+    final Collection<PsiClass> allLanguages = ClassInheritorsSearch.search(languageClass,
+                                                                           allScope, true).findAll();
+    final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);
+
+    final Collection<PsiClass> projectLanguages = ClassInheritorsSearch.search(languageClass,
+                                                                               projectProductionScope, true).findAll();
+    final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
 
     final List<LanguageDefinition> all = new ArrayList<LanguageDefinition>(libraryDefinitions);
     all.addAll(projectDefinitions);
     return all;
   }
 
-  private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context) {
+  private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context,
+                                                                  final Collection<PsiClass> allLanguages) {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), new NullableFunction<Language, LanguageDefinition>() {
       @Override
       public LanguageDefinition fun(Language language) {
@@ -73,6 +89,10 @@ class LanguageResolvingUtil {
           return null;
         }
 
+        if (!allLanguages.contains(psiClass)) {
+          return null;
+        }
+
         final LanguageFileType type = language.getAssociatedFileType();
         final Icon icon = type != null ? type.getIcon() : null;
         return new LanguageDefinition(language.getID(),
@@ -82,18 +102,9 @@ class LanguageResolvingUtil {
     });
   }
 
-  private static List<LanguageDefinition> collectProjectLanguages(ConvertContext context,
+  private static List<LanguageDefinition> collectProjectLanguages(final Collection<PsiClass> projectLanguages,
                                                                   final List<LanguageDefinition> libraryLanguages) {
-    final PsiClass languageClass = DomJavaUtil.findClass(Language.class.getName(), context.getInvocationElement());
-    if (languageClass == null) {
-      return Collections.emptyList();
-    }
-
-    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(context.getProject());
-    final Collection<PsiClass> languages = ClassInheritorsSearch.search(languageClass,
-                                                                        scope, true).findAll();
-
-    return ContainerUtil.mapNotNull(languages, new NullableFunction<PsiClass, LanguageDefinition>() {
+    return ContainerUtil.mapNotNull(projectLanguages, new NullableFunction<PsiClass, LanguageDefinition>() {
       @Nullable
       @Override
       public LanguageDefinition fun(final PsiClass language) {
