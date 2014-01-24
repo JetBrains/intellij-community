@@ -106,7 +106,6 @@ public class AnalyzeStacktraceUtil {
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();
-    printStacktrace(consoleView, text);
     return descriptor;
   }
 
