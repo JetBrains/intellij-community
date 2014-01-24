@@ -602,7 +602,7 @@ class Outer {
     }
 }'''
     myFixture.type('\t')
-    assert myFixture.editor.document.text.contains("Outer.Inner.foo")
+    assert myFixture.editor.document.text.contains("\"Inner.foo")
   }
 
   public void "test do not strip type argument containing class"() {

@@ -268,7 +268,7 @@ public class HgRegularUpdater implements HgUpdater {
     if (parentAfterUpdate.equals(parentBeforeUpdate)) { // nothing to update => returning not to capture local uncommitted changes
       return;
     }
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).baseRevision(parentBeforeUpdate).targetRevision(
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).baseRevision(parentBeforeUpdate).targetRevision(
       parentAfterUpdate).build(project);
     Set<HgChange> changes = statusCommand.execute(repo);
     for (HgChange change : changes) {

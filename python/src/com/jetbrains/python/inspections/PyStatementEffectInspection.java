@@ -79,7 +79,7 @@ public class PyStatementEffectInspection extends PyInspection {
       if (checkStringLiteral(expression)) {
         return;
       }
-      if (expression instanceof PyReferenceExpression && ((PyReferenceExpression)expression).getQualifier() == null) {
+      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
         registerProblem(expression, PyBundle.message("INSP.NAME.statement.message"));
       }
       else {

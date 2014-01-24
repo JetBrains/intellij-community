@@ -458,7 +458,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (PyNames.COMPARISON_OPERATORS.contains(refname)) {
           return;
         }
-        if (refex.getQualifier() != null) {
+        if (refex.isQualified()) {
           final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
         }

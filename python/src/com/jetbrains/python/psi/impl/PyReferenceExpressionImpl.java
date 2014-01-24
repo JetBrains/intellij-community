@@ -51,6 +51,7 @@ import java.util.*;
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
+  private QualifiedName myQualifiedName = null;
 
   public PyReferenceExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -98,6 +99,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public PyExpression getQualifier() {
     final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
+  }
+
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
   }
 
   @Nullable
@@ -174,7 +180,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public QualifiedName asQualifiedName() {
-    return PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+    if (myQualifiedName == null) {
+      myQualifiedName = PyPsiUtils.asQualifiedName(this);
+    }
+    return myQualifiedName;
   }
 
   @Override
@@ -187,8 +196,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null;
     }
     try {
-      final PyExpression qualifier = getQualifier();
-      if (qualifier == null) {
+      final boolean qualified = isQualified();
+      if (!qualified) {
         String name = getReferencedName();
         if (PyNames.NONE.equals(name)) {
           return PyNoneType.INSTANCE;
@@ -198,7 +207,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (type != null) {
         return type;
       }
-      if (qualifier != null) {
+      if (qualified) {
         PyType maybe_type = PyUtil.getSpecialAttributeType(this, context);
         if (maybe_type != null) return maybe_type;
         Ref<PyType> typeOfProperty = getTypeOfProperty(context);
@@ -403,6 +412,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return null;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myQualifiedName = null;
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +43,8 @@ public final class IdeaLaf extends MetalLookAndFeel {
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
+    final UISettings ui = UISettings.getInstance();
+    Pair<String, Integer> systemFont = SystemInfo.isWindows ? Pair.create(ui.FONT_FACE, ui.FONT_SIZE) : UIUtil.getSystemFontData();
     if (systemFont != null) {
       LafManagerImpl.initFontDefaults(defaults, systemFont.first, systemFont.second);
     }

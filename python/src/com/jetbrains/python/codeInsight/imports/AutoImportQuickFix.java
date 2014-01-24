@@ -129,7 +129,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       return false;
     }
-    if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
+    if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).isQualified()))) return false; // we cannot be qualified
     String name = getNameToImport();
     if (!name.equals(myInitialName)) {
       return false;

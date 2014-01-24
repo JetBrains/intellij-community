@@ -220,7 +220,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     if (element instanceof PyClass || element instanceof PyFunction) {
       return true;
     }
-    if (!(parent instanceof PyClass) && (element instanceof PyTargetExpression) && ((PyTargetExpression)element).getQualifier() == null) {
+    if (!(parent instanceof PyClass) && (element instanceof PyTargetExpression) && !((PyTargetExpression)element).isQualified()) {
       PsiElement e = element.getParent();
       if (e instanceof PyAssignmentStatement) {
         e = e.getParent();

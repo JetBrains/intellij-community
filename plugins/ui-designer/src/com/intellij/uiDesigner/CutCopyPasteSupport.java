@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -165,7 +164,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         if (parentLayout != null) {
           container.setLayoutManager(parentLayout);
         }
-        
+
         final int x = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X));
         final int y = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y));
 
@@ -204,17 +203,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static String getSerializedComponents() {
     try {
-      final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-      if (!copyPasteManager.isDataFlavorAvailable(ourDataFlavor)) {
-        return null;
-      }
-
-      final Transferable content = copyPasteManager.getContents();
-      if (content == null) {
-        return null;
-      }
-
-      final Object transferData = content.getTransferData(ourDataFlavor);
+      final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
       if (!(transferData instanceof SerializedComponentData)) {
         return null;
       }

@@ -1183,7 +1183,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     else {
       final PyClassStub stub = getStub();
-      final QualifiedName name = stub != null ? stub.getMetaClass() : PyQualifiedNameFactory.fromExpression(getMetaClassExpression());
+      final QualifiedName name = stub != null ? stub.getMetaClass() : PyPsiUtils.asQualifiedName(getMetaClassExpression());
       final PsiFile file = getContainingFile();
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
