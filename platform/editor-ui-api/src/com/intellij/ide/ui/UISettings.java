@@ -173,17 +173,17 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {
-    final Pair<String,Integer> fontData = UIUtil.getSystemFontData();
-    if (fontData != null) {
-      return fontData;
-    }
-
     if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
       final Font font = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (font != null) {
         return Pair.create(font.getName(), font.getSize());
       }
+    }
+
+    final Pair<String,Integer> fontData = UIUtil.getSystemFontData();
+    if (fontData != null) {
+      return fontData;
     }
 
     return Pair.create("Dialog", 12);
