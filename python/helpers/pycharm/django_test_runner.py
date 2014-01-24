@@ -1,5 +1,6 @@
 from tcunittest import TeamcityTestRunner, TeamcityTestResult
 from tcmessages import TeamcityServiceMessages
+import sys
 from pycharm_run_utils import adjust_django_sys_path
 adjust_django_sys_path()
 
