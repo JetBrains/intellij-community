@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,16 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
-      throwClauseMarker.done(THROW_CLAUSE);
+    if (ReferenceElement.parse(builder, false, true, true, false, false) == FAIL) {
       builder.error(GroovyBundle.message("identifier.expected"));
+      throwClauseMarker.done(THROW_CLAUSE);
       return;
     }
 
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
+      if (ReferenceElement.parse(builder, false, true, true, false, false) == FAIL) {
         break;
       }
     }
