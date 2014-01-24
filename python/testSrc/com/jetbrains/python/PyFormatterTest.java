@@ -299,7 +299,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testAlignInCallExpression() {  
+  public void testAlignInCallExpression() {
+    doTest();
+  }
+
+  public void _testAlignInNestedCallInWith() { //PY-11337 TODO:
     doTest();
   }
 
@@ -310,8 +314,8 @@ public class PyFormatterTest extends PyTestCase {
   public void testIfConditionContinuation() {  // PY-8195
     doTest();
   }
-
-  public void _testIndentInNestedCall() {  // PY-11906 TODO: fix indent
+  
+  public void _testIndentInNestedCall() {  // PY-11919 TODO: required changes in formatter to be able to make indent relative to block or alignment
     doTest();
   }
 
@@ -381,7 +385,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testIndentParensInImport() { // PY-9075
     doTest();
   }
-  
+
   public void testAlignInParenthesizedExpression() {
     doTest();
   }
