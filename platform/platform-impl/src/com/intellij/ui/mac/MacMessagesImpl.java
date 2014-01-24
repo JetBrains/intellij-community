@@ -122,6 +122,8 @@ public class MacMessagesImpl extends MacMessages {
       //         invoke(invoke(alert, "buttons"), "objectAtIndex:", count == 1 ? 0 : 1));
       //}
 
+      enableEscapeToCloseTheMessage(alert);
+
       String doNotAsk = toStringViaUTF8(doNotAskText);
       if (!"-1".equals(doNotAsk)) {
         invoke(alert, "setShowsSuppressionButton:", 1);
@@ -163,10 +165,10 @@ public class MacMessagesImpl extends MacMessages {
       //invoke(window, "makeFirstResponder:",
       //       invoke(invoke(alert, "buttons"), "objectAtIndex:", alternateExist ? 2 : otherExist ? 1 : 0));
       //
-      ////it is impossible to override ESCAPE key behavior -> key should be named "Cancel" to be bound to ESC
-      //if (!alternateExist) {
-      //  invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 1), "setKeyEquivalent:", nsString("\\e"));
-      //}
+
+      if (!alternateExist) {
+          enableEscapeToCloseTheMessage(alert);
+      }
 
       String doNotAsk = toStringViaUTF8(doNotAskText);
       if (!"-1".equals(doNotAsk)) {
@@ -200,6 +202,11 @@ public class MacMessagesImpl extends MacMessages {
       }
 
     }
+  }
+
+  private static ID enableEscapeToCloseTheMessage(ID alert) {
+    return invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:",
+                         invoke(invoke(alert, "buttons"), "count").intValue() - 1), "setKeyEquivalent:",  nsString("\033"));
   }
 
   private MacMessagesImpl() {}
