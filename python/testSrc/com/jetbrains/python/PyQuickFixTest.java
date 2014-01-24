@@ -266,6 +266,15 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
   }
 
+  public void testUnresolvedRefNoCreateFunction() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(
+      PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"));
+    assertNull(intentionAction);
+  }
+
   public void testReplaceNotEqOperator() {
     doInspectionTest("ReplaceNotEqOperator.py", PyCompatibilityInspection.class,
                      PyBundle.message("INTN.replace.noteq.operator"), true, true);
@@ -306,6 +315,17 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  public void testAddCallSuperAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("AddCallSuperAnnotations.py",
+                         PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
   public void testAddCallSuperPass() {                      //PY-8654
     doInspectionTest("AddCallSuperPass.py", PyMissingConstructorInspection.class,
                      PyBundle.message("QFIX.add.super"), true, true);
@@ -340,6 +360,11 @@ public class PyQuickFixTest extends PyTestCase {
     setLanguageLevel(LanguageLevel.PYTHON27);
     doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
                      PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
+  }
+
+  public void testDictComprehensionToCall() {
+    doInspectionTest("DictComprehensionToCall.py", PyCompatibilityInspection.class,
+                         PyBundle.message("INTN.convert.dict.comp.to"), true, true);
   }
 
   public void testDocstringParams() {                      //PY-3394

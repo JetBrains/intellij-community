@@ -701,7 +701,7 @@ public class PyUtil {
       final QualifiedName qualifiedName = decorator.getQualifiedName();
       if (qualifiedName != null) {
         final String name = qualifiedName.toString();
-        if (PyNames.ABSTRACTMETHOD.equals(name) || PyNames.ABSTRACTPROPERTY.equals(name)) {
+        if (name.endsWith(PyNames.ABSTRACTMETHOD) || name.endsWith(PyNames.ABSTRACTPROPERTY)) {
           return true;
         }
       }

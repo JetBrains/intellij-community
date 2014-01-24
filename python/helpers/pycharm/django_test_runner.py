@@ -1,8 +1,6 @@
-import sys
-
-from tcunittest import TeamcityTestRunner
+from tcunittest import TeamcityTestRunner, TeamcityTestResult
 from tcmessages import TeamcityServiceMessages
-
+import sys
 from pycharm_run_utils import adjust_django_sys_path
 adjust_django_sys_path()
 
@@ -52,9 +50,40 @@ except ImportError:
     def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self, stream)
 
+
+def strclass(cls):
+  if not cls.__name__:
+    return cls.__module__
+  return "%s.%s" % (cls.__module__, cls.__name__)
+
+class DjangoTeamcityTestResult(TeamcityTestResult):
+  def __init__(self, *args, **kwargs):
+    super(DjangoTeamcityTestResult, self).__init__()
+
+  def _getSuite(self, test):
+    if hasattr(test, "suite"):
+      suite = strclass(test.suite)
+      suite_location = test.suite.location
+      location = test.suite.abs_location
+      if hasattr(test, "lineno"):
+        location = location + ":" + str(test.lineno)
+      else:
+        location = location + ":" + str(test.test.lineno)
+    else:
+
+      suite = strclass(test.__class__)
+      suite_location = "django_testid://" + suite
+      location = "django_testid://" + str(test.id())
+
+    return (suite, location, suite_location)
+
+
 class DjangoTeamcityTestRunner(BaseRunner):
   def __init__(self, stream=sys.stdout, **options):
     super(DjangoTeamcityTestRunner, self).__init__(stream)
+
+  def _makeResult(self, **kwargs):
+    return DjangoTeamcityTestResult(self.stream, **kwargs)
 
   def build_suite(self, *args, **kwargs):
     EXCLUDED_APPS = getattr(settings, 'TEST_EXCLUDE', [])

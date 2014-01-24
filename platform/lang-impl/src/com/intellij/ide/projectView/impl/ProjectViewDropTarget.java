@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
       return false;
     }
-    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorSupported(event)) {
+    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false;
     }
     else if (sourceNodes != null && ArrayUtilRt.find(sourceNodes, targetNode) != -1) {
@@ -124,7 +124,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     assert targetNode != null;
     final int dropAction = event.getAction().getActionId();
     if (sourceNodes == null) {
-      if (FileCopyPasteUtil.isFileListFlavorSupported(event)) {
+      if (FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
         List<File> fileList = FileCopyPasteUtil.getFileListFromAttachedObject(attached);
         if (!fileList.isEmpty()) {
           getDropHandler(dropAction).doDropFiles(fileList, targetNode);

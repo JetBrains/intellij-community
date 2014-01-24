@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
 /**
@@ -43,7 +44,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       "this is a <caret>"
     );
   }
-  
+
   public void testInTheMiddle() throws IOException {
     doTest(
       "th<caret>is is a string",
@@ -86,7 +87,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       "this is a string<caret>"
     );
   }
-  
+
   public void testAtWhiteSpaceAtLineEnd() throws IOException {
     doTest(
       "this is the first string  <caret>     \n" +
@@ -94,7 +95,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       "this is the first string  <caret>this is the second string"
     );
   }
-  
+
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordEnd();
@@ -106,13 +107,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText(getTestName(false) + ".txt", text);
     killToWordEnd();
     checkResultByText(" second third");
-    
+
     getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, false);
     getEditor().getCaretModel().moveCaretRelatively(-1, 0, false, false, false);
     killToWordEnd();
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals(" second", string);
   }
 
@@ -123,9 +122,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     killToWordEnd();
     checkResultByText(" third");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("first second", string);
   }
 
@@ -144,9 +141,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        public Insets getBorderInsets(    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("Component c) {\n        }\n", string);
   }
 
@@ -185,9 +180,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        public Insets getBorderInsets(    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("Component c) {\n        }\n", string);
   }
 
@@ -203,9 +196,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       killToWordEnd();
       checkResultByText(" third");
 
-      Transferable contents = CopyPasteManager.getInstance().getContents();
-      assertTrue(contents instanceof KillRingTransferable);
-      Object string = contents.getTransferData(DataFlavor.stringFlavor);
+      Object string = getContents();
       assertEquals("first second", string);
     }
     finally {
@@ -227,9 +218,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("\n" +
                  "    }", string);
   }
@@ -247,9 +236,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("\n" +
                  "    }", string);
   }
@@ -267,9 +254,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        public Insets getBorderInsets(    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("        }\n", string);
   }
 
@@ -286,9 +271,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("public class ParentCopy {\n" +
                       "        public Insets getBorderInsets(    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("}\n", string);
   }
 
@@ -306,9 +289,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
                       "        public Insets getBorderInsets(        }\n" +
                       "    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("\n" +
                  "                \n", string);
   }
@@ -328,11 +309,14 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
                       "                \n" +
                       "    }");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    Object string = getContents();
     assertEquals("\n" +
                  "        }", string);
   }
 
+  private static String getContents() throws UnsupportedFlavorException, IOException {
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    return (String)contents.getTransferData(DataFlavor.stringFlavor);
+  }
 }

@@ -22,10 +22,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -137,7 +137,7 @@ public class PyPep8NamingInspection extends PyInspection {
       final String asName = node.getAsName();
       final QualifiedName importedQName = node.getImportedQName();
       if (importedQName == null) return;
-      final String name = importedQName.toString();
+      final String name = importedQName.getLastComponent();
 
       if (asName == null || name == null) return;
       if (UPPERCASE_REGEX.matcher(name).matches()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.ide;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -33,15 +34,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author yole
  */
 public class JavaFilePasteProvider implements PasteProvider {
   public void performPaste(@NotNull final DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
-    final IdeView ideView = DataKeys.IDE_VIEW.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
     final PsiJavaFile javaFile = createJavaFileFromClipboardContent(project);
     if (javaFile == null) return;
@@ -59,7 +59,7 @@ public class JavaFilePasteProvider implements PasteProvider {
     final PsiClass mainClass = publicClass;
     new WriteCommandAction(project, "Paste class '" + mainClass.getName() + "'") {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         PsiFile file;
         try {
           file = targetDir.createFile(mainClass.getName() + ".java");
@@ -68,8 +68,10 @@ public class JavaFilePasteProvider implements PasteProvider {
           return;
         }
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        document.setText(javaFile.getText());
-        PsiDocumentManager.getInstance(project).commitDocument(document);
+        if (document != null) {
+          document.setText(javaFile.getText());
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+        }
         if (file instanceof PsiJavaFile) {
           updatePackageStatement((PsiJavaFile) file, targetDir);
         }
@@ -113,8 +115,8 @@ public class JavaFilePasteProvider implements PasteProvider {
   }
 
   public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
-    final IdeView ideView = DataKeys.IDE_VIEW.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
       return false;
     }
@@ -124,20 +126,7 @@ public class JavaFilePasteProvider implements PasteProvider {
 
   @Nullable
   private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
-    PsiJavaFile file = null;
-    Transferable content = CopyPasteManager.getInstance().getContents();
-    if (content != null) {
-      String text = null;
-      try {
-        text = (String)content.getTransferData(DataFlavor.stringFlavor);
-      }
-      catch (Exception e) {
-        // ignore;
-      }
-      if (text != null) {
-        file = (PsiJavaFile) PsiFileFactory.getInstance(project).createFileFromText("A.java", StdLanguages.JAVA, text);
-      }
-    }
-    return file;
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return text != null ? (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, text) : null;
   }
 }

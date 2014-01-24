@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,19 @@ public abstract class CopyPasteManager {
 
   public abstract void removeContentChangedListener(ContentChangedListener listener);
 
-  public abstract boolean isDataFlavorAvailable(@Nullable DataFlavor flavor);
+  /** @deprecated use {@link #getContents(DataFlavor)} or {@link #areDataFlavorsAvailable(DataFlavor...)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
+  public boolean isDataFlavorAvailable(@Nullable DataFlavor flavor) {
+    return flavor != null && areDataFlavorsAvailable(flavor);
+  }
+
+  public abstract boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors);
 
   @Nullable
   public abstract Transferable getContents();
+
+  @Nullable
+  public abstract <T> T getContents(@NotNull DataFlavor flavor);
 
   public abstract Transferable[] getAllContents();
 
@@ -56,11 +65,11 @@ public abstract class CopyPasteManager {
    * <p/>
    * However, there are situations when all 'kill rings' should be stopped manually (e.g. on undo). Hence, we need
    * a handle to ask for that. This method works like such a handle.
-   * 
+   *
    * @see KillRingTransferable
    */
   public abstract void stopKillRings();
-  
+
   public interface ContentChangedListener extends EventListener {
     void contentChanged(@Nullable final Transferable oldTransferable, final Transferable newTransferable);
   }

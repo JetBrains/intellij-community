@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  *         Date: 20.09.13
  */
-public class BuilderBasedProjectType extends ProjectCategory {
+public class ModuleTypeCategory extends ProjectCategory {
 
   private final ModuleType myModuleType;
 
-  public BuilderBasedProjectType(ModuleType moduleType) {
+  public ModuleTypeCategory(ModuleType moduleType) {
     myModuleType = moduleType;
   }
 
@@ -23,7 +23,7 @@ public class BuilderBasedProjectType extends ProjectCategory {
     return myModuleType.createModuleBuilder();
   }
 
-  public static class Java extends BuilderBasedProjectType {
+  public static class Java extends ModuleTypeCategory {
 
     public Java() {
       super(JavaModuleType.getModuleType());

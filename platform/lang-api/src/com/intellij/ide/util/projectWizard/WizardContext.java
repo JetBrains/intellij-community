@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ public class WizardContext extends UserDataHolderBase {
   private String myCompilerOutputDirectory;
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
+  private ProjectTemplate myProjectTemplate;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
   private boolean myNewWizard;
@@ -161,6 +163,15 @@ public class WizardContext extends UserDataHolderBase {
 
   public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
+  }
+
+  @Nullable
+  public ProjectTemplate getProjectTemplate() {
+    return myProjectTemplate;
+  }
+
+  public void setProjectTemplate(ProjectTemplate projectTemplate) {
+    myProjectTemplate = projectTemplate;
   }
 
   public String getPresentationName() {

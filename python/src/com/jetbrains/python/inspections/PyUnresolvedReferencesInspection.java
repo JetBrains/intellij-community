@@ -476,7 +476,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
           addAddSelfFix(node, refex, actions);
           PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-          if (callExpression != null) {
+          if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
+              ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, refex));
           }
           PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);

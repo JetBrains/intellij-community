@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.macro;
+package com.intellij.ide.projectWizard;
 
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.ExpressionContext;
-import com.intellij.openapi.ide.CopyPasteManager;
-
-import java.awt.datatransfer.DataFlavor;
+import com.intellij.platform.templates.BuilderBasedTemplate;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author Dmitry Avdeev
  */
-public class ClipboardMacro extends SimpleMacro {
-  public ClipboardMacro() {
-    super("clipboard");
+public class ProjectCategoryTemplate extends BuilderBasedTemplate {
+
+  private final ProjectCategory myCategory;
+
+  public ProjectCategoryTemplate(ProjectCategory category) {
+    super(category.createModuleBuilder());
+    myCategory = category;
   }
 
+  @NotNull
   @Override
-  protected String evaluateSimpleMacro(Expression[] params, ExpressionContext context) {
-    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return text != null ? text : "";
+  public String getName() {
+    return myCategory.getDisplayName();
+  }
+
+  public ProjectCategory getCategory() {
+    return myCategory;
   }
 }
