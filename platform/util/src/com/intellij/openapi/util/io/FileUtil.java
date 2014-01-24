@@ -1350,46 +1350,27 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> loadLines(@NotNull File file) throws IOException {
-    return loadLines(file.getPath());
+    return FileUtilRt.loadLines(file);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
-    return loadLines(file.getPath(), encoding);
+    return FileUtilRt.loadLines(file, encoding);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull String path) throws IOException {
-    return loadLines(path, null);
+    return FileUtilRt.loadLines(path);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
-    InputStream stream = new FileInputStream(path);
-    try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-      BufferedReader reader = new BufferedReader(in);
-      try {
-        return loadLines(reader);
-      }
-      finally {
-        reader.close();
-      }
-    }
-    finally {
-      stream.close();
-    }
+    return FileUtilRt.loadLines(path, encoding);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
-    List<String> lines = new ArrayList<String>();
-    String line;
-    while ((line = reader.readLine()) != null) {
-      lines.add(line);
-    }
-    return lines;
+    return FileUtilRt.loadLines(reader);
   }
 
   /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
