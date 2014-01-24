@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -55,6 +56,7 @@ import java.util.List;
 public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
+  public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
 
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
   private static boolean ourNoSkeletonsErrorReported = false;
@@ -177,6 +179,10 @@ public class PyUserSkeletonsUtil {
 
   @Nullable
   private static PyFile getUserSkeletonForFile(@NotNull PyFile file) {
+    final Boolean hasSkeleton = file.getUserData(HAS_SKELETON);
+    if (hasSkeleton != null && !hasSkeleton) {
+      return null;
+    }
     final VirtualFile moduleVirtualFile = file.getVirtualFile();
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
@@ -188,7 +194,9 @@ public class PyUserSkeletonsUtil {
             moduleName = restored.toString();
           }
         }
-        return getUserSkeletonForModuleQName(moduleName, file);
+        final PyFile skeletonFile = getUserSkeletonForModuleQName(moduleName, file);
+        file.putUserData(HAS_SKELETON, skeletonFile != null);
+        return skeletonFile;
       }
     }
     return null;
