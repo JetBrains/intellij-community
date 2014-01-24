@@ -266,6 +266,14 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
   }
 
+  public void testUnresolvedRefNoCreateFunction() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"));
+    assertNull(intentionAction);
+  }
+
   public void testReplaceNotEqOperator() {
     doInspectionTest("ReplaceNotEqOperator.py", PyCompatibilityInspection.class,
                      PyBundle.message("INTN.replace.noteq.operator"), true, true);
