@@ -471,13 +471,15 @@ public abstract class HgUtil {
     if (rev1 != null) {
       revNumber1 = rev1.getRevisionNumber();
       //rev2==null means "compare with local version"
-      statusCommand = new HgStatusCommand.Builder(true).copySource(false).baseRevision(revNumber1)
+      statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(revNumber1)
         .targetRevision(rev2 != null ? rev2.getRevisionNumber() : null).build(project);
     }
     else {
       LOG.assertTrue(rev2 != null, "revision1 and revision2 can't both be null. Path: " + path); //rev1 and rev2 can't be null both//
       //get initial changes//
-      statusCommand = new HgStatusCommand.Builder(true).copySource(false).baseRevision(rev2.getRevisionNumber()).build(project);
+      statusCommand =
+        new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(rev2.getRevisionNumber())
+          .build(project);
     }
 
     Collection<HgChange> hgChanges = statusCommand.execute(root, Collections.singleton(path));
@@ -485,11 +487,11 @@ public abstract class HgUtil {
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
-      if (status != FileStatus.UNKNOWN && status!= FileStatus.IGNORED) {
+     if (status != FileStatus.UNKNOWN) {
         changes.add(createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
                                  hgChange.afterFile().getRelativePath(),
                                  rev2 != null ? rev2.getRevisionNumber() : null, status));
-      }
+     }
     }
     return changes;
   }
