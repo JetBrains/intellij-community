@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,10 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText(getTestName(false) + ".txt", documentContents);
   }
 
-  private void verifyResult(String expectedDocumentContents, String expectedClipboardContents) throws Exception {
+  private void verifyResult(String expectedDocumentContents, String expectedClipboardContents) {
     checkResultByText(expectedDocumentContents);
     assertEquals("Clipboard contents mismatch",
                  expectedClipboardContents,
-                 CopyPasteManager.getInstance().getContents().getTransferData(DataFlavor.stringFlavor).toString());
+                 CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
   }
 }

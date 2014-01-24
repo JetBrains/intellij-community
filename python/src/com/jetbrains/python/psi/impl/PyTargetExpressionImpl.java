@@ -60,6 +60,7 @@ import java.util.List;
  * @author yole
  */
 public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
+  QualifiedName myQualifiedName;
 
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -467,7 +468,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Nullable
   @Override
   public QualifiedName asQualifiedName() {
-    return PyPsiUtils.asQualifiedName(this);
+    if (myQualifiedName == null) {
+      myQualifiedName = PyPsiUtils.asQualifiedName(this);
+    }
+    return myQualifiedName;
   }
 
   public String toString() {
@@ -690,5 +694,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
     }
     return null;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myQualifiedName = null;
   }
 }

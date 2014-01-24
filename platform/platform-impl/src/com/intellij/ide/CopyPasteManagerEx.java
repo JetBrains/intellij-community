@@ -36,6 +36,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private final List<Transferable> myData = new ArrayList<Transferable>();
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private final ClipboardSynchronizer myClipboardSynchronizer;
+  private boolean myOwnContent = false;
 
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
@@ -45,23 +46,28 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     myClipboardSynchronizer = clipboardSynchronizer;
   }
 
+  @Override
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
+    myOwnContent = false;
     myClipboardSynchronizer.resetContent();
     fireContentChanged(contents, null);
   }
 
-  void fireContentChanged(@Nullable final Transferable oldTransferable, @Nullable final Transferable _new) {
-    myDispatcher.getMulticaster().contentChanged(oldTransferable, _new);
+  private void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
+    myDispatcher.getMulticaster().contentChanged(oldContent, newContent);
   }
 
+  @Override
   public void addContentChangedListener(ContentChangedListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void addContentChangedListener(final ContentChangedListener listener, Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
+  @Override
   public void removeContentChangedListener(ContentChangedListener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -71,15 +77,17 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return flavors.length > 0 &&  myClipboardSynchronizer.areDataFlavorsAvailable(flavors);
   }
 
-  public void setContents(@NotNull final Transferable content) {
-    Transferable old = getContents();
-    Transferable contentToUse = addNewContentToStack(content);
+  @Override
+  public void setContents(@NotNull Transferable content) {
+    Transferable oldContent = myOwnContent && !myData.isEmpty() ? myData.get(0) : null;
 
+    Transferable contentToUse = addNewContentToStack(content);
     setSystemClipboardContent(contentToUse);
 
-    fireContentChanged(old, contentToUse);
+    fireContentChanged(oldContent, contentToUse);
   }
 
+  @Override
   public boolean isCutElement(@Nullable final Object element) {
     for (CutElementMarker marker : Extensions.getExtensions(CutElementMarker.EP_NAME)) {
       if (marker.isCutElement(element)) return true;
@@ -96,8 +104,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
-  void setSystemClipboardContent(final Transferable content) {
+  private void setSystemClipboardContent(Transferable content) {
     myClipboardSynchronizer.setContent(content, this);
+    myOwnContent = true;
   }
 
   /**
@@ -257,13 +266,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void removeContent(Transferable t) {
-    boolean isCurrentClipboardContent = !myData.isEmpty() && Comparing.equal(t, myData.get(0));
+    Transferable current = myData.isEmpty() ? null : myData.get(0);
     myData.remove(t);
-    if (isCurrentClipboardContent) {
-      Transferable old = getContents();
-      Transferable _new = !myData.isEmpty() ? myData.get(0) : new StringSelection("");
-      setSystemClipboardContent(_new);
-      fireContentChanged(old, _new);
+    if (Comparing.equal(t, current)) {
+      Transferable newContent = !myData.isEmpty() ? myData.get(0) : new StringSelection("");
+      setSystemClipboardContent(newContent);
+      fireContentChanged(current, newContent);
     }
   }
 
@@ -274,8 +282,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void moveContentToStackTop(Transferable t) {
-    setSystemClipboardContent(t);
-    myData.remove(t);
-    myData.add(0, t);
+    Transferable current = myData.isEmpty() ? null : myData.get(0);
+    if (!Comparing.equal(t, current)) {
+      myData.remove(t);
+      myData.add(0, t);
+      setSystemClipboardContent(t);
+      fireContentChanged(current, t);
+    }
   }
 }

@@ -382,8 +382,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   }
 
   private void updateSelection() {
-    ModuleBuilder builder = getSelectedBuilder();
-    if (builder != null) {
+    ProjectTemplate template = getSelectedTemplate();
+    if (template != null) {
+      myContext.setProjectTemplate(template);
+      ModuleBuilder builder = myBuilders.get(template);
       myContext.setProjectBuilder(builder);
       myWizard.getSequence().setType(builder.getBuilderId());
     }

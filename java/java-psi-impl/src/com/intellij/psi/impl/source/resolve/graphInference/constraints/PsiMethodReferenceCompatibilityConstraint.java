@@ -17,16 +17,16 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
@@ -55,7 +55,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final PsiParameter[] targetParameters = interfaceMethod.getParameterList().getParameters();
-    final PsiType returnType = substitutor.substitute(interfaceMethod.getReturnType());
+    final PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
+    PsiType returnType = substitutor.substitute(interfaceMethodReturnType);
+    if (myExpression.getTypeParameters().length == 0) {
+      returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, myExpression);
+    }
     final PsiType[] typeParameters = myExpression.getTypeParameters();
     if (!myExpression.isExact()) {
       for (PsiParameter parameter : targetParameters) {
@@ -161,11 +165,17 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
-      if (typeParameters.length == 0 &&
-          ((PsiMethod)resolve).getTypeParameters().length > 0 && 
-          PsiPolyExpressionUtil.mentionsTypeParameters(returnType, new HashSet<PsiTypeParameter>(Arrays.asList(interfaceMethod.getTypeParameters())))) {
-        //todo target type constraint
-        return true;
+      if (typeParameters.length == 0 && ((PsiMethod)resolve).getTypeParameters().length > 0) {
+
+        final PsiClass interfaceClass = classResolveResult.getElement();
+        LOG.assertTrue(interfaceClass != null);
+
+        if (PsiPolyExpressionUtil.mentionsTypeParameters(interfaceMethodReturnType,
+                                                         ContainerUtil.newHashSet(interfaceClass.getTypeParameters()))) {
+          LOG.assertTrue(interfaceMethodReturnType != null);
+          constraints.add(new TypeCompatibilityConstraint(referencedMethodReturnType, interfaceMethodReturnType));
+          return true;
+        }
       }
 
       if (PsiType.VOID.equals(referencedMethodReturnType)) {

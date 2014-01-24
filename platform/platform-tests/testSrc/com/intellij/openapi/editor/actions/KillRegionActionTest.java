@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author Denis Zhdanov
@@ -33,11 +32,10 @@ public class KillRegionActionTest extends AbstractRegionToKillRingTest {
     Pair<String,String> parseResult = parse();
     killRegion();
     if (parseResult.first != null) {
-      Transferable contents = CopyPasteManager.getInstance().getContents();
-      assertNotNull(contents);
-      assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
+      String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      assertEquals(parseResult.first, contents);
     }
-    
+
     assertEquals(parseResult.second, myEditor.getDocument().getText());
   }
 }
