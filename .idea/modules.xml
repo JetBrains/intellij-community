@@ -3,8 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/FxBuilderEmbedder/FxBuilderEmbedder.iml" filepath="$PROJECT_DIR$/plugins/javaFX/FxBuilderEmbedder/FxBuilderEmbedder.iml" group="plugins/JavaFX" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/FxBuilderEmbedder/Stubs/FxBuilderStubs.iml" filepath="$PROJECT_DIR$/plugins/javaFX/FxBuilderEmbedder/Stubs/FxBuilderStubs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" group="plugins/IntelliLang" />
