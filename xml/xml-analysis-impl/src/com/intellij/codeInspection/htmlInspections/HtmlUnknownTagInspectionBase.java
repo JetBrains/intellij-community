@@ -74,13 +74,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
     return descriptor == null || descriptor instanceof AnyXmlElementDescriptor;
   }
 
-  // this hack is needed, because we temporarily ignore svg and mathML namespaces
-  // todo: provide schemas for svg and mathML and remove this in IDEA XI
-  private static boolean isInSpecialHtml5Namespace(XmlTag tag) {
-    final String ns = tag.getNamespace();
-    return HtmlUtil.SVG_NAMESPACE.equals(ns) || HtmlUtil.MATH_ML_NAMESPACE.endsWith(ns);
-  }
-
   @Override
   @Nls
   @NotNull
@@ -143,7 +136,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
 
   @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag) || isInSpecialHtml5Namespace(tag)) {
+    if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
     }
 
