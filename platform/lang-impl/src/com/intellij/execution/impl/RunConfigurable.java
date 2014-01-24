@@ -399,11 +399,6 @@ class RunConfigurable extends BaseConfigurable {
       myRightPanel.add(((SingleConfigurationConfigurable)configurable).getValidationComponent(), BorderLayout.SOUTH);
     }
 
-    if (configurable instanceof SingleConfigurationConfigurable) {
-      RunManagerEx.getInstanceEx(myProject)
-        .invalidateConfigurationIcon((RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)configurable).getSettings());
-    }
-
     setupDialogBounds();
   }
 

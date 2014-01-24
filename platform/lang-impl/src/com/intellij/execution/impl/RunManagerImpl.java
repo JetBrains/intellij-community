@@ -425,7 +425,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         mySharedConfigurations.remove(settings.getUniqueID());
         myConfigurationToBeforeTasksMap.remove(settings.getConfiguration());
         myRecentlyUsedTemporaries.remove(settings.getConfiguration());
-        invalidateConfigurationIcon(configuration);
         myDispatcher.getMulticaster().runConfigurationRemoved(configuration);
         break;
       }
@@ -444,9 +443,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Override
   public void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
     setSelectedConfigurationId(settings == null ? null : settings.getUniqueID());
-    if (settings != null) {
-      invalidateConfigurationIcon(settings);
-    }
     fireRunConfigurationSelected();
   }
 
@@ -889,7 +885,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (tempConfiguration == null) return;
 
     tempConfiguration.setTemporary(true);
-    invalidateConfigurationIcon(tempConfiguration);
 
     addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
                      getBeforeRunTasks(tempConfiguration.getConfiguration()), false);
@@ -942,7 +937,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void makeStable(@NotNull RunnerAndConfigurationSettings settings) {
-      invalidateConfigurationIcon(settings);
       settings.setTemporary(false);
       myRecentlyUsedTemporaries.remove(settings.getConfiguration());
       if (!myOrder.isEmpty()) {
@@ -1005,11 +999,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   @Override
-  public void invalidateConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings) {
-    myIdToIcon.remove(settings.getUniqueID());
-  }
-
-  @Override
   public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings) {
     final String uniqueID = settings.getUniqueID();
     RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
@@ -1024,10 +1013,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
     Icon icon = myIdToIcon.get(uniqueID);
     if (icon == null) {
-      icon = IconDeferrer.getInstance().defer(settings.getConfiguration().getIcon(), Pair.create(myProject, settings),
-                                              new Function<Pair<Project, RunnerAndConfigurationSettings>, Icon>() {
+      icon = IconDeferrer.getInstance().deferAutoUpdatable(settings.getConfiguration().getIcon(), myProject.hashCode() ^ settings.hashCode(),
+                                              new Function<Integer, Icon>() {
                                                 @Override
-                                                public Icon fun(Pair<Project, RunnerAndConfigurationSettings> projectRunnerAndConfigurationSettingsPair) {
+                                                public Icon fun(Integer param) {
                                                   if (myProject.isDisposed()) return null;
 
                                                   myIconCalcTime.remove(uniqueID);
@@ -1181,7 +1170,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final RunnerAndConfigurationSettings settings = entry.getValue();
       if (!settings.isTemplate() && isConfigurationShared(settings) && !existing.contains(settings.getUniqueID())) {
         removed.add(settings);
-        invalidateConfigurationIcon(settings);
         it.remove();
       }
     }
@@ -1189,7 +1177,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-    invalidateConfigurationIcon(settings);
     myDispatcher.getMulticaster().runConfigurationChanged(settings);
   }
 
