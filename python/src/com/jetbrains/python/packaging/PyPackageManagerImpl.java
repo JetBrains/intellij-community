@@ -113,8 +113,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNTAR = "untar";
 
   // Bundled versions of  package management tools
-  public static final String SETUPTOOLS_VERSION = "2.1";
-  public static final String PIP_VERSION = "1.5.1";
+  public static final String SETUPTOOLS_VERSION = "1.1.5";
+  public static final String PIP_VERSION = "1.4.1";
 
   public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
   public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
