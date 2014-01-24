@@ -145,7 +145,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         addToTheTopOfTheStack(content);
       }
       else {
-        moveContentTopStackTop(same);
+        moveContentToStackTop(same);
       }
     }
     catch (UnsupportedFlavorException ignore) { }
@@ -267,7 +267,13 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
+  /** @deprecated use {@link #moveContentToStackTop(Transferable)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public void moveContentTopStackTop(Transferable t) {
+    moveContentToStackTop(t);
+  }
+
+  public void moveContentToStackTop(Transferable t) {
     setSystemClipboardContent(t);
     myData.remove(t);
     myData.add(0, t);
