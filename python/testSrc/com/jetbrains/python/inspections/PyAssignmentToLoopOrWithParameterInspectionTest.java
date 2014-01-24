@@ -39,6 +39,6 @@ public class PyAssignmentToLoopOrWithParameterInspectionTest extends PyInspectio
 
   @Override
   protected boolean isWeakWarning() {
-    return false;
+    return true;
   }
 }
