@@ -97,6 +97,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                                       @Nullable ProjectOpenedCallback callback,
                                       final boolean isReopen) {
     VirtualFile baseDir = virtualFile;
+    boolean dummyProject = false;
+    String dummyProjectName = null;
+
     if (!baseDir.isDirectory()) {
       baseDir = virtualFile.getParent();
       while (baseDir != null) {
@@ -108,8 +111,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       if (baseDir == null) { // no reasonable directory -> create new temp one or use parent
         if (Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
-            File directory = FileUtil.createTempDirectory(virtualFile.getName(), null, true);
+            dummyProjectName = virtualFile.getPath();
+            File directory = FileUtil.createTempDirectory(dummyProjectName, null, true);
             baseDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
+            dummyProject = true;
           } catch (IOException ex) {
             LOG.error(ex);
           }
@@ -178,7 +183,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     if (project == null) {
-      project = projectManager.newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
+      String projectName = dummyProject ? dummyProjectName : projectDir.getParentFile().getName();
+      project = projectManager.newProject(projectName, projectDir.getParent(), true, dummyProject);
     }
 
     if (project == null) return null;
