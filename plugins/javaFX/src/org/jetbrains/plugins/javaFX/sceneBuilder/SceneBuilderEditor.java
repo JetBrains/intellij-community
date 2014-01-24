@@ -3,6 +3,8 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -159,7 +161,16 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     if (SceneBuilderEditor.class.getClassLoader() instanceof PluginClassLoader) {
       urls.add(new File(new File(parent).getParent(), "embedder.jar").toURI().toURL());
     } else {
-      urls.add(new File(parent, "FXBuilderEmbedder").toURI().toURL());
+      final File localEmbedder = new File(parent, "FXBuilderEmbedder");
+      if (localEmbedder.exists()) {
+        urls.add(localEmbedder.toURI().toURL());
+      } else {
+        File home = new File(PathManager.getHomePath(), "community");
+        if (!home.exists()) {
+          home = new File(PathManager.getHomePath());
+        }
+        urls.add(new File(home, "plugins/JavaFX/FxBuilderEmbedder/lib/embedder.jar").toURI().toURL());
+      }
     }
     return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
