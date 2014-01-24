@@ -80,11 +80,31 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
   public void testNoSlf4j() {
     doTest("class FalsePositiveSLF4J {\n" +
            "    public void method( DefinitelyNotSLF4J definitelyNotSLF4J ) {\n" +
-           "        definitelyNotSLF4J.trace( \"not a trace message\", \"not a trace parameter\" );\n" +
+           "        definitelyNotSLF4J.info( \"not a trace message\", \"not a trace parameter\" );\n" +
            "    }\n" +
            "    public interface DefinitelyNotSLF4J {\n" +
-           "        void trace( String firstParameter, Object secondParameter );\n" +
+           "        void info( String firstParameter, Object secondParameter );\n" +
            "    }\n" +
+           "}");
+  }
+
+  public void testArrayArgument() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  Logger LOG = LoggerFactory.getLogger( X.class );" +
+           "  void m(String a, int b, Object c) {" +
+           "    LOG.info(\"schnizzle {} for blurb {} in quark {}\", new Object[] {a, b, c});" +
+           "  }" +
+           "}");
+  }
+
+  public void testUncountableArray() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  Logger LOG = LoggerFactory.getLogger( X.class );" +
+           "  void m(Object[] objects) {" +
+           "    LOG.info(\"deep cover {} quantum disstressor {} at light speed {}\", objects);" +
+           "  }" +
            "}");
   }
 }
