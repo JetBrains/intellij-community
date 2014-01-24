@@ -118,7 +118,7 @@ public class AutoHardWrapHandler {
     }
 
     VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
-    if (margin > visEndLinePosition.column) {
+    if (margin >= visEndLinePosition.column) {
       if (change != null) {
         change.modificationStamp = document.getModificationStamp();
       }

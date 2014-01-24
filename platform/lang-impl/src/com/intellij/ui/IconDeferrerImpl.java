@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,15 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   @Override
   public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
+    return deferImpl(base, param, f, false);
+  }
+
+  @Override
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f) {
+    return deferImpl(base, param, f, true);
+  }
+
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> f, boolean autoupdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return f.fun(param);
     }
@@ -92,7 +101,7 @@ public class IconDeferrerImpl extends IconDeferrer {
               }
             }
           }
-        });
+        }, autoupdatable);
         myIconsCache.put(param, result);
       }
 

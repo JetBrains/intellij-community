@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
@@ -637,7 +638,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean isBundled() {
-    return getPath().getAbsolutePath().startsWith(PathManager.getPreInstalledPluginsPath());
+    String path;
+    try {
+      //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
+      path = getPath().getCanonicalPath();
+    } catch (IOException e) {
+      path = getPath().getAbsolutePath();
+    }
+    if (ApplicationManager.getApplication().isInternal()) {
+      if (path.startsWith(PathManager.getHomePath() + File.separator + "out" + File.separator + "classes")) {
+        return true;
+      }
+    }
+
+    return path.startsWith(PathManager.getPreInstalledPluginsPath());
   }
 
   @Nullable

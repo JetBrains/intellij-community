@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -119,7 +120,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
-        if (qName.endsWith(name)) {
+        if (qName.endsWith(name) && ImportFilter.shouldImport(qName)) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
           }

@@ -118,13 +118,12 @@ public class OpenFileAction extends AnAction implements DumbAware {
         return;
       }
 
-      if (OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-        int answer = Messages.showYesNoDialog(project,
-                                              IdeBundle.message("message.open.file.is.project", file.getName()),
-                                              IdeBundle.message("title.open.project"),
-                                              Messages.getQuestionIcon());
-        if (answer == Messages.YES) {
-          FileChooserUtil.setLastOpenedFile(ProjectUtil.openOrImport(file.getPath(), project, false), file);
+      if (OpenProjectFileChooserDescriptor.isProjectFile(file) &&
+          // if the ipr-based project is already open, just open the ipr file
+          (project == null || file != project.getProjectFile())) {
+        Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
+        if (openedProject != null) {
+          FileChooserUtil.setLastOpenedFile(openedProject, file);
           return;
         }
       }

@@ -129,6 +129,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
   @NonNls public static final String OVERRIDES_ATTR_NAME = "overrides";
+  @NonNls public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
 
   private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
 
@@ -424,11 +425,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
-      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME)).booleanValue()) {
+      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
           throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
         }
-        replaceAction(id, action, pluginId);
+        AnAction prev = replaceAction(id, action, pluginId);
+        if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
+          if (Boolean.valueOf(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
+            ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
+          }
+        }
       }
       else {
         registerAction(id, action, pluginId);

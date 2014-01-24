@@ -188,10 +188,6 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
-  }
-
-  @Override
   @NotNull
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
     return Collections.emptyList();
