@@ -15,8 +15,6 @@
  */
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManagerImpl;
-
 /**
  * @author Eugene.Kudelevsky
  */
@@ -69,7 +67,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   }
 
   public void testHtml5_11() throws Throwable {
-    doTestCompletion("html5_11");
+    myTestFixture.testCompletionTyping("/html5_11.xml", "\n", "/html5_11_after.xml");
   }
 
   public void testHtml5_12() throws Throwable {
@@ -77,7 +75,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   }
 
   public void testHtml5_13() throws Throwable {
-    doTestCompletion("html5_13");
+    myTestFixture.testCompletionTyping("/html5_13.xml", "\n", "/html5_13_after.xml");
   }
 
   public void testHtml5_14() throws Throwable {
@@ -85,7 +83,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   }
 
   public void testHtml5_15() throws Throwable {
-    doTestCompletion("html5_15");
+    myTestFixture.testCompletionTyping("/html5_15.xml", "\n", "/html5_15_after.xml");
   }
 
   public void testHtml5_16() throws Throwable {
