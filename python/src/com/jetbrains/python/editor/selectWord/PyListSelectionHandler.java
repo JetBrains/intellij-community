@@ -19,6 +19,7 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -42,6 +43,9 @@ public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     TextRange stringRange = e.getTextRange();
     PsiElement firstChild = e.getFirstChild().getNextSibling();
+    if (firstChild instanceof PsiErrorElement) {
+      return Collections.emptyList();
+    }
     int startShift = 1;
     if (firstChild instanceof PsiWhiteSpace)
       startShift += firstChild.getTextLength();
@@ -50,7 +54,7 @@ public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
     if (lastChild instanceof PsiWhiteSpace)
       endShift += lastChild.getTextLength();
 
-    TextRange offsetRange = new TextRange(stringRange.getStartOffset() + startShift, stringRange.getEndOffset() - endShift );
+    final TextRange offsetRange = new TextRange(stringRange.getStartOffset() + startShift, stringRange.getEndOffset() - endShift);
     if (offsetRange.contains(cursorOffset) && offsetRange.getLength() > 1) {
       return Collections.singletonList(offsetRange);
     }
