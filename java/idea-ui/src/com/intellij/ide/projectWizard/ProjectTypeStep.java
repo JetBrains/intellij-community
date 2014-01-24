@@ -135,7 +135,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context));
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
-      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
+      ArrayList<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
+      templates.add(new ProjectCategoryTemplate(category));
+      myTemplatesMap.put(new TemplatesGroup(category), templates);
     }
     if (context.isCreatingNewProject()) {
       MultiMap<String, ProjectTemplate> localTemplates = loadLocalTemplates();
