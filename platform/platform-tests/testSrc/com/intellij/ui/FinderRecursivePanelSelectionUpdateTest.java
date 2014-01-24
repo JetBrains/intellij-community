@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.List;
 
 public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
 
-  @Bombed(year = 2014, month = Calendar.JANUARY, day = 31, user = "Yann Cebron")
+  @Bombed(year = 2014, month = Calendar.MARCH, day = 1, user = "Yann Cebron")
   public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull
