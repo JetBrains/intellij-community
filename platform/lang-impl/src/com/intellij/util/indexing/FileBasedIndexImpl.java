@@ -1450,6 +1450,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
             // if we have uncommitted documents in unsaved documents, we may index old psi with new uncommitted doc,
             // to properly reindex with new psi / new doc we don't mark index up to date in this case (IDEA-111448)
+            myUpToDateIndices.add(indexId);
           }
         }
       }
@@ -1603,6 +1604,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;
+      if (myPsiDependentIndices.contains(indexId)) continue;
       final IndexStorage indexStorage = index.getStorage();
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
