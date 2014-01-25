@@ -52,7 +52,7 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+    final PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
     if (null != psiClass) {
       for (AbstractClassProcessor classProcessor : classProcessors) {
         processClass(project, psiClass, classProcessor);
@@ -77,6 +77,20 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
     }
 
     deleteAnnotations(psiAnnotations);
+  }
+
+  public Collection<PsiAnnotation> collectProccessableAnnotations(@NotNull PsiClass psiClass) {
+    Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+
+    for (AbstractClassProcessor classProcessor : classProcessors) {
+      result.addAll(classProcessor.collectProcessedAnnotations(psiClass));
+    }
+
+    for (AbstractFieldProcessor fieldProcessor : fieldProcessors) {
+      result.addAll(fieldProcessor.collectProcessedAnnotations(psiClass));
+    }
+
+    return result;
   }
 
   private void processFields(@NotNull Project project, @NotNull PsiClass psiClass, AbstractProcessor fieldProcessor) {

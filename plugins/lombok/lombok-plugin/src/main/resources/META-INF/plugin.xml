@@ -106,7 +106,7 @@
     <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
            icon="/icons/delombok.png" popup="true">
       <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"
-              text="Everything" description="Action to replace all lombok annotations with vanilla java methods">
+              text="All lombok annotations" description="Action to replace all lombok annotations with vanilla java methods">
       </action>
       <separator/>
       <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
@@ -146,11 +146,10 @@
 
   <change-notes><![CDATA[
 		<ul>
+		<!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
+		<!--<li>TODO: Add delombok action for @Delegate, @Cleanup, @Synchronized and other annotations</li>-->
 		<li>0.8.0
 				<ol>
-				    <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-				    <!--<li>TODO: Add delombok action for all other annotations</li>-->
-
 				    <li>Added refactoring action for Lombok @Log and friends</li>
 				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
 				    <li>Added refactoring actions to Delombok @Data, @Value, @Wither annotations</li>

@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import de.plushnikov.intellij.plugin.action.BaseLombokAction;
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
@@ -21,12 +19,14 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
-import org.jetbrains.annotations.NotNull;
 
-public class DelombokEverythingAction extends BaseLombokAction {
-  @NotNull
-  @Override
-  protected CodeInsightActionHandler getHandler() {
+public class DelombokEverythingAction extends BaseDelombokAction {
+
+  public DelombokEverythingAction() {
+    super(createHandler());
+  }
+
+  private static BaseDelombokHandler createHandler() {
     final BaseDelombokHandler delombokHandler = new BaseDelombokHandler(
         new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor(),
         new DataProcessor(), new GetterProcessor(), new ValueProcessor(), new WitherProcessor(),
