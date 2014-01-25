@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 import static de.plushnikov.intellij.plugin.util.PsiElementUtil.typesAreEquivalent;
@@ -82,22 +84,26 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     return true;
   }
 
-  private boolean hasParam(PsiField field, PsiMethod psiMethod) {
-    for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
-      if (typesAreEquivalent(param.getType(), field.getType())) {
-        return true;
-      }
-    }
-    return false;
+  private boolean hasRightConstructor(PsiField field) {
+    return null != getRightConstructor(field);
   }
 
-  private boolean hasRightConstructor(PsiField field) {
+  private PsiMethod getRightConstructor(PsiField field) {
     PsiClass psiClass = field.getContainingClass();
     if (psiClass != null) {
       for (PsiMethod psiMethod : PsiClassUtil.collectClassConstructorIntern(psiClass)) {
         if (hasParam(field, psiMethod)) {
-          return true;
+          return psiMethod;
         }
+      }
+    }
+    return null;
+  }
+
+  private boolean hasParam(PsiField field, PsiMethod psiMethod) {
+    for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
+      if (typesAreEquivalent(param.getType(), field.getType())) {
+        return true;
       }
     }
     return false;
@@ -146,16 +152,52 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     LombokLightMethodBuilder result = null;
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {
-      PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
-      result = new LombokLightMethodBuilder(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
+      final PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
+      final String psiFieldName = psiField.getName();
+      result = new LombokLightMethodBuilder(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiFieldName)))
           .withMethodReturnType(returnType)
           .withContainingClass(psiFieldContainingClass)
-          .withParameter(psiField.getName(), psiField.getType())
+          .withParameter(psiFieldName, psiField.getType())
           .withNavigationElement(psiField)
           .withModifier(methodModifier);
+
+      final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
+      final String blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
+      result.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiFieldContainingClass));
+
       copyAnnotations(psiField, result.getModifierList(),
           LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     }
     return result;
+  }
+
+  private String getConstructorCall(@NotNull PsiField psiField, @NotNull PsiClass psiClass) {
+    final StringBuilder paramString = StringBuilderSpinAllocator.alloc();
+    try {
+      final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
+      for (PsiField classField : psiFields) {
+        final String classFieldName = classField.getName();
+        if (classFieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER)) {
+          continue;
+        }
+        if (classField.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        if (classField.hasModifierProperty(PsiModifier.FINAL) && null != classField.getInitializer()) {
+          continue;
+        }
+
+        if (classField.equals(psiField)) {
+          paramString.append(classFieldName);
+        } else {
+          paramString.append("this.").append(classFieldName);
+        }
+        paramString.append(',');
+      }
+      paramString.deleteCharAt(paramString.length() - 1);
+      return paramString.toString();
+    } finally {
+      StringBuilderSpinAllocator.dispose(paramString);
+    }
   }
 }

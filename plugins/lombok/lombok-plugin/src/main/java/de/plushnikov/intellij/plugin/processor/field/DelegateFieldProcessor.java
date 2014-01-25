@@ -81,7 +81,6 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final PsiClass psiClass = psiField.getContainingClass();
     final Project project = psiField.getProject();
     final PsiManager manager = psiField.getContainingFile().getManager();
 
@@ -99,6 +98,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> methodsToDelegate = findMethodsToDelegate(includesMethods, excludeMethods);
     if (!methodsToDelegate.isEmpty()) {
+      final PsiClass psiClass = psiField.getContainingClass();
       for (Pair<PsiMethod, PsiSubstitutor> pair : methodsToDelegate) {
         target.add(generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
       }

@@ -113,7 +113,13 @@
       </action>
       <separator/>
       <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
-              text="@Data" description="Action to replace lombok @Data annotation with vanilla getter methods">
+              text="@Data" description="Action to replace lombok @Data annotation with vanilla java methods">
+      </action>
+      <action id="delombokValue" class="de.plushnikov.intellij.plugin.action.delombok.DelombokValueAction"
+              text="@Value" description="Action to replace lombok @Value annotation with vanilla java methods">
+      </action>
+      <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"
+              text="@Wither" description="Action to replace lombok @Wither annotation with vanilla java methods">
       </action>
       <separator/>
       <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"

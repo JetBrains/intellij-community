@@ -7,6 +7,8 @@ import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -18,6 +20,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
 import org.jetbrains.annotations.NotNull;
 
 public class DelombokEverythingAction extends BaseLombokAction {
@@ -26,11 +29,12 @@ public class DelombokEverythingAction extends BaseLombokAction {
   protected CodeInsightActionHandler getHandler() {
     final BaseDelombokHandler delombokHandler = new BaseDelombokHandler(
         new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor(),
-        new DataProcessor(), new GetterProcessor(), new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),
+        new DataProcessor(), new GetterProcessor(), new ValueProcessor(), new WitherProcessor(),
+        new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),
         new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor()
     );
 
-    delombokHandler.addFieldProcessor(new GetterFieldProcessor(), new SetterFieldProcessor());
+    delombokHandler.addFieldProcessor(new GetterFieldProcessor(), new SetterFieldProcessor(), new WitherFieldProcessor());
 
     return delombokHandler;
   }
