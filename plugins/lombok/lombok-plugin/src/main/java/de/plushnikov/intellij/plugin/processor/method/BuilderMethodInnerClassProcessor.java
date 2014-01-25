@@ -52,7 +52,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
    */
   protected boolean validateInternal(PsiAnnotation psiAnnotation, PsiMethod psiMethod, ProblemBuilder builder, boolean shouldAddErrors) {
     return validateAnnotationOnRightType(psiMethod, builder, shouldAddErrors)
-       && validateExistingInnerClass(psiMethod, psiAnnotation, builder, shouldAddErrors);
+        && validateExistingInnerClass(psiMethod, psiAnnotation, builder, shouldAddErrors);
   }
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
@@ -86,14 +86,14 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassNameWithGenerics(psiAnnotation, psiMethod.getReturnType());
     final String innerClassCanonicalName = parentClass.getName() + "." + innerClassSimpleName;
     LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiMethod.getProject(), innerClassSimpleName, innerClassCanonicalName)
-       .withContainingClass(parentClass)
-       .withNavigationElement(psiAnnotation)
-       .withParameterTypes(psiMethod.getTypeParameterList())
-       .withModifier(PsiModifier.PUBLIC)
-       .withModifier(PsiModifier.STATIC);
+        .withContainingClass(parentClass)
+        .withNavigationElement(psiAnnotation)
+        .withParameterTypes(psiMethod.getTypeParameterList())
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC);
     innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-     .withFields(createFields(psiMethod))
-     .withMethods(createMethods(parentClass, innerClass, psiMethod, psiAnnotation));
+        .withFields(createFields(psiMethod))
+        .withMethods(createMethods(parentClass, innerClass, psiMethod, psiAnnotation));
     target.add(innerClass);
   }
 
@@ -108,7 +108,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
       String psiParameterName = psiParameter.getName();
       assert psiParameterName != null;
       fields.add(new LombokLightFieldBuilder(psiMethod.getManager(), psiParameterName, psiParameter.getType())
-        .withModifier(PsiModifier.PRIVATE));
+          .withModifier(PsiModifier.PRIVATE));
     }
     return fields;
   }
@@ -117,7 +117,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     methods.addAll(createSetterMethods(innerClass, psiMethod, psiAnnotation));
     methods.add(createBuildMethod(parentClass, innerClass, psiMethod, psiAnnotation));
-    methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, parentClass));
+    methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, psiAnnotation));
     return methods;
   }
 
@@ -127,20 +127,20 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
       String psiParameterName = psiParameter.getName();
       assert psiParameterName != null;
       methods.add(new LombokLightMethodBuilder(psiMethod.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiParameterName))
-        .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
-        .withContainingClass(innerClass)
-        .withParameter(psiParameterName, psiParameter.getType())
-        .withNavigationElement(innerClass)
-        .withModifier(PsiModifier.PUBLIC));
+          .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
+          .withContainingClass(innerClass)
+          .withParameter(psiParameterName, psiParameter.getType())
+          .withNavigationElement(innerClass)
+          .withModifier(PsiModifier.PUBLIC));
     }
     return methods;
   }
 
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     return new LombokLightMethodBuilder(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
-       .withMethodReturnType(psiMethod.getReturnType())
-       .withContainingClass(innerClass)
-       .withNavigationElement(parentClass)
-       .withModifier(PsiModifier.PUBLIC);
+        .withMethodReturnType(psiMethod.getReturnType())
+        .withContainingClass(innerClass)
+        .withNavigationElement(parentClass)
+        .withModifier(PsiModifier.PUBLIC);
   }
 }

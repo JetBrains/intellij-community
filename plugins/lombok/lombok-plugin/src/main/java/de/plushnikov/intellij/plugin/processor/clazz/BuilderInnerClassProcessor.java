@@ -126,7 +126,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     methods.addAll(createFieldMethods(parentClass, innerClass, psiAnnotation));
     methods.add(createBuildMethod(parentClass, innerClass, psiAnnotation));
-    methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, parentClass));
+    methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, psiAnnotation));
     return methods;
   }
 

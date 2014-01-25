@@ -5,7 +5,9 @@ import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Plushnikov Michail
@@ -32,20 +34,18 @@ public class PsiFieldUtil {
   }
 
   @NotNull
-  public static Collection<PsiField> filterFieldsByNames(@NotNull PsiField[] psiFields, String... fieldNames) {
-    Collection<PsiField> filterdFields = new ArrayList<PsiField>(psiFields.length);
+  public static Collection<PsiField> filterFieldsByNames(@NotNull PsiField[] psiFields, @NotNull Collection<String> excludeFieldNames) {
+    Collection<PsiField> filteredFields = new ArrayList<PsiField>(psiFields.length);
     for (PsiField psiField : psiFields) {
-      boolean addField = true;
-
-      final String psiFieldName = psiField.getName();
-      for (String fieldName : fieldNames) {
-        addField &= !psiFieldName.equals(fieldName);
-      }
-
-      if (addField) {
-        filterdFields.add(psiField);
+      if (!excludeFieldNames.contains(psiField.getName())) {
+        filteredFields.add(psiField);
       }
     }
-    return filterdFields;
+    return filteredFields;
+  }
+
+  @NotNull
+  public static Collection<PsiField> filterFieldsByNames(@NotNull PsiField[] psiFields, String... fieldNames) {
+    return filterFieldsByNames(psiFields, new HashSet<String>(Arrays.asList(fieldNames)));
   }
 }

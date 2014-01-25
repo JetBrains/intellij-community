@@ -165,6 +165,11 @@ public class PsiAnnotationUtil {
     return result;
   }
 
+  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass, @NotNull T defaultValue) {
+    T result = getAnnotationValue(psiAnnotation, parameter, asClass);
+    return result == null ? defaultValue : result;
+  }
+
   @Nullable
   public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
     T result = null;

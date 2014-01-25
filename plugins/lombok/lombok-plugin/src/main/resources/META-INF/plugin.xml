@@ -2,10 +2,8 @@
 <idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
-  <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail
-    Plushnikov
-  </vendor>
-  <version>0.7.4</version>
+  <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
+  <version>0.8.0</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -41,8 +39,7 @@
   <extensions defaultExtensionNs="Lombook Plugin">
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
-    <processor
-        implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor"/>
@@ -149,14 +146,15 @@
 
   <change-notes><![CDATA[
 		<ul>
-		<li>0.8
+		<li>0.8.0
 				<ol>
 				    <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
 				    <!--<li>TODO: Add delombok action for all other annotations</li>-->
 
 				    <li>Added refactoring action for Lombok @Log and friends</li>
 				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
-				    <li>Added refactoring actions for Delombok @Data, @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString, @Log annotations</li>
+				    <li>Added refactoring actions to Delombok @Data, @Value, @Wither annotations</li>
+				    <li>Added refactoring actions to Delombok @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString and @Log annotations</li>
 				    <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
 				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>

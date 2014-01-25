@@ -6,9 +6,14 @@ import java.util.Date;
 
 @ToString(doNotUseGetters = true, callSuper = false, of = {"floatProperty"})
 public class ClassToString extends Date {
-    private int intProperty;
+  private int intProperty;
 
-    private float floatProperty;
+  private float floatProperty;
+  private float[] floatPropertyArray;
 
-    private static String stringProperty;
+  private String stringProperty;
+  private String[] stringPropertyArray;
+
+  private static String staticStringProperty;
+  private static String[] staticStringPropertyArray;
 }

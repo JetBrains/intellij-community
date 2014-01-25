@@ -1,27 +1,33 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiFieldUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -85,7 +91,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
+  public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
       return Collections.emptyList();
@@ -95,10 +101,11 @@ public class ToStringProcessor extends AbstractClassProcessor {
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
         .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
         .withContainingClass(psiClass)
-        .withNavigationElement(psiNavTargetElement)
+        .withNavigationElement(psiAnnotation)
         .withModifier(PsiModifier.PUBLIC);
 
-    final String blockText = String.format("return \"\";");
+    final String paramString = createParamString(psiClass, psiAnnotation);
+    final String blockText = String.format("return \"%s(%s)\";", psiClass.getName(), paramString);
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
     Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
@@ -107,4 +114,73 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return Collections.<PsiMethod>singletonList(method);
   }
 
+  private String createParamString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final boolean includeFieldNames = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "includeFieldNames", Boolean.class, Boolean.TRUE);
+    final boolean callSuper = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "includeFieldNames", Boolean.class, Boolean.FALSE);
+    final boolean doNotUseGetters = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "doNotUseGetters", Boolean.class, Boolean.FALSE);
+    final Collection<String> excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
+    final Collection<String> ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
+
+    final StringBuilder paramString = StringBuilderSpinAllocator.alloc();
+    try {
+      if (callSuper) {
+        paramString.append("super=\" + super.toString() + \", ");
+      }
+
+      final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
+      for (PsiField classField : psiFields) {
+        final String fieldName = classField.getName();
+        if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER)) {
+          continue;
+        }
+        if (classField.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        if (excludeProperty.contains(fieldName)) {
+          continue;
+        }
+        if (!ofProperty.isEmpty() && !ofProperty.contains(fieldName)) {
+          continue;
+        }
+
+        if (includeFieldNames) {
+          paramString.append(fieldName).append('=');
+        }
+        paramString.append("\"+");
+
+        final PsiType classFieldType = classField.getType();
+        if (classFieldType instanceof PsiArrayType) {
+          final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
+          if (componentType instanceof PsiPrimitiveType) {
+            paramString.append("java.util.Arrays.toString(");
+          } else {
+            paramString.append("java.util.Arrays.deepToString(");
+          }
+        }
+
+        if (doNotUseGetters) {
+          paramString.append(fieldName);
+        } else {
+          paramString.append(LombokUtils.toGetterName(fieldName, PsiType.BOOLEAN.equals(classField.getType()))).append("()");
+        }
+
+        if (classFieldType instanceof PsiArrayType) {
+          paramString.append(")");
+        }
+
+        paramString.append("+\", ");
+      }
+      paramString.delete(paramString.length() - 2, paramString.length());
+      return paramString.toString();
+    } finally {
+      StringBuilderSpinAllocator.dispose(paramString);
+    }
+  }
+
+  private Collection<String> makeSet(@Nullable Collection<String> exclude) {
+    if (null == exclude || exclude.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return new HashSet<String>(exclude);
+  }
 }
