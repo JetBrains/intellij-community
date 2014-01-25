@@ -98,6 +98,9 @@ public class ToStringProcessor extends AbstractClassProcessor {
         .withNavigationElement(psiNavTargetElement)
         .withModifier(PsiModifier.PUBLIC);
 
+    final String blockText = String.format("return \"\";");
+    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
+
     Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
     UserMapKeys.addReadUsageFor(toStringFields);
 

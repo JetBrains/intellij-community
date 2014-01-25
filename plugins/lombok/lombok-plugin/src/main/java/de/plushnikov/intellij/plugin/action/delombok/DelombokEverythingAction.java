@@ -2,8 +2,11 @@ package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import de.plushnikov.intellij.plugin.action.BaseLombokAction;
+import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -22,12 +25,12 @@ public class DelombokEverythingAction extends BaseLombokAction {
   @Override
   protected CodeInsightActionHandler getHandler() {
     final BaseDelombokHandler delombokHandler = new BaseDelombokHandler(
-        new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
-        new GetterProcessor(),
-        new SetterProcessor(),
-        new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor());
+        new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor(),
+        new DataProcessor(), new GetterProcessor(), new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),
+        new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor()
+    );
 
-    delombokHandler.addFieldProcessor(new SetterFieldProcessor(), new GetterFieldProcessor());
+    delombokHandler.addFieldProcessor(new GetterFieldProcessor(), new SetterFieldProcessor());
 
     return delombokHandler;
   }

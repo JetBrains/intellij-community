@@ -104,10 +104,19 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation, true));
   }
 
-  protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement, boolean tryGenerateCanEqual) {
+  protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement, boolean tryGenerateCanEqual) {
     if (areMethodsAlreadyExists(psiClass)) {
       return Collections.emptyList();
     }
+    //TODO
+    /*
+    PsiField[] equalsFields = PsiField.EMPTY_ARRAY;
+    PsiField[] hashCodeFields = PsiField.EMPTY_ARRAY;
+    PsiField[] nonNullFields = PsiField.EMPTY_ARRAY;
+    GenerateEqualsHelper helper = new GenerateEqualsHelper(psiClass.getProject(), psiClass, equalsFields, hashCodeFields, nonNullFields, true);
+    Collection<PsiMethod> generatedMethods = helper.generateMembers();
+    */
+
     Collection<PsiMethod> result = new ArrayList<PsiMethod>(3);
     result.add(createEqualsMethod(psiClass, psiNavTargetElement));
     result.add(createHashCodeMethod(psiClass, psiNavTargetElement));
@@ -133,32 +142,44 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   @NotNull
   private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
     final PsiManager psiManager = psiClass.getManager();
+
+    final String blockText = String.format("return true;");
+
     return new LombokLightMethodBuilder(psiManager, EQUALS_METHOD_NAME)
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(PsiType.BOOLEAN)
         .withContainingClass(psiClass)
         .withNavigationElement(psiNavTargetElement)
-        .withParameter("obj", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
+        .withParameter("other", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
+        .withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
   }
 
   @NotNull
   private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
     final PsiManager psiManager = psiClass.getManager();
+
+    final String blockText = String.format("return 0;");
+
     return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(PsiType.INT)
         .withContainingClass(psiClass)
-        .withNavigationElement(psiNavTargetElement);
+        .withNavigationElement(psiNavTargetElement)
+        .withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
   }
 
   @NotNull
   private PsiMethod createCanEqualMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
     final PsiManager psiManager = psiClass.getManager();
+
+    final String blockText = String.format("return other instanceof %s;", psiClass.getName());
+
     return new LombokLightMethodBuilder(psiManager, CAN_EQUAL_METHOD_NAME)
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(PsiType.BOOLEAN)
         .withContainingClass(psiClass)
         .withNavigationElement(psiNavTargetElement)
-        .withParameter("obj", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
+        .withParameter("other", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
+        .withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
   }
 }
