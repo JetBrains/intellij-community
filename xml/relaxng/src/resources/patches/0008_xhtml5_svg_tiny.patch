@@ -1,0 +1,11 @@
+--- /Users/denofevil/Code/sandbox/checker/validator/schema/xhtml5-svg-mathml.rnc	2014-01-24 12:18:54.000000000 +0400
++++ xhtml5-svg-mathml.rnc	2014-01-25 15:50:41.000000000 +0400
+@@ -2,7 +2,7 @@
+ namespace math = "http://www.w3.org/1998/Math/MathML"
+ namespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+ 
+-include "svg11/svg11-inc.rnc"
++include "svg11/svg11-tiny-inc.rnc"
+ include "inkscape/inkscape.rnc"
+ include "mml3/mathml3-inc.rnc"
+ include "rdf/rdf.rnc"
