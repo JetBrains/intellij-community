@@ -928,14 +928,4 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
     }
   }
-
-  private static class EditSourceWithIconAction extends EditSourceAction {
-
-    @Override
-    public void update(AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setIcon(AllIcons.Actions.EditSource);
-    }
-
-  }
 }
