@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -433,7 +434,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
     for (LocalChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
         final ContentRevision before = change.getBeforeRevision();
@@ -452,7 +453,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         }
       }
     }
-    return result;
+    return new ArrayList<VirtualFile>(result);
   }
 
   public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
