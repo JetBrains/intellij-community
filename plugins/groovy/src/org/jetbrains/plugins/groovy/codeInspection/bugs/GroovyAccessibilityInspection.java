@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +137,16 @@ public class GroovyAccessibilityInspection extends BaseInspection {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, location, accessObjectClass, null)) {
-          fixes.add(new GrModifierFix(refElement, refElement.getModifierList(), modifier, true, true));
+          fixes.add(new GrModifierFix(refElement, modifier, true, true, new Function<ProblemDescriptor, PsiModifierList>() {
+            @Override
+            public PsiModifierList fun(ProblemDescriptor descriptor) {
+              final PsiElement element = descriptor.getPsiElement();
+              assert element instanceof GrReferenceElement : element;
+              final PsiElement resolved = ((GrReferenceElement)element).resolve();
+              assert resolved instanceof PsiModifierListOwner : resolved;
+              return ((PsiModifierListOwner)resolved).getModifierList();
+            }
+          }));
         }
       }
     }

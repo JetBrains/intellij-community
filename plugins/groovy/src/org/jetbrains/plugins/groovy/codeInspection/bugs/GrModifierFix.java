@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -30,40 +29,44 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
  * @author Max Medvedev
  */
 public class GrModifierFix extends GroovyFix {
-  @NotNull private final PsiModifierList myModifierList;
+  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST = new Function<ProblemDescriptor, PsiModifierList>() {
+    @Override
+    public PsiModifierList fun(ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      assert element instanceof PsiImportList : element;
+      return (PsiModifierList)element;
+    }
+  };
+
+  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST_OWNER = new Function<ProblemDescriptor, PsiModifierList>() {
+    @Override
+    public PsiModifierList fun(ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      assert element instanceof PsiModifierListOwner : element;
+      return ((PsiModifierListOwner)element).getModifierList();
+    }
+  };
+
+
   private final String myModifier;
   private final String myText;
   private final boolean myDoSet;
+  private final Function<ProblemDescriptor, PsiModifierList> myModifierListProvider;
 
   public GrModifierFix(@NotNull PsiMember member,
-                       @NotNull PsiModifierList modifierList,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
-                       boolean doSet) {
-    myModifierList = modifierList;
+                       boolean doSet,
+                       Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
     myModifier = modifier;
     myDoSet = doSet;
+    myModifierListProvider = modifierListProvider;
 
     myText = initText(member, showContainingClass, myModifier, myDoSet);
   }
 
   public static String initText(final PsiMember member, final boolean showContainingClass, final String modifier, final boolean doSet) {
-    String name;
-    if (showContainingClass) {
-      final PsiClass containingClass = member.getContainingClass();
-      String containingClassName;
-      if (containingClass != null) {
-        containingClassName = containingClass.getName() + ".";
-      }
-      else {
-        containingClassName = "";
-      }
-
-      name = containingClassName + member.getName();
-    }
-    else {
-      name = member.getName();
-    }
+    String name = getMemberName(member, showContainingClass);
     String modifierText = toPresentableText(modifier);
 
     if (doSet) {
@@ -71,6 +74,17 @@ public class GrModifierFix extends GroovyFix {
     }
     else {
       return GroovyBundle.message("change.modifier.not", name, modifierText);
+    }
+  }
+
+  private static String getMemberName(PsiMember member, boolean showContainingClass) {
+    if (showContainingClass) {
+      final PsiClass containingClass = member.getContainingClass();
+      String containingClassName = containingClass != null ? containingClass.getName() + "." : "";
+      return containingClassName + member.getName();
+    }
+    else {
+      return member.getName();
     }
   }
 
@@ -91,7 +105,11 @@ public class GrModifierFix extends GroovyFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-    assert myModifierList.isValid();
-    myModifierList.setModifierProperty(myModifier, myDoSet);
+    final PsiModifierList modifierList = getModifierList(descriptor);
+    modifierList.setModifierProperty(myModifier, myDoSet);
+  }
+
+  private PsiModifierList getModifierList(ProblemDescriptor descriptor) {
+    return myModifierListProvider.fun(descriptor);
   }
 }

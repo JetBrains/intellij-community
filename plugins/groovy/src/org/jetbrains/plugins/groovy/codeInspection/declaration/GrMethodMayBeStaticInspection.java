@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -63,8 +65,16 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       @Override
       public void visitMethod(GrMethod method) {
         if (checkMethod(method)) {
-          LocalQuickFix[] fixes = new LocalQuickFix[]{new GrModifierFix(method, method.getModifierList(), PsiModifier.STATIC, false, true)};
-          registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          final GrModifierFix modifierFix = new GrModifierFix(method, PsiModifier.STATIC, false, true, new Function<ProblemDescriptor, PsiModifierList>() {
+            @Override
+            public PsiModifierList fun(ProblemDescriptor descriptor) {
+              final PsiElement element = descriptor.getPsiElement();
+              final PsiElement parent = element.getParent();
+              assert parent instanceof GrMethod : "element: " + element + ", parent:" + parent;
+              return ((GrMethod)parent).getModifierList();
+            }
+          });
+          registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), new LocalQuickFix[]{modifierFix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };
