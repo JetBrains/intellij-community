@@ -56,7 +56,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
   }
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
-    if (!psiMethod.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       if (shouldAddErrors) {
         builder.addError(ErrorMessages.canBeUsedOnStaticMethodOnly(Builder.class));
       }

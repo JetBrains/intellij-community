@@ -39,7 +39,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
-    List<Psi> emptyResult = Collections.emptyList();
+    final List<Psi> emptyResult = Collections.emptyList();
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code auto completion will not work
     if (!(element instanceof PsiClass) || !element.isValid()) {
@@ -60,7 +60,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       if (log.isDebugEnabled()) {
         log.debug(String.format("Skipped call for type: %s class: %s", type, ((PsiClass) element).getQualifiedName()));
       }
-      return Collections.emptyList();
+      return emptyResult;
     }
 
     return process(type, project, (PsiClass) element);
@@ -71,7 +71,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     try {
       isLombokPossiblePresent = verifyLombokPresent(psiClass);
     } catch (IOException ex) {
-      log.warn("Exception durcing check for Lombok", ex);
+      log.warn("Exception during check for Lombok", ex);
     }
     UserMapKeys.updateLombokPresent(psiClass, isLombokPossiblePresent);
 
