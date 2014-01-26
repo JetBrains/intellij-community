@@ -38,5 +38,4 @@ include "meta.rnc" {
 			)
 }
 include "meta-ext.rnc"
-include "microdata.rnc"
 include "rdfa.rnc"
