@@ -29,12 +29,14 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
-import org.jetbrains.plugins.github.api.GithubUser;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -61,7 +63,7 @@ public class GithubSettingsPanel {
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
-  private JPasswordField myTokenField;
+  private JPasswordField myTokenField; // look at createUIComponents() to understand
   private JTextPane mySignupTextField;
   private JPanel myPane;
   private JButton myTestButton;
@@ -70,6 +72,7 @@ public class GithubSettingsPanel {
   private JPanel myCardPanel;
   private JBLabel myAuthTypeLabel;
   private JSpinner myTimeoutSpinner;
+  private JButton myCreateTokenButton;
 
   private boolean myCredentialsModified;
 
@@ -88,11 +91,12 @@ public class GithubSettingsPanel {
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          final Project project = ProjectManager.getInstance().getDefaultProject();
           final GithubAuthData auth = getAuthData();
           GithubUser user = GithubUtil
             .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
@@ -116,6 +120,36 @@ public class GithubSettingsPanel {
         catch (IOException ex) {
           LOG.info(ex);
           GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: " + GithubUtil.getErrorTextFromException(ex));
+        }
+      }
+    });
+
+    myCreateTokenButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        try {
+          myPasswordField.setText(
+            GithubUtil.computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, String, IOException>() {
+              @NotNull
+              @Override
+              public String convert(ProgressIndicator indicator) throws IOException {
+                return GithubUtil.runWithValidBasicAuthForHost(project, indicator, getHost(),
+                                                               new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                                                 @Override
+                                                                 public String convert(GithubAuthData auth) throws IOException {
+                                                                   return GithubApiUtil.getMasterToken(auth, "IntelliJ plugin");
+                                                                 }
+                                                               }
+                );
+              }
+            })
+          );
+        }
+        catch (GithubOperationCanceledException ignore) {
+        }
+        catch (IOException ex) {
+          LOG.info(ex);
+          GithubNotifications.showErrorDialog(myPane, "Can't create API token", ex);
         }
       }
     });
