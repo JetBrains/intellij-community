@@ -38,7 +38,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   public ReplacementPreviewDialog(final Project project, UsageInfo info, String replacementString) {
     super(project,true);
 
-    setTitle(SSRBundle.message("structural.replace.preview"));
+    setTitle(SSRBundle.message("structural.replace.preview.dialog.title"));
     setOKButtonText(SSRBundle.message("replace.preview.oktext"));
     this.project = project;
     init();
