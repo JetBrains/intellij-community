@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,8 @@ import java.util.Map;
  * Date: 25.05.2007
  */
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
-  private GrAccessorMethod mySetter;
-  private GrAccessorMethod[] myGetters;
-
-  private boolean mySetterInitialized = false;
+  private volatile GrAccessorMethod mySetter;
+  private volatile GrAccessorMethod[] myGetters;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -177,16 +175,13 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrAccessorMethod getSetter() {
-    if (mySetterInitialized) return mySetter;
-
-    mySetter = GrAccessorMethodImpl.createSetterMethod(this);
-    mySetterInitialized = true;
-
+    if (mySetter == null) {
+      mySetter = GrAccessorMethodImpl.createSetterMethod(this);
+    }
     return mySetter;
   }
 
   public void clearCaches() {
-    mySetterInitialized = false;
     mySetter = null;
     myGetters = null;
   }
