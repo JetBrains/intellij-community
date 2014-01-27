@@ -1,5 +1,8 @@
 package com.intellij.util.net.ssl;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +42,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 class ConfirmingTrustManager implements X509TrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+
+  // Errors
+  @NonNls public static final String ERR_EMPTY_TRUST_ANCHORS = "It seems, that your JRE installation doesn't have system trust store.\n" +
+                                                               "If you're using Mac JRE, try upgrading to the latest version.";
+
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemDefault(), new MutableTrustManager(path, password));
@@ -90,8 +99,11 @@ class ConfirmingTrustManager implements X509TrustManager {
       Throwable cause = e.getCause();
       // this can happen on some version of Apple's JRE, e.g. see IDEA-115565
       if (cause != null && cause.getMessage().equals("the trustAnchors parameter must be non-empty")) {
-        LOG.error("It seems, that your JRE installation doesn't have system trust store.\n" +
-                  "If you're using Mac JRE, try upgrading to the latest version.", e);
+        LOG.error(ERR_EMPTY_TRUST_ANCHORS, e);
+        Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                  "No default keystore", ERR_EMPTY_TRUST_ANCHORS,
+                                                  NotificationType.ERROR));
+        throw e;
       }
     }
     catch (CertificateException e) {
