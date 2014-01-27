@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,18 +37,4 @@ public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterPro
     return Collections.emptyList();
   }
 
-  public boolean isAuxiliaryFrame(String className, String methodName) {
-    if (className.equals(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS) ||
-        className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport")) {
-      return false;
-    }
-
-    for (ClassFilter filter : FILTERS) {
-      final String pattern = filter.getPattern();
-      if (className.startsWith(pattern.substring(0, pattern.length() - 1))) {
-        return true;
-      }
-    }
-    return false;
-  }
 }
