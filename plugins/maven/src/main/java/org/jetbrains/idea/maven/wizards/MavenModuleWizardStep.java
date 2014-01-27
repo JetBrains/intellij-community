@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -197,6 +198,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return true;
   }
 
+  private static void setTestIfEmpty(@NotNull JTextField artifactIdField, @Nullable String text) {
+    if (StringUtil.isEmpty(artifactIdField.getText())) {
+      artifactIdField.setText(StringUtil.notNullize(text));
+    }
+  }
+  
   @Override
   public void updateStep() {
     if (myArchetypes != null && myArchetypes.isSkipUpdateUI()) return;
@@ -210,14 +217,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     MavenId projectId = myBuilder.getProjectId();
 
     if (projectId == null) {
-      myArtifactIdField.setText(myBuilder.getName());
-      myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
-      myVersionField.setText(myParent == null ? "1.0-SNAPSHOT" : myParent.getMavenId().getVersion());
+      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTestIfEmpty(myGroupIdField, myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
+      setTestIfEmpty(myVersionField, myParent == null ? "1.0-SNAPSHOT" : myParent.getMavenId().getVersion());
     }
     else {
-      myArtifactIdField.setText(projectId.getArtifactId());
-      myGroupIdField.setText(projectId.getGroupId());
-      myVersionField.setText(projectId.getVersion());
+      setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
+      setTestIfEmpty(myGroupIdField, projectId.getGroupId());
+      setTestIfEmpty(myVersionField, projectId.getVersion());
     }
 
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
