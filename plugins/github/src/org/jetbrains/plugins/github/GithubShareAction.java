@@ -288,6 +288,8 @@ public class GithubShareAction extends DumbAwareAction {
       final List<VirtualFile> trackedFiles = ChangeListManager.getInstance(project).getAffectedFiles();
       final Collection<VirtualFile> untrackedFiles = filterOutIgnored(project,
                                                                       repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      trackedFiles.removeAll(untrackedFiles); // fix IDEA-119855
+
       final List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
       allFiles.addAll(trackedFiles);
       allFiles.addAll(untrackedFiles);
