@@ -21,6 +21,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,12 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
     result.doWhenProcessed(new Runnable() {
       @Override
       public void run() {
-        startRunProfile(project, env, state, callback, result.getResult());
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            startRunProfile(project, env, state, callback, result.getResult());
+          }
+        });
       }
     });
   }
