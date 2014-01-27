@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
@@ -114,8 +115,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     setTitle(getDefaultTitle());
 
     if (runFindActionOnClose) {
-      setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
-      getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('F'));
+      setOKButtonText(FindBundle.message("find.dialog.find.button"));
     }
 
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
@@ -210,7 +210,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       searchOptions.add(UIUtil.createOptionLine(recursiveMatching));
     }
 
-    caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"), true);
+    caseSensitiveMatch = new JCheckBox(FindBundle.message("find.options.case.sensitive"), true);
     searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
 
     final List<FileType> types = new ArrayList<FileType>();
@@ -629,7 +629,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     if (myRunFindActionOnClose) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-      openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
+      openInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       openInNewTab.setSelected(ourOpenInNewTab);
       ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
       openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
