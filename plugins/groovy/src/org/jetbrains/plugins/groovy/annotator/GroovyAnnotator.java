@@ -1108,9 +1108,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, String message) {
     if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;
 
-    myHolder.
-      createErrorAnnotation(element, message).
-      registerFix(new GrReplacePrimitiveTypeWithWrapperFix(element));
+    final Annotation annotation = myHolder.createErrorAnnotation(element, message);
+    registerFix(annotation, new GrReplacePrimitiveTypeWithWrapperFix(element), element);
   }
 
   @Override
