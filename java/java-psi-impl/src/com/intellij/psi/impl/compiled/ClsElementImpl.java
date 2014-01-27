@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       return PsiElement.EMPTY_ARRAY;
     }
 
-    List<PsiElement> list = ContainerUtil.newArrayListWithExpectedSize(children.length);
+    List<PsiElement> list = ContainerUtil.newArrayListWithCapacity(children.length);
     for (PsiElement child : children) {
       if (child != null) {
         list.add(child);

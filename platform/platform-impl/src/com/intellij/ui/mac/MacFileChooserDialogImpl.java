@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     }
 
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    final List<VirtualFile> files = ContainerUtil.newArrayListWithExpectedSize(paths.size());
+    final List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(paths.size());
     for (String path : paths) {
       final String vfsPath = FileUtil.toSystemIndependentName(path);
       final VirtualFile file = fs.refreshAndFindFileByPath(vfsPath);
