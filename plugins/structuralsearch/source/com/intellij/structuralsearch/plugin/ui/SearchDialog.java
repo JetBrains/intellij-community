@@ -645,13 +645,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   @Override
   protected JComponent createSouthPanel() {
-    final JPanel statusPanel = new JPanel(new BorderLayout());
+    final JPanel statusPanel = new JPanel(new BorderLayout(5, 0));
     statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
     statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
-    final String s = SSRBundle.message("status.mnemonic");
-    if (!s.isEmpty()) statusText.setDisplayedMnemonic(s.charAt(0));
     statusPanel.add(status = new JLabel(), BorderLayout.CENTER);
-
     return statusPanel;
   }
 
