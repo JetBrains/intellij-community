@@ -12,10 +12,7 @@ public class DoSearchAction {
                              final Configuration configuration) {
     final MatchOptions options = configuration.getMatchOptions();
 
-    Matcher matcher = new Matcher(project);
-
-    sink = new FilteringMatchResultSink(sink);
-
+    final Matcher matcher = new Matcher(project);
     try {
       matcher.findMatches(sink, options);
     }
