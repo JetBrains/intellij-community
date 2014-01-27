@@ -56,8 +56,6 @@ public class SelectTemplateDialog extends DialogWrapper {
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.project);
 
     setTitle(SSRBundle.message(this.showHistory ? "used.templates.history.dialog.title" : "existing.templates.dialog.title"));
-
-    getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('O'));
     init();
 
     if (this.showHistory) {
