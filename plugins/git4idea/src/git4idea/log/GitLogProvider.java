@@ -223,10 +223,10 @@ public class GitLogProvider implements VcsLogProvider {
       // assuming there is only one date filter, until filter expressions are defined
       VcsLogDateFilter filter = dateFilters.iterator().next();
       if (filter.getAfter() != null) {
-        filterParameters.add("--after=" + filter.getAfter().toString());
+        filterParameters.add(prepareParameter("after", filter.getAfter().toString()));
       }
       if (filter.getBefore() != null) {
-        filterParameters.add("--before=" + filter.getBefore().toString());
+        filterParameters.add(prepareParameter("before", filter.getBefore().toString()));
       }
     }
 
@@ -240,7 +240,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
     if (maxCount > 0) {
-      filterParameters.add("--max-count=" + maxCount);
+      filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
     }
     filterParameters.add("--date-order");
 
