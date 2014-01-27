@@ -632,7 +632,6 @@ def layoutAndroid(String androidHome) {
         module("ddmlib")
         module("dvlib")
         module("draw9patch")
-        module("lint-cli")
         module("lint-api")
         module("lint-checks")
         module("ninepatch")
