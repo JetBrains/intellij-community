@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.NotNull;
@@ -97,8 +98,13 @@ public class FrameworkSupportOptionsComponent {
 
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
-      myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
-                                                      container, !myConfigurable.isOnlyLibraryAdded()) {
+      myLibraryOptionsPanel = new LibraryOptionsPanel(description, new NotNullComputable<String>() {
+        @NotNull
+        @Override
+        public String compute() {
+          return myModel.getBaseDirectoryForLibrariesPath();
+        }
+      }, createLibraryVersionFilter(), container, !myConfigurable.isOnlyLibraryAdded()) {
         @Override
         protected void onVersionChanged(@Nullable String version) {
           if (myFrameworkVersionComponent == null) {
@@ -120,7 +126,6 @@ public class FrameworkSupportOptionsComponent {
 
   public void updateLibrariesPanel() {
     if (myLibraryOptionsPanel != null) {
-      myLibraryOptionsPanel.changeBaseDirectoryPath(myModel.getBaseDirectoryForLibrariesPath());
       myLibraryOptionsPanel.setVersionFilter(createLibraryVersionFilter());
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());
