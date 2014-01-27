@@ -46,6 +46,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   @Nullable private String myServiceDirectoryPath;
   @Nullable private String myGradleVmOptions;
+  private boolean myIsOfflineWork;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -66,6 +67,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
     myServiceDirectoryPath = settings.getServiceDirectoryPath();
     myGradleVmOptions = settings.getGradleVmOptions();
+    myIsOfflineWork = settings.isOfflineWork();
   }
 
   @SuppressWarnings("unchecked")
@@ -76,6 +78,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     fillState(state);
     state.serviceDirectoryPath = myServiceDirectoryPath;
     state.gradleVmOptions = myGradleVmOptions;
+    state.offlineWork = myIsOfflineWork;
     return state;
   }
 
@@ -84,6 +87,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     super.loadState(state);
     myServiceDirectoryPath = state.serviceDirectoryPath;
     myGradleVmOptions = state.gradleVmOptions;
+    myIsOfflineWork = state.offlineWork;
   }
 
   /**
@@ -118,6 +122,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     }
   }
 
+  public boolean isOfflineWork() {
+    return myIsOfflineWork;
+  }
+
+  public void setOfflineWork(boolean isOfflineWork) {
+    myIsOfflineWork = isOfflineWork;
+  }
+
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
     if (!Comparing.equal(old.getGradleHome(), current.getGradleHome())) {
@@ -133,6 +145,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
     public String serviceDirectoryPath;
     public String gradleVmOptions;
+    public boolean offlineWork;
 
     @AbstractCollection(surroundWithTag = false, elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {

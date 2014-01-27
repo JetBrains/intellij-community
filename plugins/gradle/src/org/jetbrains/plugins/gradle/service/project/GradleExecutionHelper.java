@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,7 +67,7 @@ public class GradleExecutionHelper {
                                              @NotNull ExternalSystemTaskNotificationListener listener,
                                              @NotNull List<String> extraJvmArgs) {
     ModelBuilder<T> result = connection.model(modelType);
-    prepare(result, id, settings, listener, extraJvmArgs, connection);
+    prepare(result, id, settings, listener, extraJvmArgs, ContainerUtil.<String>newArrayList(), connection);
     return result;
   }
 
@@ -76,9 +77,10 @@ public class GradleExecutionHelper {
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
                                         @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @NotNull final List<String> vmOptions) {
+                                        @NotNull final List<String> vmOptions,
+                                        @NotNull final List<String> commandLineArgs) {
     BuildLauncher result = connection.newBuild();
-    prepare(result, id, settings, listener, vmOptions, connection);
+    prepare(result, id, settings, listener, vmOptions, commandLineArgs, connection);
     return result;
   }
 
@@ -88,8 +90,9 @@ public class GradleExecutionHelper {
                              @Nullable GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull List<String> extraJvmArgs,
+                             @NotNull List<String> commandLineArgs,
                              @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, extraJvmArgs, connection,
+    prepare(operation, id, settings, listener, extraJvmArgs, commandLineArgs, connection,
             new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
   }
 
@@ -100,6 +103,7 @@ public class GradleExecutionHelper {
                              @Nullable GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull List<String> extraJvmArgs,
+                             @NotNull List<String> commandLineArgs,
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
@@ -136,6 +140,22 @@ public class GradleExecutionHelper {
       });
 
       operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
+    }
+
+    if(settings.isOfflineWork()) {
+      commandLineArgs.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
+    }
+
+    if (!commandLineArgs.isEmpty()) {
+      LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
+      // filter nulls and empty strings
+      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return StringUtil.isEmpty(s) ? null : s;
+        }
+      });
+      operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
 
     listener.onStart(id);
@@ -213,7 +233,6 @@ public class GradleExecutionHelper {
 
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList());
       try {
         final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
         tempFile.deleteOnExit();
@@ -229,7 +248,9 @@ public class GradleExecutionHelper {
           "}}",
         };
         FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
-        launcher.withArguments("--init-script", tempFile.getAbsolutePath());
+
+        BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList(),
+                                                  ContainerUtil.newArrayList(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath()));
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
@@ -355,32 +376,34 @@ public class GradleExecutionHelper {
     field.setAccessible(isAccessible);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static boolean setInitScript(@NotNull LongRunningOperation longRunningOperation, boolean isBuildSrcProject) {
+  @Nullable
+  public static File generateInitScript(boolean isBuildSrcProject) {
+    InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
     try {
-      InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
-      if (stream == null) return isBuildSrcProject;
+      if (stream == null) {
+        LOG.warn("Can't get init script template");
+        return null;
+      }
 
       String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(GradleProjectResolver.class));
       String s = FileUtil.loadTextAndClose(stream).replace("${JAR_PATH}", jarPath);
 
-      if(isBuildSrcProject) {
+      if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
-        if(buildSrcDefaultInitScript == null) return false;
+        if (buildSrcDefaultInitScript == null) return null;
         s += buildSrcDefaultInitScript;
       }
 
       final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
       FileUtil.writeToFile(tempFile, s);
-
-      String[] buildExecutorArgs = new String[]{"--init-script", tempFile.getAbsolutePath()};
-      longRunningOperation.withArguments(buildExecutorArgs);
-
-      return true;
+      return tempFile;
     }
     catch (Exception e) {
-      LOG.warn("Can't use IJ gradle init script", e);
-      return false;
+      LOG.warn("Can't generate IJ gradle init script", e);
+      return null;
+    }
+    finally {
+      StreamUtil.closeStream(stream);
     }
   }
 

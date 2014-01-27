@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.model.builder;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -73,8 +74,9 @@ public abstract class AbstractModelBuilderTest {
     final ProjectImportAction projectImportAction = new ProjectImportAction(true);
     projectImportAction.addExtraProjectModelClasses(getModels());
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-    GradleExecutionHelper.setInitScript(buildActionExecutor, false);
-
+    File initScript = GradleExecutionHelper.generateInitScript(false);
+    assertNotNull(initScript);
+    buildActionExecutor.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     allModels = buildActionExecutor.run();
     assertNotNull(allModels);
   }

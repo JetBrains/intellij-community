@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HideableTitledPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public abstract class AbstractImportFromExternalSystemControl<
 
   @NotNull private final PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
   @NotNull private final TextFieldWithBrowseButton myLinkedProjectPathField = new TextFieldWithBrowseButton();
+  @Nullable private final HideableTitledPanel hideableSystemSettingsPanel;
 
   @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
   @NotNull private final  ProjectSystemId                                myExternalSystemId;
@@ -103,7 +105,18 @@ public abstract class AbstractImportFromExternalSystemControl<
     myComponent.add(myLinkedProjectPathField, ExternalSystemUiUtil.getFillLineConstraints(0));
     myProjectSettingsControl.fillUi(myComponent, 0);
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.fillUi(myComponent, 0);
+      final PaintAwarePanel mySystemSettingsControlPanel = new PaintAwarePanel();
+      mySystemSettingsControl.fillUi(mySystemSettingsControlPanel, 0);
+
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(mySystemSettingsControlPanel, BorderLayout.CENTER);
+      hideableSystemSettingsPanel = new HideableTitledPanel(
+        ExternalSystemBundle.message("settings.title.system.settings", myExternalSystemId.getReadableName()), false);
+      hideableSystemSettingsPanel.setContentComponent(panel);
+      hideableSystemSettingsPanel.setOn(false);
+      myComponent.add(hideableSystemSettingsPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
+    } else {
+      hideableSystemSettingsPanel = null;
     }
     ExternalSystemUiUtil.fillBottom(myComponent);
   }
@@ -180,6 +193,9 @@ public abstract class AbstractImportFromExternalSystemControl<
     myProjectSettingsControl.reset();
     if (mySystemSettingsControl != null) {
       mySystemSettingsControl.reset();
+    }
+    if (hideableSystemSettingsPanel != null) {
+      hideableSystemSettingsPanel.setOn(false);
     }
   }
 

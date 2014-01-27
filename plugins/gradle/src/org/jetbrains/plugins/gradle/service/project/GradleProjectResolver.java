@@ -160,16 +160,22 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       parametersList.addProperty(jvmArg.getKey(), jvmArg.getValue());
     }
 
+
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
+
+    final List<String> commandLineArgs = ContainerUtil.newArrayList();
+    // TODO [vlad] remove the check
+    if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
+      File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject);
+      if (initScript != null) {
+        ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+      }
+    }
+
     GradleExecutionHelper.prepare(
       buildActionExecutor, resolverCtx.getExternalSystemTaskId(),
       resolverCtx.getSettings(), resolverCtx.getListener(),
-      parametersList.getParameters(), resolverCtx.getConnection());
-
-    // TODO [vlad] remove the check
-    if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
-      GradleExecutionHelper.setInitScript(buildActionExecutor, isBuildSrcProject);
-    }
+      parametersList.getParameters(), commandLineArgs, resolverCtx.getConnection());
 
     ProjectImportAction.AllModels allModels;
     try {

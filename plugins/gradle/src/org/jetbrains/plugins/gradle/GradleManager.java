@@ -180,7 +180,8 @@ public class GradleManager
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
                                                                      distributionType,
-                                                                     settings.getGradleVmOptions());
+                                                                     settings.getGradleVmOptions(),
+                                                                     settings.isOfflineWork());
 
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
