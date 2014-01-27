@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
@@ -127,7 +127,7 @@ public class GithubUtil {
    */
   @NotNull
   public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator)
-    throws GithubAuthenticationCanceledException {
+    throws GithubOperationCanceledException {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -136,7 +136,7 @@ public class GithubUtil {
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
+      throw new GithubOperationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }
@@ -147,7 +147,7 @@ public class GithubUtil {
   @NotNull
   public static GithubAuthData getValidBasicAuthDataForHost(@Nullable Project project,
                                                             @NotNull ProgressIndicator indicator,
-                                                            @NotNull String host) throws GithubAuthenticationCanceledException {
+                                                            @NotNull String host) throws GithubOperationCanceledException {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     dialog.lockHost(host);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -157,7 +157,7 @@ public class GithubUtil {
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
+      throw new GithubOperationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }

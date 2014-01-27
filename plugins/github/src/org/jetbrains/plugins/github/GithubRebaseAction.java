@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
@@ -199,14 +199,14 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     try {
       return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
-          @Override
-          @NotNull
-          public GithubRepoDetailed convert(GithubAuthData authData) throws IOException {
-            return GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository());
-          }
-        });
+        @Override
+        @NotNull
+        public GithubRepoDetailed convert(GithubAuthData authData) throws IOException {
+          return GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository());
+        }
+      });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {

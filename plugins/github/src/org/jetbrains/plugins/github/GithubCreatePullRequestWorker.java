@@ -35,7 +35,7 @@ import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
@@ -144,7 +144,7 @@ public class GithubCreatePullRequestWorker {
           }
         });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {
@@ -218,7 +218,7 @@ public class GithubCreatePullRequestWorker {
 
       return new GithubTargetInfo(info.getBranches());
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {
@@ -475,7 +475,7 @@ public class GithubCreatePullRequestWorker {
           }
         });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {

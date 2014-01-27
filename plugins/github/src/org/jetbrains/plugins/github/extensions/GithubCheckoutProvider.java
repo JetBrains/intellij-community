@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubRepo;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -68,7 +68,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
           }
         });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return;
     }
     catch (IOException e) {

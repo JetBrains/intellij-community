@@ -30,7 +30,9 @@ import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
+import sun.security.validator.ValidatorException;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -164,7 +166,16 @@ public class GithubApiUtil {
       method.addRequestHeader(header);
     }
 
-    client.executeMethod(method);
+    try {
+      client.executeMethod(method);
+    }
+    catch (SSLHandshakeException e) { // User canceled operation from CertificatesManager
+      if (e.getCause() instanceof ValidatorException) {
+        LOG.info("Host SSL certificate is not trusted", e);
+        throw new GithubOperationCanceledException("Host SSL certificate is not trusted", e);
+      }
+      throw e;
+    }
     return method;
   }
 

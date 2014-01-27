@@ -13,8 +13,8 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -133,7 +133,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
           }
         }));
     }
-    catch (GithubAuthenticationCanceledException ignore) {
+    catch (GithubOperationCanceledException ignore) {
     }
     catch (IOException e) {
       GithubNotifications.showErrorDialog(myProject, "Can't get access token", e);
