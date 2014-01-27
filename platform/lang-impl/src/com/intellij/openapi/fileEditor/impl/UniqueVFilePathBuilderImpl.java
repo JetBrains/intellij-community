@@ -16,14 +16,12 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
@@ -31,7 +29,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -61,12 +58,19 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       for (VirtualFile virtualFile: filesWithSameName) {
         builder.addPath(virtualFile, virtualFile.getPath());
       }
-      String result = builder.getShortPath(file);
-      if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
-        return FileUtil.getNameWithoutExtension(result);
-      }
-      return result;
+      return getEditorTabText(file, builder, UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS);
     }
     return file.getPresentableName();
+  }
+
+  public static <T> String getEditorTabText(T key, UniqueNameBuilder<T> builder, boolean hideKnownExtensionInTabs) {
+    String result = builder.getShortPath(key);
+    if (hideKnownExtensionInTabs) {
+      String withoutExtension = FileUtil.getNameWithoutExtension(result);
+      if (StringUtil.isNotEmpty(withoutExtension) && !withoutExtension.endsWith(builder.getSeparator())) {
+        return withoutExtension;
+      }
+    }
+    return result;
   }
 }
