@@ -1056,6 +1056,16 @@
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Objects T requireNonNull(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null,_-&gt;fail&quot;"/>
+    </annotation>
+  </item>
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
