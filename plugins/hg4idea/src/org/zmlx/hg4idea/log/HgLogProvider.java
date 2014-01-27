@@ -165,7 +165,6 @@ public class HgLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    // or -r options with appropriate revset arguments delimited by '|' or 'and'.
     if (!branchFilters.isEmpty()) {
       for (VcsLogBranchFilter branchFilter : branchFilters) {
         filterParameters.add(prepareParameter("branch", branchFilter.getBranchName()));
