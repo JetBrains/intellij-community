@@ -14,6 +14,10 @@ import java.util.Set;
 public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiMethod> {
   @Override
   public boolean execute(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> consumer) {
+    return processDeepestSuperMethods(method, consumer);
+  }
+
+  public static boolean processDeepestSuperMethods(PsiMethod method, Processor<PsiMethod> consumer) {
     final Set<PsiMethod> methods = new THashSet<PsiMethod>();
     methods.add(method);
     return findDeepestSuperOrSelfSignature(method, methods, null, consumer);

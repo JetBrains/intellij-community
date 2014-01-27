@@ -488,7 +488,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       }
       if (allNames.contains(currName)) {
         itemWithError = template;
-        errorString = IdeBundle.message("error.template.with.such.name.already.exists");
+        errorString = "Template with name \'" + currName + "\' already exists. Please specify a different template name";
         break;
       }
       if (currExt.length() == 0) {

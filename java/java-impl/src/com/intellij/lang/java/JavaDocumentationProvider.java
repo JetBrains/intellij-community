@@ -73,27 +73,27 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @NonNls public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    if (element instanceof PsiClass) {
-      return generateClassInfo((PsiClass)element);
-    }
-    else if (element instanceof PsiMethod) {
-      return generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
-    }
-    else if (element instanceof PsiField) {
-      return generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
-    }
-    else if (element instanceof PsiVariable) {
-      return generateVariableInfo((PsiVariable)element);
-    }
-    else if (element instanceof PsiPackage) {
-      return generatePackageInfo((PsiPackage)element);
-    }
-    else if (element instanceof BeanPropertyElement) {
-      return generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
-    }
-    return null;
-  }
+     public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+       if (element instanceof PsiClass) {
+         return generateClassInfo((PsiClass)element);
+       }
+       else if (element instanceof PsiMethod) {
+         return generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
+       }
+       else if (element instanceof PsiField) {
+         return generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
+       }
+       else if (element instanceof PsiVariable) {
+         return generateVariableInfo((PsiVariable)element);
+       }
+       else if (element instanceof PsiPackage) {
+         return generatePackageInfo((PsiPackage)element);
+       }
+       else if (element instanceof BeanPropertyElement) {
+         return generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
+       }
+       return null;
+     }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -115,20 +115,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void generateInitializer(StringBuilder buffer, PsiVariable variable) {
-    PsiExpression initializer = JavaDocInfoGenerator.calcInitializerExpression(variable);
+    PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
-      String text = initializer.getText().trim();
-      int index1 = text.indexOf('\n');
-      if (index1 < 0) index1 = text.length();
-      int index2 = text.indexOf('\r');
-      if (index2 < 0) index2 = text.length();
-      int index = Math.min(index1, index2);
-      boolean trunc = index < text.length();
-      text = text.substring(0, index);
-      buffer.append(" = ");
-      buffer.append(StringUtil.escapeXml(text));
-      if (trunc) {
-        buffer.append("...");
+      JavaDocInfoGenerator.appendExpressionValue(buffer, initializer, " = ");
+      PsiExpression constantInitializer = JavaDocInfoGenerator.calcInitializerExpression(variable);
+      if (constantInitializer != null) {
+        buffer.append("\n");
+        JavaDocInfoGenerator.appendExpressionValue(buffer, constantInitializer, CodeInsightBundle.message("javadoc.resolved.value"));
       }
     }
   }
