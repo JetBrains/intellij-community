@@ -29,7 +29,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -110,10 +109,12 @@ public class HgBranchPopup {
     popupGroup.addSeparator("Repositories");
     boolean isMultiRepoConfig = repositories.size() > 1;
     for (VirtualFile repository : repositories) {
-      HgRepository repo = HgRepositoryImpl.getInstance(repository, myProject, myProject);
-      popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
-                                                  new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
-                                                  HgUtil.getDisplayableBranchText(repo)));
+      HgRepository repo = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(repository);
+      if (repo != null) {
+        popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
+                                                    new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
+                                                    HgUtil.getDisplayableBranchText(repo)));
+      }
     }
     return popupGroup;
   }
