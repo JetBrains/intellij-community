@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -206,6 +207,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenEditor.setContext(psiClass);
         myChildrenExpandedEditor.setContext(psiClass);
         myListChildrenEditor.setContext(psiClass);
+
+        PsiType type = DebuggerUtils.getType(qName, project);
+        myLabelEditor.setThisType(type);
+        myChildrenEditor.setThisType(type);
+        myChildrenExpandedEditor.setThisType(type);
+        myListChildrenEditor.setThisType(type);
       }
     });
 

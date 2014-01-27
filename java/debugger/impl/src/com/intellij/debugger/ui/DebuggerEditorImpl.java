@@ -64,6 +64,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   private final Project myProject;
   private PsiElement myContext;
+  private PsiType myThisType;
 
   private final String myRecentsId;
 
@@ -215,6 +216,10 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     getPreferredFocusedComponent().requestFocus();
   }
 
+  public void setThisType(PsiType thisType) {
+    myThisType = thisType;
+  }
+
   @Nullable
   protected Document createDocument(TextWithImports item) {
     LOG.assertTrue(myContext == null || myContext.isValid());
@@ -224,7 +229,10 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     }
     JavaCodeFragment codeFragment = getCurrentFactory().createPresentationCodeFragment(item, myContext, getProject());
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-    if (myContext != null) {
+    if (myThisType != null) {
+      codeFragment.setThisType(myThisType);
+    }
+    else if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {
         final PsiClassType contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
