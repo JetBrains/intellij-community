@@ -18,6 +18,12 @@ package com.intellij.dvcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,10 +36,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogProvider;
+import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,6 +151,36 @@ public class DvcsUtil {
   public static String joinMessagesOrNull(@NotNull Collection<String> messages) {
     String joined = StringUtil.join(messages, "\n");
     return StringUtil.isEmptyOrSpaces(joined) ? null : joined;
+  }
+
+  /**
+   * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
+   */
+  @Nullable
+  public static VirtualFile getSelectedFile(@NotNull Project project) {
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
+    VirtualFile result = null;
+    if (fileEditor != null) {
+      if (fileEditor instanceof TextEditor) {
+        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+        result = FileDocumentManager.getInstance().getFile(document);
+      }
+      else if (fileEditor instanceof ImageFileEditor) {
+        result = ((ImageFileEditor)fileEditor).getImageEditor().getFile();
+      }
+    }
+
+    if (result == null) {
+      final FileEditorManager manager = FileEditorManager.getInstance(project);
+      if (manager != null) {
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        }
+      }
+    }
+    return result;
   }
 
 }

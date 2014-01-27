@@ -30,14 +30,17 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgBranchPopup;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * Widget to display basic hg status in the IJ status bar.
@@ -152,18 +155,32 @@ public class HgStatusWidget extends EditorBasedWidget
           return;
         }
 
-        emptyTextAndTooltip();
-
-        if (null != myCurrentBranchStatus.getStatusText()) {
-          myText = myCurrentBranchStatus.getStatusText();
-          myTooltip = myCurrentBranchStatus.getToolTipText();
+        final HgRepository repo = HgUtil.getCurrentRepository(project);
+        if (repo == null) { // the file is not under version control => display nothing
+          emptyTextAndTooltip();
+          return;
         }
-
-        int maxLength = MAX_STRING.length();
-        myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
-        if (!isDisposed() && myStatusBar != null) {
-          myStatusBar.updateWidget(ID());
-        }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            String bookmark = repo.getCurrentBookmark();
+            final String branchOrBookMarkName = StringUtil.isEmptyOrSpaces(bookmark) ? repo.getCurrentBranch() : bookmark;
+            final List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo.getRoot());
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myCurrentBranchStatus.updateFor(branchOrBookMarkName, parents);
+                myText = myCurrentBranchStatus.getStatusText();
+                myTooltip = myCurrentBranchStatus.getToolTipText();
+                int maxLength = MAX_STRING.length();
+                myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
+                if (!isDisposed() && myStatusBar != null) {
+                  myStatusBar.updateWidget(ID());
+                }
+              }
+            });
+          }
+        });
       }
     });
   }
@@ -177,6 +194,7 @@ public class HgStatusWidget extends EditorBasedWidget
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    busConnection.subscribe(HgVcs.BRANCH_TOPIC,this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
   }
@@ -198,10 +216,5 @@ public class HgStatusWidget extends EditorBasedWidget
   private void emptyTextAndTooltip() {
     myText = "";
     myTooltip = "";
-  }
-
-  @NotNull
-  public HgCurrentBranchStatus getCurrentBranchStatus() {
-    return myCurrentBranchStatus;
   }
 }

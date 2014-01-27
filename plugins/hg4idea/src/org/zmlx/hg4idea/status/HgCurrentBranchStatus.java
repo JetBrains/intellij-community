@@ -22,8 +22,8 @@ import java.util.List;
 
 public class HgCurrentBranchStatus {
 
-  private String text;
-  private String toolTip;
+  @NotNull private String text;
+  @NotNull private String toolTip;
 
   public HgCurrentBranchStatus() {
   }
