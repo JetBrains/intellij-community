@@ -125,8 +125,11 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
 
-    for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-      if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+    // extension points are available only in IDE process
+    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
+        if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+      }
     }
 
     // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
