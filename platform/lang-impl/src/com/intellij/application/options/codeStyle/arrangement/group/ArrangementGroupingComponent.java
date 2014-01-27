@@ -123,7 +123,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     
     setBackground(UIUtil.getListBackground());
     setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
-    setOpaque(!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderNativeMacLookAndFeel());
+    setOpaque(!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderNativeMacLookAndFeel() && !UIUtil.isUnderDarcula());
   }
 
   @Override
@@ -136,7 +136,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
         myRowIndexControl.setBaseLine(baseline);
       }
     }
-    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderNativeMacLookAndFeel()) {
+    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula() || UIUtil.isUnderNativeMacLookAndFeel()) {
       g.setColor(getBackground());
       g.fillRect(1, 1, getWidth() - 2, getHeight() - 2);
     }
