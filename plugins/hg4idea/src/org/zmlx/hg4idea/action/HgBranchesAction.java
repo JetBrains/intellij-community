@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
@@ -35,17 +34,19 @@ public class HgBranchesAction extends HgAbstractGlobalAction {
   protected void execute(@NotNull Project project, @NotNull Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo) {
     HgRepository repository;
     if (selectedRepo != null) {
-      repository = HgRepositoryImpl.getInstance(selectedRepo, project, project);
+      repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(selectedRepo);
     }
     else {
       VirtualFile selectedRoot = HgUtil.getRootForSelectedFile(project);
       if (selectedRoot != null) {
-        repository = HgRepositoryImpl.getInstance(selectedRoot, project, project);
+        repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(selectedRoot);
       }
       else {
         return;
       }
     }
-    HgBranchPopup.getInstance(project, repository).asListPopup().showInFocusCenter();
+    if (repository != null) {
+      HgBranchPopup.getInstance(project, repository).asListPopup().showInFocusCenter();
+    }
   }
 }
