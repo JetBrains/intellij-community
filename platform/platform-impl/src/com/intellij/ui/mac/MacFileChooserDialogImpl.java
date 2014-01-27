@@ -180,6 +180,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       invoke(chooser, "setCanChooseDirectories:", chooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", chooserDescriptor.isChooseMultiple());
       invoke(chooser, "setTreatsFilePackagesAsDirectories:", chooserDescriptor.isChooseFolders());
+      invoke(chooser, "setResolvesAliases:", false);
 
       String description = chooserDescriptor.getDescription();
       if (!StringUtil.isEmpty(description)) {
