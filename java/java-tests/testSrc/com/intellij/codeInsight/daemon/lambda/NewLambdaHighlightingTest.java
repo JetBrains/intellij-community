@@ -95,6 +95,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRecursiveCalls() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

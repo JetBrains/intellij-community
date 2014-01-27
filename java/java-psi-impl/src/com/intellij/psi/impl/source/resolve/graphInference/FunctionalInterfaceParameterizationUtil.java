@@ -72,7 +72,7 @@ public class FunctionalInterfaceParameterizationUtil {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod == null) return null;
 
-      final InferenceSession session = new InferenceSession(PsiSubstitutor.EMPTY);
+      final InferenceSession session = new InferenceSession(PsiSubstitutor.EMPTY, expr);
       PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       if (typeParameters.length != parameters.length) {
         return null;
