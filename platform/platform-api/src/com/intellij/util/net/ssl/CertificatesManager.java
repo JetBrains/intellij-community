@@ -14,14 +14,12 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * at all: default {@code HttpClient} will use "Default" {@code SSLContext}, which is set up by this component itself.
  * <p/>
  * However for httpclient-4.x you have several of choices:
+ * <pre>
  * <ol>
  *  <li>Client returned by {@code HttpClients.createSystem()} will use "Default" SSL context as it does in httpclient-3.1.</li>
  *  <li>If you want to customize {@code HttpClient} using {@code HttpClients.custom()}, you can use the following methods of the builder
@@ -46,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *      </ol>
  *    </li>
  * </ol>
+ * </pre>
  *
  * @author Mikhail Golubev
  */
@@ -219,7 +219,7 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
     return accepted.get();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Config getState() {
     return myConfig;
@@ -231,10 +231,13 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
   }
 
   public static class Config {
+    // ensure that request's hostname matches certificate's common name (CN)
     public boolean checkHostname;
+    // ensure that certificate is neither expired nor not yet eligible
+    public boolean checkValidity;
     @Tag("expired")
     @Property(surroundWithTag = false)
-    @AbstractCollection(elementTag = "hostname")
-    public List<String> expiredCertificateHostnames = new ArrayList<String>();
+    @AbstractCollection(elementTag = "commonName")
+    public LinkedHashSet<String> brokenCertificates = new LinkedHashSet<String>();
   }
 }

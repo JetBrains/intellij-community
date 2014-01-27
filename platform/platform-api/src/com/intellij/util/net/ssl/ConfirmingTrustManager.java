@@ -20,10 +20,12 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -42,6 +44,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 class ConfirmingTrustManager implements X509TrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+
+  private static final CertificateFactory ourFactory = createFactory();
+
+  private static CertificateFactory createFactory() {
+    try {
+      return CertificateFactory.getInstance("X509");
+    }
+    catch (CertificateException e) {
+      throw new AssertionError("Can't initialize X509 certificate factory");
+    }
+  }
 
   // Errors
   @NonNls public static final String ERR_EMPTY_TRUST_ANCHORS = "It seems, that your JRE installation doesn't have system trust store.\n" +
@@ -166,7 +179,7 @@ class ConfirmingTrustManager implements X509TrustManager {
     private final String myPassword;
     private final TrustManagerFactory myFactory;
     private final KeyStore myKeyStore;
-    private volatile X509TrustManager myTrustManager;
+    private X509TrustManager myTrustManager;
     private volatile boolean broken = false;
     private final ReadWriteLock myLock = new ReentrantReadWriteLock();
     private final Lock myReadLock = myLock.readLock();
@@ -225,6 +238,13 @@ class ConfirmingTrustManager implements X509TrustManager {
       return keyStore;
     }
 
+
+    /**
+     * Add certificate to underlying trust store.
+     *
+     * @param certificate   server's certificate
+     * @return              whether the operation was successful
+     */
     public boolean addCertificate(@NotNull X509Certificate certificate) {
       if (broken) {
         return false;
@@ -240,7 +260,7 @@ class ConfirmingTrustManager implements X509TrustManager {
         return true;
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Can't add certificate", e);
         return false;
       }
       finally {
@@ -249,14 +269,48 @@ class ConfirmingTrustManager implements X509TrustManager {
       }
     }
 
+    /**
+     * Add certificate, loaded from file at {@code path}, to underlying trust store.
+     *
+     * @param path  path to file containing certificate
+     * @return      whether the operation was successful
+     */
+    public boolean addCertificate(@NotNull String path) {
+      InputStream stream = null;
+      try {
+        stream = new FileInputStream(path);
+        X509Certificate certificate = (X509Certificate)ourFactory.generateCertificate(stream);
+        return addCertificate(certificate);
+      }
+      catch (Exception e) {
+        LOG.error("Can't add certificate for path: " + path, e);
+        return false;
+      }
+      finally {
+        StreamUtil.closeStream(stream);
+      }
+    }
+
     private static String createAlias(@NotNull X509Certificate certificate) {
       return certificate.getIssuerX500Principal().getName();
     }
 
+    /**
+     * Remove certificate from underlying trust store.
+     *
+     * @param alias certificate alias
+     * @return      whether the operation was successful
+     */
     public boolean removeCertificate(@NotNull X509Certificate certificate) {
       return removeCertificate(createAlias(certificate));
     }
 
+    /**
+     * Remove certificate, specified by its alias, from underlying trust store.
+     *
+     * @param alias certificate's alias
+     * @return      true if removal operation was successful and false otherwise
+     */
     public boolean removeCertificate(@NotNull String alias) {
       if (broken) {
         return false;
@@ -272,7 +326,7 @@ class ConfirmingTrustManager implements X509TrustManager {
         return true;
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Can't remove certificate for alias: " + alias, e);
         return false;
       }
       finally {
@@ -281,6 +335,12 @@ class ConfirmingTrustManager implements X509TrustManager {
       }
     }
 
+    /**
+     * Get certificate, specified by its alias, from underlying trust store.
+     *
+     * @param alias certificate's alias
+     * @return certificate or null if it's not present
+     */
     @Nullable
     public X509Certificate getCertificate(@NotNull String alias) {
       myReadLock.lock();
@@ -296,7 +356,9 @@ class ConfirmingTrustManager implements X509TrustManager {
     }
 
     /**
-     * @return all available X509 certificates, returned list is not supposed to be modified
+     * Select all available certificates from underlying trust store. Result list is not supposed to be modified.
+     *
+     * @return certificates
      */
     public List<X509Certificate> getCertificates() {
       myReadLock.lock();
