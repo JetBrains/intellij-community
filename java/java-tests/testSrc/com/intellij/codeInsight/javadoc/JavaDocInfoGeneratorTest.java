@@ -55,11 +55,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testEnumValueOf() throws Exception {
     doTestMethod();
   }
-
-  public void testMethodFormatting() throws Exception {
-    doTestMethod();
-  }
-
+  
   public void testConstantFieldInitializer() throws Exception {
     doTestField();
   }
