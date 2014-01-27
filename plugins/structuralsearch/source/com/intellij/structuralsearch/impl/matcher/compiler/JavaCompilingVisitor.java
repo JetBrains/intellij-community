@@ -28,9 +28,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final GlobalCompilingVisitor myCompilingVisitor;
 
   @NonNls private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
-  private static Pattern ourPattern = Pattern.compile("//" + COMMENT, Pattern.DOTALL);
-  private static Pattern ourPattern2 = Pattern.compile("/\\*" + COMMENT + "\\*/", Pattern.DOTALL);
-  private static Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
+  private static final Pattern ourPattern = Pattern.compile("//" + COMMENT, Pattern.DOTALL);
+  private static final Pattern ourPattern2 = Pattern.compile("/\\*" + COMMENT + "\\*/", Pattern.DOTALL);
+  private static final Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
 
   public JavaCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
