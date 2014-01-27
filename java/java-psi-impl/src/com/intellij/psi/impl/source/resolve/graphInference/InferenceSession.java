@@ -312,6 +312,9 @@ public class InferenceSession {
           });
         }
         if (targetType != null) {
+          if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
+            setErased();
+          }
           myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(targetType, false), PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
         }
       }
