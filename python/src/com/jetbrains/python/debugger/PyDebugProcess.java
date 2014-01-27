@@ -77,6 +77,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
+  private boolean myDownloadSources = false;
 
   private boolean myClosing = false;
 
@@ -422,8 +423,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     cleanUp();
   }
 
+  public boolean isDownloadSources() {
+    return myDownloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    myDownloadSources = downloadSources;
+  }
+
   protected void cleanUp() {
     mySuspendedThreads.clear();
+    myDownloadSources = false;
   }
 
   @Override
