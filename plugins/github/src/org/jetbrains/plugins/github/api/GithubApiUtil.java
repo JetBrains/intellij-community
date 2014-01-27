@@ -420,10 +420,21 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static String getMasterToken(@NotNull GithubAuthData auth, @Nullable String note) throws IOException {
+    List<String> scopes = new ArrayList<String>();
+
+    scopes.add("repo"); // read/write access to public/private repositories
+    scopes.add("gist"); // create/delete gists
+
+    return getScopedToken(auth, scopes, note);
+  }
+
+  @NotNull
   public static String getReadOnlyToken(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, @Nullable String note)
     throws IOException {
     GithubRepo repository = getDetailedRepoInfo(auth, user, repo);
 
+    // TODO: use read-only token for private repos when it will be available
     List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.<String>emptyList();
 
     return getScopedToken(auth, scopes, note);
