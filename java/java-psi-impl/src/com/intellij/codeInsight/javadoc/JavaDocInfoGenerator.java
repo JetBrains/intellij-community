@@ -73,7 +73,7 @@ public class JavaDocInfoGenerator {
   
   private final Project    myProject;
   private final PsiElement myElement;
-  
+
   interface InheritDocProvider<T> {
     Pair<T, InheritDocProvider<T>> getInheritDoc();
 
@@ -592,7 +592,7 @@ public class JavaDocInfoGenerator {
       generateEpilogue(buffer);
   }
 
-  public static PsiExpression calcInitializerExpression(PsiVariable variable) {
+  public static @Nullable PsiExpression calcInitializerExpression(PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
       PsiModifierList modifierList = variable.getModifierList();
@@ -606,15 +606,36 @@ public class JavaDocInfoGenerator {
             text = "\"" + StringUtil.trimLog(text, 120) + "\"";
           }
           else if (type.equalsToText("char")) text = "'" + text + "'";
-          initializer = instance.getElementFactory().createExpressionFromText(text, variable);
+          try {
+            return instance.getElementFactory().createExpressionFromText(text, variable);
+          } catch (IncorrectOperationException ex) {
+            LOG.error(text, ex);
+          }
         }
       }
     }
-    return initializer;
+    return null;
+  }
+
+  public static boolean appendExpressionValue(StringBuilder buffer, PsiExpression initializer, String label) {
+    String text = initializer.getText().trim();
+    int index1 = text.indexOf('\n');
+    if (index1 < 0) index1 = text.length();
+    int index2 = text.indexOf('\r');
+    if (index2 < 0) index2 = text.length();
+    int index = Math.min(index1, index2);
+    boolean trunc = index < text.length();
+    text = text.substring(0, index);
+    buffer.append(label);
+    buffer.append(StringUtil.escapeXml(text));
+    if (trunc) {
+      buffer.append("...");
+    }
+    return trunc;
   }
 
   private static void appendInitializer(StringBuilder buffer, PsiVariable variable) {
-    PsiExpression initializer = calcInitializerExpression(variable);
+    PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
       buffer.append(" = ");
 
@@ -633,6 +654,11 @@ public class JavaDocInfoGenerator {
       }
       else {
         initializer.accept(new MyVisitor(buffer));
+      }
+      PsiExpression constantInitializer = calcInitializerExpression(variable);
+      if (constantInitializer != null) {
+        buffer.append("\n");
+        appendExpressionValue(buffer, constantInitializer, CodeInsightBundle.message("javadoc.resolved.value"));
       }
     }
   }
