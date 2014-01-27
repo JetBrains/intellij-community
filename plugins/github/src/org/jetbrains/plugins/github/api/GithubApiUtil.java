@@ -218,9 +218,18 @@ public class GithubApiUtil {
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
         String message = getErrorMessage(method);
+
+        Header headerOTP = method.getResponseHeader("X-GitHub-OTP");
+        if (headerOTP != null) {
+          if (headerOTP.getValue().startsWith("required")) {
+            throw new GithubTwoFactorAuthenticationException(message);
+          }
+        }
+
         if (message.contains("API rate limit exceeded")) {
           throw new GithubRateLimitExceededException(message);
         }
+
         throw new GithubAuthenticationException("Request response: " + message);
       default:
         throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
