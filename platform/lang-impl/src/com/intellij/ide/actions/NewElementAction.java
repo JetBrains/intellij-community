@@ -17,7 +17,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -96,8 +95,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
       presentation.setEnabled(false);
       return;
     }
-    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(context);
-    if (ideView == null) {
+    if (PlatformDataKeys.FILE_EDITOR.getData(context) != null) {
       presentation.setEnabled(false);
       return;
     }
