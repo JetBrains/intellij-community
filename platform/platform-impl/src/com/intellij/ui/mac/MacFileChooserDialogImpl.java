@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -179,6 +180,11 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       invoke(chooser, "setCanChooseDirectories:", chooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", chooserDescriptor.isChooseMultiple());
       invoke(chooser, "setTreatsFilePackagesAsDirectories:", chooserDescriptor.isChooseFolders());
+
+      String description = chooserDescriptor.getDescription();
+      if (!StringUtil.isEmpty(description)) {
+        invoke(chooser, "setMessage:", Foundation.nsString(description));
+      }
 
       if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setCanCreateDirectories:"))) {
         invoke(chooser, "setCanCreateDirectories:", true);
