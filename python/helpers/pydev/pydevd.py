@@ -2,7 +2,6 @@
 from django_debug import DjangoLineBreakpoint
 from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
-from pydevd_constants import * #@UnusedWildImport
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass
@@ -1081,6 +1080,9 @@ class PyDB:
             from imp import new_module
             m = new_module('__main__')
             sys.modules['__main__'] = m
+            if hasattr(sys.modules['pydevd'], '__loader__'):
+                setattr(m, '__loader__', getattr(sys.modules['pydevd'], '__loader__'))
+                
             m.__file__ = file
             globals = m.__dict__
             try:
