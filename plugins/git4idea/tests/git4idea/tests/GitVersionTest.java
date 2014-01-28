@@ -17,7 +17,7 @@ package git4idea.tests;
 
 import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.lang.reflect.Field;
 
