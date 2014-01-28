@@ -13,12 +13,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -160,7 +158,9 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
 
       if (psiVariable instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
-        psiVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        final PsiModifierList modifierList = psiVariable.getModifierList();
+        modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
       }
 
       for (PsiReference reference : refs) {
