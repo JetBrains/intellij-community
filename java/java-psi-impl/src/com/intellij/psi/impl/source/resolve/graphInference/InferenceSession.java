@@ -684,10 +684,6 @@ public class InferenceSession {
           }
           else {
             subset.add(constraint);
-            Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(null, this);
-            if (outputVars != null) {
-              varsToResolve.addAll(outputVars);
-            }
           }
         }
         else {
@@ -697,18 +693,20 @@ public class InferenceSession {
       if (subset.isEmpty()) {
         subset = Collections.singleton(additionalConstraints.iterator().next()); //todo choose one constraint
       }
+
       additionalConstraints.removeAll(subset);
+
+      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, false);
+
+      for (ConstraintFormula additionalConstraint : subset) {
+        additionalConstraint.apply(substitutor);
+      }
 
       myConstraints.addAll(subset);
       if (!repeatInferencePhases(true)) {
         return false;
       }
 
-      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, false);
-
-      for (ConstraintFormula additionalConstraint : additionalConstraints) {
-        additionalConstraint.apply(substitutor);
-      }
     }
     return true;
   }
