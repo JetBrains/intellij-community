@@ -350,17 +350,23 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
           MavenProject project = buildingResult.getProject();
 
-          // copied from DefaultLifecycleExecutor.execute
-          loadExtensions(project);
-          //findExtensions(project);
-          // end copied from DefaultLifecycleExecutor.execute
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+
+            if (myWorkspaceMap != null) {
+              ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven3WorkspaceReader(myWorkspaceMap));
+            }
+          }
+
+          List<Exception> exceptions = new ArrayList<Exception>();
+          loadExtensions(project, exceptions);
 
           //Artifact projectArtifact = project.getArtifact();
           //Map managedVersions = project.getManagedVersionMap();
           //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
           project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
           //
-          ArtifactResolver resolver = getComponent(ArtifactResolver.class);
 
           ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
           resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
@@ -373,20 +379,12 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
           resolutionRequest.setResolveRoot(false);
           resolutionRequest.setResolveTransitively(true);
 
-          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-          if (repositorySession instanceof DefaultRepositorySystemSession) {
-            ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
-
-            if (myWorkspaceMap != null) {
-              ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven3WorkspaceReader(myWorkspaceMap));
-            }
-          }
-
+          ArtifactResolver resolver = getComponent(ArtifactResolver.class);
           ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
           project.setArtifacts(result.getArtifacts());
           // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ref.set(new MavenExecutionResult(project, new ArrayList<Exception>()));
+          ref.set(new MavenExecutionResult(project, exceptions));
         }
         catch (Exception e) {
           ref.set(handleException(e));
@@ -398,7 +396,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   /** adapted from {@link org.apache.maven.DefaultMaven#doExecute(org.apache.maven.execution.MavenExecutionRequest)} */
-  private void loadExtensions(MavenProject project) {
+  private void loadExtensions(MavenProject project, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Arrays.asList(project));
     if (!lifecycleParticipants.isEmpty()) {
@@ -407,17 +405,17 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       session.setCurrentProject(project);
       session.setProjects(Arrays.asList(project));
 
-      try {
-        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+        Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+        try {
           listener.afterProjectsRead(session);
         }
-      }
-      catch (MavenExecutionException e) {
-        throw new RuntimeException(e);
-      }
-      finally {
-        Thread.currentThread().setContextClassLoader(originalClassLoader);
+        catch (MavenExecutionException e) {
+          exceptions.add(e);
+        }
+        finally {
+          Thread.currentThread().setContextClassLoader(originalClassLoader);
+        }
       }
     }
   }
