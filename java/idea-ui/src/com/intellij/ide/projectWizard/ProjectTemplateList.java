@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Comparing;
@@ -41,6 +42,8 @@ import java.util.List;
  *         Date: 12/24/13
  */
 public class ProjectTemplateList extends JPanel {
+
+  private static final String PROJECT_WIZARD_TEMPLATE = "project.wizard.template";
 
   private boolean myNewProject;
   private JBList myList;
@@ -105,7 +108,7 @@ public class ProjectTemplateList extends JPanel {
     Messages.installHyperlinkSupport(myDescriptionPane);
   }
 
-  public void setTemplates(List<ProjectTemplate> list) {
+  public void setTemplates(List<ProjectTemplate> list, boolean preserveSelection) {
     Collections.sort(list, new Comparator<ProjectTemplate>() {
       @Override
       public int compare(ProjectTemplate o1, ProjectTemplate o2) {
@@ -126,14 +129,40 @@ public class ProjectTemplateList extends JPanel {
       }
     });
 
-    int index = myList.getSelectedIndex();
+    int index = preserveSelection ? myList.getSelectedIndex() : -1;
     //noinspection unchecked
     myList.setModel(new CollectionListModel(list));
     myList.setSelectedIndex(index == -1 ? 0 : index);
   }
 
+  @Nullable
   public ProjectTemplate getSelectedTemplate() {
     return (ProjectTemplate)myList.getSelectedValue();
+  }
+
+  void restoreSelection() {
+    final String templateName = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_TEMPLATE);
+    if (templateName != null) {
+      List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
+      ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
+        @Override
+        public boolean value(ProjectTemplate template) {
+          return templateName.equals(template.getName());
+        }
+      });
+      if (template != null) {
+        myList.setSelectedValue(template, true);
+      }
+    }
+    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        ProjectTemplate template = getSelectedTemplate();
+        if (template != null) {
+          PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_TEMPLATE, template.getName());
+        }
+      }
+    });
   }
 
   public void addListSelectionListener(ListSelectionListener listener) {

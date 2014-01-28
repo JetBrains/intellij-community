@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
@@ -65,6 +67,7 @@ import java.util.List;
 public class ProjectTypeStep extends ModuleWizardStep implements Disposable, ActionListener {
 
   private static final String DEFAULT_CARD = "default card";
+  private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
 
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
@@ -128,7 +131,22 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
       myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
     }
 
-    myProjectTypeList.setSelectedIndex(0);
+    final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
+    if (groupId != null) {
+      TemplatesGroup group = ContainerUtil.find(groups, new Condition<TemplatesGroup>() {
+        @Override
+        public boolean value(TemplatesGroup group) {
+          return groupId.equals(group.getId());
+        }
+      });
+      if (group != null) {
+        myProjectTypeList.setSelectedValue(group, true);
+      }
+    }
+    myTemplatesList.restoreSelection();
+    if (myProjectTypeList.getSelectedValue() == null) {
+      myProjectTypeList.setSelectedIndex(0);
+    }
   }
 
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
@@ -213,18 +231,18 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
 
   // new category or template is selected
   public void projectTypeChanged() {
-
     TemplatesGroup group = getSelectedGroup();
     if (group == null) return;
+    PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
     Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
     if (!selectCustomOptions(templates)) {
-      setTemplatesList(group, templates);
+      setTemplatesList(group, templates, false);
       ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, DEFAULT_CARD);
     }
     updateSelection();
   }
 
-  private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates) {
+  private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
     ArrayList<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
     if (group.getParentGroup() == null) {
       for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
@@ -233,7 +251,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
         }
       }
     }
-    myTemplatesList.setTemplates(list);
+    myTemplatesList.setTemplates(list, preserveSelection);
   }
 
   private boolean selectCustomOptions(Collection<ProjectTemplate> templates) {
@@ -260,9 +278,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   public ProjectTemplate getSelectedTemplate() {
     TemplatesGroup group = getSelectedGroup();
     if (group == null) return null;
-    Collection<ProjectTemplate> categories = myTemplatesMap.get(group);
-    if (categories.size() == 1) {
-      ProjectTemplate template = categories.iterator().next();
+    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+    if (templates.size() == 1) {
+      ProjectTemplate template = templates.iterator().next();
       if (myCards.contains(myBuilders.get(template).getBuilderId())) {
         return template;
       }
@@ -272,7 +290,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
 
   @Nullable
   private ModuleBuilder getSelectedBuilder() {
-
     ProjectTemplate template = getSelectedTemplate();
     return template == null ? null : myBuilders.get(template);
   }
@@ -364,7 +381,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
               TemplatesGroup group = getSelectedGroup();
               if (group == null) return;
               Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-              setTemplatesList(group, templates);
+              setTemplatesList(group, templates, true);
             }
           });
         }
