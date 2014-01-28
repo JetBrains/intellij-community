@@ -91,7 +91,7 @@ public class ReferenceElement implements GroovyElementTypes {
   }
 
   public enum ReferenceElementResult {
-    IDENTIFIER, PATH_REF, REF_WITH_TYPE_PARAMS, PATH_REF_WITHOUT_NAME_ELEMENT, FAIL
+    IDENTIFIER, PATH_REF, REF_WITH_TYPE_PARAMS, FAIL
   }
 
   public static ReferenceElementResult parseForImport(@NotNull PsiBuilder builder) {
