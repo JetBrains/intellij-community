@@ -113,9 +113,6 @@ public class CodeCompletionHandlerBase {
       CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
     }
 
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
-
     checkNoWriteAccess();
 
     CompletionAssertions.checkEditorValid(editor);
@@ -130,8 +127,6 @@ public class CodeCompletionHandlerBase {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
-
-    psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(myCompletionType, editor);
@@ -167,9 +162,12 @@ public class CodeCompletionHandlerBase {
           public void run() {
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-            CompletionAssertions.assertCommitSuccessful(editor, psiFile);
             CompletionAssertions.checkEditorValid(editor);
+
+            final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+            assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
+            psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
+            CompletionAssertions.assertCommitSuccessful(editor, psiFile);
 
             initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile);
           }
@@ -179,7 +177,7 @@ public class CodeCompletionHandlerBase {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-      if (!restarted && shouldSkipAutoPopup(editor, psiFile)) {
+      if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         return;
       }
