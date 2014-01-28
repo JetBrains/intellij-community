@@ -19,9 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.maven.DefaultMaven;
-import org.apache.maven.Maven;
-import org.apache.maven.RepositoryUtils;
+import org.apache.maven.*;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -310,6 +308,17 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     MavenSession oldSession = legacySupport.getSession();
 
     legacySupport.setSession(mavenSession);
+
+    /** adapted from {@link org.apache.maven.DefaultMaven#doExecute(org.apache.maven.execution.MavenExecutionRequest)} */
+    try {
+      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+        listener.afterSessionStart(mavenSession);
+      }
+    }
+    catch (MavenExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
     try {
       runnable.run();
     }
@@ -342,6 +351,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
           MavenProject project = buildingResult.getProject();
 
           // copied from DefaultLifecycleExecutor.execute
+          loadExtensions(project);
           //findExtensions(project);
           // end copied from DefaultLifecycleExecutor.execute
 
@@ -385,6 +395,79 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     });
 
     return ref.get();
+  }
+
+  /** adapted from {@link org.apache.maven.DefaultMaven#doExecute(org.apache.maven.execution.MavenExecutionRequest)} */
+  private void loadExtensions(MavenProject project) {
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Arrays.asList(project));
+    if (!lifecycleParticipants.isEmpty()) {
+      LegacySupport legacySupport = getComponent(LegacySupport.class);
+      MavenSession session = legacySupport.getSession();
+      session.setCurrentProject(project);
+      session.setProjects(Arrays.asList(project));
+
+      try {
+        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+          listener.afterProjectsRead(session);
+        }
+      }
+      catch (MavenExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+      }
+    }
+  }
+
+  /** adapted from {@link org.apache.maven.DefaultMaven#getLifecycleParticipants(java.util.Collection)} */
+  private Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
+    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<AbstractMavenLifecycleParticipant>();
+
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      try {
+        lifecycleListeners.addAll(myContainer.lookupList(AbstractMavenLifecycleParticipant.class));
+      }
+      catch (ComponentLookupException e) {
+        // this is just silly, lookupList should return an empty list!
+        warn("Failed to lookup lifecycle participants", e);
+      }
+
+      Collection<ClassLoader> scannedRealms = new HashSet<ClassLoader>();
+
+      for (MavenProject project : projects) {
+        ClassLoader projectRealm = project.getClassRealm();
+
+        if (projectRealm != null && scannedRealms.add(projectRealm)) {
+          Thread.currentThread().setContextClassLoader(projectRealm);
+
+          try {
+            lifecycleListeners.addAll(myContainer.lookupList(AbstractMavenLifecycleParticipant.class));
+          }
+          catch (ComponentLookupException e) {
+            // this is just silly, lookupList should return an empty list!
+            warn("Failed to lookup lifecycle participants", e);
+          }
+        }
+      }
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(originalClassLoader);
+    }
+
+    return lifecycleListeners;
+  }
+
+  private static void warn(String message, Throwable e) {
+    try {
+      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
+    }
+    catch (RemoteException e1) {
+      throw new RuntimeException(e1);
+    }
   }
 
   public MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
