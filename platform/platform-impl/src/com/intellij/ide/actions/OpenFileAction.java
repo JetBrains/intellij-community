@@ -120,7 +120,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
       if (OpenProjectFileChooserDescriptor.isProjectFile(file) &&
           // if the ipr-based project is already open, just open the ipr file
-          (project == null || file != project.getProjectFile())) {
+          (project == null || !file.equals(project.getProjectFile()))) {
         Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
         if (openedProject != null) {
           FileChooserUtil.setLastOpenedFile(openedProject, file);
