@@ -7,3 +7,11 @@ project("moduleWithAdditionalClasspath") {
     }
   }
 }
+
+project("baseModule") {
+  buildscript {
+    dependencies {
+      classpath files("lib/inheritedDep.jar")
+    }
+  }
+}
