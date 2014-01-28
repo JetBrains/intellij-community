@@ -139,30 +139,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     }
 
     try {
-      final PsiExpression initializer = psiVariable.getInitializer();
-      if (initializer != null) {
-        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, null, element);
-        if (directConversion != null) {
-          TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
-        }
-      } else if (!psiVariable.getModifierList().hasModifierProperty(PsiModifier.FINAL)){
-        final PsiExpression defaultInitializer =
-          elementFactory.createExpressionFromText("new " + toType.getPresentableText() + "()", psiVariable);
-        if (psiVariable instanceof PsiLocalVariable) {
-          ((PsiLocalVariable)psiVariable).setInitializer(defaultInitializer);
-        } else if (psiVariable instanceof PsiField) {
-          ((PsiField)psiVariable).setInitializer(defaultInitializer);
-        }
-      }
-
-      psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
-
-      if (psiVariable instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
-        final PsiModifierList modifierList = psiVariable.getModifierList();
-        modifierList.setModifierProperty(PsiModifier.FINAL, true);
-        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
-      }
-
       for (PsiReference reference : refs) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
@@ -187,6 +163,30 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
             TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, directConversion);
           }
         }
+      }
+
+      final PsiExpression initializer = psiVariable.getInitializer();
+      if (initializer != null) {
+        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, null, element);
+        if (directConversion != null) {
+          TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
+        }
+      } else if (!psiVariable.getModifierList().hasModifierProperty(PsiModifier.FINAL)){
+        final PsiExpression defaultInitializer =
+          elementFactory.createExpressionFromText("new " + toType.getPresentableText() + "()", psiVariable);
+        if (psiVariable instanceof PsiLocalVariable) {
+          ((PsiLocalVariable)psiVariable).setInitializer(defaultInitializer);
+        } else if (psiVariable instanceof PsiField) {
+          ((PsiField)psiVariable).setInitializer(defaultInitializer);
+        }
+      }
+
+      psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
+
+      if (psiVariable instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+        final PsiModifierList modifierList = psiVariable.getModifierList();
+        modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
       }
     } catch (IncorrectOperationException e) {
       LOG.error(e);
