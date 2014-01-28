@@ -17,6 +17,9 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.platform.templates.BuilderBasedTemplate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
@@ -34,6 +37,17 @@ public class ProjectCategoryTemplate extends BuilderBasedTemplate {
   @Override
   public String getName() {
     return myCategory.getDisplayName();
+  }
+
+  @Override
+  public Icon getIcon() {
+    return myCategory.getIcon();
+  }
+
+  @Nullable
+  @Override
+  public String getDescription() {
+    return myCategory.getDescription();
   }
 
   public ProjectCategory getCategory() {
