@@ -86,6 +86,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   // custom progress
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
+  private boolean myTestsRunning = true;
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
@@ -247,10 +248,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-    SMTestProxy root = getTestsRootNode();
-    if (root != null) {
-      selectAndNotify(root);
-    }
+    selectAndNotify(myTestsRootNode, new Runnable() {
+      @Override
+      public void run() {
+        myTestsRunning = false;
+      }
+    });
 
     fireOnTestingFinished();
   }
@@ -334,7 +337,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public boolean isRunning() {
-    return getRoot().isInProgress();
+    return myTestsRunning;
   }
 
   public TestTreeView getTreeView() {
@@ -365,8 +368,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param testProxy Test or suite
    */
-  public void selectAndNotify(@Nullable final AbstractTestProxy testProxy) {
-    selectWithoutNotify(testProxy);
+  @Override
+  public void selectAndNotify(AbstractTestProxy testProxy) {
+    selectAndNotify(testProxy, null);
+  }
+
+  private void selectAndNotify(@Nullable final AbstractTestProxy testProxy, @Nullable Runnable onDone) {
+    selectWithoutNotify(testProxy, onDone);
 
     // Is used by Statistic tab to differ use selection in tree
     // from manual selection from API (e.g. test runner events)
@@ -474,7 +482,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
+  private void selectWithoutNotify(final AbstractTestProxy testProxy, @Nullable final Runnable onDone) {
     if (testProxy == null) {
       return;
     }
@@ -484,7 +492,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         if (myTreeBuilder.isDisposed()) {
           return;
         }
-        myTreeBuilder.select(testProxy, null);
+        myTreeBuilder.select(testProxy, onDone);
       }
     }, ModalityState.NON_MODAL);
   }
@@ -547,7 +555,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                   final boolean requestFocus) {
         SMRunnerUtil.addToInvokeLater(new Runnable() {
           public void run() {
-            selectWithoutNotify(selectedTestProxy);
+            selectWithoutNotify(selectedTestProxy, null);
 
             // Request focus if necessary
             if (requestFocus) {
