@@ -17,34 +17,45 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
-import junit.framework.TestCase;
+import org.junit.Assume;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-public class FoundationTest extends TestCase {
-  public void testStrings() throws Exception {
-    if (!SystemInfo.isMac) return;
-    assertEquals("Test", Foundation.toStringViaUTF8(Foundation.nsString("Test")));
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
+
+public class FoundationTest {
+  @BeforeClass
+  public static void assumeMac() {
+    Assume.assumeTrue(SystemInfo.isMac);
   }
 
+  @Test
+  public void testStrings() throws Exception {
+    assertThat(Foundation.toStringViaUTF8(Foundation.nsString("Test")), equalTo("Test"));
+  }
+
+  @Test
   public void testEncodings() throws Exception {
-    if (!SystemInfo.isMac) return;
+    assertThat(Foundation.getEncodingName(4), equalTo("utf-8"));
+    assertThat(Foundation.getEncodingName(0), nullValue());
+    assertThat(Foundation.getEncodingName(-1), nullValue());
 
-    assertEquals("utf-8", Foundation.getEncodingName(4));
-    assertEquals(null, Foundation.getEncodingName(0));
-    assertEquals(null, Foundation.getEncodingName(-1));
+    assertThat(Foundation.getEncodingCode("utf-8"), equalTo(4L));
+    assertThat(Foundation.getEncodingCode("UTF-8"), equalTo(4L));
 
-    assertEquals(4, Foundation.getEncodingCode("utf-8"));
-    assertEquals(4, Foundation.getEncodingCode("UTF-8"));
+    assertThat(Foundation.getEncodingCode(""), equalTo(-1L));
+    //noinspection SpellCheckingInspection
+    assertThat(Foundation.getEncodingCode("asdasd"), equalTo(-1L));
+    assertThat(Foundation.getEncodingCode(null), equalTo(-1L));
 
-    assertEquals(-1, Foundation.getEncodingCode(""));
-    assertEquals(-1, Foundation.getEncodingCode("asdasd"));
-    assertEquals(-1, Foundation.getEncodingCode(null));
+    assertThat(Foundation.getEncodingName(10), equalTo("utf-16"));
+    assertThat(Foundation.getEncodingCode("utf-16"), equalTo(10L));
 
-    assertEquals("utf-16", Foundation.getEncodingName(10));
-    assertEquals(10, Foundation.getEncodingCode("utf-16"));
-
-    assertEquals("utf-16le", Foundation.getEncodingName(2483028224l));
-    assertEquals(2483028224l, Foundation.getEncodingCode("utf-16le"));
-    assertEquals("utf-16be", Foundation.getEncodingName(2415919360l));
-    assertEquals(2415919360l, Foundation.getEncodingCode("utf-16be"));
+    assertThat(Foundation.getEncodingName(2483028224l), equalTo("utf-16le"));
+    assertThat(Foundation.getEncodingCode("utf-16le"), equalTo(2483028224l));
+    assertThat(Foundation.getEncodingName(2415919360l), equalTo("utf-16be"));
+    assertThat(Foundation.getEncodingCode("utf-16be"), equalTo(2415919360l));
   }
 }

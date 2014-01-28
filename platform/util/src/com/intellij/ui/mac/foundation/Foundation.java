@@ -257,17 +257,18 @@ public class Foundation {
       registerObjcClassPair(runnableClass);
 
       final Callback callback = new Callback() {
+        @SuppressWarnings("UnusedDeclaration")
         public void callback(ID self, String selector, ID keyObject) {
           final String key = toStringViaUTF8(keyObject);
-
 
           RunnableInfo info;
           synchronized (RUNNABLE_LOCK) {
             info = ourMainThreadRunnables.remove(key);
           }
 
-          if (info == null) return;
-
+          if (info == null) {
+            return;
+          }
 
           ID pool = null;
           try {
