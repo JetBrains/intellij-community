@@ -142,7 +142,7 @@ public class ProjectTemplateList extends JPanel {
 
   void restoreSelection() {
     final String templateName = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_TEMPLATE);
-    if (templateName != null) {
+    if (templateName != null && myList.getModel() instanceof CollectionListModel) {
       List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
       ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
         @Override

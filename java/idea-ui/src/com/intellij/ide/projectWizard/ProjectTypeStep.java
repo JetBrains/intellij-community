@@ -143,10 +143,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
         myProjectTypeList.setSelectedValue(group, true);
       }
     }
-    myTemplatesList.restoreSelection();
     if (myProjectTypeList.getSelectedValue() == null) {
       myProjectTypeList.setSelectedIndex(0);
     }
+    myTemplatesList.restoreSelection();
   }
 
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
