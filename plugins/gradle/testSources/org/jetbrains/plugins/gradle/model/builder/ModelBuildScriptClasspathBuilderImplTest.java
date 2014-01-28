@@ -55,20 +55,28 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
             ClasspathEntryModel classpathEntry = classpathModel.getClasspath().getAt(0);
             assertEquals("someDep.jar", classpathEntry.getClassesFile().getName());
           }
+          else if (module.getName().equals("baseModule") ||
+                   module.getName().equals("moduleWithInheritedClasspath")) {
+            assertNotNull("Null build classpath for module: " + module.getName(), classpathModel);
+            assertEquals("Wrong build classpath for module: " + module.getName(), 1, classpathModel.getClasspath().size());
+
+            ClasspathEntryModel classpathEntry = classpathModel.getClasspath().getAt(0);
+            assertEquals("Wrong build classpath for module: " + module.getName(), "inheritedDep.jar", classpathEntry.getClassesFile().getName());
+          }
           else if (module.getName().equals("moduleWithoutAdditionalClasspath") ||
                    module.getName().equals("testModelBuildScriptClasspathBuilder")) {
-            assertNotNull(classpathModel);
-            assertTrue(classpathModel.getClasspath().isEmpty());
+            assertNotNull("Wrong build classpath for module: " + module.getName(), classpathModel);
+            assertTrue("Wrong build classpath for module: " + module.getName(), classpathModel.getClasspath().isEmpty());
           }
           else {
-            fail();
+            fail("Unexpected module found: " + module.getName());
           }
 
           return classpathModel;
         }
       });
 
-    assertEquals(3, ideaModule.size());
+    assertEquals(5, ideaModule.size());
   }
 
   @Override

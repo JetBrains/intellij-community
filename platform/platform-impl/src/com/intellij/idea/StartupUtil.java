@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -47,7 +46,7 @@ import java.util.List;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = Bootstrap.NO_SPLASH;
+  @NonNls public static final String NO_SPLASH = "nosplash";
 
   private static SocketLock ourLock;
   private static String myDefaultLAF;
