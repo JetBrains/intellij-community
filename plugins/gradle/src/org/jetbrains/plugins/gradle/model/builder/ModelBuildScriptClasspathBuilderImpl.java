@@ -22,20 +22,21 @@ import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.internal.IdeDependenciesExtractor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.model.internal.ClasspathEntryModelImpl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Vladislav.Soroka
  * @since 12/20/13
  */
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
+
+  private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
 
   @Override
   public boolean canBuild(String modelName) {
@@ -45,6 +46,9 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
+    BuildScriptClasspathModelImpl buildScriptClasspath = cache.get(project.getPath());
+    if (buildScriptClasspath != null) return buildScriptClasspath;
+
     boolean offline = false;
     boolean downloadJavadoc = false;
     boolean downloadSources = true;
@@ -60,12 +64,21 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
       }
     }
 
+    buildScriptClasspath = new BuildScriptClasspathModelImpl();
+    Project parent = project.getParent();
+    if (parent != null) {
+      BuildScriptClasspathModelImpl parentBuildScriptClasspath = (BuildScriptClasspathModelImpl)buildAll(modelName, parent);
+      if (parentBuildScriptClasspath != null) {
+        for (ClasspathEntryModel classpathEntryModel : parentBuildScriptClasspath.getClasspath()) {
+          buildScriptClasspath.add(classpathEntryModel);
+        }
+      }
+    }
+
     final IdeDependenciesExtractor dependenciesExtractor = new IdeDependenciesExtractor();
 
     final Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
     Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);
-
-    BuildScriptClasspathModelImpl buildScriptClasspath = new BuildScriptClasspathModelImpl();
 
     if (!offline) {
       // download sources and/or javadoc
@@ -88,6 +101,7 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
       buildScriptClasspath.add(new ClasspathEntryModelImpl(dependency.getFile(), null, null));
     }
 
+    cache.put(project.getPath(), buildScriptClasspath);
     return buildScriptClasspath;
   }
 }
