@@ -82,15 +82,7 @@ public class MavenModuleResourceConfiguration {
   }
 
   public int computeConfigurationHash(boolean forTestResources) {
-    int result = id.hashCode();
-    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
-    result = 31 * result + directory.hashCode();
-    result = 31 * result + delimitersPattern.hashCode();
-    result = 31 * result + modelMap.hashCode();
-    result = 31 * result + properties.hashCode();
-    result = 31 * result + filteringExclusions.hashCode();
-    result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
-    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
+    int result = computeModuleConfigurationHash();
 
     final List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
     result = 31 * result;
@@ -100,6 +92,18 @@ public class MavenModuleResourceConfiguration {
     return result;
   }
 
+  public int computeModuleConfigurationHash() {
+    int result = id.hashCode();
+    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
+    result = 31 * result + directory.hashCode();
+    result = 31 * result + delimitersPattern.hashCode();
+    result = 31 * result + modelMap.hashCode();
+    result = 31 * result + properties.hashCode();
+    result = 31 * result + filteringExclusions.hashCode();
+    result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
+    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
+    return result;
+  }
 }
 
 

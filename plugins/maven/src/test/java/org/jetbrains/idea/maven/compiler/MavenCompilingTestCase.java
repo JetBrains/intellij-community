@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.CompileContext;
@@ -27,7 +28,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -44,15 +48,20 @@ import java.util.List;
  * @author nik
  */
 public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
-  protected void compileModules(final String... moduleNames) throws Exception {
-    final List<Module> modules = new ArrayList<Module>();
+  protected void compileModules(final String... moduleNames) {
+    compile(createModulesCompileScope(moduleNames));
+  }
 
+  protected void buildArtifacts(String... artifactNames) {
+    compile(createArtifactsScope(artifactNames));
+  }
+
+  private void compile(final CompileScope scope) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        for (String each : moduleNames) {
-          setupJdkForModule(each);
-          modules.add(getModule(each));
+        for (Module module : scope.getAffectedModules()) {
+          setupJdkForModule(module.getName());
         }
         if (useJps()) {
           new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
@@ -68,7 +77,6 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     TranslatingCompilerFilesMonitor.getInstance()
       .scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
 
-    final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -96,6 +104,22 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     }
   }
 
+  private CompileScope createArtifactsScope(String[] artifactNames) {
+    List<Artifact> artifacts = new ArrayList<Artifact>();
+    for (String name : artifactNames) {
+      artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
+    }
+    return ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+  }
+
+  private CompileScope createModulesCompileScope(final String[] moduleNames) {
+    final List<Module> modules = new ArrayList<Module>();
+    for (String name : moduleNames) {
+      modules.add(getModule(name));
+    }
+    return new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+  }
+
   protected static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
     assertEquals(content, loadResult(pomFile, relativePath));
   }
@@ -108,5 +132,9 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
 
   protected void assertResult(String relativePath, String content) throws IOException {
     assertResult(myProjectPom, relativePath, content);
+  }
+
+  protected void assertDirectory(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
+    fileSystemBuilder.build().assertDirectoryEqual(new File(myProjectPom.getParent().getPath(), relativePath));
   }
 }

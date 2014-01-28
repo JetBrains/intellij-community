@@ -26,7 +26,9 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -55,12 +57,11 @@ public class MavenResourceFileProcessor {
   private Map<String, String> myProperties;
   private Pattern myDelimitersPattern;
 
-  public MavenResourceFileProcessor(MavenProjectConfiguration projectConfiguration,
-                                    JpsEncodingProjectConfiguration encodingConfiguration,
+  public MavenResourceFileProcessor(MavenProjectConfiguration projectConfiguration, JpsProject project,
                                     MavenModuleResourceConfiguration moduleConfiguration) {
     myTimestamp = new Date();
     myProjectConfig = projectConfiguration;
-    myEncodingConfig = encodingConfiguration;
+    myEncodingConfig = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(project);
     myModuleConfiguration = moduleConfiguration;
     myFilteringExcludedExtensions = moduleConfiguration.getFilteringExcludedExtensions();
   }

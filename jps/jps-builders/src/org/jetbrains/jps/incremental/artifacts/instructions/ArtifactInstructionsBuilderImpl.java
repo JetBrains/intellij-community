@@ -17,9 +17,12 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,16 +37,25 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Map<String, JarInfo> myJarByPath;
   private final List<ArtifactRootDescriptor> myDescriptors;
   private final ModuleExcludeIndex myRootsIndex;
+  private final Iterable<ArtifactRootCopyingHandlerProvider> myCopyingHandlerProviders;
   private int myRootIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
   private ArtifactBuildTarget myBuildTarget;
+  private final JpsModel myModel;
+  private final BuildDataPaths myBuildDataPaths;
 
-  public ArtifactInstructionsBuilderImpl(ModuleExcludeIndex rootsIndex, IgnoredFileIndex ignoredFileIndex, ArtifactBuildTarget target) {
+  public ArtifactInstructionsBuilderImpl(@NotNull ModuleExcludeIndex rootsIndex,
+                                         @NotNull IgnoredFileIndex ignoredFileIndex,
+                                         @NotNull ArtifactBuildTarget target,
+                                         @NotNull JpsModel model, @NotNull BuildDataPaths dataPaths) {
     myRootsIndex = rootsIndex;
     myIgnoredFileIndex = ignoredFileIndex;
     myBuildTarget = target;
+    myModel = model;
+    myBuildDataPaths = dataPaths;
     myJarByPath = new HashMap<String, JarInfo>();
     myDescriptors = new ArrayList<ArtifactRootDescriptor>();
+    myCopyingHandlerProviders = JpsServiceManager.getInstance().getExtensions(ArtifactRootCopyingHandlerProvider.class);
   }
 
   public IgnoredFileIndex getIgnoredFileIndex() {
@@ -74,8 +86,19 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public FileBasedArtifactRootDescriptor createFileBasedRoot(@NotNull File file,
                                                              @NotNull SourceFileFilter filter,
-                                                             final DestinationInfo destinationInfo) {
-    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget, destinationInfo);
+                                                             final @NotNull DestinationInfo destinationInfo) {
+    FileCopyingHandler handler = createCopyingHandler(file);
+    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget, destinationInfo, handler);
+  }
+
+  private FileCopyingHandler createCopyingHandler(File file) {
+    for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
+      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, myModel, myBuildDataPaths);
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return FileCopyingHandler.DEFAULT;
   }
 
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
