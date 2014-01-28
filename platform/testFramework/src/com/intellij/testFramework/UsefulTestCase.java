@@ -604,6 +604,11 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(array);
   }
 
+  public static void assertNotEmpty(final Collection<?> collection) {
+    if (collection == null) return;
+    assertTrue(!collection.isEmpty());
+  }
+
   public static void assertEmpty(final Collection<?> collection) {
     assertEmpty(collection.toString(), collection);
   }
