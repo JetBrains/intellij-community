@@ -225,7 +225,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenExpandedEditor.setText(myChildrenExpandedEditor.getText());
         myListChildrenEditor.setText(myListChildrenEditor.getText());
       }
-    }, ModalityState.any());
+    }, ModalityState.any(), myProject.getDisposed());
   }
 
   private void updateEnabledState() {
