@@ -514,7 +514,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             return;
           }
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
-          if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName()) || refname == null) {
+          if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
             return;
           }
           final PyExpression qualifier = qexpr.getQualifier();
@@ -576,7 +576,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       addPluginQuickFixes(reference, actions);
 
-      if (reference instanceof PyImportReference && refname != null) {
+      if (reference instanceof PyImportReference) {
         // TODO: Ignore references in the second part of the 'from ... import ...' expression
         final QualifiedName qname = QualifiedName.fromDottedString(refname);
         final List<String> components = qname.getComponents();
