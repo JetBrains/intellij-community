@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -45,15 +47,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -114,6 +120,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public void visitAssertStatement(GrAssertStatement assertStatement) {
     if (myChildType != GroovyTokenTypes.kASSERT) {
       myResult = Indent.getContinuationIndent();
+    }
+  }
+
+  @Override
+  public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
+    if (myChildType != mLBRACK && myChildType != mRBRACK) {
+      myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
@@ -212,9 +225,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitVariable(GrVariable variable) {
-    if (myChild == variable.getInitializerGroovy()) {
-      myResult = Indent.getContinuationIndent();
-    }
+    myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
@@ -368,6 +379,68 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public void visitParameterList(GrParameterList parameterList) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
+
+  @Override
+  public void visitArrayDeclaration(GrArrayDeclaration arrayDeclaration) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitExpression(GrExpression expression) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
+    myResult = Indent.getContinuationIndent();
+  }
+
+  @Override
+  public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitForInClause(GrForInClause forInClause) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitForClause(GrForClause forClause) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitCatchClause(GrCatchClause catchClause) {
+    if (myChild == catchClause.getBody()) {
+      myResult = Indent.getNoneIndent();
+    }
+    else {
+      myResult = Indent.getContinuationWithoutFirstIndent();
+    }
+  }
+
+  @Override
+  public void visitTypeParameterList(GrTypeParameterList list) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+
 
 }
 
