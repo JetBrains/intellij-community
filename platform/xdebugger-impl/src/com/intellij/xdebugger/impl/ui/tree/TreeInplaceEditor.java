@@ -148,9 +148,11 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         cancelEditing();
       }
     };
+    tree.addComponentListener(componentListener);
     rootPane.addComponentListener(componentListener);
     myRemoveActions.add(new Runnable() {
       public void run() {
+        tree.addComponentListener(componentListener);
         rootPane.removeComponentListener(componentListener);
       }
     });
