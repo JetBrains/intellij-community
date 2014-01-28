@@ -18,8 +18,12 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
 
 public class FunctionalInterfaceParameterizationUtil {
   private static final Logger LOG = Logger.getInstance("#" + FunctionalInterfaceParameterizationUtil.class.getName());
@@ -43,20 +47,54 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   @Nullable
-  public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
-    return getFunctionalType(psiClassType, expr, true);
-  }
-
-  @Nullable
-  public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
-    if (!expr.hasFormalParameterTypes() || expr.getParameterList().getParametersCount() == 0) return psiClassType;
+  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
+
+    if (expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr, resolve);
+
+    return getFunctionalTypeImplicit(psiClassType);
+  }
+
+  private static PsiType getFunctionalTypeImplicit(PsiType psiClassType) {
+    if (psiClassType instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)psiClassType;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass != null) {
+
+        final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+        final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
+        PsiType[] parameters = classType.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+          PsiType paramType = parameters[i];
+          if (paramType instanceof PsiWildcardType) {
+            final PsiClassType[] extendsListTypes = typeParameters[i].getExtendsListTypes();
+            final PsiClassType Bi = extendsListTypes.length > 0 ? extendsListTypes[0]
+                                                                : PsiType.getJavaLangObject(psiClass.getManager(), GlobalSearchScope.allScope(psiClass.getProject()));
+            if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) return null;
+
+            final PsiType bound = ((PsiWildcardType)paramType).getBound();
+            if (bound == null) {
+              parameters[i] = Bi;
+            } else if (((PsiWildcardType)paramType).isExtends()){
+              parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, bound);
+            } else {
+              parameters[i] = bound;
+            }
+          }
+        }
+        return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
+      }
+    }
+    return psiClassType;
+  }
+
+  private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
     if (psiClassType instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalType(psiType, expr, false);
+        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr, false);
         if (functionalType != null) return functionalType;
       }
       return null;
