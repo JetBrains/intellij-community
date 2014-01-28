@@ -576,17 +576,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       addPluginQuickFixes(reference, actions);
 
-      final PsiElement point;
-      final TextRange range;
-      final PsiElement lastChild = node.getLastChild();
-      if (reference instanceof PyOperatorReference || lastChild == null) {
-        point = node;
-        range = rangeInElement;
-      }
-      else {
-        point = lastChild; // usually the identifier at the end of qual ref
-        range = rangeInElement.shiftRight(-point.getStartOffsetInParent());
-      }
       if (reference instanceof PyImportReference && refname != null) {
         // TODO: Ignore references in the second part of the 'from ... import ...' expression
         final QualifiedName qname = QualifiedName.fromDottedString(refname);
@@ -606,7 +595,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
-      registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
+      registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     /**

@@ -66,9 +66,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     try {
-      // descriptor points to the unresolved identifier
-      // there can be no name clash, else the name would have resolved, and it hasn't.
-      PsiElement problem_elt = descriptor.getPsiElement().getParent(); // id -> ref expr
+      final PsiElement problem_elt = descriptor.getPsiElement();
       sure(myPyFile);
       sure(FileModificationService.getInstance().preparePsiElementForWrite(myPyFile));
       // try to at least match parameter count
