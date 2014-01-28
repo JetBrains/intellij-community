@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
@@ -181,6 +182,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       return result.values();
     }
     return super.getLookupElements(file, editor, offset);
+  }
+
+  @NotNull
+  public Set<String> getAllTemplateKeys() {
+    return myTemplates.keySet();
   }
 
   @Nullable

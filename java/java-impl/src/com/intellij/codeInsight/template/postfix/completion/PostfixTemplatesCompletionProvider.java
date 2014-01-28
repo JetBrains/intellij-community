@@ -22,7 +22,6 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -52,9 +51,9 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
 
       CharSequence documentContent = parameters.getEditor().getDocument().getCharsSequence();
       String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(documentContent, parameters.getOffset());
-      if (StringUtil.isNotEmpty(possibleKey)) {
+      if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
-        result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(possibleKey));
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys()));
       }
     }
   }

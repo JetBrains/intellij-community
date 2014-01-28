@@ -30,6 +30,11 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
+  // IDEA-119910 Middle matching doesn't work if pattern starts with a digit
+  public void testRestartCompletionForExactMatchOnly() {
+    doCompleteTest(".2", '\n');
+  }
+
   public void testShowTemplateInAutoPopup() {
     doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class);
   }
