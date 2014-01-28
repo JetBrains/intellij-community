@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
@@ -65,7 +66,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
@@ -451,7 +451,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
-        if (object instanceof GrBindingVariable && ((GrBindingVariable)object).getName().contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)) {
+        if (isLightElementDeclaredDuringCompletion(object)) {
           return;
         }
 
@@ -494,6 +494,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
     return EmptyRunnable.INSTANCE;
   }
+
+  private static boolean isLightElementDeclaredDuringCompletion(Object object) {
+    if (!(object instanceof LightElement && object instanceof PsiNamedElement)) return false;
+    final String name = ((PsiNamedElement)object).getName();
+    if (name == null) return false;
+
+    return name.contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED.trim()) ||
+           name.contains(DUMMY_IDENTIFIER_DECAPITALIZED.trim());
+  }
+
 
   private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
