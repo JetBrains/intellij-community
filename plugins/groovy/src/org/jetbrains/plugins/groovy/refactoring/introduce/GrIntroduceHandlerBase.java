@@ -775,7 +775,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
-  public static GrExpression generateExpressionFromStringPart(final StringPartInfo stringPart, final Project project) {
+  public static GrExpression generateExpressionFromStringPart(@NotNull final StringPartInfo stringPart, @NotNull final Project project) {
     Data data = new Data(stringPart);
     String startQuote = data.getStartQuote();
     TextRange range = data.getRange();
