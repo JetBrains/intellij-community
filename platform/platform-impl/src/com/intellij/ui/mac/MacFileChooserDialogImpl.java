@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -276,7 +277,9 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     addFoundationMethod(delegate, "showOpenPanel:", MAIN_THREAD_RUNNABLE, "v*");
     addFoundationMethod(delegate, "openPanelDidEnd:returnCode:contextInfo:", OPEN_PANEL_DID_END, "v*i");
     addFoundationMethod(delegate, "panel:shouldEnableURL:", SHOULD_ENABLE_CALLBACK, "B@@");
-    addFoundationMethod(delegate, "panel:validateURL:error:", VALIDATE_URL_CALLBACK, "B@@o");
+    if (SystemInfo.isMacOSSnowLeopard) {
+      addFoundationMethod(delegate, "panel:validateURL:error:", VALIDATE_URL_CALLBACK, "B@@o");
+    }
     Foundation.registerObjcClassPair(delegate);
   }
 
