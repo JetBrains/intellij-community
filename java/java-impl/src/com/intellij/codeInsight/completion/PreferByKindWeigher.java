@@ -112,9 +112,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
+    expectedTypeConstant,
     normal,
     collectionFactory,
-    expectedTypeMember,
+    expectedTypeMethod,
     suitableClass,
     nonInitialized,
     classLiteral,
@@ -147,11 +148,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
 
     if (myCompletionType == CompletionType.SMART) {
-      if (item.getUserData(CollectionsUtilityMethodsProvider.COLLECTION_FACTORY) != null) {
-        return MyResult.collectionFactory;
+      if (object instanceof PsiMethod) {
+        PsiClass containingClass = ((PsiMethod)object).getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
+          return MyResult.collectionFactory;
+        }
       }
-      if (Boolean.TRUE.equals(item.getUserData(MembersGetter.EXPECTED_TYPE_INHERITOR_MEMBER))) {
-        return MyResult.expectedTypeMember;
+      Boolean expectedTypeMember = item.getUserData(MembersGetter.EXPECTED_TYPE_MEMBER);
+      if (expectedTypeMember != null) {
+        return expectedTypeMember ? (object instanceof PsiField ? MyResult.expectedTypeConstant : MyResult.expectedTypeMethod) : MyResult.classNameOrGlobalStatic;
       }
 
       final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
