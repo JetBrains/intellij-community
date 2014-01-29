@@ -112,6 +112,10 @@ public class PyInjectionUtil {
         if (formatting != Formatting.NONE) {
           final String part = range.substring(text);
           final List<FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(part) : parsePercentFormat(part);
+          if (chunks.isEmpty()) {
+            registrar.addPlace(prefix, suffix, expr, range);
+            continue;
+          }
           for (int i = 0; i < chunks.size(); i++) {
             final FormatStringChunk chunk = chunks.get(i);
             if (chunk instanceof ConstantChunk) {
