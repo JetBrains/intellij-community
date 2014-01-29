@@ -749,7 +749,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     assert expression != null;
 
     final PsiElement resolved = expression.resolve();
-    assert resolved instanceof GrVariable;
+    assert resolved instanceof GrVariable : resolved;
     return (GrVariable)resolved;
   }
 
@@ -821,15 +821,15 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return concat;
     }
     else {
-      assert concat instanceof GrBinaryExpression;
+      assert concat instanceof GrBinaryExpression : buffer;
       final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
       if (left instanceof GrReferenceExpression) {
         return left;
       }
       else {
-        assert left instanceof GrBinaryExpression;
+        assert left instanceof GrBinaryExpression : buffer;
         final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
-        assert right != null;
+        assert right != null : buffer;
         return right;
       }
     }
