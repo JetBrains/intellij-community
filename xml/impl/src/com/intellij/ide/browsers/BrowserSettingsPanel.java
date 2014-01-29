@@ -25,8 +25,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -55,13 +53,7 @@ import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
 public class BrowserSettingsPanel {
-  private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR =
-    SystemInfo.isMac ? new FileChooserDescriptor(false, true, false, false, false, false) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return file.getName().endsWith(".app");
-      }
-    } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+  private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
 
   private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
     new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
