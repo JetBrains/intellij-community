@@ -16,32 +16,34 @@
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author traff
  */
-public class MutableCollectionComboBoxModel extends AbstractCollectionComboBoxModel {
-  private List myItems;
+public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel {
+  private List<T> myItems;
 
-  public MutableCollectionComboBoxModel(List items, Object selection) {
+  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable Object selection) {
     super(selection);
+
     myItems = items;
   }
 
-  public MutableCollectionComboBoxModel(List items) {
+  public MutableCollectionComboBoxModel(List<T> items) {
     super(items.isEmpty() ? null : items.get(0));
     myItems = items;
   }
 
   @NotNull
   @Override
-  final protected List getItems() {
+  final protected List<T> getItems() {
     return myItems;
   }
 
-  public void update(List items) {
+  public void update(List<T> items) {
     myItems = items;
     super.update();
   }
