@@ -32,6 +32,31 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
  * @author vlan
  */
 public class PyInjectionUtil {
+
+  public static class InjectionResult {
+    public static InjectionResult EMPTY = new InjectionResult(false, true);
+
+    private final boolean myInjected;
+    private final boolean myStrict;
+
+    private InjectionResult(boolean injected, boolean strict) {
+      myInjected = injected;
+      myStrict = strict;
+    }
+
+    public boolean isInjected() {
+      return myInjected;
+    }
+
+    public boolean isStrict() {
+      return myStrict;
+    }
+
+    public InjectionResult append(@NotNull InjectionResult result) {
+      return new InjectionResult(myInjected || result.isInjected(), myStrict && result.isStrict());
+    }
+  }
+
   public static final List<Class<? extends PyExpression>> ELEMENTS_TO_INJECT_IN =
     Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class, PyCallExpression.class);
 
@@ -54,8 +79,9 @@ public class PyInjectionUtil {
    * Registers language injections in the given registrar for the specified string literal element or its ancestor that contains
    * string concatenations or formatting.
    */
-  public static void registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
+  @NotNull
+  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
+    return processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
@@ -101,10 +127,13 @@ public class PyInjectionUtil {
     return null;
   }
 
-  private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar, @NotNull String prefix,
-                                           @NotNull String suffix, @NotNull Formatting formatting) {
-    final String missingValue = "missing";
+  @NotNull
+  private static InjectionResult processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar,
+                                                      @NotNull String prefix, @NotNull String suffix, @NotNull Formatting formatting) {
+    final String missingValue = "missing_value";
     if (element instanceof PyStringLiteralExpression) {
+      boolean injected = false;
+      boolean strict = true;
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();
       final String text = expr.getText();
@@ -112,9 +141,8 @@ public class PyInjectionUtil {
         if (formatting != Formatting.NONE) {
           final String part = range.substring(text);
           final List<FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(part) : parsePercentFormat(part);
-          if (chunks.isEmpty()) {
-            registrar.addPlace(prefix, suffix, expr, range);
-            continue;
+          if (!filterSubstitutions(chunks).isEmpty()) {
+            strict = false;
           }
           for (int i = 0; i < chunks.size(); i++) {
             final FormatStringChunk chunk = chunks.get(i);
@@ -141,18 +169,21 @@ public class PyInjectionUtil {
               }
               final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
               registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
+              injected = true;
             }
           }
         }
         else {
           registrar.addPlace(prefix, suffix, expr, range);
+          injected = true;
         }
       }
+      return new InjectionResult(injected, strict);
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       if (contained != null) {
-        processStringLiteral(contained, registrar, prefix, suffix, formatting);
+        return processStringLiteral(contained, registrar, prefix, suffix, formatting);
       }
     }
     else if (element instanceof PyBinaryExpression) {
@@ -162,23 +193,26 @@ public class PyInjectionUtil {
       final boolean isLeftString = isStringLiteralPart(left, null);
       if (expr.isOperator("+")) {
         final boolean isRightString = right != null && isStringLiteralPart(right, null);
+        InjectionResult result = InjectionResult.EMPTY;
         if (isLeftString) {
-          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, formatting);
+          result = result.append(processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, formatting));
         }
         if (isRightString) {
-          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, formatting);
+          result = result.append(processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, formatting));
         }
+        return result;
       }
       else if (expr.isOperator("%")) {
-        processStringLiteral(left, registrar, prefix, suffix, Formatting.PERCENT);
+        return processStringLiteral(left, registrar, prefix, suffix, Formatting.PERCENT);
       }
     }
     else if (element instanceof PyCallExpression) {
       final PyExpression qualifier = getFormatCallQualifier((PyCallExpression)element);
       if (qualifier != null) {
-        processStringLiteral(qualifier, registrar, prefix, suffix, Formatting.NEW_STYLE);
+        return processStringLiteral(qualifier, registrar, prefix, suffix, Formatting.NEW_STYLE);
       }
     }
+    return InjectionResult.EMPTY;
   }
 
   private enum Formatting {
