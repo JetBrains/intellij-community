@@ -472,9 +472,15 @@ public class LambdaUtil {
                   final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
                   if (interfaceMethod != null) {
                     final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
-                    if (!dependsOnTypeParams(paramIdx == -1 ? cachedType :
-                                             cachedResult.getSubstitutor().substitute(interfaceMethod.getParameterList().getParameters()[paramIdx].getType()), cachedType, expression)){
-                      return cachedType;
+                    if (paramIdx == -1) {
+                      if (!dependsOnTypeParams(cachedType, cachedType, expression) && !dependsOnTypeParams(getFunctionalInterfaceReturnType(cachedType), cachedType, expression)) {
+                        return cachedType;
+                      }
+                    }
+                    else {
+                      if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethod.getParameterList().getParameters()[paramIdx].getType()), cachedType, expression)) {
+                        return cachedType;
+                      }
                     }
                   }
                 }
