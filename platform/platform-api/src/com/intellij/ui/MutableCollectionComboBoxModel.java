@@ -15,33 +15,35 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author traff
  */
-public class MutableCollectionComboBoxModel extends AbstractCollectionComboBoxModel {
-  private List myItems;
+public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel<T> {
+  private List<T> myItems;
 
-  public MutableCollectionComboBoxModel(List items, Object selection) {
-    super(selection);
-    myItems = items;
+  public MutableCollectionComboBoxModel(@NotNull List<T> items) {
+    this(items, ContainerUtil.getFirstItem(items));
   }
 
-  public MutableCollectionComboBoxModel(List items) {
-    super(items.isEmpty() ? null : items.get(0));
+  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
+    super(selection);
+
     myItems = items;
   }
 
   @NotNull
   @Override
-  final protected List getItems() {
+  final protected List<T> getItems() {
     return myItems;
   }
 
-  public void update(List items) {
+  public void update(@NotNull List<T> items) {
     myItems = items;
     super.update();
   }

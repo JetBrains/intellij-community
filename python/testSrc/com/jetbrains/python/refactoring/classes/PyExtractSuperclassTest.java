@@ -53,7 +53,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     for (String memberName : membersName) {
       final PyElement member = findMember(className, memberName);
-      assertNotNull(member);
       members.add(new PyMemberInfo(member));
     }
 
@@ -82,7 +81,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     final PyElement member = findMember(className, ".foo");
-    assertNotNull(member);
     members.add(new PyMemberInfo(member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
@@ -126,7 +124,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     final PyElement member = findMember(className, ".foo");
-    assertNotNull(member);
     members.add(new PyMemberInfo(member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 

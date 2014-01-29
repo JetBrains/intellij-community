@@ -47,6 +47,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return myUseCustomProfile;
   }
 
+  @Nullable
   @Tag("command-line-options")
   public String getCommandLineOptions() {
     return myCommandLineOptions;

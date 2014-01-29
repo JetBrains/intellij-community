@@ -22,6 +22,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -32,7 +33,7 @@ public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, final PyClass superClass) {
+  public static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {
     final MultiMap<PsiElement, String> conflictsList = new MultiMap<PsiElement, String>();
     for (PyMemberInfo info : infos) {
       PsiElement member = info.getMember();

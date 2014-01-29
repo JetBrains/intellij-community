@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -19,7 +20,9 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 public class SceneBuilderEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) && SystemInfo.isJavaVersionAtLeast("1.8");
+    return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) &&
+           SystemInfo.isJavaVersionAtLeast("1.8") &&
+           ApplicationManager.getApplication().isInternal();
   }
 
   @NotNull

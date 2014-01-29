@@ -55,7 +55,6 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     for (String memberName : membersName) {
       final PyElement member = findMember(className, memberName);
-      assertNotNull(member);
       members.add(new PyMemberInfo(member));
     }
 

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.drag.source.AbstractDragSource;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
@@ -13,6 +12,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
+import javafx.scene.SceneAntialiasing;
 import javafx.scene.control.SplitPane;
 import javafx.scene.input.DataFormat;
 
@@ -28,8 +28,6 @@ import java.util.HashSet;
  * @author Alexander Lobas
  */
 public class SceneBuilderKitWrapper {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderKitWrapper");
-
   public static JComponent create(final String path) throws Exception {
     Field identifier = DataFormat.class.getDeclaredField("identifier");
     identifier.setAccessible(true);
@@ -54,7 +52,7 @@ public class SceneBuilderKitWrapper {
           editor.setFxmlTextAndLocation(fxmlText, fxmlURL);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          e.printStackTrace();
         }
 
         SplitPane leftPane = new SplitPane();
@@ -62,12 +60,14 @@ public class SceneBuilderKitWrapper {
         leftPane.getItems().addAll(palette.getPanelRoot(), componentTree.getPanelRoot());
         leftPane.setDividerPositions(0.5, 0.5);
 
+        SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+        SplitPane.setResizableWithParent(propertyTable.getPanelRoot(), Boolean.FALSE);
+
         SplitPane mainPane = new SplitPane();
 
         mainPane.getItems().addAll(leftPane, canvas.getPanelRoot(), propertyTable.getPanelRoot());
-        mainPane.setDividerPositions(0, 0.5, 1);
-
-        panel.setScene(new Scene(mainPane, 900, 600));
+        mainPane.setDividerPositions(0.11036789297658862, 0.8963210702341137);
+        panel.setScene(new Scene(mainPane, -1, -1, true, SceneAntialiasing.BALANCED));
       }
     });
 

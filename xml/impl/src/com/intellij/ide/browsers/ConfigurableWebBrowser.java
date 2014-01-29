@@ -1,5 +1,6 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,25 @@ final class ConfigurableWebBrowser extends WebBrowser {
   @NotNull
   @Override
   public Icon getIcon() {
+    if (family == BrowserFamily.CHROME) {
+      if (checkNameAndPath("Yandex")) {
+        return AllIcons.Xml.Browsers.Yandex16;
+      }
+      else if (checkNameAndPath("Dartium") || checkNameAndPath("Chromium")) {
+        return AllIcons.Xml.Browsers.Chromium16;
+      }
+      else if (checkNameAndPath("Canary")) {
+        return AllIcons.Xml.Browsers.Canary16;
+      }
+      else if (checkNameAndPath("Opera")) {
+        return AllIcons.Xml.Browsers.Opera16;
+      }
+    }
     return family.getIcon();
+  }
+
+  private boolean checkNameAndPath(@NotNull String what) {
+    return StringUtil.containsIgnoreCase(name, what) || path != null && StringUtil.containsIgnoreCase(path, what);
   }
 
   @Nullable
