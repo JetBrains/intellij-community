@@ -26,18 +26,20 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -145,10 +147,10 @@ public class BrowserSettingsPanel {
   private String customPathValue;
 
   public BrowserSettingsPanel() {
-    defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", false));
-
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null,
                                                         APP_FILE_CHOOSER_DESCRIPTOR);
+
+    defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
 
     //noinspection unchecked
     defaultBrowserComboBox.setModel(new EnumComboBoxModel<DefaultBrowser>(DefaultBrowser.class));
@@ -190,6 +192,10 @@ public class BrowserSettingsPanel {
           setText(name);
         }
       });
+
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        defaultBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
+      }
     }
     else {
       defaultBrowserComboBox.setVisible(false);
