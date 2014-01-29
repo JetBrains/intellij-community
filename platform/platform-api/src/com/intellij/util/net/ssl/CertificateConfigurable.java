@@ -1,27 +1,29 @@
 package com.intellij.util.net.ssl;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.security.cert.X509Certificate;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.net.ssl.CertificateWrapper.CommonField.COMMON_NAME;
@@ -35,26 +37,31 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   private JPanel myRootPanel;
   private JBCheckBox myCheckHostname;
-  private JPanel myAccptedCertificatesPanel;
   private JBCheckBox myCheckValidityPeriod;
-  private JPanel myBrokenCertificatesPanel;
-  private JBList mySelfSignedList;
-  private JBList myBrokenList;
+
+  private JPanel myCertificatesListPanel;
+  private JPanel myDetailsPanel;
+  private JBList myCertificatesList;
+  private MutableTrustManager myTrustManager;
 
   public CertificateConfigurable() {
-    mySelfSignedList = new JBList();
-    mySelfSignedList.getEmptyText().setText("No certificates");
-    mySelfSignedList.setCellRenderer(new ListCellRendererWrapper<X509Certificate>() {
+    myTrustManager = CertificatesManager.getInstance().getCustomTrustManager();
+
+    myCertificatesList = new JBList();
+    myCertificatesList.getEmptyText().setText("No certificates");
+    myCertificatesList.setCellRenderer(new ListCellRendererWrapper<X509Certificate>() {
       @Override
       public void customize(JList list, X509Certificate value, int index, boolean selected, boolean hasFocus) {
         setText(new CertificateWrapper(value).getSubjectField(COMMON_NAME));
       }
     });
-    final MutableTrustManager manager = CertificatesManager.getInstance().getCustomTrustManager();
+    // fill lower panel with cards
+    for (X509Certificate certificate : myTrustManager.getCertificates()) {
+      addCertificatePanel(certificate);
+    }
 
-    installModel(manager);
-
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(mySelfSignedList).disableUpDownActions();
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCertificatesList).disableUpDownActions();
+    decorator.setVisibleRowCount(5);
     decorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -63,11 +70,14 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
           @Override
           public void consume(VirtualFile file) {
             String path = file.getPath();
-            if (manager.addCertificate(path)) {
-              installModel(manager);
+            X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
+            if (certificate != null) {
+              getListModel().add(certificate);
+              addCertificatePanel(certificate);
+              myCertificatesList.setSelectedValue(certificate, true);
             }
             else {
-              Messages.showErrorDialog(myRootPanel, "Cannot Add Certificate", "Cannot add X509 certificate " + path);
+              Messages.showErrorDialog(myRootPanel, "Cannot Load Certificate", "Possibly malformed X509 server certificate " + path);
             }
           }
         });
@@ -76,13 +86,22 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       @Override
       public void run(AnActionButton button) {
         // allow to delete several certificates at once
-        for (int i : mySelfSignedList.getSelectedIndices()) {
-          X509Certificate certificate = (X509Certificate)mySelfSignedList.getModel().getElementAt(i);
-          manager.removeCertificate(certificate);
+        CollectionListModel<X509Certificate> model = getListModel();
+        for (int i : myCertificatesList.getSelectedIndices()) {
+          X509Certificate certificate = (X509Certificate)myCertificatesList.getModel().getElementAt(i);
+          model.remove(certificate);
         }
-        installModel(manager);
+        if (getListModel().getSize() > 0) {
+          myCertificatesList.setSelectedIndex(0);
+        } else {
+          myDetailsPanel.removeAll();
+          myDetailsPanel.repaint();
+        }
       }
-    }).addExtraAction(new AnActionButton("View details", AllIcons.General.Information) {
+    });
+
+    /*
+    decorator.addExtraAction(new AnActionButton("View details", AllIcons.General.Information) {
       @Override
       public boolean isEnabled() {
         return getSelectedCertificate() != null;
@@ -98,27 +117,42 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         dialog.show();
       }
     });
-    myAccptedCertificatesPanel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-    final Set<String> brokenCertificates = CertificatesManager.getInstance().getState().brokenCertificates;
-    myBrokenList = new JBList(new CollectionListModel<String>(brokenCertificates));
-    decorator = ToolbarDecorator.createDecorator(myBrokenList).disableUpDownActions().disableAddAction();
-    decorator.setRemoveAction(new AnActionButtonRunnable() {
+    */
+    myCertificatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
-      public void run(AnActionButton button) {
-        myBrokenList.remove(myBrokenList.getSelectedIndex());
+      public void valueChanged(ListSelectionEvent e) {
+        X509Certificate certificate = getSelectedCertificate();
+        if (certificate != null) {
+          String uniqueName = certificate.getSubjectX500Principal().getName();
+          ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, uniqueName);
+          //mySplitter.doLayout();
+          //mySplitter.repaint();
+        }
       }
     });
+    myCertificatesListPanel.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
-  private void installModel(MutableTrustManager manager) {
-    CollectionListModel<X509Certificate> model = new CollectionListModel<X509Certificate>(manager.getCertificates());
+  private void addCertificatePanel(X509Certificate certificate) {
+    String uniqueName = certificate.getSubjectX500Principal().getName();
+    JPanel infoPanel = new CertificateInfo(certificate).getPanel();
+    UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS);
+    JBScrollPane scrollPane = new JBScrollPane(infoPanel);
+    //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myDetailsPanel.add(scrollPane, uniqueName);
+  }
+
+  private CollectionListModel<X509Certificate> getListModel() {
     //noinspection unchecked
-    mySelfSignedList.setModel(model);
+    return (CollectionListModel<X509Certificate>)myCertificatesList.getModel();
+  }
+
+  private List<X509Certificate> getCertificates() {
+    return getListModel().getItems();
   }
 
   private X509Certificate getSelectedCertificate() {
-    return (X509Certificate)mySelfSignedList.getSelectedValue();
+    return (X509Certificate)myCertificatesList.getSelectedValue();
   }
 
   @NotNull
@@ -153,30 +187,65 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public boolean isModified() {
-    return false;
+    CertificatesManager.Config state = CertificatesManager.getInstance().getState();
+    return myCheckHostname.isSelected() != state.checkHostname ||
+           myCheckValidityPeriod.isSelected() != state.checkValidity ||
+           !getCertificates().equals(myTrustManager.getCertificates());
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    List<X509Certificate> existing = myTrustManager.getCertificates();
+
+    Set<X509Certificate> added = new HashSet<X509Certificate>(getCertificates());
+    added.removeAll(existing);
+
+    Set<X509Certificate> removed = new HashSet<X509Certificate>(existing);
+    removed.removeAll(getCertificates());
+
+    for (X509Certificate certificate : added) {
+      if (!myTrustManager.addCertificate(certificate)) {
+        throw new ConfigurationException("Cannot add certificate", "Cannot Add Certificate");
+      }
+    }
+
+    for (X509Certificate certificate : removed) {
+      if (!myTrustManager.removeCertificate(certificate)) {
+        throw new ConfigurationException("Cannot remove certificate", "Cannot Remove Certificate");
+      }
+    }
+
+    //Set<X509Certificate> old = new HashSet<X509Certificate>(existing);
+    //for (X509Certificate certificate : getListModel().getItems()) {
+    //  if (old.contains(certificate)) {
+    //    old.remove(certificate);
+    //  }
+    //  else if (!myTrustManager.addCertificate(certificate)) {
+    //    throw new ConfigurationException("Cannot add certificate", "Cannot Add Certificate");
+    //  }
+    //}
+    //// all that remains were removed
+    //for (X509Certificate certificate : old) {
+    //  if (!myTrustManager.removeCertificate(certificate)) {
+    //    throw new ConfigurationException("Cannot remove certificate", "Cannot Remove Certificate");
+    //  }
+    //}
     CertificatesManager.Config state = CertificatesManager.getInstance().getState();
     state.checkHostname = myCheckHostname.isSelected();
     state.checkValidity = myCheckValidityPeriod.isSelected();
-    //noinspection unchecked
-    CollectionListModel<String> model = (CollectionListModel<String>)(myBrokenList.getModel());
-    state.brokenCertificates = new LinkedHashSet<String>(model.getItems());
   }
 
   @Override
   public void reset() {
-
+    //noinspection unchecked
+    myCertificatesList.setModel(new CollectionListModel<X509Certificate>(myTrustManager.getCertificates()));
+    CertificatesManager.Config state = CertificatesManager.getInstance().getState();
+    myCheckHostname.setSelected(state.checkHostname);
+    myCheckValidityPeriod.setSelected(state.checkValidity);
   }
 
   @Override
   public void disposeUIResources() {
 
-  }
-
-  private void createUIComponents() {
-    // TODO: place custom component creation code here
   }
 }

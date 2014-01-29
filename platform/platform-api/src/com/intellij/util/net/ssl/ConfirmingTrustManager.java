@@ -20,12 +20,10 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -45,17 +43,6 @@ class ConfirmingTrustManager implements X509TrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
-  private static final CertificateFactory ourFactory = createFactory();
-
-  private static CertificateFactory createFactory() {
-    try {
-      return CertificateFactory.getInstance("X509");
-    }
-    catch (CertificateException e) {
-      throw new AssertionError("Can't initialize X509 certificate factory");
-    }
-  }
-
   // Errors
   @NonNls public static final String ERR_EMPTY_TRUST_ANCHORS = "It seems, that your JRE installation doesn't have system trust store.\n" +
                                                                "If you're using Mac JRE, try upgrading to the latest version.";
@@ -66,12 +53,12 @@ class ConfirmingTrustManager implements X509TrustManager {
   }
 
   private static X509TrustManager getSystemDefault() {
-    X509TrustManager systemManager = null;
+    X509TrustManager systemManager;
     try {
       TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       factory.init((KeyStore)null);
       // assume that only X509 TrustManagers exist
-      systemManager = ConfirmingTrustManager.findX509TrustManager(factory.getTrustManagers());
+      systemManager = findX509TrustManager(factory.getTrustManagers());
     }
     catch (Exception e) {
       throw new AssertionError(e);
@@ -276,19 +263,8 @@ class ConfirmingTrustManager implements X509TrustManager {
      * @return      whether the operation was successful
      */
     public boolean addCertificate(@NotNull String path) {
-      InputStream stream = null;
-      try {
-        stream = new FileInputStream(path);
-        X509Certificate certificate = (X509Certificate)ourFactory.generateCertificate(stream);
-        return addCertificate(certificate);
-      }
-      catch (Exception e) {
-        LOG.error("Can't add certificate for path: " + path, e);
-        return false;
-      }
-      finally {
-        StreamUtil.closeStream(stream);
-      }
+      X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
+      return certificate != null && addCertificate(certificate);
     }
 
     private static String createAlias(@NotNull X509Certificate certificate) {
@@ -298,8 +274,8 @@ class ConfirmingTrustManager implements X509TrustManager {
     /**
      * Remove certificate from underlying trust store.
      *
-     * @param alias certificate alias
-     * @return      whether the operation was successful
+     * @param certificate certificate alias
+     * @return            whether the operation was successful
      */
     public boolean removeCertificate(@NotNull X509Certificate certificate) {
       return removeCertificate(createAlias(certificate));

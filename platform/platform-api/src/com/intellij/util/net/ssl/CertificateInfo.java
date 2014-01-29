@@ -43,7 +43,7 @@ public class CertificateInfo {
     builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     builder = builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint())));
     builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint())));
-    myPanel.add(builder.getPanel(), BorderLayout.CENTER);
+    myPanel.add(builder.getPanel(), BorderLayout.NORTH);
   }
 
   @NotNull
