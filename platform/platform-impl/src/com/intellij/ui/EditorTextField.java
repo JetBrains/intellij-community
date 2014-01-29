@@ -62,7 +62,7 @@ import java.util.List;
  * @author max
  */
 public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
-                                                       DocumentBasedComponent {
+                                                       DocumentBasedComponent, FocusListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -73,6 +73,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
@@ -119,7 +120,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // todo[dsl,max]
     setFocusable(true);
     // dsl: this is a weird way of doing things....
-    addFocusListener(new FocusListener() {
+    super.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
         requestFocus();
@@ -321,6 +322,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     remove(editor.getComponent());
+
+    editor.getContentComponent().removeFocusListener(this);
+
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       @Override
@@ -522,6 +526,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
+    editor.getContentComponent().addFocusListener(this);
     
     editor.setPlaceholder(myHintText);
 
@@ -744,6 +749,30 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public JComponent getFocusTarget() {
     return myEditor == null ? this : myEditor.getContentComponent();
+  }
+
+  @Override
+  public synchronized void addFocusListener(FocusListener l) {
+    myFocusListeners.add(l);
+  }
+
+  @Override
+  public synchronized void removeFocusListener(FocusListener l) {
+    myFocusListeners.remove(l);
+  }
+
+  @Override
+  public void focusGained(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusGained(e);
+    }
+  }
+
+  @Override
+  public void focusLost(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusLost(e);
+    }
   }
 
   @Override
