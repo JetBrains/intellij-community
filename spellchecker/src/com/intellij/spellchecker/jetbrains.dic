@@ -43,6 +43,7 @@ breakpoints
 btree
 buffered
 buffering
+buildable
 builtin
 bzip
 calc
@@ -247,6 +248,7 @@ lucene
 lvalue
 lvalues
 macrodef
+makefile
 maxdatafiles
 maxextents
 maximizable
@@ -530,6 +532,7 @@ todo
 toggleable
 tokenize
 tokenizer
+toolchain
 tooltip
 tooltips
 toplink
