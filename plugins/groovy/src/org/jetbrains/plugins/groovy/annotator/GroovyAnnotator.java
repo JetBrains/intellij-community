@@ -301,6 +301,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
     checkFinalFieldAccess(referenceExpression);
     checkFinalParameterAccess(referenceExpression);
+
     if (ResolveUtil.isKeyOfMap(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
@@ -590,7 +591,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkOverridingMethod(myHolder, method);
   }
 
-  private void checkGetterOfImmutable(AnnotationHolder holder, GrMethod method) {
+  private static void checkGetterOfImmutable(AnnotationHolder holder, GrMethod method) {
     if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) return;
 
     PsiClass aClass = method.getContainingClass();
@@ -1801,12 +1802,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     checkModifierIsNotAllowed(modifiersList, VOLATILE, GroovyBundle.message("method.has.incorrect.modifier.volatile"), holder);
 
-    if (method.hasModifierProperty(FINAL) && method.hasModifierProperty(ABSTRACT)) {
-      final Annotation annotation =
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
-      registerFix(annotation, new GrModifierFix(method, FINAL, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
-      registerFix(annotation, new GrModifierFix(method, ABSTRACT, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
-    }
+    checkForAbstractAndFinalCombination(holder, method, modifiersList);
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(ABSTRACT);
@@ -1862,6 +1858,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
+  private static void checkForAbstractAndFinalCombination(AnnotationHolder holder, GrMember member, GrModifierList modifiersList) {
+    if (member.hasModifierProperty(FINAL) && member.hasModifierProperty(ABSTRACT)) {
+      final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
+      registerFix(annotation, new GrModifierFix(member, FINAL, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
+      registerFix(annotation, new GrModifierFix(member, ABSTRACT, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
+    }
+  }
+
   @NotNull
   private static PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
     PsiElement m = PsiUtil.findModifierInList(modifiersList, modifier);
@@ -1904,10 +1908,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    if (!typeDefinition.isEnum() && modifiersList.hasModifierProperty(ABSTRACT) && modifiersList.hasModifierProperty(FINAL)) {
-      final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
-      registerFix(annotation, new GrModifierFix(typeDefinition, FINAL, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
-      registerFix(annotation, new GrModifierFix(typeDefinition, ABSTRACT, false, false, GrModifierFix.MODIFIER_LIST), modifiersList);
+    if (!typeDefinition.isEnum()) {
+      checkForAbstractAndFinalCombination(holder, typeDefinition, modifiersList);
     }
 
     checkModifierIsNotAllowed(modifiersList, TRANSIENT, GroovyBundle.message("modifier.transient.not.allowed.here"), holder);
