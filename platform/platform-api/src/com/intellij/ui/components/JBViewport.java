@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
@@ -31,29 +32,44 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     @Override
     public void layoutContainer(Container parent) {
-      super.layoutContainer(parent);
-      JBViewport viewPort = (JBViewport)parent;
-      Component view = viewPort.getView();
-      if (view == null) return;
-
-      Dimension size = view.getSize();
-
+      JBViewport viewport = (JBViewport)parent;
+      Component view = viewport.getView();
       JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, parent);
-      if (scrollPane == null) return;
+      // do not force viewport size on editor component, e.g. EditorTextField and LanguageConsole
+      if (view == null || scrollPane == null || view instanceof TypingTarget) {
+        super.layoutContainer(parent);
+        return;
+      }
 
-      Dimension visible = viewPort.getExtentSize();
+      Dimension size = doSuperLayoutContainer(viewport);
+
+      Dimension visible = viewport.getExtentSize();
       if (scrollPane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
         size.width = visible.width;
       }
       if (scrollPane.getVerticalScrollBarPolicy() == ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER) {
         size.height = visible.height;
       }
-      view.setSize(size);
+      viewport.setViewSize(size);
+    }
+
+    private Dimension doSuperLayoutContainer(JBViewport viewport) {
+      try {
+        viewport.mySaveTempViewSize = true;
+        super.layoutContainer(viewport);
+      }
+      finally {
+        viewport.mySaveTempViewSize = false;
+      }
+      return viewport.myTempViewSize;
     }
   };
 
   private StatusText myEmptyText;
   private ZoomingDelegate myZoomer;
+
+  private Dimension myTempViewSize;
+  private boolean mySaveTempViewSize;
 
   public JBViewport() {
     addContainerListener(new ContainerListener() {
@@ -80,6 +96,18 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   protected LayoutManager createLayoutManager() {
     return ourLayoutManager;
+  }
+
+  @Override
+  public void setViewSize(Dimension newSize) {
+    // only store newSize from ViewportLayout.layoutContainer
+    // if we're going to fix it the next moment in our layoutContainer code
+    if (mySaveTempViewSize) {
+      myTempViewSize = newSize;
+    }
+    else {
+      super.setViewSize(newSize);
+    }
   }
 
   @Override
