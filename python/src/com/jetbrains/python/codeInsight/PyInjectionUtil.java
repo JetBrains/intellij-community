@@ -81,7 +81,7 @@ public class PyInjectionUtil {
    */
   @NotNull
   public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    return processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
+    return processStringLiteral(element, registrar, "", "", Formatting.NONE);
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
