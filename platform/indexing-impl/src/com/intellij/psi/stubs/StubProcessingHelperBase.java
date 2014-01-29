@@ -44,10 +44,15 @@ public abstract class StubProcessingHelperBase {
       if (_psifile instanceof PsiFileWithStubSupport) {
         psiFile = (PsiFileWithStubSupport)_psifile;
         stubTree = psiFile.getStubTree();
-        if (stubTree == null && psiFile instanceof PsiFileImpl) {
-          BinaryFileStubBuilder stubBuilder = BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType());
-          if (stubBuilder == null) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-          else customStubs = true;
+        if (stubTree == null && psiFile instanceof PsiFileImpl) {          
+          IElementType contentElementType = ((PsiFileImpl)psiFile).getContentElementType();
+          if (contentElementType instanceof IStubFileElementType) {
+            stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+          }
+          else {
+            customStubs = true;
+            assert BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null;
+          }
         }
       }
     }
