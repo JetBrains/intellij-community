@@ -429,7 +429,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         public Collection<K> call() throws Exception {
           return oldValues.keySet();
         }
-      }, null);
+      });
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -445,9 +445,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     @Override
     public void updateWithMap(final int inputId,
                               @NotNull final Map<K, StubIdList> newData,
-                              @NotNull Callable<Collection<K>> oldKeysGetter,
-                              Void input) throws StorageException {
-      super.updateWithMap(inputId, newData, oldKeysGetter, input);
+                              @NotNull Callable<Collection<K>> oldKeysGetter) throws StorageException {
+      super.updateWithMap(inputId, newData, oldKeysGetter);
     }
   }
 
