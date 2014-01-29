@@ -204,9 +204,11 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-  private static ID enableEscapeToCloseTheMessage(ID alert) {
-    return invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:",
-                         invoke(invoke(alert, "buttons"), "count").intValue() - 1), "setKeyEquivalent:",  nsString("\033"));
+  private static void enableEscapeToCloseTheMessage(ID alert) {
+    int buttonsNumber = invoke(invoke(alert, "buttons"), "count").intValue();
+    if (buttonsNumber < 2) return;
+    invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:",
+                         buttonsNumber - 1), "setKeyEquivalent:",  nsString("\033"));
   }
 
   private MacMessagesImpl() {}
