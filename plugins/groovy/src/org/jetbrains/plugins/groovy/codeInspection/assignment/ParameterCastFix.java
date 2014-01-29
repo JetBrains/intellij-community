@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,27 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
  */
 public class ParameterCastFix extends GroovyFix {
-  private final int myParam;
+  private final GrExpression myArgument;
   private final PsiType myType;
   private String myName;
 
-  public ParameterCastFix(int param, PsiType type) {
-    myParam = param;
-    myType = type;
+  public ParameterCastFix(int param, @NotNull PsiType type, @NotNull GrExpression argument) {
+    myArgument = argument;
+    myType = TypesUtil.substituteBoxAndNormalizeType(type, PsiSubstitutor.EMPTY, null, argument);
 
     StringBuilder builder = new StringBuilder();
     builder.append("Cast ");
@@ -57,7 +58,7 @@ public class ParameterCastFix extends GroovyFix {
         builder.append("th");
         break;
     }
-    builder.append(" parameter to ").append(type.getCanonicalText());
+    builder.append(" parameter to ").append(myType.getPresentableText());
 
 
     myName = builder.toString();
@@ -69,12 +70,7 @@ public class ParameterCastFix extends GroovyFix {
     final GrArgumentList list = element instanceof GrArgumentList ? (GrArgumentList)element :PsiUtil.getArgumentsList(element);
     if (list == null) return;
 
-    final GrExpression[] arguments = list.getExpressionArguments();
-
-    final int p = PsiImplUtil.hasNamedArguments(list) ? myParam - 1 : myParam;
-    if (arguments.length <= p) return;
-
-    GrCastFix.doCast(project, myType, arguments[p]);
+    GrCastFix.doCast(project, myType, myArgument);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.isSpreadAssignment;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -62,6 +64,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     return true;
   }
 
+  @NotNull
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
@@ -149,7 +152,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       PsiType rType = rValue.getType();
 
       // For assignments with spread dot
-      if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
+      if (isSpreadAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
         final PsiClassType pct = (PsiClassType)lType;
         final PsiClass clazz = pct.resolve();
         if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
@@ -178,20 +181,5 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       }
     }
 
-    private static boolean isListAssignment(GrExpression lValue) {
-      if (lValue instanceof GrReferenceExpression) {
-        GrReferenceExpression expression = (GrReferenceExpression)lValue;
-        final PsiElement dot = expression.getDotToken();
-        //noinspection ConstantConditions
-        if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
-          return true;
-        }
-        else {
-          final GrExpression qual = expression.getQualifierExpression();
-          if (qual != null) return isListAssignment(qual);
-        }
-      }
-      return false;
-    }
   }
 }

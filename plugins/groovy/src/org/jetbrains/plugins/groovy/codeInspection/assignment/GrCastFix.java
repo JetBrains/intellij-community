@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -42,8 +44,8 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GrCastFix.class);
   private PsiType myExpectedType;
 
-  public GrCastFix(PsiType expectedType) {
-    myExpectedType = expectedType;
+  public GrCastFix(PsiType expectedType, GrExpression expression) {
+    myExpectedType = TypesUtil.substituteBoxAndNormalizeType(expectedType, PsiSubstitutor.EMPTY, null, expression);
   }
 
   @Override

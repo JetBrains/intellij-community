@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -152,7 +153,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
         final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
-        fixes.add(new GrCastFix(expectedType));
+        fixes.add(new GrCastFix(expectedType, expression));
 
         String varName = getLValueVarName(toHighlight);
         if (varName != null) {
@@ -310,14 +311,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         for (GrExpression lValue : lValues) {
           PsiType lType = lValue.getNominalType();
           // For assignments with spread dot
-          if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
-            final PsiClassType pct = (PsiClassType)lType;
-            final PsiClass clazz = pct.resolve();
-            if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
-              final PsiType[] types = pct.getParameters();
-              if (types.length == 1 && types[0] != null && rType != null) {
-                checkAssignability(types[0], rType, tupleExpression, getExpressionPartToHighlight(lValue));
-              }
+          if (GroovyRefactoringUtil.isSpreadAssignment(lValue)) {
+            final PsiType argType = extractIterableArg(lType);
+            if (argType != null && rType != null) {
+              checkAssignability(argType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
             }
             return;
           }
@@ -336,15 +333,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private void checkAssignment(GrExpression lValue, GrExpression rValue) {
       PsiType lType = lValue.getNominalType();
       PsiType rType = rValue.getType();
-      // For assignments with spread dot
-      if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
-        final PsiClassType pct = (PsiClassType)lType;
-        final PsiClass clazz = pct.resolve();
-        if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
-          final PsiType[] types = pct.getParameters();
-          if (types.length == 1 && types[0] != null && rType != null) {
-            checkAssignability(types[0], rValue, getExpressionPartToHighlight(lValue));
-          }
+      if (GroovyRefactoringUtil.isSpreadAssignment(lValue)) {
+        final PsiType argType = extractIterableArg(lType);
+        if (argType != null && rValue != null) {
+          checkAssignability(argType, rValue, getExpressionPartToHighlight(lValue));
         }
         return;
       }
@@ -361,6 +353,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (lType != null && rType != null) {
         checkAssignability(lType, rValue, getExpressionPartToHighlight(lValue));
       }
+    }
+
+    @Nullable
+    private static PsiType extractIterableArg(@Nullable PsiType type) {
+      return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
     }
 
     @Override
@@ -858,9 +855,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
       }
 
+      final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
+
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       for (Pair<Integer, PsiType> error : allErrors) {
-        fixes.add(new ParameterCastFix(error.first, error.second));
+        fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));
       }
 
       return fixes.toArray(new LocalQuickFix[fixes.size()]);
@@ -1035,20 +1034,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
   }
 
-  private static boolean isListAssignment(GrExpression lValue) {
-    if (lValue instanceof GrReferenceExpression) {
-      GrReferenceExpression expression = (GrReferenceExpression)lValue;
-      final PsiElement dot = expression.getDotToken();
-      //noinspection ConstantConditions
-      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
-        return true;
-      }
-      else {
-        final GrExpression qualifier = expression.getQualifierExpression();
-        if (qualifier != null) return isListAssignment(qualifier);
-      }
+  @NotNull
+  private static List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
+    final GrExpression[] argArray = argumentList.getExpressionArguments();
+    final ArrayList<GrExpression> args = ContainerUtil.newArrayList(argArray);
+
+    final PsiElement parent = argumentList.getParent();
+    if (parent instanceof GrIndexProperty && PsiUtil.isLValue((GroovyPsiElement)parent)) {
+      args.add(TypeInferenceHelper.getInitializerFor((GrExpression)parent));
     }
-    return false;
+    return args;
   }
 
   @Nullable

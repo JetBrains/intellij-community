@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     if (element instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)element).getName();
       if ("putAt".equals(name) && args != null) {
-        args = ArrayUtil.append(args, TypeInferenceHelper.getInitializerFor(this), PsiType.class);
+        args = ArrayUtil.append(args, TypeInferenceHelper.getInitializerTypeFor(this), PsiType.class);
       }
     }
     PsiType overloadedOperatorType = ResolveUtil.extractReturnTypeFromCandidate(candidate, this, args);
@@ -192,7 +192,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GroovyResolveResult[] candidates;
     final String name = isSetter ? "putAt" : "getAt";
     if (isSetter && !incompleteCode) {
-      argTypes = ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(this), PsiType.class);
+      argTypes = ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerTypeFor(this), PsiType.class);
     }
 
     if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, this, isSetter)) {

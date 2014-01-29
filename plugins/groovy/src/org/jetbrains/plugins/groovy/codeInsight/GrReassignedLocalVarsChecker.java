@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class GrReassignedLocalVarsChecker {
         for (PsiReference reference : all) {
           final PsiElement ref = reference.getElement();
           if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
-            result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerFor(ref), manager);
+            result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
           }
         }
         return result;

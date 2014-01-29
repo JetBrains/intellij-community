@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -225,7 +226,7 @@ public class TypeInferenceHelper {
   @Nullable
   public static PsiType getInitializerType(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
-      return getInitializerFor(element);
+      return getInitializerTypeFor(element);
     }
 
     if (element instanceof GrVariable) {
@@ -236,7 +237,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  public static PsiType getInitializerFor(PsiElement element) {
+  public static PsiType getInitializerTypeFor(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof GrAssignmentExpression) {
       if (element instanceof GrIndexProperty) {
@@ -265,6 +266,25 @@ public class TypeInferenceHelper {
     if (parent instanceof GrUnaryExpression &&
         TokenSets.POSTFIX_UNARY_OP_SET.contains(((GrUnaryExpression)parent).getOperationTokenType())) {
       return ((GrUnaryExpression)parent).getType();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static GrExpression getInitializerFor(GrExpression lValue) {
+    final PsiElement parent = lValue.getParent();
+    if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
+    if (parent instanceof GrTupleExpression) {
+      final int i = ((GrTupleExpression)parent).indexOf(lValue);
+      final PsiElement pparent = parent.getParent();
+      org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG.assertTrue(pparent instanceof GrAssignmentExpression);
+
+      final GrExpression rValue = ((GrAssignmentExpression)pparent).getRValue();
+      if (rValue instanceof GrListOrMap && !((GrListOrMap)rValue).isMap()) {
+        final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
+        if (initializers.length < i) return initializers[i];
+      }
     }
 
     return null;
