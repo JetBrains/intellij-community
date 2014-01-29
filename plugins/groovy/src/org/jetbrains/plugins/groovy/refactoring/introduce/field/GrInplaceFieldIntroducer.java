@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -53,7 +54,19 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   @Nullable
   @Override
   protected PsiElement checkLocalScope() {
-    return ((PsiField)getVariable()).getContainingClass();
+    final GrVariable variable = getVariable();
+    if (variable instanceof PsiField) {
+      return ((PsiField)getVariable()).getContainingClass();
+    }
+    else {
+      final PsiFile file = variable.getContainingFile();
+      if (file instanceof GroovyFile) {
+        return ((GroovyFile)file).getScriptClass();
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
