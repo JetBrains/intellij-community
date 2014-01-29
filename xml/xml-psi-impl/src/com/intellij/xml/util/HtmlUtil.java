@@ -46,6 +46,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
@@ -221,6 +222,13 @@ public class HtmlUtil {
             if (isHtmlBlockTag(elementsDescriptor.getName())) {
               variants.add(elementsDescriptor);
             }
+          }
+        }
+      } else if (parent instanceof HtmlDocumentImpl) {
+        final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+        for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
+          if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+            variants.add(elementDescriptor);
           }
         }
       }
