@@ -27,7 +27,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class NonResizeSelectionDecorator extends ComponentDecorator {
-  private final Color myColor;
+  protected final Color myColor;
   private final int myLineWidth;
   private final BasicStroke myStroke;
 
