@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -411,7 +411,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
-    JavaCompletionUtil.setShowFQN(item);
+    if (item.getObject() instanceof PsiClass) {
+      JavaCompletionUtil.setShowFQN(item);
+    }
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, true));
     return item;
   }
