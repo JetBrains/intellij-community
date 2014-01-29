@@ -23,16 +23,16 @@ import java.util.List;
 /**
  * @author traff
  */
-public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel {
+public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel<T> {
   private List<T> myItems;
 
-  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable Object selection) {
+  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
     super(selection);
 
     myItems = items;
   }
 
-  public MutableCollectionComboBoxModel(List<T> items) {
+  public MutableCollectionComboBoxModel(@NotNull List<T> items) {
     super(items.isEmpty() ? null : items.get(0));
     myItems = items;
   }
@@ -43,7 +43,7 @@ public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBo
     return myItems;
   }
 
-  public void update(List<T> items) {
+  public void update(@NotNull List<T> items) {
     myItems = items;
     super.update();
   }
