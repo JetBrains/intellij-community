@@ -57,7 +57,7 @@ public class VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInContentRoots() {
-    Set<VcsRoot> gitRoots = new HashSet<VcsRoot>();
+    Set<VcsRoot> vcsRoots = new HashSet<VcsRoot>();
     VirtualFile[] roots = myProjectManager.getContentRoots();
     for (VirtualFile contentRoot : roots) {
 
@@ -72,9 +72,9 @@ public class VcsRootDetector {
         List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(contentRoot);
         rootsInsideRoot.addAll(rootsAbove);
       }
-      gitRoots.addAll(rootsInsideRoot);
+      vcsRoots.addAll(rootsInsideRoot);
     }
-    return gitRoots;
+    return vcsRoots;
   }
 
   @NotNull
