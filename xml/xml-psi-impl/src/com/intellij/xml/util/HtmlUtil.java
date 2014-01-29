@@ -104,9 +104,6 @@ public class HtmlUtil {
   private HtmlUtil() {
   }
 
-  @NonNls private static final String[] EMPTY_TAGS = {
-    "base", "hr", "meta", "link", "frame", "br", "basefont", "param", "img", "area", "input", "isindex", "col", /*html 5*/ "source", "wbr"
-  };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
@@ -150,7 +147,10 @@ public class HtmlUtil {
   private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
 
   static {
-    ContainerUtil.addAll(EMPTY_TAGS_MAP, EMPTY_TAGS);
+    for (HTMLControls.Control control : HTMLControls.getControls()) {
+      final String tagName = control.name.toLowerCase();
+      if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+    }
     ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
