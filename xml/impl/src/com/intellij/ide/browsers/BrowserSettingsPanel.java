@@ -257,6 +257,11 @@ public class BrowserSettingsPanel {
       }
 
       @Override
+      public boolean isEditable(@NotNull ConfigurableWebBrowser browser) {
+        return browser.getSpecificSettings() != null;
+      }
+
+      @Override
       public boolean isRemovable(@NotNull ConfigurableWebBrowser item) {
         return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
