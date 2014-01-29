@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -55,10 +54,7 @@ import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.extract.GroovyExtractChooser;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 import org.jetbrains.plugins.groovy.refactoring.ui.MethodOrClosureScopeChooser;
@@ -85,14 +81,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
       final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, offset, false);
       if (expressions.isEmpty()) {
-        final GrVariable variable = GrIntroduceHandlerBase.findVariableAtCaret(file, editor, offset);
-        if (variable == null || variable instanceof GrField || variable instanceof GrParameter) {
-          selectionModel.selectLineAtCaret();
-        }
-        else {
-          final TextRange textRange = variable.getTextRange();
-          selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-        }
+        GrIntroduceHandlerBase.updateSelectionForVariable(editor, file, selectionModel, offset);
       }
       else if (expressions.size() == 1) {
         final TextRange textRange = expressions.get(0).getTextRange();
@@ -180,20 +169,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (isInplace(info, editor)) {
       final GrIntroduceContext context = createContext(info, editor);
       Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = GrIntroduceHandlerBase.fillChoice(context);
-      new OccurrencesChooser<Object>(editor) {
-        @Override
-        protected TextRange getOccurrenceRange(Object occurrence) {
-          if (occurrence instanceof PsiElement) {
-            return ((PsiElement)occurrence).getTextRange();
-          }
-          else if (occurrence instanceof StringPartInfo) {
-            return ((StringPartInfo)occurrence).getRange();
-          }
-          else {
-            return null;
-          }
-        }
-      }.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
         @Override
         public void pass(OccurrencesChooser.ReplaceChoice choice) {
           startInplace(info, context, choice == OccurrencesChooser.ReplaceChoice.ALL);
