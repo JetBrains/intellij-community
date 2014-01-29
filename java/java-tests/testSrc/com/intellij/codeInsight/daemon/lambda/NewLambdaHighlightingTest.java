@@ -107,6 +107,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAdditionalConstraintSubstitution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

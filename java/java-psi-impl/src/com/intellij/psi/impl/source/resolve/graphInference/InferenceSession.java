@@ -696,7 +696,13 @@ public class InferenceSession {
 
       additionalConstraints.removeAll(subset);
 
-      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, false);
+      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, true);
+
+      if (myContext instanceof PsiCallExpression) {
+        PsiExpressionList argumentList = ((PsiCallExpression)myContext).getArgumentList();
+        LOG.assertTrue(argumentList != null);
+        MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
+      }
 
       for (ConstraintFormula additionalConstraint : subset) {
         additionalConstraint.apply(substitutor);

@@ -83,7 +83,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityReturnValueResolution3() { doTest(); }
   public void testLambdaOnVarargsPlace1() { doTest(); }
   public void testInferenceFromSecondLambda() { doTest(); }
-  public void _testAcceptRawSubstForLambda() { doTest(); }
+  public void testAcceptRawSubstForLambda() { doTest(); }
   public void testCheckFunctionalInterfaceAccess() { doTest(); }
   public void testVoidCompatibility() { doTest(); }
   public void testConditionalInferenceFromOppositePart() { doTest(); }

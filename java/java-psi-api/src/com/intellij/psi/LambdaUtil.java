@@ -468,12 +468,12 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                if (cachedType != null && paramIdx > -1) {
+                if (cachedType != null) {
                   final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
                   if (interfaceMethod != null) {
                     final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
-                    final PsiType interfaceMethodParameterType = interfaceMethod.getParameterList().getParameters()[paramIdx].getType();
-                    if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethodParameterType), cachedType, expression)){
+                    if (!dependsOnTypeParams(paramIdx == -1 ? cachedType :
+                                             cachedResult.getSubstitutor().substitute(interfaceMethod.getParameterList().getParameters()[paramIdx].getType()), cachedType, expression)){
                       return cachedType;
                     }
                   }
