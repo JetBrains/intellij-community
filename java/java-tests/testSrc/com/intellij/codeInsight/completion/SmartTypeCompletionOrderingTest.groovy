@@ -325,6 +325,14 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'toString'
   }
 
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
