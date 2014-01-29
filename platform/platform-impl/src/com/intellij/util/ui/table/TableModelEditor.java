@@ -121,7 +121,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   public static abstract class ItemEditor<T> {
     /**
-     * Used for "add" and "in place edit" actions.
+     * Used for "copy" and "in place edit" actions.
      *
      * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
      */
