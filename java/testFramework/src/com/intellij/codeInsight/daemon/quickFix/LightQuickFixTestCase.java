@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return findActionWithText(getAvailableActions(), text);
   }
 
-  public static IntentionAction findActionWithText(final List<IntentionAction> actions, final String text) {
+  public static IntentionAction findActionWithText(@NotNull List<IntentionAction> actions, final String text) {
     for (IntentionAction action : actions) {
       if (text.equals(action.getText())) {
         return action;

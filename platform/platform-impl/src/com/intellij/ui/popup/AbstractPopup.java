@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,6 @@ public class AbstractPopup implements JBPopup {
   private boolean myCancelOnWindowDeactivation = true;
   private   Dimension         myForcedSize;
   private   Point             myForcedLocation;
-  private   ChildFocusWatcher myFocusWatcher;
   private   boolean           myCancelKeyEnabled;
   private   boolean           myLocateByContent;
   protected FocusTrackback    myFocusTrackback;
@@ -1037,7 +1036,7 @@ public class AbstractPopup implements JBPopup {
     }
 
 
-    myFocusWatcher = new ChildFocusWatcher(myContent) {
+    ChildFocusWatcher focusWatcher = new ChildFocusWatcher(myContent) {
       @Override
       protected void onFocusGained(final FocusEvent event) {
         setWindowActive(true);
@@ -1047,8 +1046,8 @@ public class AbstractPopup implements JBPopup {
       protected void onFocusLost(final FocusEvent event) {
         setWindowActive(false);
       }
-
     };
+    Disposer.register(this, focusWatcher);
 
     mySpeedSearchPatternField = new JTextField();
     if (SystemInfo.isMac) {
@@ -1058,7 +1057,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private Window updateMaskAndAlpha(Window window) {
-    if (window == null) return window;
+    if (window == null) return null;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;
@@ -1248,11 +1247,6 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
-
-    if (myFocusWatcher != null) {
-      myFocusWatcher.dispose();
-      myFocusWatcher = null;
-    }
 
     resetWindow();
 

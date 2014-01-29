@@ -357,7 +357,7 @@ public class Alarm implements Disposable {
     @Override
     public String toString() {
       Runnable task = getTask();
-      return super.toString() + (task != null ? " "+task:null);
+      return super.toString() + (task != null ? ": "+task : "");
     }
   }
 
