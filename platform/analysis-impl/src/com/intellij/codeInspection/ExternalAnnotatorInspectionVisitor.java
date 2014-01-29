@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
@@ -19,7 +34,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
 
   private final ProblemsHolder myHolder;
   private final ExternalAnnotator myAnnotator;
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
 
   public ExternalAnnotatorInspectionVisitor(ProblemsHolder holder, ExternalAnnotator annotator, boolean onTheFly) {
     myHolder = holder;
@@ -27,17 +42,19 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     myOnTheFly = onTheFly;
   }
 
-  public static ProblemDescriptor[] checkFileWithExternalAnnotator(PsiFile file,
-                                                                   InspectionManager manager,
-                                                                   boolean isOnTheFly, ExternalAnnotator annotator) {
+  @NotNull
+  public static <Init,Result> ProblemDescriptor[] checkFileWithExternalAnnotator(@NotNull PsiFile file,
+                                                                                 @NotNull InspectionManager manager,
+                                                                                 boolean isOnTheFly,
+                                                                                 @NotNull ExternalAnnotator<Init,Result> annotator) {
     if (isOnTheFly) {
       // concrete JSLinterExternalAnnotator implementation does this work
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
-    Object info = annotator.collectInformation(file);
+    Init info = annotator.collectInformation(file);
     if (info != null) {
-      Object annotationResult = annotator.doAnnotate(info);
+      Result annotationResult = annotator.doAnnotate(info);
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
@@ -48,10 +65,11 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     return ProblemDescriptor.EMPTY_ARRAY;
   }
 
+  @NotNull
   private static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations,
                                                                  @NotNull final InspectionManager manager,
                                                                  @NotNull final PsiFile file) {
-    if (annotations.size() == 0) {
+    if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
