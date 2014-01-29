@@ -52,7 +52,7 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testInterfaceWithGroovyDoc() throws Throwable { doTest(); }
 
   public void testIncorrectParam1() { doTest() }
-  public void testIncorrectParam2() { doTest() }
+  public void testIncorrectParameter2() { doTest() }
   public void testIncorrectParam3() { doTest() }
 
   public void testEmptyTypeArgs() {doTest()}
