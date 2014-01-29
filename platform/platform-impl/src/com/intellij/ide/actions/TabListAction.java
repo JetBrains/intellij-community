@@ -36,7 +36,6 @@ public class TabListAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isTabListAvailable(e));
-    e.getPresentation().setDescription("Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen");
   }
 
   private static boolean isTabListAvailable(AnActionEvent e) {
