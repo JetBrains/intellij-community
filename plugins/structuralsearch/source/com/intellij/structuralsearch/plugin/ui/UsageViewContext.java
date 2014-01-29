@@ -83,30 +83,28 @@ public class UsageViewContext {
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
   }
 
-  private class MyUsageTarget implements ConfigurableUsageTarget {
+  private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
     private final String myPresentableText;
 
     MyUsageTarget(String str) {
       myPresentableText = str;
     }
 
-    final ItemPresentation presentation = new ItemPresentation() {
-      @Override
-      public String getPresentableText() {
-        return myPresentableText;
-      }
+    @Override
+    public String getPresentableText() {
+      return myPresentableText;
+    }
 
-      @Override
-      public String getLocationString() {
-        //noinspection HardCodedStringLiteral
-        return "Do Not Know Where";
-      }
+    @Override
+    public String getLocationString() {
+      //noinspection HardCodedStringLiteral
+      return "Do Not Know Where";
+    }
 
-      @Override
-      public Icon getIcon(boolean open) {
-        return null;
-      }
-    };
+    @Override
+    public Icon getIcon(boolean open) {
+      return null;
+    }
 
     @Override
     public void findUsages() {
@@ -150,7 +148,7 @@ public class UsageViewContext {
 
     @Override
     public ItemPresentation getPresentation() {
-      return presentation;
+      return this;
     }
 
     @Override
