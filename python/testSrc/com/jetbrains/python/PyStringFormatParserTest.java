@@ -146,4 +146,17 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals(1, chunks.size());
     assertConstant(chunks.get(0), 0, 1);
   }
+
+  public void testNewStyleUnbalanced() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{{{foo}}");
+    assertEquals(2, chunks.size());
+  }
+
+  public void testNewStyleEscapingAndValue() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{{{foo}}}");
+    assertEquals(3, chunks.size());
+    assertEquals(TextRange.create(0, 2), chunks.get(0).getTextRange());
+    assertEquals(TextRange.create(2, 7), chunks.get(1).getTextRange());
+    assertEquals(TextRange.create(7, 9), chunks.get(2).getTextRange());
+  }
 }

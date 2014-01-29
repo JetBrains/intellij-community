@@ -29,11 +29,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyStringFormatParser {
+  private static final Pattern NEW_STYLE_FORMAT_TOKENS = Pattern.compile("(\\{\\{)|(\\}\\})|(\\{[^\\{\\}]*\\})|([^\\{\\}]+)");
+
   public static abstract class FormatStringChunk {
     private final int myStartIndex;
     protected int myEndIndex;
@@ -173,30 +176,22 @@ public class PyStringFormatParser {
   @NotNull
   public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
     final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
-    int pos = 0;
-    final int n = s.length();
-    while (pos < n) {
-      int next = s.indexOf('{', pos);
-      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '{') {
-        next = s.indexOf('{', next + 2);
+    final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(s);
+    while (matcher.find()) {
+      final String group = matcher.group();
+      final int start = matcher.start();
+      final int end = matcher.end();
+      if ("{{".equals(group)) {
+        results.add(new ConstantChunk(start, end));
       }
-      if (next < 0) {
-        break;
+      else if ("}}".equals(group)) {
+        results.add(new ConstantChunk(start, end));
       }
-      if (next > pos) {
-        results.add(new ConstantChunk(pos, next));
-      }
-      pos = next;
-      next = s.indexOf('}', pos);
-      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '}') {
-        next = s.indexOf('}', next + 2);
-      }
-      if (next > pos) {
-        final SubstitutionChunk chunk = new SubstitutionChunk(pos);
-        final int nameStart = pos + 1;
-        final int chunkEnd = next + 1;
-        chunk.setEndIndex(chunkEnd);
-        final int nameEnd = StringUtil.indexOfAny(s, "!:.[}", nameStart, chunkEnd);
+      else if (group.startsWith("{") && group.endsWith("}")) {
+        final SubstitutionChunk chunk = new SubstitutionChunk(start);
+        chunk.setEndIndex(end);
+        final int nameStart = start + 1;
+        final int nameEnd = StringUtil.indexOfAny(s, "!:.[}", nameStart, end);
         if (nameEnd > 0 && nameStart < nameEnd) {
           final String name = s.substring(nameStart, nameEnd);
           try {
@@ -209,10 +204,9 @@ public class PyStringFormatParser {
         // TODO: Parse substitution details
         results.add(chunk);
       }
-      pos = next + 1;
-    }
-    if (pos < n) {
-      results.add(new ConstantChunk(pos, n));
+      else {
+        results.add(new ConstantChunk(start, end));
+      }
     }
     return results;
   }
