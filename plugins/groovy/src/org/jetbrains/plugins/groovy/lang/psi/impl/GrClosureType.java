@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
-  private PsiType[] myTypeArgs = null;
+  private volatile PsiType[] myTypeArgs = null;
 
   private GrClosureType(@NotNull LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
@@ -78,6 +78,7 @@ public class GrClosureType extends GrLiteralClassType {
     return myTypeArgs;
   }
 
+  @NotNull
   private PsiType[] inferParameters() {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
