@@ -151,9 +151,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
-
-        if (PsiPolyExpressionUtil.mentionsTypeParameters(interfaceMethodReturnType,
-                                                         ContainerUtil.newHashSet(interfaceClass.getTypeParameters()))) {
+        if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
+                                                         ContainerUtil.newHashSet(method.getTypeParameters()))) {
           LOG.assertTrue(interfaceMethodReturnType != null);
           constraints.add(new TypeCompatibilityConstraint(referencedMethodReturnType, interfaceMethodReturnType));
           return true;
