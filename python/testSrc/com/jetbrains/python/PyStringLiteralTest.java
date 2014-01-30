@@ -115,6 +115,15 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(-1, escaper.getOffsetInHost(9, range));
   }
 
+  public void testStringValue() {
+    assertEquals("foo", createLiteralFromText("\"\"\"foo\"\"\"").getStringValue());
+    assertEquals("foo", createLiteralFromText("u\"foo\"").getStringValue());
+    assertEquals("foo", createLiteralFromText("b\"foo\"").getStringValue());
+    assertEquals("\\b", createLiteralFromText("r'\\b'").getStringValue());
+    assertEquals("b\\n", createLiteralFromText("ur'\\u0062\\n'").getStringValue());
+    assertEquals("\\8", createLiteralFromText("'\\8'").getStringValue());
+  }
+
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
@@ -126,15 +135,6 @@ public class PyStringLiteralTest extends PyTestCase {
     final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(5), PyStringLiteralExpression.class);
     assert expr != null;
     return expr;
-  }
-
-  public void testStringValue() {
-    assertEquals("foo", createLiteralFromText("\"\"\"foo\"\"\"").getStringValue());
-    assertEquals("foo", createLiteralFromText("u\"foo\"").getStringValue());
-    assertEquals("foo", createLiteralFromText("b\"foo\"").getStringValue());
-    assertEquals("\\b", createLiteralFromText("r'\\b'").getStringValue());
-    assertEquals("b\\n", createLiteralFromText("ur'\\u0062\\n'").getStringValue());
-    assertEquals("\\8", createLiteralFromText("'\\8'").getStringValue());
   }
 
   private List<String> getCharacterRanges(String text) {
