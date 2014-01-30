@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -30,7 +31,7 @@ public class VcsRootErrorsFinder {
   @NotNull
   public Collection<VcsRootError> find() {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    Collection<VcsRoot> vcsRoots = new VcsRootDetector(myProject).detect().getRoots();
+    Collection<VcsRoot> vcsRoots = ServiceManager.getService(myProject, VcsRootDetectorI.class).detect();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     errors.addAll(findExtraMappings(mappings));
