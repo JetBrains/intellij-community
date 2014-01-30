@@ -28,6 +28,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.proximity.KnownElementWeigher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -113,6 +114,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     qualifiedWithGetter,
     superMethodParameters,
     expectedTypeConstant,
+    field,
+    getter,
     normal,
     collectionFactory,
     expectedTypeMethod,
@@ -134,6 +137,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       }
       if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
+      }
+      if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
+        boolean inReturn = PsiTreeUtil.getParentOfType(myPosition, PsiReturnStatement.class, false, PsiMember.class) != null;
+        return inReturn ? MyResult.probableKeyword : MyResult.normal;
       }
     }
 
@@ -168,10 +175,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         if (qualifier instanceof PsiField) {
           return MyResult.qualifiedWithField;
         }
-        if (qualifier instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)qualifier)) {
+        if (isGetter(qualifier)) {
           return MyResult.qualifiedWithGetter;
         }
       }
+
+      if (object instanceof PsiField) return MyResult.field;
+      if (isGetter(object)) return MyResult.getter;
 
       return MyResult.normal;
     }
@@ -203,6 +213,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
 
     return MyResult.normal;
+  }
+
+  private static boolean isGetter(Object object) {
+    if (!(object instanceof PsiMethod)) return false;
+    
+    PsiMethod method = (PsiMethod)object;
+    if (!PropertyUtil.hasGetterName(method)) return false;
+    
+    return !KnownElementWeigher.isGetClass(method);
   }
 
   private static boolean isLastStatement(PsiStatement statement) {
