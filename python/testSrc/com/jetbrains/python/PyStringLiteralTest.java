@@ -124,6 +124,12 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\\8", createLiteralFromText("'\\8'").getStringValue());
   }
 
+  public void testEscapedUnicodeInLiterals() {
+    assertEquals("\\u0041", createLiteralFromText("'\\u0041'").getStringValue());
+    assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
+    assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+  }
+
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
