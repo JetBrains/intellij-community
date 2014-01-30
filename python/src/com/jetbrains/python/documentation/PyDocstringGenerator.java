@@ -222,8 +222,9 @@ public class PyDocstringGenerator {
       }
       replacementText.append(line);
     }
-    if (replacementText.length() > 0)
-      replacementText.deleteCharAt(replacementText.length()-1);
+    if (replacementText.length() > 0) {
+      replacementText.deleteCharAt(replacementText.length() - 1);
+    }
     addParams(replacementText, false, paramsToAdd);
     for (int i = ind; i != lines.length; ++i) {
       String line = lines[i];
@@ -250,7 +251,7 @@ public class PyDocstringGenerator {
     final Module module = ModuleUtilCore.findModuleForPsiElement(myDocStringOwner);
     if (module != null) {
       PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-      if (documentationSettings.isPlain(getFile())) return replacementText.length()-1;
+      if (documentationSettings.isPlain(getFile())) return replacementText.length() - 1;
     }
 
     int i = 0;
@@ -418,7 +419,8 @@ public class PyDocstringGenerator {
                                                             "def " + myFunction.getName() + myFunction.getParameterList().getText()
                                                             + ":\n" + StringUtil.repeat(" ", getIndentSize(myFunction))
                                                             + replacement + "\n" +
-                                                            StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText());
+                                                            StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText()
+          );
 
           myFunction = (PyFunction)myFunction.replace(func);
         }
@@ -429,7 +431,9 @@ public class PyDocstringGenerator {
       }
 
       myFunction = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
-      myDocStringExpression = myFunction.getDocStringExpression();
+      if (myFunction != null) {
+        myDocStringExpression = myFunction.getDocStringExpression();
+      }
     }
   }
 
