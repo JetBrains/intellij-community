@@ -188,6 +188,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     else if (context.getStringPart() != null) {
       map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
     }
+    else if (context.getVar() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getVar()));
+    }
 
     PsiElement[] occurrences = context.getOccurrences();
     if (occurrences.length > 1) {
@@ -445,7 +448,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         }
       });
       final PsiElement[] occurrences = list.toArray(new PsiElement[list.size()]);
-      return new GrIntroduceContextImpl(project, editor, variable.getInitializerGroovy(), variable, stringPart, occurrences, scope);
+      return new GrIntroduceContextImpl(project, editor, null, variable, stringPart, occurrences, scope);
     }
     else if (expression != null ) {
       final PsiElement[] occurrences = findOccurrences(expression, scope);

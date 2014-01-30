@@ -24,6 +24,8 @@ import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -39,6 +41,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 /**
@@ -74,7 +77,20 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
     finalListener = new GrFinalListener(myEditor);
 
-    mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    GrVariable var = context.getVar();
+    if (var != null) {
+
+      ArrayList<String> result = ContainerUtil.newArrayList(var.getName());
+
+      GrExpression initializer = var.getInitializerGroovy();
+      if (initializer != null) {
+        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
+      }
+      mySuggestedNames = ArrayUtil.toStringArray(result);
+    }
+    else {
+      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    }
     myApplicablePlaces = getApplicableInitPlaces();
   }
 
@@ -183,7 +199,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       @Override
       public boolean removeLocalVar() {
-        return false;
+        return getContext().getVar() != null;
       }
 
       @Nullable
