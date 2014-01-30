@@ -39,7 +39,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.roots.VcsRootDetectorI;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
@@ -632,7 +632,7 @@ public class VcsUtil {
         + rootDir.getParent()
       );
     }
-    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetectorI.class).detect(rootDir);
+    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetector.class).detect(rootDir);
     Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
     for (VcsRoot vcsRoot : roots) {
       VirtualFile vFile = vcsRoot.getPath();

@@ -12,7 +12,7 @@ import java.util.Collection;
  *
  * @author Nadya Zabrodina
  */
-public interface VcsRootDetectorI {
+public interface VcsRootDetector {
 
   /**
    * Detect vcs roots for whole project

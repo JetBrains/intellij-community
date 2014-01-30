@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootDetectorImpl implements VcsRootDetectorI {
+public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;

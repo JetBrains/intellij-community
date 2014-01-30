@@ -46,7 +46,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.roots.VcsRootDetectorI;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -586,7 +586,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetectorI.class).detect();
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(roots);
       }
     });
