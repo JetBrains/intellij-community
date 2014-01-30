@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="123649d3-c8ed-496e-b9a9-b357697e25e3" name="Default" comment="Multiline tasks are now available.&#10;">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java" afterPath="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java" />
+    <list default="true" id="123649d3-c8ed-496e-b9a9-b357697e25e3" name="Default" comment="user is now allowed to restart IDE&#10;">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="EDIDE.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -91,10 +90,76 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name=".gitignore" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/.gitignore">
+      <file leaf-file-name="StudyEditorFactoryListener.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyEditorFactoryListener.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="22" selection-start="37" selection-end="37" vertical-scroll-proportion="0.19909503" vertical-offset="0" max-vertical-offset="442">
+            <state line="64" column="74" selection-start="3507" selection-end="3556" vertical-scroll-proportion="0.0" vertical-offset="616" max-vertical-offset="1408">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="StudyDirectoryProjectGenerator.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="121" column="12" selection-start="5536" selection-end="5536" vertical-scroll-proportion="0.0" vertical-offset="1914" max-vertical-offset="2662">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="StudyPlugin.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPlugin.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="4" column="0" selection-start="196" selection-end="196" vertical-scroll-proportion="0.0" vertical-offset="22" max-vertical-offset="814">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="EditorFactory.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../intellij-community/platform/editor-ui-api/src/com/intellij/openapi/editor/EditorFactory.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="178" column="23" selection-start="6648" selection-end="6648" vertical-scroll-proportion="0.0" vertical-offset="3204" max-vertical-offset="4048">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="EditorFactoryImpl.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorFactoryImpl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="241" column="26" selection-start="8661" selection-end="8661" vertical-scroll-proportion="0.0" vertical-offset="4004" max-vertical-offset="4598">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="plugin.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/EDIDE/META-INF/plugin.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="34" column="55" selection-start="1186" selection-end="1186" vertical-scroll-proportion="0.0" vertical-offset="308" max-vertical-offset="1188">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="StudyPythonUnitTestCommandLineState.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPythonUnitTestCommandLineState.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="29" column="13" selection-start="1295" selection-end="1295" vertical-scroll-proportion="1.6296296" vertical-offset="0" max-vertical-offset="748">
+              <folding>
+                <element signature="e#764#765#0" expanded="true" />
+                <element signature="e#798#799#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PathManager.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../intellij-community/platform/util/src/com/intellij/openapi/application/PathManager.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="39" column="13" selection-start="1385" selection-end="1385" vertical-scroll-proportion="0.0" vertical-offset="858" max-vertical-offset="10120">
               <folding />
             </state>
           </provider>
@@ -130,9 +195,12 @@
         <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyTestClass.java" />
         <option value="$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld2.meta" />
         <option value="$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld.meta" />
-        <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java" />
         <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyEditorFactoryListener.java" />
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/EDIDE/META-INF/plugin.xml" />
+        <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java" />
+        <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPlugin.java" />
+        <option value="$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPythonUnitTestCommandLineState.java" />
       </list>
     </option>
   </component>
@@ -168,6 +236,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -186,9 +255,40 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="EDIDE" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="EDIDE" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="edide" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="EDIDE" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="EDIDE" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="META-INF" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -200,7 +300,7 @@
     <property name="options.lastSelected" value="reference.settingsdialog.IDE.editor.colors.Font" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="recentsLimit" value="5" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../ideavim/ideavim" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
@@ -407,12 +507,16 @@
       <created>1390373715140</created>
       <updated>1390373715140</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="user is now allowed to restart IDE">
+      <created>1391101815621</created>
+      <updated>1391101815621</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="64" y="-4" width="1303" height="773" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32850242" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -423,16 +527,16 @@
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.41867954" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.27729085" sideWeight="0.46398306" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32850242" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.27729085" sideWeight="0.46376812" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32850242" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3268921" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.17131475" sideWeight="0.6" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32749003" sideWeight="0.59903383" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27729085" sideWeight="0.53601694" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23993559" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27729085" sideWeight="0.5346216" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.23993559" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="JetGradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -467,7 +571,7 @@
     </layout-to-restore>
   </component>
   <component name="Vcs.Log.UiProperties">
-    <option name="RECENTLY_FILTERED_USERS">
+    <option name="RECENTLY_FILTERED_USER_GROUPS">
       <collection />
     </option>
   </component>
@@ -481,7 +585,8 @@
     <MESSAGE value="Tool window now works normally without any tasks in task manager." />
     <MESSAGE value="Tasks with many red frames are now available." />
     <MESSAGE value="Multiline tasks are now available.&#10;" />
-    <option name="LAST_COMMIT_MESSAGE" value="Multiline tasks are now available.&#10;" />
+    <MESSAGE value="user is now allowed to restart IDE" />
+    <option name="LAST_COMMIT_MESSAGE" value="user is now allowed to restart IDE" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -491,53 +596,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="11" selection-start="11" selection-end="11" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="114" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="18" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="114" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/core-api/src/com/intellij/openapi/editor/RangeMarker.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="17" selection-start="1478" selection-end="1478" vertical-scroll-proportion="0.0" vertical-offset="646" max-vertical-offset="1976" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="42" column="15" selection-start="1457" selection-end="1457" vertical-scroll-proportion="0.0" vertical-offset="798" max-vertical-offset="1919">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/Task.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="1" selection-start="325" selection-end="325" vertical-scroll-proportion="0.0" vertical-offset="323" max-vertical-offset="437" />
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/../pycharm-community-3.0.1/lib/src/pycharm-openapi-src.zip!/com/jetbrains/python/psi/PyElementGenerator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="0" selection-start="564" selection-end="564" vertical-scroll-proportion="0.0" vertical-offset="285" max-vertical-offset="1957" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-impl/src/com/intellij/platform/NewDirectoryProjectAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="52" column="21" selection-start="2129" selection-end="2129" vertical-scroll-proportion="0.33147633" vertical-offset="0" max-vertical-offset="0" />
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/../pycharm-community-3.0.1/lib/src/pycharm-openapi-src.zip!/com/jetbrains/python/psi/PyElementGenerator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="0" selection-start="564" selection-end="564" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/template/impl/TemplateImpl.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="99" column="14" selection-start="3939" selection-end="3939" vertical-scroll-proportion="0.33274338" vertical-offset="0" max-vertical-offset="0" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/template/Template.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="69" column="23" selection-start="2770" selection-end="2770" vertical-scroll-proportion="0.33274338" vertical-offset="0" max-vertical-offset="0" />
@@ -566,11 +624,6 @@
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-api/src/com/intellij/execution/configurations/ConfigurationType.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="37" column="9" selection-start="1364" selection-end="1364" vertical-scroll-proportion="0.0" vertical-offset="185" max-vertical-offset="1102" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPythonUnitTestCommandLineState.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="28" column="34" selection-start="1269" selection-end="1269" vertical-scroll-proportion="0.0" vertical-offset="532" max-vertical-offset="722" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyUnitTestRunConfiguration.java">
@@ -633,16 +686,6 @@
         <state line="119" column="45" selection-start="5053" selection-end="5053" vertical-scroll-proportion="0.0" vertical-offset="1590" max-vertical-offset="2706" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-api/src/com/intellij/codeInsight/template/TemplateBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="31" column="17" selection-start="1106" selection-end="1106" vertical-scroll-proportion="0.0" vertical-offset="833" max-vertical-offset="1518" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/template/TemplateManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="32" column="23" selection-start="1097" selection-end="1097" vertical-scroll-proportion="0.0" vertical-offset="58" max-vertical-offset="946" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/template/impl/TemplateState.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="264" column="14" selection-start="9445" selection-end="9445" vertical-scroll-proportion="-0.025316456" vertical-offset="4282" max-vertical-offset="24310" />
@@ -660,18 +703,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/META-INF/plugin.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1144">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="33" selection-start="33" selection-end="33" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="132">
-          <folding />
-        </state>
+        <state line="0" column="33" selection-start="33" selection-end="33" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="132" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/TaskTextToolWindowFactory.java">
@@ -685,112 +719,182 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="62" selection-start="125" selection-end="125" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="154">
-          <folding />
-        </state>
+        <state line="1" column="62" selection-start="125" selection-end="125" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="154" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/core-impl/src/com/intellij/openapi/editor/impl/LineSet.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="33" column="13" selection-start="1428" selection-end="1428" vertical-scroll-proportion="0.0" vertical-offset="1098" max-vertical-offset="8140">
-          <folding />
-        </state>
+        <state line="33" column="13" selection-start="1428" selection-end="1428" vertical-scroll-proportion="0.0" vertical-offset="1098" max-vertical-offset="8140" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-impl/src/com/intellij/ui/EditorTextFieldCellRenderer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="195" column="30" selection-start="8224" selection-end="8224" vertical-scroll-proportion="0.0" vertical-offset="3562" max-vertical-offset="4466">
-          <folding />
-        </state>
+        <state line="195" column="30" selection-start="8224" selection-end="8224" vertical-scroll-proportion="0.0" vertical-offset="3562" max-vertical-offset="4466" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/daemon/impl/EditorTracker.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="296" column="22" selection-start="10064" selection-end="10064" vertical-scroll-proportion="0.883905" vertical-offset="4879" max-vertical-offset="5346">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/projectModel-api/src/com/intellij/openapi/project/ProjectManagerListener.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="52" column="21" selection-start="1377" selection-end="1377" vertical-scroll-proportion="0.0" vertical-offset="488" max-vertical-offset="968">
-          <folding />
-        </state>
+        <state line="296" column="22" selection-start="10064" selection-end="10064" vertical-scroll-proportion="0.883905" vertical-offset="4879" max-vertical-offset="5346" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld.meta">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="1" selection-start="27" selection-end="27" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="308">
-          <folding />
-        </state>
+        <state line="5" column="1" selection-start="27" selection-end="27" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="308" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/resources/ru/compscicenter/edide/helloworld2.meta">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="1" selection-start="3" selection-end="3" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="220">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyEditorFactoryListener.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="48" column="91" selection-start="2356" selection-end="2356" vertical-scroll-proportion="0.0" vertical-offset="990" max-vertical-offset="1848">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-api/src/com/intellij/openapi/fileEditor/FileEditorManagerListener.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="60" selection-start="642" selection-end="642" vertical-scroll-proportion="0.10891089" vertical-offset="0" max-vertical-offset="1012">
-          <folding />
-        </state>
+        <state line="1" column="1" selection-start="3" selection-end="3" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="220" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/editor-ui-api/src/com/intellij/openapi/editor/event/EditorFactoryListener.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="17" selection-start="886" selection-end="886" vertical-scroll-proportion="0.4009901" vertical-offset="14" max-vertical-offset="418">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="122" column="14" selection-start="5647" selection-end="5647" vertical-scroll-proportion="0.5314685" vertical-offset="2016" max-vertical-offset="2706">
-          <folding />
-        </state>
+        <state line="24" column="17" selection-start="886" selection-end="886" vertical-scroll-proportion="0.4009901" vertical-offset="14" max-vertical-offset="418" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyTestClass.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="41" column="95" selection-start="1613" selection-end="1667" vertical-scroll-proportion="0.5641026" vertical-offset="660" max-vertical-offset="1562">
           <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#1202#2671#0" expanded="true" />
-            <element signature="e#2660#2661#0" expanded="true" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#1202#2671#0" expanded="false" />
+            <element signature="e#2660#2661#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/core-api/src/com/intellij/openapi/editor/Document.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="101" column="6" selection-start="3502" selection-end="3502" vertical-scroll-proportion="0.27972028" vertical-offset="1618" max-vertical-offset="6358">
-          <folding />
-        </state>
+        <state line="101" column="6" selection-start="3502" selection-end="3502" vertical-scroll-proportion="0.27972028" vertical-offset="1618" max-vertical-offset="6358" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/application/options/colors/FontEditorPreview.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="83" column="13" selection-start="3426" selection-end="3426" vertical-scroll-proportion="0.12587413" vertical-offset="1178" max-vertical-offset="2618">
+        <state line="83" column="13" selection-start="3426" selection-end="3426" vertical-scroll-proportion="0.12587413" vertical-offset="1178" max-vertical-offset="2618" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/core-impl/src/com/intellij/psi/impl/file/impl/FileManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="29" column="17" selection-start="1012" selection-end="1012" vertical-scroll-proportion="0.30769232" vertical-offset="0" max-vertical-offset="814" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-api/src/com/intellij/openapi/fileEditor/FileDocumentManagerListener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="52" column="40" selection-start="2180" selection-end="2180" vertical-scroll-proportion="0.6188119" vertical-offset="476" max-vertical-offset="1056" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/projectModel-api/src/com/intellij/openapi/project/ProjectManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="109" column="40" selection-start="3992" selection-end="3992" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2552">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/projectModel-api/src/com/intellij/openapi/project/ProjectManagerListener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="22" column="17" selection-start="723" selection-end="723" vertical-scroll-proportion="0.0" vertical-offset="37" max-vertical-offset="968">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/util/src/com/intellij/openapi/application/PathManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="39" column="13" selection-start="1385" selection-end="1385" vertical-scroll-proportion="0.0" vertical-offset="858" max-vertical-offset="10120">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="22" selection-start="37" selection-end="37" vertical-scroll-proportion="0.19909503" vertical-offset="0" max-vertical-offset="442">
+        <state line="3" column="0" selection-start="15" selection-end="36" vertical-scroll-proportion="0.12790698" vertical-offset="0" max-vertical-offset="516">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-api/src/com/intellij/openapi/fileEditor/FileEditorManagerListener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="29" column="0" selection-start="1064" selection-end="1064" vertical-scroll-proportion="-0.5308151" vertical-offset="509" max-vertical-offset="1012">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-impl/src/com/intellij/codeInsight/template/TemplateManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="32" column="27" selection-start="1101" selection-end="1101" vertical-scroll-proportion="0.31628788" vertical-offset="75" max-vertical-offset="946">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/python/src/com/jetbrains/python/inspections/quickfix/UnresolvedReferenceAddParameterQuickFix.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="66" column="22" selection-start="2778" selection-end="2778" vertical-scroll-proportion="1.5833334" vertical-offset="0" max-vertical-offset="1034">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/python/src/com/jetbrains/python/documentation/PyDocstringGenerator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="144" column="45" selection-start="5308" selection-end="5308" vertical-scroll-proportion="-0.34592447" vertical-offset="2176" max-vertical-offset="9108">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/lang-api/src/com/intellij/codeInsight/template/TemplateBuilder.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="57" column="12" selection-start="2157" selection-end="2157" vertical-scroll-proportion="0.08901515" vertical-offset="833" max-vertical-offset="1518">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyEditorFactoryListener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="64" column="74" selection-start="3507" selection-end="3556" vertical-scroll-proportion="0.0" vertical-offset="616" max-vertical-offset="1408">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/editor-ui-api/src/com/intellij/openapi/editor/EditorFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="178" column="23" selection-start="6648" selection-end="6648" vertical-scroll-proportion="0.0" vertical-offset="3204" max-vertical-offset="4048">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../intellij-community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorFactoryImpl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="241" column="26" selection-start="8661" selection-end="8661" vertical-scroll-proportion="0.0" vertical-offset="4004" max-vertical-offset="4598">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EDIDE/META-INF/plugin.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="34" column="55" selection-start="1186" selection-end="1186" vertical-scroll-proportion="0.0" vertical-offset="308" max-vertical-offset="1188">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyDirectoryProjectGenerator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="121" column="12" selection-start="5536" selection-end="5536" vertical-scroll-proportion="0.0" vertical-offset="1914" max-vertical-offset="2662">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPlugin.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="4" column="0" selection-start="196" selection-end="196" vertical-scroll-proportion="0.0" vertical-offset="22" max-vertical-offset="814">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EDIDE/src/ru/compscicenter/edide/StudyPythonUnitTestCommandLineState.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="29" column="13" selection-start="1295" selection-end="1295" vertical-scroll-proportion="1.6296296" vertical-offset="0" max-vertical-offset="748">
+          <folding>
+            <element signature="e#764#765#0" expanded="true" />
+            <element signature="e#798#799#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
