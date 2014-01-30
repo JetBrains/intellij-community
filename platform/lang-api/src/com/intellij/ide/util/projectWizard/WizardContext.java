@@ -172,6 +172,7 @@ public class WizardContext extends UserDataHolderBase {
 
   public void setProjectTemplate(ProjectTemplate projectTemplate) {
     myProjectTemplate = projectTemplate;
+    setProjectBuilder(projectTemplate.createModuleBuilder());
   }
 
   public String getPresentationName() {

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -169,8 +170,8 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
   }
 
   @NotNull
-  private VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
-    return new VcsRootDetector(myProject).detect(startDir);
+  private Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+    return ServiceManager.getService(myProject, VcsRootDetector.class).detect(startDir);
   }
 
   public void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration,
@@ -178,9 +179,9 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
                      @NotNull Collection<String> expectedPaths)
     throws IOException {
     initProject(vcsRootConfiguration);
-    VcsRootDetectInfo info = detect(startDir);
+    Collection<VcsRoot> vcsRoots = detect(startDir);
     assertRoots(expectedPaths, getPaths(
-      ContainerUtil.filter(info.getRoots(), new Condition<VcsRoot>() {
+      ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {
         @Override
         public boolean value(VcsRoot root) {
           assert root.getVcs() != null;

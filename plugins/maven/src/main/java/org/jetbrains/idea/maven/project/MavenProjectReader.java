@@ -356,7 +356,7 @@ public class MavenProjectReader {
     for (Element each : xmlProperties.getChildren()) {
       String name = each.getName();
       String value = each.getTextTrim();
-      if (!props.containsKey(name) && !isEmptyOrSpaces(value)) {
+      if (!props.containsKey(name) && !isEmptyOrSpaces(name)) {
         props.setProperty(name, value);
       }
     }
