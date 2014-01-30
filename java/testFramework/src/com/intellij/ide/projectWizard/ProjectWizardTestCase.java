@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
@@ -91,8 +90,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     if (!condition) {
       throw new IllegalArgumentException(group + "/" + name + " template not found");
     }
-    ProjectTemplate template = step.getSelectedTemplate();
-    assertNotNull(template);
 
     if (adjuster != null) {
       adjuster.consume(step);

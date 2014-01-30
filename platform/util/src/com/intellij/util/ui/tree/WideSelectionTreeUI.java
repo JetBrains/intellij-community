@@ -51,6 +51,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private boolean myOldRepaintAllRowValue;
   private boolean invertLineColor;
   private boolean myForceDontPaintLines = false;
+  private boolean mySkinny = false;
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
@@ -74,8 +75,16 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     return isSkinny() ? 8 : super.getRightChildIndent();
   }
 
-  private static boolean isSkinny() {
-    return UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderAquaLookAndFeel();
+  public boolean isSkinny() {
+    return mySkinny;
+  }
+
+  /**
+   * Setting to <code>true</code> make tree to reduce row offset
+   * @param skinny <code>true</code> to reduce row offset
+   */
+  public void setSkinny(boolean skinny) {
+    mySkinny = skinny;
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {

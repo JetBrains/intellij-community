@@ -13,6 +13,8 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 

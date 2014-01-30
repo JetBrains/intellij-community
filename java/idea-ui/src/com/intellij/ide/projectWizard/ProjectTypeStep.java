@@ -180,8 +180,14 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       }
     });
 
-    for (ProjectTemplate category : myTemplatesMap.values()) {
-      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
+    for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+      ModuleBuilder builder = templatesGroup.getModuleBuilder();
+      if (builder != null) {
+        myWizard.getSequence().addStepsForBuilder(builder, context, modulesProvider);
+      }
+      for (ProjectTemplate template : myTemplatesMap.get(templatesGroup)) {
+        myWizard.getSequence().addStepsForBuilder(myBuilders.get(template), context, modulesProvider);
+      }
     }
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
@@ -218,7 +224,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       else {
         TemplatesGroup group = new TemplatesGroup(builder);
         groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>(Arrays.asList(template)));
+        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
       }
     }
 
@@ -226,7 +232,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myTemplatesMap.putAllValues(map);
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
-      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>(Arrays.asList(new ProjectCategoryTemplate(category))));
+      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
     }
 
     if (context.isCreatingNewProject()) {
@@ -291,14 +297,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return groups;
   }
 
-  private ModuleType getModuleType(TemplatesGroup group) {
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    if (templates.isEmpty()) {
-      return null;
-    }
-    ProjectTemplate template = templates.iterator().next();
-    ModuleBuilder builder = myBuilders.get(template);
-    return builder.getModuleType();
+  private static ModuleType getModuleType(TemplatesGroup group) {
+    ModuleBuilder moduleBuilder = group.getModuleBuilder();
+    return moduleBuilder == null ? null : moduleBuilder.getModuleType();
   }
 
   // new TemplatesGroup selected
@@ -391,28 +392,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return (TemplatesGroup)myProjectTypeList.getSelectedValue();
   }
 
+  @Nullable
   public ProjectTemplate getSelectedTemplate() {
-    TemplatesGroup group = getSelectedGroup();
-    if (group == null) return null;
-    if (myCurrentCard == Cards.TEMPLATES) {
-      return myTemplatesList.getSelectedTemplate();
-    }
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    if (!templates.isEmpty()) return templates.iterator().next();
-    final ModuleBuilder builder = group.getModuleBuilder();
-    Map.Entry<ProjectTemplate, ModuleBuilder> entry =
-      ContainerUtil.find(myBuilders.entrySet(), new Condition<Map.Entry<ProjectTemplate, ModuleBuilder>>() {
-        @Override
-        public boolean value(Map.Entry<ProjectTemplate, ModuleBuilder> entry) {
-          return entry.getValue() == builder;
-        }
-      });
-    return entry == null ? null : entry.getKey();
+    return myCurrentCard == Cards.TEMPLATES ? myTemplatesList.getSelectedTemplate() : null;
   }
 
   private ModuleBuilder getSelectedBuilder() {
     ProjectTemplate template = getSelectedTemplate();
-    return myBuilders.get(template);
+    if (template != null) {
+      return myBuilders.get(template);
+    }
+    return getSelectedGroup().getModuleBuilder();
+  }
+
+  public Collection<ProjectTemplate> getAvailableTemplates() {
+    return myCurrentCard != Cards.FRAMEWORKS ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
   }
 
   public void onWizardFinished() throws CommitStepException {
@@ -462,7 +456,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     for (int i = 0; i < model.getSize(); i++) {
       if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
         myProjectTypeList.setSelectedIndex(i);
-        if (name == null) return getSelectedTemplate().getName().equals(group);
+        if (name == null) return getSelectedGroup().getName().equals(group);
         return myTemplatesList.setSelectedTemplate(name);
       }
     }
@@ -532,8 +526,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     ProjectTemplate template = getSelectedTemplate();
     if (template != null) {
       myContext.setProjectTemplate(template);
-      ModuleBuilder builder = myBuilders.get(template);
-      myContext.setProjectBuilder(builder);
+    }
+
+    ModuleBuilder builder = getSelectedBuilder();
+    myContext.setProjectBuilder(builder);
+    if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());
     }
   }

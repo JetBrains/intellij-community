@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
  */
 public class NewProjectWizard extends AbstractProjectWizard {
 
@@ -36,7 +35,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
     super(project == null ? IdeBundle.message("title.new.project") : IdeBundle.message("title.add.module"), project, defaultPath);
     myWizardContext.setNewWizard(true);
     mySequence = new StepSequence();
-    mySequence.addCommonStep(new ProjectTypeStep(myWizardContext, this, modulesProvider));
+    ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
+    mySequence.addCommonStep(projectTypeStep);
+    mySequence.addCommonStep(new ChooseTemplateStep(myWizardContext, projectTypeStep));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);

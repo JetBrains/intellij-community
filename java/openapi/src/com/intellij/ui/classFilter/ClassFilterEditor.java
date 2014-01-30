@@ -53,6 +53,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   private final ClassFilter myChooserFilter;
   @Nullable
   private final String myPatternsHelpId;
+  private String classDelimiter = "$";
 
   public ClassFilterEditor(Project project) {
     this(project, null);
@@ -328,16 +329,20 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   @Nullable
-  private static String getJvmClassName(PsiClass aClass) {
+  private String getJvmClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if (parentClass != null) {
       final String parentName = getJvmClassName(parentClass);
       if (parentName == null) {
         return null;
       }
-      return parentName + "$" + aClass.getName();
+      return parentName + classDelimiter + aClass.getName();
     }
     return aClass.getQualifiedName();
+  }
+
+  public void setClassDelimiter(String classDelimiter) {
+    this.classDelimiter = classDelimiter;
   }
 
   public void addPattern(String pattern) {
