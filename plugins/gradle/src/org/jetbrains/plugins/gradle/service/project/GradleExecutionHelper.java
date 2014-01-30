@@ -408,17 +408,19 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static String getBuildSrcDefaultInitScript() {
+    InputStream stream =
+      GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/buildSrcInit.gradle");
     try {
-      InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/buildSrcInit.gradle");
       if (stream == null) return null;
-
       return FileUtil.loadTextAndClose(stream);
     }
     catch (Exception e) {
       LOG.warn("Can't use IJ gradle init script", e);
       return null;
+    }
+    finally {
+      StreamUtil.closeStream(stream);
     }
   }
 

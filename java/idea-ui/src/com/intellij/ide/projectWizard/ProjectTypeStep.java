@@ -180,8 +180,14 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       }
     });
 
-    for (ProjectTemplate category : myTemplatesMap.values()) {
-      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
+    for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+      ModuleBuilder builder = templatesGroup.getModuleBuilder();
+      if (builder != null) {
+        myWizard.getSequence().addStepsForBuilder(builder, context, modulesProvider);
+      }
+      for (ProjectTemplate template : myTemplatesMap.get(templatesGroup)) {
+        myWizard.getSequence().addStepsForBuilder(myBuilders.get(template), context, modulesProvider);
+      }
     }
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
@@ -291,14 +297,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return groups;
   }
 
-  private ModuleType getModuleType(TemplatesGroup group) {
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    if (templates.isEmpty()) {
-      return null;
-    }
-    ProjectTemplate template = templates.iterator().next();
-    ModuleBuilder builder = myBuilders.get(template);
-    return builder.getModuleType();
+  private static ModuleType getModuleType(TemplatesGroup group) {
+    ModuleBuilder moduleBuilder = group.getModuleBuilder();
+    return moduleBuilder == null ? null : moduleBuilder.getModuleType();
   }
 
   // new TemplatesGroup selected
