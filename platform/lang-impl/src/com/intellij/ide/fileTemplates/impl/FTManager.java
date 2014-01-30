@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -43,6 +44,7 @@ class FTManager {
   public static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   public static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
   public static final String CONTENT_ENCODING = CharsetToolkit.UTF8;
+  private static final String ENCODED_NAME_EXT_DELIMITER = "\u0F0Fext\u0F0F.";
 
   private final String myName;
   private final boolean myInternal;
@@ -119,8 +121,11 @@ class FTManager {
     // templateName must be non-qualified name, since previous lookup found nothing
     for (FileTemplateBase t : getAllTemplates(false)) {
       final String qName = t.getQualifiedName();
-      if (qName.startsWith(templateName) && qName.charAt(templateName.length()) == '.') {
-        return t;
+      if (qName.startsWith(templateName) && qName.length() > templateName.length()) {
+        String remainder = qName.substring(templateName.length());
+        if (remainder.startsWith(ENCODED_NAME_EXT_DELIMITER) || remainder.charAt(0) == '.') {
+          return t;
+        }
       }
     }
     return null;
@@ -193,7 +198,7 @@ class FTManager {
     return bundled;
   }
 
-  void saveTemplates() {
+  public void saveTemplates() {
     final File configRoot = getConfigRoot(true);
 
     final File[] files = configRoot.listFiles();
@@ -262,7 +267,7 @@ class FTManager {
    *  todo: review saving algorithm
    */
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
-    final File templateFile = new File(parentDir, template.getName() + "." + template.getExtension());
+    final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
 
     FileOutputStream fileOutputStream;
     try {
@@ -308,6 +313,23 @@ class FTManager {
   @Override
   public String toString() {
     return myName + " file template manager";
+  }
+
+  public static String encodeFileName(String templateName, String extension) {
+    String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
+    return templateName + nameExtDelimiter + extension;
+  }
+
+  public static Pair<String,String> decodeFileName(String fileName) {
+    String name = fileName;
+    String ext = "";
+    String nameExtDelimiter = fileName.contains(ENCODED_NAME_EXT_DELIMITER) ? ENCODED_NAME_EXT_DELIMITER : ".";
+    int extIndex = fileName.lastIndexOf(nameExtDelimiter);
+    if (extIndex >= 0) {
+      name = fileName.substring(0, extIndex);
+      ext = fileName.substring(extIndex + nameExtDelimiter.length());
+    }
+    return new Pair<String,String>(name, ext);
   }
 
 }
