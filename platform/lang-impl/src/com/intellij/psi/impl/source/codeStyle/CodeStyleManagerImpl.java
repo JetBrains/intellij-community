@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -191,9 +192,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       caretKeeper = new CaretPositionKeeper(editor);
     }
 
+    Collection<TextRange> correctedRanges = FormatterUtil.isFormatterCalledExplicitly()
+                                            ? removeEndingWhiteSpaceFromEachRange(file, ranges)
+                                            : ranges;
+
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
-    for (TextRange range : ranges) {
+    for (TextRange range : correctedRanges) {
       final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
       final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
       if (start != null && !start.isValid()) {
@@ -213,7 +218,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     FormatTextRanges formatRanges = new FormatTextRanges();
-    for (TextRange range : ranges) {
+    for (TextRange range : correctedRanges) {
       formatRanges.add(range, true);
     }
     codeFormatter.processText(file, formatRanges, true);
@@ -231,6 +236,30 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
     }
+  }
+
+  @NotNull
+  private Collection<TextRange> removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+    Collection<TextRange> result = new ArrayList<TextRange>();
+
+    for (TextRange range : ranges) {
+      int rangeStart = range.getStartOffset();
+      int rangeEnd = range.getEndOffset();
+
+      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
+      if (lastElementInRange instanceof PsiWhiteSpace
+          && rangeStart < lastElementInRange.getTextRange().getStartOffset())
+      {
+        PsiElement prev = lastElementInRange.getPrevSibling();
+        if (prev != null) {
+          rangeEnd = prev.getTextRange().getEndOffset();
+        }
+      }
+
+      result.add(new TextRange(rangeStart, rangeEnd));
+    }
+
+    return result;
   }
 
   private PsiElement reformatRangeImpl(final PsiElement element,
