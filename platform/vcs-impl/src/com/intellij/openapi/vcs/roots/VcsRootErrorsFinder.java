@@ -31,7 +31,7 @@ public class VcsRootErrorsFinder {
   @NotNull
   public Collection<VcsRootError> find() {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    Collection<VcsRoot> vcsRoots = ServiceManager.getService(myProject, VcsRootDetectorI.class).detect();
+    Collection<VcsRoot> vcsRoots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     errors.addAll(findExtraMappings(mappings));

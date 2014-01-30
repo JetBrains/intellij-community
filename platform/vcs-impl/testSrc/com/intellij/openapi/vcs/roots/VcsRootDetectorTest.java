@@ -171,7 +171,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
 
   @NotNull
   private Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
-    return ServiceManager.getService(myProject, VcsRootDetectorI.class).detect(startDir);
+    return ServiceManager.getService(myProject, VcsRootDetector.class).detect(startDir);
   }
 
   public void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration,
