@@ -17,16 +17,18 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,14 +56,48 @@ public class ProjectTemplateList extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    ColoredListCellRenderer<ProjectTemplate> renderer = new ColoredListCellRenderer<ProjectTemplate>() {
+    GroupedItemsListRenderer renderer = new GroupedItemsListRenderer(new ListItemDescriptor<ProjectTemplate>() {
+      @Nullable
       @Override
-      protected void customizeCellRenderer(JList list, ProjectTemplate template, int index, boolean selected, boolean hasFocus) {
-        append(template.getName());
-        setIcon(template.getIcon());
+      public String getTextFor(ProjectTemplate value) {
+        return value.getName();
+      }
+
+      @Nullable
+      @Override
+      public String getTooltipFor(ProjectTemplate value) {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIconFor(ProjectTemplate value) {
+        return value.getIcon();
+      }
+
+      @Override
+      public boolean hasSeparatorAboveOf(ProjectTemplate value) {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getCaptionAboveOf(ProjectTemplate value) {
+        return null;
+      }
+    }) {
+
+      @Override
+      protected void customizeComponent(JList list, Object value, boolean isSelected) {
+        super.customizeComponent(list, value, isSelected);
+        Icon icon = myTextLabel.getIcon();
+        if (icon != null && myTextLabel.getDisabledIcon() == icon) {
+          myTextLabel.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        }
+        myTextLabel.setEnabled(myList.isEnabled());
+        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3, 3, 3, 3));
       }
     };
-    renderer.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     myList.setCellRenderer(renderer);
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -101,6 +137,13 @@ public class ProjectTemplateList extends JPanel {
   @Nullable
   public ProjectTemplate getSelectedTemplate() {
     return (ProjectTemplate)myList.getSelectedValue();
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    myList.setEnabled(enabled);
+    myDescriptionPane.setEnabled(enabled);
   }
 
   void restoreSelection() {
