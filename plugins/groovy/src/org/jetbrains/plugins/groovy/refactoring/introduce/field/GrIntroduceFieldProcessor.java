@@ -87,6 +87,7 @@ public class GrIntroduceFieldProcessor {
 
     if (mySettings.removeLocalVar()) {
       myLocalVariable = GrIntroduceHandlerBase.resolveLocalVar(myContext);
+      assert myLocalVariable != null : myContext.getExpression() + ", " + myContext.getVar() + ", " + myContext.getStringPart();
     }
     myInitializer = (GrExpression)getInitializer().copy();
 

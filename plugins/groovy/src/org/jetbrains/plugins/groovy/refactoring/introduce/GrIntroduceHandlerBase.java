@@ -741,19 +741,29 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @NotNull
+  @Nullable
   public static GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
     final GrVariable var = context.getVar();
     if (var != null) {
       return var;
     }
 
-    final GrReferenceExpression expression = (GrReferenceExpression)context.getExpression();
-    assert expression != null;
+    return resolveLocalVar(context.getExpression());
+  }
 
-    final PsiElement resolved = expression.resolve();
-    assert resolved instanceof GrVariable : resolved;
-    return (GrVariable)resolved;
+  @Nullable
+  private static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
+    if (expression instanceof GrReferenceExpression) {
+      final GrReferenceExpression ref = (GrReferenceExpression)expression;
+
+      final PsiElement resolved = ref.resolve();
+      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        return (GrVariable)resolved;
+      }
+      return null;
+    }
+
+    return null;
   }
 
   public static boolean hasLhs(@NotNull final PsiElement[] occurrences) {

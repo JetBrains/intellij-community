@@ -53,6 +53,29 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final GrFinalListener finalListener;
   private String[] mySuggestedNames;
   private boolean myIsStatic;
+  private final GrVariable myLocalVar;
+
+  public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+    super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
+
+    finalListener = new GrFinalListener(myEditor);
+
+    myLocalVar = GrIntroduceHandlerBase.resolveLocalVar(context);
+    if (myLocalVar != null) {
+      //myLocalVariable = myLocalVar;
+      ArrayList<String> result = ContainerUtil.newArrayList(myLocalVar.getName());
+
+      GrExpression initializer = myLocalVar.getInitializerGroovy();
+      if (initializer != null) {
+        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
+      }
+      mySuggestedNames = ArrayUtil.toStringArray(result);
+    }
+    else {
+      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    }
+    myApplicablePlaces = getApplicableInitPlaces();
+  }
 
   @Nullable
   @Override
@@ -70,28 +93,6 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return null;
       }
     }
-  }
-
-  public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
-
-    finalListener = new GrFinalListener(myEditor);
-
-    GrVariable var = context.getVar();
-    if (var != null) {
-
-      ArrayList<String> result = ContainerUtil.newArrayList(var.getName());
-
-      GrExpression initializer = var.getInitializerGroovy();
-      if (initializer != null) {
-        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
-      }
-      mySuggestedNames = ArrayUtil.toStringArray(result);
-    }
-    else {
-      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
-    }
-    myApplicablePlaces = getApplicableInitPlaces();
   }
 
   @Override
@@ -146,7 +147,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       @Override
       public boolean removeLocalVar() {
-        return context.getVar() != null;
+        return myLocalVar != null;
       }
 
       @Nullable
@@ -199,7 +200,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       @Override
       public boolean removeLocalVar() {
-        return getContext().getVar() != null;
+        return myLocalVar != null;
       }
 
       @Nullable
