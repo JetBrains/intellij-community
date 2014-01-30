@@ -51,8 +51,11 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myCertificatesList.getEmptyText().setText("No certificates");
     myCertificatesList.setCellRenderer(new ListCellRendererWrapper<X509Certificate>() {
       @Override
-      public void customize(JList list, X509Certificate value, int index, boolean selected, boolean hasFocus) {
-        setText(new CertificateWrapper(value).getSubjectField(COMMON_NAME));
+      public void customize(JList list, X509Certificate certificate, int index, boolean selected, boolean hasFocus) {
+        if (!new CertificateWrapper(certificate).isValid()) {
+          setForeground(UIUtil.getLabelDisabledForeground());
+        }
+        setText(new CertificateWrapper(certificate).getSubjectField(COMMON_NAME));
       }
     });
     // fill lower panel with cards

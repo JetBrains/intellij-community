@@ -80,7 +80,10 @@ public class CertificateWrapper {
 
   /**
    * Check whether certificate is valid. It's considered invalid it it either expired or
-   * not yet legal.
+   * not yet valid.
+   *
+   * @see #isExpired()
+   * @see #isNotYetValid()
    */
   public boolean isValid() {
     try {
@@ -90,6 +93,14 @@ public class CertificateWrapper {
     catch (Exception e) {
       return false;
     }
+  }
+
+  public boolean isExpired() {
+    return new Date().getTime() > myCertificate.getNotAfter().getTime();
+  }
+
+  public boolean isNotYetValid() {
+    return new Date().getTime() < myCertificate.getNotBefore().getTime();
   }
 
   /**

@@ -1,7 +1,6 @@
 package com.intellij.util.net.ssl;
 
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -35,16 +34,20 @@ public class CertificateInfoPanel extends JPanel {
     builder = updateBuilderWithTitle(builder, "Issued By");
     builder = updateBuilderWithPrincipalData(builder, myCertificateWrapper.getIssuerFields());
     builder = updateBuilderWithTitle(builder, "Validity Period");
+    String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
+    String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
     builder = builder
       .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
-      .addLabeledComponent("Valid from:", new JBLabel(DATE_FORMAT.format(myCertificateWrapper.getNotBefore())))
-      .addLabeledComponent("Valid until:", new JBLabel(DATE_FORMAT.format(myCertificateWrapper.getNotAfter())));
+      .addLabeledComponent("Valid from:", createColoredComponent(notBefore, "not yet valid", myCertificateWrapper.isNotYetValid()))
+      .addLabeledComponent("Valid until:", createColoredComponent(notAfter, "expired", myCertificateWrapper.isExpired()));
     builder = builder.setIndent(0);
     builder = updateBuilderWithTitle(builder, "Fingerprints");
     builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     builder = builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint())));
     builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint())));
     add(builder.getPanel(), BorderLayout.NORTH);
+
+    SimpleColoredComponent component = new SimpleColoredComponent();
   }
 
   @NotNull
@@ -93,5 +96,15 @@ public class CertificateInfoPanel extends JPanel {
     pane.setText(text);
     //Messages.installHyperlinkSupport(pane);
     return pane;
+  }
+
+  private static JComponent createColoredComponent(String mainText, String errorText, boolean hasError) {
+    SimpleColoredComponent component = new SimpleColoredComponent();
+    if (hasError) {
+      component.append(mainText + " (" + errorText + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED));
+    } else {
+      component.append(mainText);
+    }
+    return component;
   }
 }
