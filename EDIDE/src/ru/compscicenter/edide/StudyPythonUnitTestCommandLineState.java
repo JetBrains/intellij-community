@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.plugins.PluginManager;
 import com.jetbrains.python.testing.unittest.PythonUnitTestCommandLineState;
 
 public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLineState {

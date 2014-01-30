@@ -26,8 +26,10 @@
   <depends>com.intellij.modules.lang</depends>
 
   <application-components>
-    <!-- Add your application components here -->
-  </application-components>
+          <component>
+              <implementation-class>ru.compscicenter.edide.StudyPlugin</implementation-class>
+          </component>
+   </application-components>
 
   <project-components>
     <!-- Add your project components here -->

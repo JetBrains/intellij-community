@@ -119,7 +119,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
                 }
             });
-            EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
             makeRunConfiguration(project, baseDir);
         } catch (IOException e) {
             Log.print("Problems with metadata file");
