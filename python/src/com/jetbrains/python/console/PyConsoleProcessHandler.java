@@ -24,7 +24,7 @@ import com.jetbrains.python.run.PythonProcessHandler;
 import java.nio.charset.Charset;
 
 /**
- * @author oleg
+ * @author traff
  */
 public class PyConsoleProcessHandler extends PythonProcessHandler {
   private final PythonConsoleView myConsoleView;
@@ -55,6 +55,11 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   @Override
   public boolean isSilentlyDestroyOnClose() {
     return !myPydevConsoleCommunication.isExecuting();
+  }
+
+  @Override
+  protected boolean shouldKillProcessSoftly() {
+    return false;
   }
 
   private void doCloseCommunication() {
