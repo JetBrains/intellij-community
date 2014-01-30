@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class TestLogProvider extends Extensions.SimpleLogProvider {
-  public final List<String> errors = ContainerUtil.newSmartList();
+  private final List<String> errors = ContainerUtil.newSmartList();
 
   @Override
   public void error(String message) {
@@ -38,5 +38,12 @@ public class TestLogProvider extends Extensions.SimpleLogProvider {
   @Override
   public void error(@NotNull Throwable t) {
     errors.add(ExceptionUtil.getThrowableText(t));
+  }
+
+  @NotNull
+  public List<String> errors() {
+    List<String> copy = ContainerUtil.newArrayList(errors);
+    errors.clear();
+    return copy;
   }
 }

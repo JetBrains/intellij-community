@@ -154,17 +154,21 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myLoadedAdapters.add(index, adapter);
 
     if (runNotifications) {
-      if (extension instanceof Extension) {
-        try {
-          ((Extension)extension).extensionAdded(this);
-        }
-        catch (Throwable e) {
-          myLogger.error(e);
-        }
-      }
-
       clearCache();
-      notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
+
+      if (!adapter.isNotificationSent()) {
+        if (extension instanceof Extension) {
+          try {
+            ((Extension)extension).extensionAdded(this);
+          }
+          catch (Throwable e) {
+            myLogger.error(e);
+          }
+        }
+
+        notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
+        adapter.setNotificationSent(true);
+      }
     }
   }
 
@@ -229,15 +233,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       adapters.addAll(myExtensionAdapters);
       adapters.addAll(myLoadedAdapters);
       LoadingOrder.sort(adapters);
+      myExtensionAdapters.clear();
+      myExtensionAdapters.addAll(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
       myExtensions.clear();
-      myExtensionAdapters.clear();
       myLoadedAdapters.clear();
 
       for (ExtensionComponentAdapter adapter : adapters) {
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         registerExtension(extension, adapter, myExtensions.size(), !loaded.contains(adapter));
+        myExtensionAdapters.remove(adapter);
       }
     }
   }
