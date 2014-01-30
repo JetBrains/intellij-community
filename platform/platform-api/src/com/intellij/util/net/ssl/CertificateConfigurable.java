@@ -33,7 +33,7 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  * @author Mikhail Golubev
  */
 public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR = new FileTypeDescriptor("Choose Certificate", ".crt", ".cer");
+  private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR = new FileTypeDescriptor("Choose Certificate", ".crt", ".cer", ".pem");
 
   private JPanel myRootPanel;
   private JBCheckBox myCheckHostname;

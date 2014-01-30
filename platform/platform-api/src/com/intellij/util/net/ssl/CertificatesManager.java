@@ -24,6 +24,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
+
 /**
  * {@code CertificatesManager} is responsible for negotiation SSL connection with server
  * and deals with untrusted/self-singed/expired and other kinds of digital certificates.
@@ -66,7 +68,7 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
    * Special version of hostname verifier, that asks user whether he accepts certificate, which subject's common name
    * doesn't match requested hostname.
    */
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier();
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
 
   public static CertificatesManager getInstance() {
     return (CertificatesManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
@@ -232,12 +234,12 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
 
   public static class Config {
     // ensure that request's hostname matches certificate's common name (CN)
-    public boolean checkHostname;
+    public volatile boolean checkHostname;
     // ensure that certificate is neither expired nor not yet eligible
-    public boolean checkValidity;
+    public volatile boolean checkValidity;
     @Tag("expired")
     @Property(surroundWithTag = false)
     @AbstractCollection(elementTag = "commonName")
-    public LinkedHashSet<String> brokenCertificates = new LinkedHashSet<String>();
+    public volatile LinkedHashSet<String> brokenCertificates = new LinkedHashSet<String>();
   }
 }

@@ -1,8 +1,8 @@
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.ui.DialogWrapper;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
+import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
@@ -26,8 +26,11 @@ import java.util.concurrent.Callable;
  * resolved in httpclient4.4.
  */
 class ConfirmingHostnameVerifier implements X509HostnameVerifier {
-  private static final X509HostnameVerifier DELEGATE = SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
-  private static final boolean CHECK_HOSTNAME = false;
+  private final X509HostnameVerifier myVerifier;
+
+  public ConfirmingHostnameVerifier(@NotNull X509HostnameVerifier verifier) {
+    myVerifier = verifier;
+  }
 
   // Copied from httpclient 4.2 sources, read class level commentary for explanation.
   @Override
@@ -64,22 +67,29 @@ class ConfirmingHostnameVerifier implements X509HostnameVerifier {
 
   @Override
   public void verify(final String host, final X509Certificate cert) throws SSLException {
-      try {
-        DELEGATE.verify(host, cert);
+    if (!CertificatesManager.getInstance().getState().checkHostname) {
+      return;
+    }
+    try {
+      myVerifier.verify(host, cert);
+    }
+    catch (SSLException e) {
+      //noinspection ConstantConditions
+      if (!accepted(host, cert)) {
+        throw e;
       }
-      catch (SSLException e) {
-        //noinspection ConstantConditions
-        if (!(CHECK_HOSTNAME && CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
-          @Override
-          public DialogWrapper call() throws Exception {
-            return CertificateWarningDialog.createHostnameMismatchWarning(cert, host);
-          }
-        }))) {
-          throw e;
-        }
-        // TODO: inclusion in some kind of persistent settings
-        // Read/Write lock to protect storage?
+      // TODO: inclusion in some kind of persistent settings
+      // Read/Write lock to protect storage?
+    }
+  }
+
+  private static boolean accepted(final String host, final X509Certificate cert) {
+    return CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
+      @Override
+      public DialogWrapper call() throws Exception {
+        return CertificateWarningDialog.createHostnameMismatchWarning(cert, host);
       }
+    });
   }
 
   // Copied from httpclient 4.2 sources, read class level commentary for explanation.
@@ -99,6 +109,6 @@ class ConfirmingHostnameVerifier implements X509HostnameVerifier {
   @Override
   public void verify(String host, String[] cns, String[] subjectAlts) throws SSLException {
     // actually never used, because it's only used in verify(final String host, final X509Certificate cert)
-    DELEGATE.verify(host, cns, subjectAlts);
+    myVerifier.verify(host, cns, subjectAlts);
   }
 }
