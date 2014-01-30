@@ -134,6 +134,9 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   static TIntIntHashMap countBackSlashes(CharSequence text, int start, int end) {
     TIntIntHashMap result = new TIntIntHashMap();
     int line = 0;
+    if (end > text.length()) {
+      end = text.length();
+    }
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {

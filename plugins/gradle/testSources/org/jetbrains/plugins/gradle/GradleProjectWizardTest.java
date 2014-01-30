@@ -23,7 +23,6 @@ import com.intellij.util.Consumer;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 18.10.13
  */
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
@@ -32,7 +31,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       @Override
       public void consume(Step step) {
         if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Java", "Gradle"));
+          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
         }
       }
     });

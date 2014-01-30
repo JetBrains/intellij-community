@@ -19,8 +19,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
@@ -62,7 +64,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   public void processTerminated(ProcessEvent event) {
     final ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
-    final String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, String.valueOf(event.getExitCode()));
+    final String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(event.getExitCode()));
     processHandler.notifyTextAvailable(message, ProcessOutputTypes.SYSTEM);
     if (myProject != null) ApplicationManager.getApplication().invokeLater(new Runnable(){
       public void run() {
@@ -71,4 +73,27 @@ public class ProcessTerminatedListener extends ProcessAdapter {
       }
     });
   }
+
+  @NotNull
+  private static String stringifyExitCode(int exitCode) {
+    if (SystemInfo.isWindows) {
+      // Quote from http://support.microsoft.com/kb/308558:
+      //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
+      //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
+      String hex = Integer.toHexString(exitCode).toUpperCase();
+      if (hex.startsWith("C")) {
+        StringBuilder result = new StringBuilder();
+        result.append(exitCode);
+        result.append(" (0x").append(hex);
+        // reporting a detailed reason for a well-known exit code
+        if ("C000013A".equals(hex)) {
+          result.append(": as a result of a CTRL+C");
+        }
+        result.append(")");
+        return result.toString();
+      }
+    }
+    return String.valueOf(exitCode);
+  }
+
 }

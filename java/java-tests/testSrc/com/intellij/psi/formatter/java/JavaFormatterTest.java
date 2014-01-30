@@ -3016,4 +3016,36 @@ public void testSCR260() throws Exception {
     settings.FORMATTER_ON_TAG = "end.*fragment";
     doTest();
   }
+
+  public void testDoNotIndentNotSelectedStatement_AfterSelectedOne() {
+    myTextRange = new TextRange(0, 73);
+    doTextTest(
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "    int a = 3;\n" +
+      "    System.out.println(\"AAA\");\n" +
+      "    }\n" +
+      "}",
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        int a = 3;\n" +
+      "    System.out.println(\"AAA\");\n" +
+      "    }\n" +
+      "}"
+    );
+
+    myTextRange = new TextRange(0, 67);
+    doTextTest(
+      "    import java.lang.Override;\n" +
+      "    import java.lang.Exception;\n" +
+      "    \n" +
+      "    class Foo {\n" +
+      "}",
+      "import java.lang.Override;\n" +
+      "import java.lang.Exception;\n" +
+      "    \n" +
+      "    class Foo {\n" +
+      "}"
+    );
+  }
 }
