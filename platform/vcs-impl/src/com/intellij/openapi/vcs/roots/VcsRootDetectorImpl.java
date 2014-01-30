@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -16,43 +31,42 @@ import java.util.*;
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootDetector {
+public class VcsRootDetectorImpl implements VcsRootDetectorI {
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  public VcsRootDetector(@NotNull Project project) {
+  public VcsRootDetectorImpl(@NotNull Project project,
+                             @NotNull ProjectRootManager projectRootManager,
+                             @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
     myProject = project;
-    myProjectManager = ProjectRootManager.getInstance(project);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myProjectManager = projectRootManager;
+    myVcsManager = projectLevelVcsManager;
   }
 
   @NotNull
-  public VcsRootDetectInfo detect() {
+  public Collection<VcsRoot> detect() {
     return detect(myProject.getBaseDir());
   }
 
   @NotNull
-  public VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
+  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
     if (startDir == null) {
-      return new VcsRootDetectInfo(Collections.<VcsRoot>emptyList(), false);
+      return Collections.emptyList();
     }
 
     final Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
     roots.addAll(scanForRootsInContentRoots());
     for (VcsRoot root : roots) {
       if (startDir.equals(root.getPath())) {
-        return new VcsRootDetectInfo(roots, false);
+        return roots;
       }
     }
     List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(startDir);
-    if (!rootsAbove.isEmpty()) {
-      roots.addAll(rootsAbove);
-      return new VcsRootDetectInfo(roots, true);
-    }
-    return new VcsRootDetectInfo(roots, false);
+    roots.addAll(rootsAbove);
+    return roots;
   }
 
   @NotNull

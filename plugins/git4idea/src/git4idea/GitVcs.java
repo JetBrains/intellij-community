@@ -46,8 +46,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vcs.roots.VcsRootDetectorI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -89,6 +88,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -586,8 +586,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        VcsRootDetectInfo detectInfo = new VcsRootDetector(myProject).detect();
-        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetectorI.class).detect();
+        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(roots);
       }
     });
   }

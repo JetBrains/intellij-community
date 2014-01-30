@@ -22,8 +22,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -56,9 +56,9 @@ public class GitIntegrationEnabler {
     myPlatformFacade = platformFacade;
   }
 
-  public void enable(@NotNull VcsRootDetectInfo detectInfo) {
+  public void enable(@NotNull Collection<VcsRoot> vcsRoots) {
     Notificator notificator = myPlatformFacade.getNotificator(myProject);
-    Collection<VcsRoot> gitRoots = ContainerUtil.filter(detectInfo.getRoots(), new Condition<VcsRoot>() {
+    Collection<VcsRoot> gitRoots = ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {
       @Override
       public boolean value(VcsRoot root) {
         AbstractVcs gitVcs = root.getVcs();
@@ -77,11 +77,22 @@ public class GitIntegrationEnabler {
     }
     else {
       assert !roots.isEmpty();
-      if (roots.size() > 1 || detectInfo.projectIsBelowVcs()) {
+      if (roots.size() > 1 || isProjectBelowVcs(roots)) {
         notifyAddedRoots(notificator, roots);
       }
       addVcsRoots(roots);
     }
+  }
+
+  private boolean isProjectBelowVcs(@NotNull Collection<VirtualFile> gitRoots) {
+    //check if there are vcs roots strictly above the project dir
+    VirtualFile baseDir = myProject.getBaseDir();
+    for (VirtualFile root : gitRoots) {
+      if (VfsUtilCore.isAncestor(root, baseDir, true)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void notifyAddedRoots(Notificator notificator, Collection<VirtualFile> roots) {

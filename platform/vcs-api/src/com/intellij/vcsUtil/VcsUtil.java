@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,13 +39,11 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vcs.roots.VcsRootDetectorI;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -633,8 +632,7 @@ public class VcsUtil {
         + rootDir.getParent()
       );
     }
-    VcsRootDetectInfo info = new VcsRootDetector(project).detect(rootDir);
-    Collection<VcsRoot> roots = info.getRoots();
+    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetectorI.class).detect(rootDir);
     Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
     for (VcsRoot vcsRoot : roots) {
       VirtualFile vFile = vcsRoot.getPath();
