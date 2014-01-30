@@ -111,7 +111,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       public void actionPerformed(AnActionEvent e) {
         DialogBuilder dialog = new DialogBuilder(myRootPanel);
         dialog.setTitle("Certificate Details");
-        dialog.setCenterPanel(new CertificateInfo(getSelectedCertificate()).getPanel());
+        dialog.setCenterPanel(new CertificateInfoPanel(getSelectedCertificate()).getPanel());
         // Only OK action is available
         dialog.setActionDescriptors(new DialogBuilder.ActionDescriptor[]{new DialogBuilder.OkActionDescriptor()});
         dialog.show();
@@ -135,7 +135,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   private void addCertificatePanel(X509Certificate certificate) {
     String uniqueName = certificate.getSubjectX500Principal().getName();
-    JPanel infoPanel = new CertificateInfo(certificate).getPanel();
+    JPanel infoPanel = new CertificateInfoPanel(certificate);
     UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS);
     JBScrollPane scrollPane = new JBScrollPane(infoPanel);
     //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

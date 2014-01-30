@@ -71,7 +71,7 @@ public class CertificateWarningDialog extends DialogWrapper {
                     path, password
       )
     );
-    myCertificateInfoPanel.add(new CertificateInfo(certificate).getPanel(), BorderLayout.CENTER);
+    myCertificateInfoPanel.add(new CertificateInfoPanel(certificate), BorderLayout.CENTER);
     setResizable(false);
     init();
     LOG.debug("Preferred size: " + getPreferredSize());

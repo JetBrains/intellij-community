@@ -17,14 +17,15 @@ import static com.intellij.util.net.ssl.CertificateWrapper.CommonField;
 /**
  * @author Mikhail Golubev
  */
-public class CertificateInfo {
+public class CertificateInfoPanel extends JPanel {
   private static DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
 
   private JPanel myPanel;
   private final CertificateWrapper myCertificateWrapper;
 
-  public CertificateInfo(@NotNull X509Certificate certificate) {
+  public CertificateInfoPanel(@NotNull X509Certificate certificate) {
     myCertificateWrapper = new CertificateWrapper(certificate);
+    setLayout(new BorderLayout());
 
     FormBuilder builder = FormBuilder.createFormBuilder();
 
@@ -43,7 +44,7 @@ public class CertificateInfo {
     builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     builder = builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint())));
     builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint())));
-    myPanel.add(builder.getPanel(), BorderLayout.NORTH);
+    add(builder.getPanel(), BorderLayout.NORTH);
   }
 
   @NotNull
@@ -61,10 +62,6 @@ public class CertificateInfo {
       builder.deleteCharAt(builder.length() - 1);
     }
     return builder.toString().toUpperCase();
-  }
-
-  public JPanel getPanel() {
-    return myPanel;
   }
 
   public X509Certificate getCertificate() {
