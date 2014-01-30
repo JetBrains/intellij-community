@@ -165,6 +165,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     });
   }
 
+  @NotNull
   protected Project getProject() {
     return myProject;
   }
