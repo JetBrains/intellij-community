@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -76,6 +77,7 @@ import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingToken
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mGDOC_COMMENT_START;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mQUESTION;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mSEMI;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mSTAR;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_ASTERISKS;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_START;
@@ -356,6 +358,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitTupleExpression(GrTupleExpression tupleExpression) {
     manageSpaceInTuple();
+  }
+
+  @Override
+  public void visitSpreadArgument(GrSpreadArgument spreadArgument) {
+    if (myType1 == mSTAR) {
+      createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
+    }
   }
 
   @Override
