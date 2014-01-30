@@ -169,6 +169,7 @@ public class Messages {
     return SystemInfo.isMac
            && !isApplicationInUnitTestOrHeadless()
            && Registry.is("ide.mac.message.dialogs.as.sheets")
+           && !SystemInfo.isJavaVersionAtLeast("1.8")
            && !DialogWrapper.isMultipleModalDialogs();
   }
 
