@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -192,8 +193,8 @@ public abstract class DocumentCommitProcessor {
                                         FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
     if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
+      String fileText = file.getText();
       if (ApplicationManager.getApplication().isInternal()) {
-        String fileText = file.getText();
         LOG.error("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
                   "; doc len=" + document.getTextLength() +
                   "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
@@ -202,7 +203,10 @@ public abstract class DocumentCommitProcessor {
                   ";\n old psi file text=" + oldPsiText);
       }
       else {
-        LOG.error("commitDocument left PSI inconsistent: " + file);
+        LOG.error("commitDocument left PSI inconsistent: " + file,
+                  new Attachment("file psi text", fileText),
+                  new Attachment("old text", documentText),
+                  new Attachment("old psi file text", oldPsiText));
       }
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
