@@ -50,6 +50,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -146,11 +148,13 @@ public class HtmlUtil {
     "main"
   };
   private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<String, Set<String>>();
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
       final String tagName = control.name.toLowerCase();
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
     }
     ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
@@ -174,6 +178,11 @@ public class HtmlUtil {
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName);
+  }
+
+  public static boolean canTerminate(final String childTagName, final String tagName) {
+    final Set<String> closingTags = AUTO_CLOSE_BY_MAP.get(tagName);
+    return closingTags != null && closingTags.contains(childTagName);
   }
 
   public static boolean isSingleHtmlAttribute(String attrName) {

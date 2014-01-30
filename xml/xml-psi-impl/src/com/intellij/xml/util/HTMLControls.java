@@ -23,13 +23,14 @@ import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -76,7 +77,7 @@ public class HTMLControls {
     @Attribute("emptyAllowed")
     public boolean emptyAllowed;
     @Attribute(value = "autoClosedBy", converter = AutoCloseConverter.class)
-    public List<String> autoClosedBy = Collections.emptyList();
+    public Set<String> autoClosedBy = Collections.emptySet();
   }
 
   private static class TagStateConverter extends Converter<TagState> {
@@ -93,16 +94,20 @@ public class HTMLControls {
     }
   }
 
-  private static class AutoCloseConverter extends Converter<List<String>> {
+  private static class AutoCloseConverter extends Converter<Set<String>> {
     @Nullable
     @Override
-    public List<String> fromString(@NotNull String value) {
-      return StringUtil.split(value, ",");
+    public Set<String> fromString(@NotNull String value) {
+      final THashSet<String> result = new THashSet<String>();
+      for (String closingTag : StringUtil.split(value, ",")) {
+        result.add(closingTag.trim());
+      }
+      return result;
     }
 
     @NotNull
     @Override
-    public String toString(@NotNull List<String> o) {
+    public String toString(@NotNull Set<String> o) {
       return StringUtil.join(o, ", ");
     }
   }

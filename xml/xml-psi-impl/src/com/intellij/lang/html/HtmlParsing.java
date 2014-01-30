@@ -378,9 +378,7 @@ public class HtmlParsing {
   }
 
   private static boolean canTerminate(final String childTagName,final String tagName) {
-    // TODO: make hash
-    return !(tagName.equalsIgnoreCase(TR_TAG) && childTagName.equalsIgnoreCase(TD_TAG)) ||
-           tagName.equalsIgnoreCase(TABLE_TAG) && childTagName.equalsIgnoreCase(TR_TAG);
+    return HtmlUtil.canTerminate(childTagName, tagName);
   }
 
   private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
@@ -395,7 +393,7 @@ public class HtmlParsing {
         return false;
       }
 
-      if (childName.equals(parentName)) {
+      if (childName.equals(parentName) || canTerminate(childName, parentName)) {
         return true;
       }
     }
