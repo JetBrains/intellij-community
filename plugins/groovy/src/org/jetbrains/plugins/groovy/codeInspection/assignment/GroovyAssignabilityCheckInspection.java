@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
@@ -85,6 +86,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -838,6 +840,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     private static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, @Nullable GrArgumentList argumentList) {
       if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
+      final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
+
+      if (args == null) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
 
       final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignature(signature);
 
@@ -854,8 +861,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           }
         }
       }
-
-      final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
 
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       for (Pair<Integer, PsiType> error : allErrors) {
@@ -1034,10 +1039,25 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
   }
 
-  @NotNull
+  @Nullable
   private static List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
     final GrExpression[] argArray = argumentList.getExpressionArguments();
-    final ArrayList<GrExpression> args = ContainerUtil.newArrayList(argArray);
+    final ArrayList<GrExpression> args = ContainerUtil.newArrayList();
+
+    for (GrExpression arg : argArray) {
+      if (arg instanceof GrSpreadArgument) {
+        GrExpression spreaded = ((GrSpreadArgument)arg).getArgument();
+        if (spreaded instanceof GrListOrMap && !((GrListOrMap)spreaded).isMap()) {
+          Collections.addAll(args, ((GrListOrMap)spreaded).getInitializers());
+        }
+        else {
+          return null;
+        }
+      }
+      else {
+        args.add(arg);
+      }
+    }
 
     final PsiElement parent = argumentList.getParent();
     if (parent instanceof GrIndexProperty && PsiUtil.isLValue((GroovyPsiElement)parent)) {

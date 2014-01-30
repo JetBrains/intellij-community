@@ -21,7 +21,6 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -45,7 +44,7 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   private PsiType myExpectedType;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
-    myExpectedType = TypesUtil.substituteBoxAndNormalizeType(expectedType, PsiSubstitutor.EMPTY, null, expression);
+    myExpectedType = PsiImplUtil.normalizeWildcardTypeByPosition(expectedType, expression);
   }
 
   @Override

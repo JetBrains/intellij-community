@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -38,7 +37,7 @@ public class ParameterCastFix extends GroovyFix {
 
   public ParameterCastFix(int param, @NotNull PsiType type, @NotNull GrExpression argument) {
     myArgument = argument;
-    myType = TypesUtil.substituteBoxAndNormalizeType(type, PsiSubstitutor.EMPTY, null, argument);
+    myType = PsiImplUtil.normalizeWildcardTypeByPosition(type, argument);
 
     StringBuilder builder = new StringBuilder();
     builder.append("Cast ");
