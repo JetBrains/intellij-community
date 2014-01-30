@@ -17,7 +17,6 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,8 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -45,48 +46,23 @@ public class ProjectTemplateList extends JPanel {
 
   private static final String PROJECT_WIZARD_TEMPLATE = "project.wizard.template";
 
-  private boolean myNewProject;
   private JBList myList;
   private JPanel myPanel;
   private JTextPane myDescriptionPane;
-
-  private ProjectTemplate myFirstProjectType;
-  private ProjectTemplate myFirstArchivedTemplate;
 
   public ProjectTemplateList() {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor<ProjectTemplate>() {
-      @Nullable
+    ColoredListCellRenderer<ProjectTemplate> renderer = new ColoredListCellRenderer<ProjectTemplate>() {
       @Override
-      public String getTextFor(ProjectTemplate value) {
-        return value.getName();
+      protected void customizeCellRenderer(JList list, ProjectTemplate template, int index, boolean selected, boolean hasFocus) {
+        append(template.getName());
+        setIcon(template.getIcon());
       }
-
-      @Nullable
-      @Override
-      public String getTooltipFor(ProjectTemplate value) {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIconFor(ProjectTemplate value) {
-        return value.getIcon();
-      }
-
-      @Override
-      public boolean hasSeparatorAboveOf(ProjectTemplate value) {
-        return value == myFirstArchivedTemplate || value == myFirstProjectType;
-      }
-
-      @Nullable
-      @Override
-      public String getCaptionAboveOf(ProjectTemplate value) {
-        return value == myFirstArchivedTemplate ? "Ready-To-Use Templates" : "Configurable " + (myNewProject ? "Project" : "Module") + " Types";
-      }
-    }));
+    };
+    renderer.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myList.setCellRenderer(renderer);
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -116,19 +92,6 @@ public class ProjectTemplateList extends JPanel {
       }
     });
 
-    myFirstProjectType = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-      @Override
-      public boolean value(ProjectTemplate template) {
-        return !(template instanceof ArchivedProjectTemplate);
-      }
-    });
-    myFirstArchivedTemplate = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-      @Override
-      public boolean value(ProjectTemplate template) {
-        return template instanceof ArchivedProjectTemplate;
-      }
-    });
-
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     //noinspection unchecked
     myList.setModel(new CollectionListModel(list));
@@ -143,6 +106,7 @@ public class ProjectTemplateList extends JPanel {
   void restoreSelection() {
     final String templateName = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_TEMPLATE);
     if (templateName != null && myList.getModel() instanceof CollectionListModel) {
+      @SuppressWarnings("unchecked")
       List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
       ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
         @Override
@@ -183,9 +147,5 @@ public class ProjectTemplateList extends JPanel {
 
   public void setPaintBusy(boolean b) {
     myList.setPaintBusy(b);
-  }
-
-  public void setNewProject(boolean newProject) {
-    myNewProject = newProject;
   }
 }

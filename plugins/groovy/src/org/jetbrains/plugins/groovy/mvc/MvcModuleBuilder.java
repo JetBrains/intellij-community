@@ -35,4 +35,9 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   protected MvcFramework getFramework() {
     return myFramework;
   }
+
+  @Override
+  public boolean isTemplate() {
+    return true;
+  }
 }

@@ -17,14 +17,12 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -103,6 +101,8 @@ public class FrameworksTree extends CheckboxTree {
     private FrameworksTreeRenderer(FrameworkSupportModelBase model) {
       super(true, false);
       myModel = model;
+      Border border = IdeBorderFactory.createEmptyBorder(2, 2, 2, 2);
+      setBorder(border);
     }
 
     @Override

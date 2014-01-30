@@ -32,7 +32,7 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
     createSdk("devkit", IdeaJdk.getInstance());
-    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
+    Project project = createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
     VirtualFile baseDir = project.getBaseDir();
     VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);

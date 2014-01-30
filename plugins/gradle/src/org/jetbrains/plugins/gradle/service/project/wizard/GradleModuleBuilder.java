@@ -130,7 +130,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Override
-  public String getGroupName() {
+  public String getParentGroup() {
     return JavaModuleType.JAVA_GROUP;
   }
 

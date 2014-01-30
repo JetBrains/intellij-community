@@ -26,8 +26,10 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * @author Dmitry Avdeev
  * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmartList()}, {@link #create(gnu.trove.TObjectHashingStrategy)} instead of override.
+ * @see com.intellij.util.containers.BidirectionalMultiMap
+ * @see com.intellij.util.containers.ConcurrentMultiMap
+ * @author Dmitry Avdeev
  */
 public class MultiMap<K, V> implements Serializable {
   public static final MultiMap EMPTY = new EmptyMap();

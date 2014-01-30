@@ -50,7 +50,7 @@
         <children>
           <grid id="27a92" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
-              <card name="default card"/>
+              <card name="templates card"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -59,6 +59,14 @@
                 <constraints border-constraint="Center"/>
               </nested-form>
             </children>
+          </grid>
+          <grid id="b50ee" binding="myFrameworksPanelPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="frameworks card"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
           </grid>
         </children>
       </grid>

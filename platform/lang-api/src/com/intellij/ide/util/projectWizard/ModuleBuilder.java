@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
+
   public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
@@ -358,6 +359,14 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
+  public boolean isTemplate() {
+    return false;
+  }
+
+  public boolean isTemplateBased() {
+    return false;
+  }
+
   public void updateFrom(ModuleBuilder from) {
     myName = from.getName();
     myContentEntryPath = from.getContentEntryPath();
@@ -370,18 +379,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   public Sdk getModuleJdk() {
     return myJdk;
-  }
-
-  private Map<String, Boolean> myAvailableFrameworks;
-
-  /** @deprecated will be removed */
-  public Map<String, Boolean> getAvailableFrameworks() {
-    return myAvailableFrameworks;
-  }
-
-  /** @deprecated will be removed */
-  public void setAvailableFrameworks(Map<String, Boolean> availableFrameworks) {
-    myAvailableFrameworks = availableFrameworks;
   }
 
   @NotNull

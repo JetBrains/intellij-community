@@ -18,8 +18,6 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.projectWizard.ProjectCategory;
-import com.intellij.ide.projectWizard.ProjectCategoryTemplate;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -34,13 +32,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.platform.ProjectTemplate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -59,7 +54,6 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
     myContext = context;
     myBuilder = builder;
     List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(builder);
-    filterByCategory(providers, context.getProjectTemplate());
     myFrameworkSupportModel = new FrameworkSupportModelInWizard(librariesContainer, builder);
     mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, myFrameworkSupportModel, false);
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
@@ -73,15 +67,6 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   private static String getBaseDirectory(final ModuleBuilder builder) {
     final String path = builder.getContentEntryPath();
     return path != null ? FileUtil.toSystemIndependentName(path) : "";
-  }
-
-  private static void filterByCategory(List<FrameworkSupportInModuleProvider> providers, @Nullable ProjectTemplate template) {
-    if (!(template instanceof ProjectCategoryTemplate)) return;
-    ProjectCategory category = ((ProjectCategoryTemplate)template).getCategory();
-    for (Iterator<FrameworkSupportInModuleProvider> iterator = providers.iterator(); iterator.hasNext(); ) {
-      FrameworkSupportInModuleProvider provider = iterator.next();
-
-    }
   }
 
   public Icon getIcon() {

@@ -5,6 +5,7 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -120,13 +121,17 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected void runWizard(Consumer<Step> adjuster) {
     while(true) {
+      ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
-        adjuster.consume(myWizard.getCurrentStepObject());
+        adjuster.consume(currentStep);
       }
       if (myWizard.isLast()) {
         break;
       }
       myWizard.doNextAction();
+      if (currentStep == myWizard.getCurrentStepObject()) {
+        throw new RuntimeException(currentStep + " is not validated");
+      }
     }
     myWizard.doOk();
   }
