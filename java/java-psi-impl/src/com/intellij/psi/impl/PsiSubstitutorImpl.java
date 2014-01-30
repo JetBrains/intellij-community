@@ -176,12 +176,18 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     private static PsiType handleBoundComposition(PsiWildcardType wildcardType, PsiWildcardType bound) {
+      final PsiType newBoundBound = bound.getBound();
       if (bound.isExtends() == wildcardType.isExtends()) {
-        final PsiType newBoundBound = bound.getBound();
         if (newBoundBound != null) {
           return rebound(wildcardType, newBoundBound);
         }
       }
+
+      if (newBoundBound != null) {
+        return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBoundBound)
+                                        : PsiWildcardType.createSuper(wildcardType.getManager(), newBoundBound);
+      }
+
       return PsiWildcardType.createUnbounded(wildcardType.getManager());
     }
 
