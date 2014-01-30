@@ -291,14 +291,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return groups;
   }
 
-  private ModuleType getModuleType(TemplatesGroup group) {
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    if (templates.isEmpty()) {
-      return null;
-    }
-    ProjectTemplate template = templates.iterator().next();
-    ModuleBuilder builder = myBuilders.get(template);
-    return builder.getModuleType();
+  private static ModuleType getModuleType(TemplatesGroup group) {
+    ModuleBuilder moduleBuilder = group.getModuleBuilder();
+    return moduleBuilder == null ? null : moduleBuilder.getModuleType();
   }
 
   // new TemplatesGroup selected
