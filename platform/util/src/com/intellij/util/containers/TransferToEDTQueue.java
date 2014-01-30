@@ -72,6 +72,16 @@ public class TransferToEDTQueue<T> {
     myShutUpCondition = shutUpCondition;
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
+  
+  public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
+    return new TransferToEDTQueue<Runnable>(name, new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, Condition.FALSE, maxUnitOfWorkThresholdMs);
+  }
 
   private boolean isEmpty() {
     synchronized (myQueue) {
