@@ -1765,7 +1765,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (expression.getTextRange().getStartOffset() >= referencedField.getTextRange().getEndOffset()) return null;
     // only simple reference can be illegal
     if (expression.getQualifierExpression() != null) return null;
-    PsiField initField = findEnclosingFieldInitializer(expression, true);
+    PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
     // instance initializers may access static fields
@@ -1786,11 +1786,6 @@ public class HighlightUtil extends HighlightUtilBase {
    */
   @Nullable
   public static PsiField findEnclosingFieldInitializer(@Nullable PsiElement element) {
-    return findEnclosingFieldInitializer(element, false);
-  }
-
-  @Nullable
-  public static PsiField findEnclosingFieldInitializer(@Nullable PsiElement element, boolean stopAtLambda) {
     while (element != null) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiField) {
@@ -1798,7 +1793,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (element == field.getInitializer()) return field;
         if (field instanceof PsiEnumConstant && element == ((PsiEnumConstant)field).getArgumentList()) return field;
       }
-      if (element instanceof PsiClass || element instanceof PsiMethod || (stopAtLambda && parent instanceof PsiLambdaExpression)) return null;
+      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
       element = parent;
     }
     return null;
