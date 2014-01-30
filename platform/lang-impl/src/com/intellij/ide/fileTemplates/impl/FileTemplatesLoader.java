@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -191,7 +192,7 @@ public class FileTemplatesLoader {
     }
   }
 
-  private void loadCustomizedContent(FTManager manager) {
+  void loadCustomizedContent(FTManager manager) {
     final File configRoot = manager.getConfigRoot(false);
     final File[] configFiles = configRoot.listFiles();
     if (configFiles == null) {
@@ -226,9 +227,10 @@ public class FileTemplatesLoader {
     }
   }
 
-  private void addTemplateFromFile(FTManager manager, String templateQName, File file) {
-    final String extension = myTypeManager.getExtension(templateQName);
-    templateQName = templateQName.substring(0, templateQName.length() - extension.length() - 1);
+  private static void addTemplateFromFile(FTManager manager, String fileName, File file) {
+    Pair<String,String> nameExt = FTManager.decodeFileName(fileName);
+    final String extension = nameExt.second;
+    final String templateQName = nameExt.first;
     if (templateQName.length() == 0) {
       return;
     }
