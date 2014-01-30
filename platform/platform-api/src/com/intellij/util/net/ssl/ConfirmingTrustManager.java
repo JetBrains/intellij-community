@@ -86,8 +86,7 @@ class ConfirmingTrustManager implements X509TrustManager {
 
   @Override
   public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-    // Not called by client
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Should not be called by client");
   }
 
   @Override
@@ -138,7 +137,7 @@ class ConfirmingTrustManager implements X509TrustManager {
       }
     });
     if (accepted) {
-      LOG.debug("Certificate was accepted");
+      LOG.info("Certificate was accepted");
       myCustomManager.addCertificate(certificate);
     }
     return accepted;
@@ -166,11 +165,11 @@ class ConfirmingTrustManager implements X509TrustManager {
     private final String myPassword;
     private final TrustManagerFactory myFactory;
     private final KeyStore myKeyStore;
-    private X509TrustManager myTrustManager;
-    private volatile boolean broken = false;
     private final ReadWriteLock myLock = new ReentrantReadWriteLock();
     private final Lock myReadLock = myLock.readLock();
     private final Lock myWriteLock = myLock.writeLock();
+    // reloaded after each modification
+    private X509TrustManager myTrustManager;
 
     private MutableTrustManager(@NotNull String path, @NotNull String password) {
       myPath = path;
@@ -178,8 +177,8 @@ class ConfirmingTrustManager implements X509TrustManager {
       // initialization step
       myWriteLock.lock();
       try {
-        myKeyStore = loadKeyStore(path, password);
         myFactory = createFactory();
+        myKeyStore = createKeyStore(path, password);
         myTrustManager = initFactoryAndGetManager();
       }
       finally {
@@ -187,19 +186,17 @@ class ConfirmingTrustManager implements X509TrustManager {
       }
     }
 
-    private TrustManagerFactory createFactory() {
+    private static TrustManagerFactory createFactory() {
       try {
         return TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       }
       catch (NoSuchAlgorithmException e) {
-        LOG.error(e);
-        broken = true;
+        return null;
       }
-      return null;
     }
 
-    private KeyStore loadKeyStore(@NotNull String path, @NotNull String password) {
-      KeyStore keyStore = null;
+    private static KeyStore createKeyStore(@NotNull String path, @NotNull String password) {
+      KeyStore keyStore;
       try {
         keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         File cacertsFile = new File(path);
@@ -214,13 +211,16 @@ class ConfirmingTrustManager implements X509TrustManager {
           }
         }
         else {
-          FileUtil.createParentDirs(cacertsFile);
+          if (!FileUtil.createParentDirs(cacertsFile)) {
+            LOG.error("Cannot create directories: " + cacertsFile.getParent());
+            return null;
+          }
           keyStore.load(null, password.toCharArray());
         }
       }
       catch (Exception e) {
         LOG.error(e);
-        broken = true;
+        return null;
       }
       return keyStore;
     }
@@ -229,19 +229,17 @@ class ConfirmingTrustManager implements X509TrustManager {
     /**
      * Add certificate to underlying trust store.
      *
-     * @param certificate   server's certificate
-     * @return              whether the operation was successful
+     * @param certificate server's certificate
+     * @return whether the operation was successful
      */
     public boolean addCertificate(@NotNull X509Certificate certificate) {
-      if (broken) {
-        return false;
-      }
-      FileOutputStream stream = null;
       myWriteLock.lock();
       try {
+        if (isBroken()) {
+          return false;
+        }
         myKeyStore.setCertificateEntry(createAlias(certificate), certificate);
-        stream = new FileOutputStream(myPath);
-        myKeyStore.store(stream, myPassword.toCharArray());
+        flushKeyStore();
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
         return true;
@@ -251,7 +249,6 @@ class ConfirmingTrustManager implements X509TrustManager {
         return false;
       }
       finally {
-        StreamUtil.closeStream(stream);
         myWriteLock.unlock();
       }
     }
@@ -259,8 +256,8 @@ class ConfirmingTrustManager implements X509TrustManager {
     /**
      * Add certificate, loaded from file at {@code path}, to underlying trust store.
      *
-     * @param path  path to file containing certificate
-     * @return      whether the operation was successful
+     * @param path path to file containing certificate
+     * @return whether the operation was successful
      */
     public boolean addCertificate(@NotNull String path) {
       X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
@@ -275,7 +272,7 @@ class ConfirmingTrustManager implements X509TrustManager {
      * Remove certificate from underlying trust store.
      *
      * @param certificate certificate alias
-     * @return            whether the operation was successful
+     * @return whether the operation was successful
      */
     public boolean removeCertificate(@NotNull X509Certificate certificate) {
       return removeCertificate(createAlias(certificate));
@@ -285,18 +282,16 @@ class ConfirmingTrustManager implements X509TrustManager {
      * Remove certificate, specified by its alias, from underlying trust store.
      *
      * @param alias certificate's alias
-     * @return      true if removal operation was successful and false otherwise
+     * @return true if removal operation was successful and false otherwise
      */
     public boolean removeCertificate(@NotNull String alias) {
-      if (broken) {
-        return false;
-      }
-      FileOutputStream stream = null;
       myWriteLock.lock();
       try {
+        if (isBroken()) {
+          return false;
+        }
         myKeyStore.deleteEntry(alias);
-        stream = new FileOutputStream(myPath);
-        myKeyStore.store(stream, myPassword.toCharArray());
+        flushKeyStore();
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
         return true;
@@ -306,7 +301,6 @@ class ConfirmingTrustManager implements X509TrustManager {
         return false;
       }
       finally {
-        StreamUtil.closeStream(stream);
         myWriteLock.unlock();
       }
     }
@@ -357,23 +351,14 @@ class ConfirmingTrustManager implements X509TrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-      Lock readLock = myLock.readLock();
-      try {
-        if (keyStoreIsEmpty() || broken) {
-          throw new CertificateException();
-        }
-        myTrustManager.checkClientTrusted(certificates, s);
-      }
-      finally {
-        readLock.unlock();
-      }
+      throw new UnsupportedOperationException("Should not be called");
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
       myReadLock.lock();
       try {
-        if (keyStoreIsEmpty() || broken) {
+        if (keyStoreIsEmpty() || isBroken()) {
           throw new CertificateException();
         }
         myTrustManager.checkServerTrusted(certificates, s);
@@ -388,7 +373,7 @@ class ConfirmingTrustManager implements X509TrustManager {
       myReadLock.lock();
       try {
         // trust no one if broken
-        if (keyStoreIsEmpty() || broken) {
+        if (keyStoreIsEmpty() || isBroken()) {
           return NO_CERTIFICATES;
         }
         return myTrustManager.getAcceptedIssuers();
@@ -398,8 +383,8 @@ class ConfirmingTrustManager implements X509TrustManager {
       }
     }
 
+    // Guarded by caller's lock
     private boolean keyStoreIsEmpty() {
-      myReadLock.lock();
       try {
         return myKeyStore.size() == 0;
       }
@@ -407,27 +392,35 @@ class ConfirmingTrustManager implements X509TrustManager {
         LOG.error(e);
         return true;
       }
-      finally {
-        myReadLock.unlock();
-      }
     }
 
+    // Guarded by caller's lock
     private X509TrustManager initFactoryAndGetManager() {
-      if (!broken) {
-        try {
+      try {
+        if (myFactory != null && myKeyStore != null) {
           myFactory.init(myKeyStore);
           return findX509TrustManager(myFactory.getTrustManagers());
         }
-        catch (KeyStoreException e) {
-          LOG.error(e);
-          broken = true;
-        }
+      }
+      catch (KeyStoreException e) {
+        LOG.error(e);
       }
       return null;
     }
 
-    public boolean isBroken() {
-      return broken;
+    // Guarded by caller's lock
+    private boolean isBroken() {
+      return myKeyStore == null || myFactory == null || myTrustManager == null;
+    }
+
+    private void flushKeyStore() throws Exception {
+      FileOutputStream stream = new FileOutputStream(myPath);
+      try {
+        myKeyStore.store(stream, myPassword.toCharArray());
+      }
+      finally {
+        StreamUtil.closeStream(stream);
+      }
     }
   }
 }
