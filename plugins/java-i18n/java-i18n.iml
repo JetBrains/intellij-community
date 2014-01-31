@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="jsp-base-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
 </module>
 

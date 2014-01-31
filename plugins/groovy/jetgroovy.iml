@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="groovy-jps-plugin" />
     <orderEntry type="module" module-name="ByteCodeViewer" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
 </module>
 

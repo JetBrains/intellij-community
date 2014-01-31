@@ -249,7 +249,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -264,6 +264,16 @@ public def layoutCommunityPlugins(String home) {
       dir("jps") {
         jar("ui-designer-jps-plugin.jar") {
           module("ui-designer-jps-plugin")
+        }
+      }
+    }
+
+    dir("properties") {
+      dir("lib") {
+        jar("properties.jar") {
+          module("properties-psi-api")
+          module("properties-psi-impl")
+          module("properties")
         }
       }
     }

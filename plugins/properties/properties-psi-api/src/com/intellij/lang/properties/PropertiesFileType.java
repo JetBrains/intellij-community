@@ -19,7 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +63,12 @@ public class PropertiesFileType extends LanguageFileType {
 
   @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
-    Charset charset = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(file);
-    return charset == null ? CharsetToolkit.getDefaultSystemCharset().name() : charset.name();
+    final EncodingRegistry encodingManager = EncodingRegistry.getInstance();
+    if (encodingManager != null) {
+      final Charset encoding = encodingManager.getEncoding(file, true);
+      if (encoding != null) return encoding.toString();
+    }
+    final Charset charset = CharsetToolkit.getDefaultSystemCharset();
+    return charset != null ? charset.toString() : null;
   }
 }
