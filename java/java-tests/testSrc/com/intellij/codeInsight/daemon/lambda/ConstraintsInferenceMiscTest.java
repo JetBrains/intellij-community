@@ -46,6 +46,10 @@ public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testUncheckedBoundsWithErasure() throws Exception {
+    doTest(false);
+  }
+
   private void doTest(final boolean checkWarnings) {
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }

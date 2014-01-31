@@ -333,7 +333,7 @@ public class InferenceSession {
     final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
     if (inferenceVariable != null) {
       if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable) ||
-          targetType instanceof PsiClassType && hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType)) {
+          targetType instanceof PsiClassType && (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) || myErased)) {
         return inferenceVariable;
       }
     }
