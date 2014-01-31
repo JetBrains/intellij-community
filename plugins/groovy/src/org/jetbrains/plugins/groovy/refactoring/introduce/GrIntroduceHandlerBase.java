@@ -752,7 +752,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  private static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
+  public static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final GrReferenceExpression ref = (GrReferenceExpression)expression;
 

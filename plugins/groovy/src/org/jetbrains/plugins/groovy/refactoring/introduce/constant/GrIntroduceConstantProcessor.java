@@ -73,10 +73,17 @@ public class GrIntroduceConstantProcessor {
     final GrVariableDeclaration declaration = addDeclaration(targetClass);
     final GrField field = (GrField)declaration.getVariables()[0];
 
-    if (context.getVar() != null) {
-      GrVariable var = context.getVar();
-      replaceOccurrence(field, var.getInitializerGroovy(), isEscalateVisibility());
-      deleteLocalVar(var);
+    GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
+    if (localVar != null) {
+      assert localVar.getInitializerGroovy() != null : "initializer should exist: " + localVar.getText();
+      deleteLocalVar(localVar);
+
+      if (settings.replaceAllOccurrences()) {
+        processOccurrences(field);
+      }
+      else {
+        replaceOccurrence(field, localVar.getInitializerGroovy(), isEscalateVisibility());
+      }
     }
     else if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
@@ -85,17 +92,21 @@ public class GrIntroduceConstantProcessor {
     }
     else if (context.getExpression() != null) {
       if (settings.replaceAllOccurrences()) {
-        final PsiElement[] occurrences = context.getOccurrences();
-        GroovyRefactoringUtil.sortOccurrences(occurrences);
-        for (PsiElement occurrence : occurrences) {
-          replaceOccurrence(field, occurrence, isEscalateVisibility());
-        }
+        processOccurrences(field);
       }
       else {
         replaceOccurrence(field, context.getExpression(), isEscalateVisibility());
       }
     }
     return field;
+  }
+
+  private void processOccurrences(GrField field) {
+    final PsiElement[] occurrences = context.getOccurrences();
+    GroovyRefactoringUtil.sortOccurrences(occurrences);
+    for (PsiElement occurrence : occurrences) {
+      replaceOccurrence(field, occurrence, isEscalateVisibility());
+    }
   }
 
   private void updateCaretPosition(PsiElement element) {
@@ -206,14 +217,14 @@ public class GrIntroduceConstantProcessor {
 
   @NotNull
   protected GrExpression getInitializer() {
+    GrVariable var = GrIntroduceHandlerBase.resolveLocalVar(context);
     GrExpression expression = context.getExpression();
-    GrVariable var = context.getVar();
 
-    if (expression != null) {
-      return expression;
-    }
-    else if (var != null) {
+    if (var != null) {
       return var.getInitializerGroovy();
+    }
+    else if (expression != null) {
+      return expression;
     }
     else {
       return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
