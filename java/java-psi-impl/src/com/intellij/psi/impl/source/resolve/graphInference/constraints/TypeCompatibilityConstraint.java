@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.TypesDistinctProver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -56,8 +55,31 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
         return true;
       }
     }
+
+    if (isUncheckedConversion(session, myT, myS)) return true;
+
     constraints.add(new SubtypingConstraint(myT, myS, true));
     return true;
+  }
+
+  private static boolean isUncheckedConversion(InferenceSession session, final PsiType t, final PsiType s) {
+    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw() && s instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult tResult = ((PsiClassType)t).resolveGenerics();
+      final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
+      final PsiClass tClass = tResult.getElement();
+      final PsiClass sClass = sResult.getElement();
+      if (tClass != null && sClass != null) {
+        final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
+        if (sSubstitutor != null && PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+          session.setErased();
+          return true;
+        }
+      }
+    } 
+    else if (t instanceof PsiArrayType && t.getArrayDimensions() == s.getArrayDimensions()) {
+      return isUncheckedConversion(session, t.getDeepComponentType(), s.getDeepComponentType());
+    }
+    return false;
   }
 
   @Override

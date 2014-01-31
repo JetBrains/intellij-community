@@ -87,11 +87,6 @@ public class SubtypingConstraint implements ConstraintFormula {
           final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
           final PsiSubstitutor sSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(CClass, SClass, SResult.getSubstitutor()) : null;
           if (sSubstitutor != null) {
-            //18.2.2 Type Compatibility Constraints
-            if (PsiUtil.isRawSubstitutor(CClass, sSubstitutor)) {
-              session.setErased();
-              return true;
-            }
             for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
               final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
