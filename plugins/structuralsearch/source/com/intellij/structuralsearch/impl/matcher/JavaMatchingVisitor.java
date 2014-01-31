@@ -559,7 +559,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!(_handler instanceof SubstitutionHandler)) _handler = context.getPattern().getHandlerSimple(reference);
 
     final PsiElement element = myMatchingVisitor.getElement();
-    PsiElement other = element instanceof PsiExpression ? PsiUtil.skipParenthesizedExprDown((PsiExpression)element) : element;
+    PsiElement other = element instanceof PsiExpression && context.getOptions().isLooseMatching() ?
+                       PsiUtil.skipParenthesizedExprDown((PsiExpression)element) :
+                       element;
     if (_handler instanceof SubstitutionHandler &&
         !(context.getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
         !(qualifier instanceof PsiThisExpression)
@@ -568,7 +570,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)other;
 
         final PsiExpression qualifier2 = psiReferenceExpression.getQualifierExpression();
-        if (qualifier2 == null || qualifier2 instanceof PsiThisExpression) {
+        if (qualifier2 == null || (context.getOptions().isLooseMatching() && qualifier2 instanceof PsiThisExpression)) {
           other = psiReferenceExpression.getReferenceNameElement();
         }
       }
