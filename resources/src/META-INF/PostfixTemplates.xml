@@ -12,7 +12,6 @@
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForeachPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.WhileStatementPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.CastExpressionPostfixTemplate"/>
-    <!--<postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.NewExpressionPostfixTemplate"/>-->
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.IfStatementPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForAscendingPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForDescendingPostfixTemplate"/>
