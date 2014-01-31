@@ -17,10 +17,17 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 
 public class NewElementSamePlaceAction extends NewElementAction {
   @Override
   protected String getPopupTitle() {
     return IdeBundle.message("title.popup.new.element.same.place");
+  }
+
+  @Override
+  protected boolean isEnabled(AnActionEvent e) {
+    return LangDataKeys.IDE_VIEW.getData(e.getDataContext()) != null;
   }
 }
