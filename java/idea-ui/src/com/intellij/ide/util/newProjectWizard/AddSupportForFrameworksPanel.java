@@ -108,7 +108,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
         ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
       }
     }, this);
-    setProviders(providers, Collections.<String>emptySet(), Collections.<String>emptySet());
+    setProviders(providers);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -127,6 +127,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
     splitter.setSecondComponent(myOptionsPanel);
     myFrameworksPanel.add(splitter, BorderLayout.CENTER);
 
+  }
+
+  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+    setProviders(providers, Collections.<String>emptySet(), Collections.<String>emptySet());
   }
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {

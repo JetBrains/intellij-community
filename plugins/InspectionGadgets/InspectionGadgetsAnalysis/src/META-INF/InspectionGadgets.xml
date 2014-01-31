@@ -136,10 +136,6 @@
                      implementationClass="com.siyeh.ig.bitwise.ShiftOutOfRangeInspection"/>
 
     <!--group.names.probable.bugs-->
-    <localInspection language="JAVA" suppressId="UseOfArchaicSystemPropertyAccessors" shortName="ArchaicSystemPropertyAccess"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="archaic.system.property.accessors.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ArchaicSystemPropertyAccessInspection"/>
     <localInspection language="JAVA" shortName="ArrayEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="array.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ArrayEqualityInspection"/>
@@ -1129,6 +1125,10 @@
                      key="unnecessary.unicode.escape.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection"/>
+<localInspection language="JAVA" shortName="ImplicitDefaultCharsetUsage" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="implicit.default.charset.usage.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.internationalization.ImplicitDefaultCharsetUsageInspection"/>
 
     <!--group.names.j2me.issues-->
     <localInspection language="JAVA" shortName="AbstractClassWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"

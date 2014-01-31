@@ -45,6 +45,10 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTest("Boo", ".boo", "Foo");
   }
 
+  public void testSeveralParents() {
+    doHelperTest("Child", "Spam", "Parent_1");
+  }
+
   public void testMultiFile() {   // PY-2810
     doMultiFileTest();
   }

@@ -46,9 +46,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -104,9 +107,6 @@ public class HtmlUtil {
   private HtmlUtil() {
   }
 
-  @NonNls private static final String[] EMPTY_TAGS = {
-    "base", "hr", "meta", "link", "frame", "br", "basefont", "param", "img", "area", "input", "isindex", "col", /*html 5*/ "source", "wbr"
-  };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
@@ -148,9 +148,14 @@ public class HtmlUtil {
     "main"
   };
   private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<String, Set<String>>();
 
   static {
-    ContainerUtil.addAll(EMPTY_TAGS_MAP, EMPTY_TAGS);
+    for (HTMLControls.Control control : HTMLControls.getControls()) {
+      final String tagName = control.name.toLowerCase();
+      if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
+    }
     ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
@@ -173,6 +178,11 @@ public class HtmlUtil {
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName);
+  }
+
+  public static boolean canTerminate(final String childTagName, final String tagName) {
+    final Set<String> closingTags = AUTO_CLOSE_BY_MAP.get(tagName);
+    return closingTags != null && closingTags.contains(childTagName);
   }
 
   public static boolean isSingleHtmlAttribute(String attrName) {
@@ -221,6 +231,13 @@ public class HtmlUtil {
             if (isHtmlBlockTag(elementsDescriptor.getName())) {
               variants.add(elementsDescriptor);
             }
+          }
+        }
+      } else if (parent instanceof HtmlDocumentImpl) {
+        final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+        for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
+          if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+            variants.add(elementDescriptor);
           }
         }
       }

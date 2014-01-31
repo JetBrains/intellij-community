@@ -14,11 +14,12 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.*;
-import org.jetbrains.jps.model.JpsEncodingConfigurationService;
-import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,10 +40,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     if (config == null) {
       return;
     }
-    final JpsEncodingProjectConfiguration encodingConfig =
-      JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(target.getModule().getProject());
 
-    final MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, encodingConfig, config);
+    final MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
 
       @Override

@@ -27,18 +27,16 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +58,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
   private CompoundReferenceRenderer myRenderer;
   private CompoundReferenceRenderer myOriginalRenderer;
   private Project myProject;
-  private TextFieldWithBrowseButton myClassNameField;
+  private ClassNameEditorWithBrowseButton myClassNameField;
   private JRadioButton myRbDefaultLabel;
   private JRadioButton myRbExpressionLabel;
   private JRadioButton myRbDefaultChildrenRenderer;
@@ -132,7 +130,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     myRbListChildrenRenderer.addItemListener(updateListener);
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
 
-    myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
+    myClassNameField = new ClassNameEditorWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PsiClass psiClass = DebuggerUtils.getInstance()
           .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
@@ -142,8 +140,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
           updateContext(qName);
         }
       }
-    });
-    myClassNameField.getTextField().addFocusListener(new FocusAdapter() {
+    }, myProject);
+    myClassNameField.getEditorTextField().addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
         final String qName = myClassNameField.getText();
         updateContext(qName);
@@ -206,6 +204,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenEditor.setContext(psiClass);
         myChildrenExpandedEditor.setContext(psiClass);
         myListChildrenEditor.setContext(psiClass);
+
+        PsiType type = DebuggerUtils.getType(qName, project);
+        myLabelEditor.setThisType(type);
+        myChildrenEditor.setThisType(type);
+        myChildrenExpandedEditor.setThisType(type);
+        myListChildrenEditor.setThisType(type);
       }
     });
 
@@ -218,7 +222,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenExpandedEditor.setText(myChildrenExpandedEditor.getText());
         myListChildrenEditor.setText(myListChildrenEditor.getText());
       }
-    }, ModalityState.any());
+    }, ModalityState.any(), myProject.getDisposed());
   }
 
   private void updateEnabledState() {
@@ -506,6 +510,22 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         this.name = name;
         this.value = value;
       }
+    }
+  }
+  
+  private static class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
+    private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
+      super(browseActionListener, project,
+            new Function<String, Document>() {
+              @Override
+              public Document fun(String s) {
+                PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+                final JavaCodeFragment fragment =
+                  JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+                fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+                return PsiDocumentManager.getInstance(project).getDocument(fragment);
+              }
+            }, "");
     }
   }
 }

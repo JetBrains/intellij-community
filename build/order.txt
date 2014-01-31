@@ -9083,7 +9083,6 @@ inspectionDescriptions/ReplaceAssignmentWithOperatorAssignment.html:/plugins/Ins
 inspectionDescriptions/IncompatibleMask.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/PointlessBitwiseExpression.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ShiftOutOfRange.html:/plugins/InspectionGadgets/lib/resources_en.jar
-inspectionDescriptions/ArchaicSystemPropertyAccess.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ArrayEquals.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/AssertWithSideEffects.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ConstantAssertCondition.html:/plugins/InspectionGadgets/lib/resources_en.jar

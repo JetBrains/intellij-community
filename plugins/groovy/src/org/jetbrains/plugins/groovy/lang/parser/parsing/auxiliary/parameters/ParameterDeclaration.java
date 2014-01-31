@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.*;
+
 /**
  * @author: Dmitry.Krasilschikov, ilyas
  */
@@ -47,7 +49,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
 
-    if (result == ReferenceElement.ReferenceElementResult.FAIL && !hasModifiers) {
+    if (result == FAIL && !hasModifiers) {
       rb.drop();
       pdMarker.rollbackTo();
       return false;
@@ -90,9 +92,10 @@ public class ParameterDeclaration implements GroovyElementTypes {
     if (mIDENT.equals(builder.getTokenType()) || (mTRIPLE_DOT.equals(builder.getTokenType()))) {
       rb.drop();
     }
-    else if (result == ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS) {
+    else if (result == REF_WITH_TYPE_PARAMS || result == PATH_REF) {
       rb.drop();
-      pdMarker.error(GroovyBundle.message("identifier.expected"));
+      pdMarker.drop();
+      builder.error(GroovyBundle.message("identifier.expected"));
       return true;
     }
     else  {
@@ -135,7 +138,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
       rb.drop();
       rb = builder.mark();
       final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, false);
-      if (result == ReferenceElement.ReferenceElementResult.FAIL && ParserUtils.lookAhead(builder, mBOR)) {
+      if (result == FAIL && ParserUtils.lookAhead(builder, mBOR)) {
         builder.error(GroovyBundle.message("type.expected"));
       }
       else {

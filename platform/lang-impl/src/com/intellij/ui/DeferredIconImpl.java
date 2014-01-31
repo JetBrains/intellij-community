@@ -26,12 +26,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -60,13 +58,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private long myLastTimeSpent = 0L;
 
   private final IconListener<T> myEvalListener;
-  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = new TransferToEDTQueue<Runnable>("Deferred icon later invocator", new Processor<Runnable>() {
-    @Override
-    public boolean process(Runnable runnable) {
-      runnable.run();
-      return true;
-    }
-  }, Condition.FALSE, 200);
+  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
 
   public DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
     this(baseIcon, param, true, evaluator, listener, autoUpdatable);

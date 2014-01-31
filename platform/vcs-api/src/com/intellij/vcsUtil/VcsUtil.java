@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
@@ -620,17 +622,21 @@ public class VcsUtil {
 
   @NotNull
   public static Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile rootDir, @NotNull Project project)
-    throws IllegalArgumentException
-  {
+    throws IllegalArgumentException {
     if (!rootDir.isDirectory()) {
       throw new IllegalArgumentException(
         "Can't find VCS at the target file system path. Reason: expected to find a directory there but it's not. The path: "
         + rootDir.getParent()
       );
     }
+    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetector.class).detect(rootDir);
     Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
-    for (VcsRootFinder finder : VcsRootFinder.EP_NAME.getExtensions(project)) {
-      result.addAll(finder.findRoots(rootDir));
+    for (VcsRoot vcsRoot : roots) {
+      VirtualFile vFile = vcsRoot.getPath();
+      AbstractVcs rootVcs = vcsRoot.getVcs();
+      if (rootVcs != null && vFile != null) {
+        result.add(new VcsDirectoryMapping(vFile.getPath(), rootVcs.getName()));
+      }
     }
     return result;
   }

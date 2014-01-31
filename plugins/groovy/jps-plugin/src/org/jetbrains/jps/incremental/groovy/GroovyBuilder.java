@@ -328,12 +328,18 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                             GroovycOSProcessHandler.OutputItem item,
                                             Map<ModuleBuildTarget, String> generationOutputs,
                                             String compilerOutput,
-                                            ModuleBuildTarget srcTarget) throws IOException {
+                                            @NotNull ModuleBuildTarget srcTarget) throws IOException {
     if (chunk.getModules().size() > 1 && !srcTarget.equals(chunk.representativeTarget())) {
       File output = new File(item.outputPath);
 
+      String srcTargetOutput = generationOutputs.get(srcTarget);
+      if (srcTargetOutput == null) {
+        LOG.info("No output for " + srcTarget + "; outputs=" + generationOutputs + "; targets = " + chunk.getTargets());
+        return item.outputPath;
+      }
+
       //todo honor package prefixes
-      File correctRoot = new File(generationOutputs.get(srcTarget));
+      File correctRoot = new File(srcTargetOutput);
       File correctOutput = new File(correctRoot, FileUtil.getRelativePath(new File(compilerOutput), output));
 
       FileUtil.rename(output, correctOutput);

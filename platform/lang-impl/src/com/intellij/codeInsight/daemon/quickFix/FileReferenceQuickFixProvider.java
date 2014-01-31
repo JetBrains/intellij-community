@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,7 +102,7 @@ public class FileReferenceQuickFixProvider {
     if (context == null) return Collections.emptyList();
 
     final VirtualFile virtualFile = context.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
+    if (virtualFile == null || !virtualFile.isValid()) return Collections.emptyList();
 
     final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
@@ -111,7 +110,7 @@ public class FileReferenceQuickFixProvider {
     if (fileReferenceSet.isCaseSensitive()) {
       final PsiElement psiElement = reference.innerSingleResolve(false);
 
-      if (psiElement instanceof PsiNamedElement) {
+      if (psiElement != null) {
         final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
         final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
@@ -151,7 +150,7 @@ public class FileReferenceQuickFixProvider {
   @Nullable
   private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
     VirtualFile file = context.getVirtualFile();
-    return file != null ? ModuleUtil.findModuleForFile(file, context.getProject()) : null;
+    return file != null ? ModuleUtilCore.findModuleForFile(file, context.getProject()) : null;
   }
 
   private static class MyCreateFileFix extends CreateFileFix {

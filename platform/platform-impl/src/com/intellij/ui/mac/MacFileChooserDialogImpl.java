@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -57,20 +59,50 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   private final Project myProject;
   private Consumer<List<VirtualFile>> myCallback;
 
-  private static final Callback SHOULD_ENABLE_URL = new Callback() {
-    @SuppressWarnings("UnusedDeclaration")
-    public boolean callback(ID self, String selector, ID panel, ID url) {
+  private static boolean checkFile(@NotNull ID self, ID url, boolean checkDirectories) {
       MacFileChooserDialogImpl dialog = ourImplMap.get(self);
       if (dialog == null) {
         // Since it has already been removed from the map, the file is likely to be valid if the user was able to select it
         return true;
       }
-      if (url == null || url.intValue() == 0) return false;
-      final ID filename = Foundation.invoke(url, "path");
-      final String fileName = Foundation.toStringViaUTF8(filename);
-      if (fileName == null) return false;
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      return virtualFile == null || virtualFile.isDirectory() || dialog.myChooserDescriptor.isFileSelectable(virtualFile);
+
+      if (url == null || url.intValue() == 0) {
+        return false;
+      }
+
+      ID filename = Foundation.invoke(url, "path");
+      String fileName = Foundation.toStringViaUTF8(filename);
+      if (fileName == null) {
+        return false;
+      }
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
+    return file == null || (!checkDirectories && file.isDirectory()) || dialog.myChooserDescriptor.isFileSelectable(file);
+  }
+
+  private static final Callback SHOULD_ENABLE_CALLBACK = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
+    public boolean callback(ID self, String selector, ID panel, ID url) {
+      // allow any directory - ability to select nested directories
+      return checkFile(self, url, false);
+    }
+  };
+
+  private static final Callback VALIDATE_URL_CALLBACK = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
+    public boolean callback(ID self, String selector, ID panel, ID url, ID outError) {
+      if (checkFile(self, url, true)) {
+        return true;
+      }
+
+      /*
+      if (!outError.equals(ID.NIL)) {
+        ID error = Foundation.invoke("NSError", "errorWithDomain:code:userInfo:", Foundation.nsString("org.jetbrains"),
+                                     Foundation.createDict(new String[]{"NSLocalizedDescriptionKey"}, new Object[]{"Not allowed"}));
+        // todo "*outError = error"
+      }
+      */
+      return false;
     }
   };
 
@@ -152,7 +184,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     }
 
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    final List<VirtualFile> files = ContainerUtil.newArrayListWithExpectedSize(paths.size());
+    final List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(paths.size());
     for (String path : paths) {
       final String vfsPath = FileUtil.toSystemIndependentName(path);
       final VirtualFile file = fs.refreshAndFindFileByPath(vfsPath);
@@ -179,6 +211,12 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       invoke(chooser, "setCanChooseDirectories:", chooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", chooserDescriptor.isChooseMultiple());
       invoke(chooser, "setTreatsFilePackagesAsDirectories:", chooserDescriptor.isChooseFolders());
+      invoke(chooser, "setResolvesAliases:", false);
+
+      String description = chooserDescriptor.getDescription();
+      if (!StringUtil.isEmpty(description)) {
+        invoke(chooser, "setMessage:", Foundation.nsString(description));
+      }
 
       if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setCanCreateDirectories:"))) {
         invoke(chooser, "setCanCreateDirectories:", true);
@@ -235,17 +273,20 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   };
 
   static {
-    final ID delegate = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
-    if (!Foundation.addMethod(delegate, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
-    if (!Foundation.addMethod(delegate, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), OPEN_PANEL_DID_END, "v*i")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
-    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldEnableURL:"), SHOULD_ENABLE_URL, "B@@")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
+    ID delegate = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
+    addFoundationMethod(delegate, "showOpenPanel:", MAIN_THREAD_RUNNABLE, "v*");
+    addFoundationMethod(delegate, "openPanelDidEnd:returnCode:contextInfo:", OPEN_PANEL_DID_END, "v*i");
+    addFoundationMethod(delegate, "panel:shouldEnableURL:", SHOULD_ENABLE_CALLBACK, "B@@");
+    if (SystemInfo.isMacOSSnowLeopard) {
+      addFoundationMethod(delegate, "panel:validateURL:error:", VALIDATE_URL_CALLBACK, "B@@o");
     }
     Foundation.registerObjcClassPair(delegate);
+  }
+
+  private static void addFoundationMethod(@NotNull ID delegate, @NotNull String selector, @NotNull Callback callback, @NotNull String types) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector(selector), callback, types)) {
+      throw new RuntimeException("Unable to add method " + selector + " to objective-c delegate class!");
+    }
   }
 
   public MacFileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, final Project project) {

@@ -101,7 +101,6 @@
       <keyboard-shortcut first-keystroke="shift control I"/>
     </action>
     <action id="SmartTypeCompletion">
-      <keyboard-shortcut first-keystroke="alt SPACE"/>
       <keyboard-shortcut first-keystroke="shift alt SPACE"/>
     </action>
     <action id="GotoDeclaration">

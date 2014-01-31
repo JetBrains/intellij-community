@@ -624,4 +624,12 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
   }
 
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
+  }
+
 }

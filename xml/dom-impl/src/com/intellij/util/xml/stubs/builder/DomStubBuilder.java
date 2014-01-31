@@ -17,12 +17,13 @@ package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
@@ -40,8 +41,6 @@ import com.intellij.xml.util.XmlUtil;
  *         Date: 8/2/12
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
-
-  public final static Key<FileContent> CONTENT_FOR_DOM_STUBS = Key.create("dom stubs content");
   private final static Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
@@ -52,21 +51,27 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public Stub buildStubTree(FileContent fileContent) {
-    VirtualFile file = fileContent.getFile();
-    Project project = fileContent.getProject();
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    PsiFile psiFile = fileContent.getPsiFile();
     if (!(psiFile instanceof XmlFile)) return null;
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(fileContent.getFile());
+    Project project = fileContent.getProject();
+    if (document != null) {
+      PsiFile existingPsi = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (existingPsi != null) {
+        psiFile = existingPsi;
+      }
+    }
 
     XmlFile xmlFile = (XmlFile)psiFile;
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
-      psiFile.putUserData(CONTENT_FOR_DOM_STUBS, fileContent);
       DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);
       if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
 
       XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
       if (header.getRootTagLocalName() == null) {
-        LOG.error("null root tag for " + fileElement + " for " + file);
+        LOG.error("null root tag for " + fileElement + " for " + fileContent.getFile());
       }
       FileStub fileStub = new FileStub(header);
       XmlTag rootTag = xmlFile.getRootTag();
@@ -77,7 +82,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     }
     finally {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.FALSE);
-      psiFile.putUserData(CONTENT_FOR_DOM_STUBS, null);
     }
   }
 

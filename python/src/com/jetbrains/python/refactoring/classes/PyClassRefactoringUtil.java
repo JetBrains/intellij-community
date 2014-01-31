@@ -49,7 +49,8 @@ public class PyClassRefactoringUtil {
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
-  private PyClassRefactoringUtil() {}
+  private PyClassRefactoringUtil() {
+  }
 
   public static void moveSuperclasses(PyClass clazz, Set<String> superClasses, PyClass superClass) {
     if (superClasses.size() == 0) return;
@@ -58,7 +59,8 @@ public class PyClassRefactoringUtil {
     addSuperclasses(project, superClass, toAdd, superClasses);
   }
 
-  public static void addSuperclasses(Project project, PyClass superClass,
+  public static void addSuperclasses(Project project,
+                                     PyClass superClass,
                                      @Nullable Collection<PyExpression> superClassesAsPsi,
                                      Collection<String> superClassesAsStrings) {
     if (superClassesAsStrings.size() == 0) return;
@@ -74,22 +76,33 @@ public class PyClassRefactoringUtil {
           argList.addArgument(PyElementGenerator.getInstance(project).createExpressionFromText(s));
         }
       }
-    } else {
+    }
+    else {
       addSuperclasses(project, superClass, superClassesAsStrings);
     }
   }
 
-  public static List<PyExpression> removeAndGetSuperClasses(PyClass clazz, Set<String> superClasses) {
-    if (superClasses.size() == 0) return Collections.emptyList();
-    final List<PyExpression> toAdd = new ArrayList<PyExpression>();
-    final PyExpression[] elements = clazz.getSuperClassExpressions();
-    for (PyExpression element : elements) {
-      if (superClasses.contains(element.getText())) {
-        toAdd.add(element);
-        PyUtil.removeListNode(element);
+  /**
+   * Removes super classes by name and returns list of removed
+   *
+   * @param clazz                class to find super classes to remove
+   * @param superClassesToRemove list of super class names
+   * @return list of removed classes
+   */
+  @NotNull
+  public static List<PyExpression> removeAndGetSuperClasses(@NotNull PyClass clazz, @NotNull Set<String> superClassesToRemove) {
+    if (superClassesToRemove.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final List<PyExpression> result = new ArrayList<PyExpression>();
+    for (PyExpression superClassExpression : clazz.getSuperClassExpressions()) {
+      //TODO: We probably should use #getName() here, but #getText() was used in previous version so keeped temporary for backward comp.
+      if (superClassesToRemove.contains(superClassExpression.getText())) {
+        result.add(superClassExpression);
+        superClassExpression.delete();
       }
     }
-    return toAdd;
+    return result;
   }
 
   public static void addSuperclasses(Project project, PyClass superClass, Collection<String> superClasses) {
@@ -106,7 +119,8 @@ public class PyClassRefactoringUtil {
     builder.append(")");
     if (!hasChanges) return;
 
-    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(superClass.getName() + "temp", PythonFileType.INSTANCE, builder.toString());
+    final PsiFile file =
+      PsiFileFactory.getInstance(project).createFileFromText(superClass.getName() + "temp", PythonFileType.INSTANCE, builder.toString());
     final PsiElement expression = file.getFirstChild().getFirstChild();
     PsiElement colon = superClass.getFirstChild();
     while (colon != null && !colon.getText().equals(":")) {
@@ -148,7 +162,8 @@ public class PyClassRefactoringUtil {
   public static void insertPassIfNeeded(PyClass clazz) {
     final PyStatementList statements = clazz.getStatementList();
     if (statements.getStatements().length == 0) {
-      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
+      statements.add(
+        PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
     }
   }
 
@@ -238,7 +253,7 @@ public class PyClassRefactoringUtil {
     if (components.isEmpty()) {
       return false;
     }
-    for (String s: components) {
+    for (String s : components) {
       if (!PyNames.isIdentifier(s) || PyNames.isReserved(s)) {
         return false;
       }
@@ -346,7 +361,7 @@ public class PyClassRefactoringUtil {
     final String name = getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
-      for (PyImportElement e: importStatement.getImportElements()) {
+      for (PyImportElement e : importStatement.getImportElements()) {
         if (name.equals(getOriginalName(e))) {
           importElement = e;
         }
@@ -363,11 +378,14 @@ public class PyClassRefactoringUtil {
         }
         if (deleteImportElement) {
           if (importStatement.getImportElements().length == 1) {
-            final boolean isInjected = InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
-            if (!isInjected)
+            final boolean isInjected =
+              InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
+            if (!isInjected) {
               importStatement.delete();
-            else
+            }
+            else {
               deleteImportStatementFromInjected(importStatement);
+            }
           }
           else {
             importElement.delete();
@@ -380,8 +398,7 @@ public class PyClassRefactoringUtil {
   private static void deleteImportStatementFromInjected(@NotNull final PyImportStatementBase importStatement) {
     final PsiElement sibling = importStatement.getPrevSibling();
     importStatement.delete();
-    if (sibling instanceof PsiWhiteSpace)
-      sibling.delete();
+    if (sibling instanceof PsiWhiteSpace) sibling.delete();
   }
 
   @Nullable

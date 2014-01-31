@@ -145,7 +145,19 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   private static boolean isUnicode(String text) {
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';                       //TODO[ktisha]
-  } 
+  }
+
+  private boolean isUnicodeByDefault() {
+    if (LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
+      return true;
+    }
+    final PsiFile file = getContainingFile();
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      return pyFile.hasImportFromFuture(FutureFeature.UNICODE_LITERALS);
+    }
+    return false;
+  }
 
   private static boolean isBytes(String text) {
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'B';
@@ -161,12 +173,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     if (myDecodedFragments == null) {
       final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
       final int elementStart = getTextRange().getStartOffset();
+      final boolean unicodeByDefault = isUnicodeByDefault();
       for (ASTNode node : getStringNodes()) {
         final String text = node.getText();
         final TextRange textRange = getNodeTextRange(text);
         final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
         final String encoded = textRange.substring(text);
-        result.addAll(getDecodedFragments(encoded, offset, isRaw(text), isUnicode(text)));
+        result.addAll(getDecodedFragments(encoded, offset, isRaw(text), unicodeByDefault || isUnicode(text)));
       }
       myDecodedFragments = result;
     }
@@ -190,6 +203,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       // TODO: Implement unicode character name escapes: EscapeRegexGroup.UNICODE_NAMED
       final String unicode16 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_16BIT);
       final String unicode32 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_32BIT);
+      final String wholeMatch = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
 
       final boolean escapedUnicode = raw && unicode || !raw;
 
@@ -201,13 +215,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
       }
       else if (escapedUnicode && unicode16 != null) {
-        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : unicode16;
+        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : wholeMatch;
       }
       else if (escapedUnicode && unicode32 != null) {
-        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : unicode32;
+        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : wholeMatch;
       }
       else if (raw) {
-        str = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
+        str = wholeMatch;
       }
       else {
         final String toReplace = escapeRegexGroup(escMatcher, EscapeRegexGroup.ESCAPED_SUBSTRING);
@@ -215,8 +229,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       }
 
       if (str != null) {
-        final TextRange wholeMatch = TextRange.create(escMatcher.start(), escMatcher.end());
-        result.add(Pair.create(wholeMatch.shiftRight(offset), str));
+        final TextRange wholeMatchRange = TextRange.create(escMatcher.start(), escMatcher.end());
+        result.add(Pair.create(wholeMatchRange.shiftRight(offset), str));
       }
 
       index = escMatcher.end();

@@ -22,10 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -35,6 +38,23 @@ public class PythonPatterns extends PlatformPatterns {
     return new PyElementPattern.Capture<PyLiteralExpression>(new InitialPatternCondition<PyLiteralExpression>(PyLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PyLiteralExpression;
+      }
+    });
+  }
+
+  public static PyElementPattern.Capture<PyStringLiteralExpression> pyStringLiteralMatches(final String regexp) {
+    final Pattern pattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    return new PyElementPattern.Capture<PyStringLiteralExpression>(new InitialPatternCondition<PyStringLiteralExpression>(PyStringLiteralExpression.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        if (o instanceof PyStringLiteralExpression) {
+          final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
+          if (!DocStringUtil.isDocStringExpression(expr)) {
+            final String value = expr.getStringValue();
+            return pattern.matcher(value).matches();
+          }
+        }
+        return false;
       }
     });
   }

@@ -5,14 +5,14 @@ class Test {
 
     static void test() {
         Integer next = map(String::length).iterator().next();
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer next1 = map(Test::length).iterator().next();</error>
+        Integer next1 = map(Test::length).iterator().next();//error with int!!!
     }
 
     public static <T> T length(T s) {
       return null;
     }
 
-    public static <T> int length(String s) {
+    public static <T> /*int*/Integer length(String s) {
       return 0;
     }
 }

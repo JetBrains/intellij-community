@@ -16,13 +16,15 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.projectWizard.ProjectCategory;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
+ * The groups are shown in "Project Type" selection list.
  * @author Dmitry Avdeev
- *         Date: 11/20/12
  */
 public class TemplatesGroup implements Comparable<TemplatesGroup> {
 
@@ -32,19 +34,38 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   private final int myWeight;
   private final String myParentGroup;
   private final String myId;
+  private final ModuleBuilder myModuleBuilder;
+  private ProjectCategory myProjectCategory;
 
-  public TemplatesGroup(String name, String description, Icon icon, int weight, String parentGroup, String id) {
+  public TemplatesGroup(String name, String description, Icon icon, int weight, String parentGroup, String id, ModuleBuilder moduleBuilder) {
     myName = name;
     myDescription = description;
     myIcon = icon;
     myWeight = weight;
     myParentGroup = parentGroup;
     myId = id;
+    myModuleBuilder = moduleBuilder;
   }
 
+  /**
+   * Category-based group
+   * @param category
+   */
   public TemplatesGroup(ProjectCategory category) {
-    this(category.getDisplayName(), category.getDescription(), null, 0, category.getGroupName(), category.getId());
+    this(category.getDisplayName(), category.getDescription(), null, 0, category.getGroupName(), category.getId(), category.createModuleBuilder());
+    myProjectCategory = category;
   }
+
+  public TemplatesGroup(ModuleBuilder builder) {
+    this(builder.getPresentableName(), builder.getDescription(), builder.getBigIcon(), 0, builder.getParentGroup(), builder.getBuilderId(), builder);
+  }
+
+  @Nullable
+  public ModuleBuilder getModuleBuilder() {
+    return myModuleBuilder;
+  }
+
+  public ProjectCategory getProjectCategory() { return myProjectCategory; }
 
   public String getName() {
     return myName;

@@ -19,6 +19,9 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -37,6 +40,7 @@ import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -81,12 +85,38 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
-  private void handleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
+  private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
+    while (true) {
+      final AtomicBoolean canceled = new AtomicBoolean(false);
+      DumbService.getInstance(myProject).waitForSmartMode();
+      ProgressIndicatorUtils.runWithWriteActionPriority(new ReadTask() {
+        @Override
+        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+          if (DumbService.isDumb(myProject)) {
+            canceled.set(true);
+            return;
+          }
+
+          doHandleConstantSearchTask(channel, sessionId, task);
+        }
+  
+        @Override
+        public void onCanceled(@NotNull ProgressIndicator indicator) {
+          canceled.set(true);
+        }
+      });
+      if (!canceled.get()) {
+        break;
+      }
+    }
+  }
+  private void doHandleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
     final String ownerClassName = task.getOwnerClassName();
     final String fieldName = task.getFieldName();
     final int accessFlags = task.getAccessFlags();
     final boolean accessChanged = task.getIsAccessChanged();
     final boolean isRemoved = task.getIsFieldRemoved();
+    boolean canceled = false;
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
     final Set<String> affectedPaths = Collections.synchronizedSet(new HashSet<String>()); // PsiSearchHelper runs multiple threads
     try {
@@ -167,23 +197,38 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
       }
     }
-    finally {
-      final CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builder = CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder();
-      builder.setOwnerClassName(ownerClassName);
-      builder.setFieldName(fieldName);
-      if (isSuccess.get()) {
-        builder.setIsSuccess(true);
-        builder.addAllPath(affectedPaths);
-        LOG.debug("Constant search task: " + affectedPaths.size() + " affected files found");
-      }
-      else {
-        builder.setIsSuccess(false);
-        LOG.debug("Constant search task: unsuccessful");
-      }
-      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
-        CmdlineRemoteProto.Message.ControllerMessage.Type.CONSTANT_SEARCH_RESULT).setConstantSearchResult(builder.build()).build()
-      ));
+    catch (ProcessCanceledException e) {
+      canceled = true;
+      throw e;
     }
+    finally {
+      if (!canceled) {
+        notifyConstantSearchFinished(channel, sessionId, ownerClassName, fieldName, isSuccess, affectedPaths);
+      }
+    }
+  }
+
+  private static void notifyConstantSearchFinished(Channel channel,
+                                                   UUID sessionId,
+                                                   String ownerClassName,
+                                                   String fieldName,
+                                                   Ref<Boolean> isSuccess, Set<String> affectedPaths) {
+    final CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builder =
+      CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder();
+    builder.setOwnerClassName(ownerClassName);
+    builder.setFieldName(fieldName);
+    if (isSuccess.get()) {
+      builder.setIsSuccess(true);
+      builder.addAllPath(affectedPaths);
+      LOG.debug("Constant search task: " + affectedPaths.size() + " affected files found");
+    }
+    else {
+      builder.setIsSuccess(false);
+      LOG.debug("Constant search task: unsuccessful");
+    }
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
+      CmdlineRemoteProto.Message.ControllerMessage.Type.CONSTANT_SEARCH_RESULT).setConstantSearchResult(builder.build()).build()
+    ));
   }
 
   private boolean isDumbMode() {

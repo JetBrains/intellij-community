@@ -15,21 +15,45 @@
  */
 package org.jetbrains.jps.maven.model.impl;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
  */
 public class MavenArtifactResourceConfiguration {
-
+  @Tag("web-artifact-name")
   public String webArtifactName;
+
+  @Tag("module-name")
+  public String moduleName;
 
   @Tag("web-resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
   public List<ResourceRootConfiguration> webResources = new ArrayList<ResourceRootConfiguration>();
 
+  @Transient
+  private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;
+
+  @Nullable
+  public ResourceRootConfiguration getRootConfiguration(@NotNull File root) {
+    if (myResourceRootsMap == null) {
+      Map<File, ResourceRootConfiguration> map = new THashMap<File, ResourceRootConfiguration>(FileUtil.FILE_HASHING_STRATEGY);
+      for (ResourceRootConfiguration resource : webResources) {
+        map.put(new File(resource.directory), resource);
+      }
+      myResourceRootsMap = map;
+    }
+    return myResourceRootsMap.get(root);
+  }
 }

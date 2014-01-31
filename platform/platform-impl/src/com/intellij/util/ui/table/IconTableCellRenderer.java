@@ -13,7 +13,7 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
   public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<Iconable>() {
     @Nullable
     @Override
-    protected Icon getIcon(@NotNull Iconable value) {
+    protected Icon getIcon(@NotNull Iconable value, JTable table, int row) {
       return value.getIcon(Iconable.ICON_FLAG_VISIBILITY);
     }
   };
@@ -22,7 +22,7 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
     return new IconTableCellRenderer() {
       @Nullable
       @Override
-      protected Icon getIcon(@NotNull Object value) {
+      protected Icon getIcon(@NotNull Object value, JTable table, int row) {
         return icon;
       }
     };
@@ -32,7 +32,7 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
     super.getTableCellRendererComponent(table, value, selected, focus, row, column);
     //noinspection unchecked
-    setIcon(value == null ? null : getIcon((T)value));
+    setIcon(value == null ? null : getIcon((T)value, table, row));
     if (isCenterAlignment()) {
       setHorizontalAlignment(CENTER);
       setVerticalAlignment(CENTER);
@@ -45,5 +45,5 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
   }
 
   @Nullable
-  protected abstract Icon getIcon(@NotNull T value);
+  protected abstract Icon getIcon(@NotNull T value, JTable table, int row);
 }

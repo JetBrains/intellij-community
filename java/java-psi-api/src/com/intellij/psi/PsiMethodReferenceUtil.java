@@ -37,7 +37,7 @@ public class PsiMethodReferenceUtil {
 
   public static boolean hasReceiver(PsiType[] parameterTypes, QualifierResolveResult qualifierResolveResult, PsiMethodReferenceExpression methodRef) {
     if (parameterTypes.length > 0 && 
-        isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()) && 
+        isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()) &&
         isStaticallyReferenced(methodRef)) {
       return true;
     }
@@ -257,7 +257,6 @@ public class PsiMethodReferenceUtil {
   }
 
   public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    boolean arrayType = receiverType instanceof PsiArrayType;
     if (containingClass != null) {
       receiverType = getExpandedType(receiverType, containingClass);
     }
@@ -265,17 +264,15 @@ public class PsiMethodReferenceUtil {
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
       LOG.assertTrue(containingClass != null);
-      return arrayType ||
-             resolveResult.getSubstitutor().equals(psiSubstitutor) ||
-             emptyOrRaw(containingClass, psiSubstitutor) ||
-             emptyOrRaw(receiverClass, resolveResult.getSubstitutor());
+      return emptyOrRaw(containingClass, psiSubstitutor) ||
+             TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), GenericsUtil.eliminateWildcards(receiverType));
     }
     return false;
   }
 
   private static boolean emptyOrRaw(PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
     return PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
-           (!containingClass.hasTypeParameters() && psiSubstitutor.getSubstitutionMap().isEmpty());
+           psiSubstitutor.getSubstitutionMap().isEmpty();
   }
 
   public static boolean isReceiverType(PsiType functionalInterfaceType, PsiClass containingClass, @Nullable PsiMethod referencedMethod) {

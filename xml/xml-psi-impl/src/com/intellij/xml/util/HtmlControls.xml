@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<htmlControls namespace="System.Web.UI.HtmlControls">
+  <control name="A" type="HtmlAnchor" startTag="required" endTag="Required" emptyAllowed="false">
+    <attribute name="href" type="%URL" />
+  </control>
+  <control name="Acronym" type="HtmlGenericControl" startTag="required" endTag="Required" emptyAllowed="false"/>
+  <control name="address" type="HtmlGenericControl" startTag="required" endTag="Required" emptyAllowed="false"/>
+  <control name="applet" type="HtmlGenericControl" startTag="required" endTag="Required" emptyAllowed="false">
+    <attribute name="codetype" type="%URL" />
+  </control>
+  <control name="area" type="HtmlGenericControl" startTag="required" endTag="Forbidden" emptyAllowed="true">
+    <attribute name="href" type="%URL" />
+  </control>
+
+  <control name="B" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="base" type="HtmlGenericControl" startTag="required" endTag="Forbidden" emptyAllowed="true">
+    <attribute name="codetype" type="%URL" />
+  </control>
+  <control name="baseFont" type="HtmlGenericControl" startTag="required" endTag="Forbidden" emptyAllowed="true"/>
+  <control name="bdo" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="big" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="blockQuote" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="cite" type="%URL" />
+  </control>
+  <control name="body" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" />
+  <control name="br" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+  <control name="button" type="HtmlButton" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="Caption" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="center" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="cite" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="code" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="col" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+  <control name="colGroup" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="colGroup"/>
+  
+  <control name="DD" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
+  <control name="del" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="cite" type="%URL" />
+  </control>
+  <control name="dfn" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="dir" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="div" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="dl" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="dt" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
+  
+  <control name="EM" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="embed" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="true" />
+  <control name="FieldSet" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="font" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="form" type="HtmlForm" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="action" type="%URL" />
+  </control>
+  <control name="frame" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true">
+    <attribute name="src" type="%URL" />
+  </control>
+  <control name="frameSet" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="H1" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="H2" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="H3" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="H4" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="H5" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="H6" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>  
+  <control name="head" type="HtmlHead" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" autoClosedBy="body">
+    <attribute name="profile" type="%URL" />
+  </control>
+  <control name="hr" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+  <control name="html" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" />
+  
+  <control name="I" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="IFrame" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="src" type="%URL" />
+  </control>
+  <control name="img" type="HtmlImage" startTag="required" endTag="forbidden" emptyAllowed="true">
+    <attribute name="src" type="%URL" />
+    <attribute name="usemap" type="%URL" />
+  </control>
+  <control name="input" startTag="required" endTag="forbidden" emptyAllowed="true">
+    <type name="HtmlInputButton" typeAttribute="BUTTON|SUBMIT|RESET" />
+    <type name="HtmlInputCheckBox" typeAttribute="CheckBox" />
+    <type name="HtmlInputFile" typeAttribute="file" />
+    <type name="HtmlInputHidden" typeAttribute="hidden" />
+    <type name="HtmlInputImage" typeAttribute="image" />
+    <type name="HtmlInputRadioButton" typeAttribute="radio" />
+    <type name="HtmlInputText" typeAttribute="TEXT|PASSWORD" />
+  </control>
+  <control name="ins" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="cite" type="%URL" />
+  </control>
+  <control name="isIndex" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+  
+  <control name="KBD" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="Label" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="legend" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="li" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="li"/>
+  <control name="link" type="HtmlLink" startTag="required" endTag="forbidden" emptyAllowed="true">
+    <attribute name="href" type="%URL" />
+  </control>
+
+  <control name="Map" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="menu" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="meta" type="HtmlMeta" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+
+  <control name="noembed" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="true"/>
+  <control name="NoFrames" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="noScript" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="nobr" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="Object" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="classid" type="%URL" />
+    <attribute name="codebase" type="%URL" />
+    <attribute name="data" type="%URL" />
+    <attribute name="name" type="%URL" />
+    <attribute name="usemap" type="%URL" />
+  </control>
+  <control name="ol" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="option" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="option"/>
+  
+  <control name="P" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="p"/>
+  <control name="param" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+  <control name="pre" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="Q" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
+    <attribute name="cite" type="%URL" />
+  </control>
+
+  <control name="S" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="samp" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="script" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="select" type="HtmlSelect" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="small" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="source" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true">
+    <attribute name="src" type="%URL" />
+  </control>
+  <control name="span" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="strike" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="strong" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="style" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="sub" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="sup" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="Table" type="HtmlTable" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="tbody" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" autoClosedBy="tfoot, thead, tbody"/>
+  <control name="td" type="HtmlTableCell" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="td, th"/>
+  <control name="textArea" type="HtmlTextArea" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="tfoot" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="tfoot, thead, tbody"/>
+  <control name="th" type="HtmlTableCell" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="td, th"/>
+  <control name="thead" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="tfoot, thead, tbody"/>
+  <control name="title" type="HtmlTitle" startTag="required" endTag="required" emptyAllowed="false" onlyOnce="true" />
+  <control name="tr" type="HtmlTableRow" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="tr"/>
+  <control name="track" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true" />
+  <control name="tt" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="U" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="UL" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  
+  <control name="VAR" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
+  <control name="wbr" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
+</htmlControls>

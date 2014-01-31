@@ -394,7 +394,9 @@ public abstract class DebuggerUtils {
       }
       final PsiClass aClass =
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
-      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(aClass);
+      if (aClass != null) {
+        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(aClass);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

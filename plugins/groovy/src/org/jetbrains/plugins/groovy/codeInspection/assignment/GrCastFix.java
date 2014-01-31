@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -42,8 +43,8 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GrCastFix.class);
   private PsiType myExpectedType;
 
-  public GrCastFix(PsiType expectedType) {
-    myExpectedType = expectedType;
+  public GrCastFix(PsiType expectedType, GrExpression expression) {
+    myExpectedType = PsiImplUtil.normalizeWildcardTypeByPosition(expectedType, expression);
   }
 
   @Override

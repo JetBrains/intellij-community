@@ -38,6 +38,9 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
  */
 public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
+  // In case of diagonal edges, one node can be at most 3 "arrows" + 2 nodes at the left from another - that is enough for sure
+  private static final int IMAGE_WIDTH_RESERVE = 5 * WIDTH_NODE;
+
   @NotNull private final GraphCellPainter graphPainter;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
@@ -82,7 +85,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
       return;
     }
 
-    int width = calcPaddingBeforeText(cell, (Graphics2D)g);
+    int width = calcPaddingBeforeText(cell, (Graphics2D)g) + IMAGE_WIDTH_RESERVE;
     BufferedImage image = UIUtil.createImage(width, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
 

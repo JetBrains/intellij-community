@@ -26,10 +26,6 @@ import java.lang.reflect.Method;
 public class Bootstrap {
   private static final String PLUGIN_MANAGER = "com.intellij.ide.plugins.PluginManager";
 
-  /** @deprecated use StartupUtil.NO_SPLASH if needed (to remove in 134.x) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public static final String NO_SPLASH = "nosplash";
-
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {

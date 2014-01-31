@@ -129,6 +129,26 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA117311() throws Exception {
+    doTest();
+  }
+
+  public void testDeepWildcardEliminating() throws Exception {
+    doTest();
+  }
+
+  public void _testLambdaExercise() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA118437() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA113297() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

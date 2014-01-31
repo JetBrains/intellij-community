@@ -149,7 +149,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testBooleanValueOf() throws Throwable {
-    checkPreferredItems(0, "b", "valueOf", "valueOf", "Boolean.FALSE", "Boolean.TRUE");
+    checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf");
   }
   
   public void testXmlTagGetAttribute() throws Throwable {
@@ -323,6 +323,21 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferStringsInStringConcatenation() {
     checkPreferredItems 0, 'toString'
+  }
+
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
+  }
+
+  public void testPreferExpectedTypeMembers() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
+    assertPreferredItems 0, 'MyColor.RED', 'Another.RED'
+    assert lookup.items.size() == 2
   }
 
   @Override

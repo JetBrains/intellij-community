@@ -442,7 +442,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   @NotNull
-  public JTextField getNameField() {
+  public JTextField getModuleNameField() {
     return getNameComponent();
   }
 

@@ -773,4 +773,20 @@ public abstract class GroovyRefactoringUtil {
       }
     });
   }
+
+  public static boolean isSpreadAssignment(GrExpression lValue) {
+    if (lValue instanceof GrReferenceExpression) {
+      GrReferenceExpression expression = (GrReferenceExpression)lValue;
+      final PsiElement dot = expression.getDotToken();
+      //noinspection ConstantConditions
+      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
+        return true;
+      }
+      else {
+        final GrExpression qualifier = expression.getQualifierExpression();
+        if (qualifier != null) return isSpreadAssignment(qualifier);
+      }
+    }
+    return false;
+  }
 }

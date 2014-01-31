@@ -42,6 +42,7 @@ public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
 
   @NonNls private static final String VOWELS = "aeiouy";
+  @NonNls private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
   @NonNls private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
   @NonNls private static final Pattern EOL_SPLIT_PATTERN_WITH_EMPTY = Pattern.compile(" *(\r|\n|\r\n) *");
   @NonNls private static final Pattern EOL_SPLIT_DONT_TRIM_PATTERN = Pattern.compile("(\r|\n|\r\n)+");
@@ -2219,6 +2220,11 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String[] splitByLinesDontTrim(@NotNull String string) {
     return EOL_SPLIT_DONT_TRIM_PATTERN.split(string);
+  }
+
+  @NotNull
+  public static String[] splitByLinesKeepSeparators(@NotNull String string) {
+    return EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
 
   @NotNull

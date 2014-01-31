@@ -56,7 +56,7 @@ public class AppUIUtil {
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})
   private static List<Image> getAppIconImages() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    List<Image> images = ContainerUtil.newArrayListWithExpectedSize(3);
+    List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isXWindow) {
       String bigIconUrl = appInfo.getBigIconUrl();

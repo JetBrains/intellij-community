@@ -915,6 +915,10 @@ public class PyUtil {
     return selfName;
   }
 
+  /**
+   *
+   * @return Source roots <strong>and</strong> content roots for element's project
+   */
   @NotNull
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
@@ -924,6 +928,10 @@ public class PyUtil {
     return Collections.emptyList();
   }
 
+  /**
+   *
+   * @return Source roots <strong>and</strong> content roots for module
+   */
   @NotNull
   public static Collection<VirtualFile> getSourceRoots(@NotNull Module module) {
     final Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();

@@ -92,12 +92,10 @@ public class BrowsersConfiguration {
       return myIcon;
     }
 
-
     @Override
     public String toString() {
       return myName;
     }
-
 
     @Override
     public Icon getIcon(@IconFlags int flags) {

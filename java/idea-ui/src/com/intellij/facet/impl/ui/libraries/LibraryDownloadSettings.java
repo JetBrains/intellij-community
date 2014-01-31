@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +46,7 @@ import java.util.Map;
 public class LibraryDownloadSettings {
   private final FrameworkLibraryVersion myVersion;
   private final DownloadableLibraryType myLibraryType;
-  private String myDirectoryForDownloadedLibrariesPath;
+  private String myLibrariesPath;
   private final String myLibraryName;
   private final boolean myDownloadSources;
   private final boolean myDownloadJavaDocs;
@@ -59,13 +61,13 @@ public class LibraryDownloadSettings {
   }
 
   public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion, @Nullable DownloadableLibraryType libraryType,
-                                 @NotNull String directoryForDownloadedLibrariesPath, @NotNull String libraryName,
+                                 @NotNull String librariesPath, @NotNull String libraryName,
                                  @NotNull LibrariesContainer.LibraryLevel libraryLevel,
                                  @NotNull List<? extends DownloadableLibraryFileDescription> selectedDownloads,
                                  boolean downloadSources, boolean downloadJavaDocs) {
     myVersion = libraryVersion;
     myLibraryType = libraryType;
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    myLibrariesPath = librariesPath;
     myLibraryName = libraryName;
     myDownloadSources = downloadSources;
     myDownloadJavaDocs = downloadJavaDocs;
@@ -100,7 +102,7 @@ public class LibraryDownloadSettings {
   }
 
   public String getDirectoryForDownloadedLibrariesPath() {
-    return myDirectoryForDownloadedLibrariesPath;
+    return myLibrariesPath;
   }
 
   public List<? extends DownloadableLibraryFileDescription> getSelectedDownloads() {
@@ -116,12 +118,8 @@ public class LibraryDownloadSettings {
     return myLibraryType;
   }
 
-  public void setDirectoryForDownloadedLibrariesPath(String directoryForDownloadedLibrariesPath) {
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-  }
-
   @Nullable
-  public NewLibraryEditor download(JComponent parent) {
+  public NewLibraryEditor download(JComponent parent, @Nullable String rootPath) {
     final List<DownloadableFileDescription> toDownload = new ArrayList<DownloadableFileDescription>(mySelectedDownloads);
     Map<DownloadableFileDescription, OrderRootType> rootTypes = new HashMap<DownloadableFileDescription, OrderRootType>();
     for (DownloadableLibraryFileDescription description : mySelectedDownloads) {
@@ -137,10 +135,11 @@ public class LibraryDownloadSettings {
       }
     }
 
+    String path = rootPath != null && !FileUtil.isAbsolute(myLibrariesPath) ? new File(rootPath, myLibrariesPath).getPath() : myLibrariesPath;
     List<Pair<VirtualFile,DownloadableFileDescription>> downloaded =
       DownloadableFileService.getInstance()
         .createDownloader(toDownload, myLibraryName + " Library")
-        .downloadWithProgress(myDirectoryForDownloadedLibrariesPath, null, parent);
+        .downloadWithProgress(path, null, parent);
     if (downloaded == null) {
       return null;
     }

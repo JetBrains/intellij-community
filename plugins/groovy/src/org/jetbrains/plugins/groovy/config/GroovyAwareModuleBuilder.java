@@ -95,6 +95,11 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     return getModuleTypeName();
   }
 
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
   @Nullable
   protected MvcFramework getFramework() {
     return null;

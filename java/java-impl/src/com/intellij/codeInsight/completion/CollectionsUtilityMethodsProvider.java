@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +28,6 @@ import static com.intellij.psi.CommonClassNames.*;
 * @author peter
 */
 class CollectionsUtilityMethodsProvider {
-  public static final Key<Boolean> COLLECTION_FACTORY = Key.create("CollectionFactory");
   private final PsiElement myElement;
   private final PsiType myExpectedType;
   private final PsiType myDefaultType;
@@ -95,7 +93,6 @@ class CollectionsUtilityMethodsProvider {
     final JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
     item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType), myElement);
-    item.putUserData(COLLECTION_FACTORY, true);
     myResult.consume(item);
   }
 

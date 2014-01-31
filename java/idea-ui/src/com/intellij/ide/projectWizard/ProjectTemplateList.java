@@ -15,15 +15,18 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +36,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -42,19 +46,17 @@ import java.util.List;
  */
 public class ProjectTemplateList extends JPanel {
 
-  private boolean myNewProject;
+  private static final String PROJECT_WIZARD_TEMPLATE = "project.wizard.template";
+
   private JBList myList;
   private JPanel myPanel;
   private JTextPane myDescriptionPane;
-
-  private ProjectTemplate myFirstProjectType;
-  private ProjectTemplate myFirstArchivedTemplate;
 
   public ProjectTemplateList() {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor<ProjectTemplate>() {
+    GroupedItemsListRenderer renderer = new GroupedItemsListRenderer(new ListItemDescriptor<ProjectTemplate>() {
       @Nullable
       @Override
       public String getTextFor(ProjectTemplate value) {
@@ -75,15 +77,28 @@ public class ProjectTemplateList extends JPanel {
 
       @Override
       public boolean hasSeparatorAboveOf(ProjectTemplate value) {
-        return value == myFirstArchivedTemplate || value == myFirstProjectType;
+        return false;
       }
 
       @Nullable
       @Override
       public String getCaptionAboveOf(ProjectTemplate value) {
-        return value == myFirstArchivedTemplate ? "Ready-To-Use Templates" : "Configurable " + (myNewProject ? "Project" : "Module") + " Types";
+        return null;
       }
-    }));
+    }) {
+
+      @Override
+      protected void customizeComponent(JList list, Object value, boolean isSelected) {
+        super.customizeComponent(list, value, isSelected);
+        Icon icon = myTextLabel.getIcon();
+        if (icon != null && myTextLabel.getDisabledIcon() == icon) {
+          myTextLabel.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        }
+        myTextLabel.setEnabled(myList.isEnabled());
+        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3, 3, 3, 3));
+      }
+    };
+    myList.setCellRenderer(renderer);
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -105,7 +120,7 @@ public class ProjectTemplateList extends JPanel {
     Messages.installHyperlinkSupport(myDescriptionPane);
   }
 
-  public void setTemplates(List<ProjectTemplate> list) {
+  public void setTemplates(List<ProjectTemplate> list, boolean preserveSelection) {
     Collections.sort(list, new Comparator<ProjectTemplate>() {
       @Override
       public int compare(ProjectTemplate o1, ProjectTemplate o2) {
@@ -113,27 +128,48 @@ public class ProjectTemplateList extends JPanel {
       }
     });
 
-    myFirstProjectType = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-      @Override
-      public boolean value(ProjectTemplate template) {
-        return !(template instanceof ArchivedProjectTemplate);
-      }
-    });
-    myFirstArchivedTemplate = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-      @Override
-      public boolean value(ProjectTemplate template) {
-        return template instanceof ArchivedProjectTemplate;
-      }
-    });
-
-    int index = myList.getSelectedIndex();
+    int index = preserveSelection ? myList.getSelectedIndex() : -1;
     //noinspection unchecked
     myList.setModel(new CollectionListModel(list));
     myList.setSelectedIndex(index == -1 ? 0 : index);
   }
 
+  @Nullable
   public ProjectTemplate getSelectedTemplate() {
     return (ProjectTemplate)myList.getSelectedValue();
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    myList.setEnabled(enabled);
+    myDescriptionPane.setEnabled(enabled);
+  }
+
+  void restoreSelection() {
+    final String templateName = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_TEMPLATE);
+    if (templateName != null && myList.getModel() instanceof CollectionListModel) {
+      @SuppressWarnings("unchecked")
+      List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
+      ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
+        @Override
+        public boolean value(ProjectTemplate template) {
+          return templateName.equals(template.getName());
+        }
+      });
+      if (template != null) {
+        myList.setSelectedValue(template, true);
+      }
+    }
+    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        ProjectTemplate template = getSelectedTemplate();
+        if (template != null) {
+          PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_TEMPLATE, template.getName());
+        }
+      }
+    });
   }
 
   public void addListSelectionListener(ListSelectionListener listener) {
@@ -154,9 +190,5 @@ public class ProjectTemplateList extends JPanel {
 
   public void setPaintBusy(boolean b) {
     myList.setPaintBusy(b);
-  }
-
-  public void setNewProject(boolean newProject) {
-    myNewProject = newProject;
   }
 }

@@ -49,11 +49,13 @@ public class KnownElementWeigher extends ProximityWeigher {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
         String methodName = method.getName();
-        if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || "getClass".equals(methodName) ||
-            methodName.startsWith("wait") || methodName.startsWith("notify")) {
+        if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || methodName.startsWith("wait") || methodName.startsWith("notify")) {
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
             return -1;
           }
+        }
+        if (isGetClass(method)) {
+          return -1;
         }
         if ("subSequence".equals(methodName)) {
           if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
@@ -70,6 +72,10 @@ public class KnownElementWeigher extends ProximityWeigher {
       return getJdkClassProximity(((PsiField)element).getContainingClass());
     }
     return 0;
+  }
+
+  public static boolean isGetClass(PsiMethod method) {
+    return "getClass".equals(method.getName()) && method.getParameterList().getParametersCount() <= 0;
   }
 
   private static Comparable getJdkClassProximity(@Nullable PsiClass element) {

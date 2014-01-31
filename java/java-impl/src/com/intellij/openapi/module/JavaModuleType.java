@@ -21,19 +21,16 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
@@ -79,20 +76,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Override
   public Icon getNodeIcon(boolean isOpened) {
     return getJavaModuleNodeIconClosed();
-  }
-
-  @NotNull
-  @Override
-  public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext, @NotNull final JavaModuleBuilder moduleBuilder,
-                                              @NotNull final ModulesProvider modulesProvider) {
-    final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
-    ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
-    if (supportForFrameworksStep != null) {
-      steps.add(supportForFrameworksStep);
-    }
-    final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
-    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
   }
 
   @Nullable

@@ -96,6 +96,12 @@ public class TableModelEditor<T> implements ElementProducer<T> {
             table.requestFocus();
           }
         }
+      }).setEditActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          T item = table.getSelectedObject();
+          return item != null && ((DialogItemEditor<T>)TableModelEditor.this.itemEditor).isEditable(item);
+        }
       });
     }
   }
@@ -121,7 +127,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   public static abstract class ItemEditor<T> {
     /**
-     * Used for "add" and "in place edit" actions.
+     * Used for "copy" and "in place edit" actions.
      *
      * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
      */
@@ -142,6 +148,10 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator);
 
     public abstract void applyEdited(@NotNull T oldItem, @NotNull T newItem);
+
+    public boolean isEditable(@NotNull T item) {
+      return true;
+    }
   }
 
   @NotNull

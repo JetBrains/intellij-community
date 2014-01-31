@@ -20,18 +20,39 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
+ * Panel that handles table with list of class members with selection checkboxes.
+ * @see com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionTable
+ *
  * @author Dennis.Ushakov
  */
 public class PyMemberSelectionPanel extends JPanel {
+  private static final List<PyMemberInfo> EMPTY_MEMBER_INFO = Collections.emptyList();
   private final PyMemberSelectionTable myTable;
 
+
+  /**
+   * Creates empty panel to be filled later by {@link #getTable()}
+   * @param title
+   */
+  public PyMemberSelectionPanel(@NotNull String title) {
+    this(title, EMPTY_MEMBER_INFO, null);
+  }
+
+  /**
+   * Creates panel and fills its table (see {@link #getTable()}) with members info
+   * @param title Title for panel
+   * @param memberInfo list of members
+   * @param model model
+   */
   public PyMemberSelectionPanel(String title, List<PyMemberInfo> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo> model) {
     super();
     Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);

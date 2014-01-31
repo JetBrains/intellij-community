@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,11 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
 
   public T setModifiers(String... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    return (T)this;
+  }
+
+  public T setModifierList(LightModifierList modifierList) {
+    myModifierList = modifierList;
     return (T)this;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -32,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -53,7 +56,13 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
 
   @Override
   protected void checkExpression(@NotNull GrExpression selectedExpr) {
-    selectedExpr.accept(new ConstantChecker(selectedExpr, selectedExpr));
+    GrVariable variable = GrIntroduceHandlerBase.resolveLocalVar(selectedExpr);
+    if (variable != null) {
+      checkVariable(variable);
+    }
+    else {
+      selectedExpr.accept(new ConstantChecker(selectedExpr, selectedExpr));
+    }
   }
 
   @Override
@@ -102,6 +111,31 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     }
 
     return new GrInplaceConstantIntroducer(contextRef.get(), choice);
+  }
+
+  @NotNull
+  @Override
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+    HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
+
+    GrVariable localVar = resolveLocalVar(context);
+    if (localVar != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(context.getOccurrences()));
+      return map;
+    }
+
+    if (context.getExpression() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getExpression()));
+    }
+    else if (context.getStringPart() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+    }
+
+    PsiElement[] occurrences = context.getOccurrences();
+    if (occurrences.length > 1) {
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(occurrences));
+    }
+    return map;
   }
 
   private static class ConstantChecker extends GroovyRecursiveElementVisitor {

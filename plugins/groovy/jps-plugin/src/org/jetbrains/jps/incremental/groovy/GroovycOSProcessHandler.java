@@ -65,7 +65,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
       return;
     }
 
-    if (outputType == ProcessOutputTypes.STDERR) {
+    if (outputType == ProcessOutputTypes.STDERR && !text.startsWith("Picked up JAVA_TOOL_OPTIONS")) {
       stdErr.append(StringUtil.convertLineSeparators(text));
       return;
     }

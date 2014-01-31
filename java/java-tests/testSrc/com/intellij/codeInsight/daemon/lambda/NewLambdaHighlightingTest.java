@@ -95,6 +95,22 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRecursiveCalls() throws Exception {
+    doTest();
+  }
+
+  public void testGroundTargetTypeForImplicitLambdas() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintsReduceOrder() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintSubstitution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

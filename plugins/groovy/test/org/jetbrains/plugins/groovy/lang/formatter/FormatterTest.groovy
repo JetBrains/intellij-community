@@ -768,6 +768,8 @@ def foo() {
 
   void testRegexExpressions() { doTest() }
 
+  void testSpreadArg() { doTest() }
+
   void testLabelWithDescription() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)

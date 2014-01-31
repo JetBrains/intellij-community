@@ -40,6 +40,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final boolean myDeserializeInstance;
   private ComponentAdapter myDelegate;
   private Class myImplementationClass;
+  private boolean myNotificationSent = false;
 
   public ExtensionComponentAdapter(@NotNull String implementationClass,
                                    Element extensionElement,
@@ -181,5 +182,13 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   @Override
   public String getAssignableToClassName() {
     return myImplementationClassName;
+  }
+
+  public boolean isNotificationSent() {
+    return myNotificationSent;
+  }
+
+  public void setNotificationSent(boolean notificationSent) {
+    myNotificationSent = notificationSent;
   }
 }

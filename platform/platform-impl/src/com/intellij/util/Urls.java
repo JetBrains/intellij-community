@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -165,7 +165,7 @@ public final class Urls {
     }
   }
 
-  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull List<Url> urls) {
+  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls) {
     for (Url otherUrl : urls) {
       if (url.equalsIgnoreParameters(otherUrl)) {
         return true;

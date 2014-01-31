@@ -176,7 +176,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
-    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithExpectedSize(current.length + toAdd.size());
+    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithCapacity(current.length + toAdd.size());
     for (FSRecords.NameId nameId : current) {
       childrenIds.add(nameId.id);
       nameIds.add(nameId);

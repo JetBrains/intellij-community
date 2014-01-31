@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       final GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
       final GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
-      final Collection<Component> buttons = ContainerUtil.newArrayListWithExpectedSize(5);
+      final Collection<Component> buttons = ContainerUtil.newArrayListWithCapacity(5);
       final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
 
       if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {

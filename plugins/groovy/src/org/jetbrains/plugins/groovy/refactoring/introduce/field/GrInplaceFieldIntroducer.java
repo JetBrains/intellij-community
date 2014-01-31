@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -38,6 +41,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 /**
@@ -49,20 +53,46 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final GrFinalListener finalListener;
   private String[] mySuggestedNames;
   private boolean myIsStatic;
-
-  @Nullable
-  @Override
-  protected PsiElement checkLocalScope() {
-    return ((PsiField)getVariable()).getContainingClass();
-  }
+  private final GrVariable myLocalVar;
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
     super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
 
     finalListener = new GrFinalListener(myEditor);
 
-    mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    myLocalVar = GrIntroduceHandlerBase.resolveLocalVar(context);
+    if (myLocalVar != null) {
+      //myLocalVariable = myLocalVar;
+      ArrayList<String> result = ContainerUtil.newArrayList(myLocalVar.getName());
+
+      GrExpression initializer = myLocalVar.getInitializerGroovy();
+      if (initializer != null) {
+        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
+      }
+      mySuggestedNames = ArrayUtil.toStringArray(result);
+    }
+    else {
+      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    }
     myApplicablePlaces = getApplicableInitPlaces();
+  }
+
+  @Nullable
+  @Override
+  protected PsiElement checkLocalScope() {
+    final GrVariable variable = getVariable();
+    if (variable instanceof PsiField) {
+      return ((PsiField)getVariable()).getContainingClass();
+    }
+    else {
+      final PsiFile file = variable.getContainingFile();
+      if (file instanceof GroovyFile) {
+        return ((GroovyFile)file).getScriptClass();
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   @Override
@@ -117,7 +147,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       @Override
       public boolean removeLocalVar() {
-        return context.getVar() != null;
+        return myLocalVar != null;
       }
 
       @Nullable
@@ -170,7 +200,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       @Override
       public boolean removeLocalVar() {
-        return false;
+        return myLocalVar != null;
       }
 
       @Nullable

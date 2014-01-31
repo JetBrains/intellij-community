@@ -21,6 +21,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.Collection;
 
@@ -28,22 +31,29 @@ import java.util.Collection;
  * @author Dennis.Ushakov
  */
 public abstract class PyClassRefactoringTest extends PyTestCase {
-  protected PyElement findMember(String className, String memberName) {
-    if (!memberName.contains(".")) return findClass(memberName);
-    return findMethod(className, memberName.substring(1));
+  /**
+   * @param className  class where member should be found
+   * @param memberName member that starts with dot (<code>.</code>) is treated as method.
+   *                   It is treated parent class otherwise
+   * @return member or null if not found
+   */
+  @NotNull
+  protected PyElement findMember(@NotNull String className, @NotNull String memberName) {
+    boolean findMethod = memberName.contains(".");
+    PyElement result = (findMethod ? findMethod(className, memberName.substring(1)) : findClass(memberName));
+    Assert.assertNotNull(String.format("No member %s found in class %s", memberName, className), result);
+    return result;
   }
 
   private PyFunction findMethod(final String className, final String name) {
     final PyClass clazz = findClass(className);
-    final PyFunction method = clazz.findMethodByName(name, false);
-    assertNotNull(method);
-    return method;
+    return clazz.findMethodByName(name, false);
   }
 
   protected PyClass findClass(final String name) {
     final Project project = myFixture.getProject();
     final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
-    assertEquals(1, classes.size());
+    Assert.assertThat(String.format("Expected one class named %s", name), classes, Matchers.hasSize(1));
     return classes.iterator().next();
   }
 }

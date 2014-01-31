@@ -150,9 +150,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newArrayList(iterable);
   }
 
-  @NotNull
+  /** @deprecated Use {@link #newArrayListWithCapacity(int)} (to remove in IDEA 15) */
+  @SuppressWarnings("deprecation")
   public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return ContainerUtilRt.newArrayListWithExpectedSize(size);
+    return ContainerUtilRt.newArrayListWithCapacity(size);
   }
 
   @NotNull

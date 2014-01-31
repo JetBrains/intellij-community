@@ -248,11 +248,15 @@ public class HtmlParsing {
         if (isOptionalTagEnd) {
           boolean foundMatch = childTerminatesParentInStack(childName, true);
           if (foundMatch) {
-            myTagMarkersStack.pop();
-            myTagNamesStack.pop();
+            // allow only one promotion per tag, otherwise last row in table
+            // will make it up to the first one moving all tags in between under first node
+            if (!canTerminate(childName, tagName)) {
+              myTagMarkersStack.pop();
+              myTagNamesStack.pop();
 
-            myTagMarkersStack.push(childMarker);
-            myTagNamesStack.push(childName);
+              myTagMarkersStack.push(childMarker);
+              myTagNamesStack.push(childName);
+            }
 
             tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
             return true;
@@ -378,9 +382,7 @@ public class HtmlParsing {
   }
 
   private static boolean canTerminate(final String childTagName,final String tagName) {
-    // TODO: make hash
-    return !(tagName.equalsIgnoreCase(TR_TAG) && childTagName.equalsIgnoreCase(TD_TAG)) ||
-           tagName.equalsIgnoreCase(TABLE_TAG) && childTagName.equalsIgnoreCase(TR_TAG);
+    return childTagName.equals(tagName) || HtmlUtil.canTerminate(childTagName, tagName);
   }
 
   private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
@@ -395,7 +397,7 @@ public class HtmlParsing {
         return false;
       }
 
-      if (childName.equals(parentName)) {
+      if (canTerminate(childName, parentName)) {
         return true;
       }
     }

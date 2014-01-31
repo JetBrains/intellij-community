@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,6 +87,7 @@ public class GrIntroduceFieldProcessor {
 
     if (mySettings.removeLocalVar()) {
       myLocalVariable = GrIntroduceHandlerBase.resolveLocalVar(myContext);
+      assert myLocalVariable != null : myContext.getExpression() + ", " + myContext.getVar() + ", " + myContext.getStringPart();
     }
     myInitializer = (GrExpression)getInitializer().copy();
 
@@ -392,13 +395,15 @@ public class GrIntroduceFieldProcessor {
       return extractVarInitializer();
     }
 
-
-    final GrExpression expression = myContext.getExpression();
+    GrExpression expression = myContext.getExpression();
+    StringPartInfo stringPart = myContext.getStringPart();
     if (expression != null) {
       return expression;
     }
+    else if (stringPart != null) {
+      return GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPart, myContext.getProject());
+    }
 
-
-    return GrIntroduceHandlerBase.generateExpressionFromStringPart(myContext.getStringPart(), myContext.getProject());
+    throw new IncorrectOperationException("cannot be here!");
   }
 }

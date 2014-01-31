@@ -59,64 +59,64 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   @Override
   public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
     assertMyFile(elt);
-    return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
+    return createAnnotation(HighlightSeverity.ERROR, elt.getTextRange(), message);
   }
 
   @Override
   public Annotation createErrorAnnotation(@NotNull ASTNode node, String message) {
     assertMyFile(node.getPsi());
-    return createAnnotation(node.getTextRange(), HighlightSeverity.ERROR, message);
+    return createAnnotation(HighlightSeverity.ERROR, node.getTextRange(), message);
   }
 
   @Override
   public Annotation createErrorAnnotation(@NotNull TextRange range, String message) {
-    return createAnnotation(range, HighlightSeverity.ERROR, message);
+    return createAnnotation(HighlightSeverity.ERROR, range, message);
   }
 
   @Override
   public Annotation createWarningAnnotation(@NotNull PsiElement elt, String message) {
     assertMyFile(elt);
-    return createAnnotation(elt.getTextRange(), HighlightSeverity.WARNING, message);
+    return createAnnotation(HighlightSeverity.WARNING, elt.getTextRange(), message);
   }
 
   @Override
   public Annotation createWarningAnnotation(@NotNull ASTNode node, String message) {
     assertMyFile(node.getPsi());
-    return createAnnotation(node.getTextRange(), HighlightSeverity.WARNING, message);
+    return createAnnotation(HighlightSeverity.WARNING, node.getTextRange(), message);
   }
 
   @Override
   public Annotation createWarningAnnotation(@NotNull TextRange range, String message) {
-    return createAnnotation(range, HighlightSeverity.WARNING, message);
+    return createAnnotation(HighlightSeverity.WARNING, range, message);
   }
 
   @Override
   public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
     assertMyFile(elt);
-    return createAnnotation(elt.getTextRange(), HighlightSeverity.WEAK_WARNING, message);
+    return createAnnotation(HighlightSeverity.WEAK_WARNING, elt.getTextRange(), message);
   }
 
   @Override
   public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message) {
     assertMyFile(node.getPsi());
-    return createAnnotation(node.getTextRange(), HighlightSeverity.WEAK_WARNING, message);
+    return createAnnotation(HighlightSeverity.WEAK_WARNING, node.getTextRange(), message);
   }
 
   @Override
   public Annotation createWeakWarningAnnotation(@NotNull TextRange range, String message) {
-    return createAnnotation(range, HighlightSeverity.WEAK_WARNING, message);
+    return createAnnotation(HighlightSeverity.WEAK_WARNING, range, message);
   }
 
   @Override
   public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {
     assertMyFile(elt);
-    return createAnnotation(elt.getTextRange(), HighlightSeverity.INFORMATION, message);
+    return createAnnotation(HighlightSeverity.INFORMATION, elt.getTextRange(), message);
   }
 
   @Override
   public Annotation createInfoAnnotation(@NotNull ASTNode node, String message) {
     assertMyFile(node.getPsi());
-    return createAnnotation(node.getTextRange(), HighlightSeverity.INFORMATION, message);
+    return createAnnotation(HighlightSeverity.INFORMATION, node.getTextRange(), message);
   }
 
   private void assertMyFile(PsiElement node) {
@@ -135,10 +135,11 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @Override
   public Annotation createInfoAnnotation(@NotNull TextRange range, String message) {
-    return createAnnotation(range, HighlightSeverity.INFORMATION, message);
+    return createAnnotation(HighlightSeverity.INFORMATION, range, message);
   }
 
-  protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, @Nullable String message) {
+  @Override
+  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message) {
     //noinspection HardCodedStringLiteral
     //TODO: FIXME
     @NonNls

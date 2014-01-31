@@ -20,6 +20,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,10 +65,16 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
       return;
     }
     RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
-    prepare(project, env, state, new RunProfileStarterConsumer() {
+    final AsyncResult<RunProfileStarter> result = prepare(project, env, state);
+    result.doWhenProcessed(new Runnable() {
       @Override
-      public void consume(@NotNull RunProfileStarter starter) {
-        startRunProfile(project, env, state, callback, starter);
+      public void run() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            startRunProfile(project, env, state, callback, result.getResult());
+          }
+        });
       }
     });
   }
@@ -74,27 +82,22 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
   /**
    * Makes all the needed preparations for the further execution. Although this method is called in EDT,
    * these preparations can be performed in a background thread. <p/>
-   * Once the preparations are done, {@code consumer.consume(RunProfileStarter)} should be called in EDT to start actual execution.
    *
    * @param project Project instance
    * @param env ExecutionEnvironment instance
    * @param state RunProfileState instance
-   * @param consumer RunProfileStarterConsumer instance; if no further actual execution is needed, then {@code consumer.consume} method shouldn't be called.
+   * @return RunProfileStarter async result
    */
-  protected abstract void prepare(@NotNull Project project,
-                                  @NotNull ExecutionEnvironment env,
-                                  @NotNull RunProfileState state,
-                                  @NotNull RunProfileStarterConsumer consumer) throws ExecutionException;
-
-  public interface RunProfileStarterConsumer {
-    void consume(@NotNull RunProfileStarter provider);
-  }
+  @NotNull
+  protected abstract AsyncResult<RunProfileStarter> prepare(@NotNull Project project,
+                                                            @NotNull ExecutionEnvironment env,
+                                                            @NotNull RunProfileState state) throws ExecutionException;
 
   private static void startRunProfile(@NotNull Project project,
                                       @NotNull ExecutionEnvironment environment,
                                       @NotNull RunProfileState state,
                                       @Nullable final Callback callback,
-                                      @NotNull final RunProfileStarter starter) {
+                                      @Nullable final RunProfileStarter starter) {
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override
       public RunContentDescriptor execute(@NotNull Project project,
@@ -102,7 +105,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-        RunContentDescriptor descriptor = starter.execute(project, executor, state, contentToReuse, env);
+        RunContentDescriptor descriptor = starter == null ? null : starter.execute(project, executor, state, contentToReuse, env);
         if (descriptor != null) {
           descriptor.setExecutionId(env.getExecutionId());
         }

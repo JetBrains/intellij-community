@@ -28,6 +28,7 @@ public interface XDebuggerActions {
 
   @NonNls String STEP_OVER = "StepOver";
   @NonNls String STEP_INTO = "StepInto";
+  @NonNls String SMART_STEP_INTO = "SmartStepInto";
   @NonNls String FORCE_STEP_INTO = "ForceStepInto";
   @NonNls String STEP_OUT = "StepOut";
 

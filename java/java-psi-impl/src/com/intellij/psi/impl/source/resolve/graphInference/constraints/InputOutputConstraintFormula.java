@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
       if (LambdaHighlightingUtil.checkInterfaceFunctional(type) == null) {
         final PsiType functionType =
           psiExpression instanceof PsiLambdaExpression
-          ? FunctionalInterfaceParameterizationUtil.getFunctionalType(type, (PsiLambdaExpression)psiExpression)
+          ? FunctionalInterfaceParameterizationUtil.getGroundTargetType(type, (PsiLambdaExpression)psiExpression, true)
           : type;
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);

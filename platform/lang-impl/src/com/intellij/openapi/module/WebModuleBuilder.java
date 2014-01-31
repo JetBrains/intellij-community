@@ -62,6 +62,16 @@ public class WebModuleBuilder extends ModuleBuilder {
   }
 
   @Override
+  public String getPresentableName() {
+    return getGroupName();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
+  @Override
   public String getGroupName() {
     return GROUP_NAME;
   }

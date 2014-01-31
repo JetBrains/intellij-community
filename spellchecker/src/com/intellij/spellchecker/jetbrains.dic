@@ -43,6 +43,7 @@ breakpoints
 btree
 buffered
 buffering
+buildable
 builtin
 bzip
 calc
@@ -138,6 +139,7 @@ filesystems
 finalizer
 finalizers
 firefox
+fixme
 foreach
 formatter
 freelist
@@ -246,6 +248,7 @@ lucene
 lvalue
 lvalues
 macrodef
+makefile
 maxdatafiles
 maxextents
 maximizable
@@ -529,6 +532,7 @@ todo
 toggleable
 tokenize
 tokenizer
+toolchain
 tooltip
 tooltips
 toplink

@@ -929,9 +929,16 @@ public class AbstractPopup implements JBPopup {
             return;
           }
 
-          if (ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus && prevOwner != null && 
+          if (ourXWindowIDEA94683FocusBug && !myRequestFocus && prevOwner != null &&
               Registry.is("actionSystem.xWindow.remove.focus.from.nonFocusable.popups")) {
-            IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
+            new Alarm().addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (isFocused()) {
+                  IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
+                }
+              }
+            }, Registry.intValue("actionSystem.xWindow.remove.focus.from.nonFocusable.popups.delay"));
           }
 
           afterShow.run();

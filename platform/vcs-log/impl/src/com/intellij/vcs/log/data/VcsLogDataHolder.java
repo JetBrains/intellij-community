@@ -298,7 +298,8 @@ public class VcsLogDataHolder implements Disposable {
     }, "Loading log structure...");
   }
 
-  private List<CompactCommit> compactHashes(List<TimedVcsCommit> commits) {
+  @NotNull
+  private List<CompactCommit> compactHashes(@NotNull List<? extends TimedVcsCommit> commits) {
     List<CompactCommit> compactedHashes = ContainerUtil.map(commits, new Function<TimedVcsCommit, CompactCommit>() {
       @Override
       public CompactCommit fun(final TimedVcsCommit commit) {
@@ -340,7 +341,7 @@ public class VcsLogDataHolder implements Disposable {
 //          throw new RuntimeException(e);
 //        }
 
-        List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
+        List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
         DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator, myHashGetter, myIndexGetter);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
@@ -355,7 +356,7 @@ public class VcsLogDataHolder implements Disposable {
     }, "Building full log...");
   }
 
-  private List<? extends GraphCommit> convertToGraphCommits(List<TimedVcsCommit> log) {
+  private List<? extends GraphCommit> convertToGraphCommits(List<? extends TimedVcsCommit> log) {
     return compactHashes(log);
   }
 
@@ -396,10 +397,10 @@ public class VcsLogDataHolder implements Disposable {
       refsByRoot.put(root, info.newRefs);
     }
 
-    List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
-    List<TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
+    List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+    List<? extends TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
 
-    List<TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
+    List<? extends TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
     DataPack dataPack = DataPack.build(convertToGraphCommits(logToBuild), collectAllRefs(refsByRoot), indicator,
                                        myHashGetter, myIndexGetter);
 
@@ -431,7 +432,7 @@ public class VcsLogDataHolder implements Disposable {
       refsByRoot.put(root, info.newRefs);
     }
 
-    List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+    List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
 
     // even if the full log was already loaded (and possibly presented to the user),
     // build only the data that was retrieved from the VCS:
@@ -511,7 +512,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         }
 
-        final List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
+        final List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
 
         final List<VcsFullCommitDetails> list = ContainerUtil.mapNotNull(compoundLog, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
           @Override
@@ -768,12 +769,12 @@ public class VcsLogDataHolder implements Disposable {
   private static class LogData {
     @NotNull private final Map<VirtualFile, List<? extends TimedVcsCommit>> myLogsByRoot;
     @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefsByRoot;
-    @NotNull private final List<TimedVcsCommit> myCompoundTopCommits;
+    @NotNull private final List<? extends TimedVcsCommit> myCompoundTopCommits;
     @NotNull private final DataPack myDataPack;
     private final boolean myFullLog;
 
     private LogData(@NotNull Map<VirtualFile, List<? extends TimedVcsCommit>> logsByRoot,
-                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull List<TimedVcsCommit> compoundTopCommits,
+                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull List<? extends TimedVcsCommit> compoundTopCommits,
                     @NotNull DataPack dataPack, boolean fullLog) {
       myLogsByRoot = logsByRoot;
       myRefsByRoot = refsByRoot;
@@ -825,7 +826,7 @@ public class VcsLogDataHolder implements Disposable {
     }
 
     @NotNull
-    public List<TimedVcsCommit> getTopCommits() {
+    public List<? extends TimedVcsCommit> getTopCommits() {
       return myCompoundTopCommits;
     }
   }

@@ -228,7 +228,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                   final Collection<Key> oldKeys = myInputsIndex.get(inputId);
                   return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
                 }
-              }, content);
+              });
             } catch (StorageException ex) {
               exRef.set(ex);
             }
@@ -248,8 +248,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   protected void updateWithMap(final int inputId,
                                @NotNull Map<Key, Value> newData,
-                               @NotNull Callable<Collection<Key>> oldKeysGetter,
-                               Input input) throws StorageException {
+                               @NotNull Callable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
       try {

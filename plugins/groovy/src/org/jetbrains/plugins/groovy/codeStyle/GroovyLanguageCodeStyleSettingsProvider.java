@@ -166,7 +166,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_AROUND_ADDITIVE_OPERATORS",
                                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                                    "SPACE_AROUND_SHIFT_OPERATORS",
-                                   "SPACE_AROUND_UNARY_OPERATOR",
+                                   //"SPACE_AROUND_UNARY_OPERATOR",
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
                                    "SPACE_BEFORE_COMMA",
@@ -224,6 +224,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_WITHIN_ANNOTATION_PARENTHESES"
       );
       consumer.renameStandardOption("SPACE_AROUND_RELATIONAL_OPERATORS", "Relational operators (<, >, <=, >=, <=>)");
+      consumer.renameStandardOption("SPACE_AROUND_UNARY_OPERATOR", "Unary operators (!, -, +, ++, --, *)");
 
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP", "List and maps literals", CodeStyleSettingsCustomizable.SPACES_WITHIN);

@@ -34,6 +34,8 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +68,15 @@ public class CustomizeContextViewAction extends DebuggerAction{
 
       public String getHelpTopic() {
         return null;
+      }
+
+      @Override
+      protected void createConfigurableTabs() {
+        for (Configurable configurable : getConfigurables()) {
+          JComponent component = configurable.createComponent();
+          component.setBorder(new EmptyBorder(8,8,8,8));
+          myTabbedPane.addTab(configurable.getDisplayName(), component);
+        }
       }
     };
 

@@ -160,6 +160,10 @@ public class AsyncResult<T> extends ActionCallback {
     return REJECTED;
   }
 
+  public static <R> AsyncResult<R> done(@NotNull R result) {
+    return new AsyncResult<R>().setDone(result);
+  }
+
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
   private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Consumer<Result> {
     private final AsyncSubResult subResult;

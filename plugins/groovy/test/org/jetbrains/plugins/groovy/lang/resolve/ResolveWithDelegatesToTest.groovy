@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -651,6 +651,34 @@ foo([1:'ab', 2:'cde']) {
   sub<caret>string(1)
 }
 ''', 'String')
+  }
+
+  void testDelegateAndDelegatesTo() {
+    assertScript('''
+import groovy.transform.CompileStatic
+
+class Subject {
+    List list = []
+
+    void withList(@DelegatesTo(List) Closure<?> closure) {
+        list.with(closure)
+    }
+}
+
+class Wrapper {
+    @Delegate(parameterAnnotations = true)
+    Subject subject = new Subject()
+}
+
+@CompileStatic
+def staticOnWrapper() {
+    def wrapper = new Wrapper()
+    wrapper.withList {
+        ad<caret>d(1)
+    }
+    assert wrapper.list == [1]
+}
+''', 'List')
   }
 
 
