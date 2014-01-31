@@ -60,7 +60,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       return true;
     }
 
-    constraints.add(new SubtypingConstraint(myT, myS, true));
+    constraints.add(new StrictSubtypingConstraint(myT, myS));
     return true;
   }
 

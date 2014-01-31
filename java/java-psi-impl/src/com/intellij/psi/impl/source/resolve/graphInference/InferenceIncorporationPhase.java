@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
-import com.intellij.psi.impl.source.resolve.graphInference.constraints.SubtypingConstraint;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 
 import java.util.List;
@@ -145,7 +145,7 @@ public class InferenceIncorporationPhase {
       if (upperBound == null) continue;
       for (PsiType eqBound : eqBounds) {
         if (!upperBound.equals(eqBound) && !upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          addConstraint(new SubtypingConstraint(upperBound, eqBound, true));
+          addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
         }
       }
     }
@@ -159,7 +159,7 @@ public class InferenceIncorporationPhase {
       if (upperBound == null) continue;
       for (PsiType lowerBound : lowerBounds) {
         if (!upperBound.equals(lowerBound)) {
-          addConstraint(new SubtypingConstraint(upperBound, lowerBound, true));
+          addConstraint(new StrictSubtypingConstraint(upperBound, lowerBound));
         }
       }
     }

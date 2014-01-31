@@ -205,7 +205,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
     if (qualifierClass != null) {
       session.initBounds(qualifierClass.getTypeParameters());
-      constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
+      constraints.add(new StrictSubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType()))));
     }
   }
 
