@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,10 +147,12 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
   }
 
   /**
-   * Trust manager that supports addition of new certificates (most likely self-signed) to underlying physical
-   * key store.
+   * Trust manager that supports modifications of underlying physical key store.
+   * It can also notify clients about such modifications, see {@link #addListener(CertificateListener)}.
+   *
+   * @see com.intellij.util.net.ssl.CertificateListener
    */
-  static class MutableTrustManager extends ClientOnlyTrustManager {
+  public static class MutableTrustManager extends ClientOnlyTrustManager {
     private final String myPath;
     private final String myPassword;
     private final TrustManagerFactory myFactory;
@@ -159,6 +162,8 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     private final Lock myWriteLock = myLock.writeLock();
     // reloaded after each modification
     private X509TrustManager myTrustManager;
+
+    private final EventDispatcher<CertificateListener> myDispatcher = EventDispatcher.create(CertificateListener.class);
 
     private MutableTrustManager(@NotNull String path, @NotNull String password) {
       myPath = path;
@@ -231,6 +236,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         flushKeyStore();
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
+        myDispatcher.getMulticaster().certificateAdded(certificate);
         return true;
       }
       catch (Exception e) {
@@ -279,10 +285,13 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         if (isBroken()) {
           return false;
         }
+        // for listeners
+        X509Certificate certificate = getCertificate(alias);
         myKeyStore.deleteEntry(alias);
         flushKeyStore();
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
+        myDispatcher.getMulticaster().certificateRemoved(certificate);
         return true;
       }
       catch (Exception e) {
@@ -365,6 +374,10 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       finally {
         myReadLock.unlock();
       }
+    }
+
+    public void addListener(@NotNull CertificateListener listener) {
+      myDispatcher.addListener(listener);
     }
 
     // Guarded by caller's lock

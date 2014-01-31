@@ -23,6 +23,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
 /**
  * @author Mikhail Golubev
  */
-public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
   private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR = new FileTypeDescriptor("Choose Certificate", ".crt", ".cer", ".pem");
 
   private JPanel myRootPanel;
@@ -45,7 +46,14 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   private MutableTrustManager myTrustManager;
 
   public CertificateConfigurable() {
+
+    // not fully functional by now
+    myCheckHostname.setVisible(false);
+    myCheckValidityPeriod.setVisible(false);
+
     myTrustManager = CertificatesManager.getInstance().getCustomTrustManager();
+    // show newly added certificates
+    myTrustManager.addListener(this);
 
     myCertificatesList = new JBList();
     myCertificatesList.getEmptyText().setText("No certificates");
@@ -58,10 +66,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         setText(new CertificateWrapper(certificate).getSubjectField(COMMON_NAME));
       }
     });
-    // fill lower panel with cards
-    for (X509Certificate certificate : myTrustManager.getCertificates()) {
-      addCertificatePanel(certificate);
-    }
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCertificatesList).disableUpDownActions();
     decorator.setVisibleRowCount(5);
@@ -74,13 +78,16 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
           public void consume(VirtualFile file) {
             String path = file.getPath();
             X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
-            if (certificate != null) {
+            if (certificate == null) {
+              Messages.showErrorDialog(myRootPanel, "Malformed X509 server certificate", "Not Imported");
+            }
+            else if (getCertificates().contains(certificate)) {
+              Messages.showWarningDialog(myRootPanel, "Certificate already exists", "Not Imported");
+            }
+            else {
               getListModel().add(certificate);
               addCertificatePanel(certificate);
               myCertificatesList.setSelectedValue(certificate, true);
-            }
-            else {
-              Messages.showErrorDialog(myRootPanel, "Cannot Load Certificate", "Possibly malformed X509 server certificate " + path);
             }
           }
         });
@@ -90,8 +97,12 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       public void run(AnActionButton button) {
         // allow to delete several certificates at once
         CollectionListModel<X509Certificate> model = getListModel();
+        // In JDK 1.7 getSelectedValuesList can be used instead
+        List<X509Certificate> selected = new ArrayList<X509Certificate>();
         for (int i : myCertificatesList.getSelectedIndices()) {
-          X509Certificate certificate = (X509Certificate)myCertificatesList.getModel().getElementAt(i);
+          selected.add((X509Certificate)myCertificatesList.getModel().getElementAt(i));
+        }
+        for (X509Certificate certificate : selected) {
           model.remove(certificate);
         }
         if (getListModel().getSize() > 0) {
@@ -103,33 +114,13 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       }
     });
 
-    /*
-    decorator.addExtraAction(new AnActionButton("View details", AllIcons.General.Information) {
-      @Override
-      public boolean isEnabled() {
-        return getSelectedCertificate() != null;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        DialogBuilder dialog = new DialogBuilder(myRootPanel);
-        dialog.setTitle("Certificate Details");
-        dialog.setCenterPanel(new CertificateInfoPanel(getSelectedCertificate()).getPanel());
-        // Only OK action is available
-        dialog.setActionDescriptors(new DialogBuilder.ActionDescriptor[]{new DialogBuilder.OkActionDescriptor()});
-        dialog.show();
-      }
-    });
-    */
     myCertificatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         X509Certificate certificate = getSelectedCertificate();
         if (certificate != null) {
-          String uniqueName = certificate.getSubjectX500Principal().getName();
+          String uniqueName = getCardName(certificate);
           ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, uniqueName);
-          //mySplitter.doLayout();
-          //mySplitter.repaint();
         }
       }
     });
@@ -137,12 +128,16 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   }
 
   private void addCertificatePanel(X509Certificate certificate) {
-    String uniqueName = certificate.getSubjectX500Principal().getName();
+    String uniqueName = getCardName(certificate);
     JPanel infoPanel = new CertificateInfoPanel(certificate);
     UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS);
     JBScrollPane scrollPane = new JBScrollPane(infoPanel);
     //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myDetailsPanel.add(scrollPane, uniqueName);
+  }
+
+  private String getCardName(X509Certificate certificate) {
+    return certificate.getSubjectX500Principal().getName();
   }
 
   private CollectionListModel<X509Certificate> getListModel() {
@@ -242,6 +237,13 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   public void reset() {
     //noinspection unchecked
     myCertificatesList.setModel(new CollectionListModel<X509Certificate>(myTrustManager.getCertificates()));
+    // fill lower panel with cards
+    for (X509Certificate certificate : getCertificates()) {
+      addCertificatePanel(certificate);
+    }
+    if (!getCertificates().isEmpty()) {
+      myCertificatesList.setSelectedIndex(0);
+    }
     CertificatesManager.Config state = CertificatesManager.getInstance().getState();
     myCheckHostname.setSelected(state.checkHostname);
     myCheckValidityPeriod.setSelected(state.checkValidity);
@@ -249,6 +251,17 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public void disposeUIResources() {
+    // do nothing
+  }
 
+  @Override
+  public void certificateAdded(X509Certificate certificate) {
+    getListModel().add(certificate);
+    addCertificatePanel(certificate);
+  }
+
+  @Override
+  public void certificateRemoved(X509Certificate certificate) {
+    getListModel().remove(certificate);
   }
 }
