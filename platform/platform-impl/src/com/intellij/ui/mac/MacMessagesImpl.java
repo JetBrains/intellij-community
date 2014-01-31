@@ -15,9 +15,11 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -331,6 +335,9 @@ public class MacMessagesImpl extends MacMessages {
           method.invoke(theQueue, event);
         }
       }
+      catch (MacMessageException mme) {
+        throw mme;
+      }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -423,7 +430,9 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     private ID getParamsAsID() {
-      LOG.assertTrue(window != null, "Native window must be set first.");
+      if (window == null) {
+        throw new RuntimeException("Window should be in th list.");
+      }
       params.put(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow, window);
 
       ID paramsAsID = null;
@@ -571,7 +580,7 @@ public class MacMessagesImpl extends MacMessages {
   }
 
   //title, message, errorStyle, window, paramsArray, doNotAskDialogOption, "showVariableButtonsSheet:"
-  private static Window showDialog(@Nullable Window window, final String methodName, DialogParamsWrapper paramsWrapper) {
+  private static Window showDialog(@Nullable Window window, final String methodName, final DialogParamsWrapper paramsWrapper) {
 
     final Window foremostWindow = getForemostWindow(window);
 
@@ -583,6 +592,19 @@ public class MacMessagesImpl extends MacMessages {
 
     final ID paramsArray = paramsWrapper.getParamsAsID();
 
+    foremostWindow.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        super.windowClosed(e);
+        //if (blockedDocumentRoots.get(documentRoot) != null) {
+        //   LOG.assertTrue(blockedDocumentRoots.get(documentRoot) < 2);
+        //}
+        queuesFromDocumentRoot.remove(documentRoot);
+        if (blockedDocumentRoots.remove(documentRoot) != null) {
+          throw new MacMessageException("Owner window has been removed");
+        }
+      }
+    });
 
     final ID delegate = invoke(invoke(getObjcClass("NSAlertDelegate_"), "alloc"), "init");
 
@@ -710,9 +732,10 @@ public class MacMessagesImpl extends MacMessages {
       }
     }
 
-    //Actually can, but not in this implementation. If you know a reasonable scenario, please ask Denis Fokin for the improvement.
-    if (SystemInfo.isAppleJvm) {
-      LOG.assertTrue(MacUtil.getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    if (SystemInfo.isAppleJvm && MacUtil.getWindowTitle(_window) == null) {
+      // With Apple JDK we cannot find a window if it does not have a title
+      // Let's show a dialog instead of the message.
+      throw new MacMessageException("MacMessage parent does not have a title.");
     }
     while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();
