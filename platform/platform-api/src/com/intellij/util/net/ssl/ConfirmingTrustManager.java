@@ -254,7 +254,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     private static String createAlias(@NotNull X509Certificate certificate) {
-      return certificate.getIssuerX500Principal().getName();
+      return new CertificateWrapper(certificate).getSubjectField(CertificateWrapper.CommonField.COMMON_NAME);
     }
 
     /**
