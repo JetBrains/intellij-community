@@ -89,7 +89,7 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Branches");
-    List<String> branchNamesList = new ArrayList<String>(myRepository.getBranches().keySet());
+    List<String> branchNamesList = new ArrayList<String>(myRepository.getOpenedBranches());//only opened branches have to be shown
     Collections.sort(branchNamesList);
     for (String branch : branchNamesList) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
