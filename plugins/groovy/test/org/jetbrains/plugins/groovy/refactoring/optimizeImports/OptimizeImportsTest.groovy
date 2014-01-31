@@ -150,6 +150,8 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
   public void testDontRemoveRedImports5() { doTest(); }
   public void testDontRemoveRedImports6() { doTest(); }
   public void testDontRemoveRedImports7() { doTest(); }
+  public void testDontRemoveRedImports8() { doTest(); }
+  public void testDontRemoveRedImports9() { doTest(); }
 
   public void testRemoveSamePackaged() {
     myFixture.addClass("package foo.bar; public class Aaaa {}");

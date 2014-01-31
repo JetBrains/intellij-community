@@ -227,16 +227,23 @@ public class GroovyImportOptimizer implements ImportOptimizer {
               usedImports.add(anImport);
             }
 
-            final String className = getImportReferenceText(anImport);
+            final String symbolName = getImportReferenceText(anImport);
 
             if (anImport.isAliasedImport()) {
               if (aliased != null) {
-                aliased.put(className, importedName);
+                aliased.put(symbolName, importedName);
               }
             }
             else {
-              if (importedClasses != null) {
-                importedClasses.add(className);
+              if (anImport.isStatic()) {
+                if (staticallyImportedMembers != null) {
+                  staticallyImportedMembers.add(symbolName);
+                }
+              }
+              else {
+                if (importedClasses != null) {
+                  importedClasses.add(symbolName);
+                }
               }
             }
           }
