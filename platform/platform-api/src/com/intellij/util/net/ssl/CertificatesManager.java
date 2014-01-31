@@ -165,11 +165,11 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
     // default context with can't be initialized twice
     try {
       // actually TLSv1 support is mandatory for Java platform
-      return SSLContext.getInstance("TLS");
+      return SSLContext.getInstance(CertificateUtil.TLS);
     }
     catch (NoSuchAlgorithmException e) {
       LOG.error(e);
-      throw new IllegalStateException("Can't get system SSL context");
+      throw new AssertionError("Can't get system SSL context");
     }
   }
 

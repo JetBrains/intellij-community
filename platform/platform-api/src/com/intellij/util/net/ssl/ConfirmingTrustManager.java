@@ -1,16 +1,13 @@
 package com.intellij.util.net.ssl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,36 +31,46 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Special kind of trust manager, that asks user to confirm untrusted certificate, e.g. if
- * it wasn't found in system-wide storage.
+ * The central piece of our SSL support - special kind of trust manager, that asks user to confirm
+ * untrusted certificate, e.g. if it wasn't found in system-wide storage.
  *
  * @author Mikhail Golubev
  */
-class ConfirmingTrustManager implements X509TrustManager {
+public class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+  private static final X509TrustManager MISSING_TRUST_MANAGER = new ClientOnlyTrustManager() {
+    @Override
+    public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
+      LOG.debug("Trust manager is missing. Retreating.");
+      throw new CertificateException("Missing trust manager");
+    }
 
-  // Errors
-  @NonNls public static final String ERR_EMPTY_TRUST_ANCHORS = "It seems, that your JRE installation doesn't have system trust store.\n" +
-                                                               "If you're using Mac JRE, try upgrading to the latest version.";
-
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+      return NO_CERTIFICATES;
+    }
+  };
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemDefault(), new MutableTrustManager(path, password));
   }
 
   private static X509TrustManager getSystemDefault() {
-    X509TrustManager systemManager;
     try {
       TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      // hacky way to get default trust store
       factory.init((KeyStore)null);
       // assume that only X509 TrustManagers exist
-      systemManager = findX509TrustManager(factory.getTrustManagers());
+      X509TrustManager systemManager = findX509TrustManager(factory.getTrustManagers());
+      if (systemManager != null && systemManager.getAcceptedIssuers().length != 0) {
+        return systemManager;
+      }
     }
     catch (Exception e) {
-      throw new AssertionError(e);
+      LOG.error("Cannot get system trust store", e);
     }
-    return systemManager;
+    return MISSING_TRUST_MANAGER;
   }
 
   private final X509TrustManager mySystemManager;
@@ -75,7 +82,7 @@ class ConfirmingTrustManager implements X509TrustManager {
     myCustomManager = custom;
   }
 
-  static X509TrustManager findX509TrustManager(TrustManager[] managers) {
+  private static X509TrustManager findX509TrustManager(TrustManager[] managers) {
     for (TrustManager manager : managers) {
       if (manager instanceof X509TrustManager) {
         return (X509TrustManager)manager;
@@ -85,67 +92,49 @@ class ConfirmingTrustManager implements X509TrustManager {
   }
 
   @Override
-  public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-    throw new UnsupportedOperationException("Should not be called by client");
-  }
-
-  @Override
   public void checkServerTrusted(final X509Certificate[] certificates, String s) throws CertificateException {
     try {
       mySystemManager.checkServerTrusted(certificates, s);
     }
-    catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      // this can happen on some version of Apple's JRE, e.g. see IDEA-115565
-      if (cause != null && cause.getMessage().equals("the trustAnchors parameter must be non-empty")) {
-        LOG.error(ERR_EMPTY_TRUST_ANCHORS, e);
-        Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                  "No default keystore", ERR_EMPTY_TRUST_ANCHORS,
-                                                  NotificationType.ERROR));
-        throw e;
-      }
-    }
     catch (CertificateException e) {
-      X509Certificate certificate = certificates[0];
-      // looks like self-signed certificate
-      if (certificates.length == 1) {
-        // check-then-act sequence
-        synchronized (myCustomManager) {
-          try {
-            myCustomManager.checkServerTrusted(certificates, s);
-          }
-          catch (CertificateException e2) {
-            if (myCustomManager.isBroken() || !updateTrustStore(certificate)) {
-              throw e;
-            }
+      // check-then-act sequence
+      synchronized (myCustomManager) {
+        try {
+          myCustomManager.checkServerTrusted(certificates, s);
+        }
+        catch (CertificateException e2) {
+          if (myCustomManager.isBroken() || !confirmAndUpdate(certificates)) {
+            throw e;
           }
         }
       }
     }
   }
 
-  private boolean updateTrustStore(final X509Certificate certificate) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain) {
     Application app = ApplicationManager.getApplication();
+    final X509Certificate endPoint = chain[0];
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      myCustomManager.addCertificate(certificate);
+      myCustomManager.addCertificate(endPoint);
       return true;
     }
     boolean accepted = CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
       @Override
       public DialogWrapper call() throws Exception {
-        return CertificateWarningDialog.createSelfSignedCertificateWarning(certificate);
+        // TODO may be another kind of warning, if default trust store is missing
+        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
       }
     });
     if (accepted) {
       LOG.info("Certificate was accepted");
-      myCustomManager.addCertificate(certificate);
+      myCustomManager.addCertificate(endPoint);
     }
     return accepted;
   }
 
   @Override
   public X509Certificate[] getAcceptedIssuers() {
-    return mySystemManager.getAcceptedIssuers();
+    return ArrayUtil.mergeArrays(mySystemManager.getAcceptedIssuers(), myCustomManager.getAcceptedIssuers());
   }
 
   public X509TrustManager getSystemManager() {
@@ -157,10 +146,10 @@ class ConfirmingTrustManager implements X509TrustManager {
   }
 
   /**
-   * Trust manager that supports addition of new certificates (most likely self-signed) to corresponding physical
+   * Trust manager that supports addition of new certificates (most likely self-signed) to underlying physical
    * key store.
    */
-  static class MutableTrustManager implements X509TrustManager {
+  static class MutableTrustManager extends ClientOnlyTrustManager {
     private final String myPath;
     private final String myPassword;
     private final TrustManagerFactory myFactory;
@@ -347,11 +336,6 @@ class ConfirmingTrustManager implements X509TrustManager {
       finally {
         myReadLock.unlock();
       }
-    }
-
-    @Override
-    public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-      throw new UnsupportedOperationException("Should not be called");
     }
 
     @Override

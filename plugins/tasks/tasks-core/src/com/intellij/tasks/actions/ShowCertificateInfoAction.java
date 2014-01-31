@@ -28,7 +28,7 @@ public class ShowCertificateInfoAction extends AnAction {
         final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(stream, "changeit".toCharArray());
         X509Certificate certificate = (X509Certificate)keyStore.getCertificate("mykey");
-        CertificateWarningDialog dialog = CertificateWarningDialog.createSelfSignedCertificateWarning(certificate);
+        CertificateWarningDialog dialog = CertificateWarningDialog.createUntrustedCertificateWarning(certificate);
         LOG.debug("Accepted: " + dialog.showAndGet());
       }
       finally {

@@ -20,10 +20,10 @@ import java.security.cert.X509Certificate;
 public class CertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(CertificateWarningDialog.class);
 
-  public static CertificateWarningDialog createSelfSignedCertificateWarning(@NotNull X509Certificate certificate) {
+  public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
     return new CertificateWarningDialog(certificate,
-                                        "Self-signed Server's Certificate",
-                                        "Server's certificate is untrusted and appears to be self-signed");
+                                        "Untrusted Server's Certificate",
+                                        "Server's certificate is not trusted");
   }
 
   public static CertificateWarningDialog createExpiredCertificateWarning(@NotNull X509Certificate certificate) {

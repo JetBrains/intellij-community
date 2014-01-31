@@ -2,6 +2,7 @@ package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,18 @@ public class CertificateUtil {
       throw new AssertionError("Can't initialize X509 certificate factory");
     }
   }
+
+  // Standard Names
+  // See complete reference at http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html
+  // certificate format
+  @Nls public static final String X509 = "X.509";
+  // Java Key Store - standard type of keystores used by keytool utility
+  @Nls public static final String JKS = "JKS";
+  // another standard type of keystore
+  @Nls public static final String PKCS12 = "PKCS12";
+  // type of trust manager factory
+  @Nls public static final String PKIX = "PKIX";
+  @Nls public static final String TLS = "TLS";
 
   /**
    * Utility class
