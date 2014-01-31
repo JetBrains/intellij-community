@@ -82,15 +82,14 @@ public abstract class JvmSmartStepIntoHandler {
         final ListPopup popup = new ListPopupImpl(popupStep) {
           @Override
           protected JComponent createContent() {
-            final AnAction stepIntoAction = ActionManager.getInstance().getAction(XDebuggerActions.STEP_INTO);
-            registerExtraHandleShortcuts(stepIntoAction.getShortcutSet());
-            final AnAction smartStepIntoAction = ActionManager.getInstance().getAction(XDebuggerActions.SMART_STEP_INTO);
-            registerExtraHandleShortcuts(smartStepIntoAction.getShortcutSet());
+            registerExtraHandleShortcuts(XDebuggerActions.STEP_INTO);
+            registerExtraHandleShortcuts(XDebuggerActions.SMART_STEP_INTO);
             return super.createContent();
           }
 
-          private void registerExtraHandleShortcuts(ShortcutSet shortcuts) {
-            KeyStroke stroke = KeymapUtil.getKeyStroke(shortcuts);
+          private void registerExtraHandleShortcuts(String actionName) {
+            AnAction action = ActionManager.getInstance().getAction(actionName);
+            KeyStroke stroke = KeymapUtil.getKeyStroke(action.getShortcutSet());
             if (stroke != null) {
               registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
                 @Override
