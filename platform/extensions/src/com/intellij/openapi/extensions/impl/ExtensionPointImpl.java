@@ -266,13 +266,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     final int index = getExtensionIndex(extension);
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
-    myOwner.getMutablePicoContainer().unregisterComponent(adapter.getComponentKey());
-    final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
-    for (MutablePicoContainer pluginContainer : pluginContainers) {
-      pluginContainer.unregisterComponent(adapter.getComponentKey());
+    Object key = adapter.getComponentKey();
+    myOwner.getMutablePicoContainer().unregisterComponent(key);
+    for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
+      pluginContainer.unregisterComponent(key);
     }
+
     processAdapters();
-    internalUnregisterExtension(extension, null);
+    unregisterExtension(extension, null);
   }
 
   private int getExtensionIndex(@NotNull T extension) {
@@ -283,20 +284,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return i;
   }
 
-  private void internalUnregisterExtension(@NotNull T extension, PluginDescriptor pluginDescriptor) {
+  private void unregisterExtension(@NotNull T extension, PluginDescriptor pluginDescriptor) {
     int index = getExtensionIndex(extension);
+
     myExtensions.remove(index);
-
     myLoadedAdapters.remove(index);
-
     clearCache();
 
     notifyListenersOnRemove(extension, pluginDescriptor);
 
     if (extension instanceof Extension) {
-      Extension o = (Extension)extension;
       try {
-        o.extensionRemoved(this);
+        ((Extension)extension).extensionRemoved(this);
       }
       catch (Throwable e) {
         myLogger.error(e);
@@ -345,18 +344,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
-      try {
-        @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
-        listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
-      }
-      catch (Throwable e) {
-        myLogger.error(e);
+    if (myEPListeners.remove(listener)) {
+      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
+        try {
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
+        }
+        catch (Throwable e) {
+          myLogger.error(e);
+        }
       }
     }
-
-    boolean success = myEPListeners.remove(listener);
-    assert success;
   }
 
   @Override
@@ -402,21 +400,20 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensionsCache = null;
   }
 
-  synchronized boolean unregisterComponentAdapter(@NotNull ExtensionComponentAdapter componentAdapter) {
+  synchronized boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
-      if (myExtensionAdapters.remove(componentAdapter)) {
+      if (myExtensionAdapters.remove(adapter)) {
         return true;
       }
-      if (myLoadedAdapters.contains(componentAdapter)) {
-        final Object componentKey = componentAdapter.getComponentKey();
-        myOwner.getMutablePicoContainer().unregisterComponent(componentKey);
-        final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
-        for (MutablePicoContainer pluginContainer : pluginContainers) {
-          pluginContainer.unregisterComponent(componentKey);
+      if (myLoadedAdapters.contains(adapter)) {
+        Object key = adapter.getComponentKey();
+        myOwner.getMutablePicoContainer().unregisterComponent(key);
+        for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
+          pluginContainer.unregisterComponent(key);
         }
 
-        @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
-        internalUnregisterExtension(extension, componentAdapter.getPluginDescriptor());
+        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+        unregisterExtension(extension, adapter.getPluginDescriptor());
         return true;
       }
       return false;
