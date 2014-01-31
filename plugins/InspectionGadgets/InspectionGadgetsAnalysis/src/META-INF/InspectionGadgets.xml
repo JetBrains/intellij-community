@@ -454,10 +454,6 @@
                      key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.classlayout.MissingDeprecatedAnnotationInspection"/>
-    <localInspection language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.classlayout.MissingOverrideAnnotationInspection"/>
     <localInspection language="JAVA" shortName="MultipleTopLevelClassesInFile" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="multiple.top.level.classes.in.file.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
@@ -1028,6 +1024,10 @@
                      key="type.parameter.extends.final.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.TypeParameterExtendsFinalClassInspection"/>
+    <localInspection language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection"/>
 
     <!--group.names.initialization.issues-->
     <localInspection language="JAVA" shortName="AbstractMethodCallInConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
