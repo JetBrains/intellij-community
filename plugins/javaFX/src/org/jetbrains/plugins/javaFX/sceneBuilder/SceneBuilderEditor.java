@@ -1,23 +1,18 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,15 +23,11 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.jar.JarFile;
 
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor {
+public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, ErrorHandler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditor");
 
   private final static String SCENE_CARD = "scene_builder";
@@ -44,6 +35,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private final Project myProject;
   private final VirtualFile myFile;
+  private final SceneBuilderProvider myCreatorProvider;
 
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
@@ -51,16 +43,20 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel();
 
-  private JComponent myFxPanel;
-  private ClassLoader mySceneLoader;
+  private final ExternalChangeListener myChangeListener;
 
-  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  private SceneBuilderCreator myBuilderCreator;
+  private URL myFileURL;
+  private SceneBuilder mySceneBuilder;
+
+  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file, SceneBuilderProvider creatorProvider) {
     myProject = project;
     myFile = file;
+    myCreatorProvider = creatorProvider;
+
+    myChangeListener = new ExternalChangeListener();
 
     createErrorPage();
-
-    initSceneBuilder(false);
   }
 
   private void createErrorPage() {
@@ -77,15 +73,23 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myPanel.add(myErrorPanel);
   }
 
-  private void showErrorPage(SceneBuilderInfo info, Throwable e) {
+  private void showErrorPage(State state, Throwable e) {
+    removeSceneBuilder();
+
     if (e == null) {
-      if (info == SceneBuilderInfo.EMPTY) {
-        myErrorLabel.setHyperlinkText("Please configure JavaFX Scene Builder ", "path", "");
+      if (state == State.CREATE_ERROR) {
+        myErrorLabel.setHyperlinkText("JavaFX Scene Builder initialize error", "", "");
+        myErrorLabel.setIcon(Messages.getErrorIcon());
       }
       else {
-        myErrorLabel.setHyperlinkText("Please reconfigure JavaFX Scene Builder ", "path", "");
+        if (state == State.EMPTY_PATH) {
+          myErrorLabel.setHyperlinkText("Please configure JavaFX Scene Builder ", "path", "");
+        }
+        else {
+          myErrorLabel.setHyperlinkText("Please reconfigure JavaFX Scene Builder ", "path", "");
+        }
+        myErrorLabel.setIcon(Messages.getWarningIcon());
       }
-      myErrorLabel.setIcon(Messages.getWarningIcon());
     }
     else {
       myErrorLabel.setHyperlinkText("Error: " + e.getMessage(), "", "");
@@ -96,83 +100,71 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myLayout.show(myPanel, ERROR_CARD);
   }
 
-  private void initSceneBuilder(boolean choosePathIfEmpty) {
-    SceneBuilderInfo info = SceneBuilderInfo.get(myProject, choosePathIfEmpty);
+  @Override
+  public void handle(Throwable e) {
+    showErrorPage(null, e);
+  }
 
-    if (info == SceneBuilderInfo.EMPTY || info.libPath == null) {
-      showErrorPage(info, null);
+  private void initSceneBuilder(boolean choosePathIfEmpty) {
+    if (choosePathIfEmpty || myBuilderCreator == null) {
+      myBuilderCreator = myCreatorProvider.get(myProject, choosePathIfEmpty);
+      updateState();
     }
     else {
-      try {
-        loadSceneBuilder(info);
+      SceneBuilderCreator creator = myCreatorProvider.get(null, false);
+      if (myBuilderCreator.equals(creator)) {
+        if (myBuilderCreator.getState() == State.OK) {
+          myChangeListener.checkContent();
+        }
       }
-      catch (Throwable e) {
-        showErrorPage(info, e);
+      else {
+        updateState();
       }
     }
   }
 
-  private void loadSceneBuilder(SceneBuilderInfo info) throws Exception {
-    mySceneLoader = createSceneLoader(info);
-
-    Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderKitWrapper", false, mySceneLoader);
-    myFxPanel = (JComponent)wrapperClass.getMethod("create", String.class).invoke(null, myFile.getPath());
-
-    myPanel.add(myFxPanel, SCENE_CARD);
-    myLayout.show(myPanel, SCENE_CARD);
+  private void updateState() {
+    if (myBuilderCreator.getState() == State.OK) {
+      addSceneBuilder();
+    }
+    else {
+      showErrorPage(myBuilderCreator.getState(), null);
+    }
   }
 
-  private static ClassLoader createSceneLoader(SceneBuilderInfo info) throws Exception {
-    List<URL> urls = new ArrayList<URL>();
+  private void addSceneBuilder() {
+    removeSceneBuilder();
 
-    File[] files = new File(info.libPath).listFiles();
-    if (files == null) {
-      throw new Exception(info.libPath + " wrong path");
-    }
-
-    for (File libFile : files) {
-      if (libFile.isFile() && libFile.getName().endsWith(".jar")) {
-        if (libFile.getName().equalsIgnoreCase("SceneBuilderApp.jar")) {
-          JarFile appJar = new JarFile(libFile);
-          String version = appJar.getManifest().getMainAttributes().getValue("Implementation-Version");
-          appJar.close();
-
-          if (version != null) {
-            int index = version.indexOf(" ");
-            if (index != -1) {
-              version = version.substring(0, index);
-            }
-          }
-
-          if (StringUtil.compareVersionNumbers(version, "2.0") < 0) {
-            throw new Exception(info.path + " wrong version: " + version);
-          }
-        }
-
-        urls.add(libFile.toURI().toURL());
+    try {
+      if (myFileURL == null) {
+        myFileURL = new File(myFile.getPath()).toURI().toURL();
       }
-    }
 
-    if (urls.isEmpty()) {
-      throw new Exception(info.libPath + " no jar found");
-    }
+      mySceneBuilder = myBuilderCreator.create(myFileURL, this);
 
-    final String parent = new File(PathUtil.getJarPathForClass(SceneBuilderEditor.class)).getParent();
-    if (SceneBuilderEditor.class.getClassLoader() instanceof PluginClassLoader) {
-      urls.add(new File(new File(parent).getParent(), "embedder.jar").toURI().toURL());
-    } else {
-      final File localEmbedder = new File(parent, "FXBuilderEmbedder");
-      if (localEmbedder.exists()) {
-        urls.add(localEmbedder.toURI().toURL());
-      } else {
-        File home = new File(PathManager.getHomePath(), "community");
-        if (!home.exists()) {
-          home = new File(PathManager.getHomePath());
-        }
-        urls.add(new File(home, "plugins/JavaFX/FxBuilderEmbedder/lib/embedder.jar").toURI().toURL());
-      }
+      myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
+      myLayout.show(myPanel, SCENE_CARD);
+
+      myChangeListener.start();
     }
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
+    catch (Throwable e) {
+      showErrorPage(null, e);
+    }
+  }
+
+  private void updateSceneBuilder() {
+    if (mySceneBuilder != null) {
+      mySceneBuilder.reloadFile();
+    }
+  }
+
+  private void removeSceneBuilder() {
+    myChangeListener.stop();
+
+    if (mySceneBuilder != null) {
+      myPanel.remove(mySceneBuilder.getPanel());
+      mySceneBuilder = null;
+    }
   }
 
   @NotNull
@@ -184,15 +176,13 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myFxPanel == null ? myErrorPanel : myFxPanel;
+    return mySceneBuilder == null ? myErrorPanel : mySceneBuilder.getPanel();
   }
 
   @Override
   public void dispose() {
-    if (myFxPanel != null) {
-      mySceneLoader = null;
-      // XXX
-    }
+    removeSceneBuilder();
+    myChangeListener.dispose();
   }
 
   @NotNull
@@ -203,12 +193,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void selectNotify() {
-    // TODO: Auto-generated method stub
+    initSceneBuilder(false);
   }
 
   @Override
   public void deselectNotify() {
-    // TODO: Auto-generated method stub
+    myChangeListener.stop();
   }
 
   @NotNull
@@ -255,5 +245,48 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
+  }
+
+  private class ExternalChangeListener extends DocumentAdapter {
+    private final Document myDocument;
+    private volatile boolean myRunState;
+    private String myContent;
+
+    public ExternalChangeListener() {
+      myDocument = FileDocumentManager.getInstance().getDocument(myFile);
+      myDocument.addDocumentListener(this);
+    }
+
+    public void start() {
+      if (!myRunState) {
+        myRunState = true;
+        myContent = null;
+      }
+    }
+
+    public void stop() {
+      if (myRunState) {
+        myRunState = false;
+        myContent = myDocument.getText();
+      }
+    }
+
+    public void dispose() {
+      myDocument.removeDocumentListener(this);
+    }
+
+    public void checkContent() {
+      if (!myRunState && !myDocument.getText().equals(myContent)) {
+        updateSceneBuilder();
+        start();
+      }
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      if (myRunState) {
+        updateSceneBuilder();
+      }
+    }
   }
 }
