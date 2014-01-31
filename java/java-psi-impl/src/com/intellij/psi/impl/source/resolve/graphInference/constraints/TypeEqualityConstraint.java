@@ -55,11 +55,12 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (myT instanceof PsiClassType && myS instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult tResult = ((PsiClassType)myT).resolveGenerics();
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)myS).resolveGenerics();
-      final PsiClass C = tResult.getElement();
-      if (C == sResult.getElement() && C != null) {
+      final PsiClass tClass = tResult.getElement();
+      //equal erasure
+      if (tClass != null && tClass.equals(sResult.getElement())) {
         final PsiSubstitutor tSubstitutor = tResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
-        for (PsiTypeParameter typeParameter : C.getTypeParameters()) {
+        for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
           final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
@@ -73,22 +74,24 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       constraints.add(new TypeEqualityConstraint(((PsiArrayType)myT).getComponentType(), ((PsiArrayType)myS).getComponentType()));
       return true;
     }
-    if (myT instanceof PsiIntersectionType && myS instanceof PsiIntersectionType) {
-      final PsiType[] tConjuncts = ((PsiIntersectionType)myT).getConjuncts();
-      final PsiType[] sConjuncts = ((PsiIntersectionType)myS).getConjuncts();
-      if (sConjuncts.length == tConjuncts.length) {
-        for (int i = 0; i < sConjuncts.length; i++) {
-          constraints.add(new TypeEqualityConstraint(tConjuncts[i], sConjuncts[i]));
-        }
-        return true;
-      }
-    }
 
     if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
       final PsiType tBound = ((PsiWildcardType)myT).getBound();
       final PsiType sBound = ((PsiWildcardType)myS).getBound();
 
       if (tBound == null && sBound == null) return true;
+
+      if (sBound == null && ((PsiWildcardType)myT).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myS).getExtendsBound(), tBound));
+        return true;
+      }
+
+      if (tBound == null && ((PsiWildcardType)myS).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myT).getExtendsBound(), sBound));
+        return true;
+      }
 
       if (((PsiWildcardType)myT).isExtends() && ((PsiWildcardType)myS).isExtends() || 
           ((PsiWildcardType)myT).isSuper() && ((PsiWildcardType)myS).isSuper()) {
