@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -73,15 +74,16 @@ public class GrIntroduceConstantProcessor {
     final GrField field = (GrField)declaration.getVariables()[0];
 
     if (context.getVar() != null) {
-      deleteLocalVar(context.getVar());
+      GrVariable var = context.getVar();
+      replaceOccurrence(field, var.getInitializerGroovy(), isEscalateVisibility());
+      deleteLocalVar(var);
     }
-
-    if (context.getStringPart() != null) {
+    else if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
       final PsiElement element = replaceOccurrence(field, ref, isEscalateVisibility());
       updateCaretPosition(element);
     }
-    else {
+    else if (context.getExpression() != null) {
       if (settings.replaceAllOccurrences()) {
         final PsiElement[] occurrences = context.getOccurrences();
         GroovyRefactoringUtil.sortOccurrences(occurrences);
@@ -204,9 +206,14 @@ public class GrIntroduceConstantProcessor {
 
   @NotNull
   protected GrExpression getInitializer() {
-    final GrExpression expression = context.getExpression();
+    GrExpression expression = context.getExpression();
+    GrVariable var = context.getVar();
+
     if (expression != null) {
       return expression;
+    }
+    else if (var != null) {
+      return var.getInitializerGroovy();
     }
     else {
       return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
