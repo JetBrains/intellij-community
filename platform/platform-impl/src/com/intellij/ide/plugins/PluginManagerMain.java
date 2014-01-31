@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -48,11 +51,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -93,6 +99,9 @@ public abstract class PluginManagerMain implements Disposable {
 
   private JPanel myTablePanel;
   protected JPanel myActionsPanel;
+  private JPanel myHeader;
+  private PluginHeaderPanel myPluginHeaderPanel;
+  private JPanel myInfoPanel;
 
 
   protected PluginTableModel pluginsModel;
@@ -112,19 +121,28 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void init() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
-
+    myDescriptionTextArea.setEditorKit(new HTMLEditorKit());
+    myDescriptionTextArea.setEditable(false);
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
     JScrollPane installedScrollPane = createTable();
-    installTableActions(pluginTable);
+    myPluginHeaderPanel = new PluginHeaderPanel(this, getPluginTable());
+    myHeader.setBackground(UIUtil.getTextFieldBackground());
+    myHeader.add(myPluginHeaderPanel.getPanel(), BorderLayout.CENTER);
+    installTableActions();
 
     myTablePanel.add(installedScrollPane, BorderLayout.CENTER);
 
     myToolbarPanel.setLayout(new BorderLayout());
-    myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(true), true);
+    myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManager", getActionGroup(true), true);
     final JComponent component = myActionToolbar.getComponent();
-    myToolbarPanel.add(component, BorderLayout.WEST);
-    myToolbarPanel.add(myFilter, BorderLayout.EAST);
+    myToolbarPanel.add(component, BorderLayout.CENTER);
+    myToolbarPanel.add(myFilter, BorderLayout.WEST);
+    //Border border = UIManager.getBorder("Table.scrollPaneBorder");
+    //if (border == null) {
+      Border border = new BorderUIResource.LineBorderUIResource(Gray._220, 1);
+    //}
+    myInfoPanel.setBorder(border);
   }
 
   protected abstract JScrollPane createTable();
@@ -159,19 +177,26 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginsModel;
   }
 
-  protected void installTableActions(final PluginTable pluginTable) {
+  protected void installTableActions() {
     pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
-        pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null,
-                         myFilter.getFilter(), myDescriptionTextArea);
-        myActionToolbar.updateActionsImmediately();
+        refresh();
       }
     });
 
     PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(false), ActionManager.getInstance());
 
     new MySpeedSearchBar(pluginTable);
+  }
+
+  public void refresh() {
+    final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
+    pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null,
+                     myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel, this);
+    myActionToolbar.updateActionsImmediately();
+    final JComponent parent = (JComponent)myHeader.getParent();
+    parent.revalidate();
+    parent.repaint();
   }
 
   public void setRequireShutdown(boolean val) {
@@ -194,6 +219,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected abstract ActionGroup getActionGroup(boolean inToolbar);
+
+  protected abstract PluginManagerMain getAvailable();
+  protected abstract PluginManagerMain getInstalled();
 
   public JPanel getMainPanel() {
     return main;
@@ -337,61 +365,62 @@ public abstract class PluginManagerMain implements Disposable {
     requireShutdown = false;
   }
 
-  public static void pluginInfoUpdate(Object plugin, @Nullable String filter, @NotNull JEditorPane descriptionTextArea) {
-    if (plugin instanceof IdeaPluginDescriptor) {
-      IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
-      StringBuilder sb = new StringBuilder();
+  public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
+                                      @Nullable String filter,
+                                      @NotNull JEditorPane descriptionTextArea,
+                                      @NotNull PluginHeaderPanel header, PluginManagerMain manager) {
 
-      String description = pluginDescriptor.getDescription();
-      if (!isEmptyOrSpaces(description)) {
-        sb.append(description);
-      }
-
-      String changeNotes = pluginDescriptor.getChangeNotes();
-      if (!isEmptyOrSpaces(changeNotes)) {
-        sb.append("<h4>Change Notes</h4>");
-        sb.append(changeNotes);
-      }
-
-      if (!pluginDescriptor.isBundled()) {
-        String vendor = pluginDescriptor.getVendor();
-        String vendorEmail = pluginDescriptor.getVendorEmail();
-        String vendorUrl = pluginDescriptor.getVendorUrl();
-        if (!isEmptyOrSpaces(vendor) || !isEmptyOrSpaces(vendorEmail) || !isEmptyOrSpaces(vendorUrl)) {
-          sb.append("<h4>Vendor</h4>");
-
-          if (!isEmptyOrSpaces(vendor)) {
-            sb.append(vendor);
-          }
-          if (!isEmptyOrSpaces(vendorUrl)) {
-            sb.append("<br>").append(composeHref(vendorUrl));
-          }
-          if (!isEmptyOrSpaces(vendorEmail)) {
-            sb.append("<br>").append(composeHref("mailto:" + vendorEmail));
-          }
-        }
-
-        String pluginDescriptorUrl = pluginDescriptor.getUrl();
-        if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
-          sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
-        }
-
-        String version = pluginDescriptor.getVersion();
-        if (!isEmptyOrSpaces(version)) {
-          sb.append("<h4>Version</h4>").append(version);
-        }
-
-        String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
-        if (!isEmptyOrSpaces(size)) {
-          sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
-        }
-      }
-
-      setTextValue(sb, filter, descriptionTextArea);
-    }
-    else {
+    if (plugin == null) {
       setTextValue(null, filter, descriptionTextArea);
+      header.getPanel().setVisible(false);
+      return;
     }
+    StringBuilder sb = new StringBuilder();
+    header.setPlugin(plugin);
+    String description = plugin.getDescription();
+    if (!isEmptyOrSpaces(description)) {
+      sb.append(description);
+    }
+
+    String changeNotes = plugin.getChangeNotes();
+    if (!isEmptyOrSpaces(changeNotes)) {
+      sb.append("<h4>Change Notes</h4>");
+      sb.append(changeNotes);
+    }
+
+    if (!plugin.isBundled()) {
+      String vendor = plugin.getVendor();
+      String vendorEmail = plugin.getVendorEmail();
+      String vendorUrl = plugin.getVendorUrl();
+      if (!isEmptyOrSpaces(vendor) || !isEmptyOrSpaces(vendorEmail) || !isEmptyOrSpaces(vendorUrl)) {
+        sb.append("<h4>Vendor</h4>");
+
+        if (!isEmptyOrSpaces(vendor)) {
+          sb.append(vendor);
+        }
+        if (!isEmptyOrSpaces(vendorUrl)) {
+          sb.append("<br>").append(composeHref(vendorUrl));
+        }
+        if (!isEmptyOrSpaces(vendorEmail)) {
+          sb.append("<br>")
+            .append(HTML_PREFIX)
+            .append("mailto:").append(vendorEmail)
+            .append("\">").append(vendorEmail).append(HTML_SUFFIX);
+        }
+      }
+
+      String pluginDescriptorUrl = plugin.getUrl();
+      if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
+        sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+      }
+
+      String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
+      if (!isEmptyOrSpaces(size)) {
+        sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
+      }
+    }
+
+    setTextValue(sb, filter, descriptionTextArea);
   }
 
   private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {

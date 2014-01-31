@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,16 +93,16 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     pluginsModel = model;
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.getTableHeader().setReorderingAllowed(false);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 80);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 80);
+    //pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);
+    //pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 80);
+    //pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 80);
 
     return ScrollPaneFactory.createScrollPane(pluginTable);
   }
 
   @Override
-  protected void installTableActions(final PluginTable pluginTable) {
-    super.installTableActions(pluginTable);
+  protected void installTableActions() {
+    super.installTableActions();
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -140,7 +140,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         }
       }
       if (enabled) {
-        new ActionInstallPlugin(this, installed).install();
+        new ActionInstallPlugin(this, installed).install(null);
       }
       return true;
     }
@@ -159,11 +159,21 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
+  protected PluginManagerMain getAvailable() {
+    return this;
+  }
+
+  @Override
+  protected PluginManagerMain getInstalled() {
+    return installed;
+  }
+
+  @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
     actionGroup.add(Separator.getInstance());
-    actionGroup.add(new ActionInstallPlugin(this, installed));
+    actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
     if (inToolbar) {
       actionGroup.add(new SortByStatusAction("Sort Installed First"));
       actionGroup.add(new MyFilterRepositoryAction());

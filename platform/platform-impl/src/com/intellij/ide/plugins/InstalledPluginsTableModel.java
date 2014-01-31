@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
 
   public InstalledPluginsTableModel() {
-    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new MyPluginManagerColumnInfo()};
+    super.columns = new ColumnInfo[]{new MyPluginManagerColumnInfo(), new EnabledPluginInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
     view.addAll(myInstalled);
     reset(view);
@@ -117,11 +117,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public static int getCheckboxColumn() {
-    return 0;
+    return 1;
   }
 
   public int getNameColumn() {
-    return 1;
+    return 0;
   }
 
   private void reset(final List<IdeaPluginDescriptor> list) {
@@ -368,7 +368,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
 
     public EnabledPluginInfo() {
-      super(IdeBundle.message("plugin.manager.enable.column.title"));
+      super(/*IdeBundle.message("plugin.manager.enable.column.title")*/"");
     }
 
     public Boolean valueOf(IdeaPluginDescriptor ideaPluginDescriptor) {
@@ -430,6 +430,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
         }
       };
+    }
+
+    @Override
+    public int getWidth(JTable table) {
+      return new JCheckBox().getPreferredSize().width;
     }
   }
 
@@ -637,7 +642,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     @Override
     public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
-      return new InstalledPluginsTableRenderer(pluginDescriptor);
+      return new PluginsTableRenderer(pluginDescriptor);
     }
 
     @Override
@@ -701,6 +706,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           return comparator.compare(o1, o2);
         }
       };
+    }
+
+    @Override
+    public int getWidth(JTable table) {
+      return super.getWidth(table);
     }
   }
 }

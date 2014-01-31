@@ -50,24 +50,19 @@
             </properties>
             <border type="empty"/>
             <children>
-              <grid id="7d113" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+              <grid id="7d113" binding="myInfoPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
                   <splitpane position="right"/>
                 </constraints>
                 <properties/>
                 <border type="none">
-                  <size top="0" left="0" bottom="0" right="0"/>
+                  <size top="2" left="4" bottom="2" right="4"/>
                 </border>
                 <children>
                   <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <verticalScrollBarPolicy value="22"/>
-                    </properties>
-                    <border type="none"/>
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                    <border type="empty"/>
                     <children>
                       <component id="db08a" class="javax.swing.JEditorPane" binding="myDescriptionTextArea">
                         <constraints/>
@@ -82,6 +77,14 @@
                       </component>
                     </children>
                   </scrollpane>
+                  <grid id="a6a17" binding="myHeader" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="North"/>
+                    <properties/>
+                    <border type="empty">
+                      <size top="2" left="4" bottom="2" right="4"/>
+                    </border>
+                    <children/>
+                  </grid>
                 </children>
               </grid>
               <grid id="83ed3" binding="myTablePanel" layout-manager="BorderLayout" hgap="0" vgap="0">

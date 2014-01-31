@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -84,10 +85,10 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    install();
+    install(null);
   }
 
-  public void install() {
+  public void install(@Nullable final Runnable onSuccess) {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (userConfirm(selection)) {
@@ -157,6 +158,9 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
               if (needToRestart) {
                 PluginManagerMain.notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null, null);
               }
+            }
+            if (onSuccess != null) {
+              onSuccess.run();
             }
           }
         };

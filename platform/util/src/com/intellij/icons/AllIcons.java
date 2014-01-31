@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -370,6 +370,7 @@ public class AllIcons {
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); // 16x16
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
+    public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.png"); // 16x16
     public static final Icon EditColors = IconLoader.getIcon("/general/editColors.png"); // 16x16
     public static final Icon EditItemInSection = IconLoader.getIcon("/general/editItemInSection.png"); // 16x16
@@ -480,6 +481,7 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
+    public static final Icon UninstallPlugin = IconLoader.getIcon("/general/uninstallPlugin.png"); // 16x16
     public static final Icon Warning = IconLoader.getIcon("/general/warning.png"); // 16x16
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32

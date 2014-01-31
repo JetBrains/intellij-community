@@ -1,6 +1,5 @@
 <component name="CopyrightManager">
   <settings default="apache 2 license">
-    <module2copyright />
     <LanguageOptions name="__TEMPLATE__">
       <option name="addBlankAfter" value="false" />
     </LanguageOptions>
