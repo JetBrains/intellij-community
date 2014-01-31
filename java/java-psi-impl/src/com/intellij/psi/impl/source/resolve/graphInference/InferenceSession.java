@@ -332,7 +332,8 @@ public class InferenceSession {
   private InferenceVariable shouldResolveAndInstantiate(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
     if (inferenceVariable != null) {
-      if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable)) {
+      if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable) ||
+          targetType instanceof PsiClassType && hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType)) {
         return inferenceVariable;
       }
     }
@@ -345,6 +346,21 @@ public class InferenceSession {
       for (PsiType bound : bounds) {
         if (PsiPrimitiveType.getUnboxedType(bound) != null) {
           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasUncheckedBounds(InferenceVariable inferenceVariable, PsiClassType targetType) {
+    if (!targetType.isRaw()) {
+      final InferenceBound[] boundTypes = {InferenceBound.EQ, InferenceBound.LOWER};
+      for (InferenceBound inferenceBound : boundTypes) {
+        final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
+        for (PsiType bound : bounds) {
+          if (TypeCompatibilityConstraint.isUncheckedConversion(targetType, bound)) {
+            return true;
+          }
         }
       }
     }
