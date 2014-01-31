@@ -124,6 +124,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" filepath="$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" filepath="$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties.iml" filepath="$PROJECT_DIR$/plugins/properties/properties.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/properties-psi-api.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/properties-psi-api.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/properties-psi-impl.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/properties-psi-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community.iml" filepath="$PROJECT_DIR$/python/python-community.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/build/python-community-build.iml" filepath="$PROJECT_DIR$/python/build/python-community-build.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" filepath="$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" group="python" />
