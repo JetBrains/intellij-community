@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,11 +51,48 @@ public class StringPartInfo {
     if (psi == null) return null;
 
     GrLiteral literal = findLiteral(psi);
-    if (literal != null && !literal.getTextRange().equalsToRange(startOffset, endOffset)) {
+    if (literal != null && checkSelectedRange(startOffset, endOffset, literal)) {
       return new StringPartInfo(literal, new TextRange(startOffset, endOffset));
     }
 
     return null;
+  }
+
+  private static boolean checkSelectedRange(int startOffset, int endOffset, GrLiteral literal) {
+    if (isWholeLiteralContentSelected(literal, startOffset, endOffset)) {
+      return false;
+    }
+
+    if (literal instanceof GrString) {
+      if (areInjectionsCut((GrString)literal, startOffset, endOffset)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean isWholeLiteralContentSelected(GrLiteral literal, int startOffset, int endOffset) {
+    TextRange literalRange = literal.getTextRange();
+    String literalText = literal.getText();
+    String startQuote = GrStringUtil.getStartQuote(literalText);
+    String endQuote = GrStringUtil.getEndQuote(literalText);
+
+    return literalRange.getStartOffset()                    <= startOffset && startOffset <= literalRange.getStartOffset() + startQuote.length() &&
+           literalRange.getEndOffset() - endQuote.length()  <= endOffset   && endOffset   <= literalRange.getEndOffset();
+  }
+
+  private static boolean areInjectionsCut(GrString literal, int startOffset, int endOffset) {
+    TextRange selectionRange = new TextRange(startOffset, endOffset);
+
+    GrStringInjection[] injections = literal.getInjections();
+    for (GrStringInjection injection : injections) {
+      TextRange range = injection.getTextRange();
+      if (!selectionRange.contains(range) && !range.contains(selectionRange) && range.intersects(selectionRange)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -75,7 +113,7 @@ public class StringPartInfo {
   }
 
   private static boolean isStringLiteral(final PsiElement psi) {
-    return psi instanceof GrLiteral && TokenSets.STRING_LITERAL_SET.contains(GrLiteralImpl.getLiteralType((GrLiteral)psi));
+    return psi instanceof GrLiteral && TokenSets.STRING_LITERAL_SET.contains(GrLiteralImpl.getLiteralType((GrLiteral)psi)) || psi instanceof GrString;
   }
 
   public StringPartInfo(@NotNull GrLiteral literal, @NotNull final TextRange range) {
