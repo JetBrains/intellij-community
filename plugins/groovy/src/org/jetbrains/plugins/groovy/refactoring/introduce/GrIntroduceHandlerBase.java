@@ -469,7 +469,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
 
       if (isInplace(context.getEditor(), context.getPlace())) {
-        Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = fillChoice(context);
+        Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(context);
         new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
           @Override
           public void pass(final OccurrencesChooser.ReplaceChoice choice) {
@@ -500,6 +500,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
+  }
+
+  @NotNull
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+    return fillChoice(context);
   }
 
   @NotNull
