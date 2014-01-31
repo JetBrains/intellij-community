@@ -163,7 +163,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
       public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
-        myFrameworksPanel.addSupport(module, rootModel);
+        if (myCurrentCard == Cards.FRAMEWORKS) {
+          myFrameworksPanel.addSupport(module, rootModel);
+        }
       }
     };
 
