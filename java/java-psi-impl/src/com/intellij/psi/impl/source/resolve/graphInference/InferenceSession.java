@@ -300,8 +300,9 @@ public class InferenceSession {
   private void initReturnTypeConstraint(PsiMethod method, final PsiCallExpression context) {
     if (PsiPolyExpressionUtil.isMethodCallPolyExpression(context, method) || 
         context instanceof PsiNewExpression && PsiDiamondType.ourDiamondGuard.currentStack().contains(context)) {
-      final PsiType returnType = method.getReturnType();
+      PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
+        returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context);
         PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
         if (targetType == null) {
           targetType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, true, new Computable<PsiType>() {
@@ -312,13 +313,42 @@ public class InferenceSession {
           });
         }
         if (targetType != null) {
-          if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
-            setErased();
+          final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
+          if (inferenceVariable != null) {
+            resolveBounds(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
+            myConstraints.add(new TypeCompatibilityConstraint(inferenceVariable.getInstantiation(), returnType));
+          } 
+          else {
+            if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
+              setErased();
+            }
+            myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(targetType, false), returnType));
           }
-          myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(targetType, false), PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
         }
       }
     }
+  }
+
+  private InferenceVariable shouldResolveAndInstantiate(PsiType returnType, PsiType targetType) {
+    final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
+    if (inferenceVariable != null) {
+      if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable)) {
+        return inferenceVariable;
+      }
+    }
+    return null;
+  }
+  
+  private static boolean hasPrimitiveWrapperBound(InferenceVariable inferenceVariable) {
+    for (InferenceBound inferenceBound : InferenceBound.values()) {
+      final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
+      for (PsiType bound : bounds) {
+        if (PsiPrimitiveType.getUnboxedType(bound) != null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private PsiType getTargetType(final PsiExpression context) {

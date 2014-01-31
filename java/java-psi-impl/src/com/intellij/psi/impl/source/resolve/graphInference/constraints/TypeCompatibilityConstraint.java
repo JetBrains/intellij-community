@@ -52,7 +52,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (myT instanceof PsiPrimitiveType) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myT).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
-        constraints.add(new TypeCompatibilityConstraint(boxedType, myS));
+        constraints.add(new TypeEqualityConstraint(boxedType, myS));
         return true;
       }
     }
