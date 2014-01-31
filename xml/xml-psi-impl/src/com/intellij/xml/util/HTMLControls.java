@@ -17,8 +17,10 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -46,20 +48,25 @@ public class HTMLControls {
     return ourControls;
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static Control[] loadControls() {
     Document document;
     try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      // use temporary bytes stream because otherwise inputStreamSkippingBOM will fail
+      // on ZipFileInputStream used in jar files
       final InputStream stream = HTMLControls.class.getResourceAsStream("HtmlControls.xml");
-      document = JDOMUtil.loadDocument(CharsetToolkit.inputStreamSkippingBOM(stream));
+      final byte[] bytes = FileUtilRt.loadBytes(stream);
       stream.close();
-    }
-    catch (Exception e) {
+      final UnsyncByteArrayInputStream bytesStream = new UnsyncByteArrayInputStream(bytes);
+      document = JDOMUtil.loadDocument(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
+      bytesStream.close();
+    } catch (Exception e) {
       LOG.error(e);
       return new Control[0];
     }
     if (!document.getRootElement().getName().equals("htmlControls")) {
       LOG.error("HTMLControls storage is broken");
+      return new Control[0];
     }
     return XmlSerializer.deserialize(document, Control[].class);
   }
