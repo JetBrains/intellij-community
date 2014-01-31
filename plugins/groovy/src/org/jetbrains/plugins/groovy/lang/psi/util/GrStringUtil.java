@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -602,12 +602,12 @@ public class GrStringUtil {
   }
 
   public static String getEndQuote(String text) {
-    if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
-    if (text.startsWith(QUOTE)) return QUOTE;
-    if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
-    if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
-    if (text.startsWith(SLASH)) return SLASH;
-    if (text.startsWith(SLASH_DOLLAR)) return SLASH_DOLLAR;
+    if (text.endsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
+    if (text.endsWith(QUOTE)) return QUOTE;
+    if (text.endsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
+    if (text.endsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    if (text.endsWith(SLASH)) return SLASH;
+    if (text.endsWith(SLASH_DOLLAR)) return SLASH_DOLLAR;
     return "";
   }
 

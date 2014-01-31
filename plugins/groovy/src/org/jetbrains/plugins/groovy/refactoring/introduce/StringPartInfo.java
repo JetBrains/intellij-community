@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,31 @@ public class StringPartInfo {
     final PsiElement fin = file.findElementAt(endOffset - 1);
     if (start == null || fin == null) return null;
 
-    final PsiElement parent = PsiTreeUtil.findCommonParent(start, fin);
+    final PsiElement psi = PsiTreeUtil.findCommonParent(start, fin);
+    if (psi == null) return null;
 
-    if (parent != null && isStringLiteral(parent.getParent()) && !parent.getParent().getTextRange().equalsToRange(startOffset, endOffset)) {
-      return new StringPartInfo((GrLiteral)parent.getParent(), new TextRange(startOffset, endOffset));
+    GrLiteral literal = findLiteral(psi);
+    if (literal != null && !literal.getTextRange().equalsToRange(startOffset, endOffset)) {
+      return new StringPartInfo(literal, new TextRange(startOffset, endOffset));
     }
-    if (parent instanceof GrString && !parent.getTextRange().equalsToRange(startOffset, endOffset)) {
-      return new StringPartInfo((GrLiteral)parent, new TextRange(startOffset, endOffset));
+
+    return null;
+  }
+
+  @Nullable
+  private static GrLiteral findLiteral(@NotNull PsiElement psi) {
+    if (isStringLiteral(psi.getParent())) {
+      return (GrLiteral)psi.getParent();
     }
+
+    if (isStringLiteral(psi.getParent().getParent())) {
+      return (GrLiteral)psi.getParent().getParent();
+    }
+
+    if (psi instanceof GrString) {
+      return (GrLiteral)psi;
+    }
+
     return null;
   }
 

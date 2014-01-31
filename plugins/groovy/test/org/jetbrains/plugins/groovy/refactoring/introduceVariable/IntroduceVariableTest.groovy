@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,15 @@ def foo() {
         println(preved);    // (4)
     }
 }
+''')
+  }
+
+  void testDollarSlashyString() {
+    doTest('''\
+print($/a<begin>b<end>c/$)
+''', '''\
+def preved = $/b/$
+print($/a/$ + preved + $/c/$)
 ''')
   }
 
