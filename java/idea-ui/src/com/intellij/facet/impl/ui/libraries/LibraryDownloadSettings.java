@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,7 +135,7 @@ public class LibraryDownloadSettings {
       }
     }
 
-    String path = rootPath != null && myLibrariesPath.startsWith("./") ? rootPath + myLibrariesPath.substring(1) : myLibrariesPath;
+    String path = rootPath != null && !FileUtil.isAbsolute(myLibrariesPath) ? new File(rootPath, myLibrariesPath).getPath() : myLibrariesPath;
     List<Pair<VirtualFile,DownloadableFileDescription>> downloaded =
       DownloadableFileService.getInstance()
         .createDownloader(toDownload, myLibraryName + " Library")

@@ -100,7 +100,7 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
-    return baseDirectoryPath.isEmpty() ? "./lib" : baseDirectoryPath + "/lib";
+    return baseDirectoryPath.isEmpty() ? "lib" : baseDirectoryPath + "/lib";
   }
 
   public void setDownloadSettings(LibraryDownloadSettings downloadSettings) {
