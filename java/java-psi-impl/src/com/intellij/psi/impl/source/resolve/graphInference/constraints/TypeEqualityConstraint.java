@@ -39,6 +39,38 @@ public class TypeEqualityConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
+      final PsiType tBound = ((PsiWildcardType)myT).getBound();
+      final PsiType sBound = ((PsiWildcardType)myS).getBound();
+
+      if (tBound == null && sBound == null) return true;
+
+      if (sBound == null && ((PsiWildcardType)myT).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myS).getExtendsBound(), tBound));
+        return true;
+      }
+
+      if (tBound == null && ((PsiWildcardType)myS).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myT).getExtendsBound(), sBound));
+        return true;
+      }
+
+      if (((PsiWildcardType)myT).isExtends() && ((PsiWildcardType)myS).isExtends() ||
+          ((PsiWildcardType)myT).isSuper() && ((PsiWildcardType)myS).isSuper()) {
+
+        LOG.assertTrue(tBound != null);
+        LOG.assertTrue(sBound != null);
+        constraints.add(new TypeEqualityConstraint(tBound, sBound));
+        return true;
+      }
+    }
+
+    if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
+      return false;
+    }
+
     if (session.isProperType(myT) && session.isProperType(myS)) {
       return myT.equals(myS);
     }
@@ -75,33 +107,6 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
-    if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
-      final PsiType tBound = ((PsiWildcardType)myT).getBound();
-      final PsiType sBound = ((PsiWildcardType)myS).getBound();
-
-      if (tBound == null && sBound == null) return true;
-
-      if (sBound == null && ((PsiWildcardType)myT).isExtends()) {
-        //extends bound of "?" (Object)
-        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myS).getExtendsBound(), tBound));
-        return true;
-      }
-
-      if (tBound == null && ((PsiWildcardType)myS).isExtends()) {
-        //extends bound of "?" (Object)
-        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myT).getExtendsBound(), sBound));
-        return true;
-      }
-
-      if (((PsiWildcardType)myT).isExtends() && ((PsiWildcardType)myS).isExtends() || 
-          ((PsiWildcardType)myT).isSuper() && ((PsiWildcardType)myS).isSuper()) {
-
-        LOG.assertTrue(tBound != null);
-        LOG.assertTrue(sBound != null);
-        constraints.add(new TypeEqualityConstraint(tBound, sBound));
-        return true;
-      }
-    }
     return false;
   }
 

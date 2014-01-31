@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -23,6 +27,8 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import java.util.List;
 
 public class SubtypingConstraint implements ConstraintFormula {
+  private static final Logger LOG = Logger.getInstance("#" + SubtypingConstraint.class.getName());
+
   private PsiType myS;
   private PsiType myT;
 
@@ -72,13 +78,10 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
 
       if (((PsiWildcardType)myT).isExtends()) {
-        if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return true;
-        }
-
         if (myS instanceof PsiWildcardType) {
           final PsiType sBound = ((PsiWildcardType)myS).getBound();
           if (sBound == null) {
+            constraints.add(new StrictSubtypingConstraint(tBound, ((PsiWildcardType)myS).getExtendsBound()));
             return true;
           }
 
@@ -86,12 +89,21 @@ public class SubtypingConstraint implements ConstraintFormula {
             constraints.add(new StrictSubtypingConstraint(tBound, sBound));
             return true;
           }
-        } else {
+          
+          if (((PsiWildcardType)myS).isSuper()) {
+            constraints.add(new TypeEqualityConstraint(tBound, PsiType.getJavaLangObject(((PsiWildcardType)myT).getManager(), myT.getResolveScope())));
+            return true;
+          }
+
+          assert false;
+        } 
+        else {
           constraints.add(new StrictSubtypingConstraint(tBound, myS));
           return true;
         }
-        return false;
-      } else {
+      } 
+      else {
+        LOG.assertTrue(((PsiWildcardType)myT).isSuper());
 
         if (myS instanceof PsiWildcardType) {
           final PsiType sBound = ((PsiWildcardType)myS).getBound();
@@ -120,8 +132,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           inferenceVariable.addBound(myS, InferenceBound.EQ);
           return true;
         }
-        constraints.add(new StrictSubtypingConstraint(myT, myS));
-        return true;
+        if (myT != null && myS != null) {
+          constraints.add(new TypeEqualityConstraint(myT, myS));
+          return true;
+        }
+        return false;
       }
     }
   }
