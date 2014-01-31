@@ -324,7 +324,12 @@ public abstract class JBListTable extends JPanel {
         sleep(50);
         final JScrollBar bar = myScrollPane.getVerticalScrollBar();
         if (bar == null || !bar.isVisible()) {
-          myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            }
+          });
+          sleep(15);
         }
         while (currentHeight != neededHeight) {
           if (Math.abs(currentHeight - neededHeight) < step) {
@@ -359,11 +364,11 @@ public abstract class JBListTable extends JPanel {
       }
       catch (InterruptedException ignore) {
       } finally {
-        TableUtil.scrollSelectionToVisible(myTable);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
+            TableUtil.scrollSelectionToVisible(myTable);
             if (exitEditing && !myTable.isEditing()) {
               myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
             }

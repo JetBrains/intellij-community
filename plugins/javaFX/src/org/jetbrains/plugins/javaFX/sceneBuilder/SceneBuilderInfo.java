@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,15 @@ public class SceneBuilderInfo {
   private SceneBuilderInfo(String path, String libPath) {
     this.path = path;
     this.libPath = libPath;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof SceneBuilderInfo) {
+      SceneBuilderInfo info = (SceneBuilderInfo)object;
+      return Comparing.equal(path, info.path) && Comparing.equal(libPath, info.libPath);
+    }
+    return false;
   }
 
   @NotNull
