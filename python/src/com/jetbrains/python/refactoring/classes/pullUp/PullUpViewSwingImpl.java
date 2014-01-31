@@ -46,34 +46,34 @@ import java.util.List;
  * @author Ilya.Kazakevich
  * Pull up view implementation
  */
-class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
+class PullUpViewSwingImpl extends DialogWrapper implements PyPullUpView {
   @NotNull
-  private final PullUpPresenter myPresenter;
+  private final PyPullUpPresenter myPresenter;
   @NotNull
-  private final DefaultComboBoxModel parentsModel;
+  private final DefaultComboBoxModel myParentsmodel;
   @NotNull
-  private final JPanel topPanel;
+  private final JPanel myTopPanel;
   @NotNull
-  private final JComponent centerPanel;
+  private final JComponent myCenterPanel;
   @NotNull
-  private final PyMemberSelectionTable membersPanelTable;
+  private final PyMemberSelectionTable myMembersPanelTable;
   @NotNull
-  private final Project project;
+  private final Project myProject;
 
   /**
    * @param project project where refactoring takes place
    * @param presenter presenter for this view
    * @param clazz class to refactor
    */
-  PullUpViewSwingImpl(@NotNull Project project, @NotNull final PullUpPresenter presenter, @NotNull PyClass clazz) {
+  PullUpViewSwingImpl(@NotNull Project project, @NotNull final PyPullUpPresenter presenter, @NotNull PyClass clazz) {
     super(project);
-    this.project = project;
+    this.myProject = project;
     setTitle(PyPullUpHandler.REFACTORING_NAME);
     myPresenter = presenter;
 
-    parentsModel = new DefaultComboBoxModel();
+    myParentsmodel = new DefaultComboBoxModel();
 
-    ComboBox parentsCombo = new ComboBox(parentsModel);
+    ComboBox parentsCombo = new ComboBox(myParentsmodel);
     parentsCombo.setRenderer(new PyClassCellRenderer());
 
     JLabel mainLabel = new JLabel();
@@ -81,8 +81,8 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
     mainLabel.setLabelFor(parentsCombo);
 
 
-    topPanel = new JPanel();
-    topPanel.setLayout(new GridBagLayout());
+    myTopPanel = new JPanel();
+    myTopPanel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
@@ -92,22 +92,22 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    topPanel.add(mainLabel, gbConstraints);
-    topPanel.add(mainLabel, gbConstraints);
+    myTopPanel.add(mainLabel, gbConstraints);
+    myTopPanel.add(mainLabel, gbConstraints);
     gbConstraints.gridy++;
-    topPanel.add(parentsCombo, gbConstraints);
+    myTopPanel.add(parentsCombo, gbConstraints);
 
 
-    centerPanel = new JPanel(new BorderLayout());
+    myCenterPanel = new JPanel(new BorderLayout());
     PyMemberSelectionPanel membersPanel = new PyMemberSelectionPanel(RefactoringBundle.message("members.to.be.pulled.up"));
-    membersPanelTable = membersPanel.getTable();
+    myMembersPanelTable = membersPanel.getTable();
     gbConstraints.gridy++;
-    centerPanel.add(membersPanel, BorderLayout.CENTER);
+    myCenterPanel.add(membersPanel, BorderLayout.CENTER);
 
     parentsCombo.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          membersPanelTable.fireExternalDataChange();
+          myMembersPanelTable.fireExternalDataChange();
         }
       }
     });
@@ -116,7 +116,7 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
   @NotNull
   @Override
   protected JComponent createNorthPanel() {
-    return topPanel;
+    return myTopPanel;
   }
 
   @NotNull
@@ -125,7 +125,7 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
   }
 
   protected JComponent createCenterPanel() {
-    return centerPanel;
+    return myCenterPanel;
   }
 
   @Override
@@ -136,13 +136,13 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
   @NotNull
   @Override
   public Collection<PyMemberInfo> getSelectedMemberInfos() {
-    return membersPanelTable.getSelectedMemberInfos();
+    return myMembersPanelTable.getSelectedMemberInfos();
   }
 
   @Override
   public boolean showConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts) {
     Preconditions.checkArgument(!conflicts.isEmpty(), "Can't show dialog for empty conflicts");
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();
   }
@@ -155,7 +155,7 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
   @NotNull
   @Override
   public PyClass getSelectedParent() {
-    return (PyClass)parentsModel.getSelectedItem();
+    return (PyClass)myParentsmodel.getSelectedItem();
   }
 
   @Override
@@ -164,12 +164,12 @@ class PullUpViewSwingImpl extends DialogWrapper implements PullUpView {
                    @NotNull List<PyMemberInfo> members) {
     Preconditions.checkState(!isVisible(), "Already initialzed");
     for (PyClass parent : parents) {
-      parentsModel.addElement(parent);
+      myParentsmodel.addElement(parent);
     }
 
-    membersPanelTable.setMemberInfoModel(memberInfoModel);
-    membersPanelTable.addMemberInfoChangeListener(memberInfoModel);
-    membersPanelTable.setMemberInfos(members);
+    myMembersPanelTable.setMemberInfoModel(memberInfoModel);
+    myMembersPanelTable.addMemberInfoChangeListener(memberInfoModel);
+    myMembersPanelTable.setMemberInfos(members);
     init();
     show();
   }

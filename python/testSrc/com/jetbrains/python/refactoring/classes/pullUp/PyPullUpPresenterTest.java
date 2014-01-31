@@ -24,27 +24,28 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
-public class PullUpPresenterTest extends PyTestCase {
+public class PyPullUpPresenterTest extends PyTestCase {
   private static final ClassToName CLASS_TO_NAME = new ClassToName();
-  private MocksControl mocksControl;
-  private PullUpView view;
-  private Capture<Collection<PyClass>> parentsCapture;
-  private Capture<List<PyMemberInfo>> memberInfos;
+  private MocksControl myMocksControl;
+  private PyPullUpView myView;
+  private Capture<Collection<PyClass>> myParentsCapture;
+  private Capture<List<PyMemberInfo>> myMemberInfos;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
     //TODO: Extract to some shared place?
     myFixture.copyDirectoryToProject("refactoring/pullup/presenter/", "");
     myFixture.configureFromTempProjectFile("file.py");
-    mocksControl = new MocksControl(MocksControl.MockType.NICE);
-    view = mocksControl.createMock(PullUpView.class);
+    myMocksControl = new MocksControl(MocksControl.MockType.NICE);
+    myView = myMocksControl.createMock(PyPullUpView.class);
 
-    parentsCapture = new Capture<Collection<PyClass>>();
+    myParentsCapture = new Capture<Collection<PyClass>>();
     Capture<MemberInfoModel<PyElement, PyMemberInfo>> memInfoModelCapture = new Capture<MemberInfoModel<PyElement, PyMemberInfo>>();
-    memberInfos = new Capture<List<PyMemberInfo>>();
+    myMemberInfos = new Capture<List<PyMemberInfo>>();
 
-    view.init(EasyMock.capture(parentsCapture), EasyMock.capture(memInfoModelCapture), EasyMock.capture(memberInfos));
+    myView.init(EasyMock.capture(myParentsCapture), EasyMock.capture(memInfoModelCapture), EasyMock.capture(myMemberInfos));
     EasyMock.expectLastCall().once();
   }
 
@@ -52,13 +53,13 @@ public class PullUpPresenterTest extends PyTestCase {
    * Checks that parents are returned in MRO order and no parents outside of source root are included
    */
   public void testParentsOrder() throws Exception {
-    PullUpPresenter sut = configureByClass("Child");
+    PyPullUpPresenter sut = configureByClass("Child");
 
-    mocksControl.replay();
+    myMocksControl.replay();
 
     sut.launch();
-    Assert.assertTrue("Presenter did not show parents", parentsCapture.hasCaptured());
-    Collection<PyClass> parents = parentsCapture.getValue();
+    Assert.assertTrue("Presenter did not show parents", myParentsCapture.hasCaptured());
+    Collection<PyClass> parents = myParentsCapture.getValue();
     Assert.assertThat("Wrong list of parents or parents are listed in wrong order", Collections2.transform(parents, CLASS_TO_NAME),
                       Matchers.contains("SubParent1", "SubParent2", "MainParent"));
   }
@@ -86,14 +87,14 @@ public class PullUpPresenterTest extends PyTestCase {
    * Checks that some members are not allowed
    */
   public void testDisabledMembers() throws Exception {
-    PullUpPresenterImpl sut = configureByClass("SomeMembersDisabled");
-    EasyMock.expect(view.getSelectedParent()).andReturn(getClassByName("SubParent1")).anyTimes();
+    PyPullUpPresenterImpl sut = configureByClass("SomeMembersDisabled");
+    EasyMock.expect(myView.getSelectedParent()).andReturn(getClassByName("SubParent1")).anyTimes();
 
-    mocksControl.replay();
+    myMocksControl.replay();
     sut.launch();
 
-    Assert.assertTrue("No members selected", memberInfos.hasCaptured());
-    List<PyMemberInfo> members = memberInfos.getValue();
+    Assert.assertTrue("No members selected", myMemberInfos.hasCaptured());
+    List<PyMemberInfo> members = myMemberInfos.getValue();
     Assert.assertFalse("No members selected", members.isEmpty());
     Collection<Pair<String, Boolean>> memberNamesAndStatus = Collections2.transform(members, new NameAndStatusTransformer(sut));
 
@@ -114,23 +115,23 @@ public class PullUpPresenterTest extends PyTestCase {
    */
   private void ensureNoMembers(String className) throws Exception {
     try {
-      PullUpPresenter sut = configureByClass(className);
+      PyPullUpPresenter sut = configureByClass(className);
 
-      mocksControl.replay();
+      myMocksControl.replay();
       sut.launch();
     }
     catch (IllegalArgumentException ignored) {
       return;
     }
-    Assert.fail("Presenter should throw exception, but it returned list of parents instead: " + parentsCapture.getValue());
+    Assert.fail("Presenter should throw exception, but it returned list of parents instead: " + myParentsCapture.getValue());
   }
 
 
 
-  private PullUpPresenterImpl configureByClass(String name) {
+  private PyPullUpPresenterImpl configureByClass(String name) {
     PyClass childClass = getClassByName(name);
     PyMemberInfoStorage storage = new PyMemberInfoStorage(childClass);
-    return new PullUpPresenterImpl(view, storage, childClass);
+    return new PyPullUpPresenterImpl(myView, storage, childClass);
   }
 
   @NotNull
@@ -147,9 +148,9 @@ public class PullUpPresenterTest extends PyTestCase {
   }
 
   private static class NameAndStatusTransformer implements Function<PyMemberInfo, Pair<String, Boolean>> {
-    private final PullUpPresenterImpl presenter;
+    private final PyPullUpPresenterImpl presenter;
 
-    private NameAndStatusTransformer(PullUpPresenterImpl presenter) {
+    private NameAndStatusTransformer(PyPullUpPresenterImpl presenter) {
       this.presenter = presenter;
     }
 

@@ -22,7 +22,7 @@ import com.jetbrains.python.vp.Presenter;
  * Presenter for pull-up refactoring
  * @author Ilya.Kazakevich
  */
-public interface PullUpPresenter extends Presenter {
+public interface PyPullUpPresenter extends Presenter {
 
   /**
    * To be called by view when user clicks "ok"

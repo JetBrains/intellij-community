@@ -18,6 +18,8 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Sets;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
@@ -26,13 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Ilya.Kazakevich
  */
 class PyAncestorsUtils implements Predicate<PyClass> {
   @NotNull
-  private final Collection<VirtualFile> sourceRoots;
+  private final Set<VirtualFile> mySourceRoots;
 
   /**
    * Returns list of class parents that are under user control
@@ -47,28 +50,11 @@ class PyAncestorsUtils implements Predicate<PyClass> {
   }
 
   private PyAncestorsUtils(@NotNull Collection<VirtualFile> sourceRoots) {
-    this.sourceRoots = sourceRoots;
+    mySourceRoots = Sets.newHashSet(sourceRoots);
   }
 
   @Override
   public boolean apply(PyClass input) {
-    return isUnderSourceRoots(sourceRoots, input.getContainingFile().getVirtualFile());
-  }
-
-  private static boolean isUnderSourceRoots(Collection<VirtualFile> sourceRoots, VirtualFile file) {
-    assert file != null;
-    assert sourceRoots != null;
-
-    for (VirtualFile root : sourceRoots) {
-      VirtualFile currentFile = file;
-      while (currentFile != null) {
-        if (currentFile.equals(root)) {
-          return true;
-        }
-        currentFile = currentFile.getParent();
-      }
-    }
-
-    return false;
+    return VfsUtilCore.isUnder(input.getContainingFile().getVirtualFile(), mySourceRoots);
   }
 }

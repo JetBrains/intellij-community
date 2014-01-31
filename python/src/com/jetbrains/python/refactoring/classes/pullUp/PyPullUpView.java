@@ -31,7 +31,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  * View for pull-up refactoring
  */
-public interface PullUpView {
+public interface PyPullUpView {
   /**
    * Launches view.
    *

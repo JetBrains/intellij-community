@@ -10,7 +10,7 @@
  *  <dd>Handles only view: it may import any swing/awt packages but should contain almost no logic, because it is untestable.</dd>
  *  </dl>
  *  One implements <strong>Presenter</strong> and <strong>View</strong>. Both may have links to each other.
- *  You run {@link com.jetbrains.python.vp.ViewPresenterUtils#init(Class, Class, Creator)} to link and launch them.
+ *  You run {@link com.jetbrains.python.vp.ViewPresenterUtils#linkViewWithPresenterAndLaunch(Class, Class, Creator)} to link and launch them.
  *  See its javadoc
  * </p>
  * <h2>Threading issues</h2>

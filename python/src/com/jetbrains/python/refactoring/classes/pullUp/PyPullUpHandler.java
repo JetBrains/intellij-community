@@ -63,18 +63,20 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
 
     if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return;
 
-    ViewPresenterUtils.init(PullUpPresenter.class, PullUpView.class, new Creator<PullUpView, PullUpPresenter>() {
-      @NotNull
-      @Override
-      public PullUpPresenter createPresenter(@NotNull PullUpView view) {
-        return new PullUpPresenterImpl(view, infoStorage, clazz);
-      }
+    ViewPresenterUtils.linkViewWithPresenterAndLaunch(PyPullUpPresenter.class, PyPullUpView.class,
+                                                      new Creator<PyPullUpView, PyPullUpPresenter>() {
+                                                        @NotNull
+                                                        @Override
+                                                        public PyPullUpPresenter createPresenter(@NotNull PyPullUpView view) {
+                                                          return new PyPullUpPresenterImpl(view, infoStorage, clazz);
+                                                        }
 
-      @Override
-      public PullUpView createView(@NotNull PullUpPresenter presenter) {
-        return new PullUpViewSwingImpl(project, presenter, clazz);
-      }
-    });
+                                                        @NotNull
+                                                        @Override
+                                                        public PyPullUpView createView(@NotNull PyPullUpPresenter presenter) {
+                                                          return new PullUpViewSwingImpl(project, presenter, clazz);
+                                                        }
+                                                      });
 
   }
 

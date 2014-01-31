@@ -29,8 +29,8 @@ import java.util.Collection;
 /**
  * @author Dennis.Ushakov
  */
-public class PullUpConflictsUtil {
-  private PullUpConflictsUtil() {
+public class PyPullUpConflictsUtil {
+  private PyPullUpConflictsUtil() {
   }
 
   public static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {

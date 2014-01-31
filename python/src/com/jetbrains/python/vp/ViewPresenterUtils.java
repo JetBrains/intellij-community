@@ -23,10 +23,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
 /**
- * Entry point to package. Use {@link #init(Class, Class, Creator)}
+ * Entry point to package. Use {@link #linkViewWithPresenterAndLaunch(Class, Class, Creator)}
  * @author Ilya.Kazakevich
  */
-public class ViewPresenterUtils {
+public final class ViewPresenterUtils {
   private ViewPresenterUtils() {
   }
 
@@ -39,9 +39,9 @@ public class ViewPresenterUtils {
    * @param <V>                view interface
    * @param <P>                presenter interface
    */
-  public static <V, P extends Presenter> void init(@NotNull Class<P> presenterInterface,
-                                                   @NotNull Class<V> viewInterface,
-                                                   @NotNull Creator<V, P> creator) {
+  public static <V, P extends Presenter> void linkViewWithPresenterAndLaunch(@NotNull Class<P> presenterInterface,
+                                                                             @NotNull Class<V> viewInterface,
+                                                                             @NotNull Creator<V, P> creator) {
     Preconditions.checkArgument(presenterInterface.isInterface(), "Presenter is not interface");
     Preconditions.checkArgument(viewInterface.isInterface(), "View is not interface");
 
