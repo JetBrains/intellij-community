@@ -18,7 +18,7 @@ public class ErrorSceneBuilderCreator implements SceneBuilderCreator {
   }
 
   @Override
-  public SceneBuilder create(URL url, ErrorHandler errorHandler) throws Exception {
+  public SceneBuilder create(URL url, EditorCallback editorCallback) throws Exception {
     throw new UnsupportedOperationException();
   }
 }

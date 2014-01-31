@@ -2,6 +2,8 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -27,7 +29,7 @@ import java.net.URL;
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, ErrorHandler {
+public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditor");
 
   private final static String SCENE_CARD = "scene_builder";
@@ -43,6 +45,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel();
 
+  private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
 
   private SceneBuilderCreator myBuilderCreator;
@@ -54,6 +57,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myFile = file;
     myCreatorProvider = creatorProvider;
 
+    myDocument = FileDocumentManager.getInstance().getDocument(file);
     myChangeListener = new ExternalChangeListener();
 
     createErrorPage();
@@ -101,7 +105,37 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  public void handle(Throwable e) {
+  public void saveChanges(final String content) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (mySceneBuilder != null) {
+          try {
+            myChangeListener.setRunState(false);
+
+            // XXX: strange behavior with undo/redo
+
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+                  @Override
+                  public void run() {
+                    myDocument.setText(content);
+                  }
+                }, "JavaFX Scene Builder edit operation", null);
+              }
+            });
+          }
+          finally {
+            myChangeListener.setRunState(true);
+          }
+        }
+      }
+    });
+  }
+
+  @Override
+  public void handleError(Throwable e) {
     showErrorPage(null, e);
   }
 
@@ -163,6 +197,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     if (mySceneBuilder != null) {
       myPanel.remove(mySceneBuilder.getPanel());
+      mySceneBuilder.close();
       mySceneBuilder = null;
     }
   }
@@ -248,12 +283,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   private class ExternalChangeListener extends DocumentAdapter {
-    private final Document myDocument;
     private volatile boolean myRunState;
     private String myContent;
 
     public ExternalChangeListener() {
-      myDocument = FileDocumentManager.getInstance().getDocument(myFile);
       myDocument.addDocumentListener(this);
     }
 
@@ -269,6 +302,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         myRunState = false;
         myContent = myDocument.getText();
       }
+    }
+
+    public void setRunState(boolean state) {
+      myRunState = state;
     }
 
     public void dispose() {

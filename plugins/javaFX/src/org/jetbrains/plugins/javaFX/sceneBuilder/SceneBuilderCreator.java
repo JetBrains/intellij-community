@@ -8,5 +8,5 @@ import java.net.URL;
 public interface SceneBuilderCreator {
   State getState();
 
-  SceneBuilder create(URL url, ErrorHandler errorHandler) throws Exception;
+  SceneBuilder create(URL url, EditorCallback editorCallback) throws Exception;
 }

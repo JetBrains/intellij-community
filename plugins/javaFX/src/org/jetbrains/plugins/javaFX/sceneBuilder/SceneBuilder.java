@@ -9,4 +9,6 @@ public interface SceneBuilder {
   JComponent getPanel();
 
   void reloadFile();
+
+  void close();
 }

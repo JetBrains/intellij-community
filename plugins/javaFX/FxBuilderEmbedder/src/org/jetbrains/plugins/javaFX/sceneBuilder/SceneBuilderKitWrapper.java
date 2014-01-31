@@ -14,7 +14,7 @@ import java.util.HashSet;
  * @author Alexander Lobas
  */
 public class SceneBuilderKitWrapper {
-  public static SceneBuilder create(URL url, ErrorHandler errorHandler) throws Exception {
+  public static SceneBuilder create(URL url, EditorCallback editorCallback) throws Exception {
     // JavaFX -> Swing drag&drop fix
     Field identifier = DataFormat.class.getDeclaredField("identifier");
     identifier.setAccessible(true);
@@ -24,6 +24,6 @@ public class SceneBuilderKitWrapper {
     // JavaFX class loading fix
     FXMLLoader.setDefaultClassLoader(SceneBuilderKitWrapper.class.getClassLoader());
 
-    return new SceneBuilderImpl(url, errorHandler);
+    return new SceneBuilderImpl(url, editorCallback);
   }
 }

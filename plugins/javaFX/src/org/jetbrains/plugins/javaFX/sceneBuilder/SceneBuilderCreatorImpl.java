@@ -30,9 +30,9 @@ public class SceneBuilderCreatorImpl implements SceneBuilderCreator {
   }
 
   @Override
-  public SceneBuilder create(URL url, ErrorHandler errorHandler) throws Exception {
+  public SceneBuilder create(URL url, EditorCallback editorCallback) throws Exception {
     Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderKitWrapper", false, myClassLoader);
-    return (SceneBuilder)wrapperClass.getMethod("create", URL.class, ErrorHandler.class).invoke(null, url, errorHandler);
+    return (SceneBuilder)wrapperClass.getMethod("create", URL.class, EditorCallback.class).invoke(null, url, editorCallback);
   }
 
   @Override
