@@ -286,11 +286,9 @@ public class GithubUtil {
         }
         catch (Error e) {
           exceptionRef.set(new GithubOperationCanceledException(e));
-          throw e;
         }
         catch (RuntimeException e) {
           exceptionRef.set(new GithubOperationCanceledException(e));
-          throw e;
         }
       }
     });
