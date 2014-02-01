@@ -503,6 +503,10 @@
                       key="method.return.always.constant.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.classlayout.MethodReturnAlwaysConstantInspection"/>
+    <localInspection language="JAVA" shortName="InterfaceMayBeAnnotatedFunctional" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="interface.may.be.annotated.functional.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.InterfaceMayBeAnnotatedFunctionalInspection"/>
 
     <!--group.names.class.metrics-->
     <localInspection language="JAVA" suppressId="OverlyComplexAnonymousInnerClass" shortName="AnonymousClassComplexity"
