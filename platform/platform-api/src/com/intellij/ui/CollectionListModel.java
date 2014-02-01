@@ -34,6 +34,10 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = new ArrayList<T>(items);
   }
 
+  public CollectionListModel(@NotNull final List<? extends T> items) {
+    this((Collection<? extends T>)items);
+  }
+
   public CollectionListModel(final T... items) {
     myItems = ContainerUtilRt.newArrayList(items);
   }
