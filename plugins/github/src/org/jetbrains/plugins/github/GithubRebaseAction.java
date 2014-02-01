@@ -105,7 +105,6 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find git repository");
       return;
     }
-    final VirtualFile root = gitRepository.getRoot();
 
     BasicAction.saveAll();
 
@@ -118,7 +117,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         if (upstreamRemoteUrl == null) {
           LOG.info("Configuring upstream remote");
           indicator.setText("Configuring upstream remote...");
-          upstreamRemoteUrl = configureUpstreamRemote(project, root, gitRepository, indicator);
+          upstreamRemoteUrl = configureUpstreamRemote(project, gitRepository, indicator);
           if (upstreamRemoteUrl == null) {
             return;
           }
@@ -149,14 +148,13 @@ public class GithubRebaseAction extends DumbAwareAction {
 
         LOG.info("Rebasing current branch");
         indicator.setText("Rebasing current branch...");
-        rebaseCurrentBranch(project, root, gitRepository, indicator);
+        rebaseCurrentBranch(project, gitRepository, indicator);
       }
     }.queue();
   }
 
   @Nullable
   static String configureUpstreamRemote(@NotNull Project project,
-                                        @NotNull VirtualFile root,
                                         @NotNull GitRepository gitRepository,
                                         @NotNull ProgressIndicator indicator) {
     GithubRepoDetailed repositoryInfo = loadRepositoryInfo(project, gitRepository, indicator);
@@ -227,7 +225,6 @@ public class GithubRebaseAction extends DumbAwareAction {
   }
 
   private static void rebaseCurrentBranch(@NotNull final Project project,
-                                          @NotNull final VirtualFile root,
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
@@ -237,7 +234,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                new Runnable() {
                                  @Override
                                  public void run() {
-                                   doRebaseCurrentBranch(project, root, indicator);
+                                   doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
                                  }
                                });
     process.execute();

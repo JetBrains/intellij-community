@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
 /**
