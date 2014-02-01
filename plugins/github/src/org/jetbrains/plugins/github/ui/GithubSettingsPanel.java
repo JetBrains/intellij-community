@@ -17,12 +17,16 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -88,7 +92,16 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          GithubUser user = GithubUtil.checkAuthData(getAuthData());
+          final Project project = ProjectManager.getInstance().getDefaultProject();
+          final GithubAuthData auth = getAuthData();
+          GithubUser user = GithubUtil
+            .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
+              @Override
+              public GithubUser convert(ProgressIndicator indicator) throws IOException {
+                return GithubUtil.checkAuthData(auth);
+              }
+            });
+
           if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
             GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful for user " + user.getLogin());
           }
