@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,7 +270,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
                                          @NotNull Project project) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-    final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : forcedType.getCanonicalText();
+    final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL ? null : forcedType.getCanonicalText();
 
     GrParameter parameter = factory.createParameter(parameterName, typeText, parametersOwner);
     parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);
