@@ -153,6 +153,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
     return GithubUtil.computeValueInModal(project, "Access to GitHub",
                                           new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+                                            @NotNull
                                             @Override
                                             public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
                                               return GithubUtil.getValidAuthDataFromConfig(project, indicator);

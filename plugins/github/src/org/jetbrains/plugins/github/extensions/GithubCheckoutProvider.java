@@ -57,6 +57,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     try {
       availableRepos = GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, List<GithubRepo>, IOException>() {
+          @NotNull
           @Override
           public List<GithubRepo> convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {

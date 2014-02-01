@@ -96,6 +96,7 @@ public class GithubSettingsPanel {
           final GithubAuthData auth = getAuthData();
           GithubUser user = GithubUtil
             .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
+              @NotNull
               @Override
               public GithubUser convert(ProgressIndicator indicator) throws IOException {
                 return GithubUtil.checkAuthData(auth);

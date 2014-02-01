@@ -120,6 +120,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     try {
       myToken.setText(
         GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, String, IOException>() {
+          @NotNull
           @Override
           public String convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil

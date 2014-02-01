@@ -74,6 +74,7 @@ public class GithubLoginDialog extends DialogWrapper {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
       GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
+        @NotNull
         @Override
         public GithubUser convert(ProgressIndicator indicator) throws IOException {
           return GithubUtil.checkAuthData(auth);
