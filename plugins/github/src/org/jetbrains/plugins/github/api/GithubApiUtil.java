@@ -169,6 +169,10 @@ public class GithubApiUtil {
     if (tokenAuth != null) {
       method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
     }
+    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+    if (basicAuth != null && basicAuth.getCode() != null) {
+      method.addRequestHeader("X-GitHub-OTP", basicAuth.getCode());
+    }
     for (Header header : headers) {
       method.addRequestHeader(header);
     }
@@ -400,6 +404,14 @@ public class GithubApiUtil {
    /*
    * Github API
    */
+
+  public static void askForTwoFactorCodeSMS(@NotNull GithubAuthData auth) {
+    try {
+      postRequest(auth, "/authorizations", null, ACCEPT_V3_JSON);
+    } catch (IOException e) {
+      LOG.info(e);
+    }
+  }
 
   @NotNull
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {

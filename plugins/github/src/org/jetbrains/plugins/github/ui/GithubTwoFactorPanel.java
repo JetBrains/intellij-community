@@ -15,19 +15,32 @@
  */
 package org.jetbrains.plugins.github.ui;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
+
+import javax.swing.*;
 
 /**
- * @author Aleksey Pivovarov
+ * @author oleg
+ * @date 10/20/10
  */
-public class GithubBasicLoginDialog extends GithubLoginDialog {
+public class GithubTwoFactorPanel {
+  private JPanel myPane;
+  private JTextField myCodeTextField;
 
-  public GithubBasicLoginDialog(@NotNull Project project, @NotNull GithubAuthDataHolder authHolder, @NotNull String host) {
-    super(project, authHolder);
-    myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
-    myGithubLoginPanel.lockHost(host);
+  public GithubTwoFactorPanel() {
+  }
+
+  public JComponent getPanel() {
+    return myPane;
+  }
+
+  @NotNull
+  public String getCode() {
+    return myCodeTextField.getText().trim();
+  }
+
+  public JComponent getPreferableFocusComponent() {
+    return myCodeTextField;
   }
 }
+
