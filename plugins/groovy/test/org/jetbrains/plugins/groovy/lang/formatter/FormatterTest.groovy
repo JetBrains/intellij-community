@@ -770,6 +770,8 @@ def foo() {
 
   void testSpreadArg() { doTest() }
 
+  void testExtraLines() { doTest() }
+
   void testLabelWithDescription() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
