@@ -82,12 +82,6 @@ public class GithubUtil {
       task.consume(auth);
       return auth;
     }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runAndGetValidAuth(project, indicator, task);
-      }
-      throw e;
-    }
   }
 
   @NotNull
@@ -104,12 +98,6 @@ public class GithubUtil {
     catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       return task.convert(auth);
-    }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runWithValidAuth(project, indicator, task);
-      }
-      throw e;
     }
   }
 
@@ -132,27 +120,6 @@ public class GithubUtil {
       auth = getValidBasicAuthDataForHost(project, indicator, host);
       return task.convert(auth);
     }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runWithValidBasicAuthForHost(project, indicator, host, task);
-      }
-      throw e;
-    }
-  }
-
-  private static boolean checkSSLCertificate(IOException e, final String host, ProgressIndicator indicator) {
-    final GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-    if (GithubSslSupport.isCertificateException(e)) {
-      final AtomicReference<Boolean> result = new AtomicReference<Boolean>();
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          result.set(sslSupport.askIfShouldProceed(host));
-        }
-      }, indicator.getModalityState());
-      return result.get();
-    }
-    return false;
   }
 
   /**
@@ -179,8 +146,8 @@ public class GithubUtil {
    */
   @NotNull
   public static GithubAuthData getValidBasicAuthDataForHost(@Nullable Project project,
-                                                            @NotNull ProgressIndicator indicator, @NotNull String host)
-    throws GithubAuthenticationCanceledException {
+                                                            @NotNull ProgressIndicator indicator,
+                                                            @NotNull String host) throws GithubAuthenticationCanceledException {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     dialog.lockHost(host);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -233,17 +200,7 @@ public class GithubUtil {
         throw new GithubAuthenticationException("Anonymous connection not allowed");
     }
 
-    try {
-      return testConnection(auth);
-    }
-    catch (IOException e) {
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (GithubSslSupport.getInstance().askIfShouldProceed(auth.getHost())) {
-          return testConnection(auth);
-        }
-      }
-      throw e;
-    }
+    return testConnection(auth);
   }
 
   @NotNull
