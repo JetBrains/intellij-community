@@ -33,10 +33,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubSettings;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -113,6 +110,8 @@ public class GithubSettingsPanel {
           else {
             GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful");
           }
+        }
+        catch (GithubOperationCanceledException ignore) {
         }
         catch (GithubAuthenticationException ex) {
           GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: " + ex.getMessage());
