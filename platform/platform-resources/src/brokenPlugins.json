@@ -115,104 +115,29 @@
     "version": "133.326"
   },
   {
-    "updateId": 14011,
+    "updateId": 14572,
     "pluginId": "NodeJS",
-    "version": "132.15"
+    "version": "134.31"
   },
   {
-    "updateId": 14203,
+    "updateId": 14671,
     "pluginId": "NodeJS",
-    "version": "132.324"
+    "version": "134.125"
   },
   {
-    "updateId": 14375,
+    "updateId": 14708,
     "pluginId": "NodeJS",
-    "version": "132.709"
+    "version": "134.198"
   },
   {
-    "updateId": 14482,
+    "updateId": 14791,
     "pluginId": "NodeJS",
-    "version": "132.944"
+    "version": "134.262"
   },
   {
-    "updateId": 14516,
+    "updateId": 14818,
     "pluginId": "NodeJS",
-    "version": "132.947"
-  },
-  {
-    "updateId": 14548,
-    "pluginId": "NodeJS",
-    "version": "132.1054"
-  },
-  {
-    "updateId": 14581,
-    "pluginId": "NodeJS",
-    "version": "133.50"
-  },
-  {
-    "updateId": 14595,
-    "pluginId": "NodeJS",
-    "version": "133.74"
-  },
-  {
-    "updateId": 14665,
-    "pluginId": "NodeJS",
-    "version": "133.134"
-  },
-  {
-    "updateId": 14693,
-    "pluginId": "NodeJS",
-    "version": "133.162"
-  },
-  {
-    "updateId": 14706,
-    "pluginId": "NodeJS",
-    "version": "133.195"
-  },
-  {
-    "updateId": 14707,
-    "pluginId": "NodeJS",
-    "version": "133.193"
-  },
-  {
-    "updateId": 14715,
-    "pluginId": "NodeJS",
-    "version": "133.168"
-  },
-  {
-    "updateId": 14790,
-    "pluginId": "NodeJS",
-    "version": "133.260"
-  },
-  {
-    "updateId": 14820,
-    "pluginId": "NodeJS",
-    "version": "133.293"
-  },
-  {
-    "updateId": 14868,
-    "pluginId": "NodeJS",
-    "version": "133.373"
-  },
-  {
-    "updateId": 14031,
-    "pluginId": "org.intellij.clojure",
-    "version": "0.7.34"
-  },
-  {
-    "updateId": 14076,
-    "pluginId": "org.intellij.clojure",
-    "version": "0.7.36"
-  },
-  {
-    "updateId": 14428,
-    "pluginId": "org.intellij.clojure",
-    "version": "0.7.57"
-  },
-  {
-    "updateId": 14604,
-    "pluginId": "org.intellij.clojure",
-    "version": "0.7.60"
+    "version": "134.307"
   },
   {
     "updateId": 8976,
@@ -263,130 +188,5 @@
     "updateId": 10010,
     "pluginId": "org.intellij.scala",
     "version": "0.5.16"
-  },
-  {
-    "updateId": 14027,
-    "pluginId": "org.intellij.scala",
-    "version": "0.18.39"
-  },
-  {
-    "updateId": 14075,
-    "pluginId": "org.intellij.scala",
-    "version": "0.21.45"
-  },
-  {
-    "updateId": 14130,
-    "pluginId": "org.intellij.scala",
-    "version": "0.21.50"
-  },
-  {
-    "updateId": 14289,
-    "pluginId": "org.intellij.scala",
-    "version": "0.23.252"
-  },
-  {
-    "updateId": 14440,
-    "pluginId": "org.intellij.scala",
-    "version": "0.23.282"
-  },
-  {
-    "updateId": 14493,
-    "pluginId": "org.intellij.scala",
-    "version": "0.23.289"
-  },
-  {
-    "updateId": 14574,
-    "pluginId": "org.intellij.scala",
-    "version": "0.23.308"
-  },
-  {
-    "updateId": 14612,
-    "pluginId": "org.intellij.scala",
-    "version": "0.23.311"
-  },
-  {
-    "updateId": 14666,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.308"
-  },
-  {
-    "updateId": 14672,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.310"
-  },
-  {
-    "updateId": 14697,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.314"
-  },
-  {
-    "updateId": 14711,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.315"
-  },
-  {
-    "updateId": 14728,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.318"
-  },
-  {
-    "updateId": 14743,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.321"
-  },
-  {
-    "updateId": 14767,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.323"
-  },
-  {
-    "updateId": 14779,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.327"
-  },
-  {
-    "updateId": 14845,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.331"
-  },
-  {
-    "updateId": 14859,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.333"
-  },
-  {
-    "updateId": 14863,
-    "pluginId": "org.intellij.scala",
-    "version": "0.26.335"
-  },
-  {
-    "updateId": 14627,
-    "pluginId": "org.jetbrains.plugins.ruby",
-    "version": "6.0.0.20131121"
-  },
-  {
-    "updateId": 14812,
-    "pluginId": "org.jetbrains.plugins.ruby",
-    "version": "6.0.0.20131207"
-  },
-  {
-    "updateId": 14036,
-    "pluginId": "Pythonid",
-    "version": "2.11.2"
-  },
-  {
-    "updateId": 14295,
-    "pluginId": "Pythonid",
-    "version": "3.0.1"
-  },
-  {
-    "updateId": 14654,
-    "pluginId": "Pythonid",
-    "version": "3.1 Beta"
-  },
-  {
-    "updateId": 14824,
-    "pluginId": "Pythonid",
-    "version": "3.1 Beta 2"
   }
 ]
