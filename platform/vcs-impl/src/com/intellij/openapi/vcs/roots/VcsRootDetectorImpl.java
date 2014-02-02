@@ -37,6 +37,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsRootChecker[] myCheckers;
 
   public VcsRootDetectorImpl(@NotNull Project project,
                              @NotNull ProjectRootManager projectRootManager,
@@ -44,6 +45,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     myProject = project;
     myProjectManager = projectRootManager;
     myVcsManager = projectLevelVcsManager;
+    myCheckers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
   }
 
   @NotNull
@@ -53,7 +55,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
-    if (startDir == null) {
+    if (startDir == null || myCheckers.length == 0) {
       return Collections.emptyList();
     }
 
@@ -140,9 +142,8 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private List<AbstractVcs> getVcsListFor(@NotNull VirtualFile dir) {
-    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
     List<AbstractVcs> vcsList = new ArrayList<AbstractVcs>();
-    for (VcsRootChecker checker : checkers) {
+    for (VcsRootChecker checker : myCheckers) {
       if (checker.isRoot(dir.getPath())) {
         vcsList.add(myVcsManager.findVcsByName(checker.getSupportedVcs().getName()));
       }
