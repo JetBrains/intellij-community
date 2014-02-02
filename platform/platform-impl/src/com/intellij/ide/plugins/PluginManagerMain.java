@@ -138,10 +138,8 @@ public abstract class PluginManagerMain implements Disposable {
     final JComponent component = myActionToolbar.getComponent();
     myToolbarPanel.add(component, BorderLayout.CENTER);
     myToolbarPanel.add(myFilter, BorderLayout.WEST);
-    //Border border = UIManager.getBorder("Table.scrollPaneBorder");
-    //if (border == null) {
-      Border border = new BorderUIResource.LineBorderUIResource(Gray._220, 1);
-    //}
+
+    Border border = new BorderUIResource.LineBorderUIResource(new JBColor(Gray._220, Gray._55), 1);
     myInfoPanel.setBorder(border);
   }
 
