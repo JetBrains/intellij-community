@@ -140,53 +140,8 @@
     "version": "134.307"
   },
   {
-    "updateId": 8976,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.407"
-  },
-  {
-    "updateId": 9009,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.442"
-  },
-  {
-    "updateId": 9041,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.472"
-  },
-  {
-    "updateId": 9214,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.589"
-  },
-  {
-    "updateId": 9343,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.748"
-  },
-  {
-    "updateId": 9470,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.820"
-  },
-  {
-    "updateId": 9473,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.833"
-  },
-  {
-    "updateId": 9669,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.1084"
-  },
-  {
-    "updateId": 9968,
-    "pluginId": "org.intellij.scala",
-    "version": "0.4.1371"
-  },
-  {
-    "updateId": 10010,
-    "pluginId": "org.intellij.scala",
-    "version": "0.5.16"
+    "updateId": 15025,
+    "pluginId": "NodeJS",
+    "version": "134.680"
   }
 ]
