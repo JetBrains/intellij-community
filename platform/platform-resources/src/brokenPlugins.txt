@@ -1,0 +1,9 @@
+// This file contains list of broken plugins.
+// Each line contains plugin ID and list of versions that are broken.
+// If plugin name or version contains a space you can quote it like in command line.
+
+NodeJS    133.74 133.50 133.373 133.293 133.260 133.195 133.162 133.134
+com.jetbrains.php    133.51 133.326 131.98 131.374 131.332 131.235 131.205 130.1639 130.1481 130.1176 129.91 129.814 129.672 129.362 127.67 127.100 126.334 123.66 122.875 121.62 121.390 121.215 121.12
+org.intellij.clojure    0.7.60
+org.intellij.scala    0.29.464 0.28.366 0.23.308
+org.jetbrains.plugins.ruby    6.0.0.20131207 6.0.0.20131121
