@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -17,12 +18,15 @@ import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -139,5 +143,54 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
       result = builder.toString();
     }
     return result;
+  }
+
+  protected Collection<PsiField> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean filterTransient) {
+    final Collection<String> excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
+    final Collection<String> ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
+
+    final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
+
+    final Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
+
+    for (PsiField classField : psiFields) {
+      final String fieldName = classField.getName();
+      if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
+        continue;
+      }
+      if (excludeProperty.contains(fieldName)) {
+        continue;
+      }
+      if (!ofProperty.isEmpty() && !ofProperty.contains(fieldName)) {
+        continue;
+      }
+
+      if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
+        continue;
+      }
+
+      result.add(classField);
+    }
+    return result;
+  }
+
+  protected String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
+    final String fieldName = classField.getName();
+    if (doNotUseGetters) {
+      return fieldName;
+    } else {
+      final String getterName = LombokUtils.toGetterName(fieldName, PsiType.BOOLEAN.equals(classField.getType()));
+
+      boolean hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
+
+      return hasGetter ? getterName + "()" : fieldName;
+    }
+  }
+
+  protected Collection<String> makeSet(@Nullable Collection<String> exclude) {
+    if (null == exclude || exclude.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return new HashSet<String>(exclude);
   }
 }
