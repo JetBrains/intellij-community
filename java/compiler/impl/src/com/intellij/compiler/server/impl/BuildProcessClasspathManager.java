@@ -127,7 +127,11 @@ public class BuildProcessClasspathManager {
         return extraDirFile;
       }
     }
-    return PluginPathManager.getPluginHome(pluginDirName);
+    File pluginHome = PluginPathManager.getPluginHome(pluginDirName);
+    if (!pluginHome.isDirectory() && StringUtil.isCapitalized(pluginDirName)) {
+      pluginHome = PluginPathManager.getPluginHome(StringUtil.decapitalize(pluginDirName));
+    }
+    return pluginHome.isDirectory() ? pluginHome : null;
   }
 
   private static List<String> getDynamicClasspath(Project project) {
