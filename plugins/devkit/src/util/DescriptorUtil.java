@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.module.Module;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 /**
  * @author swr
@@ -72,16 +76,18 @@ public class DescriptorUtil {
     assert PluginModuleType.isOfType(plugin);
 
     final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
-    if (pluginXml != null) {
-      final XmlTag rootTag = pluginXml.getDocument().getRootTag();
-      if (rootTag != null) {
-        final XmlTag idTag = rootTag.findFirstSubTag("id");
-        if (idTag != null) return idTag.getValue().getTrimmedText();
-
-        final XmlTag nameTag = rootTag.findFirstSubTag("name");
-        if (nameTag != null) return nameTag.getValue().getTrimmedText();
-      }
+    if (pluginXml == null) {
+      return null;
     }
-    return null;
+    return getIdeaPlugin(pluginXml).getRootElement().getPluginId();
+  }
+
+  public static boolean isPluginXml(PsiFile file) {
+    if (!(file instanceof XmlFile)) return false;
+    return getIdeaPlugin((XmlFile)file) != null;
+  }
+
+  private static DomFileElement<IdeaPlugin> getIdeaPlugin(XmlFile file) {
+    return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 }
