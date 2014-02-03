@@ -28,10 +28,8 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       return false;
     }
 
-    if (myExpression.hasFormalParameterTypes()) {
-    }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(
-      FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT, myExpression, false));
+    final PsiType groundTargetType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT, myExpression, false);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
       return false;
@@ -55,7 +53,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       }
     }
 
-    final PsiType returnType = interfaceMethod.getReturnType();
+    PsiType returnType = interfaceMethod.getReturnType();
     if (returnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       if (returnType.equals(PsiType.VOID)) {
@@ -66,8 +64,11 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         if (returnExpressions.isEmpty() && !myExpression.isValueCompatible()) {  //not value-compatible
           return false;
         }
-        for (PsiExpression returnExpression : returnExpressions) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, GenericsUtil.eliminateWildcards(substitutor.substitute(returnType))));
+        returnType = substitutor.substitute(returnType);
+        if (!session.isProperType(returnType)) {
+          for (PsiExpression returnExpression : returnExpressions) {
+            constraints.add(new ExpressionCompatibilityConstraint(returnExpression, GenericsUtil.eliminateWildcards(returnType)));
+          }
         }
       }
     }
