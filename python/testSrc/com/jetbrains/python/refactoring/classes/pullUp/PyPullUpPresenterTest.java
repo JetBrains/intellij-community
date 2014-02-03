@@ -86,10 +86,10 @@ public class PyPullUpPresenterTest extends PyTestCase {
   }
 
   /**
-   * Checks that some members are not allowed
+   * Checks that some members are not allowed, while others are
    */
-  public void testDisabledMembers() throws Exception {
-    PyPullUpPresenterImpl sut = configureByClass("SomeMembersDisabled");
+  public void testMembers() throws Exception {
+    PyPullUpPresenterImpl sut = configureByClass("HugeChild");
     EasyMock.expect(myView.getSelectedParent()).andReturn(getClassByName("SubParent1")).anyTimes();
 
     myMocksControl.replay();
@@ -104,11 +104,14 @@ public class PyPullUpPresenterTest extends PyTestCase {
     final Matcher<Iterable<? extends Entry>> matcher = Matchers
       .containsInAnyOrder(new Entry("extends date", true, false),
                           new Entry("CLASS_FIELD", true, true),
+                          new Entry("__init__(self)", true, false),
                           new Entry("extends SubParent1", false, false),
                           new Entry("foo(self)", false, false),
                           new Entry("bar(self)", true, false),
                           new Entry("static_1(cls)", true, true),
                           new Entry("static_2()", true, true),
+                          new Entry("self.instance_field_1", true, false),
+                          new Entry("self.instance_field_2", true, false),
                           new Entry("bad_method()", true, false)
       );
     Assert.assertThat("Wrong members or their states", memberNamesAndStatus, matcher);

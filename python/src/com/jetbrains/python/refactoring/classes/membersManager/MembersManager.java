@@ -31,7 +31,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<Py
    * List of managers. Class delegates all logic to them.
    */
   private static final Collection<? extends MembersManager<?>> MANAGERS =
-    Arrays.asList(new MethodsManager(), new SuperClassesManager(), new ClassFieldsManager());
+    Arrays.asList(new MethodsManager(), new SuperClassesManager(), new ClassFieldsManager(), new InstanceFieldsManager());
   private static final PyMemberExtractor PY_MEMBER_EXTRACTOR = new PyMemberExtractor();
 
   @NotNull
@@ -121,7 +121,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<Py
   /**
    * Filters out named elements (ones that subclasses {@link com.intellij.psi.PsiNamedElement}) and {@link com.jetbrains.python.psi.PyElement})
    * that are null or has null name.
-   * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name)
+   * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name.
+   * note: we should probably throw exceptions in such cases and display "refactoring not available" window in handler)
    *
    * @param elementsToFilter collection of elements to filter
    * @param <T>              element type
@@ -141,7 +142,12 @@ public abstract class MembersManager<T extends PyElement> implements Function<Py
    */
   protected abstract void moveMembers(@NotNull PyClass from, @NotNull PyClass to, @NotNull Collection<T> members);
 
-  //TODO: Doc
+  /**
+   * Creates {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo} from {@link com.jetbrains.python.psi.PyElement}
+   * This process is plugin-specific and should be implemented in each plugin
+   * @param input element
+   * @return member info
+   */
   @SuppressWarnings("NullableProblems") //IDEA-120100
   @NotNull
   @Override

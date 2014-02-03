@@ -29,7 +29,11 @@ class NoMembers(object):
 class BadMro(MainParent, object, SubParent1, SubParent2):
     pass
 
-class SomeMembersDisabled(SubParent1, date): #SubParent1 is disabled
+class HugeChild(SubParent1, date): #SubParent1 is disabled
+    def __init__(self):
+        self.instance_field_1 = 42
+        self.instance_field_2 = 100500
+
     CLASS_FIELD = 42
     (CLASS_FIELD_A,CLASS_FIELD_B) = (42,100500) #We do not support tuples in class assignments for now (see ClassFieldsManager)
     def foo(self): #should be disabled
