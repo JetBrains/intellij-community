@@ -238,6 +238,9 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           if (defaultValue != null) {
             final PyType type = context.getType(defaultValue);
             if (type != null && !(type instanceof PyNoneType)) {
+              if (type instanceof PyTupleType) {
+                return PyTypeParser.getTypeByName(this, "collections.Iterable");
+              }
               return type;
             }
           }
