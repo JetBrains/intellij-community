@@ -59,6 +59,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     private final CodeStyleSettings mySettings;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
     private TextRange myRange;
+    private int myDelta = 0;
 
     public PyCommentFormatter(Project project) {
       myProject = project;
@@ -72,7 +73,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
       }
       myRange = range;
       element.accept(this);
-      return range;
+      return TextRange.create(range.getStartOffset(), range.getEndOffset() + myDelta);
     }
 
     @Override
@@ -87,6 +88,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
 
         String newText = "# " + commentText;
         if (!newText.equals(text)) {
+          myDelta += newText.length() - text.length();
           element.replace(
             PyElementGenerator.getInstance(myProject).createFromText(LanguageLevel.getDefault(), PsiComment.class, newText));
         }
