@@ -853,7 +853,7 @@ public class XmlSerializerTest extends TestCase {
 
     bean.STRING_V = "skip";
 
-    assertSerializer(bean, "<BeanWithPropertyFilter />", "Serialization failure", null);
+    assertSerializer(bean, "<BeanWithPropertyFilter />", null);
   }
 
   public static class BeanWithJDOMElement {
@@ -1147,13 +1147,13 @@ public class XmlSerializerTest extends TestCase {
   }
 
   //---------------------------------------------------------------------------------------------------
-  private static void assertSerializer(Object bean, String expected, SerializationFilter filter) {
-    assertSerializer(bean, expected, "Serialization failure", filter);
+  private static Element assertSerializer(Object bean, String expected, SerializationFilter filter) {
+    return assertSerializer(bean, expected, "Serialization failure", filter);
   }
 
   private static Object doSerializerTest(String expectedText, Object bean) {
     try {
-      Element element = assertSerializer(bean, expectedText, "Serialization failure", null);
+      Element element = assertSerializer(bean, expectedText, null);
 
       //test deserializer
 
