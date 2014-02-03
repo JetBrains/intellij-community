@@ -15,6 +15,6 @@ public abstract class PackageManagementServiceEx extends PackageManagementServic
 
   public abstract boolean shouldFetchLatestVersionsForOnlyInstalledPackages();
 
-  public abstract void fetchLatestVersion(@NotNull String packageName, @NotNull final CatchingConsumer<String, Exception> consumer);
+  public abstract void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull final CatchingConsumer<String, Exception> consumer);
 
 }
