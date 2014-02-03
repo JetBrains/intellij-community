@@ -25,7 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;

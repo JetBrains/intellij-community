@@ -7,7 +7,7 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import org.easymock.Capture;
 import org.easymock.EasyMock;

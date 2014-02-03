@@ -23,7 +23,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import javax.swing.*;
 import java.awt.*;

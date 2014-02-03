@@ -21,7 +21,7 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

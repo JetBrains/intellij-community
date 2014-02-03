@@ -23,7 +23,7 @@ import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 
