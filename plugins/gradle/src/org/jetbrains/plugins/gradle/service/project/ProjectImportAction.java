@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
-    final IdeaProject ideaProject = controller.getModel(myIsPreviewMode ? BasicIdeaProject.class : IdeaProject.class);
+    Class<? extends IdeaProject> aClass1 = myIsPreviewMode ? BasicIdeaProject.class : IdeaProject.class;
+    final IdeaProject ideaProject = controller.getModel(aClass1);
     if (ideaProject == null || ideaProject.getModules().isEmpty()) {
       return null;
     }

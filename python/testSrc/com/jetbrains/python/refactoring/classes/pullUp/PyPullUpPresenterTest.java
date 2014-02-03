@@ -7,7 +7,7 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -102,6 +102,7 @@ public class PyPullUpPresenterTest extends PyTestCase {
     @SuppressWarnings("unchecked") Matcher<Iterable<? extends Pair<String, Boolean>>> matcher = Matchers
       .containsInAnyOrder(
         Pair.create("date", true),
+        Pair.create("CLASS_FIELD", true),
         Pair.create("SubParent1", false),
         Pair.create("foo", false),
         Pair.create("bar", true));

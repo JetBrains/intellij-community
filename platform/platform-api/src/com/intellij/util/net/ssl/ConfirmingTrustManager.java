@@ -260,7 +260,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     private static String createAlias(@NotNull X509Certificate certificate) {
-      return new CertificateWrapper(certificate).getSubjectField(CertificateWrapper.CommonField.COMMON_NAME);
+      return CertificateUtil.getCommonName(certificate);
     }
 
     /**
@@ -287,6 +287,10 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         }
         // for listeners
         X509Certificate certificate = getCertificate(alias);
+        if (certificate == null) {
+          LOG.error("No certificate found for alias: " + alias);
+          return false;
+        }
         myKeyStore.deleteEntry(alias);
         flushKeyStore();
         // trust manager should be updated each time its key store was modified

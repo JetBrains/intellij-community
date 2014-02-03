@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -93,5 +94,9 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
       }
     }
     return true;
+  }
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return other.isProducedBy(PythonRunConfigurationProducer.class);
   }
 }

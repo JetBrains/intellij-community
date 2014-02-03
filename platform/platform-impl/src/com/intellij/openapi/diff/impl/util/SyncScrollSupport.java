@@ -36,6 +36,7 @@ public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
   private boolean myDuringVerticalScroll = false;
   private final ArrayList<ScrollListener> myScrollers = new ArrayList<ScrollListener>();
+  private boolean myEnabled = true;
 
   public void install(EditingSides[] sideContainers) {
     Disposer.dispose(this);
@@ -56,6 +57,14 @@ public class SyncScrollSupport implements Disposable {
       Disposer.dispose(scrollListener);
     }
     myScrollers.clear();
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
   }
 
   private void install2(Editor[] editors, EditingSides[] sideContainers) {
@@ -100,7 +109,7 @@ public class SyncScrollSupport implements Disposable {
     }
 
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (myDuringVerticalScroll) return;
+      if (!myEnabled || myDuringVerticalScroll) return;
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();
       if (newRectangle == null || oldRectangle == null) return;

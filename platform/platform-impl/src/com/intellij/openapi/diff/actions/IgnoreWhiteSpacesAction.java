@@ -82,7 +82,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
     }
   }
 
-  private static class IgnoringPolicyAction extends AnAction {
+  private static class IgnoringPolicyAction extends AnAction implements DumbAware {
     private final ComparisonPolicy myPolicy;
 
     public IgnoringPolicyAction(String text, ComparisonPolicy policy) {

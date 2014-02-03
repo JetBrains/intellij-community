@@ -24,6 +24,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,7 +55,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     for (String memberName : membersName) {
       final PyElement member = findMember(className, memberName);
-      members.add(new PyMemberInfo(member));
+      members.add(MembersManager.findMember(clazz, member));
     }
 
     new WriteCommandAction.Simple(myFixture.getProject()) {
@@ -81,7 +83,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     final PyElement member = findMember(className, ".foo");
-    members.add(new PyMemberInfo(member));
+    members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
     new WriteCommandAction.Simple(myFixture.getProject()) {
@@ -124,7 +126,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     final PyElement member = findMember(className, ".foo");
-    members.add(new PyMemberInfo(member));
+    members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
     new WriteCommandAction.Simple(myFixture.getProject()) {

@@ -370,27 +370,27 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitFile(GroovyFileBase file) {
     if (isAfterElementOrSemi(PACKAGE_DEFINITION)) {
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (myType2 == PACKAGE_DEFINITION) {
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (isLeftOrRight(TYPE_DEFINITION_TYPES)) {
       if (myType1 == GROOVY_DOC_COMMENT) {
         createLF(true);
       }
       else {
-        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AROUND_CLASS + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AROUND_CLASS + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
       }
     }
     else if (isAfterElementOrSemi(IMPORT_STATEMENT) && myType2 != IMPORT_STATEMENT) { //after imports
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_IMPORTS + 1, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_IMPORTS + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (myType1 != IMPORT_STATEMENT && !isSemiAfter(IMPORT_STATEMENT) && myType2 == IMPORT_STATEMENT) { //before imports
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_IMPORTS, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_IMPORTS, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (isAfterElementOrSemi(IMPORT_STATEMENT) && myType2 == IMPORT_STATEMENT) {
-      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
+      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else {
       processClassMembers(null);
@@ -582,7 +582,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
     if (myType1 == mLT || myType2 == mGT) {
-      createSpaceProperty(false, true, 1);
+      createSpaceInCode(false);
     }
   }
 
@@ -858,7 +858,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void createLazySpace() {
-    myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
   }
 
   public void visitDocTag(GrDocTag docTag) {
@@ -1021,11 +1021,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void createSpaceInCode(final boolean space) {
-    createSpaceProperty(space, keepBlankLines());
-  }
-
-  private void createSpaceProperty(boolean space, int keepBlankLines) {
-    createSpaceProperty(space, mySettings.KEEP_LINE_BREAKS, keepBlankLines);
+    createSpaceProperty(space, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, final int keepBlankLines) {

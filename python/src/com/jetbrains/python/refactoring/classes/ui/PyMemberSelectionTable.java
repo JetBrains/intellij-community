@@ -22,7 +22,7 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.ui.RowIcon;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import javax.swing.*;
 import java.util.List;

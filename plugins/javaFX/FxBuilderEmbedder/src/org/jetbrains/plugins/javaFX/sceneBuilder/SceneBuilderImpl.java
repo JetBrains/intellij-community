@@ -27,6 +27,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private final JFXPanel myPanel = new JFXPanel();
   private EditorController myEditorController;
   private ChangeListener<Number> myListener;
+  private volatile boolean mySkipChanges;
 
   public SceneBuilderImpl(URL url, EditorCallback editorCallback) {
     myFileURL = url;
@@ -88,7 +89,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     myListener = new ChangeListener<Number>() {
       @Override
       public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        myEditorCallback.saveChanges(myEditorController.getFxmlText());
+        if (!mySkipChanges) {
+          myEditorCallback.saveChanges(myEditorController.getFxmlText());
+        }
       }
     };
 
@@ -103,12 +106,17 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   private void loadFile() {
+    mySkipChanges = true;
+
     try {
       String fxmlText = FXOMDocument.readContentFromURL(myFileURL);
       myEditorController.setFxmlTextAndLocation(fxmlText, myFileURL);
     }
     catch (Throwable e) {
       myEditorCallback.handleError(e);
+    }
+    finally {
+      mySkipChanges = false;
     }
   }
 }

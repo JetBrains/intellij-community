@@ -22,6 +22,7 @@ import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 /**
  * @author Dennis.Ushakov

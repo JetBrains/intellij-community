@@ -53,4 +53,9 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
   public abstract void setModuleFilePath(@NonNls String path);
 
   public abstract void setContentEntryPath(String moduleRootPath);
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof AbstractModuleBuilder && getBuilderId() != null && getBuilderId().equals(((AbstractModuleBuilder)obj).getBuilderId());
+  }
 }

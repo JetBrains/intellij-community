@@ -18,6 +18,8 @@ package com.jetbrains.python.refactoring.classes;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownProcessor;
 
 import java.util.ArrayList;
@@ -55,7 +57,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
     for (String memberName : membersName) {
       final PyElement member = findMember(className, memberName);
-      members.add(new PyMemberInfo(member));
+      members.add(MembersManager.findMember(clazz, member));
     }
 
     final PyPushDownProcessor processor = new PyPushDownProcessor(myFixture.getProject(), clazz, members);

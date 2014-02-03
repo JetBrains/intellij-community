@@ -26,7 +26,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionTable;

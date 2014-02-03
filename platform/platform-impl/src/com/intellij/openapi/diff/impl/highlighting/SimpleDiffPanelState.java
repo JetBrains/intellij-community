@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import java.util.Iterator;
 public abstract class SimpleDiffPanelState implements Disposable  {
   protected ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
   protected DiffPolicy myDiffPolicy;
+  protected HighlightMode myHighlightMode;
   protected final EditorPlaceHolder myAppender1;
   protected final EditorPlaceHolder myAppender2;
   protected FragmentList myFragmentList = FragmentList.EMPTY;
@@ -47,6 +49,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
     myAppender2 = createEditorWrapper(project, changeListener, FragmentSide.SIDE2);
     myProject = project;
     myDiffPolicy = DiffPolicy.LINES_WO_FORMATTING;
+    myHighlightMode = HighlightMode.BY_WORD;
     Disposer.register(parentDisposable, this);
   }
 
@@ -70,6 +73,14 @@ public abstract class SimpleDiffPanelState implements Disposable  {
 
   public ComparisonPolicy getComparisonPolicy() {
     return myComparisonPolicy;
+  }
+
+  public HighlightMode getHighlightMode() {
+    return myHighlightMode;
+  }
+
+  public void setHighlightMode(HighlightMode highlightMode) {
+    myHighlightMode = highlightMode;
   }
 
   public void dispose() {
@@ -105,7 +116,12 @@ public abstract class SimpleDiffPanelState implements Disposable  {
       return LineBlocks.EMPTY;
     }
 
-    return addMarkup(new TextCompareProcessor(myComparisonPolicy, myDiffPolicy).process(myAppender1.getText(), myAppender2.getText()));
+    if (myHighlightMode == HighlightMode.NO_HIGHLIGHTING) {
+      return LineBlocks.fromLineFragments(new ArrayList<LineFragment>());
+    }
+
+    return addMarkup(new TextCompareProcessor(myComparisonPolicy, myDiffPolicy, myHighlightMode == HighlightMode.BY_WORD)
+                       .process(myAppender1.getText(), myAppender2.getText()));
   }
 
   public Project getProject() { return myProject; }

@@ -238,6 +238,9 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           if (defaultValue != null) {
             final PyType type = context.getType(defaultValue);
             if (type != null && !(type instanceof PyNoneType)) {
+              if (type instanceof PyTupleType) {
+                return PyTypeParser.getTypeByName(this, "collections.Iterable");
+              }
               return type;
             }
           }
@@ -249,15 +252,18 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             @Override
             public boolean process(@NotNull PyCallExpression call) {
               final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-              final CallArgumentsMapping mapping = call.getArgumentList().analyzeCall(resolveContext);
-              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
-                if (entry.getValue() == PyNamedParameterImpl.this) {
-                  final PyExpression argument = entry.getKey();
-                  if (argument != null) {
-                    final PyType type = context.getType(argument);
-                    if (type != null) {
-                      types.add(type);
-                      return true;
+              final PyArgumentList argumentList = call.getArgumentList();
+              if (argumentList != null) {
+                final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
+                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+                  if (entry.getValue() == PyNamedParameterImpl.this) {
+                    final PyExpression argument = entry.getKey();
+                    if (argument != null) {
+                      final PyType type = context.getType(argument);
+                      if (type != null) {
+                        types.add(type);
+                        return true;
+                      }
                     }
                   }
                 }

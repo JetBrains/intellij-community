@@ -112,7 +112,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private boolean myRemoteTemplatesLoaded;
   private Cards myCurrentCard;
-  private boolean myNeedDownload;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -163,7 +162,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
       public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
-        if (myCurrentCard == Cards.FRAMEWORKS) {
+        if (isFrameworksMode()) {
           myFrameworksPanel.addSupport(module, rootModel);
         }
       }
@@ -208,6 +207,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       myProjectTypeList.setSelectedIndex(0);
     }
     myTemplatesList.restoreSelection();
+  }
+
+  private boolean isFrameworksMode() {
+    return myCurrentCard == Cards.FRAMEWORKS && getSelectedBuilder().equals(myContext.getProjectBuilder());
   }
 
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
@@ -306,7 +309,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   // new TemplatesGroup selected
   public void projectTypeChanged() {
-    myNeedDownload = false;
     TemplatesGroup group = getSelectedGroup();
     if (group == null) return;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
@@ -332,7 +334,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         myFrameworksPanel.setProviders(providers);
       }
       getSelectedBuilder().addModuleConfigurationUpdater(myConfigurationUpdater);
-      myNeedDownload = true;
 
       showCard(FRAMEWORKS_CARD);
     }
@@ -412,7 +413,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   public void onWizardFinished() throws CommitStepException {
-    if (myNeedDownload) {
+    if (isFrameworksMode()) {
       boolean ok = myFrameworksPanel.downloadLibraries();
       if (!ok) {
         int answer = Messages.showYesNoDialog(getComponent(),

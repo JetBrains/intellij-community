@@ -57,6 +57,7 @@
   <actions>
     <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder" text="Open In SceneBuilder">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
   </actions>
