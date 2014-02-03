@@ -34,6 +34,7 @@ import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.diff.impl.processing.HorizontalDiffSplitter;
 import com.intellij.openapi.diff.impl.settings.DiffMergeEditorSetting;
 import com.intellij.openapi.diff.impl.settings.DiffMergeSettings;
@@ -481,6 +482,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
     setComparisonPolicy(comparisonPolicy, true);
+  }
+
+  public void setHighlightMode(HighlightMode highlightMode) {
+    myData.setHighlightMode(highlightMode);
+    rediff();
+  }
+
+  public HighlightMode getHighlightMode() {
+    return myData.getHighlightMode();
   }
 
   public Rediffers getDiffUpdater() {
