@@ -47,6 +47,9 @@ public class InferenceVariable {
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
+    if (inferenceBound == InferenceBound.EQ && classType instanceof PsiClassType && ((PsiClassType)classType).resolve() == myParameter) {
+      return false;
+    }
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
