@@ -45,6 +45,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       for (int i = 0; i < lambdaParameters.length; i++) {
         constraints.add(new TypeEqualityConstraint(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType())));
       }
+      constraints.add(new StrictSubtypingConstraint(myT, groundTargetType));
     } else {
       for (PsiParameter parameter : parameters) {
         if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
