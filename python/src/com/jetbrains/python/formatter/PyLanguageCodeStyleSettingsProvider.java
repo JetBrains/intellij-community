@@ -76,6 +76,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 ApplicationBundle.message("checkbox.spaces.before.colon"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_PY_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_BACKSLASH", "Before '\\'", SPACES_OTHER);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_NUMBER_SIGN", "Before '#'", SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_NUMBER_SIGN", "After '#'", SPACES_OTHER);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
