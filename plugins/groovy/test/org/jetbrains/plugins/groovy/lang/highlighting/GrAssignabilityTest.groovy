@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,8 +288,8 @@ class Ca {
 }
 
 use(Ca) {
-  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
-  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+  1.foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
+  (1 as int).foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
 }
 ''')
   }
@@ -798,5 +798,13 @@ def zoo() {
   <warning>return</warning> foo()
 }
 ''')
+  }
+
+  void testBinaryOperatorApplicability() {
+    testHighlighting('''\
+void bug(Collection<String> foo, Collection<String> bar) {
+    foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
+    foo << "a"
+}''')
   }
 }

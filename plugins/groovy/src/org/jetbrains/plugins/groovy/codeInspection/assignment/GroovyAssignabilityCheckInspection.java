@@ -494,9 +494,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @NotNull
-    private static PsiElement getElementToHighlight(@NotNull PsiElement refElement, @Nullable GrArgumentList argList) {
+    private static PsiElement getElementToHighlight(@NotNull PsiElement place, @Nullable GrArgumentList argList) {
       PsiElement elementToHighlight = argList;
-      if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = refElement;
+      if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = place;
       return elementToHighlight;
     }
 
@@ -710,6 +710,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @Override
+    public void visitBinaryExpression(GrBinaryExpression binary) {
+      super.visitBinaryExpression(binary);
+
+      checkOperator(binary);
+    }
+
+    @Override
     public void visitEnumConstant(GrEnumConstant enumConstant) {
       super.visitEnumConstant(enumConstant);
       checkConstructorCall(enumConstant, enumConstant);
@@ -761,6 +768,31 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return false;
     }
 
+    private void checkOperator(GrBinaryExpression binary) {
+      if (hasErrorElements(binary)) return;
+
+      GroovyResolveResult[] results = binary.multiResolve(false);
+      GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(results);
+
+      GrExpression invoked = binary.getLeftOperand();
+
+      if (!checkCannotInferArgumentTypes(invoked)) return;
+
+      PsiElement operationToken = binary.getOperationToken();
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(invoked, true);
+
+      if (resolveResult.getElement() != null) {
+        checkMethodApplicability(resolveResult, invoked, true, argTypes, operationToken);
+      }
+      else if (results.length > 0) {
+        for (GroovyResolveResult result : results) {
+          if (!checkMethodApplicability(result, invoked, false, argTypes, operationToken)) return;
+        }
+
+        registerError(operationToken, GroovyBundle.message("method.call.is.ambiguous"));
+      }
+    }
+
     private void checkMethodCall(GrCall call, GrExpression invoked) {
       if (hasErrorElements(call.getArgumentList())) return;
 
@@ -810,7 +842,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult,
-                                                  GroovyPsiElement place,
+                                                  PsiElement place,
                                                   PsiMethod method,
                                                   PsiType[] argumentTypes) {
       final PsiClass containingClass =
@@ -941,6 +973,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                                              @NotNull GroovyPsiElement place,
                                              boolean checkUnknownArgs,
                                              @Nullable PsiType[] argumentTypes) {
+      return checkMethodApplicability(methodResolveResult, place, checkUnknownArgs, argumentTypes, place);
+    }
+
+    private boolean checkMethodApplicability(@NotNull GroovyResolveResult methodResolveResult,
+                                             @NotNull GroovyPsiElement place,
+                                             boolean checkUnknownArgs,
+                                             @Nullable PsiType[] argumentTypes,
+                                             @NotNull PsiElement elementToHighlight) {
       final PsiElement element = methodResolveResult.getElement();
       if (!(element instanceof PsiMethod)) return true;
       if (element instanceof GrBuilderMethod) return true;
@@ -954,7 +994,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             GrClosureSignatureUtil.ApplicabilityResult result = PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, place);
             switch (result) {
               case inapplicable:
-                highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+                highlightInapplicableMethodUsage(methodResolveResult, elementToHighlight, method, argumentTypes);
                 return false;
               case canBeApplicable:
                 if (checkUnknownArgs) {
@@ -978,7 +1018,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         if (qualifierType != null &&
             !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, qualifier, methodResolveResult.getSubstitutor()) &&
             !checkCategoryQualifier((GrReferenceExpression)place, qualifier, staticMethod, methodResolveResult.getSubstitutor())) {
-          registerError(((GrReferenceExpression)place).getReferenceNameElement(), GroovyInspectionBundle
+          registerError(getElementToHighlight(elementToHighlight, PsiUtil.getArgumentsList(elementToHighlight)), GroovyInspectionBundle
             .message("category.method.0.cannot.be.applied.to.1", method.getName(), qualifierType.getCanonicalText()));
           return false;
         }
@@ -989,7 +1029,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       GrClosureSignatureUtil.ApplicabilityResult applicable = PsiUtil.isApplicableConcrete(argumentTypes, method, methodResolveResult.getSubstitutor(), place, false);
       switch (applicable) {
         case inapplicable:
-          highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+          highlightInapplicableMethodUsage(methodResolveResult, elementToHighlight, method, argumentTypes);
           return false;
         case canBeApplicable:
           if (checkUnknownArgs) {
@@ -1068,7 +1108,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
   @Nullable
   private static PsiType inferQualifierTypeByPlace(GrReferenceExpression place) {
-    if (place.getParent() instanceof GrIndexProperty) {
+    if (place.getParent() instanceof GrIndexProperty || place.getParent() instanceof GrBinaryExpression) {
       return place.getType();
     }
     return GrReferenceResolveUtil.getQualifierType(place);
