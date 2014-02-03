@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,23 +33,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
-public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware {
-  private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
-  private static final ComparisonPolicy[] ourActionOrder = new ComparisonPolicy[]{
-    ComparisonPolicy.DEFAULT,
-    ComparisonPolicy.TRIM_SPACE,
-    ComparisonPolicy.IGNORE_SPACE};
+public class HighlightModeAction extends ComboBoxAction implements DumbAware {
+  private final Map<HighlightMode, AnAction> myActions = new HashMap<HighlightMode, AnAction>();
+  private static final HighlightMode[] ourActionOrder =
+    new HighlightMode[]{HighlightMode.BY_WORD, HighlightMode.BY_LINE, HighlightMode.NO_HIGHLIGHTING};
 
-  public IgnoreWhiteSpacesAction() {
-    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
-    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
-    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
+  public HighlightModeAction() {
+    myActions.put(HighlightMode.BY_WORD,
+                  new SetHighlightModeAction(DiffBundle.message("diff.acton.highlight.mode.action.by.word"), HighlightMode.BY_WORD));
+    myActions.put(HighlightMode.BY_LINE,
+                  new SetHighlightModeAction(DiffBundle.message("diff.acton.highlight.mode.action.by.line"), HighlightMode.BY_LINE));
+    myActions.put(HighlightMode.NO_HIGHLIGHTING,
+                  new SetHighlightModeAction(DiffBundle.message("diff.acton.highlight.mode.action.no.highlighting"),
+                                             HighlightMode.NO_HIGHLIGHTING));
   }
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(CommonBundle.message("comparison.ignore.whitespace.acton.name"));
+    final JLabel label = new JLabel(CommonBundle.message("diff.acton.highlight.mode.action.name"));
     label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
     panel.add(label, BorderLayout.WEST);
     panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
@@ -59,7 +61,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (ComparisonPolicy comparisonPolicy : ourActionOrder) {
+    for (HighlightMode comparisonPolicy : ourActionOrder) {
       actionGroup.add(myActions.get(comparisonPolicy));
     }
     return actionGroup;
@@ -70,30 +72,31 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
     Presentation presentation = e.getPresentation();
     DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     if (diffPanel != null && diffPanel.getComponent().isDisplayable()) {
-      AnAction action = myActions.get(diffPanel.getComparisonPolicy());
+      AnAction action = myActions.get(diffPanel.getHighlightMode());
       Presentation templatePresentation = action.getTemplatePresentation();
       presentation.setIcon(templatePresentation.getIcon());
       presentation.setText(templatePresentation.getText());
       presentation.setEnabled(true);
-    } else {
+    }
+    else {
       presentation.setIcon(null);
-      presentation.setText(DiffBundle.message("ignore.whitespace.action.not.available.action.name"));
+      presentation.setText(DiffBundle.message("diff.acton.highlight.mode.not.available.action.name"));
       presentation.setEnabled(false);
     }
   }
 
-  private static class IgnoringPolicyAction extends AnAction implements DumbAware {
-    private final ComparisonPolicy myPolicy;
+  private static class SetHighlightModeAction extends AnAction implements DumbAware {
+    private final HighlightMode myHighlightMode;
 
-    public IgnoringPolicyAction(String text, ComparisonPolicy policy) {
+    public SetHighlightModeAction(String text, HighlightMode mode) {
       super(text);
-      myPolicy = policy;
+      myHighlightMode = mode;
     }
 
     public void actionPerformed(AnActionEvent e) {
       final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
       if (diffPanel != null) {
-        diffPanel.setComparisonPolicy(myPolicy);
+        diffPanel.setHighlightMode(myHighlightMode);
       }
     }
   }

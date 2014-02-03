@@ -27,6 +27,7 @@ package com.intellij.openapi.diff.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,4 +42,12 @@ public interface DiffPanelEx extends DiffPanel, Disposable {
   void setComparisonPolicy(ComparisonPolicy comparisonPolicy);
 
   ComparisonPolicy getComparisonPolicy();
+
+  void setAutoScrollEnabled(boolean enabled);
+
+  boolean isAutoScrollEnabled();
+
+  void setHighlightMode(HighlightMode highlightMode);
+
+  HighlightMode getHighlightMode();
 }
