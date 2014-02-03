@@ -579,7 +579,7 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation, languageLevel);
     if (errorMessage != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(annotation).descriptionAndTooltip(errorMessage).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
     }
     return null;
   }
