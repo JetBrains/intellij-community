@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -74,11 +73,17 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       }
 
       final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
-      for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-        if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
+      if (myExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)myExpression).hasFormalParameterTypes() ||
+          myExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)myExpression).isExact()) {
+        for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+          if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
+        }
       }
+
       final PsiType returnType = interfaceMethod.getReturnType();
-      if (!session.isProperType(substitutor.substitute(returnType))) return false;
+      if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
+        if (!session.isProperType(substitutor.substitute(returnType))) return false;
+      }
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(), new Function<PsiType, PsiType>() {
@@ -133,9 +138,15 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedProperTypes, thrownType)) {
             for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
-              constraints.add(new TypeCompatibilityConstraint(expectedNonProperThrownType, thrownType));
+              constraints.add(new StrictSubtypingConstraint(expectedNonProperThrownType, thrownType));
             }
           }
+        }
+
+        for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
+          final InferenceVariable variable = session.getInferenceVariable(expectedNonProperThrownType);
+          LOG.assertTrue(variable != null);
+          variable.setThrows();
         }
       }
     }

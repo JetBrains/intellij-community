@@ -27,6 +27,7 @@ public class InferenceVariable {
     return myParameter;
   }
 
+  private boolean myThrownBound = false;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
   private final PsiTypeParameter myParameter;
 
@@ -76,5 +77,13 @@ public class InferenceVariable {
       }
     }
     return dependencies;
+  }
+
+  public boolean isThrownBound() {
+    return myThrownBound;
+  }
+
+  public void setThrows() {
+    myThrownBound = true;
   }
 }
