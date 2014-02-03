@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.testing.PythonTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,5 +95,9 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
       }
     }
     return true;
+  }
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return other.isProducedBy(PythonTestConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
   }
 }
