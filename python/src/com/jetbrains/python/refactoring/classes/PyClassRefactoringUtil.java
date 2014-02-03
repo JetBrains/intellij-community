@@ -139,6 +139,22 @@ public class PyClassRefactoringUtil {
     return false;
   }
 
+  /**
+   * Moves class field to another class
+   * @param expressions list of class fields
+   * @param superClass where to move them
+   */
+  public static void moveFields(@NotNull final Collection<PyTargetExpression> expressions, @NotNull final PyClass superClass) {
+    for (final PyTargetExpression expression : expressions) {
+      final PyAssignmentStatement expAssignmentStatement = PsiTreeUtil.getParentOfType(expression, PyAssignmentStatement.class);
+      assert expAssignmentStatement != null: "Target expression has no assignment statement";
+      final PyStatementList superClassStatement = superClass.getStatementList();
+      PyUtil.addElementToStatementList(expAssignmentStatement.copy(), superClassStatement, true);
+      expAssignmentStatement.delete();
+      PyPsiUtils.removeRedundantPass(superClassStatement);
+    }
+
+  }
   public static void moveMethods(Collection<PyFunction> methods, PyClass superClass) {
     if (methods.size() == 0) return;
     for (PsiElement e : methods) {

@@ -102,6 +102,7 @@ public class PyPullUpPresenterTest extends PyTestCase {
     @SuppressWarnings("unchecked") Matcher<Iterable<? extends Pair<String, Boolean>>> matcher = Matchers
       .containsInAnyOrder(
         Pair.create("date", true),
+        Pair.create("CLASS_FIELD", true),
         Pair.create("SubParent1", false),
         Pair.create("foo", false),
         Pair.create("bar", true));

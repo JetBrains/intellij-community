@@ -26,7 +26,10 @@ public abstract class MembersManager implements Function<PyElement, PyMemberInfo
   /**
    * List of managers. Class delegates all logic to them.
    */
-  private static final Collection<MembersManager> MANAGERS = Arrays.asList(new MethodsManager(), new SuperClassesManager());
+  private static final Collection<MembersManager> MANAGERS = Arrays.asList(
+    new MethodsManager(),
+    new SuperClassesManager(),
+    new ClassFieldsManager());
   private static final PyMemberExtractor PY_MEMBER_EXTRACTOR = new PyMemberExtractor();
 
   protected MembersManager() {
