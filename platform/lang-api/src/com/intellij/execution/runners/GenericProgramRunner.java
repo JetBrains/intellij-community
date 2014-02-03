@@ -33,7 +33,8 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
 
   @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
-  @Deprecated @NonNls public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"}) @Deprecated @NonNls
+  public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
   @Nullable
