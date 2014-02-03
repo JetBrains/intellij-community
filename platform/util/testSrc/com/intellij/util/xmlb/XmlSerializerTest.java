@@ -809,6 +809,8 @@ public class XmlSerializerTest extends TestCase {
     public int COUNT = 3;
     @Attribute("name")
     public String name = "James";
+    @Attribute("occupation")
+    public String occupation;
   }
   public void testBeanWithPrimitivePropertyBoundToAttribute() {
     final BeanWithPropertiesBoundToAttribute bean = new BeanWithPropertiesBoundToAttribute();
