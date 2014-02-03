@@ -41,4 +41,8 @@ public interface DiffPanelEx extends DiffPanel, Disposable {
   void setComparisonPolicy(ComparisonPolicy comparisonPolicy);
 
   ComparisonPolicy getComparisonPolicy();
+
+  void setAutoScrollEnabled(boolean enabled);
+
+  boolean isAutoScrollEnabled();
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
+import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -110,6 +111,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       public void customize(DiffToolbar toolbar) {
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addSeparator();
+        toolbar.addAction(new ToggleAutoScrollAction());
         toolbar.addSeparator();
         toolbar.addAction(actionManager.getAction("ContextHelp"));
         toolbar.addAction(getEditSourceAction());
@@ -466,6 +469,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (notifyManager) {
       DiffManagerImpl.getInstanceEx().setComparisonPolicy(policy);
     }
+  }
+
+  public void setAutoScrollEnabled(boolean enabled) {
+    myScrollSupport.setEnabled(enabled);
+  }
+
+  public boolean isAutoScrollEnabled() {
+    return myScrollSupport.isEnabled();
   }
 
   public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
