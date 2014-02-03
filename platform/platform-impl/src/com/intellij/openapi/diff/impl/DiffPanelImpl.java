@@ -110,6 +110,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       public void customize(DiffToolbar toolbar) {
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addSeparator();
         toolbar.addAction(actionManager.getAction("ContextHelp"));
         toolbar.addAction(getEditSourceAction());
         toolbar.addSeparator();
