@@ -72,7 +72,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
       }
       myRange = range;
       element.accept(this);
-      return element.getTextRange();
+      return range;
     }
 
     @Override
