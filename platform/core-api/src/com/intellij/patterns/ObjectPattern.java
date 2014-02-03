@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,13 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self andNot(final ElementPattern pattern) {
-    return and(StandardPatterns.not(pattern));
+    ElementPattern<T> not = StandardPatterns.not(pattern);
+    return and(not);
   }
 
-  public Self andOr(final ElementPattern... patterns) {
-    return and(StandardPatterns.or(patterns));
+  public Self andOr(@NotNull ElementPattern... patterns) {
+    ElementPattern or = StandardPatterns.or(patterns);
+    return and(or);
   }
 
   public Self and(final ElementPattern pattern) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,8 +187,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     catch (UnsupportedVersionException unsupportedVersionException) {
       // Old gradle distribution version used (before ver. 1.8)
       // fallback to use ModelBuilder gradle tooling API
+      Class<? extends IdeaProject> aClass = resolverCtx.isPreviewMode() ? BasicIdeaProject.class : IdeaProject.class;
       ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(
-        resolverCtx.isPreviewMode() ? BasicIdeaProject.class : IdeaProject.class,
+        aClass,
         resolverCtx.getExternalSystemTaskId(),
         resolverCtx.getSettings(),
         resolverCtx.getConnection(),
