@@ -63,4 +63,11 @@ public class CertificateUtil {
       StreamUtil.closeStream(stream);
     }
   }
+
+  /**
+   * @return subjects common name, usually it's domain name pattern, e.g. *.github.com
+   */
+  public static String getCommonName(@NotNull X509Certificate certificate) {
+    return new CertificateWrapper(certificate).getSubjectField(CertificateWrapper.CommonField.COMMON_NAME);
+  }
 }

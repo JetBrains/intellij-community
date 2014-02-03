@@ -232,4 +232,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testMetaClassIteration() {
     doTest();
   }
+
+  // PY-10967
+  public void testDefaultTupleParameter() {
+    doTest();
+  }
 }

@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.util.net.ssl.CertificateWrapper.CommonField.COMMON_NAME;
+import static com.intellij.util.net.ssl.CertificateUtil.getCommonName;
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
 
 /**
@@ -63,7 +63,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         if (!new CertificateWrapper(certificate).isValid()) {
           setForeground(UIUtil.getLabelDisabledForeground());
         }
-        setText(new CertificateWrapper(certificate).getSubjectField(COMMON_NAME));
+        setText(getCommonName(certificate));
       }
     });
 
@@ -136,7 +136,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myDetailsPanel.add(scrollPane, uniqueName);
   }
 
-  private String getCardName(X509Certificate certificate) {
+  private static String getCardName(X509Certificate certificate) {
     return certificate.getSubjectX500Principal().getName();
   }
 
@@ -203,13 +203,13 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
     for (X509Certificate certificate : added) {
       if (!myTrustManager.addCertificate(certificate)) {
-        throw new ConfigurationException("Cannot add certificate", "Cannot Add Certificate");
+        throw new ConfigurationException("Cannot add certificate for " + getCommonName(certificate), "Cannot Add Certificate");
       }
     }
 
     for (X509Certificate certificate : removed) {
       if (!myTrustManager.removeCertificate(certificate)) {
-        throw new ConfigurationException("Cannot remove certificate", "Cannot Remove Certificate");
+        throw new ConfigurationException("Cannot remove certificate for " + getCommonName(certificate), "Cannot Remove Certificate");
       }
     }
 
@@ -256,12 +256,18 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public void certificateAdded(X509Certificate certificate) {
-    getListModel().add(certificate);
+    CollectionListModel<X509Certificate> model = getListModel();
+    if (model.getElementIndex(certificate) < 0) {
+      model.add(certificate);
+    }
     addCertificatePanel(certificate);
   }
 
   @Override
   public void certificateRemoved(X509Certificate certificate) {
-    getListModel().remove(certificate);
+    CollectionListModel<X509Certificate> model = getListModel();
+    if (model.getElementIndex(certificate) >= 0) {
+      model.remove(certificate);
+    }
   }
 }
