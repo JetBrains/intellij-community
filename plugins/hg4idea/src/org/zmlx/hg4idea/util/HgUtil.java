@@ -354,7 +354,7 @@ public abstract class HgUtil {
     //get file name in target revision if it was moved/renamed
     HgStatusCommand statCommand = new HgStatusCommand.Builder(false).copySource(true).baseRevision(vcsRevisionNumber).build(project);
 
-    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo(), Arrays.asList(localHgFile.toFilePath()));
+    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo(), Collections.singletonList(localHgFile.toFilePath()));
 
     for (HgChange change : changes) {
       if (change.afterFile().equals(localHgFile)) {
