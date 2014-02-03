@@ -250,7 +250,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
+  public static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
     }

@@ -76,9 +76,9 @@ public class PyDebugRunner extends GenericProgramRunner {
            ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
   }
 
-  protected RunContentDescriptor doExecute(final Project project, RunProfileState profileState,
+  protected RunContentDescriptor doExecute(@NotNull final Project project, @NotNull RunProfileState profileState,
                                            RunContentDescriptor contentToReuse,
-                                           ExecutionEnvironment env) throws ExecutionException {
+                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final PythonCommandLineState pyState = (PythonCommandLineState)profileState;
