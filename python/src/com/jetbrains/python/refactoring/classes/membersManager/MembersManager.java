@@ -2,13 +2,16 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -114,6 +117,21 @@ public abstract class MembersManager<T extends PyElement> implements Function<Py
   @NotNull
   protected abstract List<PyElement> getMembersCouldBeMoved(@NotNull PyClass pyClass);
 
+
+  /**
+   * Filters out named elements (ones that subclasses {@link com.intellij.psi.PsiNamedElement}) and {@link com.jetbrains.python.psi.PyElement})
+   * that are null or has null name.
+   * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name)
+   *
+   * @param elementsToFilter collection of elements to filter
+   * @param <T>              element type
+   * @return collection of T with out of nulls and elemens whos {@link com.intellij.psi.PsiNamedElement#getName()}  returns null
+   */
+  @NotNull
+  protected static <T extends PsiNamedElement & PyElement> Collection<T> filterNameless(@NotNull final Collection<T> elementsToFilter) {
+    return Collections2.filter(elementsToFilter, new NamelessFilter<T>());
+  }
+
   /**
    * Moves element from one class to another
    *
@@ -134,6 +152,13 @@ public abstract class MembersManager<T extends PyElement> implements Function<Py
     @Override
     public PyElement apply(@NotNull final PyMemberInfo input) {
       return input.getMember();
+    }
+  }
+
+  private static class NamelessFilter<T extends PyElement & PsiNamedElement> implements Predicate<T> {
+    @Override
+    public boolean apply(@Nullable final T input) {
+      return (input != null) && (input.getName() != null);
     }
   }
 }

@@ -31,8 +31,21 @@ class BadMro(MainParent, object, SubParent1, SubParent2):
 
 class SomeMembersDisabled(SubParent1, date): #SubParent1 is disabled
     CLASS_FIELD = 42
-    (CLASS_FIELD_A,CLASS_FIELD_B) = (42,100500) We do not support tuples in class assignments for now (see ClassFieldsManager)
+    (CLASS_FIELD_A,CLASS_FIELD_B) = (42,100500) #We do not support tuples in class assignments for now (see ClassFieldsManager)
     def foo(self): #should be disabled
         pass
     def bar(self):
         pass
+
+    @classmethod
+    def static_1(cls):
+        pass
+
+    @staticmethod
+    def static_2():
+        pass
+
+
+    @staticmethod
+        def bad_method(): #Code has errors, so method should be not be marked as static
+            pass

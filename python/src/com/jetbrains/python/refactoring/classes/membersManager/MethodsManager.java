@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.google.common.collect.Lists;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Arrays.<PyElement>asList(pyClass.getMethods());
+    return Lists.<PyElement>newArrayList(filterNameless(Arrays.asList(pyClass.getMethods())));
   }
 
   @Override
@@ -36,8 +37,10 @@ class MethodsManager extends MembersManager<PyFunction> {
   public PyMemberInfo apply(@NotNull final PyElement input) {
     //TODO: Use generics to prevent casting in each subclass
     final PyFunction pyFunction = (PyFunction)input;
-    //TODO: Support static and classmethod functions
-    return new PyMemberInfo(input, false, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
+    final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(pyFunction);
+    assert flags != null : "No flags return while element is function " + pyFunction;
+    final boolean isStatic = flags.isStaticMethod() || flags.isClassMethod();
+    return new PyMemberInfo(input, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
   }
 
   @Nullable

@@ -33,7 +33,7 @@ class ClassFieldsManager extends MembersManager<PyTargetExpression> {
 
   @Override
   protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyTargetExpression> members) {
-    PyClassRefactoringUtil.moveFields(members, to);
+    PyClassRefactoringUtil.moveFieldDeclarationToStatement(members, to.getStatementList());
   }
 
   @NotNull
