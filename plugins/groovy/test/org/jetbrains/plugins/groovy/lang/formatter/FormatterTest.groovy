@@ -713,6 +713,15 @@ print abc ?:
 '''
   }
 
+  void testConditional2() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting('''\
+print abc ? cde
+:xyz''', '''\
+print abc ? cde
+          : xyz''')
+  }
+
   void testLabelsInBasicMode() {
     groovySettings.indentOptions.INDENT_SIZE = 4
     groovySettings.indentOptions.LABEL_INDENT_SIZE = -2

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,12 +301,20 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       if (myContext.getSettings().ALIGN_MULTILINE_TERNARY_OPERATION) {
         final GrConditionalExpression conditional = (GrConditionalExpression)blockPsi;
 
-        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(false);
-        aligner.append(conditional.getCondition());
+        final AlignmentProvider.Aligner exprAligner = myAlignmentProvider.createAligner(false);
+        exprAligner.append(conditional.getCondition());
         if (!(conditional instanceof GrElvisExpression)) {
-          aligner.append(conditional.getThenBranch());
+          exprAligner.append(conditional.getThenBranch());
         }
-        aligner.append(conditional.getElseBranch());
+        exprAligner.append(conditional.getElseBranch());
+
+        ASTNode question = conditional.getNode().findChildByType(GroovyTokenTypes.mQUESTION);
+        ASTNode colon = conditional.getNode().findChildByType(GroovyTokenTypes.mCOLON);
+        if (question != null && colon != null) {
+          AlignmentProvider.Aligner questionColonAligner = myAlignmentProvider.createAligner(false);
+          questionColonAligner.append(question.getPsi());
+          questionColonAligner.append(colon.getPsi());
+        }
       }
     }
 
@@ -508,7 +516,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return blockPsi instanceof GrParameterList && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS ||
            blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
            blockPsi instanceof GrThrowsClause && myContext.getSettings().ALIGN_MULTILINE_THROWS_LIST ||
-           blockPsi instanceof GrConditionalExpression && myContext.getSettings().ALIGN_MULTILINE_TERNARY_OPERATION ||
            blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP;
   }
 
@@ -516,7 +523,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return blockPsi instanceof GrParameterList ||
         blockPsi instanceof GrArgumentList ||
         blockPsi instanceof GrAssignmentExpression ||
-        blockPsi instanceof GrConditionalExpression ||
         blockPsi instanceof GrExtendsClause ||
         blockPsi instanceof GrThrowsClause ||
         blockPsi instanceof GrListOrMap;
