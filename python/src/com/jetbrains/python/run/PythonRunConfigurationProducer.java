@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.testing.PythonTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +97,6 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
   }
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return other.isProducedBy(PythonTestConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
+    return other.isProducedBy(PythonRunConfigurationProducer.class);
   }
 }
