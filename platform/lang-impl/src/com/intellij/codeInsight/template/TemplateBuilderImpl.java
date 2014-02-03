@@ -279,7 +279,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public void run() {
     final Project project = myFile.getProject();
     VirtualFile file = myFile.getVirtualFile();
-    assert file != null;
+    assert file != null: "Virtual file is null for " + file;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
 

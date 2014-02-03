@@ -38,6 +38,7 @@ public class PyPullUpConflictsUtil {
     for (PyMemberInfo info : infos) {
       PsiElement member = info.getMember();
       boolean isConflict = false;
+      //TODO: Delegate to MemeberManagers here
       if (member instanceof PyFunction) {
         final String name = ((PyFunction)member).getName();
         if (name == null) continue;

@@ -155,6 +155,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   List<PyTargetExpression> getClassAttributes();
 
+  @Nullable
   PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
 
   List<PyTargetExpression> getInstanceAttributes();

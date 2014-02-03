@@ -20,6 +20,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,12 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
   }
 
   private PyElement findField(final String className, final String memberName) {
-    return findClass(className).findClassAttribute(memberName, false);
+    final PyClass aClass = findClass(className);
+    final PyTargetExpression attribute = aClass.findClassAttribute(memberName, false);
+    if (attribute != null) {
+      return attribute;
+    }
+    return aClass.findInstanceAttribute(memberName, false);
   }
 
   private PyFunction findMethod(final String className, final String name) {

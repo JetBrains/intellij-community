@@ -32,6 +32,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -39,6 +40,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 /**
  * @author Dennis.Ushakov
@@ -140,15 +144,15 @@ public class PyClassRefactoringUtil {
   }
 
   /**
-   * Moves class field to another class
+   * Moves class field declarations to some other place
    * @param expressions list of class fields
    * @param superClass where to move them
    */
-  public static void moveFields(@NotNull final Collection<PyTargetExpression> expressions, @NotNull final PyClass superClass) {
+  public static void moveFieldDeclarationToStatement(@NotNull final Collection<PyTargetExpression> expressions,
+                                                     @NotNull final PyStatementList superClassStatement) {
     for (final PyTargetExpression expression : expressions) {
       final PyAssignmentStatement expAssignmentStatement = PsiTreeUtil.getParentOfType(expression, PyAssignmentStatement.class);
       assert expAssignmentStatement != null: "Target expression has no assignment statement";
-      final PyStatementList superClassStatement = superClass.getStatementList();
       PyUtil.addElementToStatementList(expAssignmentStatement.copy(), superClassStatement, true);
       expAssignmentStatement.delete();
       PyPsiUtils.removeRedundantPass(superClassStatement);
@@ -436,5 +440,42 @@ public class PyClassRefactoringUtil {
       return qname.getComponents().get(0);
     }
     return null;
+  }
+
+  /**
+   * Creates class method
+   * @param methodName name if new method (be sure to check {@link com.jetbrains.python.PyNames} for special methods)
+   * @param pyClass class to add method
+   * @param modifier if method static or class or simple instance method (null)>
+   * @param parameterNames method parameters
+   * @return newly created method
+   */
+  @NotNull
+  public static PyFunction createMethod(@NotNull final String methodName,
+                                        @NotNull final PyClass pyClass,
+                                        @Nullable final PyFunction.Modifier modifier,
+                                        @NotNull final String... parameterNames) {
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+
+
+    //TODO: Take names from codestyle?
+    if (modifier == null) {
+      builder.parameter(PyNames.CANONICAL_SELF);
+    }
+    else if (modifier == CLASSMETHOD) {
+      builder.parameter(PyNames.CANONICAL_CLS);
+      builder.decorate(PyNames.CLASSMETHOD);
+    }
+    else if (modifier == STATICMETHOD) {
+      builder.decorate(PyNames.STATICMETHOD);
+    }
+
+    for (final String parameterName : parameterNames) {
+      builder.parameter(parameterName);
+    }
+
+    final PyFunction function = builder.addFunction(pyClass.getStatementList(), LanguageLevel.getDefault());
+    addMethods(pyClass, new PyElement[]{function}, true);
+    return function;
   }
 }

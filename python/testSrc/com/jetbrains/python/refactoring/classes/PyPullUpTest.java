@@ -57,6 +57,13 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTest("Child2", "#CLASS_VAR", "Parent2");
   }
 
+  public void testMoveInstanceAttributesSimple() {
+    doHelperTest("Child", "#instance_field", "Parent");
+  }
+  public void testMoveInstanceAttributesNoInit() {
+    doHelperTest("Child", "#instance_field", "Parent");
+  }
+
   public void testMultiFile() {   // PY-2810
     doMultiFileTest();
   }
