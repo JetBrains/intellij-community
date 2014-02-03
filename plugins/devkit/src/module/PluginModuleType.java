@@ -49,7 +49,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return (PluginModuleType) ModuleTypeManager.getInstance().findByID(ID);
   }
 
-  public static boolean isOfType(Module module) {
+  public static boolean isOfType(@NotNull Module module) {
     return get(module) instanceof PluginModuleType;
   }
 
@@ -79,7 +79,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module) {
     if (module == null) return null;
-    if (!(get(module) instanceof PluginModuleType)) return null;
+    if (!isOfType(module)) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
