@@ -713,7 +713,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       ProgressManager.checkCanceled();
       LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
-        substitutor = substitutor.put(typeParameter, TypeConversionUtil.erasure(siteSubstitutor.substitute(typeParameter), substitutor));
+        PsiType type = siteSubstitutor.substitute(typeParameter);
+        if (type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter) {
+          type = TypeConversionUtil.erasure(type, substitutor);
+        }
+        substitutor = substitutor.put(typeParameter, type);
       }
     }
     return substitutor;
