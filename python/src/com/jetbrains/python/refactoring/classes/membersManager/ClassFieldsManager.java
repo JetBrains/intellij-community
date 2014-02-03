@@ -19,7 +19,12 @@ import java.util.List;
  * Moves class attributes up
  * @author Ilya.Kazakevich
  */
-class ClassFieldsManager extends MembersManager {
+class ClassFieldsManager extends MembersManager<PyTargetExpression> {
+
+  ClassFieldsManager() {
+    super(PyTargetExpression.class);
+  }
+
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
@@ -27,9 +32,8 @@ class ClassFieldsManager extends MembersManager {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyElement> members) {
-    //TODO: Use generics to prevent casting
-    PyClassRefactoringUtil.moveFields((Collection)members, to);
+  protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyTargetExpression> members) {
+    PyClassRefactoringUtil.moveFields(members, to);
   }
 
   @NotNull

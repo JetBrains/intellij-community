@@ -14,7 +14,12 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-class MethodsManager extends MembersManager {
+class MethodsManager extends MembersManager<PyFunction> {
+
+  MethodsManager() {
+    super(PyFunction.class);
+  }
+
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
@@ -22,10 +27,8 @@ class MethodsManager extends MembersManager {
   }
 
   @Override
-  protected void moveMembers(@NotNull PyClass from, @NotNull PyClass to, @NotNull Collection<PyElement> members) {
-    //TODO: Use generics to prevent casting in each subclass
-    Collection<PyFunction> members1 = (Collection)members;
-    PyClassRefactoringUtil.moveMethods(members1, to);
+  protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyFunction> members) {
+    PyClassRefactoringUtil.moveMethods(members, to);
   }
 
   @NotNull
