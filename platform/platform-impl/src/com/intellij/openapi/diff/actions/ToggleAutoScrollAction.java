@@ -22,8 +22,6 @@ import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 
-import javax.swing.*;
-
 public class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
   public ToggleAutoScrollAction() {
     super("Auto Scroll", AllIcons.General.AutoscrollToSource);
@@ -32,12 +30,7 @@ public class ToggleAutoScrollAction extends ToggleActionButton implements DumbAw
   @Override
   public boolean isSelected(AnActionEvent e) {
     DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
-    if (diffPanel != null) {
-      return diffPanel.isAutoScrollEnabled();
-    }
-    else {
-      return true;
-    }
+    return diffPanel == null || diffPanel.isAutoScrollEnabled();
   }
 
   @Override
