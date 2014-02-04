@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -547,24 +547,26 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
                                              HighlightInfo info,
                                              boolean compileStatic,
                                              final HighlightDisplayKey key) {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
-    if (targetClass == null || targetClass instanceof SyntheticElement && !(targetClass instanceof GroovyScriptClass)) return;
+   PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
+    if (targetClass == null) return;
 
-    if (!compileStatic) {
-      addDynamicAnnotation(info, refExpr, key);
-    }
+    if (!(targetClass instanceof SyntheticElement) || (targetClass instanceof GroovyScriptClass)) {
+      if (!compileStatic) {
+        addDynamicAnnotation(info, refExpr, key);
+      }
 
-    QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
+      QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
 
-    if (PsiUtil.isAccessedForReading(refExpr)) {
-      QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
-    }
-    if (PsiUtil.isLValue(refExpr)) {
-      QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
-    }
+      if (PsiUtil.isAccessedForReading(refExpr)) {
+        QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
+      }
+      if (PsiUtil.isLValue(refExpr)) {
+        QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
+      }
 
-    if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
-      QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
+      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
+        QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
+      }
     }
 
     if (!refExpr.isQualified()) {
