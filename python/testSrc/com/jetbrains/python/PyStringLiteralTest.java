@@ -130,6 +130,10 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
   }
 
+  public void testNonUnicodeCodePointValue() {
+    assertEquals("\\U12345678", createLiteralFromText("u'\\U12345678'").getStringValue());
+  }
+
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
