@@ -7,3 +7,7 @@ com.jetbrains.php    133.51 133.326 131.98 131.374 131.332 131.235 131.205 130.1
 org.intellij.clojure    0.7.60
 org.intellij.scala    0.29.464 0.28.366 0.23.308
 org.jetbrains.plugins.ruby    6.0.0.20131207 6.0.0.20131121
+Karma    133.50
+com.jetbrains.lang.ejs  131.17  131.12
+com.jetbrains.twig  133.51  130.1639
+org.jetbrains.kannotator   0.2.420
