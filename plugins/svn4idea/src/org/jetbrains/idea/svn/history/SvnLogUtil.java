@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -52,33 +53,36 @@ public class SvnLogUtil implements SvnLogLoader {
   public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding,
                                                 final int maxCount, final boolean includingYoungest, final boolean includeOldest) throws SVNException {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
-    loadRevisions(fromIncluding, toIncluding, null, maxCount, result, includingYoungest, includeOldest);
+    ISVNLogEntryHandler handler = createLogHandler(fromIncluding, toIncluding, includingYoungest, includeOldest, result);
+    SVNLogClient logger = myVcs.createLogClient();
+
+    logger
+      .doLog(myRepositoryRoot, new String[]{myRelative}, SVNRevision.UNDEFINED, fromIncluding, toIncluding, true, true, maxCount, handler);
+
     return result;
   }
 
-  private void loadRevisions(final SVNRevision fromIncluding, final SVNRevision toIncluding, final String author, final int maxCount,
-                             final List<CommittedChangeList> result,
-                             final boolean includingYoungest, final boolean includeOldest) throws SVNException {
-    SVNLogClient logger = myVcs.createLogClient();
-    logger.doLog(myRepositoryRoot, new String[]{myRelative}, SVNRevision.UNDEFINED, fromIncluding, toIncluding, true, true, maxCount,
-                 new ISVNLogEntryHandler() {
-                   public void handleLogEntry(SVNLogEntry logEntry) {
-                     if (myProject.isDisposed()) throw new ProcessCanceledException();
-                     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-                     if (progress != null) {
-                       progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
-                       progress.checkCanceled();
-                     }
-                     if ((! includingYoungest) && (logEntry.getRevision() == fromIncluding.getNumber())) {
-                       return;
-                     }
-                     if ((! includeOldest) && (logEntry.getRevision() == toIncluding.getNumber())) {
-                       return;
-                     }
-                     if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                       result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot.toString()));
-                     }
-                   }
-                 });
+  @NotNull
+  private ISVNLogEntryHandler createLogHandler(final SVNRevision fromIncluding,
+                                               final SVNRevision toIncluding,
+                                               final boolean includingYoungest,
+                                               final boolean includeOldest, final List<CommittedChangeList> result) {
+    return new ISVNLogEntryHandler() {
+      public void handleLogEntry(SVNLogEntry logEntry) {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        if (progress != null) {
+          progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
+          progress.checkCanceled();
+        }
+        if ((!includingYoungest) && (logEntry.getRevision() == fromIncluding.getNumber())) {
+          return;
+        }
+        if ((!includeOldest) && (logEntry.getRevision() == toIncluding.getNumber())) {
+          return;
+        }
+        result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot.toString()));
+      }
+    };
   }
 }
