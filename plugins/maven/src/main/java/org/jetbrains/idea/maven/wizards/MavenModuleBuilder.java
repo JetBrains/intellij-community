@@ -216,15 +216,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return "Maven";
   }
 
-  private MavenArchetypesPanel myPanel;
-
   @Nullable
   @Override
-  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
-    if (myPanel == null) {
-      myPanel = new MavenArchetypesPanel(this, null);
-      Disposer.register(parentDisposable, myPanel);
-    }
-    return myPanel.getMainPanel();
+  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
+    MavenArchetypesStep step = new MavenArchetypesStep(this, null);
+    Disposer.register(parentDisposable, step);
+    return step;
   }
 }

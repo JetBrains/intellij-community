@@ -34,12 +34,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public final class EditorHistoryManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -239,13 +241,26 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   }
 
   /**
-   * @return array of valid files that are in the history. The greater is index the more recent the file is.
+   * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
   public VirtualFile[] getFiles(){
     validateEntries();
     final VirtualFile[] result = new VirtualFile[myEntriesList.size()];
     for(int i=myEntriesList.size()-1; i>=0 ;i--){
       result[i] = myEntriesList.get(i).myFile;
+    }
+    return result;
+  }
+
+  /**
+   * @return a set of valid files that are in the history, oldest first.
+   */
+  public LinkedHashSet<VirtualFile> getFileSet() {
+    LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
+    for (VirtualFile file : getFiles()) {
+      // if the file occurs several times in the history, only its last occurrence counts 
+      result.remove(file);
+      result.add(file);
     }
     return result;
   }

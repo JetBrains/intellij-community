@@ -26,12 +26,10 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.KeyValue;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -67,7 +65,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   ModuleData createModule(@NotNull IdeaModule gradleModule, @NotNull ProjectData projectData);
 
   /**
-   * Populates extra models of the given ide module on the basis of the information provided by {@link org.jetbrains.plugins.gradle.model.ModelBuilderService}
+   * Populates extra models of the given ide module on the basis of the information provided by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderService}
    *
    * @param ideModule corresponding module from intellij gradle plugin domain
    */

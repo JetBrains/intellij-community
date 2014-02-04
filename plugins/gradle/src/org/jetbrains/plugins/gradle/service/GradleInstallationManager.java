@@ -14,7 +14,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
-import org.gradle.api.tasks.wrapper.Wrapper;
 import org.gradle.util.DistributionLocator;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.PathAssembler;
@@ -465,7 +464,7 @@ public class GradleInstallationManager {
     }
     File gradleSystemDir;
 
-    if (Wrapper.PathBase.PROJECT.name().equals(wrapperConfiguration.getDistributionBase())) {
+    if ("PROJECT".equals(wrapperConfiguration.getDistributionBase())) {
       gradleSystemDir = new File(linkedProjectPath, ".gradle");
     }
     else {

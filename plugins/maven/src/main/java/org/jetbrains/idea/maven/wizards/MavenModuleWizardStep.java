@@ -74,14 +74,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JPanel myAddToPanel;
 
   @Nullable
-  private final MavenArchetypesPanel myArchetypes;
+  private final MavenArchetypesStep myArchetypes;
 
   public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
     if (includeArtifacts) {
-      myArchetypes = new MavenArchetypesPanel(builder, this);
+      myArchetypes = new MavenArchetypesStep(builder, this);
       myArchetypesPanel.add(myArchetypes.getMainPanel(), BorderLayout.CENTER);
     }
     else {

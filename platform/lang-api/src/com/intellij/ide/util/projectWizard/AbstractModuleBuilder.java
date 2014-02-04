@@ -39,12 +39,11 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
     return null;
   }
 
-  public boolean hasCustomOptionsPanel() {
-    return false;
-  }
-
+  /**
+   * Custom UI to be shown on the first wizard page
+   */
   @Nullable
-  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
+  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
     return null;
   }
 

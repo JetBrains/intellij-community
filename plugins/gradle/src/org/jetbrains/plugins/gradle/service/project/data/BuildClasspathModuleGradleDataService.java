@@ -37,7 +37,6 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
-import org.jetbrains.plugins.gradle.model.data.ClasspathEntry;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -121,7 +120,7 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
 
         final Set<String> buildClasspath = ContainerUtil.newHashSet();
         BuildScriptClasspathData buildScriptClasspathData = node.getData();
-        for (ClasspathEntry classpathEntry : buildScriptClasspathData.getClasspathEntries()) {
+        for (BuildScriptClasspathData.ClasspathEntry classpathEntry : buildScriptClasspathData.getClasspathEntries()) {
           if (classpathEntry.getSourcesFile() != null) {
             buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getSourcesFile().getPath()));
           }

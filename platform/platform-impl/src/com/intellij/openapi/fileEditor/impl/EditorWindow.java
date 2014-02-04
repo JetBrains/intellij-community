@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -52,10 +53,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Author: msk
@@ -1077,130 +1076,77 @@ public class EditorWindow {
   }
 
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
-    while_label:
-    while (myTabbedPane.getTabCount() > limit && myTabbedPane.getTabCount() > 0) {
-      // If all tabs are pinned then do nothings. Othrwise we will get infinitive loop
-      boolean allTabsArePinned = true;
-      for (int i = myTabbedPane.getTabCount() - 1; i >= 0; i--) {
-        final VirtualFile file = getFileAt(i);
-        if (fileCanBeClosed(file, fileToIgnore)) {
-          allTabsArePinned = false;
-          break;
-        }
-      }
-      if (allTabsArePinned) {
+    LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
+
+    for (VirtualFile file : closingOrder) {
+      if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
         return;
       }
+      if (fileCanBeClosed(file, fileToIgnore)) {
+        defaultCloseFile(file, transferFocus);
+      }
+    }
 
-      // Try to close non-modified files first (is specified in option)
-      if (closeNonModifiedFilesFirst) {
-        // Search in history
-        final VirtualFile[] allFiles = getFiles();
-        final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
+  }
 
-        // first, we search for files not in history
-        for (int i = 0; i != allFiles.length; ++ i) {
-          final VirtualFile file = allFiles[i];
-          if (fileCanBeClosed(file, fileToIgnore)) {
-            boolean found = false;
-            for (int j = 0; j != histFiles.length; j++) {
-              if (Comparing.equal(histFiles[j], file)) {
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              defaultCloseFile(file, transferFocus);
-              continue while_label;
-            }
-          }
-        }
+  private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
+    final VirtualFile[] allFiles = getFiles();
+    final Set<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileSet();
 
-        for (final VirtualFile file : histFiles) {
-          if (!fileCanBeClosed(file, fileToIgnore)) {
-            continue;
-          }
+    LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 
-          final EditorComposite composite = findFileComposite(file);
-          //LOG.assertTrue(composite != null);
-          if (composite != null && composite.getInitialFileTimeStamp() == file.getTimeStamp()) {
-            // we found non modified file
-            defaultCloseFile(file, transferFocus);
-            continue while_label;
-          }
-        }
+    // first, we search for files not in history
+    for (final VirtualFile file : allFiles) {
+      if (!histFiles.contains(file)) {
+        closingOrder.add(file);
+      }
+    }
 
-        // Search in tabbed pane
-        final VirtualFile selectedFile = getSelectedFile();
-        for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
-          final VirtualFile file = getFileAt(i);
-          final EditorComposite composite = getEditorAt(i);
-          if (!fileCanBeClosed(file, fileToIgnore)) {
-            continue;
-          }
-          if (!selectedFile.equals(file)) {
-            if (composite.getInitialFileTimeStamp() == file.getTimeStamp()) {
-              // we found non modified file
-              defaultCloseFile(file, transferFocus);
-              continue while_label;
-            }
-          }
+    if (closeNonModifiedFilesFirst) {
+      // Search in history
+      for (final VirtualFile file : histFiles) {
+        if (isFileModified(findFileComposite(file), file)) {
+          // we found non modified file
+          closingOrder.add(file);
         }
       }
 
-      // It's non enough to close non-modified files only. Try all other files.
-      // Search in history from less frequently used.
-      {
-        final VirtualFile[]  allFiles = getFiles();
-        final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
-
-        // first, we search for files not in history
-        for (int i = 0; i != allFiles.length; ++ i) {
-          final VirtualFile file = allFiles[i];
-          if (fileCanBeClosed(file, fileToIgnore)) {
-            boolean found = false;
-            for (int j = 0; j != histFiles.length; j++) {
-              if (Comparing.equal(histFiles[j], file)) {
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              defaultCloseFile(file, transferFocus);
-              continue while_label;
-            }
-          }
-        }
-
-
-        for (final VirtualFile file : histFiles) {
-          if (fileCanBeClosed(file, fileToIgnore)) {
-            defaultCloseFile(file, transferFocus);
-            continue while_label;
-          }
-        }
-      }
-
-      // Close first opened file in tabbed pane that isn't a selected one
-      {
-        final VirtualFile selectedFile = getSelectedFile();
-        for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
-          final VirtualFile file = getFileAt(i);
-          if (!fileCanBeClosed(file, fileToIgnore)) {
-            continue;
-          }
-          if (!selectedFile.equals(file)) {
-            defaultCloseFile(file, transferFocus);
-            continue while_label;
-          }
-          else if (i == myTabbedPane.getTabCount() - 1) {
-            // if file is selected one and it's last file that we have no choice as close it
-            defaultCloseFile(file, transferFocus);
-            continue while_label;
-          }
+      // Search in tabbed pane
+      for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
+        final VirtualFile file = getFileAt(i);
+        if (isFileModified(getEditorAt(i), file)) {
+          // we found non modified file
+          closingOrder.add(file);
         }
       }
     }
+
+    // If it's not enough to close non-modified files only, try all other files.
+    // Search in history from less frequently used.
+    closingOrder.addAll(histFiles);
+
+    // finally, close tabs by their order
+    for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
+      closingOrder.add(getFileAt(i));
+    }
+
+    final VirtualFile selectedFile = getSelectedFile();
+    closingOrder.remove(selectedFile);
+    closingOrder.add(selectedFile); // selected should be closed last
+    return closingOrder;
+  }
+
+  private static boolean isFileModified(EditorComposite composite, VirtualFile file) {
+    return composite != null && (composite.getInitialFileTimeStamp() == file.getTimeStamp() || composite.isModified());
+  }
+
+  private boolean areAllTabsPinned(VirtualFile fileToIgnore) {
+    for (int i = myTabbedPane.getTabCount() - 1; i >= 0; i--) {
+      if (fileCanBeClosed(getFileAt(i), fileToIgnore)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void defaultCloseFile(VirtualFile file, boolean transferFocus) {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
@@ -54,7 +53,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     Throwable rootCause = rootCauseAndLocation.getFirst();
 
     String location = rootCauseAndLocation.getSecond();
-    if (location == null && !Strings.isNullOrEmpty(buildFilePath)) {
+    if (location == null && !StringUtil.isEmpty(buildFilePath)) {
       location = String.format("Build file: '%1$s'", buildFilePath);
     }
 

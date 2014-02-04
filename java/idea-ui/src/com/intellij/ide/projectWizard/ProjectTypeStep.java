@@ -81,8 +81,6 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
-  private enum Cards { FRAMEWORKS, TEMPLATES, CUSTOM }
-
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
 
@@ -108,10 +106,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       return (ModuleBuilder)key.createModuleBuilder();
     }
   };
-  private final Set<String> myCards = new HashSet<String>();
+  private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private boolean myRemoteTemplatesLoaded;
-  private Cards myCurrentCard;
+  private String myCurrentCard;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -210,7 +208,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   private boolean isFrameworksMode() {
-    return myCurrentCard == Cards.FRAMEWORKS && getSelectedBuilder().equals(myContext.getProjectBuilder());
+    return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
   }
 
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
@@ -342,13 +340,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   private void showCard(String card) {
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
-    if (FRAMEWORKS_CARD.equals(card)) {
-      myCurrentCard = Cards.FRAMEWORKS;
-    }
-    else if (TEMPLATES_CARD.equals(card)) {
-      myCurrentCard = Cards.TEMPLATES;
-    }
-    else myCurrentCard = Cards.CUSTOM;
+    myCurrentCard = card;
   }
 
   private void showTemplates(TemplatesGroup group) {
@@ -381,14 +373,20 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
-    if (!myCards.contains(card)) {
-      JComponent panel = builder.getCustomOptionsPanel(this);
-      if (panel == null) return false;
-      myCards.add(card);
-      myOptionsPanel.add(panel, card);
+    if (!myCustomSteps.containsKey(card)) {
+      ModuleWizardStep step = builder.getCustomOptionsStep(this);
+      if (step == null) return false;
+      step.updateStep();
+      myCustomSteps.put(card, step);
+      myOptionsPanel.add(step.getComponent(), card);
     }
     showCard(card);
     return true;
+  }
+
+  @Nullable
+  private ModuleWizardStep getCustomStep() {
+    return myCustomSteps.get(myCurrentCard);
   }
 
   private TemplatesGroup getSelectedGroup() {
@@ -397,7 +395,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   @Nullable
   public ProjectTemplate getSelectedTemplate() {
-    return myCurrentCard == Cards.TEMPLATES ? myTemplatesList.getSelectedTemplate() : null;
+    return myCurrentCard == TEMPLATES_CARD ? myTemplatesList.getSelectedTemplate() : null;
   }
 
   private ModuleBuilder getSelectedBuilder() {
@@ -409,7 +407,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   public Collection<ProjectTemplate> getAvailableTemplates() {
-    return myCurrentCard != Cards.FRAMEWORKS ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
+    return myCurrentCard != FRAMEWORKS_CARD ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
   }
 
   public void onWizardFinished() throws CommitStepException {
@@ -435,6 +433,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   public void updateDataModel() {
     ModuleBuilder builder = getSelectedBuilder();
     myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    ModuleWizardStep step = getCustomStep();
+    if (step != null) {
+      step.updateDataModel();
+    }
   }
 
   @Override
@@ -442,10 +444,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
       loadRemoteTemplates();
     }
-  }
-
-  @Override
-  public void onStepLeaving() {
   }
 
   @Override

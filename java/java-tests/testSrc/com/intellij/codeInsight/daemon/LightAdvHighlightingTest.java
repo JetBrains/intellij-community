@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
@@ -31,11 +32,13 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -54,6 +57,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -393,4 +397,44 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> infos = highlightErrors();
     assertTrue(!infos.isEmpty());
   }
+
+  public static class MyTopFileAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
+        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
+        annotation.setFileLevelAnnotation(true);
+      }
+    }
+  }
+
+  public void testAnnotatorWorksWithFileLevel() {
+    Annotator annotator = new MyTopFileAnnotator();
+    Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
+      doHighlighting();
+      List<HighlightInfo> fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      HighlightInfo info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
+      type("//xxx"); //disable top level annotation
+      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
+      assertEmpty(warnings);
+      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      assertEmpty(fileLevel);
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
 }
