@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,16 +349,14 @@ public class PsiUtilCore {
 
   @Nullable
   public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null || !element.isValid()) {
+    if (element == null) {
       return null;
     }
-
     if (element instanceof PsiFileSystemItem) {
-      return ((PsiFileSystemItem)element).getVirtualFile();
+      return element.isValid() ? ((PsiFileSystemItem)element).getVirtualFile() : null;
     }
-
     final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
+    if (containingFile == null || !containingFile.isValid()) {
       return null;
     }
 
