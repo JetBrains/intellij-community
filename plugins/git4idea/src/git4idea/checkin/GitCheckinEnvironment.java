@@ -113,22 +113,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
       VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
       VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
-      VirtualFile normalMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_COMMIT_EDITMSG);
       try {
-        if (mergeMsg == null && squashMsg == null && normalMsg == null) {
+        if (mergeMsg == null && squashMsg == null) {
           continue;
         }
-
         String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
-
         if (mergeMsg != null) {
           messages.add(loadMessage(mergeMsg, encoding));
         }
-        else if (squashMsg != null) {
-          messages.add(loadMessage(squashMsg, encoding));
-        }
         else {
-          messages.add(loadMessage(normalMsg, encoding));
+          messages.add(loadMessage(squashMsg, encoding));
         }
       }
       catch (IOException e) {
