@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +47,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 24.09.13
  */
-public class MavenArchetypesPanel implements Disposable {
+public class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
 
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
@@ -63,7 +64,7 @@ public class MavenArchetypesPanel implements Disposable {
   private final MavenModuleBuilder myBuilder;
   @Nullable private final StepAdapter myStep;
 
-  public MavenArchetypesPanel(MavenModuleBuilder builder, @Nullable StepAdapter step) {
+  public MavenArchetypesStep(MavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
     Disposer.register(this, myLoadingIcon);
@@ -296,6 +297,16 @@ public class MavenArchetypesPanel implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return getMainPanel();
+  }
+
+  @Override
+  public void updateDataModel() {
+
   }
 
   private static class MyRenderer extends ColoredTreeCellRenderer {
