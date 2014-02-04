@@ -218,7 +218,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : wholeMatch;
       }
       else if (escapedUnicode && unicode32 != null) {
-        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : wholeMatch;
+        String s = wholeMatch;
+        if (unicode) {
+          try {
+            s = new String(Character.toChars((int)Long.parseLong(unicode32, 16)));
+          }
+          catch (IllegalArgumentException ignored) {
+          }
+        }
+        str = s;
       }
       else if (raw) {
         str = wholeMatch;
