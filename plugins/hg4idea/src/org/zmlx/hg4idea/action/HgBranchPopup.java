@@ -87,7 +87,8 @@ public class HgBranchPopup {
 
   private void setCurrentBranchInfo() {
     String branchText = "Current branch : ";
-    myPopup.setAdText(branchText + HgUtil.getDisplayableBranchText(myCurrentRepository), SwingConstants.CENTER);
+    //always display heavy branch name for additional info //
+    myPopup.setAdText(branchText + myCurrentRepository.getCurrentBranch(), SwingConstants.CENTER);
   }
 
 
@@ -113,7 +114,7 @@ public class HgBranchPopup {
       if (repo != null) {
         popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
                                                     new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
-                                                    HgUtil.getDisplayableBranchText(repo)));
+                                                    HgUtil.getDisplayableBranchOrBookmarkText(repo)));
       }
     }
     return popupGroup;

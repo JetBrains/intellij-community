@@ -551,13 +551,18 @@ public abstract class HgUtil {
     return path;
   }
 
-  public static String getDisplayableBranchText(HgRepository repository) {
+  @NotNull
+  public static String getDisplayableBranchOrBookmarkText(@NotNull HgRepository repository) {
     HgRepository.State state = repository.getState();
     String branchText = "";
     if (state == HgRepository.State.MERGING) {
       branchText += state.toString() + " ";
     }
-    return branchText + repository.getCurrentBranch();
+    String branchOrBookMarkName = repository.getCurrentBookmark();
+    if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
+      branchOrBookMarkName = repository.getCurrentBranch();
+    }
+    return branchText + branchOrBookMarkName;
   }
 
   @NotNull

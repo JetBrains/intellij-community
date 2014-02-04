@@ -30,17 +30,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgBranchPopup;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 /**
  * Widget to display basic hg status in the IJ status bar.
@@ -49,11 +45,10 @@ public class HgStatusWidget extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation,
              StatusBarWidget.Multiframe, HgUpdater {
 
-  private static final String MAX_STRING = "hg: default branch (128)";
+  private static final String MAX_STRING = "Hg: Merging default ";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
 
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -62,8 +57,6 @@ public class HgStatusWidget extends EditorBasedWidget
     super(project);
     myVcs = vcs;
     myProjectSettings = projectSettings;
-
-    myCurrentBranchStatus = new HgCurrentBranchStatus();
   }
 
   @Override
@@ -160,27 +153,11 @@ public class HgStatusWidget extends EditorBasedWidget
           emptyTextAndTooltip();
           return;
         }
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            String bookmark = repo.getCurrentBookmark();
-            final String branchOrBookMarkName = StringUtil.isEmptyOrSpaces(bookmark) ? repo.getCurrentBranch() : bookmark;
-            final List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo.getRoot());
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myCurrentBranchStatus.updateFor(branchOrBookMarkName, parents);
-                myText = myCurrentBranchStatus.getStatusText();
-                myTooltip = myCurrentBranchStatus.getToolTipText();
-                int maxLength = MAX_STRING.length();
-                myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
-                if (!isDisposed() && myStatusBar != null) {
-                  myStatusBar.updateWidget(ID());
-                }
-              }
-            });
-          }
-        });
+        myText = StringUtil.shortenTextWithEllipsis(HgUtil.getDisplayableBranchOrBookmarkText(repo), MAX_STRING.length(), 5);
+        myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
+        if (!isDisposed() && myStatusBar != null) {
+          myStatusBar.updateWidget(ID());
+        }
       }
     });
   }
