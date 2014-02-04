@@ -55,7 +55,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     // show newly added certificates
     myTrustManager.addListener(this);
 
-    myCertificatesList = new JBList();
+    myCertificatesList = new JBList(new CollectionListModel<X509Certificate>());
     myCertificatesList.getEmptyText().setText("No certificates");
     myCertificatesList.setCellRenderer(new ListCellRendererWrapper<X509Certificate>() {
       @Override
@@ -255,19 +255,28 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   }
 
   @Override
-  public void certificateAdded(X509Certificate certificate) {
-    CollectionListModel<X509Certificate> model = getListModel();
-    if (model.getElementIndex(certificate) < 0) {
-      model.add(certificate);
-    }
-    addCertificatePanel(certificate);
+  public void certificateAdded(final X509Certificate certificate) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        CollectionListModel<X509Certificate> model = getListModel();
+        if (model.getElementIndex(certificate) < 0) {
+          model.add(certificate);
+        }
+        addCertificatePanel(certificate);
+      }
+    });
   }
 
   @Override
-  public void certificateRemoved(X509Certificate certificate) {
-    CollectionListModel<X509Certificate> model = getListModel();
-    if (model.getElementIndex(certificate) >= 0) {
-      model.remove(certificate);
-    }
+  public void certificateRemoved(final X509Certificate certificate) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        CollectionListModel<X509Certificate> model = getListModel();
+        if (model.getElementIndex(certificate) >= 0) {
+          model.remove(certificate);
+        }
+      }
+    });
   }
 }
