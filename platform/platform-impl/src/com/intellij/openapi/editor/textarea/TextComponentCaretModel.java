@@ -15,16 +15,21 @@
  */
 package com.intellij.openapi.editor.textarea;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Segment;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -128,5 +133,59 @@ public class TextComponentCaretModel implements CaretModel {
   @Override
   public TextAttributes getTextAttributes() {
     return null;
+  }
+
+  @Override
+  public boolean supportsMultipleCarets() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Caret getCurrentCaret() {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @NotNull
+  @Override
+  public Caret getPrimaryCaret() {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @NotNull
+  @Override
+  public Collection<Caret> getAllCarets() {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Nullable
+  @Override
+  public Caret getCaretAt(@NotNull VisualPosition pos) {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos) {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Override
+  public boolean removeCaret(@NotNull Caret caret) {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Override
+  public void removeSecondaryCarets() {
+  }
+
+  @Override
+  public void setCarets(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull Runnable runnable) {
+    runnable.run();
   }
 }

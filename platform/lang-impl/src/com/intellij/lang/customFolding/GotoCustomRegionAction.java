@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
   private static void navigateTo(Editor editor, PsiElement element) {
     int offset = element.getTextRange().getStartOffset();
     if (offset >= 0 && offset < editor.getDocument().getTextLength()) {
+      editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(offset);
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       editor.getSelectionModel().removeSelection();

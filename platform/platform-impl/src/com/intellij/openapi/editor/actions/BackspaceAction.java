@@ -39,6 +39,10 @@ public class BackspaceAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    private Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       MacUIUtil.hideCursor();

@@ -71,6 +71,12 @@ public class TextComponentSelectionModel implements SelectionModel {
     return myTextComponent.getSelectedText();
   }
 
+  @Nullable
+  @Override
+  public String getSelectedText(boolean allCarets) {
+    return getSelectedText();
+  }
+
   @Override
   public int getLeadSelectionOffset() {
     final int caretPosition = myTextComponent.getCaretPosition();
@@ -88,6 +94,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Override
   public boolean hasSelection() {
     return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
+  }
+
+  @Override
+  public boolean hasSelection(boolean anyCaret) {
+    return hasSelection();
   }
 
   @Override
@@ -116,6 +127,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   public void removeSelection() {
     final int position = myTextComponent.getCaretPosition();
     myTextComponent.select(position, position);
+  }
+
+  @Override
+  public void removeSelection(boolean allCarets) {
+    removeSelection();
   }
 
   @Override

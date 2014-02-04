@@ -69,6 +69,12 @@ public class SelectionModelWindow implements SelectionModel {
     return myHostModel.getSelectedText();
   }
 
+  @Nullable
+  @Override
+  public String getSelectedText(boolean allCarets) {
+    return myHostModel.getSelectedText(allCarets);
+  }
+
   @Override
   public int getLeadSelectionOffset() {
     return myDocument.hostToInjected(myHostModel.getLeadSelectionOffset());
@@ -83,6 +89,11 @@ public class SelectionModelWindow implements SelectionModel {
   @Override
   public boolean hasSelection() {
     return myHostModel.hasSelection();
+  }
+
+  @Override
+  public boolean hasSelection(boolean anyCaret) {
+    return myHostModel.hasSelection(anyCaret);
   }
 
   @Override
@@ -106,6 +117,11 @@ public class SelectionModelWindow implements SelectionModel {
   @Override
   public void removeSelection() {
     myHostModel.removeSelection();
+  }
+
+  @Override
+  public void removeSelection(boolean allCarets) {
+    myHostModel.removeSelection(allCarets);
   }
 
   @Override

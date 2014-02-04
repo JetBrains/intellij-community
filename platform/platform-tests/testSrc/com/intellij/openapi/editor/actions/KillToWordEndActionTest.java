@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -188,10 +187,10 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     String text = "<caret>first second third";
     configureFromFileText(getTestName(false) + ".txt", text);
     final Document document = myEditor.getDocument();
-    final CaretModelImpl caretModel = new CaretModelImpl((EditorImpl)myEditor);
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    Editor otherEditor = editorFactory.createEditor(document, ourProject);
     try {
-      document.addDocumentListener(caretModel);
-      caretModel.moveToOffset(document.getTextLength()-1);
+      otherEditor.getCaretModel().moveToOffset(document.getTextLength() - 1);
       killToWordEnd();
       killToWordEnd();
       checkResultByText(" third");
@@ -200,7 +199,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       assertEquals("first second", string);
     }
     finally {
-      Disposer.dispose(caretModel);
+      editorFactory.releaseEditor(otherEditor);
     }
   }
 

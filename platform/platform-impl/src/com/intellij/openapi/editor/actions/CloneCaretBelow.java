@@ -16,16 +16,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-/**
- * @author Denis Zhdanov
- * @since 2/14/13 7:23 PM
- */
-public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction {
-
-  public NextWordInDifferentHumpsModeWithSelectionAction() {
+public class CloneCaretBelow extends EditorAction {
+  public CloneCaretBelow() {
     super(new Handler());
   }
 
@@ -36,7 +33,15 @@ public class NextWordInDifferentHumpsModeWithSelectionAction extends TextCompone
 
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretToNextWord(editor, true, !editor.getSettings().isCamelWords());
+      CaretModel caretModel = editor.getCaretModel();
+      if (caretModel.supportsMultipleCarets()) {
+        caretModel.getCurrentCaret().clone(false);
+      }
+    }
+
+    @Override
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return editor.getCaretModel().supportsMultipleCarets();
     }
   }
 }

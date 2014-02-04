@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,23 @@ public class CopyHandler extends EditorActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if(!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+    if(!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      selectionModel.selectLineAtCaret();
-      if (!selectionModel.hasSelection()) return;
-      EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
+      editor.getCaretModel().runForEachCaret(new Runnable() {
+        @Override
+        public void run() {
+          selectionModel.selectLineAtCaret();
+        }
+      });
+      if (!selectionModel.hasSelection(true)) return;
+      editor.getCaretModel().runForEachCaret(new Runnable() {
+        @Override
+        public void run() {
+          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
+        }
+      });
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -88,7 +98,7 @@ public class CopyHandler extends EditorActionHandler {
       }
     }
 
-    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", transferableDatas);
+    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(true), "\n", transferableDatas);
     String escapedText = null;
     for(CopyPastePreProcessor processor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);

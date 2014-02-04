@@ -127,17 +127,22 @@ public class TypedAction {
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
         @Override
         public void run() {
-          Document doc = myEditor.getDocument();
-          doc.startGuardedBlockChecking();
-          try {
-            getHandler().execute(myEditor, myCharTyped, myDataContext);
-          }
-          catch (ReadOnlyFragmentModificationException e) {
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-          }
-          finally {
-            doc.stopGuardedBlockChecking();
-          }
+          myEditor.getCaretModel().runForEachCaret(new Runnable() {
+            @Override
+            public void run() {
+              Document doc = myEditor.getDocument();
+              doc.startGuardedBlockChecking();
+              try {
+                getHandler().execute(myEditor, myCharTyped, myDataContext);
+              }
+              catch (ReadOnlyFragmentModificationException e) {
+                EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+              }
+              finally {
+                doc.stopGuardedBlockChecking();
+              }
+            }
+          });
         }
       });
     }

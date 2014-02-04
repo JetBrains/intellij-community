@@ -24,128 +24,55 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
+import java.util.*;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private volatile MyRangeMarker mySelectionMarker;
   private final EditorImpl myEditor;
-  private int myLastSelectionStart;
+
+  private TextAttributes myTextAttributes;
+
   private LogicalPosition myBlockStart;
   private LogicalPosition myBlockEnd;
-  private TextAttributes myTextAttributes;
-  private DocumentEvent myIsInUpdate;
   private int[] myBlockSelectionStarts;
   private int[] myBlockSelectionEnds;
-  private boolean myUnknownDirection;
 
-  private class MyRangeMarker extends RangeMarkerImpl {
-    private VisualPosition myStartPosition;
-    private VisualPosition myEndPosition;
-    private boolean myEndPositionIsLead;
-    private boolean myIsReleased;
+  private DocumentEvent myIsInUpdate;
 
-    MyRangeMarker(DocumentEx document, int start, int end) {
-      super(document, start, end, true);
-      myIsReleased = false;
-    }
-
-    public void release() {
-      myIsReleased = true;
-      dispose();
-    }
-
-    @Nullable
-    public VisualPosition getStartPosition() {
-      invalidateVisualPositions();
-      return myStartPosition;
-    }
-
-    public void setStartPosition(@NotNull VisualPosition startPosition) {
-      myStartPosition = startPosition;
-    }
-
-    @Nullable
-    public VisualPosition getEndPosition() {
-      invalidateVisualPositions();
-      return myEndPosition;
-    }
-
-    public void setEndPosition(@NotNull VisualPosition endPosition) {
-      myEndPosition = endPosition;
-    }
-
-    public boolean isEndPositionIsLead() {
-      return myEndPositionIsLead;
-    }
-
-    public void setEndPositionIsLead(boolean endPositionIsLead) {
-      myEndPositionIsLead = endPositionIsLead;
-    }
-
-    int startBefore;
-    int endBefore;
-
-    @Override
-    protected void changedUpdateImpl(DocumentEvent e) {
-      if (myIsReleased) return;
-      startBefore = getStartOffset();
-      endBefore = getEndOffset();
-      super.changedUpdateImpl(e);
-    }
-
-    private void invalidateVisualPositions() {
-      SoftWrapModelImpl model = myEditor.getSoftWrapModel();
-      if (!myEditor.offsetToVisualPosition(getStartOffset()).equals(myStartPosition) && model.getSoftWrap(getStartOffset()) == null
-          || !myEditor.offsetToVisualPosition(getEndOffset()).equals(myEndPosition) && model.getSoftWrap(getEndOffset()) == null) {
-        myStartPosition = null;
-        myEndPosition = null;
-      }
-    }
+  public SelectionModelImpl(EditorImpl editor) {
+    myEditor = editor;
   }
-
-  private int startBefore;
-  private int endBefore;
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
     myIsInUpdate = event;
-    MyRangeMarker marker = mySelectionMarker;
-    if (marker != null && marker.isValid()) {
-      startBefore = marker.getStartOffset();
-      endBefore = marker.getEndOffset();
+    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+      ((CaretImpl)caret).beforeDocumentChange();
     }
   }
 
@@ -153,25 +80,13 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public void documentChanged(DocumentEvent event) {
     if (myIsInUpdate == event) {
       myIsInUpdate = null;
-      MyRangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        int endAfter;
-        int startAfter;
-        if (marker.isValid()) {
-          startAfter = marker.getStartOffset();
-          endAfter = marker.getEndOffset();
+      myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
+        public void run() {
+          for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+            ((CaretImpl)caret).documentChanged();
+          }
         }
-        else {
-          myLastSelectionStart = myEditor.getCaretModel().getOffset();
-          marker.release();
-          mySelectionMarker = null;
-          startAfter = endAfter = myLastSelectionStart;
-        }
-
-        if (startBefore != startAfter || endBefore != endAfter) {
-          fireSelectionChanged(startBefore, endBefore, startAfter, endAfter);
-        }
-      }
+      });
     }
   }
 
@@ -180,265 +95,76 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return EditorDocumentPriorities.SELECTION_MODEL;
   }
 
-  public SelectionModelImpl(EditorImpl editor) {
-    myEditor = editor;
+  /**
+   * @see CaretImpl#setUnknownDirection(boolean)
+   */
+  public boolean isUnknownDirection() {
+    return myEditor.getCaretModel().getCurrentCaret().isUnknownDirection();
+  }
+
+  /**
+   * @see CaretImpl#setUnknownDirection(boolean)
+   */
+  public void setUnknownDirection(boolean unknownDirection) {
+    myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(unknownDirection);
   }
 
   @Override
   public int getSelectionStart() {
-    validateContext(false);
-    if (hasSelection()) {
-      MyRangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        return marker.getStartOffset();
-      }
-    }
-    return myEditor.getCaretModel().getOffset();
+    return myEditor.getCaretModel().getCurrentCaret().getSelectionStart();
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionStartPosition() {
-    VisualPosition defaultPosition = myEditor.offsetToVisualPosition(getSelectionStart());
-    if (!hasSelection()) {
-      return defaultPosition;
-    }
-
-    MyRangeMarker marker = mySelectionMarker;
-    if (marker == null) {
-      return defaultPosition;
-    }
-
-    VisualPosition result = marker.getStartPosition();
-    return result == null ? defaultPosition : result;
-  }
-
-  private void validateContext(boolean isWrite) {
-
-    if (!myEditor.getComponent().isShowing()) return;
-    if (isWrite) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-    }
-    else {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-
-    //if (myIsInUpdate != null) {
-    //  documentChanged(myIsInUpdate);
-    //}
-  }
-
-  /**
-   * @return  information on whether current selection's direction in known
-   * @see #setUnknownDirection(boolean) 
-   */
-  public boolean isUnknownDirection() {
-    return myUnknownDirection;
-  }
-
-  /**
-   * There is a possible case that we don't know selection's direction. For example, a user might triple-click editor (select the
-   * whole line). We can't say what selection end is a {@link #getLeadSelectionOffset() leading end} then. However, that matters
-   * in a situation when a user clicks before or after that line holding Shift key. It's expected that the selection is expanded
-   * up to that point than.
-   * <p/>
-   * That's why we allow to specify that the direction is unknown and {@link #isUnknownDirection() expose this information}
-   * later.
-   * <p/>
-   * <b>Note:</b> when this method is called with <code>'true'</code>, subsequent calls are guaranteed to return <code>'true'</code>
-   * until selection is changed. 'Unknown direction' flag is automatically reset then.
-   * 
-   * @param unknownDirection
-   */
-  public void setUnknownDirection(boolean unknownDirection) {
-    myUnknownDirection = unknownDirection;
+    return myEditor.getCaretModel().getCurrentCaret().getSelectionStartPosition();
   }
 
   @Override
   public int getSelectionEnd() {
-    validateContext(false);
-    if (hasSelection()) {
-      MyRangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        return marker.getEndOffset();
-      }
-    }
-    return myEditor.getCaretModel().getOffset();
+    return myEditor.getCaretModel().getCurrentCaret().getSelectionEnd();
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionEndPosition() {
-    VisualPosition defaultPosition = myEditor.offsetToVisualPosition(getSelectionEnd());
-    if (!hasSelection()) {
-      return defaultPosition;
-    }
-
-    MyRangeMarker marker = mySelectionMarker;
-    if (marker == null) {
-      return defaultPosition;
-    }
-
-    VisualPosition result = marker.getEndPosition();
-    return result == null ? defaultPosition : result;
+    return myEditor.getCaretModel().getCurrentCaret().getSelectionEndPosition();
   }
 
   @Override
   public boolean hasSelection() {
-    validateContext(false);
-    MyRangeMarker marker = mySelectionMarker;
-    //if (marker != null && !marker.isValid()) {
-    //  removeSelection();
-    //}
+    return hasSelection(false);
+  }
 
-    return marker != null && marker.isValid() && marker.getEndOffset() > marker.getStartOffset();
+  @Override
+  public boolean hasSelection(boolean anyCaret) {
+    if (!anyCaret || !myEditor.getCaretModel().supportsMultipleCarets()) {
+      return myEditor.getCaretModel().getCurrentCaret().hasSelection();
+    }
+    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+      if (caret.hasSelection()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false);
+    myEditor.getCaretModel().getCurrentCaret().setSelection(startOffset, endOffset);
   }
 
   @Override
   public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    VisualPosition startPosition;
-    if (hasSelection()) {
-      startPosition = getLeadSelectionPosition();
-    }
-    else {
-      startPosition = myEditor.offsetToVisualPosition(startOffset);
-    }
-    setSelection(startPosition, startOffset, endPosition, endOffset);
+    myEditor.getCaretModel().getCurrentCaret().setSelection(startOffset, endPosition, endOffset);
   }
 
   @Override
   public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset) : startPosition;
-    VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset) : endPosition;
-    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true);
+    myEditor.getCaretModel().getCurrentCaret().setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
-  private void doSetSelection(@NotNull VisualPosition startPosition,
-                              int startOffset,
-                              @NotNull VisualPosition endPosition,
-                              int endOffset,
-                              boolean visualPositionAware)
-  {
-    myUnknownDirection = false;
-    final Document doc = myEditor.getDocument();
-    final Pair<String, String> markers = myEditor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
-    if (markers != null) {
-      final String text = doc.getText();
-      final int start = text.indexOf(markers.first) + markers.first.length();
-      final int end = text.indexOf(markers.second);
-      if (startOffset < endOffset) {
-        if (startOffset < start) {
-          startOffset = start;
-          startPosition = myEditor.offsetToVisualPosition(startOffset);
-        }
-        if (endOffset > end) {
-          endOffset = end;
-          endPosition = myEditor.offsetToVisualPosition(endOffset);
-        }
-      }
-      else {
-        if (endOffset < start) {
-          endOffset = start;
-          endPosition = myEditor.offsetToVisualPosition(startOffset);
-        }
-        if (startOffset > end) {
-          startOffset = end;
-          startPosition = myEditor.offsetToVisualPosition(endOffset);
-        }
-      }
-    }
-
-    validateContext(true);
-
-    removeBlockSelection();
-
-    int textLength = doc.getTextLength();
-    if (startOffset < 0 || startOffset > textLength) {
-      LOG.error("Wrong startOffset: " + startOffset + ", textLength=" + textLength);
-    }
-    if (endOffset < 0 || endOffset > textLength) {
-      LOG.error("Wrong endOffset: " + endOffset + ", textLength=" + textLength);
-    }
-
-    myLastSelectionStart = startOffset;
-    if (!visualPositionAware && startOffset == endOffset) {
-      removeSelection();
-      return;
-    }
-
-    /* Normalize selection */
-    if (startOffset > endOffset) {
-      int tmp = startOffset;
-      startOffset = endOffset;
-      endOffset = tmp;
-    }
-
-    FoldingModelEx foldingModel = myEditor.getFoldingModel();
-    FoldRegion startFold = foldingModel.getCollapsedRegionAtOffset(startOffset);
-    if (startFold != null && startFold.getStartOffset() < startOffset) {
-      startOffset = startFold.getStartOffset();
-    }
-
-    FoldRegion endFold = foldingModel.getCollapsedRegionAtOffset(endOffset);
-    if (endFold != null && endFold.getStartOffset() < endOffset) {
-      // All visual positions that lay at collapsed fold region placeholder are mapped to the same offset. Hence, there are
-      // at least two distinct situations - selection end is located inside collapsed fold region placeholder and just before it.
-      // We want to expand selection to the fold region end at the former case and keep selection as-is at the latest one.
-      endOffset = endFold.getEndOffset();
-    }
-
-    int oldSelectionStart;
-    int oldSelectionEnd;
-
-    if (hasSelection()) {
-      oldSelectionStart = getSelectionStart();
-      oldSelectionEnd = getSelectionEnd();
-      if (oldSelectionStart == startOffset && oldSelectionEnd == endOffset && !visualPositionAware) return;
-    }
-    else {
-      oldSelectionStart = oldSelectionEnd = myEditor.getCaretModel().getOffset();
-    }
-
-    MyRangeMarker marker = mySelectionMarker;
-    if (marker != null) {
-      marker.release();
-    }
-
-    marker = new MyRangeMarker((DocumentEx)doc, startOffset, endOffset);
-    if (visualPositionAware) {
-      if (endPosition.after(startPosition)) {
-        marker.setStartPosition(startPosition);
-        marker.setEndPosition(endPosition);
-        marker.setEndPositionIsLead(false);
-      }
-      else {
-        marker.setStartPosition(endPosition);
-        marker.setEndPosition(startPosition);
-        marker.setEndPositionIsLead(true);
-      }
-    }
-    mySelectionMarker = marker;
-
-    fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
-
-    updateSystemSelection();
-  }
-
-  private void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless()) return;
-
-    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
-    if (clip != null) {
-      clip.setContents(new StringSelection(getSelectedText()), EmptyClipboardOwner.INSTANCE);
-    }
-  }
-
-  private void fireSelectionChanged(int oldSelectionStart, int oldSelectionEnd, int startOffset, int endOffset) {
+  void fireSelectionChanged(int oldSelectionStart, int oldSelectionEnd, int startOffset, int endOffset) {
     repaintBySelectionChange(oldSelectionStart, startOffset, oldSelectionEnd, endOffset);
 
     SelectionEvent event = new SelectionEvent(myEditor,
@@ -465,82 +191,122 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   @Override
-  public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    removeSelection();
+  public void removeSelection() {
+    removeSelection(false);
+  }
 
-    int oldStartLine = 0;
-    int oldEndLine = 0;
-
-    if (hasBlockSelection()) {
-      oldStartLine = myBlockStart.line;
-      oldEndLine = myBlockEnd.line;
-      if (oldStartLine > oldEndLine) {
-        int t = oldStartLine;
-        oldStartLine = oldEndLine;
-        oldEndLine = t;
+  @Override
+  public void removeSelection(boolean allCarets) {
+    if (!allCarets || !myEditor.getCaretModel().supportsMultipleCarets()) {
+      myEditor.getCaretModel().getCurrentCaret().removeSelection();
+    }
+    else {
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        caret.removeSelection();
       }
     }
-
-    int newStartLine = blockStart.line;
-    int newEndLine = blockEnd.line;
-
-    if (newStartLine > newEndLine) {
-      int t = newStartLine;
-      newStartLine = newEndLine;
-      newEndLine = t;
-    }
-
-    myEditor.repaintLines(Math.min(oldStartLine, newStartLine), Math.max(newEndLine, oldEndLine));
-
-    final int[] oldStarts = getBlockSelectionStarts();
-    final int[] oldEnds = getBlockSelectionEnds();
-
-    myBlockStart = blockStart;
-    myBlockEnd = blockEnd;
-    recalculateBlockOffsets();
-
-    final int[] newStarts = getBlockSelectionStarts();
-    final int[] newEnds = getBlockSelectionEnds();
-
-    broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
   }
 
   @Override
-  public void removeSelection() {
-    if (myEditor.isStickySelection()) {
-      // Most of our 'change caret position' actions (like move caret to word start/end etc) remove active selection.
-      // However, we don't want to do that for 'sticky selection'.
-      return;
+  public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
+    if (myEditor.getCaretModel().supportsMultipleCarets()) {
+      boolean virtualSpaceIsEnabled = myEditor.getSettings().isVirtualSpace();
+      int startLine = Math.max(Math.min(blockStart.line, myEditor.getDocument().getLineCount() - 1), 0);
+      int endLine = Math.max(Math.min(blockEnd.line, myEditor.getDocument().getLineCount() - 1), 0);
+      int step = endLine < startLine ? -1 : 1;
+      int count = 1 + Math.abs(endLine - startLine);
+      List<LogicalPosition> positions = new LinkedList<LogicalPosition>();
+      List<TextRange> selections = new LinkedList<TextRange>();
+      boolean hasSelection = false;
+      for (int line = startLine, i = 0; i < count; i++, line += step) {
+        int startColumn = blockStart.column;
+        int endColumn = blockEnd.column;
+        LogicalPosition startPos = new LogicalPosition(line, virtualSpaceIsEnabled ? startColumn : truncateColumnToLineWidth(line, startColumn));
+        LogicalPosition endPos = new LogicalPosition(line, virtualSpaceIsEnabled ? endColumn : truncateColumnToLineWidth(line, endColumn));
+        int startOffset = myEditor.logicalPositionToOffset(startPos);
+        int endOffset = myEditor.logicalPositionToOffset(endPos);
+        positions.add(endPos);
+        selections.add(new TextRange(Math.min(startOffset, endOffset), Math.max(startOffset, endOffset)));
+        hasSelection |= (startOffset != endOffset);
+      }
+      if (hasSelection) { // filtering out lines without selection
+        Iterator<LogicalPosition> positionIterator = positions.iterator();
+        Iterator<TextRange> selectionIterator = selections.iterator();
+        while(selectionIterator.hasNext()) {
+          TextRange selection = selectionIterator.next();
+          positionIterator.next();
+          if (selection.isEmpty()) {
+            selectionIterator.remove();
+            positionIterator.remove();
+          }
+        }
+      }
+      myEditor.getCaretModel().setCarets(positions, selections);
     }
-    validateContext(true);
-    removeBlockSelection();
-    myLastSelectionStart = myEditor.getCaretModel().getOffset();
-    MyRangeMarker marker = mySelectionMarker;
-    if (marker != null) {
-      int startOffset = marker.getStartOffset();
-      int endOffset = marker.getEndOffset();
-      marker.release();
-      mySelectionMarker = null;
-      fireSelectionChanged(startOffset, endOffset, myLastSelectionStart, myLastSelectionStart);
-    }
-  }
+    else {
+      removeSelection();
 
-  @Override
-  public void removeBlockSelection() {
-    myUnknownDirection = false;
-    if (hasBlockSelection()) {
-      myEditor.repaint(0, myEditor.getDocument().getTextLength());
+      int oldStartLine = 0;
+      int oldEndLine = 0;
+
+      if (hasBlockSelection()) {
+        oldStartLine = myBlockStart.line;
+        oldEndLine = myBlockEnd.line;
+        if (oldStartLine > oldEndLine) {
+          int t = oldStartLine;
+          oldStartLine = oldEndLine;
+          oldEndLine = t;
+        }
+      }
+
+      int newStartLine = blockStart.line;
+      int newEndLine = blockEnd.line;
+
+      if (newStartLine > newEndLine) {
+        int t = newStartLine;
+        newStartLine = newEndLine;
+        newEndLine = t;
+      }
+
+      myEditor.repaintLines(Math.min(oldStartLine, newStartLine), Math.max(newEndLine, oldEndLine));
 
       final int[] oldStarts = getBlockSelectionStarts();
       final int[] oldEnds = getBlockSelectionEnds();
 
-      myBlockStart = null;
-      myBlockEnd = null;
+      myBlockStart = blockStart;
+      myBlockEnd = blockEnd;
+      recalculateBlockOffsets();
 
       final int[] newStarts = getBlockSelectionStarts();
       final int[] newEnds = getBlockSelectionEnds();
 
       broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
+    }
+  }
+
+  private int truncateColumnToLineWidth(int line, int column) {
+    int columnLimit = myEditor.offsetToLogicalPosition(myEditor.getDocument().getLineEndOffset(line)).column;
+    return Math.min(column, columnLimit);
+  }
+
+  @Override
+  public void removeBlockSelection() {
+    if (!myEditor.getCaretModel().supportsMultipleCarets()) {
+      myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(false);
+      if (hasBlockSelection()) {
+        myEditor.repaint(0, myEditor.getDocument().getTextLength());
+
+        final int[] oldStarts = getBlockSelectionStarts();
+        final int[] oldEnds = getBlockSelectionEnds();
+
+        myBlockStart = null;
+        myBlockEnd = null;
+
+        final int[] newStarts = getBlockSelectionStarts();
+        final int[] newEnds = getBlockSelectionEnds();
+
+        broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
+      }
     }
   }
 
@@ -648,28 +414,48 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
-    if (hasSelection()) {
-      return new int[]{getSelectionStart()};
-    }
-    else if (!hasBlockSelection() || myBlockSelectionStarts == null) {
-      return ArrayUtil.EMPTY_INT_ARRAY;
-    }
-    else {
-      return myBlockSelectionStarts;
+    if (myEditor.getCaretModel().supportsMultipleCarets()) {
+      Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
+      int[] result = new int[carets.size()];
+      int i = 0;
+      for (Caret caret : carets) {
+        result[i++] = caret.getSelectionStart();
+      }
+      return result;
+    } else {
+      if (hasSelection()) {
+        return new int[]{getSelectionStart()};
+      }
+      else if (!hasBlockSelection() || myBlockSelectionStarts == null) {
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      else {
+        return myBlockSelectionStarts;
+      }
     }
   }
 
   @Override
   @NotNull
   public int[] getBlockSelectionEnds() {
-    if (hasSelection()) {
-      return new int[]{getSelectionEnd()};
-    }
-    else if (!hasBlockSelection() || myBlockSelectionEnds == null) {
-      return ArrayUtil.EMPTY_INT_ARRAY;
-    }
-    else {
-      return myBlockSelectionEnds;
+    if (myEditor.getCaretModel().supportsMultipleCarets()) {
+      Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
+      int[] result = new int[carets.size()];
+      int i = 0;
+      for (Caret caret : carets) {
+        result[i++] = caret.getSelectionEnd();
+      }
+      return result;
+    } else {
+      if (hasSelection()) {
+        return new int[]{getSelectionEnd()};
+      }
+      else if (!hasBlockSelection() || myBlockSelectionEnds == null) {
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      else {
+        return myBlockSelectionEnds;
+      }
     }
   }
 
@@ -686,14 +472,18 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public String getSelectedText() {
+    return getSelectedText(false);
+  }
+
+  @Override
+  public String getSelectedText(boolean allCarets) {
     validateContext(false);
-    if (!hasSelection() && !hasBlockSelection()) return null;
 
     CharSequence text = myEditor.getDocument().getCharsSequence();
-    if (hasBlockSelection()) {
+    if (hasBlockSelection() || (myEditor.getCaretModel().supportsMultipleCarets() && allCarets)) {
       int[] starts = getBlockSelectionStarts();
       int[] ends = getBlockSelectionEnds();
-      int width = Math.abs(myBlockEnd.column - myBlockStart.column);
+      int width = myEditor.getCaretModel().supportsMultipleCarets() ? 0 : Math.abs(myBlockEnd.column - myBlockStart.column);
       final StringBuilder buf = new StringBuilder();
       for (int i = 0; i < starts.length; i++) {
         if (i > 0) buf.append('\n');
@@ -704,9 +494,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return buf.toString();
     }
 
-    int selectionStart = getSelectionStart();
-    int selectionEnd = getSelectionEnd();
-    return text.subSequence(selectionStart, selectionEnd).toString();
+    return myEditor.getCaretModel().getCurrentCaret().getSelectedText();
   }
 
   private static void appendCharSequence(@NotNull StringBuilder buf, @NotNull CharSequence s, int srcOffset, int len) {
@@ -720,65 +508,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     for (int i = srcOffset; i < limit; i++) {
       buf.append(s.charAt(i));
     }
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    validateContext(false);
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    if (hasSelection()) {
-      MyRangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        int startOffset = marker.getStartOffset();
-        int endOffset = marker.getEndOffset();
-        if (caretOffset != startOffset && caretOffset != endOffset) {
-          // Try to check if current selection is tweaked by fold region.
-          FoldingModelEx foldingModel = myEditor.getFoldingModel();
-          FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(caretOffset);
-          if (foldRegion != null) {
-            if (foldRegion.getStartOffset() == startOffset) {
-              return endOffset;
-            }
-            else if (foldRegion.getEndOffset() == endOffset) {
-              return startOffset;
-            }
-          }
-        }
-
-        if (caretOffset == endOffset) {
-          return startOffset;
-        }
-        else {
-          return endOffset;
-        }
-      }
-    }
-    return caretOffset;
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition getLeadSelectionPosition() {
-    MyRangeMarker marker = mySelectionMarker;
-    VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-    if (marker == null) {
-      return caretPosition;
-    }
-
-    if (marker.isEndPositionIsLead()) {
-      VisualPosition result = marker.getEndPosition();
-      return result == null ? getSelectionEndPosition() : result;
-    }
-    else {
-      VisualPosition result = marker.getStartPosition();
-      return result == null ? getSelectionStartPosition() : result;
-    }
-  }
-
-  @Override
-  public void selectLineAtCaret() {
-    validateContext(true);
-    doSelectLineAtCaret(myEditor);
   }
 
   public static void doSelectLineAtCaret(Editor editor) {
@@ -802,72 +531,30 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   @Override
+  public int getLeadSelectionOffset() {
+    return myEditor.getCaretModel().getCurrentCaret().getLeadSelectionOffset();
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition getLeadSelectionPosition() {
+    return myEditor.getCaretModel().getCurrentCaret().getLeadSelectionPosition();
+  }
+
+  @Override
+  public void selectLineAtCaret() {
+    myEditor.getCaretModel().getCurrentCaret().selectLineAtCaret();
+  }
+
+  @Override
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
-    validateContext(true);
-    removeSelection();
-    final EditorSettings settings = myEditor.getSettings();
-    boolean camelTemp = settings.isCamelWords();
-
-    final boolean needOverrideSetting = camelTemp && !honorCamelWordsSettings;
-    if (needOverrideSetting) {
-      settings.setCamelWords(false);
-    }
-
-    try {
-      EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
-        IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-      handler.execute(myEditor, myEditor.getDataContext());
-    }
-    finally {
-      if (needOverrideSetting) {
-        settings.resetCamelWords();
-      }
-    }
-  }
-
-  int getWordAtCaretStart() {
-    Document document = myEditor.getDocument();
-    int offset = myEditor.getCaretModel().getOffset();
-    if (offset == 0) return 0;
-    int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-    CharSequence text = document.getCharsSequence();
-    int newOffset = offset - 1;
-    int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-    boolean camel = myEditor.getSettings().isCamelWords();
-    for (; newOffset > minOffset; newOffset--) {
-      if (EditorActionUtil.isWordStart(text, newOffset, camel)) break;
-    }
-
-    return newOffset;
-  }
-
-  int getWordAtCaretEnd() {
-    Document document = myEditor.getDocument();
-    int offset = myEditor.getCaretModel().getOffset();
-
-    CharSequence text = document.getCharsSequence();
-    if (offset >= document.getTextLength() - 1 || document.getLineCount() == 0) return offset;
-
-    int newOffset = offset + 1;
-
-    int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-    int maxOffset = document.getLineEndOffset(lineNumber);
-    if (newOffset > maxOffset) {
-      if (lineNumber + 1 >= document.getLineCount()) return offset;
-      maxOffset = document.getLineEndOffset(lineNumber + 1);
-    }
-    boolean camel = myEditor.getSettings().isCamelWords();
-    for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordEnd(text, newOffset, camel)) break;
-    }
-
-    return newOffset;
+    myEditor.getCaretModel().getCurrentCaret().selectWordAtCaret(honorCamelWordsSettings);
   }
 
   @Override
   public void copySelectionToClipboard() {
     validateContext(true);
-    String s = myEditor.getSelectionModel().getSelectedText();
+    String s = getSelectedText(true);
     if (s == null) return;
 
     s = StringUtil.convertLineSeparators(s);
@@ -890,5 +577,15 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   public void reinitSettings() {
     myTextAttributes = null;
+  }
+
+  private void validateContext(boolean isWrite) {
+    if (!myEditor.getComponent().isShowing()) return;
+    if (isWrite) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
+    else {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
   }
 }
