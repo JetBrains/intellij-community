@@ -394,6 +394,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testAlignListComprehensionInDict() { //PY-10076
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
