@@ -72,14 +72,14 @@ public class Runner {
       //    String uHome = System.getProperty("user.home");
       FileAppender update = new FileAppender();
 
-      update.setFile(tmpDir + "idea_updater.log");
+      update.setFile(new File(tmpDir, "idea_updater.log").getAbsolutePath());
       update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(tmpDir + "idea_updater_error.log");
+      updateError.setFile(new File(tmpDir, "idea_updater_error.log").getAbsolutePath());
       updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
