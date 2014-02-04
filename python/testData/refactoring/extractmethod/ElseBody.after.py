@@ -1,5 +1,5 @@
 def baz(f_new):
-    length = len(f_new.readlines())  #<---extract something from here
+    length = len(f_new.readlines())  # <---extract something from here
     print("hi from else")
 
 

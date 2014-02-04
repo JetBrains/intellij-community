@@ -28,7 +28,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 
 import java.util.Collection;

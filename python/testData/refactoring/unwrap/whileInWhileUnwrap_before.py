@@ -1,5 +1,5 @@
 while True:
     while False:
-        #comment
+        # comment
         x = 1<caret>
         y = 2

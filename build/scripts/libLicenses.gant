@@ -216,7 +216,7 @@ libraryLicense(name: "maven-artifact", version: "3.0.3", libraryNames: ["maven-a
 libraryLicense(name: "maven-core", version: "3.0.3", libraryNames: ["maven-core-3.0.3.jar"], license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "plexus-component-annotations", version: "1.5.5", libraryNames: ["plexus-component-annotations-1.5.5.jar"], license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1.2.jar", "archetype-catalog-2.2.jar", "archetype-common-2.2.jar"], version: "3.0.3", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
-libraryLicense(name: "Gradle", version: "1.8", license: "Apache 2.0", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license")
+libraryLicense(name: "Gradle", version: "1.9", license: "Apache 2.0", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license")
 libraryLicense(name: "GradleJnaPosix", version: "1.0.3", license: "LGPL 2.1", url: "http://www.jruby.org/", licenseUrl: "http://www.gnu.org/licenses/lgpl-2.1.txt")
 libraryLicense(name: "Slf4j", version: "1.7.2", license: "MIT License", url: "http://slf4j.org/", licenseUrl: "http://slf4j.org/license.html")
 libraryLicense(name: "GradleGuava", version: "11.0.2", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")

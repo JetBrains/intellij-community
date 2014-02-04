@@ -268,7 +268,7 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
-    dir("properties") {
+    pluginDir("properties") {
       dir("lib") {
         jar("properties.jar") {
           module("properties-psi-api")
@@ -328,6 +328,15 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("gradle") {
       jar("gradle.jar") {
         module("gradle")
+      }
+      jar("gradle-tooling-extension.jar") {
+        module("gradle-tooling-extension")
+      }
+      jar("gradle-tooling-extension-v1.9.jar") {
+        module("gradle-tooling-extension-v1.9")
+      }
+      jar("gradle-tooling-extension-v1.11.jar") {
+        module("gradle-tooling-extension-v1.11")
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
     }

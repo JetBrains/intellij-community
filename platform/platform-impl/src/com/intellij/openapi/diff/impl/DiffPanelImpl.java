@@ -484,11 +484,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setComparisonPolicy(comparisonPolicy, true);
   }
 
-  public void setHighlightMode(HighlightMode highlightMode) {
+  public void setHighlightMode(@NotNull HighlightMode highlightMode) {
     myData.setHighlightMode(highlightMode);
     rediff();
   }
 
+  @NotNull
   public HighlightMode getHighlightMode() {
     return myData.getHighlightMode();
   }

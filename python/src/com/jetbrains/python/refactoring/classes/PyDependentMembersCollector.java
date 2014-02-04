@@ -29,6 +29,7 @@ public class PyDependentMembersCollector extends DependentMembersCollectorBase<P
 
   @Override
   public void collect(PyElement member) {
+    //TODO: Move to MembersManager as well
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {

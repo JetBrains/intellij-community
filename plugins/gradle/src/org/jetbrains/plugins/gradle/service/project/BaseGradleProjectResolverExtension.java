@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
-import org.jetbrains.plugins.gradle.model.data.ClasspathEntry;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -156,11 +155,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
     BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
     if (buildScriptClasspathModel != null) {
-      List<ClasspathEntry> classpathEntries =
-        ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, ClasspathEntry>() {
+      List<BuildScriptClasspathData.ClasspathEntry> classpathEntries =
+        ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
           @Override
-          public ClasspathEntry fun(ClasspathEntryModel model) {
-            return new ClasspathEntry(model.getClassesFile(), model.getSourcesFile(), model.getJavadocFile());
+          public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
+            return new BuildScriptClasspathData.ClasspathEntry(model.getClassesFile(), model.getSourcesFile(), model.getJavadocFile());
           }
         });
       BuildScriptClasspathData buildScriptClasspathData =
@@ -366,6 +365,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ProjectImportAction.class));
     for (String entry : additionalEntries) {
       classPath.add(entry);
     }

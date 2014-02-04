@@ -600,7 +600,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static HighlightInfo checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
     boolean isIncorrect = false;
-    PsiElement declarationScope;
+    PsiElement declarationScope = null;
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter &&
         ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
@@ -623,6 +623,8 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       if (proc.size() > 0) {
         isIncorrect = true;
+      } else if (declarationScope instanceof PsiLambdaExpression) {
+        isIncorrect = checkSameNames(variable);
       }
     }
     else if (variable instanceof PsiField) {
@@ -635,17 +637,7 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     else {
-      PsiElement scope = variable.getParent();
-      PsiElement[] children = scope.getChildren();
-      for (PsiElement child : children) {
-        if (child instanceof PsiVariable) {
-          if (child.equals(variable)) continue;
-          if (variable.getName().equals(((PsiVariable)child).getName())) {
-            isIncorrect = true;
-            break;
-          }
-        }
-      }
+      isIncorrect = checkSameNames(variable);
     }
 
     if (isIncorrect) {
@@ -660,6 +652,20 @@ public class HighlightUtil extends HighlightUtilBase {
       return highlightInfo;
     }
     return null;
+  }
+
+  private static boolean checkSameNames(PsiVariable variable) {
+    PsiElement scope = variable.getParent();
+    PsiElement[] children = scope.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof PsiVariable) {
+        if (child.equals(variable)) continue;
+        if (variable.getName().equals(((PsiVariable)child).getName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable

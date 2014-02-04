@@ -262,9 +262,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   @Nullable
   public PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml) {
+    if (!virtualFile.isValid()) {
+      return null;
+    }
+
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-    if (file == null || document == null) {
+    PsiFile file = document == null ? null : PsiManager.getInstance(project).findFile(virtualFile);
+    if (file == null) {
       return null;
     }
 

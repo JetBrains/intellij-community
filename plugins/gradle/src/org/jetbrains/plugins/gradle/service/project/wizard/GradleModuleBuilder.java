@@ -19,6 +19,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
@@ -115,13 +116,15 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     myWizardContext = wizardContext;
-    if (myWizardContext.isCreatingNewProject()) {
-      final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
-      return new ModuleWizardStep[]{new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl)};
-    }
-    else {
-      return ModuleWizardStep.EMPTY_ARRAY;
-    }
+    return super.createWizardSteps(wizardContext, modulesProvider);
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
+    if (!myWizardContext.isCreatingNewProject()) return null;
+    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
+    return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);
   }
 
   @Override

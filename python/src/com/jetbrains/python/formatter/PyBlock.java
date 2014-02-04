@@ -141,6 +141,33 @@ public class PyBlock implements ASTBlock {
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
+
+    if (parentType == PyElementTypes.BINARY_EXPRESSION && !isInControlStatement()) {
+      //Setup alignments for binary expression
+      childAlignment = getAlignmentForChildren();
+
+      PyBlock p = myParent; //Check grandparents
+      while (p != null) {
+        ASTNode pNode = p.getNode();
+        if (ourListElementTypes.contains(pNode.getElementType())) {
+          if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
+
+            childAlignment = p.getChildAlignment();
+            break;
+          }
+        }
+        else if (pNode == PyElementTypes.BINARY_EXPRESSION) {
+          childAlignment = p.getChildAlignment();
+        }
+        if (!breaksAlignment(pNode.getElementType())) {
+          p = p.myParent;
+        }
+        else {
+          break;
+        }
+      }
+    }
+
     if (childType == PyElementTypes.STATEMENT_LIST) {
       if (hasLineBreaksBefore(child, 1) || needLineBreakInStatement()) {
         childIndent = Indent.getNormalIndent();
@@ -172,14 +199,6 @@ public class PyBlock implements ASTBlock {
         PyParenthesizedExpression parens = PsiTreeUtil.getParentOfType(_node.getPsi(), PyParenthesizedExpression.class, true,
                                                                        PyStatementPart.class);
         childIndent = parens != null ? Indent.getNormalIndent() : Indent.getContinuationIndent();
-      }
-      else {
-        if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
-          childAlignment = myParent.getAlignmentForChildren();
-        }
-        else {
-          childAlignment = getAlignmentForChildren();
-        }
       }
     }
 
@@ -307,6 +326,10 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean breaksAlignment(IElementType type) {
+    return type != PyElementTypes.BINARY_EXPRESSION;
   }
 
   private static Alignment getAlignmentOfChild(PyBlock b, int childNum) {
@@ -516,7 +539,7 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1)) {
+      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
         return Spacing.createSpacing(2, 0, 0, false, 0);
       }
     }

@@ -27,10 +27,15 @@ import org.jetbrains.annotations.NotNull;
 public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates = false;
 
-  public MethodResolverProcessor(@NotNull PsiMethodCallExpression place, @NotNull PsiFile placeFile){
-    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList(),
-                                                                                     PsiUtil.getLanguageLevel(placeFile))});
-    setArgumentList(place.getArgumentList());
+  public MethodResolverProcessor(@NotNull PsiMethodCallExpression place, @NotNull PsiFile placeFile) {
+    this(place, place.getArgumentList(), placeFile);
+  }
+
+  public MethodResolverProcessor(@NotNull PsiCallExpression place,
+                                 @NotNull PsiExpressionList argumentList, 
+                                 @NotNull PsiFile placeFile){
+    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(placeFile))});
+    setArgumentList(argumentList);
     obtainTypeArguments(place);
   }
 

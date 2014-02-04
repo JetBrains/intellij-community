@@ -22,6 +22,8 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import java.util.ArrayList;
 
@@ -60,12 +62,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
 
   @Override
   protected void extractClassMembers(PyClass aClass, ArrayList<PyMemberInfo> temp) {
-    for (PyFunction function : aClass.getMethods()) {
-      temp.add(new PyMemberInfo(function));
-    }
-    for (PyClass pyClass : aClass.getSuperClasses()) {
-      temp.add(new PyMemberInfo(pyClass));
-    }
+    temp.addAll(MembersManager.getAllMembersCouldBeMoved(aClass));
   }
 
   @Override

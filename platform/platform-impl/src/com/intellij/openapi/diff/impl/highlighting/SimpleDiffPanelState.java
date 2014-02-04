@@ -19,10 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
-import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
-import com.intellij.openapi.diff.impl.fragments.FragmentList;
-import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
-import com.intellij.openapi.diff.impl.fragments.LineFragment;
+import com.intellij.openapi.diff.impl.fragments.*;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
@@ -33,6 +30,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 
 public abstract class SimpleDiffPanelState implements Disposable  {
@@ -117,7 +115,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
     }
 
     if (myHighlightMode == HighlightMode.NO_HIGHLIGHTING) {
-      return LineBlocks.fromLineFragments(new ArrayList<LineFragment>());
+      return LineBlocks.fromLineFragments(Collections.<LineFragment>emptyList());
     }
 
     return addMarkup(new TextCompareProcessor(myComparisonPolicy, myDiffPolicy, myHighlightMode == HighlightMode.BY_WORD)

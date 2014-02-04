@@ -75,11 +75,12 @@ public class JavaCompletionSorting {
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
     }
-    ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
     }
-    Collections.addAll(afterPrefix, new PreferByKindWeigher(type, position), new PreferSimilarlyEnding(expectedTypes),
+    afterPrefix.add(new PreferByKindWeigher(type, position));
+    ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
+    Collections.addAll(afterPrefix, new PreferSimilarlyEnding(expectedTypes),
                        new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple());
 
     sorter = sorter.weighAfter("prefix", afterPrefix.toArray(new LookupElementWeigher[afterPrefix.size()]));

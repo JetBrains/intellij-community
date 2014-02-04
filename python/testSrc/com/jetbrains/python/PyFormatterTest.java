@@ -251,7 +251,7 @@ public class PyFormatterTest extends PyTestCase {
       " desired_response_parameters,\n" +
       " inverse_filter_length, \n" +
       " observed_impulse_response):\n" +
-      " #  Extract from here to ...\n" +
+      " # Extract from here to ...\n" +
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
 
@@ -264,7 +264,7 @@ public class PyFormatterTest extends PyTestCase {
       "        desired_response_parameters,\n" +
       "        inverse_filter_length,\n" +
       "        observed_impulse_response):\n" +
-      "    #  Extract from here to ...\n" +
+      "    # Extract from here to ...\n" +
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
       "    ', logistic_derivative'}\n" +
@@ -391,6 +391,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testAlignInParameterList() {
+    doTest();
+  }
+
+  public void testAlignListComprehensionInDict() { //PY-10076
     doTest();
   }
 

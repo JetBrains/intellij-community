@@ -161,7 +161,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferParametersToGetters() throws Throwable {
-    checkPreferredItems(0, "a", "I._1", "valueOf", "getLastI");
+    checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf");
   }
 
   public void testExpectedInterfaceShouldGoFirst() throws Throwable {
@@ -178,7 +178,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferNonRecursiveMethodParams() throws Throwable {
-    checkPreferredItems(0, "b", "hashCode", "s", "a");
+    checkPreferredItems(0, "b", "s", "a", "hashCode");
   }
 
   public void testPreferDelegatingMethodParams() throws Throwable {
@@ -302,7 +302,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferGetterInSetterCall() {
-    checkPreferredItems 0, 'getZooColor', 'hashCode', 'color', 'getColor'
+    checkPreferredItems 0, 'color', 'getZooColor', 'getColor', 'hashCode'
   }
   public void testPreferOtherGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'

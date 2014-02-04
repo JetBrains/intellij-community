@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +86,7 @@ public class HighlightModeAction extends ComboBoxAction implements DumbAware {
     }
   }
 
-  private static class SetHighlightModeAction extends AnAction implements DumbAware {
+  private static class SetHighlightModeAction extends DumbAwareAction {
     private final HighlightMode myHighlightMode;
 
     public SetHighlightModeAction(String text, HighlightMode mode) {

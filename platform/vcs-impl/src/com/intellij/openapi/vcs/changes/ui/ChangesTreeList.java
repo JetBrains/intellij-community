@@ -544,7 +544,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           //noinspection unchecked
           List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
           for (T object : list) {
-            if (!checkSet.add(object.hashCode()) || !changes.contains(object)) {
+            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
               changes.add(object);
             }
           }

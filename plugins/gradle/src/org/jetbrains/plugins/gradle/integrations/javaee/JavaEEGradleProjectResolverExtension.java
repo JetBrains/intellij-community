@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.WarModel;
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.gradle.model.data.WarModelData;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -58,6 +58,6 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(WarModel.class);
+    return Collections.<Class>singleton(WarModel.class);
   }
 }
