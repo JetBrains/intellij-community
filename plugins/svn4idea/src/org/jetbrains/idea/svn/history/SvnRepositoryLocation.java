@@ -21,7 +21,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
@@ -68,5 +72,14 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     }
 
     return null;
+  }
+
+  public SVNURL toSvnUrl() throws VcsException {
+    try {
+      return SvnUtil.createUrl(myURL);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 }

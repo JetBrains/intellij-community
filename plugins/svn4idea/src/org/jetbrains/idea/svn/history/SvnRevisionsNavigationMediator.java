@@ -64,6 +64,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
       public void run() {
         SVNRepository repository = null;
         try {
+          // TODO: Rewrite this using "svn info -r HEAD"
           repository = vcs.createRepository(location.getURL());
           youngRevision[0] = repository.getLatestRevision();
           repositoryRoot[0] = repository.getRepositoryRoot(false);
@@ -133,13 +134,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     }
 
     final Ref<Boolean> canNotGoBackRef = new Ref<Boolean>();
-    final List<Fragment> fragments;
-    try {
-      fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    final List<Fragment> fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
     myCanNotGoBack = canNotGoBackRef.get().booleanValue();
 
     if (! fragments.isEmpty()) {
