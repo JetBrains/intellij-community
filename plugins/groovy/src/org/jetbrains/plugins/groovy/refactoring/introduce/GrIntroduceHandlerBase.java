@@ -63,12 +63,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -349,7 +347,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
           public void run() {
             GrIntroduceContext context = ref.get();
 
-            GrExpression expression = processLiteral(null, context.getStringPart(), context.getProject());
+            StringPartInfo stringPart = context.getStringPart();
+            assert stringPart != null;
+
+            GrExpression expression = stringPart.replaceLiteralWithConcatenation(null);
 
             ref.set(new GrIntroduceContextImpl(context.getProject(), context.getEditor(), expression, null, null, new PsiElement[]{expression}, context.getScope()));
           }
@@ -792,103 +793,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     throw new IncorrectOperationException();
   }
 
-  @NotNull
-  public static GrExpression generateExpressionFromStringPart(@NotNull final StringPartInfo stringPart, @NotNull final Project project) {
-    Data data = new Data(stringPart);
-    String startQuote = data.getStartQuote();
-    TextRange range = data.getRange();
-    String literalText = data.getText();
-    String endQuote = data.getEndQuote();
-
-    final String substringLiteral = startQuote + range.substring(literalText) + endQuote;
-    return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(substringLiteral);
-  }
-
-  @NotNull
-  public static GrExpression processLiteral(@Nullable final String varName, @NotNull final StringPartInfo stringPart, @NotNull final Project project) {
-    Data data = new Data(stringPart);
-    String startQuote = data.getStartQuote();
-    TextRange range = data.getRange();
-    String literalText = data.getText();
-    String endQuote = data.getEndQuote();
-
-    String prefix = literalText.substring(0, range.getStartOffset()) ;
-    String suffix =  literalText.substring(range.getEndOffset());
-
-    StringBuilder buffer = new StringBuilder();
-    if (!prefix.equals(startQuote)) {
-      buffer.append(prefix).append(endQuote).append('+');
-    }
-
-    if (varName != null) {
-      buffer.append(varName);
-    }
-    else {
-      String selected = literalText.substring(range.getStartOffset(), range.getEndOffset());
-      buffer.append(startQuote).append(selected).append(endQuote);
-    }
-
-    if (!suffix.equals(endQuote)) {
-      buffer.append('+').append(startQuote).append(suffix);
-    }
-
-    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
-
-    final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
-    if (concat instanceof GrReferenceExpression) {
-      return concat;
-    }
-    else {
-      assert concat instanceof GrBinaryExpression : buffer;
-      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
-      if (left instanceof GrReferenceExpression) {
-        return left;
-      }
-      else {
-        assert left instanceof GrBinaryExpression : buffer;
-        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
-        assert right != null : buffer;
-        return right;
-      }
-    }
-  }
-
   public interface Validator extends NameValidator {
     boolean isOK(GrIntroduceDialog dialog);
-  }
-
-  private static class Data {
-    private String myText;
-    private String myStartQuote;
-    private String myEndQuote;
-    private TextRange myRange;
-
-    public Data(@NotNull final StringPartInfo stringPartInfo) {
-      final GrLiteral literal = stringPartInfo.getLiteral();
-
-      myText = literal.getText();
-
-      myStartQuote = GrStringUtil.getStartQuote(myText);
-      myEndQuote = GrStringUtil.getEndQuote(myText);
-      final TextRange dataRange = new TextRange(myStartQuote.length(), myText.length() - myEndQuote.length());
-
-      myRange = stringPartInfo.getRange().intersection(dataRange);
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public String getStartQuote() {
-      return myStartQuote;
-    }
-
-    public String getEndQuote() {
-      return myEndQuote;
-    }
-
-    public TextRange getRange() {
-      return myRange;
-    }
   }
 }

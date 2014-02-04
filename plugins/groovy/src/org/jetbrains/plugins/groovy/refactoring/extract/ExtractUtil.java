@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -55,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
@@ -90,7 +88,7 @@ public class ExtractUtil {
     else {
       GrExpression oldExpr;
       if (helper.getStringPartInfo() != null) {
-        oldExpr = GrIntroduceHandlerBase.processLiteral("xyz", helper.getStringPartInfo(), helper.getProject());
+        oldExpr = helper.getStringPartInfo().replaceLiteralWithConcatenation("xyz");
       }
       else {
         oldExpr = (GrExpression)helper.getStatements()[0];
@@ -406,7 +404,7 @@ public class ExtractUtil {
     }
     else {
       GrExpression expr = stringPartInfo != null
-                          ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, helper.getProject())
+                          ? stringPartInfo.createLiteralFromSelected()
                           : (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
       boolean addReturn = !isVoid && forceReturn && !PsiUtil.isVoidMethodCall(expr);
       if (addReturn) {

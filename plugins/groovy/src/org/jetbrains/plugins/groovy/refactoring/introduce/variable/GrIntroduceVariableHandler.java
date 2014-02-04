@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrVariableDeclaration varDecl = generateDeclaration(context, settings);
 
     if (context.getStringPart() != null) {
-      final GrExpression ref = processLiteral(DUMMY_NAME, context.getStringPart(), context.getProject());
+      final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(DUMMY_NAME);
       return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, true);
     }
     else {
@@ -222,7 +222,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   private static GrExpression generateInitializer(@NotNull GrIntroduceContext context,
                                                   @NotNull GrVariable variable) {
     final GrExpression initializer = context.getStringPart() != null
-                                     ? GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject())
+                                     ? context.getStringPart().createLiteralFromSelected()
                                      : context.getExpression();
     final GrExpression dummyInitializer = variable.getInitializerGroovy();
     assert dummyInitializer != null;

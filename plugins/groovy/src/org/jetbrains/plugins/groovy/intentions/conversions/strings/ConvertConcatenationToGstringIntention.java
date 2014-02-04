@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,13 +196,12 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder, boolean multiline) {
     if (operand instanceof GrRegex) {
-      boolean isDollarSlashy = GrStringUtil.isDollarSlashyString((GrLiteral)operand);
       for (GroovyPsiElement element : ((GrRegex)operand).getAllContentParts()) {
         if (element instanceof GrStringInjection) {
           builder.append(element.getText());
         }
         else if (element instanceof GrStringContent) {
-          if (isDollarSlashy) {
+          if (GrStringUtil.isDollarSlashyString((GrLiteral)operand)) {
             processDollarSlashyContent(builder, multiline, element.getText());
           }
           else {
