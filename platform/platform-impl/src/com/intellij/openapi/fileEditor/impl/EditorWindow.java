@@ -1091,7 +1091,7 @@ public class EditorWindow {
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
     final VirtualFile[] allFiles = getFiles();
-    final Set<VirtualFile> histFiles = ContainerUtil.newLinkedHashSet(EditorHistoryManager.getInstance(getManager().getProject()).getFiles());
+    final Set<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileSet();
 
     LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 
@@ -1105,8 +1105,7 @@ public class EditorWindow {
     if (closeNonModifiedFilesFirst) {
       // Search in history
       for (final VirtualFile file : histFiles) {
-        final EditorComposite composite = findFileComposite(file);
-        if (composite != null && composite.getInitialFileTimeStamp() == file.getTimeStamp()) {
+        if (isFileModified(findFileComposite(file), file)) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1115,7 +1114,7 @@ public class EditorWindow {
       // Search in tabbed pane
       for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
         final VirtualFile file = getFileAt(i);
-        if (getEditorAt(i).getInitialFileTimeStamp() == file.getTimeStamp()) {
+        if (isFileModified(getEditorAt(i), file)) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1135,6 +1134,10 @@ public class EditorWindow {
     closingOrder.remove(selectedFile);
     closingOrder.add(selectedFile); // selected should be closed last
     return closingOrder;
+  }
+
+  private static boolean isFileModified(EditorComposite composite, VirtualFile file) {
+    return composite != null && (composite.getInitialFileTimeStamp() == file.getTimeStamp() || composite.isModified());
   }
 
   private boolean areAllTabsPinned(VirtualFile fileToIgnore) {
