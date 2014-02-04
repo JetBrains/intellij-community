@@ -83,7 +83,20 @@ public class InferenceVariable {
     return myThrownBound;
   }
 
-  public void setThrows() {
+  public void setThrownBound() {
     myThrownBound = true;
+  }
+
+  public InferenceVariable copy() {
+    final InferenceVariable variable = new InferenceVariable(myParameter);
+    for (InferenceBound bound : InferenceBound.values()) {
+      for (PsiType type : getBounds(bound)) {
+        variable.addBound(type, bound);
+      }
+    }
+    if (myThrownBound) {
+      variable.setThrownBound();
+    }
+    return variable;
   }
 }

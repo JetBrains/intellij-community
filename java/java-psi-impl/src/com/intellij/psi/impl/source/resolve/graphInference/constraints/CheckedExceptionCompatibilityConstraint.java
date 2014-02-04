@@ -146,7 +146,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
           final InferenceVariable variable = session.getInferenceVariable(expectedNonProperThrownType);
           LOG.assertTrue(variable != null);
-          variable.setThrows();
+          variable.setThrownBound();
         }
       }
     }
