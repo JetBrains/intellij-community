@@ -3,12 +3,12 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.ssl.CertificateWarningDialog;
+import com.intellij.util.net.ssl.CertificatesManager;
 
-import java.io.InputStream;
-import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -23,16 +23,13 @@ public class ShowCertificateInfoAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     try {
-      InputStream stream = ShowCertificateInfoAction.class.getResourceAsStream("keystore");
-      try {
-        final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(stream, "changeit".toCharArray());
-        X509Certificate certificate = (X509Certificate)keyStore.getCertificate("mykey");
-        CertificateWarningDialog dialog = CertificateWarningDialog.createUntrustedCertificateWarning(certificate);
+      CertificatesManager manager = CertificatesManager.getInstance();
+      List<X509Certificate> certificates = manager.getCustomTrustManager().getCertificates();
+      if (certificates.isEmpty()) {
+        Messages.showInfoMessage(String.format("Key store '%s' is empty", manager.getCacertsPath()), "No Certificates Available");
+      } else {
+        CertificateWarningDialog dialog = CertificateWarningDialog.createUntrustedCertificateWarning(certificates.get(0));
         LOG.debug("Accepted: " + dialog.showAndGet());
-      }
-      finally {
-        StreamUtil.closeStream(stream);
       }
     }
     catch (Exception logged) {

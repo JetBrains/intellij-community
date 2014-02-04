@@ -66,7 +66,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
     myNoticePane.setText(
       String.format("<html><p>" +
-                    "Accepted certificate will be saved in truststore <code>%s</code> with password <code>%s</code>" +
+                    "Accepted certificate will be saved in truststore <code>%s</code> with default password <code>%s</code>" +
                     "</p><html>",
                     path, password
       )
