@@ -45,9 +45,6 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
     addRule(new Rule('(', WrapCondition.AFTER));
     addRule(new Rule('[', WrapCondition.AFTER));
     addRule(new Rule('{', WrapCondition.AFTER));
-
-    // Symbols to wrap before
-    addRule(new Rule('.', WrapCondition.BEFORE));
   }
 
   @Override

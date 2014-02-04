@@ -1,1 +1,1 @@
-call_command('.regressiontests<caret>')
+call_command(' regressiontests<caret>')
