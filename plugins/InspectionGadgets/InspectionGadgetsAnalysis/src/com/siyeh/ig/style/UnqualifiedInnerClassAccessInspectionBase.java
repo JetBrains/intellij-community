@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -61,6 +58,9 @@ public class UnqualifiedInnerClassAccessInspectionBase extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      if (!aClass.hasModifierProperty(PsiModifier.STATIC) && reference.getParent() instanceof PsiNewExpression) {
+          return;
+      }
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass == null) {
         return;
