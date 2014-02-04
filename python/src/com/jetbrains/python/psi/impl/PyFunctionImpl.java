@@ -143,9 +143,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public PyStatementList getStatementList() {
-    return childToPsi(PyElementTypes.STATEMENT_LIST);
+    final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
+    assert statementList != null : "Statement list missing for function " + getText();
+    return statementList;
   }
 
   public PyClass getContainingClass() {

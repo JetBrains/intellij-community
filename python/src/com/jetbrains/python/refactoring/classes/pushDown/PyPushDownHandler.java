@@ -15,21 +15,16 @@
  */
 package com.jetbrains.python.refactoring.classes.pushDown;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
-import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
@@ -38,25 +33,20 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   @Override
-  protected void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext) {
-    CommonRefactoringUtil.checkReadOnlyStatus(project, file);
+  protected void doRefactorImpl(@NotNull Project project,
+                                @NotNull PyClass classUnderRefactoring,
+                                @NotNull PyMemberInfoStorage infoStorage,
+                                @NotNull Editor editor) {
 
-    final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-    if (!inClass(clazz, project, editor, "refactoring.pull.up.error.cannot.perform.refactoring.not.inside.class")) return;
 
-    final Query<PyClass> query = PyClassInheritorsSearch.search(clazz, false);
+    final Query<PyClass> query = PyClassInheritorsSearch.search(classUnderRefactoring, false);
     if (query.findFirst() == null) {
-      assert clazz != null;
-      final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", clazz.getName());
+      final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", classUnderRefactoring.getName());
       CommonRefactoringUtil.showErrorHint(project, editor, message, getTitle(), getHelpId());
       return;
     }
 
-    final PyMemberInfoStorage infoStorage = PyClassMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
-
-    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return;
-
-    final PyPushDownDialog dialog = new PyPushDownDialog(project, clazz, infoStorage);
+    final PyPushDownDialog dialog = new PyPushDownDialog(project, classUnderRefactoring, infoStorage);
     dialog.show();
   }
 
