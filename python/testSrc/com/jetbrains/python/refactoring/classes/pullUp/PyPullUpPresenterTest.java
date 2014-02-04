@@ -2,18 +2,18 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.internal.MocksControl;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -70,12 +70,14 @@ public class PyPullUpPresenterTest extends PyTestCase {
   public void testNoParents() throws Exception {
     ensureNoMembers("NoParentsAllowed");
   }
+
   /**
    * Checks that refactoring does not work for classes with out of members
    */
   public void testNoMembers() throws Exception {
     ensureNoMembers("NoMembers");
   }
+
   /**
    * Checks that refactoring does not work when C3 MRO can't be calculated
    */
@@ -84,10 +86,10 @@ public class PyPullUpPresenterTest extends PyTestCase {
   }
 
   /**
-   * Checks that some members are not allowed
+   * Checks that some members are not allowed, while others are
    */
-  public void testDisabledMembers() throws Exception {
-    PyPullUpPresenterImpl sut = configureByClass("SomeMembersDisabled");
+  public void testMembers() throws Exception {
+    PyPullUpPresenterImpl sut = configureByClass("HugeChild");
     EasyMock.expect(myView.getSelectedParent()).andReturn(getClassByName("SubParent1")).anyTimes();
 
     myMocksControl.replay();
@@ -96,15 +98,22 @@ public class PyPullUpPresenterTest extends PyTestCase {
     Assert.assertTrue("No members selected", myMemberInfos.hasCaptured());
     List<PyMemberInfo> members = myMemberInfos.getValue();
     Assert.assertFalse("No members selected", members.isEmpty());
-    Collection<Pair<String, Boolean>> memberNamesAndStatus = Collections2.transform(members, new NameAndStatusTransformer(sut));
+    final Collection<Entry> memberNamesAndStatus = Collections2.transform(members, new NameAndStatusTransformer(sut));
 
     //Pair will return correct type
-    @SuppressWarnings("unchecked") Matcher<Iterable<? extends Pair<String, Boolean>>> matcher = Matchers
-      .containsInAnyOrder(
-        Pair.create("date", true),
-        Pair.create("SubParent1", false),
-        Pair.create("foo", false),
-        Pair.create("bar", true));
+    final Matcher<Iterable<? extends Entry>> matcher = Matchers
+      .containsInAnyOrder(new Entry("extends date", true, false),
+                          new Entry("CLASS_FIELD", true, true),
+                          new Entry("__init__(self)", true, false),
+                          new Entry("extends SubParent1", false, false),
+                          new Entry("foo(self)", false, false),
+                          new Entry("bar(self)", true, false),
+                          new Entry("static_1(cls)", true, true),
+                          new Entry("static_2()", true, true),
+                          new Entry("self.instance_field_1", true, false),
+                          new Entry("self.instance_field_2", true, false),
+                          new Entry("bad_method()", true, false)
+      );
     Assert.assertThat("Wrong members or their states", memberNamesAndStatus, matcher);
 
 
@@ -127,7 +136,6 @@ public class PyPullUpPresenterTest extends PyTestCase {
   }
 
 
-
   private PyPullUpPresenterImpl configureByClass(String name) {
     PyClass childClass = getClassByName(name);
     PyMemberInfoStorage storage = new PyMemberInfoStorage(childClass);
@@ -147,7 +155,7 @@ public class PyPullUpPresenterTest extends PyTestCase {
     }
   }
 
-  private static class NameAndStatusTransformer implements Function<PyMemberInfo, Pair<String, Boolean>> {
+  private static class NameAndStatusTransformer implements Function<PyMemberInfo, Entry> {
     private final PyPullUpPresenterImpl presenter;
 
     private NameAndStatusTransformer(PyPullUpPresenterImpl presenter) {
@@ -155,9 +163,52 @@ public class PyPullUpPresenterTest extends PyTestCase {
     }
 
     @Override
-    public Pair<String, Boolean> apply(PyMemberInfo input) {
-      PyElement member = input.getMember();
-      return Pair.create(member.getName(), presenter.isMemberEnabled(input));
+    public Entry apply(final PyMemberInfo input) {
+      return new Entry(input.getDisplayName(), presenter.isMemberEnabled(input), input.isStatic());
+    }
+  }
+
+  private static class Entry {
+    @NonNls @NotNull
+    private final String myName;
+    private final boolean myEnabled;
+    private final boolean myStaticEntry;
+
+    private Entry(@NotNull final String name, final boolean enabled, final boolean staticEntry) {
+      myName = name;
+      myEnabled = enabled;
+      myStaticEntry = staticEntry;
+    }
+
+    @Override
+    public String toString() {
+      return "Entry{" +
+             "myName='" + myName + '\'' +
+             ", myEnabled=" + myEnabled +
+             ", myStaticEntry=" + myStaticEntry +
+             '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Entry)) return false;
+
+      final Entry entry = (Entry)o;
+
+      if (myEnabled != entry.myEnabled) return false;
+      if (myStaticEntry != entry.myStaticEntry) return false;
+      if (!myName.equals(entry.myName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + (myEnabled ? 1 : 0);
+      result = 31 * result + (myStaticEntry ? 1 : 0);
+      return result;
     }
   }
 }

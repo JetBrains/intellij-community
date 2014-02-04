@@ -116,7 +116,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
       suite = strclass(test.__class__)
       suite_location = "python_nosetestid://" + suite
       try:
-        from nose_helper.util import func_lineno
+        from nose.util import func_lineno
 
         if hasattr(test.test, "descriptor") and test.test.descriptor:
           suite_location = "file://" + self.test_address(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,9 +107,11 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
-          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-          PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, editor.getDocument(), file);
+          if (!editor.isDisposed()) {
+            EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+            TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, editor.getDocument(), file);
+          }
         }
       }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
     }

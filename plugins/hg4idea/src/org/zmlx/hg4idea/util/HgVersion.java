@@ -70,10 +70,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   @NotNull private final Set<String> myUnsupportedExtensions;
 
   public HgVersion(int major, int middle, int minor) {
-    myMajor = major;
-    myMiddle = middle;
-    myMinor = minor;
-    myUnsupportedExtensions = Collections.emptySet();
+    this(major, middle, minor, Collections.<String>emptySet());
   }
 
   public HgVersion(int major, int middle, int minor, @NotNull Set<String> unsupportedExtensions) {

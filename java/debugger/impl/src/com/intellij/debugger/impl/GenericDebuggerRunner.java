@@ -46,10 +46,10 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   @Override
-  protected RunContentDescriptor doExecute(final Project project,
-                                           final RunProfileState state,
+  protected RunContentDescriptor doExecute(@NotNull final Project project,
+                                           @NotNull final RunProfileState state,
                                            final RunContentDescriptor contentToReuse,
-                                           final ExecutionEnvironment env) throws ExecutionException {
+                                           @NotNull final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return createContentDescriptor(project, state, contentToReuse, env);
   }

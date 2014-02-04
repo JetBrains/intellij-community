@@ -268,7 +268,7 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
-    dir("properties") {
+    pluginDir("properties") {
       dir("lib") {
         jar("properties.jar") {
           module("properties-psi-api")

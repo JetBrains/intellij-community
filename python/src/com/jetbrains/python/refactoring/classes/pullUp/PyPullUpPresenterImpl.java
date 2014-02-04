@@ -25,12 +25,13 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Pull-up presenter implementation
@@ -87,12 +88,13 @@ class PyPullUpPresenterImpl extends AbstractUsesDependencyMemberInfoModel<PyElem
   public boolean isMemberEnabled(PyMemberInfo member) {
     PyClass currentSuperClass = myView.getSelectedParent();
     if (member.getMember() instanceof PyClass) {
+      //TODO: Delegate to Memebers Managers
       PyClass memberClass = (PyClass)member.getMember();
       if (memberClass.isSubclass(currentSuperClass) || currentSuperClass.isSubclass(memberClass)) {
         return false; //Class is already parent of superclass
       }
     }
-    if (! PyPullUpConflictsUtil.checkConflicts(Arrays.asList(member), myView.getSelectedParent()).isEmpty()) {
+    if (! PyPullUpConflictsUtil.checkConflicts(Collections.singletonList(member), myView.getSelectedParent()).isEmpty()) {
       return false; //Member has conflict
     }
     return (!myStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) && member.getMember() != currentSuperClass;

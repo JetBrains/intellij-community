@@ -370,7 +370,7 @@ public class ImportHelper{
     String className = refClass.getQualifiedName();
     if (className == null) return true;
 
-    if (!ImportFilter.shouldImport(className)) {
+    if (!ImportFilter.shouldImport(file, className)) {
       return false;
     }
     String packageName = getPackageOrClassName(className);

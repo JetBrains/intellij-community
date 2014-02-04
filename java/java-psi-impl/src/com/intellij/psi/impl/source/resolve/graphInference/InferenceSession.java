@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -327,6 +326,13 @@ public class InferenceSession {
         }
       }
     }
+
+    for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+      final InferenceVariable variable = getInferenceVariable(thrownType);
+      if (variable != null) {
+        variable.setThrows();
+      }
+    }
   }
 
   private InferenceVariable shouldResolveAndInstantiate(PsiType returnType, PsiType targetType) {
@@ -341,7 +347,8 @@ public class InferenceSession {
   }
   
   private static boolean hasPrimitiveWrapperBound(InferenceVariable inferenceVariable) {
-    for (InferenceBound inferenceBound : InferenceBound.values()) {
+    final InferenceBound[] boundTypes = {InferenceBound.UPPER, InferenceBound.LOWER};
+    for (InferenceBound inferenceBound : boundTypes) {
       final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
       for (PsiType bound : bounds) {
         if (PsiPrimitiveType.getUnboxedType(bound) != null) {
@@ -593,7 +600,7 @@ public class InferenceSession {
             else {
               boolean inferred = false;
               PsiType glb = null;
-              if (isThrowable(upperBounds)) {
+              if (inferenceVariable.isThrownBound() && isThrowable(upperBounds)) {
                 glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
                 inferred = true;
               } else {

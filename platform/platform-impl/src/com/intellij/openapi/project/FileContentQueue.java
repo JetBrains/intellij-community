@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class FileContentQueue {
   private final Object myProceedWithProcessingLock = new Object();
   private static final boolean ourAllowParallelFileReading = SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true);
 
-  public void queue(final Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  public void queue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     myFilesToLoadQueue.addAll(files);
     final Runnable contentLoadingRunnable = new Runnable() {
       @Override

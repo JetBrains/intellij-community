@@ -178,7 +178,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   private static boolean doInjectInJava(final Project project,
-                                        final PsiElement psiElement,
+                                        @NotNull final PsiElement psiElement,
                                         PsiLanguageInjectionHost host,
                                         final String languageId) {
     final PsiElement target = ContextComputationProcessor.getTopLevelInjectionTarget(psiElement);
@@ -245,7 +245,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       return false;
     }
     new WriteCommandAction(modifierListOwner.getProject(), modifierListOwner.getContainingFile()) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         JVMElementFactory factory = JVMElementFactories.getFactory(modifierListOwner.getLanguage(), modifierListOwner.getProject());
         if (factory == null) {
           factory = JavaPsiFacade.getElementFactory(modifierListOwner.getProject());
@@ -484,7 +484,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         }
       }
     }
-    else {
+//    else {
       // todo tbd
       //for (InjectionPlace place : injection.getInjectionPlaces()) {
       //  final Matcher matcher = pattern.matcher(place.getText());
@@ -492,7 +492,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       //
       //  }
       //}
-    }
+//    }
     result.setMethodInfos(infos);
     result.generatePlaces();
     return result;

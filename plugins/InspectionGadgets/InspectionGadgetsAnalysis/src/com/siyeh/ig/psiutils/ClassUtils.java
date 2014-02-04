@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,22 +205,5 @@ public class ClassUtils {
     }
     final PsiClass parentClass = (PsiClass)parent;
     return !parentClass.isInterface();
-  }
-
-  public static boolean isClassVisibleFromClass(PsiClass baseClass,
-                                                PsiClass referencedClass) {
-    if (referencedClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return true;
-    }
-    else if (referencedClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return inSamePackage(baseClass, referencedClass);
-    }
-    else if (referencedClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return PsiTreeUtil.findCommonParent(baseClass, referencedClass) !=
-             null;
-    }
-    else {
-      return inSamePackage(baseClass, referencedClass);
-    }
   }
 }

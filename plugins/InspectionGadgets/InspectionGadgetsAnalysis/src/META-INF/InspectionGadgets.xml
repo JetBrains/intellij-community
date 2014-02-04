@@ -454,10 +454,6 @@
                      key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.classlayout.MissingDeprecatedAnnotationInspection"/>
-    <localInspection language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.classlayout.MissingOverrideAnnotationInspection"/>
     <localInspection language="JAVA" shortName="MultipleTopLevelClassesInFile" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="multiple.top.level.classes.in.file.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
@@ -507,6 +503,10 @@
                       key="method.return.always.constant.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.classlayout.MethodReturnAlwaysConstantInspection"/>
+    <localInspection language="JAVA" shortName="InterfaceMayBeAnnotatedFunctional" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="interface.may.be.annotated.functional.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.InterfaceMayBeAnnotatedFunctionalInspection"/>
 
     <!--group.names.class.metrics-->
     <localInspection language="JAVA" suppressId="OverlyComplexAnonymousInnerClass" shortName="AnonymousClassComplexity"
@@ -1028,6 +1028,10 @@
                      key="type.parameter.extends.final.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.TypeParameterExtendsFinalClassInspection"/>
+    <localInspection language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection"/>
 
     <!--group.names.initialization.issues-->
     <localInspection language="JAVA" shortName="AbstractMethodCallInConstructor" bundle="com.siyeh.InspectionGadgetsBundle"

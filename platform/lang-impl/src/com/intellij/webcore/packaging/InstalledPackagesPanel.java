@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
@@ -444,7 +445,7 @@ public class InstalledPackagesPanel extends JPanel {
       final int finalIndex = i;
       final InstalledPackage pkg = getInstalledPackageAt(finalIndex);
       restPackageCount.incrementAndGet();
-      serviceEx.fetchLatestVersion(pkg.getName(), new CatchingConsumer<String, Exception>() {
+      serviceEx.fetchLatestVersion(pkg, new CatchingConsumer<String, Exception>() {
 
         private void decrement() {
           if (restPackageCount.decrementAndGet() == 0) {
@@ -535,8 +536,10 @@ public class InstalledPackagesPanel extends JPanel {
       final JLabel cell = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       final String version = (String)table.getValueAt(row, 1);
       final String availableVersion = (String)table.getValueAt(row, 2);
-      cell.setIcon(PackageVersionComparator.VERSION_COMPARATOR.compare(version, availableVersion) < 0 && column == 2 ?
-                   AllIcons.Vcs.Arrow_right : null);
+      boolean update = column == 2 &&
+                       StringUtil.isNotEmpty(availableVersion) &&
+                       PackageVersionComparator.VERSION_COMPARATOR.compare(version, availableVersion) < 0;
+      cell.setIcon(update ? AllIcons.Vcs.Arrow_right : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof InstalledPackage) {
         cell.setToolTipText(((InstalledPackage) pyPackage).getTooltipText());

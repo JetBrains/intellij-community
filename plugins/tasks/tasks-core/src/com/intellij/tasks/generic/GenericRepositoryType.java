@@ -61,8 +61,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
       this,
       new AsanaRepository(),
       new AssemblaRepository(),
-      new SprintlyRepository(),
-      new GitlabRepository()
+      new SprintlyRepository()
     );
   }
 
@@ -125,12 +124,6 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   public final class SprintlyRepository extends GenericSubtype {
     public SprintlyRepository() {
       super("Sprintly", TasksIcons.Sprintly);
-    }
-  }
-
-  public final class GitlabRepository extends GenericSubtype {
-    public GitlabRepository() {
-      super("Gitlab", TasksIcons.Gitlab);
     }
   }
 }

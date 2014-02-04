@@ -27,6 +27,7 @@ public class InferenceVariable {
     return myParameter;
   }
 
+  private boolean myThrownBound = false;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
   private final PsiTypeParameter myParameter;
 
@@ -47,6 +48,9 @@ public class InferenceVariable {
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
+    if (inferenceBound == InferenceBound.EQ && classType instanceof PsiClassType && ((PsiClassType)classType).resolve() == myParameter) {
+      return false;
+    }
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
@@ -73,5 +77,13 @@ public class InferenceVariable {
       }
     }
     return dependencies;
+  }
+
+  public boolean isThrownBound() {
+    return myThrownBound;
+  }
+
+  public void setThrows() {
+    myThrownBound = true;
   }
 }

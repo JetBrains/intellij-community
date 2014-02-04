@@ -20,6 +20,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -34,15 +35,34 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
   /**
    * @param className  class where member should be found
    * @param memberName member that starts with dot (<code>.</code>) is treated as method.
+   *                   member that starts with dash (<code>#</code>) is treated as attribute.
    *                   It is treated parent class otherwise
    * @return member or null if not found
    */
   @NotNull
   protected PyElement findMember(@NotNull String className, @NotNull String memberName) {
-    boolean findMethod = memberName.contains(".");
-    PyElement result = (findMethod ? findMethod(className, memberName.substring(1)) : findClass(memberName));
+    final PyElement result;
+    //TODO: Get rid of this chain of copy pastes
+    if (memberName.contains(".")) {
+      result = findMethod(className, memberName.substring(1));
+    }
+    else if (memberName.contains("#")) {
+      result = findField(className, memberName.substring(1));
+    }
+    else {
+      result = findClass(memberName);
+    }
     Assert.assertNotNull(String.format("No member %s found in class %s", memberName, className), result);
     return result;
+  }
+
+  private PyElement findField(final String className, final String memberName) {
+    final PyClass aClass = findClass(className);
+    final PyTargetExpression attribute = aClass.findClassAttribute(memberName, false);
+    if (attribute != null) {
+      return attribute;
+    }
+    return aClass.findInstanceAttribute(memberName, false);
   }
 
   private PyFunction findMethod(final String className, final String name) {
