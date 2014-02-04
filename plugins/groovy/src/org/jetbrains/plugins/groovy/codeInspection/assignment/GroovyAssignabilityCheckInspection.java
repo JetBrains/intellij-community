@@ -1103,6 +1103,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     if (parent instanceof GrIndexProperty && PsiUtil.isLValue((GroovyPsiElement)parent)) {
       args.add(TypeInferenceHelper.getInitializerFor((GrExpression)parent));
     }
+    else if (parent instanceof GrMethodCallExpression) {
+      ContainerUtil.addAll(args, ((GrMethodCallExpression)parent).getClosureArguments());
+    }
     return args;
   }
 
