@@ -1,6 +1,6 @@
 class Foo():
     def baz():
-        tmp = "!"  #try to extract this assignmet, either with or without this comment
+        tmp = "!"  # try to extract this assignment, either with or without this comment
 
     baz()
 

@@ -516,7 +516,7 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1)) {
+      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
         return Spacing.createSpacing(2, 0, 0, false, 0);
       }
     }
