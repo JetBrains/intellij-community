@@ -49,6 +49,13 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
+
+      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()
+          && editor.getCaretModel().getOffset() == editor.getDocument().getLineEndOffset(lineNumber)) {
+        return;
+      }
+
       boolean camelMode = editor.getSettings().isCamelWords();
       if (myNegateCamelMode) {
         camelMode = !camelMode;

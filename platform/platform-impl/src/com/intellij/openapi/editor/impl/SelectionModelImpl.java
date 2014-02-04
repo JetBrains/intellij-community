@@ -210,7 +210,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
     if (myEditor.getCaretModel().supportsMultipleCarets()) {
-      boolean virtualSpaceIsEnabled = myEditor.getSettings().isVirtualSpace();
       int startLine = Math.max(Math.min(blockStart.line, myEditor.getDocument().getLineCount() - 1), 0);
       int endLine = Math.max(Math.min(blockEnd.line, myEditor.getDocument().getLineCount() - 1), 0);
       int step = endLine < startLine ? -1 : 1;
@@ -221,15 +220,24 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       for (int line = startLine, i = 0; i < count; i++, line += step) {
         int startColumn = blockStart.column;
         int endColumn = blockEnd.column;
-        LogicalPosition startPos = new LogicalPosition(line, virtualSpaceIsEnabled ? startColumn : truncateColumnToLineWidth(line, startColumn));
-        LogicalPosition endPos = new LogicalPosition(line, virtualSpaceIsEnabled ? endColumn : truncateColumnToLineWidth(line, endColumn));
-        int startOffset = myEditor.logicalPositionToOffset(startPos);
-        int endOffset = myEditor.logicalPositionToOffset(endPos);
-        positions.add(endPos);
-        selections.add(new TextRange(Math.min(startOffset, endOffset), Math.max(startOffset, endOffset)));
-        hasSelection |= (startOffset != endOffset);
+        int lineEndOffset = myEditor.getDocument().getLineEndOffset(line);
+        int lineWidth = myEditor.offsetToLogicalPosition(lineEndOffset).column;
+        if (startColumn > lineWidth && endColumn > lineWidth) {
+          LogicalPosition caretPos = new LogicalPosition(line, Math.min(startColumn, endColumn));
+          positions.add(caretPos);
+          selections.add(new TextRange(lineEndOffset, lineEndOffset));
+        }
+        else {
+          LogicalPosition startPos = new LogicalPosition(line, Math.min(startColumn, lineWidth));
+          LogicalPosition endPos = new LogicalPosition(line, Math.min(endColumn, lineWidth));
+          int startOffset = myEditor.logicalPositionToOffset(startPos);
+          int endOffset = myEditor.logicalPositionToOffset(endPos);
+          positions.add(endPos);
+          selections.add(new TextRange(Math.min(startOffset, endOffset), Math.max(startOffset, endOffset)));
+          hasSelection |= startOffset != endOffset;
+        }
       }
-      if (hasSelection) { // filtering out lines without selection
+      if (hasSelection && !myEditor.isColumnMode()) { // filtering out lines without selection
         Iterator<LogicalPosition> positionIterator = positions.iterator();
         Iterator<TextRange> selectionIterator = selections.iterator();
         while(selectionIterator.hasNext()) {
@@ -282,11 +290,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
       broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
     }
-  }
-
-  private int truncateColumnToLineWidth(int line, int column) {
-    int columnLimit = myEditor.offsetToLogicalPosition(myEditor.getDocument().getLineEndOffset(line)).column;
-    return Math.min(column, columnLimit);
   }
 
   @Override
