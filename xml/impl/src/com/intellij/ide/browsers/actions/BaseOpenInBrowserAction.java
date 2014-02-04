@@ -52,7 +52,7 @@ import java.awt.event.InputEvent;
 import java.util.Collection;
 
 public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(OpenFileInDefaultBrowserAction.class);
+  private static final Logger LOG = Logger.getInstance(BaseOpenInBrowserAction.class);
 
   protected BaseOpenInBrowserAction(@NotNull WebBrowser browser) {
     super(browser.getName(), null, browser.getIcon());

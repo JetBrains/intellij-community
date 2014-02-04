@@ -44,11 +44,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     String text = getTemplatePresentation().getText();
     String description = getTemplatePresentation().getDescription();
     if (browserUrlProvider != null) {
-      final String customText = browserUrlProvider.getOpenInBrowserActionText(result.first.getFile());
-      if (customText != null) {
-        text = customText;
-      }
-      final String customDescription = browserUrlProvider.getOpenInBrowserActionDescription(result.first.getFile());
+      String customDescription = browserUrlProvider.getOpenInBrowserActionDescription(result.first.getFile());
       if (customDescription != null) {
         description = customDescription;
       }

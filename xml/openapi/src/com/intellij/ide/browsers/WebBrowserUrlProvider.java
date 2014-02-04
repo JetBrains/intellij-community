@@ -69,9 +69,10 @@ public abstract class WebBrowserUrlProvider {
     return canHandle;
   }
 
+  @SuppressWarnings("UnusedParameters")
   @Deprecated
   /**
-   * @deprecated to remove in IDEA 14
+   * @deprecated to remove in IDEA 15
    */
   public boolean canHandle(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
     return false;
@@ -87,7 +88,6 @@ public abstract class WebBrowserUrlProvider {
       }
     }
 
-    VirtualFile file = request.getVirtualFile();
     try {
       Collection<Url> urls = getUrls(request);
       if (!urls.isEmpty()) {
@@ -107,6 +107,7 @@ public abstract class WebBrowserUrlProvider {
     return myDeprecatedMethodOverridden ? getUrl(request.getElement(), request.getFile(), virtualFile) : null;
   }
 
+  @SuppressWarnings("UnusedParameters")
   @Deprecated
   @Nullable
   /**
@@ -121,7 +122,9 @@ public abstract class WebBrowserUrlProvider {
     return ContainerUtil.createMaybeSingletonList(getUrl(request, request.getVirtualFile()));
   }
 
+  @SuppressWarnings({"UnusedParameters", "UnusedDeclaration"})
   @Nullable
+  @Deprecated
   public String getOpenInBrowserActionText(@NotNull PsiFile file) {
     return null;
   }

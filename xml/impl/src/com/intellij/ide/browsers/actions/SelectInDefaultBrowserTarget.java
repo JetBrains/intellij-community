@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 
-class SelectInDefaultBrowserTarget extends SelectInTargetBase {
+final class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   private static final Logger LOG = Logger.getInstance(SelectInDefaultBrowserTarget.class);
-
-  private String currentName = "";
 
   @Override
   public boolean canSelect(SelectInContext context) {
@@ -43,23 +41,16 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
     }
 
     WebBrowserUrlProvider urlProvider = WebBrowserServiceImpl.getProvider(request);
-    currentName = XmlBundle.message("browser.select.in.default.name");
     if (urlProvider == null) {
       VirtualFile virtualFile = request.getVirtualFile();
       return virtualFile instanceof HttpVirtualFile || (HtmlUtil.isHtmlFile(request.getFile()) && !(virtualFile instanceof LightVirtualFile));
-    }
-    else {
-      String customText = urlProvider.getOpenInBrowserActionText(request.getFile());
-      if (customText != null) {
-        currentName = customText;
-      }
     }
     return true;
   }
 
   @Override
   public String toString() {
-    return currentName;
+    return XmlBundle.message("browser.select.in.default.name");
   }
 
   @Override
