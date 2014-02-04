@@ -199,6 +199,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
       Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, FILE_FILTER);
+      // put file element always in outsideElements
+      if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
+        PsiElement file = insideElements.remove(insideElements.size() - 1);
+        outsideElements.add(file);
+        ProperTextRange range = insideRanges.remove(insideRanges.size() - 1);
+        outsideRanges.add(range);
+      }
 
       setProgressLimit((long)(insideElements.size()+outsideElements.size()));
 
@@ -330,7 +337,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               assert info != null;
 
               if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-              List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
+              List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile) ? insideResult : outsideResult;
               // have to filter out already obtained highlights
               if (!result.add(info)) continue;
               boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
@@ -345,7 +352,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset));
 
               myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info);
-              //myTransferToEDTQueue.offer(info);
               infosForThisRange.add(info);
             }
             // include infos which we got while visiting nested elements with the same range
@@ -368,7 +374,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             nested.push(Pair.create(elementRange, infosForThisRange));
             if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
               myHighlightInfoProcessor.allHighlightsForRangeAreProduced(myHighlightingSession, elementRange, infosForThisRange);
-              //killAbandonedHighlightsUnder(elementRange, infosForThisRange, progress);
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
