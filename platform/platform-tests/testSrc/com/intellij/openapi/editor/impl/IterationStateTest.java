@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -36,6 +37,16 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                     new Segment(6, 9, Color.BLACK),
                     new Segment(9, 10, Color.WHITE),
                     new Segment(10, 11, Color.BLACK));
+  }
+
+  public void testMultiCaretBlockSelection() {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      testBlockSelection();
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
   }
 
   private void verifySplitting(String text, Segment... expectedSegments) {

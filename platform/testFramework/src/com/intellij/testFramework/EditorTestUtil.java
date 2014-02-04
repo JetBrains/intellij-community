@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.tree.IElementType;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -172,5 +173,13 @@ public class EditorTestUtil {
     });
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
+  }
+
+  public static void enableMultipleCarets() {
+    Registry.get("editor.allow.multiple.carets").setValue(true);
+  }
+
+  public static void disableMultipleCarets() {
+    Registry.get("editor.allow.multiple.carets").setValue(false);
   }
 }
