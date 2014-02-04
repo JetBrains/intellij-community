@@ -264,8 +264,11 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
-    assertEquals(1, problems.size());
-    assertTrue(problems.get(0).getDescription(), problems.get(0).getDescription().contains("Unresolved plugin"));
+    assertTrue(problems.size() > 0);
+
+    for (MavenProjectProblem problem : problems) {
+      assertTrue(problem.getDescription(), problem.getDescription().contains("Unresolved plugin"));
+    }
 
     resolvePlugins();
 
