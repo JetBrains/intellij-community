@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase {
 
@@ -115,10 +113,10 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       }
       final ReferenceCollector referenceCollector;
       if (onDemand) {
-        referenceCollector = new ReferenceCollector(qualifiedName, onDemand);
+        referenceCollector = new ReferenceCollector(qualifiedName, true);
       }
       else {
-        referenceCollector = new ReferenceCollector(innerClassName, onDemand);
+        referenceCollector = new ReferenceCollector(innerClassName, false);
       }
       final PsiClass[] classes = javaFile.getClasses();
       for (PsiClass psiClass : classes) {
@@ -189,6 +187,55 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
         return true;
       }
       return manager.areElementsEquivalent(targetClass, referencedClass);
+    }
+  }
+
+  private static class ReferenceCollector extends JavaRecursiveElementVisitor {
+
+    private final String name;
+    private final boolean onDemand;
+    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
+
+    ReferenceCollector(String name, boolean onDemand) {
+      this.name = name;
+      this.onDemand = onDemand;
+    }
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      if (reference.isQualified()) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      if (!onDemand) {
+        final String qualifiedName = aClass.getQualifiedName();
+        if (name.equals(qualifiedName)) {
+          references.add(reference);
+        }
+        return;
+      }
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (name.equals(qualifiedName)) {
+        references.add(reference);
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    public Collection<PsiJavaCodeReferenceElement> getReferences() {
+      return references;
     }
   }
 }
