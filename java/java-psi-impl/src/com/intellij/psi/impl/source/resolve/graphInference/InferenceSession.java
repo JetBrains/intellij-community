@@ -306,7 +306,7 @@ public class InferenceSession {
         PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
         if (targetType == null) {
           final PsiType finalReturnType = returnType;
-          targetType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, true, new Computable<PsiType>() {
+          targetType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, false, new Computable<PsiType>() {
             @Override
             public PsiType compute() {
               return getTargetType(context, finalReturnType);
@@ -476,9 +476,9 @@ public class InferenceSession {
       }
       else {
         args[i] = null;
-        final PsiTypeParameter[] typeParameters = ((PsiMethod)parentMethod).getTypeParameters();
-        initBounds(typeParameters);
         final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferSubstitutorFromArgs(LiftParameterTypeInferencePolicy.INSTANCE, args);
+        final Set<PsiTypeParameter> typeParameters = substitutor.getSubstitutionMap().keySet();
+        initBounds(typeParameters.toArray(new PsiTypeParameter[typeParameters.size()]));
         return getParameterType(parameters, args, i, substitutor);
       }
     }
@@ -588,8 +588,9 @@ public class InferenceSession {
           PsiType bound = null;
           if (eqBounds.size() > 1) {
             for (Iterator<PsiType> iterator = eqBounds.iterator(); iterator.hasNext(); ) {
-              PsiType eqBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, iterator.next(), substitutor);
-              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || !(bound instanceof PsiCapturedWildcardType) && Comparing.equal(bound, eqBound)) {
+              final PsiType unsubstBound = iterator.next();
+              PsiType eqBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, unsubstBound, substitutor);
+              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || !(bound instanceof PsiCapturedWildcardType && bound.equals(unsubstBound)) && Comparing.equal(bound, eqBound)) {
                 iterator.remove();
               } else if (bound == null) {
                 bound = eqBound; 
