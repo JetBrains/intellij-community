@@ -184,21 +184,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
       }
 
-      // TODO: Implement this with command line
-      final String repositoryRoot;
-      SVNRepository repository = null;
-      try {
-        repository = myVcs.createRepository(svnLocation.getURL());
-        repositoryRoot = repository.getRepositoryRoot(true).toString();
-      }
-      catch (SVNException e) {
-        throw new VcsException(e);
-      } finally {
-        if (repository != null) {
-          repository.closeSession();
-        }
-      }
-
+      final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
       getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
@@ -224,21 +210,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
 
-    final String repositoryRoot;
-    // TODO: Implement this with command line
-    SVNRepository repository = null;
-    try {
-      repository = myVcs.createRepository(svnLocation.getURL());
-      repositoryRoot = repository.getRepositoryRoot(true).toString();
-      repository.closeSession();
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
+    final String repositoryRoot = getRepositoryRoot(svnLocation);
 
     getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
       public void consume(final SVNLogEntry svnLogEntry) {
@@ -259,20 +231,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
-    // TODO: Rewrite this without using SVNKit
-    final String repositoryRoot;
-    SVNRepository repository = null;
-    try {
-      repository = myVcs.createRepository(svnLocation.getURL());
-      repositoryRoot = repository.getRepositoryRoot(true).toString();
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
+    final String repositoryRoot = getRepositoryRoot(svnLocation);
 
     final MergeTrackerProxy proxy = new MergeTrackerProxy(new Consumer<TreeStructureNode<SVNLogEntry>>() {
       public void consume(TreeStructureNode<SVNLogEntry> node) {
@@ -300,6 +259,25 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     proxy.finish();
   }
 
+  private String getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
+    // TODO: Implement this with command line
+
+    final String repositoryRoot;
+    SVNRepository repository = null;
+
+    try {
+      repository = myVcs.createRepository(svnLocation.getURL());
+      repositoryRoot = repository.getRepositoryRoot(true).toString();
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
+    }
+    return repositoryRoot;
+  }
 
   private static class MergeTrackerProxy implements ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> {
     private TreeStructureNode<SVNLogEntry> myCurrentHierarchy;
