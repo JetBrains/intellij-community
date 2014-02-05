@@ -131,6 +131,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomRightPropertiesPanel(@NotNull Project project) {
+    return null;
+  }
+
   /**
    * @deprecated override {@link #getEditorsProvider(B, com.intellij.openapi.project.Project)} instead
    */
