@@ -25,7 +25,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
 
@@ -88,7 +87,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myDownloads.setText("");
 
       final PluginNode pluginNode = myPluginDescriptor instanceof PluginNode ? (PluginNode)myPluginDescriptor : null;
-      if (pluginNode != null && isGlobalRepository(table)) {
+      if (pluginNode != null && pluginNode.getRepositoryName() == null) {
         String downloads = pluginNode.getDownloads();
         if (downloads == null) downloads= "";
         if (downloads.length() > 3) {
@@ -125,14 +124,6 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     }
 
     return myPanel;
-  }
-
-  private static boolean isGlobalRepository(JTable table) {
-    final TableModel model = table.getModel();
-    if (model instanceof AvailablePluginsTableModel) {
-      return AvailablePluginsTableModel.ALL.equals(((AvailablePluginsTableModel)model).getRepository());
-    }
-    return false;
   }
 
   private void createUIComponents() {
