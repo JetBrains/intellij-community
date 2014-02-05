@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -110,7 +109,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile());
     return url == null ? null : new SvnRepositoryLocation(url);
   }
@@ -178,12 +176,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     throws VcsException {
     try {
       final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
-      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-      if (progress != null) {
-        progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
-        progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
-      }
-
       final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
@@ -204,12 +196,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    if (progress != null) {
-      progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
-      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
-    }
-
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
     getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
@@ -226,11 +212,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                                    final PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>> finalConsumer)
     throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    if (progress != null) {
-      progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
-      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
-    }
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
     final MergeTrackerProxy proxy = new MergeTrackerProxy(new Consumer<TreeStructureNode<SVNLogEntry>>() {
@@ -255,7 +236,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         }
       }
     }, true, false);
-    
+
     proxy.finish();
   }
 
@@ -328,11 +309,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final String url, final String[] filterUrls,
                                        final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
                                        final boolean filterOutByDate) throws VcsException {
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    if (progress != null) {
-      progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
-      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
-    }
+    setCollectingChangesProgress(url);
+
     try {
       SVNLogClient logger = myVcs.createLogClient();
 
@@ -380,10 +358,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
                        if (myProject.isDisposed()) throw new ProcessCanceledException();
-                       if (progress != null) {
-                         progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
-                         progress.checkCanceled();
-                       }
+
+                       ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
                        if (filterOutByDate && logEntry.getDate() == null) {
                          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
@@ -397,6 +373,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     catch (SVNException e) {
       throw new VcsException(e);
     }
+  }
+
+  private static void setCollectingChangesProgress(@Nullable Object location) {
+    ProgressManager.progress(SvnBundle.message("progress.text.changes.collecting.changes"),
+                             SvnBundle.message("progress.text2.changes.establishing.connection", location));
   }
 
   public ChangeListColumn[] getColumns() {
