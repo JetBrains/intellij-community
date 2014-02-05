@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
@@ -107,25 +109,58 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superBody == null) {
         return;
       }
-      final PsiModifierList superModifierList =
-        superMethod.getModifierList();
-      final PsiModifierList modifierList = method.getModifierList();
-      if (!EquivalenceChecker.modifierListsAreEquivalent(
-        modifierList, superModifierList)) {
+      if (!modifierListsAreEquivalent(method.getModifierList(), superMethod.getModifierList())) {
         return;
       }
       final PsiType superReturnType = superMethod.getReturnType();
-      if (superReturnType == null) {
-        return;
-      }
-      final PsiType returnType = method.getReturnType();
-      if (!superReturnType.equals(returnType)) {
+      if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
         return;
       }
       if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody)) {
         return;
       }
       registerMethodError(method);
+    }
+
+    private static boolean modifierListsAreEquivalent(@Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
+      if (list1 == null) {
+        return list2 == null;
+      }
+      else if (list2 == null) {
+        return false;
+      }
+      final Set<String> annotations1 = new HashSet();
+      for (PsiAnnotation annotation : list1.getAnnotations()) {
+        annotations1.add(annotation.getQualifiedName());
+      }
+      final Set<String> annotations2 = new HashSet();
+      for (PsiAnnotation annotation : list2.getAnnotations()) {
+        annotations2.add(annotation.getQualifiedName());
+      }
+      final Set<String> uniques = disjunction(annotations1, annotations2);
+      uniques.remove(CommonClassNames.JAVA_LANG_OVERRIDE);
+      if (!uniques.isEmpty()) {
+        return false;
+      }
+      return list1.hasModifierProperty(PsiModifier.STRICTFP) == list2.hasModifierProperty(PsiModifier.STRICTFP) &&
+             list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) == list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
+             list1.hasModifierProperty(PsiModifier.PUBLIC) == list2.hasModifierProperty(PsiModifier.PUBLIC) &&
+             list1.hasModifierProperty(PsiModifier.PROTECTED) == list2.hasModifierProperty(PsiModifier.PROTECTED);
+    }
+
+    private static <T> Set<T> disjunction(Collection<T> set1, Collection<T> set2) {
+      final Set<T> result = new HashSet();
+      for (T t : set1) {
+        if (!set2.contains(t)) {
+          result.add(t);
+        }
+      }
+      for (T t : set2) {
+        if (!set1.contains(t)) {
+          result.add(t);
+        }
+      }
+      return result;
     }
   }
 }
