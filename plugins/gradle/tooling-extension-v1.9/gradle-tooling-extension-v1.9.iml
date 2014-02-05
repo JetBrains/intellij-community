@@ -28,6 +28,7 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-plugins-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-ide-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-scala-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
