@@ -15,34 +15,29 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
 
 public class GithubAuthDataHolder {
-  @NotNull public final Object myLock = new Object();
-
-  @NotNull private GithubAuthData myAuthData;
+  @NotNull private volatile GithubAuthData myAuthData;
 
   public GithubAuthDataHolder(@NotNull GithubAuthData auth) {
     myAuthData = auth;
   }
 
   @NotNull
-  public GithubAuthData getAuthData() {
+  public synchronized GithubAuthData getAuthData() {
     return myAuthData;
   }
 
-  public void setAuthData(@NotNull GithubAuthData auth) {
-    myAuthData = auth;
-  }
-
-  public void setTwoFactorCode(@NotNull String code) {
-    GithubAuthData auth = getAuthData();
-    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-    if (basicAuth == null) {
-      throw new IllegalStateException("Can't set two factor code for non-basic auth");
+  public synchronized <T extends Throwable> void runTransaction(@NotNull GithubAuthData expected,
+                                                                @NotNull ThrowableComputable<GithubAuthData, T> task) throws T {
+    if (expected != myAuthData) {
+      return;
     }
-    setAuthData(GithubAuthData.createBasicAuthTF(auth.getHost(), basicAuth.getLogin(), basicAuth.getPassword(), code));
+
+    myAuthData = task.compute();
   }
 
   public static GithubAuthDataHolder createFromSettings() {

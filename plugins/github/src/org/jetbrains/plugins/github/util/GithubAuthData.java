@@ -107,6 +107,15 @@ public class GithubAuthData {
     return myUseProxy;
   }
 
+  @NotNull
+  public GithubAuthData copyWithTwoFactorCode(@NotNull String code) {
+    if (myBasicAuth == null) {
+      throw new IllegalStateException("Two factor authentication can be used only with Login/Password");
+    }
+
+    return createBasicAuthTF(getHost(), myBasicAuth.getLogin(), myBasicAuth.getPassword(), code);
+  }
+
   public static class BasicAuth {
     @NotNull private final String myLogin;
     @NotNull private final String myPassword;

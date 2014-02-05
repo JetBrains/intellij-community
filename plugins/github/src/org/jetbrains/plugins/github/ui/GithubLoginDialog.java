@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubUser;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -25,21 +26,24 @@ public class GithubLoginDialog extends DialogWrapper {
   protected final GithubLoginPanel myGithubLoginPanel;
   protected final GithubSettings mySettings;
 
-  protected final GithubAuthDataHolder myAuthHolder;
   protected final Project myProject;
 
-  public GithubLoginDialog(@NotNull final Project project, @NotNull GithubAuthDataHolder authHolder) {
+  protected GithubAuthData myAuthData;
+
+  public GithubLoginDialog(@NotNull final Project project, @NotNull GithubAuthData oldAuthData) {
     super(project, true);
     myProject = project;
-    myAuthHolder = authHolder;
 
     myGithubLoginPanel = new GithubLoginPanel(this);
 
-    mySettings = GithubSettings.getInstance();
-    myGithubLoginPanel.setHost(mySettings.getHost());
-    myGithubLoginPanel.setLogin(mySettings.getLogin());
-    myGithubLoginPanel.setAuthType(mySettings.getAuthType());
+    myGithubLoginPanel.setHost(oldAuthData.getHost());
+    myGithubLoginPanel.setAuthType(oldAuthData.getAuthType());
+    GithubAuthData.BasicAuth basicAuth = oldAuthData.getBasicAuth();
+    if (basicAuth != null) {
+      myGithubLoginPanel.setLogin(basicAuth.getLogin());
+    }
 
+    mySettings = GithubSettings.getInstance();
     if (mySettings.isSavePasswordMakesSense()) {
       myGithubLoginPanel.setSavePasswordSelected(mySettings.isSavePassword());
     }
@@ -74,7 +78,6 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    // aware of recursive synchronization in getTwoFactorAuthData from modal thread
     final GithubAuthDataHolder authHolder = new GithubAuthDataHolder(myGithubLoginPanel.getAuthData());
     try {
       GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
@@ -85,7 +88,7 @@ public class GithubLoginDialog extends DialogWrapper {
         }
       });
 
-      myAuthHolder.setAuthData(authHolder.getAuthData());
+      myAuthData = authHolder.getAuthData();
 
       if (mySettings.isSavePasswordMakesSense()) {
         mySettings.setSavePassword(myGithubLoginPanel.isSavePasswordSelected());
@@ -100,6 +103,14 @@ public class GithubLoginDialog extends DialogWrapper {
 
   public boolean isSavePasswordSelected() {
     return myGithubLoginPanel.isSavePasswordSelected();
+  }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    if (myAuthData == null) {
+      throw new IllegalStateException("AuthData is not set");
+    }
+    return myAuthData;
   }
 
   public void clearErrors() {

@@ -18,15 +18,14 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubBasicLoginDialog extends GithubLoginDialog {
 
-  public GithubBasicLoginDialog(@NotNull Project project, @NotNull GithubAuthDataHolder authHolder, @NotNull String host) {
-    super(project, authHolder);
+  public GithubBasicLoginDialog(@NotNull Project project, @NotNull GithubAuthData oldAuthData, @NotNull String host) {
+    super(project, oldAuthData);
     myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
     myGithubLoginPanel.lockHost(host);
   }
