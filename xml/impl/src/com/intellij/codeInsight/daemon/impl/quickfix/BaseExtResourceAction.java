@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.xml.XmlFile;
@@ -75,6 +73,12 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
   @Nullable
   public static String findUri(PsiFile file, int offset) {
+    PsiElement element = file.findElementAt(offset);
+    if (element == null ||
+        element instanceof PsiWhiteSpace ) {
+      return null;
+    }
+
     PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
     if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
     if (currentRef instanceof URLReference ||
