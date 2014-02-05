@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
@@ -118,7 +118,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final AtomicReference<String> url = new AtomicReference<String>();
+    final Ref<String> url = new Ref<String>();
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -130,7 +130,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
       @Override
       public void onSuccess() {
-        if (url.get() == null) {
+        if (url.isNull()) {
           return;
         }
         if (dialog.isOpenInBrowser()) {

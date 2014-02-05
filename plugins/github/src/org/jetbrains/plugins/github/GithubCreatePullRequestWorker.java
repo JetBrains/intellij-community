@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -44,7 +45,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Aleksey Pivovarov
@@ -165,7 +165,7 @@ public class GithubCreatePullRequestWorker {
             GitRemote targetRemote = GithubUtil.findGithubRemote(myGitRepository, forkPath);
             String targetRemoteName = targetRemote == null ? null : targetRemote.getName();
             if (targetRemoteName == null) {
-              final AtomicReference<Integer> responseRef = new AtomicReference<Integer>();
+              final Ref<Integer> responseRef = new Ref<Integer>();
               ApplicationManager.getApplication().invokeAndWait(new Runnable() {
                 @Override
                 public void run() {

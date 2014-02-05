@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -55,7 +56,6 @@ import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Various utility methods for the GutHub plugin.
@@ -213,14 +213,14 @@ public class GithubUtil {
 
         GithubApiUtil.askForTwoFactorCodeSMS(oldAuth);
 
-        final AtomicReference<String> codeRef = new AtomicReference<String>();
+        final Ref<String> codeRef = new Ref<String>();
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
             codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
           }
         }, indicator.getModalityState());
-        if (codeRef.get() == null) {
+        if (codeRef.isNull()) {
           throw new GithubOperationCanceledException("Can't get two factor authentication code");
         }
 
@@ -279,8 +279,8 @@ public class GithubUtil {
   public static <T> T computeValueInModal(@NotNull Project project,
                                           @NotNull String caption,
                                           @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
-    final AtomicReference<T> dataRef = new AtomicReference<T>();
-    final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
+    final Ref<T> dataRef = new Ref<T>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -297,7 +297,7 @@ public class GithubUtil {
         }
       }
     });
-    if (exceptionRef.get() != null) {
+    if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
     }
     return dataRef.get();
@@ -306,7 +306,7 @@ public class GithubUtil {
   public static <T> T computeValueInModal(@NotNull Project project,
                                           @NotNull String caption,
                                           @NotNull final Convertor<ProgressIndicator, T> task) {
-    final AtomicReference<T> dataRef = new AtomicReference<T>();
+    final Ref<T> dataRef = new Ref<T>();
     ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
       public void run(@NotNull ProgressIndicator indicator) {
         dataRef.set(task.convert(indicator));

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class GithubAuthDataHolder {
-  @NotNull private volatile GithubAuthData myAuthData;
+  @NotNull private GithubAuthData myAuthData;
 
   public GithubAuthDataHolder(@NotNull GithubAuthData auth) {
     myAuthData = auth;
