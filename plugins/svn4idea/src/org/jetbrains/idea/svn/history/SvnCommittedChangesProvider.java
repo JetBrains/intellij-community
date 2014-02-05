@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -179,7 +181,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
-      getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+      getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
         public void consume(final SVNLogEntry svnLogEntry) {
           final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
           if (filter.accepts(cl)) {
@@ -198,7 +200,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+    getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
       public void consume(final SVNLogEntry svnLogEntry) {
         result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
       }
@@ -225,7 +227,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     });
 
-    getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+    getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
       public void consume(final SVNLogEntry svnLogEntry) {
         try {
           mergeSourceTracker.consume(svnLogEntry);
@@ -306,73 +308,114 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
-  private void getCommittedChangesImpl(ChangeBrowserSettings settings, final String url, final String[] filterUrls,
+  private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location, final String[] filterUrls,
                                        final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
                                        final boolean filterOutByDate) throws VcsException {
-    setCollectingChangesProgress(url);
+    setCollectingChangesProgress(location);
 
     try {
-      SVNLogClient logger = myVcs.createLogClient();
-
       final String author = settings.getUserFilter();
       final Date dateFrom = settings.getDateAfterFilter();
       final Long changeFrom = settings.getChangeAfterFilter();
       final Date dateTo = settings.getDateBeforeFilter();
       final Long changeTo = settings.getChangeBeforeFilter();
 
-      final SVNRevision revisionBefore;
-      if (dateTo != null) {
-        revisionBefore = SVNRevision.create(dateTo);
-      }
-      else if (changeTo != null) {
-        revisionBefore = SVNRevision.create(changeTo.longValue());
-      }
-      else {
-        // TODO: Implement this with command line
-        SVNRepository repository = null;
-        final long revision;
-        try {
-          repository = myVcs.createRepository(url);
-          revision = repository.getLatestRevision();
-        } finally {
-          if (repository != null) {
-            repository.closeSession();
-          }
-        }
-        revisionBefore = SVNRevision.create(revision);
-      }
-      final SVNRevision revisionAfter;
-      if (dateFrom != null) {
-        revisionAfter = SVNRevision.create(dateFrom);
-      }
-      else if (changeFrom != null) {
-        revisionAfter = SVNRevision.create(changeFrom.longValue());
-      }
-      else {
-        revisionAfter = SVNRevision.create(1);
-      }
+      final SVNRevision revisionBefore = createRevisionBefore(location, dateTo, changeTo);
+      final SVNRevision revisionAfter = createRevisionAfter(dateFrom, changeFrom);
 
       // TODO: Implement this with command line
-      logger.doLog(SVNURL.parseURIEncoded(url), filterUrls, revisionBefore, revisionBefore, revisionAfter,
-                   settings.STOP_ON_COPY, true, includeMergedRevisions, maxCount, null,
-                   new ISVNLogEntryHandler() {
-                     public void handleLogEntry(SVNLogEntry logEntry) {
-                       if (myProject.isDisposed()) throw new ProcessCanceledException();
-
-                       ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
-                       if (filterOutByDate && logEntry.getDate() == null) {
-                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
-                         return;
-                       }
-                       if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         resultConsumer.consume(logEntry);
-                       }
-                     }
-                   });
+      SVNLogClient logger = myVcs.createLogClient();
+      logger.doLog(location.toSvnUrl(), filterUrls, revisionBefore, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true,
+                   includeMergedRevisions, maxCount, null, createLogHandler(resultConsumer, filterOutByDate, author));
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
+  }
+
+  @NotNull
+  private static SVNRevision createRevisionAfter(@Nullable Date date, @Nullable Long change) throws VcsException {
+    return createRevision(date, change, new ThrowableComputable<SVNRevision, VcsException>() {
+      @Override
+      public SVNRevision compute() throws VcsException {
+        return SVNRevision.create(1);
+      }
+    });
+  }
+
+  @NotNull
+  private SVNRevision createRevisionBefore(@NotNull final SvnRepositoryLocation location, @Nullable Date date, @Nullable Long change)
+    throws VcsException {
+    return createRevision(date, change, new ThrowableComputable<SVNRevision, VcsException>() {
+      @Override
+      public SVNRevision compute() throws VcsException {
+        return getLatestRevision(location);
+      }
+    });
+  }
+
+  @NotNull
+  private SVNRevision getLatestRevision(@NotNull SvnRepositoryLocation location) throws VcsException {
+    // TODO: Implement this with command line - issue is that if url does not exist, SVNRepository will be created and asked correctly
+    // TODO: But "svn info -r HEAD" will fail - check if non-existing location could be passed or inteface should be expanded to use
+    // TODO: peg revisions.
+    SVNRepository repository = null;
+    long revision;
+
+    try {
+      repository = myVcs.createRepository(location.getURL());
+      revision = repository.getLatestRevision();
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+    finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
+    }
+
+    return SVNRevision.create(revision);
+  }
+
+  @NotNull
+  private static SVNRevision createRevision(@Nullable Date date,
+                                            @Nullable Long change,
+                                            @NotNull ThrowableComputable<SVNRevision, VcsException> defaultValue)
+    throws VcsException {
+    final SVNRevision result;
+
+    if (date != null) {
+      result = SVNRevision.create(date);
+    }
+    else if (change != null) {
+      result = SVNRevision.create(change.longValue());
+    }
+    else {
+      result = defaultValue.compute();
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private ISVNLogEntryHandler createLogHandler(final Consumer<SVNLogEntry> resultConsumer,
+                                               final boolean filterOutByDate,
+                                               final String author) {
+    return new ISVNLogEntryHandler() {
+      public void handleLogEntry(SVNLogEntry logEntry) {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+
+        ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
+        if (filterOutByDate && logEntry.getDate() == null) {
+          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
+          return;
+        }
+        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
+          resultConsumer.consume(logEntry);
+        }
+      }
+    };
   }
 
   private static void setCollectingChangesProgress(@Nullable Object location) {
@@ -458,7 +501,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
     if (rootUrlInfo == null) return null;
     final VirtualFile root = rootUrlInfo.getVirtualFile();
-    if (root == null) return null;
     final SvnRepositoryLocation svnRootLocation = (SvnRepositoryLocation)getLocationFor(new FilePathImpl(root));
     if (svnRootLocation == null) return null;
     final String url = svnRootLocation.getURL();
