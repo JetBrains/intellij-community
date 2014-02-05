@@ -38,9 +38,7 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -67,7 +65,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
   private MergeInfoUpdatesListener myMergeInfoUpdatesListener;
-  private final MyZipper myZipper;
+  private final SvnCommittedListsZipper myZipper;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
   public final static int VERSION_WITH_REPLACED_PATHS = 3;
@@ -77,7 +75,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
-    myZipper = new MyZipper();
+    myZipper = new SvnCommittedListsZipper(myVcs);
 
     myConnection = myProject.getMessageBus().connect();
 
@@ -128,49 +126,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return myZipper;
   }
 
-  private class MyZipper implements VcsCommittedListsZipper {
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
-      final List<RepositoryLocationGroup> groups = new ArrayList<RepositoryLocationGroup>();
-      final List<RepositoryLocation> singles = new ArrayList<RepositoryLocation>();
-
-      final MultiMap<SVNURL, RepositoryLocation> map = new MultiMap<SVNURL, RepositoryLocation>();
-
-      for (RepositoryLocation location : in) {
-        final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
-        final String url = svnLocation.getURL();
-
-        final SVNURL root = SvnUtil.getRepositoryRoot(myVcs, url);
-        if (root == null) {
-          // should not occur
-          LOG.info("repository root not found for location:"+ location.toPresentableString());
-          singles.add(location);
-        } else {
-          map.putValue(root, svnLocation);
-        }
-      }
-
-      final Set<SVNURL> keys = map.keySet();
-      for (SVNURL key : keys) {
-        final Collection<RepositoryLocation> repositoryLocations = map.get(key);
-        if (repositoryLocations.size() == 1) {
-          singles.add(repositoryLocations.iterator().next());
-        } else {
-          final SvnRepositoryLocationGroup group = new SvnRepositoryLocationGroup(key, repositoryLocations);
-          groups.add(group);
-        }
-      }
-      return new Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>>(groups, singles);
-    }
-
-    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
-      return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
-    }
-
-    public long getNumber(final CommittedChangeList list) {
-      return list.getNumber();
-    }
-  }
-
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
@@ -216,14 +171,14 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    final MergeTrackerProxy proxy = new MergeTrackerProxy(new Consumer<TreeStructureNode<SVNLogEntry>>() {
+    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<TreeStructureNode<SVNLogEntry>>() {
       public void consume(TreeStructureNode<SVNLogEntry> node) {
         finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node);
       }
     });
     final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
       public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-        proxy.consume(svnLogEntryIntegerPair);
+        builder.consume(svnLogEntryIntegerPair);
       }
     });
 
@@ -239,7 +194,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     }, true, false);
 
-    proxy.finish();
+    builder.finish();
   }
 
   private String getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
@@ -260,52 +215,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     }
     return repositoryRoot;
-  }
-
-  private static class MergeTrackerProxy implements ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> {
-    private TreeStructureNode<SVNLogEntry> myCurrentHierarchy;
-    private final Consumer<TreeStructureNode<SVNLogEntry>> myConsumer;
-
-    private MergeTrackerProxy(Consumer<TreeStructureNode<SVNLogEntry>> consumer) {
-      myConsumer = consumer;
-    }
-
-    public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-      final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
-      final Integer mergeLevel = svnLogEntryIntegerPair.getSecond();
-
-      if (mergeLevel < 0) {
-        if (myCurrentHierarchy != null) {
-          myConsumer.consume(myCurrentHierarchy);
-        }
-        if (logEntry.hasChildren()) {
-          myCurrentHierarchy = new TreeStructureNode<SVNLogEntry>(logEntry);
-        } else {
-          // just pass
-          myCurrentHierarchy = null;
-          myConsumer.consume(new TreeStructureNode<SVNLogEntry>(logEntry));
-        }
-      } else {
-        addToLevel(myCurrentHierarchy, logEntry, mergeLevel);
-      }
-    }
-
-    public void finish() {
-      if (myCurrentHierarchy != null) {
-        myConsumer.consume(myCurrentHierarchy);
-      }
-    }
-
-    private static void addToLevel(final TreeStructureNode<SVNLogEntry> tree, final SVNLogEntry entry, final int left) {
-      assert tree != null;
-      if (left == 0) {
-        tree.add(entry);
-      } else {
-        final List<TreeStructureNode<SVNLogEntry>> children = tree.getChildren();
-        assert ! children.isEmpty();
-        addToLevel(children.get(children.size() - 1), entry, left - 1);
-      }
-    }
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location, final String[] filterUrls,
@@ -437,39 +346,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     myMergeInfoUpdatesListener.addPanel(action);
   }
 
-  private static class ShowHideMergePanel extends ToggleAction {
-    private final DecoratorManager myManager;
-    private final ChangeListFilteringStrategy myStrategy;
-    private boolean myIsSelected;
-
-    public ShowHideMergePanel(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
-      myManager = manager;
-      myStrategy = strategy;
-    }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setIcon(SvnIcons.ShowIntegratedFrom);
-      presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
-      presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
-    }
-
-    public boolean isSelected(final AnActionEvent e) {
-      return myIsSelected;
-    }
-
-    public void setSelected(final AnActionEvent e, final boolean state) {
-      myIsSelected = state;
-      if (state) {
-        myManager.setFilteringStrategy(myStrategy);
-      } else {
-        myManager.removeFilteringStrategy(myStrategy.getKey());
-      }
-    }
-  }
-
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
     final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location);
@@ -480,7 +356,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     popup.add(rootsAndBranches.getUndoIntegrateAction());
     popup.add(new ConfigureBranchesAction());
 
-    final ShowHideMergePanel action = new ShowHideMergePanel(manager, rootsAndBranches.getStrategy());
+    final ShowHideMergePanelAction action = new ShowHideMergePanelAction(manager, rootsAndBranches.getStrategy());
 
     return new VcsCommittedViewAuxiliary(Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {
@@ -577,53 +453,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
-  private static class RenameContext {
-    @NotNull
-    private String myCurrentPath;
-    private String myRepositoryRoot;
-    private boolean myHadChanged;
-
-    private RenameContext(final SVNInfo info) {
-      myRepositoryRoot = info.getRepositoryRootURL().toString();
-      myCurrentPath = SVNPathUtil.getRelativePath(myRepositoryRoot, info.getURL().toString());
-      myCurrentPath = myCurrentPath.startsWith("/") ? myCurrentPath : ("/" + myCurrentPath);
-    }
-
-    public void accept(final SVNLogEntry entry) {
-      final Map changedPaths = entry.getChangedPaths();
-      if (changedPaths == null) return;
-
-      for (Object o : changedPaths.values()) {
-        final SVNLogEntryPath entryPath = (SVNLogEntryPath) o;
-        if (entryPath != null && 'A' == entryPath.getType() && entryPath.getCopyPath() != null) {
-          if (myCurrentPath.equals(entryPath.getPath())) {
-            myHadChanged = true;
-            myCurrentPath = entryPath.getCopyPath();
-            return;
-          } else if (SVNPathUtil.isAncestor(entryPath.getPath(), myCurrentPath)) {
-            final String relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myCurrentPath);
-            myCurrentPath = SVNPathUtil.append(entryPath.getCopyPath(), relativePath);
-            myHadChanged = true;
-            return;
-          }
-        }
-      }
-    }
-
-    @Nullable
-    public FilePath getFilePath(final SvnVcs vcs) {
-      if (! myHadChanged) return null;
-      final SvnFileUrlMapping svnFileUrlMapping = vcs.getSvnFileUrlMapping();
-      final String absolutePath = SVNPathUtil.append(myRepositoryRoot, myCurrentPath);
-      final String localPath = svnFileUrlMapping.getLocalPath(absolutePath);
-      if (localPath == null) {
-        LOG.info("Cannot find local path for url: " + absolutePath);
-        return null;
-      }
-      return new FilePathImpl(new File(localPath), false);
-    }
-  }
-
   private void tryByRoot(SvnChangeList[] result, SVNLogClient logger, SVNRevision revisionBefore, SVNURL repositoryUrl) throws VcsException {
     final boolean authorized = SvnAuthenticationNotifier.passiveValidation(myProject, repositoryUrl);
     if (! authorized) return;
@@ -637,7 +466,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                              final SVNRevision revisionBefore, final SVNInfo info, SVNURL svnurl) throws VcsException {
     final String repositoryRoot = info.getRepositoryRootURL().toString();
     try {
-      final RenameContext renameContext = new RenameContext(info);
+      final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(info);
       // TODO: Implement this with command line
       logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
                    false, true, false, 0, null,
@@ -648,13 +477,13 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
                        }
-                       renameContext.accept(logEntry);
+                       pathTracker.accept(logEntry);
                        if (logEntry.getRevision() == revisionBefore.getNumber()) {
                          result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryRoot);
                        }
                      }
                    });
-      return renameContext.getFilePath(myVcs);
+      return pathTracker.getFilePath(myVcs);
     }
     catch (SVNException e) {
       LOG.info(e);
