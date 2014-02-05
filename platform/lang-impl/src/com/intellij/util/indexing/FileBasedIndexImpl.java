@@ -127,7 +127,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final FileDocumentManager myFileDocumentManager;
   private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
-  private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
+  private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;
@@ -157,18 +157,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
-          synchronized (myTransactionMap) {
-            myTransactionMap.put(doc, file);
-          }
+          myTransactionMap = myTransactionMap.plus(doc, file);
           myUpToDateIndices.clear();
         }
       }
 
       @Override
       public void transactionCompleted(final Document doc, final PsiFile file) {
-        synchronized (myTransactionMap) {
-          myTransactionMap.remove(doc);
-        }
+        myTransactionMap = myTransactionMap.minus(doc);
       }
     });
 
@@ -1403,9 +1399,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   private Set<Document> getTransactedDocuments() {
-    synchronized (myTransactionMap) {
-      return new THashSet<Document>(myTransactionMap.keySet());
-    }
+    return myTransactionMap.keySet();
   }
 
   private void indexUnsavedDocuments(@NotNull ID<?, ?> indexId,
@@ -1461,9 +1455,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private boolean hasActiveTransactions() {
-    synchronized (myTransactionMap) {
-      return !myTransactionMap.isEmpty();
-    }
+    return !myTransactionMap.isEmpty();
   }
 
   private interface DocumentContent {
@@ -1588,10 +1580,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Nullable
   private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
-    synchronized (myTransactionMap) {
-      PsiFile psiFile = myTransactionMap.get(document);
-      if (psiFile != null) return psiFile;
-    }
+    PsiFile psiFile = myTransactionMap.get(document);
+    if (psiFile != null) return psiFile;
 
     return project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
   }
