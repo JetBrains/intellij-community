@@ -778,6 +778,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (!checkCannotInferArgumentTypes(invoked)) return;
 
+      if (isOperatorWithSimpleTypes(binary, resolveResult)) return;
+
       PsiElement operationToken = binary.getOperationToken();
       PsiType[] argTypes = PsiUtil.getArgumentTypes(invoked, true);
 
@@ -791,6 +793,20 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
         registerError(operationToken, GroovyBundle.message("method.call.is.ambiguous"));
       }
+    }
+
+    private static boolean isOperatorWithSimpleTypes(GrBinaryExpression binary, GroovyResolveResult result) {
+      if (result.getElement() != null && result.isApplicable()) {
+        return false;
+      }
+
+      GrExpression left = binary.getLeftOperand();
+      GrExpression right = binary.getRightOperand();
+
+      PsiType ltype = left.getType();
+      PsiType rtype = right != null ? right.getType() : null;
+
+      return TypesUtil.isNumericType(ltype) && (rtype == null || TypesUtil.isNumericType(rtype));
     }
 
     private void checkMethodCall(GrCall call, GrExpression invoked) {

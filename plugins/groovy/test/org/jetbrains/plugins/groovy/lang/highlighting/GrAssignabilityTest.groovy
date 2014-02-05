@@ -807,4 +807,12 @@ void bug(Collection<String> foo, Collection<String> bar) {
     foo << "a"
 }''')
   }
+
+  void testPlusIsApplicable() {
+    testHighlighting('''\
+print 1 + 2
+
+print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.StringGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
+''')
+  }
 }
