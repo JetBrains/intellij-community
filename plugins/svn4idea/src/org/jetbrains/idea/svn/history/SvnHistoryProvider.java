@@ -44,7 +44,6 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -419,10 +418,7 @@ public class SvnHistoryProvider
         relativeUrl = myUrl.substring(root.length());
       }
 
-      // TODO: Update this call to myVcs.getFactory.createHistoryClient
-        SVNLogClient client = myVcs.createLogClient();
-
-        final RepositoryLogEntryHandler repositoryLogEntryHandler =
+      final RepositoryLogEntryHandler repositoryLogEntryHandler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl,
                                         new ThrowableConsumer<VcsFileRevision, SVNException>() {
                                           @Override
@@ -430,10 +426,12 @@ public class SvnHistoryProvider
                                             myConsumer.consume(revision);
                                           }
                                         }, rootURL);
-        repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
+      repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
-      client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true,
-                   myShowMergeSources && mySupport15, 1, null, repositoryLogEntryHandler);
+      SvnTarget target = SvnTarget.fromURL(rootURL, myFrom);
+      myVcs.getFactory(target).createHistoryClient()
+        .doLog(target, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 1, null,
+               repositoryLogEntryHandler);
     }
 
     // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
