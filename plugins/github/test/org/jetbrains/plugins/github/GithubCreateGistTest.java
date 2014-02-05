@@ -121,7 +121,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongLogin() throws Throwable {
-    registerDefaultLoginDialogHandler();
+    registerCancelingLoginDialogHandler();
 
     List<FileContent> expected = createContent();
 
@@ -135,7 +135,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongPassword() throws Throwable {
-    registerDefaultLoginDialogHandler();
+    registerCancelingLoginDialogHandler();
 
     List<FileContent> expected = createContent();
 

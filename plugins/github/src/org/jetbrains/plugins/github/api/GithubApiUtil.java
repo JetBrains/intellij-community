@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.List;
@@ -460,10 +461,9 @@ public class GithubApiUtil {
 
   @NotNull
   public static String getMasterToken(@NotNull GithubAuthData auth, @Nullable String note) throws IOException {
-    List<String> scopes = new ArrayList<String>();
-
-    scopes.add("repo"); // read/write access to public/private repositories
-    scopes.add("gist"); // create/delete gists
+    // "repo" - read/write access to public/private repositories
+    // "gist" - create/delete gists
+    List<String> scopes = Arrays.asList("repo", "gist");
 
     return getScopedToken(auth, scopes, note);
   }

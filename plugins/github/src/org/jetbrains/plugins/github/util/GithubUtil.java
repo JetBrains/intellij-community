@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +51,6 @@ import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.exceptions.GithubTwoFactorAuthenticationException;
 import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-import org.jetbrains.plugins.github.ui.GithubTwoFactorDialog;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -213,18 +213,18 @@ public class GithubUtil {
 
         GithubApiUtil.askForTwoFactorCodeSMS(oldAuth);
 
-        final GithubTwoFactorDialog dialog = new GithubTwoFactorDialog(project);
+        final AtomicReference<String> codeRef = new AtomicReference<String>();
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            DialogManager.show(dialog);
+            codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
           }
         }, indicator.getModalityState());
-        if (!dialog.isOK()) {
+        if (codeRef.get() == null) {
           throw new GithubOperationCanceledException("Can't get two factor authentication code");
         }
 
-        return oldAuth.copyWithTwoFactorCode(dialog.getCode());
+        return oldAuth.copyWithTwoFactorCode(codeRef.get());
       }
     });
   }

@@ -139,7 +139,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
   }
 
-  protected void registerDefaultLoginDialogHandler() {
+  protected void registerCancelingLoginDialogHandler() {
     myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
       @Override
       public int handleDialog(GithubLoginDialog dialog) {
