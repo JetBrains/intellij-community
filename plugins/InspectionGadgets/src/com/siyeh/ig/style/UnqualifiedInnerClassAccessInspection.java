@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +69,8 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
-      final PsiClass containingClass = aClass.getContainingClass();
+      final PsiClass innerClass = (PsiClass)target;
+      final PsiClass containingClass = innerClass.getContainingClass();
       if (containingClass == null) {
         return;
       }
@@ -82,7 +83,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
         return;
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final String innerClassName = aClass.getQualifiedName();
+      final String innerClassName = innerClass.getQualifiedName();
       if (innerClassName == null) {
         return;
       }
@@ -132,7 +133,8 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       if (referenceImportStatement != null) {
         referenceImportStatement.delete();
       }
-      ImportUtils.addImportIfNeeded(containingClass, referenceElement);
+      final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
+      ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(containingFile);
       if (document == null) {
@@ -158,7 +160,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       }
       //noinspection SuspiciousMethodCalls
       if (references.contains(element)) {
-        final String shortClassName = aClass.getName();
+        final String shortClassName = getShortClassName(aClass, new StringBuilder()).toString();
         if (isReferenceToTargetClass(shortClassName, aClass, element)) {
           out.append(shortClassName);
         }
@@ -176,6 +178,16 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
         buildNewText(child, references, aClass, out);
       }
       return out;
+    }
+
+    private static StringBuilder getShortClassName(@NotNull PsiClass aClass, @NotNull StringBuilder builder) {
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) {
+        getShortClassName(containingClass, builder);
+        builder.append('.');
+      }
+      builder.append(aClass.getName());
+      return builder;
     }
 
     private static boolean isReferenceToTargetClass(String referenceText, PsiClass targetClass, PsiElement context) {
