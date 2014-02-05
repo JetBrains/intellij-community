@@ -569,6 +569,7 @@ public class SvnUtil {
       return repository.hasCapability(SVNCapability.MERGE_INFO);
     }
     catch (SVNException e) {
+      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
       return false;
     }
     finally {

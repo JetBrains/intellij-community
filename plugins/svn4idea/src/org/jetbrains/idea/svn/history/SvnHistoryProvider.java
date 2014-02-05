@@ -409,12 +409,15 @@ public class SvnHistoryProvider
     }
 
     private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
-        final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
-        final String root = rootURL.toString();
-        String relativeUrl = myUrl;
-        if (myUrl.startsWith(root)) {
-          relativeUrl = myUrl.substring(root.length());
-        }
+      // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
+      // command to get repository url
+      SVNInfo info = myVcs.getInfo(svnurl, myPeg, myPeg);
+      final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
+      final String root = rootURL != null ? rootURL.toString() : "";
+      String relativeUrl = myUrl;
+      if (myUrl.startsWith(root)) {
+        relativeUrl = myUrl.substring(root.length());
+      }
 
       // TODO: Update this call to myVcs.getFactory.createHistoryClient
         SVNLogClient client = myVcs.createLogClient();
