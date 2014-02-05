@@ -428,12 +428,12 @@ public class SvnHistoryProvider
                                           @Override
                                           public void consume(VcsFileRevision revision) throws SVNException {
                                             myConsumer.consume(revision);
-                                            throw new SVNCancelException(); // load only one revision
                                           }
                                         }, rootURL);
         repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
-        client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 0, null, repositoryLogEntryHandler);
+      client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true,
+                   myShowMergeSources && mySupport15, 1, null, repositoryLogEntryHandler);
     }
 
     // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
