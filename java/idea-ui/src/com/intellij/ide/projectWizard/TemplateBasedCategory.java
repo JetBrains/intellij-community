@@ -15,42 +15,41 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.platform.templates.BuilderBasedTemplate;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.platform.templates.ArchivedProjectTemplate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class ProjectCategoryTemplate extends BuilderBasedTemplate {
+public class TemplateBasedCategory extends ProjectCategory {
 
-  private final ProjectCategory myCategory;
+  private final ArchivedProjectTemplate myTemplate;
 
-  public ProjectCategoryTemplate(ProjectCategory category) {
-    super(category.createModuleBuilder());
-    myCategory = category;
+  public TemplateBasedCategory(ArchivedProjectTemplate template) {
+    myTemplate = template;
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myCategory.getDisplayName();
+  public String getDisplayName() {
+    return myTemplate.getName();
   }
 
   @Override
   public Icon getIcon() {
-    return myCategory.getIcon();
+    return myTemplate.getIcon();
   }
 
-  @Nullable
   @Override
   public String getDescription() {
-    return myCategory.getDescription();
+    return myTemplate.getDescription();
   }
 
-  public ProjectCategory getCategory() {
-    return myCategory;
+  @NotNull
+  @Override
+  public ModuleBuilder createModuleBuilder() {
+    return myTemplate.createModuleBuilder();
   }
 }

@@ -473,14 +473,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     Disposer.dispose(this);
   }
 
-  private static MultiMap<String, ProjectTemplate> loadLocalTemplates() {
+  private MultiMap<String, ProjectTemplate> loadLocalTemplates() {
     ConcurrentMultiMap<String, ProjectTemplate> map = new ConcurrentMultiMap<String, ProjectTemplate>();
     ProjectTemplateEP[] extensions = ProjectTemplateEP.EP_NAME.getExtensions();
     for (ProjectTemplateEP ep : extensions) {
       ClassLoader classLoader = ep.getLoaderForClass();
       URL url = classLoader.getResource(ep.templatePath);
       if (url != null) {
-        map.putValue(ep.projectType, new LocalArchivedTemplate(url, classLoader));
+        LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
+        if (ep.category) {
+          TemplateBasedCategory category = new TemplateBasedCategory(template);
+          myTemplatesMap.putValue(new TemplatesGroup(category), template);
+        }
+        else {
+          map.putValue(ep.projectType, template);
+        }
       }
     }
     return map;
