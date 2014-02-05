@@ -384,6 +384,10 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       myDispatcher.addListener(listener);
     }
 
+    public void removeListener(@NotNull CertificateListener listener) {
+      myDispatcher.removeListener(listener);
+    }
+
     // Guarded by caller's lock
     private boolean keyStoreIsEmpty() {
       try {

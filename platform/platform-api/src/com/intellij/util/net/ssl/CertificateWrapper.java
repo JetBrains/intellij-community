@@ -161,6 +161,15 @@ public class CertificateWrapper {
     return Collections.unmodifiableMap(fields);
   }
 
+  @Override
+  public final boolean equals(Object other) {
+    return other instanceof CertificateWrapper && myCertificate.equals(((CertificateWrapper)other).getCertificate());
+  }
+
+  @Override
+  public final int hashCode() {
+    return myCertificate.hashCode();
+  }
 
   /**
    * Find out full list of names from specification.
