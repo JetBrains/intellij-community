@@ -46,7 +46,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean result = validateAnnotationOnRigthType(psiClass, builder);
+    final boolean result = validateAnnotationOnRightType(psiClass, builder);
     if (result) {
       validateExistingMethods(psiClass, builder);
     }
@@ -76,7 +76,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("@EqualsAndHashCode is only supported on a class type");
