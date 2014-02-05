@@ -215,7 +215,7 @@ public class InferenceSession {
       }
       doesNotContainFalseBound = repeatInferencePhases(true);
 
-      PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+      PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
       LOG.assertTrue(parent != null);
       PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
       LOG.assertTrue(argumentList != null);
