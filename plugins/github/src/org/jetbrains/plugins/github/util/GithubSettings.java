@@ -176,6 +176,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   public GithubAuthData getAuthData() {
     switch (getAuthType()) {
       case BASIC:
+        //noinspection ConstantConditions
         return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
         return GithubAuthData.createTokenAuth(getHost(), getPassword());
