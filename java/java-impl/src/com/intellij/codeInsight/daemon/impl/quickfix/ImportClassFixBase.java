@@ -121,7 +121,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
-        if (qName.endsWith(name) && ImportFilter.shouldImport(file, qName)) {
+        if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
           }

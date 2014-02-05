@@ -180,7 +180,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void focusGained(FocusEvent event) {
-    if (GeneralSettings.getInstance().isAutoSaveIfInactive()) {
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
   }
