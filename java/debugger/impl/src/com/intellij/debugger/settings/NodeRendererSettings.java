@@ -512,7 +512,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     @Override
     public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-      setPreferableChildrenRenderer(builder.getParentDescriptor(), ourChildrenRenderer);
+      if (getLastChildrenRenderer(builder.getParentDescriptor()) == null) {
+        setPreferableChildrenRenderer(builder.getParentDescriptor(), ourChildrenRenderer);
+      }
       super.buildChildren(value, builder, evaluationContext);
     }
   }
