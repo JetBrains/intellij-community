@@ -208,7 +208,10 @@ public abstract class PluginManagerMain implements Disposable {
   protected void modifyPluginsList(List<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    pluginTable.getRowSorter().setSortKeys(Collections.singletonList(pluginsModel.getDefaultSortKey()));
+    final RowSorter.SortKey key = pluginsModel.getDefaultSortKey();
+    if (key != null) {
+      pluginTable.getRowSorter().setSortKeys(Collections.singletonList(key));
+    }
     //pluginsModel.sort();
     pluginsModel.filter(myFilter.getFilter().toLowerCase());
     if (selected != null) {
