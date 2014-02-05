@@ -201,7 +201,7 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
-      LOG.warn("Gradle execution error", e);
+      LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
       throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
