@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author nik
  */
-class DetectedRootData {
+public class DetectedRootData {
   private final File myDirectory;
   private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
 

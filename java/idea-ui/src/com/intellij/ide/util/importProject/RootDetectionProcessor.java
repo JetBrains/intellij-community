@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +42,11 @@ public class RootDetectionProcessor {
   private final List<DetectedProjectRoot>[] myDetectedRoots;
   private final FileTypeManager myTypeManager;
   private final ProgressIndicator myProgressIndicator;
+
+  @NotNull
+  public static List<DetectedRootData> detectRoots(@NotNull File baseProjectFile) {
+    return new RootDetectionProcessor(baseProjectFile, ProjectStructureDetector.EP_NAME.getExtensions()).detectRoots();
+  }
 
   public RootDetectionProcessor(File baseDir, final ProjectStructureDetector[] detectors) {
     myBaseDir = getCanonicalDir(baseDir);
@@ -60,8 +67,18 @@ public class RootDetectionProcessor {
     }
   }
 
+  public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<DetectedRootData> list) {
+    MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<ProjectStructureDetector, DetectedProjectRoot>();
+    for (final DetectedRootData rootData : list) {
+      for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
+        roots.putValue(detector, rootData.getSelectedRoot());
+      }
+    }
+    return roots;
+  }
 
-  public Map<ProjectStructureDetector, List<DetectedProjectRoot>> findRoots() {
+
+  public Map<ProjectStructureDetector, List<DetectedProjectRoot>> runDetectors() {
     if (!myBaseDir.isDirectory()) {
       return Collections.emptyMap();
     }
@@ -144,5 +161,68 @@ public class RootDetectionProcessor {
       }
     }
     return parentsToSkip;
+  }
+
+  private static void removeIncompatibleRoots(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {
+    DetectedRootData[] allRoots = rootData.values().toArray(new DetectedRootData[rootData.values().size()]);
+    for (DetectedRootData child : allRoots) {
+      final File childDirectory = child.getDirectory();
+      if (FileUtil.isAncestor(root.getDirectory(), childDirectory, true)) {
+        for (DetectedProjectRoot projectRoot : child.getAllRoots()) {
+          if (!root.canContainRoot(projectRoot)) {
+            child.removeRoot(projectRoot);
+          }
+        }
+        if (child.getAllRoots().length == 0) {
+          rootData.remove(childDirectory);
+        }
+      }
+    }
+  }
+
+  private static boolean isUnderIncompatibleRoot(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {
+    File directory = root.getDirectory().getParentFile();
+    while (directory != null) {
+      final DetectedRootData data = rootData.get(directory);
+      if (data != null) {
+        for (DetectedProjectRoot parentRoot : data.getAllRoots()) {
+          if (!parentRoot.canContainRoot(root)) {
+            return true;
+          }
+        }
+      }
+      directory = directory.getParentFile();
+    }
+    return false;
+  }
+
+  private List<DetectedRootData> detectRoots() {
+    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = runDetectors();
+    if (myProgressIndicator != null) {
+      myProgressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
+    }
+
+    Map<File, DetectedRootData> rootData = new LinkedHashMap<File, DetectedRootData>();
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      for (DetectedProjectRoot detectedRoot : roots.get(detector)) {
+        if (isUnderIncompatibleRoot(detectedRoot, rootData)) {
+          continue;
+        }
+
+        final DetectedRootData data = rootData.get(detectedRoot.getDirectory());
+        if (data == null) {
+          rootData.put(detectedRoot.getDirectory(), new DetectedRootData(detector, detectedRoot));
+        }
+        else {
+          detectedRoot = data.addRoot(detector, detectedRoot);
+        }
+        removeIncompatibleRoots(detectedRoot, rootData);
+      }
+    }
+
+    if (myProgressIndicator != null) {
+      myProgressIndicator.setText2("");
+    }
+    return new ArrayList<DetectedRootData>(rootData.values());
   }
 }

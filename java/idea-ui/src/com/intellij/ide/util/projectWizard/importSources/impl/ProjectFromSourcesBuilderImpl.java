@@ -128,8 +128,11 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     return myBaseProjectPath;
   }
 
-  public void setProjectRoots(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
+  public void setupProjectStructure(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
     myRoots = roots;
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      detector.setupProjectStructure(roots.get(detector), getProjectDescriptor(detector), this);
+    }
   }
 
   @NotNull
