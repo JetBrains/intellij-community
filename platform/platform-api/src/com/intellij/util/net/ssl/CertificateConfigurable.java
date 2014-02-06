@@ -17,6 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  */
 public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
   private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR = new FileTypeDescriptor("Choose Certificate", ".crt", ".cer", ".pem");
+  @NonNls public static final String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;
   private JBCheckBox myCheckHostname;
@@ -44,11 +46,12 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   private JPanel myCertificatesListPanel;
   private JPanel myDetailsPanel;
+  private JPanel myEmptyPanel;
   private MutableTrustManager myTrustManager;
 
   private Tree myTree = new Tree();
-  private CertificateTreeBuilder myTreeBuilder;
-  private Set<X509Certificate> myCertificates;
+  private CertificateTreeBuilder myTreeBuilder = new CertificateTreeBuilder(myTree);
+  private Set<X509Certificate> myCertificates = new HashSet<X509Certificate>();
 
   public CertificateConfigurable() {
 
@@ -94,13 +97,12 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       @Override
       public void run(AnActionButton button) {
         // allow to delete several certificates at once
-        for (X509Certificate certificate : myTreeBuilder.getSelectedCertificates()) {
+        for (X509Certificate certificate : myTreeBuilder.getSelectedCertificates(true)) {
           myCertificates.remove(certificate);
           myTreeBuilder.removeCertificate(certificate);
         }
         if (myCertificates.isEmpty()) {
-          myDetailsPanel.removeAll();
-          myDetailsPanel.repaint();
+          showCard(EMPTY_PANEL);
         }
         else {
           myTreeBuilder.selectFirstCertificate();
@@ -111,17 +113,20 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        X509Certificate certificate = myTreeBuilder.getFirstSelectedCertificate();
+        X509Certificate certificate = myTreeBuilder.getFirstSelectedCertificate(true);
         if (certificate != null) {
-          String uniqueName = getCardName(certificate);
-          ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, uniqueName);
+          showCard(getCardName(certificate));
         }
       }
     });
     myCertificatesListPanel.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
-  private void addCertificatePanel(X509Certificate certificate) {
+  private void showCard(@NotNull String cardName) {
+    ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, cardName);
+  }
+
+  private void addCertificatePanel(@NotNull X509Certificate certificate) {
     String uniqueName = getCardName(certificate);
     JPanel infoPanel = new CertificateInfoPanel(certificate);
     UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS);
@@ -130,7 +135,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myDetailsPanel.add(scrollPane, uniqueName);
   }
 
-  private static String getCardName(X509Certificate certificate) {
+  private static String getCardName(@NotNull X509Certificate certificate) {
     return certificate.getSubjectX500Principal().getName();
   }
 
@@ -201,13 +206,23 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Override
   public void reset() {
     List<X509Certificate> original = myTrustManager.getCertificates();
-    myTreeBuilder = new CertificateTreeBuilder(myTree, original);
-    myCertificates = new HashSet<X509Certificate>(original);
+    myTreeBuilder.reset(original);
+
+    myCertificates.clear();
+    myCertificates.addAll(original);
+
+    myDetailsPanel.removeAll();
+    myDetailsPanel.add(myEmptyPanel, EMPTY_PANEL);
 
     // fill lower panel with cards
     for (X509Certificate certificate : original) {
       addCertificatePanel(certificate);
     }
+
+    if (!myCertificates.isEmpty()) {
+      myTreeBuilder.selectFirstCertificate();
+    }
+
     CertificatesManager.Config state = CertificatesManager.getInstance().getState();
     myCheckHostname.setSelected(state.checkHostname);
     myCheckValidityPeriod.setSelected(state.checkValidity);
@@ -226,8 +241,8 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         if (!myCertificates.contains(certificate)) {
           myCertificates.add(certificate);
           myTreeBuilder.addCertificate(certificate);
+          addCertificatePanel(certificate);
         }
-        addCertificatePanel(certificate);
       }
     });
   }
