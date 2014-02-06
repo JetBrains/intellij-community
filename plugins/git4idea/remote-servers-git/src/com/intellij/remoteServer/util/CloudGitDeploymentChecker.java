@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
@@ -42,27 +41,27 @@ import java.util.regex.Pattern;
 /**
  * @author michael.golubev
  */
-public class CloudGitDeploymentEditor<
+public class CloudGitDeploymentChecker<
   T extends CloudDeploymentNameConfiguration,
   SC extends ServerConfigurationBase,
-  SR extends CloudMultiSourceServerRuntimeInstance<T, ?, ?, ?>> extends CloudDeploymentNameEditor<T> {
+  SR extends CloudMultiSourceServerRuntimeInstance<T, ?, ?, ?>> {
 
   private GitRepositoryManager myGitRepositoryManager;
   private Git myGit;
 
   private final DeploymentSource myDeploymentSource;
   private final RemoteServer<SC> myServer;
+  private final CloudDeploymentNameEditor<T> mySettingsEditor;
 
-  public CloudGitDeploymentEditor(Factory<T> deploymentModelFactory,
-                                  String labelCaption,
-                                  DeploymentSource deploymentSource,
-                                  RemoteServer<SC> server) {
-    super(deploymentModelFactory, labelCaption);
+  public CloudGitDeploymentChecker(DeploymentSource deploymentSource,
+                                   RemoteServer<SC> server,
+                                   CloudDeploymentNameEditor<T> settingsEditor) {
     myDeploymentSource = deploymentSource;
     myServer = server;
+    mySettingsEditor = settingsEditor;
   }
 
-  protected void checkGitUrl(final T settings, Pattern gitUrlPattern) throws ConfigurationException {
+  public void checkGitUrl(final T settings, Pattern gitUrlPattern) throws ConfigurationException {
     if (!(myDeploymentSource instanceof ModuleDeploymentSource)) {
       return;
     }
@@ -149,13 +148,13 @@ public class CloudGitDeploymentEditor<
         }.perform();
 
         if (application == null) {
-          Messages.showErrorDialog(getComponent(), "No application matching repository URL(s) found in account");
+          Messages.showErrorDialog(mySettingsEditor.getComponent(), "No application matching repository URL(s) found in account");
         }
         else {
-          T fixedSettings = getFactory().create();
+          T fixedSettings = mySettingsEditor.getFactory().create();
           fixedSettings.setDefaultDeploymentName(false);
           fixedSettings.setDeploymentName(application.getName());
-          resetEditorFrom(fixedSettings);
+          mySettingsEditor.resetFrom(fixedSettings);
         }
       }
     });
