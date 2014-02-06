@@ -205,7 +205,7 @@ public class Switcher extends AnAction implements DumbAware {
     final SwitcherSpeedSearch mySpeedSearch;
     final ClickListener myClickListener = new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myPinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
         final Object source = e.getSource();
         if (source instanceof JList) {

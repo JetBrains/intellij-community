@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,7 +88,7 @@ public class CheckboxTreeBase extends Tree {
     setCellRenderer(cellRenderer);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         int row = getRowForLocation(e.getX(), e.getY());
         if (row < 0) return false;
         final Object o = getPathForRow(row).getLastPathComponent();

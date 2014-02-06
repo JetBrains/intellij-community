@@ -28,6 +28,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +65,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         doAction(e);
         return true;
       }

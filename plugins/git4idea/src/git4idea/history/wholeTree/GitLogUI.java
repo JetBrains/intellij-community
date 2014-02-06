@@ -685,11 +685,7 @@ public class GitLogUI implements Disposable {
       protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
         myDescriptionRenderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
         final Rectangle rc = table.getCellRect(row, column, false);
-        int index = myDescriptionRenderer.myInner.findFragmentAt(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
-        if (index >= 0) {
-          return myDescriptionRenderer.myInner.getFragmentTag(index);
-        }
-        return null;
+        return myDescriptionRenderer.myInner.getFragmentTag(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
       }
     };
     final ActionToolbar actionToolbar = createToolbar();

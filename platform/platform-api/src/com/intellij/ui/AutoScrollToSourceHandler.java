@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -55,7 +56,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount > 1) return false;
 
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
@@ -86,7 +87,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount >= 2) return false;
 
         Component location = table.getComponentAt(e.getPoint());
@@ -117,7 +118,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount >= 2) return false;
         final Object source = e.getSource();
         final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component ? (Component)source : null, e.getPoint(), jList));

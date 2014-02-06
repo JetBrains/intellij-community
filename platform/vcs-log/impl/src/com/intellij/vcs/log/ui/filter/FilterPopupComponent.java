@@ -150,7 +150,7 @@ abstract class FilterPopupComponent extends JPanel {
   private void showPopupMenuOnClick() {
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showPopupMenu();
         return true;
       }

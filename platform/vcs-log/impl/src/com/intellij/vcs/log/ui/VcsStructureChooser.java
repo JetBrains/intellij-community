@@ -202,7 +202,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         int row = myTree.getRowForLocation(e.getX(), e.getY());
         if (row < 0) return false;
         final Object o = myTree.getPathForRow(row).getLastPathComponent();

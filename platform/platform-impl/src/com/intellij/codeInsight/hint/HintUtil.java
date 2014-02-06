@@ -105,6 +105,7 @@ public class HintUtil {
     );
   }
 
+  @NotNull
   public static JComponent createInformationLabel(SimpleColoredText text) {
     return createInformationLabel(text, null);
   }
@@ -129,19 +130,21 @@ public class HintUtil {
     return label;
   }
 
+  @NotNull
+  public static SimpleColoredComponent createInformationComponent() {
+    SimpleColoredComponent component = new SimpleColoredComponent();
+    component.setBackground(INFORMATION_COLOR);
+    component.setForeground(JBColor.foreground());
+    component.setFont(getBoldFont());
+    return component;
+  }
+
+  @NotNull
   public static JComponent createInformationLabel(@NotNull SimpleColoredText text, @Nullable Icon icon) {
-    SimpleColoredComponent highlighted = new SimpleColoredComponent();
-
-    highlighted.setIcon(icon);
-    highlighted.setBackground(INFORMATION_COLOR);
-    highlighted.setForeground(JBColor.foreground());
-    highlighted.setFont(getBoldFont());
-    text.appendToComponent(highlighted);
-
-    HintLabel label = new HintLabel();
-    label.setText(highlighted);
-
-    return label;
+    SimpleColoredComponent component = createInformationComponent();
+    component.setIcon(icon);
+    text.appendToComponent(component);
+    return new HintLabel(component);
   }
 
   public static JComponent createErrorLabel(String text) {
@@ -195,7 +198,6 @@ public class HintUtil {
   }
 
   private static class HintLabel extends JPanel {
-
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
@@ -204,8 +206,12 @@ public class HintUtil {
       setLayout(new BorderLayout());
     }
 
+    private HintLabel(@NotNull SimpleColoredComponent component) {
+      this();
+      setText(component);
+    }
 
-    public void setText(SimpleColoredComponent colored) {
+    public void setText(@NotNull SimpleColoredComponent colored) {
       clearText();
 
       myColored = colored;

@@ -63,7 +63,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     }, this);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         EventLog.toggleLog(getProject(), null);
         return true;
       }

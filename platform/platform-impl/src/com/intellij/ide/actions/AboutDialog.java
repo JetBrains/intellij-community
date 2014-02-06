@@ -35,6 +35,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,7 +119,7 @@ public class AboutDialog extends JDialog {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         dispose();
         return true;
       }

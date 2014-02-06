@@ -16,47 +16,71 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public abstract class LinkMouseListenerBase extends ClickListener implements MouseMotionListener {
+public abstract class LinkMouseListenerBase<T> extends ClickListener implements MouseMotionListener {
+  public static void installSingleTagOn(@NotNull SimpleColoredComponent component) {
+    new LinkMouseListenerBase<Consumer<MouseEvent>>() {
+      @Nullable
+      @Override
+      protected Consumer<MouseEvent> getTagAt(@NotNull MouseEvent e) {
+        //noinspection unchecked
+        return (Consumer<MouseEvent>)((SimpleColoredComponent)e.getSource()).getFragmentTagAt(e.getX());
+      }
+
+      @Override
+      protected void handleTagClick(@Nullable Consumer<MouseEvent> tag, @NotNull MouseEvent event) {
+        if (tag != null) {
+          tag.consume(event);
+        }
+      }
+    }.installOn(component);
+  }
+
   @Nullable
-  protected abstract Object getTagAt(final MouseEvent e);
+  protected abstract T getTagAt(@NotNull MouseEvent e);
 
   @Override
-  public boolean onClick(MouseEvent e, int clickCount) {
-    if (e.getButton() == 1) {
-      Object tag = getTagAt(e);
-      handleTagClick(tag, e);
+  public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+    if (e.getButton() == MouseEvent.BUTTON1) {
+      handleTagClick(getTagAt(e), e);
     }
     return false;
   }
 
-  protected void handleTagClick(final Object tag, MouseEvent event) {
+  protected void handleTagClick(@Nullable T tag, @NotNull MouseEvent event) {
     if (tag instanceof Runnable) {
-      ((Runnable) tag).run();
+      ((Runnable)tag).run();
     }
   }
-  
+
+  @Override
   public void mouseDragged(MouseEvent e) {
   }
 
+  @Override
   public void mouseMoved(MouseEvent e) {
-    Component tree = (Component)e.getSource();
+    Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
     if (tag != null) {
-      tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
     else {
-      tree.setCursor(Cursor.getDefaultCursor());
+      component.setCursor(Cursor.getDefaultCursor());
     }
   }
 
-  public void installOn(Component tree) {
-    super.installOn(tree);
-    tree.addMouseMotionListener(this);
+  @Override
+  public void installOn(@NotNull Component component) {
+    super.installOn(component);
+
+    component.addMouseMotionListener(this);
   }
 }

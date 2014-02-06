@@ -206,7 +206,7 @@ public abstract class AbstractValueHint {
     final JComponent component = HintUtil.createInformationLabel(text, IconUtil.getAddIcon());
     addClickListenerToHierarchy(component, new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (myCurrentHint != null) {
           myCurrentHint.hide();
         }
