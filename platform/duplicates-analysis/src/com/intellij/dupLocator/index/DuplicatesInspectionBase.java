@@ -57,6 +57,8 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
           @Override
           public boolean process(final VirtualFile file, final TIntArrayList list) {
             for(int i = 0, len = list.size(); i < len; ++i) {
+              ProgressManager.checkCanceled();
+
               int value = list.getQuick(i);
 
               if (myProjectFileIndex.isInSource(virtualFile) && !myProjectFileIndex.isInSource(file)) return true;
@@ -123,7 +125,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       descriptors.add(descriptor);
     }
 
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
   protected LocalQuickFix createNavigateToDupeFix(@NotNull VirtualFile file, int offsetInOtherFile) {

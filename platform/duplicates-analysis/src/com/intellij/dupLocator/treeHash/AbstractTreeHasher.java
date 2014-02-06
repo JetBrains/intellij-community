@@ -3,6 +3,7 @@ package com.intellij.dupLocator.treeHash;
 import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.TreeHasher;
 import com.intellij.dupLocator.util.PsiFragment;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
    * Creates only single PsiFragment.
    */
   protected TreeHashResult computeElementHash(@NotNull final PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
+    ProgressManager.checkCanceled();
     final List<PsiElement> children = hasher.getNodeChildren(root);
     final int size = children.size();
     final int[] childHashes = new int[size];
