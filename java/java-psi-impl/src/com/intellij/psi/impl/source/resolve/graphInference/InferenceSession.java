@@ -579,7 +579,9 @@ public class InferenceSession {
         return false;
       }
       if (incorporate) {
-        myIncorporationPhase.incorporate();
+        if (!myIncorporationPhase.incorporate()) {
+          return false;
+        }
       }
     } while (incorporate && !myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
 
@@ -817,5 +819,9 @@ public class InferenceSession {
 
   public void setErased() {
     myErased = true;
+  }
+
+  public InferenceVariable getInferenceVariable(PsiTypeParameter parameter) {
+    return myInferenceVariables.get(parameter);
   }
 }

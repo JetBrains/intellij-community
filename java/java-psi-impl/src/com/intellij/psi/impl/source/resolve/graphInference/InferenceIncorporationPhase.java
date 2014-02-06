@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
@@ -32,13 +33,19 @@ import java.util.List;
  * User: anna
  */
 public class InferenceIncorporationPhase {
+  private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
+  private PsiClassType myCapture;
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
   }
 
-  public void incorporate() {
+  public void setCapture(PsiClassType capture) {
+    myCapture = capture;
+  }
+
+  public boolean incorporate() {
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -53,6 +60,88 @@ public class InferenceIncorporationPhase {
 
       upUp(upperBounds);
     }
+
+    if (myCapture != null) {
+      final PsiClass gClass = myCapture.resolve();
+      LOG.assertTrue(gClass != null);
+      final PsiTypeParameter[] parameters = gClass.getTypeParameters();
+      PsiType[] typeArgs = myCapture.getParameters();
+      LOG.assertTrue(parameters.length == typeArgs.length);
+      for (int i = 0; i < typeArgs.length; i++) {
+        PsiType aType = typeArgs[i];
+        final InferenceVariable inferenceVariable = mySession.getInferenceVariable(parameters[i]);
+        LOG.assertTrue(inferenceVariable != null);
+
+        final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+        final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
+        final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
+
+        if (aType instanceof PsiWildcardType) {
+
+          for (PsiType eqBound : eqBounds) {
+            if (mySession.isProperType(eqBound)) return false;
+          }
+
+          final PsiClassType[] paramBounds = parameters[i].getExtendsListTypes();
+
+          if (!((PsiWildcardType)aType).isBounded()) {
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                for (PsiClassType paramBound : paramBounds) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, paramBound));
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) return false;
+            }
+
+          } else if (((PsiWildcardType)aType).isExtends()) {
+
+            final PsiType extendsBound = ((PsiWildcardType)aType).getExtendsBound();
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                if (paramBounds.length == 1 && paramBounds[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramBounds.length == 0) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, extendsBound));
+                } else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+                  for (PsiClassType paramBound : paramBounds) {
+                    addConstraint(new StrictSubtypingConstraint(upperBound, paramBound));
+                  }
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) return false;
+            }
+
+          } else {
+            LOG.assertTrue(((PsiWildcardType)aType).isSuper());
+            final PsiType superBound = ((PsiWildcardType)aType).getSuperBound();
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                for (PsiClassType paramBound : paramBounds) {
+                  addConstraint(new StrictSubtypingConstraint(paramBound, upperBound));
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) {
+                addConstraint(new StrictSubtypingConstraint(lowerBound, superBound));
+              }
+            }
+          }
+        } else {
+          inferenceVariable.addBound(aType, InferenceBound.EQ);
+        }
+      }
+    }
+    return true;
   }
 
   boolean isFullyIncorporated() {
