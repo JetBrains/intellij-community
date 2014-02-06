@@ -47,47 +47,19 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
+  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType) {
+    return getGroundTargetType(psiClassType, null);
+  }
+
+  @Nullable
+  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
 
-    if (expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr);
+    if (expr != null && expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr);
 
-    return getFunctionalTypeImplicit(psiClassType);
-  }
-
-  private static PsiType getFunctionalTypeImplicit(PsiType psiClassType) {
-    if (psiClassType instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)psiClassType;
-      final PsiClass psiClass = classType.resolve();
-      if (psiClass != null) {
-
-        final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-        final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
-        PsiType[] parameters = classType.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiType paramType = parameters[i];
-          if (paramType instanceof PsiWildcardType) {
-            final PsiClassType[] extendsListTypes = typeParameters[i].getExtendsListTypes();
-            final PsiClassType Bi = extendsListTypes.length > 0 ? extendsListTypes[0]
-                                                                : PsiType.getJavaLangObject(psiClass.getManager(), GlobalSearchScope.allScope(psiClass.getProject()));
-            if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) return null;
-
-            final PsiType bound = ((PsiWildcardType)paramType).getBound();
-            if (bound == null) {
-              parameters[i] = Bi;
-            } else if (((PsiWildcardType)paramType).isExtends()){
-              parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, bound);
-            } else {
-              parameters[i] = bound;
-            }
-          }
-        }
-        return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
-      }
-    }
-    return psiClassType;
+    return psiClassType instanceof PsiClassType ? getNonWildcardParameterization((PsiClassType)psiClassType) : null;
   }
 
   private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr) {
@@ -150,7 +122,54 @@ public class FunctionalInterfaceParameterizationUtil {
           !GenericsUtil.isTypeArgumentsApplicable(typeParameters, PsiSubstitutor.EMPTY.putAll(psiClass, newTypeParameters), expr)) {
         return null;
       }
-      if (!TypeConversionUtil.containsWildcards(parameterization)) return parameterization;
+
+      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+        return parameterization;
+      }
+
+      return getNonWildcardParameterization(parameterization);
+    }
+    return null;
+  }
+
+  /**
+     The function type of a parameterized functional interface, F<A1...An>, where one or more of A1...An is a wildcard, is the function type of the non-wildcard parameterization of F, F<T1...Tn> determined as follows. 
+     Let P1, ..., Pn be the type parameters of F and B1, ..., Bn be the corresponding bounds. For all i, 1 ≤ i ≤ n, Ti is derived according to the form of Ai:
+
+     If Ai is a type, then Ti = Ai.
+     If Ai is a wildcard, and the corresponding type parameter bound, Bi, mentions one of P1...Pn, then Ti is undefined and there is no function type.
+     Otherwise:
+     If Ai is an unbound wildcard ?, then Ti = Bi.
+     If Ai is a upper-bounded wildcard ? extends Ui, then Ti = glb(Ui, Bi).
+     If Ai is a lower-bounded wildcard ? super Li, then Ti = Li.
+   */
+  @Nullable
+  public static PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
+    final PsiClass psiClass = psiClassType.resolve();
+    if (psiClass != null) {
+      final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+      final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
+      PsiType[] parameters = psiClassType.getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType paramType = parameters[i];
+        if (paramType instanceof PsiWildcardType) {
+          final PsiClassType[] extendsListTypes = typeParameters[i].getExtendsListTypes();
+          final PsiClassType Bi = extendsListTypes.length > 0 ? extendsListTypes[0]
+                                                              : PsiType.getJavaLangObject(psiClass.getManager(),
+                                                                                          GlobalSearchScope.allScope(psiClass.getProject()));
+          if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) return null;
+
+          final PsiType bound = ((PsiWildcardType)paramType).getBound();
+          if (bound == null) {
+            parameters[i] = Bi;
+          } else if (((PsiWildcardType)paramType).isExtends()){
+            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, bound);
+          } else {
+            parameters[i] = bound;
+          }
+        }
+      }
+      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
     }
     return null;
   }
