@@ -30,6 +30,7 @@ import java.util.List;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
+import static java.util.Calendar.YEAR;
 
 /**
  * @author Nadya Zabrodina
@@ -52,10 +53,9 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     hg("add");
     hg("commit -m add");
     java.util.Calendar now = java.util.Calendar.getInstance();
-    int year = java.util.Calendar.YEAR;
-    now.set(year, now.get(year) + 1);
+    now.add(YEAR, 1);
     dateBefore = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
-    now.set(year, 1970);
+    now.set(YEAR, 1970);
     dateAfter = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
   }
 

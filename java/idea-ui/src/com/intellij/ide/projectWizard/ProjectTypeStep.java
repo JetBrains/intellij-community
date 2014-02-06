@@ -58,10 +58,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,6 +69,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.net.URL;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -85,6 +84,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   private static final String FRAMEWORKS_CARD = "frameworks card";
 
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
+  public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
+    new Convertor<FrameworkSupportInModuleProvider, String>() {
+      @Override
+      public String convert(FrameworkSupportInModuleProvider o) {
+        return o.getId();
+      }
+    };
 
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -222,6 +228,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
       if (builder.isTemplate()) {
         TemplatesGroup group = groupMap.get(builder.getGroupName());
+        if (group == null) {
+          group = new TemplatesGroup(builder);
+        }
         myTemplatesMap.putValue(group, template);
       }
       else {
@@ -318,13 +327,23 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(groupModuleBuilder);
       final ProjectCategory category = group.getProjectCategory();
       if (category != null) {
-        providers = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
+        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
                     @Override
                     public boolean value(FrameworkSupportInModuleProvider provider) {
                       return matchFramework(category, provider);
                     }
                   });
-        myFrameworksPanel.setProviders(providers,
+        // add associated
+        Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), PROVIDER_STRING_CONVERTOR);
+        Set<FrameworkSupportInModuleProvider> set = new HashSet<FrameworkSupportInModuleProvider>(filtered);
+        for (FrameworkSupportInModuleProvider provider : filtered) {
+          for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
+            FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
+            set.add(dependency);
+          }
+        }
+
+        myFrameworksPanel.setProviders(new ArrayList<FrameworkSupportInModuleProvider>(set),
                                        new HashSet<String>(Arrays.asList(category.getAssociatedFrameworkIds())),
                                        new HashSet<String>(Arrays.asList(category.getPreselectedFrameworkIds())));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.navigation.NavigationItem;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 /**
  * @author peter
  */
 public interface GrMethodCall extends GrCallExpression, NavigationItem {
-  @Nullable
+  @NotNull
   GrExpression getInvokedExpression();
+
+  @Override
+  @NotNull
+  GrArgumentList getArgumentList();
 
   boolean isCommandExpression();
 }

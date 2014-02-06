@@ -16,6 +16,7 @@
 package com.intellij.ui.roots;
 
 import com.intellij.ui.ClickListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class IconActionComponent extends ScalableIconComponent {
     });
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (action != null) {
           action.run();
           return true;

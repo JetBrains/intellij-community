@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="util-rt" />
+    <orderEntry type="module" module-name="core-api" />
   </component>
 </module>
 

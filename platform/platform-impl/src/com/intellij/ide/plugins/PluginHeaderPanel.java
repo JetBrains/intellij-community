@@ -23,6 +23,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -166,21 +167,24 @@ public class PluginHeaderPanel {
 
       private Color getButtonForeground() {
         switch (myActionId) {
-          case UPDATE: return Color.BLACK;
-          case INSTALL: return Color.WHITE;
-          case UNINSTALL: return Gray._0;
+          case UPDATE: return new JBColor(Gray._0, Gray._20);
+          case INSTALL: return new JBColor(Gray._255, Gray._210);
+          case UNINSTALL: return new JBColor(Gray._0, Gray._140);
           case RESTART:
             break;
         }
 
-        return new JBColor(Gray._80, JBColor.WHITE);
+        return new JBColor(Gray._80, Gray._60);
       }
 
       private Paint getBackgroundPaint() {
         switch (myActionId) {
-          case UPDATE: return new Color(209, 190, 114);
-          case INSTALL: return new Color(0x4DA864);
-          case UNINSTALL: return Gray._240;
+          case UPDATE: return new JBColor(new Color(209, 190, 114), new Color(132, 116, 66));
+          case INSTALL: return new JBColor(new Color(0x4DA864), new Color(49, 98, 49));
+          case UNINSTALL: return UIUtil.isUnderDarcula()
+                                 ? new GradientPaint(0, 0, UIManager.getColor("Button.darcula.color1"),
+                                                   0, getHeight(), UIManager.getColor("Button.darcula.color2"))
+                                 : Gray._240;
           case RESTART:
             break;
         }
@@ -191,7 +195,7 @@ public class PluginHeaderPanel {
         switch (myActionId) {
           case UPDATE: return new JBColor(new Color(164, 145, 82), Gray._85);
           case INSTALL: return new JBColor(new Color(0x337043), Gray._80);
-          case UNINSTALL: return Gray._220;
+          case UNINSTALL: return new JBColor(Gray._220, Gray._100.withAlpha(180));
           case RESTART:
         }
         return Gray._208;

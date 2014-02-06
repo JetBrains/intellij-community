@@ -15,12 +15,15 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -39,29 +42,14 @@ public class InferenceIncorporationPhase {
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-      /*
-      todo inference errors
-      Infer infer = inferenceContext.infer();
-                for (Type e : uv.getBounds(InferenceBound.EQ)) {
-                    if (e.containsAny(inferenceContext.inferenceVars())) continue;
-                    for (Type u : uv.getBounds(InferenceBound.UPPER)) {
-                        if (!isSubtype(e, inferenceContext.asFree(u), warn, infer)) {
-                            infer.reportBoundError(uv, BoundErrorKind.BAD_EQ_UPPER);
-                        }
-                    }
-                    for (Type l : uv.getBounds(InferenceBound.LOWER)) {
-                        if (!isSubtype(inferenceContext.asFree(l), e, warn, infer)) {
-                            infer.reportBoundError(uv, BoundErrorKind.BAD_EQ_LOWER);
-                        }
-                    }
-                }
-       */
 
       eqEq(eqBounds);
       upperLower(upperBounds, lowerBounds);
 
       upDown(eqBounds, upperBounds);
       upDown(lowerBounds, eqBounds);
+
+      upUp(upperBounds);
     }
   }
 
@@ -88,7 +76,6 @@ public class InferenceIncorporationPhase {
     for (PsiType eqBound : eqBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
       if (inferenceVar != null) {
-        //inferenceVar.addBound(inferenceVariable.qType, InferenceVariable.InferenceBound.EQ);
         for (InferenceBound inferenceBound : InferenceBound.values()) {
           for (PsiType bound : inferenceVariable.getBounds(inferenceBound)) {
             if (mySession.getInferenceVariable(bound) != inferenceVar) {
@@ -121,12 +108,11 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
       if (inferenceVar != null) {
-        //todo inferenceVar.addBound(inferenceVariable.qType, inferenceBound);
+
         for (PsiType lowerBound : lowerBounds) {
           result |= inferenceVar.addBound(lowerBound, inferenceBound);
         }
 
-        
         for (PsiType varUpperBound : inferenceVar.getBounds(oppositeBound)) {
           result |= inferenceVariable.addBound(varUpperBound, oppositeBound);
         }
@@ -144,9 +130,7 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null) continue;
       for (PsiType eqBound : eqBounds) {
-        if (!upperBound.equals(eqBound) && !upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
-        }
+        addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
   }
@@ -158,9 +142,7 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null) continue;
       for (PsiType lowerBound : lowerBounds) {
-        if (!upperBound.equals(lowerBound)) {
-          addConstraint(new StrictSubtypingConstraint(upperBound, lowerBound));
-        }
+        addConstraint(new StrictSubtypingConstraint(upperBound, lowerBound));
       }
     }
   }
@@ -176,6 +158,42 @@ public class InferenceIncorporationPhase {
         final PsiType tBound = eqBounds.get(j);
         if (tBound == null) continue;
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
+      }
+    }
+  }
+
+
+  /**
+   * If two bounds have the form α <: S and α <: T, and if for some generic class or interface, G, 
+   * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
+   * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
+   */
+  private void upUp(List<PsiType> upperBounds) {
+    for (int i = 0; i < upperBounds.size(); i++) {
+      final PsiType sBound = upperBounds.get(i);
+      final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
+      if (sClass == null) continue;
+      final LinkedHashSet<PsiClass> superClasses = InheritanceUtil.getSuperClasses(sClass);
+      for (int j = i + 1; j < upperBounds.size(); j++) {
+        final PsiType tBound = upperBounds.get(j);
+        final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
+        if (tClass != null) {
+
+          final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
+          tSupers.retainAll(superClasses);
+
+          for (PsiClass gClass : tSupers) {
+            final PsiSubstitutor sSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)sBound);
+            final PsiSubstitutor tSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)tBound);
+            for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
+              final PsiType sType = sSubstitutor.substitute(typeParameter);
+              final PsiType tType = tSubstitutor.substitute(typeParameter);
+              if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+                addConstraint(new TypeEqualityConstraint(sType, tType));
+              }
+            }
+          }
+        }
       }
     }
   }

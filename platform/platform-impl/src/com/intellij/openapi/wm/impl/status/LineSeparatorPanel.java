@@ -76,7 +76,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
         showPopup(e);
         return true;

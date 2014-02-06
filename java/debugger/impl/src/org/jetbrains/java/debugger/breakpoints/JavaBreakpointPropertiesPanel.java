@@ -59,9 +59,9 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
   private final FieldPanel myInstanceFiltersField;
   private final FieldPanel myClassFiltersField;
 
-  private ClassFilter[] myClassFilters;
-  private ClassFilter[] myClassExclusionFilters;
-  private InstanceFilter[] myInstanceFilters;
+  private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
+  private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
+  private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
   protected final Project myProject;
 
   private PsiClass myBreakpointPsiClass;
@@ -207,8 +207,8 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
       XSourcePosition position = breakpoint.getSourcePosition();
       // TODO: need to calculate psi class
       //myBreakpointPsiClass = breakpoint.getPsiClass();
-      updateCheckboxes();
     }
+    updateCheckboxes();
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {

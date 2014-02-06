@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.refactoring.classes;
+package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -45,6 +46,10 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   public void testWithImport() throws Exception {
     doSimpleTest("A", "Suppa", null, false, ".foo");
+  }
+
+  public void testMoveFields() throws Exception {
+    doSimpleTest("FromClass", "ToClass", null, true, "#instance_field", "#CLASS_FIELD");
   }
 
   private void doSimpleTest(final String className, final String superclassName, final String expectedError, final boolean sameFile, final String... membersName) throws Exception {

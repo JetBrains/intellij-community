@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 class XValueTextRendererImpl extends XValueTextRendererBase {
   private final ColoredTextContainer myText;
 
-  public XValueTextRendererImpl(ColoredTextContainer text) {
+  public XValueTextRendererImpl(@NotNull ColoredTextContainer text) {
     myText = text;
   }
 

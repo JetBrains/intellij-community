@@ -1468,8 +1468,6 @@ public class AbstractPopup implements JBPopup {
 
   public static Window setSize(JComponent content, final Dimension size) {
     final Window popupWindow = SwingUtilities.windowForComponent(content);
-    final Point location = popupWindow.getLocation();
-    popupWindow.setLocation(location.x, location.y);
     Insets insets = content.getInsets();
     if (insets != null) {
       size.width += insets.left + insets.right;

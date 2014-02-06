@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.net.HTTPProxySettingsDialog;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,7 +79,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog ();
         settingsDialog.pack();
         settingsDialog.show();
@@ -92,7 +93,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         BrowserUtil.launchBrowser("http://account.jetbrains.com");
         return true;
       }

@@ -34,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public interface PyFunction
 extends
   PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
-  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement {
+  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement,
+  PyStatementListContainer{
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {
@@ -53,9 +54,6 @@ extends
    */
   @Nullable
   ASTNode getNameNode();
-
-  @Nullable
-  PyStatementList getStatementList();
 
   @Nullable
   PyClass getContainingClass();

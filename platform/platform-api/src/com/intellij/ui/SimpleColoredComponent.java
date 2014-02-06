@@ -464,6 +464,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return -1;
   }
 
+  @Nullable
+  public Object getFragmentTagAt(int x) {
+    int index = findFragmentAt(x);
+    return index < 0 ? null : getFragmentTag(index);
+  }
+
   @NotNull
   protected JLabel formatToLabel(@NotNull JLabel label) {
     label.setIcon(myIcon);

@@ -99,8 +99,7 @@ public class PyClassRefactoringUtil {
       return Collections.emptyList();
     }
     final List<PyExpression> result = new ArrayList<PyExpression>();
-    for (PyExpression superClassExpression : clazz.getSuperClassExpressions()) {
-      //TODO: We probably should use #getName() here, but #getText() was used in previous version so keeped temporary for backward comp.
+    for (final PyExpression superClassExpression : clazz.getSuperClassExpressions()) {
       if (superClassesToRemove.contains(superClassExpression.getText())) {
         result.add(superClassExpression);
         superClassExpression.delete();
@@ -179,11 +178,11 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeElements(elements);
   }
 
-  public static void insertPassIfNeeded(PyClass clazz) {
-    final PyStatementList statements = clazz.getStatementList();
+  public static <T extends PyElement & PyStatementListContainer>void insertPassIfNeeded(@NotNull T element) {
+    final PyStatementList statements = element.getStatementList();
     if (statements.getStatements().length == 0) {
       statements.add(
-        PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
+        PyElementGenerator.getInstance(element.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
     }
   }
 

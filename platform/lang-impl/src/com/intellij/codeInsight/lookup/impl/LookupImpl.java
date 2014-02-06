@@ -936,7 +936,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         setFocusDegree(FocusDegree.FOCUSED);
         markSelectionTouched();
 
@@ -1524,7 +1524,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private class ChangeLookupSorting extends ClickListener {
 
     @Override
-    public boolean onClick(MouseEvent e, int clickCount) {
+    public boolean onClick(@NotNull MouseEvent e, int clickCount) {
       DataContext context = DataManager.getInstance().getDataContext(mySortingLabel);
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(createSortingAction(true));

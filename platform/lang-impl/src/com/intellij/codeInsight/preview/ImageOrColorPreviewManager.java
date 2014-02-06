@@ -205,7 +205,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       }
 
       elementRef = new WeakReference<PsiElement>(element);
-      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensions()) {
         try {
           provider.show(element, editor, point, keyTriggered);
         }

@@ -89,9 +89,7 @@ public class PyPushDownDialog extends RefactoringDialog {
 
     myMemberInfoModel = new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo>(myClass);
     myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PyElement, PyMemberInfo>(myMemberInfos));
-    memberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
-    memberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
-
+    memberSelectionPanel.init(myMemberInfoModel, myMemberInfos);
     return panel;
   }
 

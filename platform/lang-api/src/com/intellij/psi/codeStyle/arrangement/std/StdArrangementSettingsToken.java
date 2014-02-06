@@ -28,18 +28,34 @@ public class StdArrangementSettingsToken extends ArrangementSettingsToken {
 
   @NotNull private final StdArrangementTokenType myTokenType;
 
-  public StdArrangementSettingsToken(@NotNull String id, @NotNull StdArrangementTokenType tokenType) {
-    super(id, id.toLowerCase().replace("_", " "));
-    myTokenType = tokenType;
+  @NotNull
+  public static StdArrangementSettingsToken tokenById(@NotNull String id,
+                                                      @NotNull StdArrangementTokenType tokenType) {
+    return new StdArrangementSettingsToken(id, id.toLowerCase().replace("_", " "), tokenType);
   }
 
-  public StdArrangementSettingsToken (@NotNull String id, @NotNull @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key,
-                                      @NotNull StdArrangementTokenType tokenType) {
-    super(id, ApplicationBundle.message(key));
-    myTokenType = tokenType;
+  @NotNull
+  public static StdArrangementSettingsToken token(@NotNull String id,
+                                                  @NotNull String name,
+                                                  @NotNull StdArrangementTokenType tokenType) {
+    return new StdArrangementSettingsToken(id, name, tokenType);
+  }
+
+  @NotNull
+  public static StdArrangementSettingsToken tokenByBundle(@NotNull String id,
+                                                          @NotNull @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key,
+                                                          @NotNull StdArrangementTokenType tokenType) {
+    return new StdArrangementSettingsToken(id, ApplicationBundle.message(key), tokenType);
   }
 
   @NotNull public StdArrangementTokenType getTokenType() {
     return myTokenType;
+  }
+
+  private StdArrangementSettingsToken(@NotNull String id,
+                                      @NotNull String uiName,
+                                      @NotNull StdArrangementTokenType tokenType) {
+    super(id, uiName);
+    myTokenType = tokenType;
   }
 }

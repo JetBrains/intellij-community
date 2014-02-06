@@ -29,11 +29,12 @@ import java.util.Collection;
 /**
  * @author Dennis.Ushakov
  */
-public class PyPullUpConflictsUtil {
+final class PyPullUpConflictsUtil {
   private PyPullUpConflictsUtil() {
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {
+  @NotNull
+  static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {
     final MultiMap<PsiElement, String> conflictsList = new MultiMap<PsiElement, String>();
     for (PyMemberInfo info : infos) {
       PsiElement member = info.getMember();

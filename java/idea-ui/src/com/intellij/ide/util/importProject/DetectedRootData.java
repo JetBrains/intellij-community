@@ -67,6 +67,10 @@ public class DetectedRootData {
     return roots.toArray(new DetectedProjectRoot[roots.size()]);
   }
 
+  public boolean isEmpty() {
+    return myRoots.isEmpty();
+  }
+
   public boolean isIncluded() {
     return myIncluded;
   }
@@ -89,7 +93,7 @@ public class DetectedRootData {
     mySelectedRoot = root;
   }
 
-  public void removeRoot(DetectedProjectRoot root) {
-    myRoots.remove(root);
+  public Collection<ProjectStructureDetector> removeRoot(DetectedProjectRoot root) {
+    return myRoots.remove(root);
   }
 }

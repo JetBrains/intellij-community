@@ -34,7 +34,7 @@ class ClassFieldsManager extends FieldsManager {
 
   @NotNull
   @Override
-  protected List<PyTargetExpression> getFieldsByClass(@NotNull PyClass pyClass) {
+  protected List<PyTargetExpression> getFieldsByClass(@NotNull final PyClass pyClass) {
     return pyClass.getClassAttributes();
   }
 }

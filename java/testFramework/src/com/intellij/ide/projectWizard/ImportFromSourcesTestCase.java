@@ -17,7 +17,11 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.importProject.DetectedRootData;
 import com.intellij.ide.util.importProject.RootDetectionProcessor;
+import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,6 +30,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -65,12 +71,26 @@ public abstract class ImportFromSourcesTestCase extends PlatformTestCase {
     myRootDir = dir;
     try {
       myProject = doCreateProject(getIprFile());
+      myBuilder.setBaseProjectPath(dir.getAbsolutePath());
       List<DetectedRootData> list = RootDetectionProcessor.detectRoots(dir);
-      myBuilder.setupProjectStructure(RootDetectionProcessor.createRootsMap(list));
+      MultiMap<ProjectStructureDetector,DetectedProjectRoot> map = RootDetectionProcessor.createRootsMap(list);
+      myBuilder.setupProjectStructure(map);
+      for (ProjectStructureDetector detector : map.keySet()) {
+        List<ModuleWizardStep> steps = detector.createWizardSteps(myBuilder, myBuilder.getProjectDescriptor(detector), EmptyIcon.ICON_16);
+        for (ModuleWizardStep step : steps) {
+          if (step instanceof AbstractStepWithProgress<?>) {
+            performStep((AbstractStepWithProgress<?>)step);
+          }
+        }
+      }
       myBuilder.commit(myProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static <Result> void performStep(AbstractStepWithProgress<Result> step) {
+    step.performStep();
   }
 }

@@ -66,6 +66,7 @@ public class SvnHistoryProvider
     myVcs = vcs;
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return true;
   }
@@ -80,6 +81,7 @@ public class SvnHistoryProvider
     return true;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;
@@ -95,6 +97,7 @@ public class SvnHistoryProvider
       field.setBackground(UIUtil.getComboBoxDisabledBackground());
       field.setWrapStyleWord(true);
       listener = new Consumer<VcsFileRevision>() {
+        @Override
         public void consume(VcsFileRevision vcsFileRevision) {
           field.setText(mergeSourceColumn.getText(vcsFileRevision));
         }
@@ -156,6 +159,7 @@ public class SvnHistoryProvider
     return new SvnHistorySession(myVcs, revisions, filePath, aBoolean, currentRevision, false, ! filePath.isNonLocal());
   }
 
+  @Override
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     final VcsAppendableHistoryPartnerAdapter adapter = new VcsAppendableHistoryPartnerAdapter();
@@ -165,6 +169,7 @@ public class SvnHistoryProvider
     return adapter.getSession();
   }
 
+  @Override
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     // we need + 1 rows to be reported to further detect that number of rows exceeded the limit
     reportAppendableHistory(path, partner, null, null, VcsConfiguration.getInstance(myVcs.getProject()).MAXIMUM_HISTORY_ROWS + 1, null, false);
@@ -221,6 +226,7 @@ public class SvnHistoryProvider
       indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));
     }
     final Consumer<VcsFileRevision> consumer = new Consumer<VcsFileRevision>() {
+      @Override
       public void consume(VcsFileRevision vcsFileRevision) {
         if (!Boolean.TRUE.equals(sessionReported.get())) {
           partner.reportCreatedEmptySession(historySession);
@@ -454,14 +460,17 @@ public class SvnHistoryProvider
     }
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public AnAction[] getAdditionalActions(final Runnable refresher) {
     return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new MergeSourceDetailsAction(), new SvnEditCommitMessageFromFileHistoryAction()};
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
@@ -500,6 +509,7 @@ public class SvnHistoryProvider
       myUrl = url;
       myRepositoryRoot = repoRootURL;
       myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
+        @Override
         public void consume(final Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
           final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
 
@@ -581,11 +591,12 @@ public class SvnHistoryProvider
       return false;
     }
 
+    @Override
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
       myTracker.consume(logEntry);
     }
 
-    private void addToListByLevel(final SvnFileRevision revision, final SvnFileRevision revisionToAdd, final int level) {
+    private static void addToListByLevel(final SvnFileRevision revision, final SvnFileRevision revisionToAdd, final int level) {
       if (level < 0) {
         return;
       }
@@ -683,6 +694,7 @@ public class SvnHistoryProvider
       return myRenderer;
     }
 
+    @Override
     public RevisionMergeSourceInfo valueOf(final VcsFileRevision vcsFileRevision) {
       return vcsFileRevision != null ? new RevisionMergeSourceInfo(vcsFileRevision) : null;
     }
@@ -714,7 +726,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    public boolean onClick(MouseEvent e, int clickCount) {
+    public boolean onClick(@NotNull MouseEvent e, int clickCount) {
       if (e.getButton() == 1 && !e.isPopupTrigger()) {
         Object tag = getTagAt(e);
         if (tag == myTag) {
@@ -741,6 +753,7 @@ public class SvnHistoryProvider
       return null;
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       JTable table = (JTable)e.getSource();
       Object tag = getTagAt(e);
@@ -765,6 +778,7 @@ public class SvnHistoryProvider
       return RevisionMergeSourceInfo.toString(value);
     }
 
+    @Override
     protected void customizeCellRenderer(final JTable table,
                                          final Object value,
                                          final boolean selected,
@@ -813,6 +827,7 @@ public class SvnHistoryProvider
   private static class CopyFromColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final Icon myIcon = PlatformIcons.COPY_ICON;
     private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
+      @Override
       protected void customizeCellRenderer(final JTable table,
                                            final Object value,
                                            final boolean selected,
@@ -833,6 +848,7 @@ public class SvnHistoryProvider
       super(SvnBundle.message("copy.column.title"));
     }
 
+    @Override
     public String valueOf(final VcsFileRevision o) {
       return o instanceof SvnFileRevision ? ((SvnFileRevision)o).getCopyFromPath() : "";
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -990,7 +990,7 @@ public class GrClosureSignatureUtil {
     return new MapResultWithError<Arg>(map, errors);
   }
 
-  public static List<GrClosureSignature> generateSimpleSignature(GrSignature signature) {
+  public static List<GrClosureSignature> generateSimpleSignature(@NotNull GrSignature signature) {
     final List<GrClosureSignature> result = new ArrayList<GrClosureSignature>();
     signature.accept(new GrRecursiveSignatureVisitor() {
       @Override

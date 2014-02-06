@@ -88,14 +88,14 @@ public class StdArrangementTokens {
   }
 
   private static StdArrangementSettingsToken token(@NotNull String id, @NotNull StdArrangementTokenType type) {
-    StdArrangementSettingsToken result = new StdArrangementSettingsToken(id, type);
+    StdArrangementSettingsToken result = StdArrangementSettingsToken.tokenById(id, type);
     TOKENS_BY_ID.put(id, result);
     return result;
   }
 
   private static StdArrangementSettingsToken token(@NotNull String id, @NotNull @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key,
                                                    @NotNull StdArrangementTokenType type) {
-    StdArrangementSettingsToken result = new StdArrangementSettingsToken(id, key, type);
+    StdArrangementSettingsToken result = StdArrangementSettingsToken.tokenByBundle(id, key, type);
     TOKENS_BY_ID.put(id, result);
     return result;
   }

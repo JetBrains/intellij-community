@@ -196,7 +196,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     label.setToolTipText("Recent files");
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showRecentFilesPopup();
         return true;
       }

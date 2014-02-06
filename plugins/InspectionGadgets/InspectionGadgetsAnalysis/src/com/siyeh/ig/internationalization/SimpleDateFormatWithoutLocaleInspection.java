@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
           return;
         }
       }
-      registerError(expression);
+      registerNewExpressionError(expression);
     }
   }
 }

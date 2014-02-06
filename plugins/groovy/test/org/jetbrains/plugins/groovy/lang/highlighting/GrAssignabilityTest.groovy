@@ -288,8 +288,8 @@ class Ca {
 }
 
 use(Ca) {
-  1.foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
-  (1 as int).foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
+  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
 }
 ''')
   }
@@ -806,5 +806,13 @@ void bug(Collection<String> foo, Collection<String> bar) {
     foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
     foo << "a"
 }''')
+  }
+
+  void testPlusIsApplicable() {
+    testHighlighting('''\
+print 1 + 2
+
+print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.StringGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
+''')
   }
 }

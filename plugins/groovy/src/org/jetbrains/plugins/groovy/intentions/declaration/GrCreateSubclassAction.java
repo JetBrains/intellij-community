@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,24 +29,26 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
 /**
@@ -75,14 +77,13 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
 
     new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
         final GrTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
 
         try {
-          targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass,
-                                                                  GroovyTemplates.GROOVY_CLASS, true));
+          targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass, GroovyTemplates.GROOVY_CLASS, true));
         }
         catch (final IncorrectOperationException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -96,10 +97,9 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           return;
         }
         startTemplate(oldTypeParameterList, project, psiClass, targetClass.get(), false);
-        PsiElement element = targetClass.get();
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       }
     }.execute();
+
     if (targetClass.get() == null) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !psiClass.hasTypeParameters()) {
 
@@ -118,22 +118,15 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
                                     boolean includeClassName) {
     PsiElementFactory jfactory = JavaPsiFacade.getElementFactory(project);
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(project);
-    GrCodeReferenceElement ref = elementFactory.createCodeReferenceElementFromClass(psiClass);
+    GrCodeReferenceElement stubRef = elementFactory.createCodeReferenceElementFromClass(psiClass);
     try {
-      if (psiClass.isInterface()) {
-        GrImplementsClause clause = targetClass.getImplementsClause();
-        if (clause == null) {
-          clause = (GrImplementsClause)targetClass.addAfter(elementFactory.createImplementsClause(), targetClass.getNameIdentifierGroovy());
-        }
-        ref = (GrCodeReferenceElement)clause.add(ref);
+      GrReferenceList clause = psiClass.isInterface() ? targetClass.getImplementsClause() : targetClass.getExtendsClause();
+      if (clause == null) {
+        GrReferenceList stubRefList = psiClass.isInterface() ? elementFactory.createImplementsClause() : elementFactory.createExtendsClause();
+        clause = (GrExtendsClause)targetClass.addAfter(stubRefList, targetClass.getNameIdentifierGroovy());
       }
-      else {
-        GrExtendsClause clause = targetClass.getExtendsClause();
-        if (clause == null) {
-          clause = (GrExtendsClause)targetClass.addAfter(elementFactory.createExtendsClause(), targetClass.getNameIdentifierGroovy());
-        }
-        ref = (GrCodeReferenceElement)clause.add(ref);
-      }
+      GrCodeReferenceElement ref = (GrCodeReferenceElement)clause.add(stubRef);
+
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
         final TemplateBuilderImpl templateBuilder = editor == null || ApplicationManager.getApplication().isUnitTestMode() ? null
@@ -143,18 +136,30 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           templateBuilder.replaceElement(targetClass.getNameIdentifier(), targetClass.getName());
         }
 
-        if (oldTypeParameterList != null) {
+        if (oldTypeParameterList != null && oldTypeParameterList.getTypeParameters().length > 0) {
+          GrTypeArgumentList existingList = ref.getTypeArgumentList();
+          final GrTypeParameterList typeParameterList =
+            (GrTypeParameterList)targetClass.addAfter(elementFactory.createTypeParameterList(), targetClass.getNameIdentifierGroovy());
+
+          GrTypeArgumentList argList;
+          if (existingList == null) {
+            GrCodeReferenceElement codeRef = elementFactory.createCodeReferenceElementFromText("A<T>");
+            argList = ((GrTypeArgumentList)ref.add(codeRef.getTypeArgumentList()));
+            argList.getTypeArgumentElements()[0].delete();
+          }
+          else {
+            argList = existingList;
+          }
+
           for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
-            final PsiElement param = ref.getTypeArgumentList().add(elementFactory.createTypeElement(jfactory.createType(parameter)));
+            final PsiElement param = argList.add(elementFactory.createTypeElement(jfactory.createType(parameter)));
             if (templateBuilder != null) {
               templateBuilder.replaceElement(param, param.getText());
             }
+
+            typeParameterList.add(elementFactory.createTypeParameter(parameter.getName(), parameter.getExtendsListTypes()));
           }
         }
-
-        final GrTypeParameterList typeParameterList = targetClass.getTypeParameterList();
-        assert typeParameterList != null;
-        typeParameterList.replace(oldTypeParameterList);
 
         if (templateBuilder != null) {
           templateBuilder.setEndVariableBefore(ref);
@@ -166,12 +171,14 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 
           final TextRange textRange = targetClass.getTextRange();
-          final int startClassOffset = textRange.getStartOffset();
+          final RangeMarker startClassOffset = editor.getDocument().createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+          startClassOffset.setGreedyToLeft(true);
+          startClassOffset.setGreedyToRight(true);
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
-              chooseAndImplement(psiClass, project,PsiTreeUtil.getParentOfType(containingFile.findElementAt(startClassOffset), GrTypeDefinition.class),editor);
+              chooseAndImplement(psiClass, project,PsiTreeUtil.getParentOfType(containingFile.findElementAt(startClassOffset.getStartOffset()), GrTypeDefinition.class),editor);
             }
           }, getTitle(psiClass));
         }

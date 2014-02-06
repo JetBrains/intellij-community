@@ -22,15 +22,18 @@ class InstanceFieldsManager extends FieldsManager {
                              @NotNull final PyClass to,
                              @NotNull final Collection<PyTargetExpression> members) {
     //We need __init__ method, and if there is no any -- we need to create it
-    PyFunction initMethod = to.findMethodByName(PyNames.INIT, false);
-    if (initMethod == null) {
-      initMethod = PyClassRefactoringUtil.createMethod(PyNames.INIT, to, null);
+    PyFunction toInitMethod = to.findMethodByName(PyNames.INIT, false);
+    if (toInitMethod == null) {
+      toInitMethod = PyClassRefactoringUtil.createMethod(PyNames.INIT, to, null);
     }
-    final PyStatementList statementList = initMethod.getStatementList();
-    if (statementList == null) {
-      return; //TODO: Investigate how could it be
-    }
+    final PyStatementList statementList = toInitMethod.getStatementList();
     PyClassRefactoringUtil.moveFieldDeclarationToStatement(members, statementList);
+
+    final PyFunction fromInitMethod = from.findMethodByName(PyNames.INIT, false);
+    if (fromInitMethod !=null) {
+      //We can't leave class constructor with empty body
+      PyClassRefactoringUtil.insertPassIfNeeded(fromInitMethod);
+    }
   }
 
   @Override
