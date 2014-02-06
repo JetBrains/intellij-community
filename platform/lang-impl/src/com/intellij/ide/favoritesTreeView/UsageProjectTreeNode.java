@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsagePresentation;
@@ -78,12 +79,12 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
 
   @Override
   public void navigate(boolean requestFocus) {
-    getValue().navigateTo(requestFocus);
+    UsageViewUtil.navigateTo(getValue(), requestFocus);
   }
 
   @Override
   public boolean canNavigate() {
-    return getValue().getElement().isValid();
+    return canNavigateToSource();
   }
 
   @Override

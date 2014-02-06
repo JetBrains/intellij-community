@@ -133,6 +133,7 @@
 
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
     <duplicates.profile implementation="com.jetbrains.python.duplocator.PyDuplicatesProfile"/>
+    <duplicates.presentation implementation="com.jetbrains.python.duplocator.PyDuplicatesProfile"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
