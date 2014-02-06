@@ -171,8 +171,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Matches tree segments starting with given elements to find equality
    *
-   * @param el1 the pattern element for matching
-   * @param el2 the tree element for matching
+   * @param nodes the pattern element for matching
+   * @param nodes2 the tree element for matching
    * @return if they are equal and false otherwise
    */
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
