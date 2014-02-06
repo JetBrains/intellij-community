@@ -85,7 +85,9 @@ public class XValueHint extends AbstractValueHint {
           public void applyPresentation(@Nullable Icon icon,
                                         @NotNull XValuePresentation valuePresenter,
                                         boolean hasChildren) {
-            if (isHintHidden()) return;
+            if (isHintHidden()) {
+              return;
+            }
 
             SimpleColoredText text = new SimpleColoredText();
             text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
@@ -114,8 +116,7 @@ public class XValueHint extends AbstractValueHint {
 
           @Override
           public boolean isObsolete() {
-            //todo[nik]
-            return false;
+            return isHintHidden();
           }
         }, XValuePlace.TOOLTIP);
       }

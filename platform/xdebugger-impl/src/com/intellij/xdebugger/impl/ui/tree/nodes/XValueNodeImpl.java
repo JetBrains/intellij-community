@@ -190,6 +190,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return null;
   }
 
+  @Override
   @Nullable
   public String getName() {
     return myName;
@@ -200,11 +201,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myValuePresentation;
   }
 
+  @Override
   @Nullable
   public String getRawValue() {
     return myRawValue;
   }
 
+  @Override
   public boolean isComputed() {
     return myValuePresentation != null;
   }

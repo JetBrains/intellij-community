@@ -90,6 +90,7 @@ public class HintUtil {
 
   @NotNull
   public static HintHint getInformationHint() {
+    //noinspection UseJBColor
     return new HintHint().setTextBg(INFORMATION_COLOR)
       .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
@@ -97,6 +98,7 @@ public class HintUtil {
   }
 
   public static CompoundBorder createHintBorder() {
+    //noinspection UseJBColor
     return BorderFactory.createCompoundBorder(
       new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1),
       BorderFactory.createEmptyBorder(2, 2, 2, 2)
@@ -127,7 +129,7 @@ public class HintUtil {
     return label;
   }
 
-  public static JComponent createInformationLabel(final SimpleColoredText text, final Icon icon) {
+  public static JComponent createInformationLabel(@NotNull SimpleColoredText text, @Nullable Icon icon) {
     SimpleColoredComponent highlighted = new SimpleColoredComponent();
 
     highlighted.setIcon(icon);
