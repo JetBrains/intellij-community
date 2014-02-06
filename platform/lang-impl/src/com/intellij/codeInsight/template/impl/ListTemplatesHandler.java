@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,12 +71,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       }
     }
 
-    List<CustomLiveTemplateLookupElement> customTemplatesLookupElements = ContainerUtil.newArrayList();
-    for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if (customLiveTemplate instanceof CustomLiveTemplateBase && TemplateManagerImpl.isApplicable(customLiveTemplate, editor, file)) {
-        customTemplatesLookupElements.addAll(((CustomLiveTemplateBase)customLiveTemplate).getLookupElements(file, editor, offset));
-      }
-    }
+    MultiMap<String,CustomLiveTemplateLookupElement> customTemplatesLookupElements = listApplicableCustomTemplates(editor, file, offset);
 
     if (matchingTemplates.isEmpty()) {
       matchingTemplates.addAll(applicableTemplates);
@@ -99,7 +95,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                           final PsiFile file,
                                           @NotNull String prefix,
                                           @NotNull List<TemplateImpl> matchingTemplates,
-                                          @NotNull List<CustomLiveTemplateLookupElement> customTemplatesLookupElements) {
+                                          @NotNull MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements) {
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix,
                                                                                           new TemplatesArranger());
@@ -107,13 +103,27 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
     }
 
-    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
-    for (CustomLiveTemplateLookupElement element : customTemplatesLookupElements) {
-      String customTemplatePrefix = element.getCustomLiveTemplate().computeTemplateKeyWithoutContextChecking(customTemplateCallback);
-      lookup.addItem(element, new PlainPrefixMatcher(customTemplatePrefix));
+    for (Map.Entry<String, Collection<CustomLiveTemplateLookupElement>> entry : customTemplatesLookupElements.entrySet()) {
+      for (CustomLiveTemplateLookupElement lookupElement : entry.getValue()) {
+        lookup.addItem(lookupElement, new PlainPrefixMatcher(entry.getKey()));
+      }
     }
 
     showLookup(lookup, file);
+  }
+
+  public static MultiMap<String, CustomLiveTemplateLookupElement> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
+    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
+    for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if (customLiveTemplate instanceof CustomLiveTemplateBase && TemplateManagerImpl.isApplicable(customLiveTemplate, editor, file)) {
+        String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
+        if (customTemplatePrefix != null) {
+          result.putValues(customTemplatePrefix, ((CustomLiveTemplateBase)customLiveTemplate).getLookupElements(file, editor, offset));
+        }
+      }
+    }
+    return result;
   }
 
   private static LiveTemplateLookupElement createTemplateElement(final TemplateImpl template) {
