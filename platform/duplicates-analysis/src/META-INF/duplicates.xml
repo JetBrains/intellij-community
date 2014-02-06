@@ -1,0 +1,32 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="duplicates.profile" interface="com.intellij.dupLocator.DuplicatesProfile"/>
+    <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
+                    interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <appStarter implementation="com.intellij.dupLocator.util.DuplocateMain"/>
+    <projectService serviceInterface="com.intellij.dupLocator.DuplocateManager"
+                    serviceImplementation="com.intellij.dupLocator.DuplocateManager"/>
+    <applicationService serviceInterface="com.intellij.dupLocator.DuplocatorSettings"
+                          serviceImplementation="com.intellij.dupLocator.DuplocatorSettings"/>
+    <applicationService serviceInterface="com.intellij.dupLocator.MultilanguageDuplocatorSettings"
+                              serviceImplementation="com.intellij.dupLocator.MultilanguageDuplocatorSettings"/>
+    <fileBasedIndex implementation="com.intellij.dupLocator.index.DuplicatesIndex"/>
+    <localInspection shortName="Duplicates" enabledByDefault="true" level="WARNING" bundle="messages.InspectionsBundle" key="inspection.duplicated.code.display.name"
+                     groupKey="inspection.general.tools.group.name"
+                     implementationClass="com.intellij.dupLocator.index.DuplicatesInspection"/>
+
+  </extensions>
+
+  <actions>
+    <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project">
+      <add-to-group group-id="InspectCodeGroup" anchor="last"/>
+    </action>
+    <action id="DuplicatesForm.SendToRight" class="com.intellij.dupLocator.resultUI.DuplicatesForm$SendToRightAction"/>
+    <action id="DuplicatesForm.SendToLeft" class="com.intellij.dupLocator.resultUI.DuplicatesForm$SendToLeftAction"/>
+  </actions>
+
+</idea-plugin>
