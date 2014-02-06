@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.concurrency.*;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -33,6 +34,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.CoreFileTypeFactory;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
@@ -119,6 +121,9 @@ public class CoreApplicationEnvironment {
     registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
     registerExtensionPoint(Extensions.getRootArea(), FileContextProvider.EP_NAME, FileContextProvider.class);
+
+    registerExtensionPoint(Extensions.getRootArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
+    addExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new CoreFileTypeFactory());
 
     registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
 

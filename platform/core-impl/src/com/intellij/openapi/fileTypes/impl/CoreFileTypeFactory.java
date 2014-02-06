@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PlatformFileTypeFactory extends FileTypeFactory {
+public class CoreFileTypeFactory  extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(NativeFileType.INSTANCE, "doc;docx;xls;xlsx;ppt;pptx;mdb;vsd;pdf;hlp;chm;odt");
+    consumer.consume(ArchiveFileType.INSTANCE, "zip;jar;war;ear;swc;ane;egg;apk");
+    consumer.consume(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
+    consumer.consume(UnknownFileType.INSTANCE);
   }
 }

@@ -26,6 +26,10 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.impl.CoreFileTypeFactory;
+import com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
@@ -49,9 +53,10 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
 
+    addExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new JavaFileTypeFactory());
+
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
-    registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
 
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
