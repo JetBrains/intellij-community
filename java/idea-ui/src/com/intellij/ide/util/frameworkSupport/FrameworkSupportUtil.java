@@ -127,8 +127,8 @@ public class FrameworkSupportUtil {
           dependencies.add(underlyingProvider);
         }
       }
-      for (String frameworkId : provider.getOptionalDependenciesFrameworkIds()) {
-        FrameworkSupportInModuleProvider dep = findProvider(frameworkId, myFrameworkSupportProviders);
+      for (FrameworkSupportInModuleProvider.FrameworkDependency frameworkId : provider.getDependenciesFrameworkIds()) {
+        FrameworkSupportInModuleProvider dep = findProvider(frameworkId.getFrameworkId(), myFrameworkSupportProviders);
         if (dep != null) {
           dependencies.add(dep);
         }

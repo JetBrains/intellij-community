@@ -30,11 +30,15 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return (T)super.getUserObject();
   }
 
-  public static void sortByName(@Nullable List<FrameworkSupportNodeBase> nodes) {
+  public static void sortByName(@Nullable List<FrameworkSupportNodeBase> nodes, @Nullable final Comparator<FrameworkSupportNodeBase> comparator) {
     if (nodes == null) return;
 
     Collections.sort(nodes, new Comparator<FrameworkSupportNodeBase>() {
       public int compare(final FrameworkSupportNodeBase o1, final FrameworkSupportNodeBase o2) {
+        if (comparator != null) {
+          int compare = comparator.compare(o1, o2);
+          if (compare != 0) return compare;
+        }
         if (o1 instanceof FrameworkGroupNode && !(o2 instanceof FrameworkGroupNode)) return -1;
         if (o2 instanceof FrameworkGroupNode && !(o1 instanceof FrameworkGroupNode)) return 1;
         if (o1.getChildCount() < o2.getChildCount()) return 1;
@@ -43,7 +47,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
       }
     });
     for (FrameworkSupportNodeBase node : nodes) {
-      sortByName(node.children);
+      sortByName(node.children, null);
     }
   }
 
