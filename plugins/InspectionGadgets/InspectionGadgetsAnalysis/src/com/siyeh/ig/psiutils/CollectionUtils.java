@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +33,6 @@ public class CollectionUtils {
    * @noinspection StaticCollection
    */
   @NonNls private static final Set<String> s_collectionClassesRequiringCapacity =
-    new HashSet<String>();
-  /**
-   * @noinspection StaticCollection
-   */
-  @NonNls private static final Set<String> s_allCollectionClasses =
     new HashSet<String>();
   /**
    * @noinspection StaticCollection
@@ -64,30 +61,6 @@ public class CollectionUtils {
     s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashMap");
     s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Hashtable");
     s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashSet");
-
-    s_allCollectionClasses.add("java.util.ArrayList");
-    s_allCollectionClasses.add("java.util.EnumMap");
-    s_allCollectionClasses.add("java.util.EnumSet");
-    s_allCollectionClasses.add("java.util.HashMap");
-    s_allCollectionClasses.add("java.util.HashSet");
-    s_allCollectionClasses.add("java.util.Hashtable");
-    s_allCollectionClasses.add("java.util.IdentityHashMap");
-    s_allCollectionClasses.add("java.util.LinkedHashMap");
-    s_allCollectionClasses.add("java.util.LinkedHashSet");
-    s_allCollectionClasses.add("java.util.LinkedList");
-    s_allCollectionClasses.add("java.util.PriorityQueue");
-    s_allCollectionClasses.add("java.util.TreeMap");
-    s_allCollectionClasses.add("java.util.TreeSet");
-    s_allCollectionClasses.add("java.util.Vector");
-    s_allCollectionClasses.add("java.util.WeakHashMap");
-    s_allCollectionClasses.add("com.sun.java.util.collections.ArrayList");
-    s_allCollectionClasses.add("com.sun.java.util.collections.HashMap");
-    s_allCollectionClasses.add("com.sun.java.util.collections.HashSet");
-    s_allCollectionClasses.add("com.sun.java.util.collections.Hashtable");
-    s_allCollectionClasses.add("com.sun.java.util.collections.TreeMap");
-    s_allCollectionClasses.add("com.sun.java.util.collections.TreeSet");
-    s_allCollectionClasses.add("com.sun.java.util.collections.LinkedList");
-    s_allCollectionClasses.add("com.sun.java.util.collections.Vector");
 
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractCollection");
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractList");
@@ -189,7 +162,8 @@ public class CollectionUtils {
     return s_collectionClassesRequiringCapacity.contains(className);
   }
 
-  public static boolean isCollectionClass(@Nullable PsiType type) {
+  @Contract("null -> false")
+  public static boolean isConcreteCollectionClass(@Nullable PsiType type) {
     if (!(type instanceof PsiClassType)) {
       return false;
     }
@@ -198,12 +172,21 @@ public class CollectionUtils {
     if (resolved == null) {
       return false;
     }
-    return isCollectionClass(resolved);
+    return isConcreteCollectionClass(resolved);
   }
 
-  public static boolean isCollectionClass(PsiClass aClass) {
-    final String className = aClass.getQualifiedName();
-    return s_allCollectionClasses.contains(className);
+  @Contract("null -> false")
+  public static boolean isConcreteCollectionClass(PsiClass aClass) {
+    if (aClass == null || aClass.isEnum() || aClass.isInterface() || aClass.isAnnotationType() ||
+        aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+    if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) &&
+        !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP)) {
+      return false;
+    }
+    @NonNls final String name = aClass.getQualifiedName();
+    return name != null && name.startsWith("java.util.");
   }
 
   public static boolean isCollectionClassOrInterface(@Nullable PsiType type) {
