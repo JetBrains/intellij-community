@@ -203,7 +203,13 @@ public class GitLogProvider implements VcsLogProvider {
         LOG.warn("More than one branch filter was passed. Using only the first one.");
       }
       VcsLogBranchFilter branchFilter = branchFilters.iterator().next();
-      filterParameters.add(branchFilter.getBranchName());
+      String branch = branchFilter.getBranchName();
+      GitRepository repository = getRepository(root);
+      assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
+      if (repository.getBranches().findBranchByName(branch) == null) {
+        return Collections.emptyList();
+      }
+      filterParameters.add(branch);
     }
     else {
       filterParameters.addAll(GitHistoryUtils.LOG_ALL);

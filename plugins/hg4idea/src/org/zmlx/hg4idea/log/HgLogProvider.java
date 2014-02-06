@@ -166,8 +166,22 @@ public class HgLogProvider implements VcsLogProvider {
 
     // branch filter and user filter may be used several times without delimiter
     if (!branchFilters.isEmpty()) {
+      HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository not found for root " + root);
+        return Collections.emptyList();
+      }
+
+      boolean atLeastOneBranchExists = false;
       for (VcsLogBranchFilter branchFilter : branchFilters) {
-        filterParameters.add(prepareParameter("branch", branchFilter.getBranchName()));
+        String branchName = branchFilter.getBranchName();
+        if (branchExists(repository, branchName)) {
+          filterParameters.add(prepareParameter("branch", branchName));
+          atLeastOneBranchExists = true;
+        }
+      }
+      if (!atLeastOneBranchExists) { // no such branches => filter matches nothing
+        return Collections.emptyList();
       }
     }
 
@@ -235,4 +249,10 @@ public class HgLogProvider implements VcsLogProvider {
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
+
+  private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
+    return repository.getBranches().keySet().contains(branchName) ||
+           HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);
+  }
+
 }
