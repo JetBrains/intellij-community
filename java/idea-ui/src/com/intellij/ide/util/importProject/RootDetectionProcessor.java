@@ -15,16 +15,20 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.util.projectWizard.importSources.DetectedContentRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,7 +177,7 @@ public class RootDetectionProcessor {
             child.removeRoot(projectRoot);
           }
         }
-        if (child.getAllRoots().length == 0) {
+        if (child.isEmpty()) {
           rootData.remove(childDirectory);
         }
       }
@@ -220,8 +224,64 @@ public class RootDetectionProcessor {
       }
     }
 
+    List<DetectedRootData> dataCollection = mergeContentRoots(rootData);
     if (myProgressIndicator != null) {
       myProgressIndicator.setText2("");
+    }
+    return dataCollection;
+  }
+
+  private List<DetectedRootData> mergeContentRoots(Map<File, DetectedRootData> rootData) {
+    LOG.debug(rootData.size() + " roots found, merging content roots");
+    boolean hasSourceRoots = false;
+    Set<ModuleType> typesToReplace = new HashSet<ModuleType>();
+    Set<ModuleType> moduleTypes = new HashSet<ModuleType>();
+    for (DetectedRootData data : rootData.values()) {
+      for (DetectedProjectRoot root : data.getAllRoots()) {
+        if (root instanceof DetectedContentRoot) {
+          Collections.addAll(typesToReplace, ((DetectedContentRoot)root).getTypesToReplace());
+          moduleTypes.add(((DetectedContentRoot)root).getModuleType());
+        }
+        else if (root instanceof DetectedSourceRoot) {
+          LOG.debug("Source root found: " + root.getDirectory() + ", content roots will be ignored");
+          hasSourceRoots = true;
+          break;
+        }
+      }
+    }
+    moduleTypes.removeAll(typesToReplace);
+
+    if (hasSourceRoots || moduleTypes.size() <= 1) {
+      Iterator<DetectedRootData> iterator = rootData.values().iterator();
+      DetectedContentRoot firstRoot = null;
+      ProjectStructureDetector firstDetector = null;
+      while (iterator.hasNext()) {
+        DetectedRootData data = iterator.next();
+        for (DetectedProjectRoot root : data.getAllRoots()) {
+          if (root instanceof DetectedContentRoot) {
+            LOG.debug("Removed detected " + root.getRootTypeName() + " content root: " + root.getDirectory());
+            Collection<ProjectStructureDetector> detectors = data.removeRoot(root);
+            if ((firstRoot == null || firstDetector == null) && moduleTypes.contains(((DetectedContentRoot)root).getModuleType())) {
+              firstRoot = (DetectedContentRoot)root;
+              firstDetector = ContainerUtil.getFirstItem(detectors);
+            }
+          }
+        }
+        if (data.isEmpty()) {
+          iterator.remove();
+        }
+      }
+      if (!hasSourceRoots && firstRoot != null && firstDetector != null) {
+        DetectedContentRoot baseRoot = new DetectedContentRoot(myBaseDir, firstRoot.getRootTypeName(), firstRoot.getModuleType());
+        DetectedRootData data = rootData.get(myBaseDir);
+        if (data == null) {
+          rootData.put(myBaseDir, new DetectedRootData(firstDetector, baseRoot));
+        }
+        else {
+          data.addRoot(firstDetector, baseRoot);
+        }
+        LOG.debug("Added " + firstRoot.getRootTypeName() + " content root for " + myBaseDir);
+      }
     }
     return new ArrayList<DetectedRootData>(rootData.values());
   }

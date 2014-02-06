@@ -19,11 +19,14 @@ import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
+import com.intellij.ide.util.projectWizard.importSources.DetectedContentRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,13 +53,7 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
     for (File child : children) {
       if (FileUtilRt.extensionEquals(child.getName(), "py")) {
         LOG.info("Found Python file " + child.getPath());
-        result.add(new DetectedProjectRoot(dir) {
-          @NotNull
-          @Override
-          public String getRootTypeName() {
-            return "Python";
-          }
-        });
+        result.add(new DetectedContentRoot(dir, "Python", PythonModuleTypeBase.getInstance(), WebModuleType.getInstance()));
         return DirectoryProcessingResult.SKIP_CHILDREN;
       }
     }
@@ -67,6 +64,7 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
   public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots,
                                     @NotNull ProjectDescriptor projectDescriptor,
                                     @NotNull ProjectFromSourcesBuilder builder) {
+    builder.setupModulesByContentRoots(projectDescriptor, roots);
     if (!roots.isEmpty() && !builder.hasRootsFromOtherDetectors(this)) {
       List<ModuleDescriptor> modules = projectDescriptor.getModules();
       if (modules.isEmpty()) {
