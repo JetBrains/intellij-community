@@ -56,6 +56,16 @@ public class EmptyModuleBuilder extends ModuleBuilder {
   }
 
   @Override
+  public boolean isTemplate() {
+    return true;
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
+  @Override
   public String getDescription() {
     return "Empty project without modules. Use it to create free-style module structure.";
   }
