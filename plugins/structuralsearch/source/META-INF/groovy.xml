@@ -3,5 +3,6 @@
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
     <duplicates.profile implementation="com.intellij.structuralsearch.GroovyDuplicatesProfile"/>
+    <duplicates.presentation implementation="com.intellij.structuralsearch.GroovyDuplicatesProfile"/>
   </extensions>
 </idea-plugin>
