@@ -115,7 +115,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         ListPopup oldPopup = SoftReference.dereference(myPopup);
         if (oldPopup != null && !oldPopup.isDisposed()) {
           oldPopup.cancel();

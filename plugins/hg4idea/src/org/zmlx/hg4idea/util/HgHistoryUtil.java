@@ -197,9 +197,6 @@ public class HgHistoryUtil {
 
   @Nullable
   public static List<String> prepareHashes(@NotNull List<String> hashes) {
-    if (hashes.isEmpty()) {
-      return Collections.emptyList();
-    }
     List<String> hashArgs = new ArrayList<String>();
     for (String hash : hashes) {
       hashArgs.add("-r");

@@ -74,6 +74,7 @@ codeinsight
 codesign
 commandline
 committer
+commonjs
 conf
 config
 configs
@@ -577,6 +578,7 @@ vertices
 viewlet
 vtlvariable
 watchlist
+webpack
 webservice
 whitespace
 whitespaces

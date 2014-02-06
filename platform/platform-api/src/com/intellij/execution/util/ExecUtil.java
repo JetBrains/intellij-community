@@ -167,11 +167,18 @@ public class ExecUtil {
   @Nullable
   public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
-      final Process process = new GeneralCommandLine(command).createProcess();
-      InputStream inputStream = process.getInputStream();
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      InputStreamReader in = charset == null ? new InputStreamReader(inputStream) : new InputStreamReader(inputStream, charset);
-      final BufferedReader reader = new BufferedReader(in);
+      return readFirstLine(new GeneralCommandLine(command).createProcess().getInputStream(), charset);
+    }
+    catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String readFirstLine(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    BufferedReader reader = new BufferedReader(charset == null ? new InputStreamReader(inputStream) : new InputStreamReader(inputStream, charset));
+    try {
       try {
         return reader.readLine();
       }
@@ -179,8 +186,9 @@ public class ExecUtil {
         reader.close();
       }
     }
-    catch (Exception ignored) { }
-    return null;
+    catch (IOException ignored) {
+      return null;
+    }
   }
 
   /**

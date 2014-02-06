@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -156,8 +158,13 @@ public class AllClassesGetter {
 
       @Override
       public boolean process(PsiClass psiClass) {
-        if (parameters.getInvocationCount() < 2 && PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
-          return true;
+        if (parameters.getInvocationCount() < 2) {
+          if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
+            return true;
+          }
+          if (!StringUtil.isCapitalized(psiClass.getName()) && !Registry.is("ide.completion.show.lower.case.classes")) {
+            return true;
+          }
         }
 
         assert psiClass != null;

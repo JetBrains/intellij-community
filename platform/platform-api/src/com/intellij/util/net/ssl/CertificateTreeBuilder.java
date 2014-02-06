@@ -10,7 +10,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +36,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
   private final MultiMap<String, CertificateWrapper> myCertificates = new MultiMap<String, CertificateWrapper>();
 
-  public CertificateTreeBuilder(@NotNull Tree tree, @NotNull Collection<X509Certificate> certificates) {
-    for (X509Certificate certificate : certificates) {
-      addCertificate(certificate);
-    }
+  public CertificateTreeBuilder(@NotNull Tree tree) {
     init(tree, new DefaultTreeModel(new DefaultMutableTreeNode()), new MyTreeStructure(), new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -56,6 +52,21 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
       }
     }, true);
     initRootNode();
+  }
+
+  public void reset(@NotNull Collection<X509Certificate> certificates) {
+    myCertificates.clear();
+    for (X509Certificate certificate : certificates) {
+      addCertificate(certificate);
+    }
+    // expand organization nodes at the same time
+    //initRootNode();
+    queueUpdateFrom(RootDescriptor.ROOT, true).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        CertificateTreeBuilder.this.expandAll(null);
+      }
+    });
   }
 
   public void addCertificate(@NotNull X509Certificate certificate) {
@@ -105,22 +116,19 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
    * @return - selected certificates
    */
   @NotNull
-  public Set<X509Certificate> getSelectedCertificates() {
-    Set<X509Certificate> selected = new HashSet<X509Certificate>();
-    for (Object o : getSelectedElements()) {
-      if (o instanceof CertificateWrapper) {
-        selected.add(((CertificateWrapper)o).getCertificate());
-      }
-      else if (o instanceof String) {
-        selected.addAll(getCertificatesByOrganization((String)o));
+  public Set<X509Certificate> getSelectedCertificates(boolean addFromOrganization) {
+    Set<X509Certificate> selected = getSelectedElements(X509Certificate.class);
+    if (addFromOrganization) {
+      for (String s : getSelectedElements(String.class)) {
+        selected.addAll(getCertificatesByOrganization(s));
       }
     }
     return selected;
   }
 
   @Nullable
-  public X509Certificate getFirstSelectedCertificate() {
-    Set<X509Certificate> certificates = getSelectedCertificates();
+  public X509Certificate getFirstSelectedCertificate(boolean addFromOrganization) {
+    Set<X509Certificate> certificates = getSelectedCertificates(addFromOrganization);
     return certificates.isEmpty() ? null : certificates.iterator().next();
   }
 

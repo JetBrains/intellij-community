@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.usageView;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -91,6 +89,7 @@ public class UsageInfo {
     mySmartPointer = smartPointer;
   }
 
+  @NotNull
   public SmartPsiElementPointer<?> getSmartPointer() {
     return mySmartPointer;
   }
@@ -172,15 +171,8 @@ public class UsageInfo {
   /**
    * Override this method if you want a tooltip to be displayed for this usage
    */
-  public String getTooltipText () {
+  public String getTooltipText() {
     return null;
-  }
-
-  public final void navigateTo(boolean requestFocus) {
-    int offset = getNavigationOffset();
-    VirtualFile file = getVirtualFile();
-    Project project = getProject();
-    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
   }
 
   public int getNavigationOffset() {
@@ -233,6 +225,7 @@ public class UsageInfo {
     return element == null || element.isWritable();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!getClass().equals(o.getClass())) return false;
@@ -246,6 +239,7 @@ public class UsageInfo {
            && (myPsiFileRange == null || usageInfo.myPsiFileRange != null && smartPointerManager.pointToTheSameElement(myPsiFileRange, usageInfo.myPsiFileRange));
   }
 
+  @Override
   public int hashCode() {
     int result = mySmartPointer != null ? mySmartPointer.hashCode() : 0;
     result = 29 * result + (myPsiFileRange == null ? 0 : myPsiFileRange.hashCode());

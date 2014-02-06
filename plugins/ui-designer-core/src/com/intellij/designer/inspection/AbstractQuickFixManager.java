@@ -377,7 +377,7 @@ public abstract class AbstractQuickFixManager {
 
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent event, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
           showPopup();
           return true;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.listApplicableCustomTemplates;
 
 /**
  * @author peter
@@ -43,31 +44,32 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   public LiveTemplateCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
+      protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
         final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
+        Editor editor = parameters.getEditor();
         if (showAllTemplates()) {
+          final MultiMap<String, CustomLiveTemplateLookupElement> customTemplates = listApplicableCustomTemplates(editor, file, offset);
           final Ref<Boolean> templatesShown = Ref.create(false);
-
           final CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
             @Override
             public void consume(CompletionResult completionResult) {
               finalResult.passResult(completionResult);
-              ensureTemplatesShown(templatesShown, templates, finalResult);
+              ensureTemplatesShown(templatesShown, templates, customTemplates, finalResult);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, result);
+          ensureTemplatesShown(templatesShown, templates, customTemplates, result);
           return;
         }
 
         if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
-        String templatePrefix = findLiveTemplatePrefix(file, parameters.getEditor(), result.getPrefixMatcher().getPrefix());
+        String templatePrefix = findLiveTemplatePrefix(file, editor, result.getPrefixMatcher().getPrefix());
         final TemplateImpl template = findApplicableTemplate(file, offset, templatePrefix);
         if (template != null) {
           result = result.withPrefixMatcher(template.getKey());
@@ -76,7 +78,6 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         for (final TemplateImpl possible : templates) {
           result.restartCompletionOnPrefixChange(possible.getKey());
         }
-
       }
     });
   }
@@ -86,11 +87,21 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return Registry.is("show.live.templates.in.completion");
   }
 
-  private static void ensureTemplatesShown(Ref<Boolean> templatesShown, List<TemplateImpl> templates, CompletionResultSet result) {
+  private static void ensureTemplatesShown(Ref<Boolean> templatesShown,
+                                           List<TemplateImpl> templates,
+                                           MultiMap<String, CustomLiveTemplateLookupElement> customTemplates,
+                                           CompletionResultSet result) {
     if (!templatesShown.get()) {
       templatesShown.set(true);
       for (final TemplateImpl possible : templates) {
         result.addElement(new LiveTemplateLookupElementImpl(possible, false));
+      }
+
+      for (Map.Entry<String, Collection<CustomLiveTemplateLookupElement>> entry : customTemplates.entrySet()) {
+        Collection<CustomLiveTemplateLookupElement> value = entry.getValue();
+        if (!value.isEmpty()) {
+          result.withPrefixMatcher(entry.getKey()).addAllElements(value);
+        }
       }
     }
   }

@@ -16,11 +16,11 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Ilya.Kazakevich
  */
-class PyAncestorsUtils implements Predicate<PyClass> {
+class PyAncestorsUtils extends NotNullPredicate<PyClass> {
   @NotNull
   private final Set<VirtualFile> mySourceRoots;
 
@@ -44,17 +44,17 @@ class PyAncestorsUtils implements Predicate<PyClass> {
    * @return list of parents
    */
   @NotNull
-  static Collection<PyClass> getAncestorsUnderUserControl(@NotNull PyClass pyClass) {
-    List<PyClass> allAncestors = pyClass.getAncestorClasses(TypeEvalContext.userInitiated(pyClass.getContainingFile()));
+  static Collection<PyClass> getAncestorsUnderUserControl(@NotNull final PyClass pyClass) {
+    final List<PyClass> allAncestors = pyClass.getAncestorClasses(TypeEvalContext.userInitiated(pyClass.getContainingFile()));
     return Collections2.filter(allAncestors, new PyAncestorsUtils(PyUtil.getSourceRoots(pyClass)));
   }
 
-  private PyAncestorsUtils(@NotNull Collection<VirtualFile> sourceRoots) {
+  private PyAncestorsUtils(@NotNull final Collection<VirtualFile> sourceRoots) {
     mySourceRoots = Sets.newHashSet(sourceRoots);
   }
 
   @Override
-  public boolean apply(PyClass input) {
+  public boolean applyNotNull(@NotNull final PyClass input) {
     return VfsUtilCore.isUnder(input.getContainingFile().getVirtualFile(), mySourceRoots);
   }
 }

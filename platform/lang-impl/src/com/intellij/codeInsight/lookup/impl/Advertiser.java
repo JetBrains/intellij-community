@@ -78,7 +78,7 @@ public class Advertiser {
     myNextLabel.setForeground(JBColor.blue);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         myCurrentItem++;
         updateAdvertisements();
         return true;

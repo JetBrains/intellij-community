@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
@@ -22,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqual
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Processor;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,13 +33,19 @@ import java.util.List;
  * User: anna
  */
 public class InferenceIncorporationPhase {
+  private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
+  private PsiClassType myCapture;
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
   }
 
-  public void incorporate() {
+  public void setCapture(PsiClassType capture) {
+    myCapture = capture;
+  }
+
+  public boolean incorporate() {
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -51,6 +60,91 @@ public class InferenceIncorporationPhase {
 
       upUp(upperBounds);
     }
+
+    if (myCapture != null) {
+      final PsiClass gClass = myCapture.resolve();
+      LOG.assertTrue(gClass != null);
+      final PsiTypeParameter[] parameters = gClass.getTypeParameters();
+      PsiType[] typeArgs = myCapture.getParameters();
+      LOG.assertTrue(parameters.length == typeArgs.length);
+      for (int i = 0; i < typeArgs.length; i++) {
+        PsiType aType = typeArgs[i];
+        if (aType instanceof PsiCapturedWildcardType) {
+          aType = ((PsiCapturedWildcardType)aType).getWildcard();
+        }
+        final InferenceVariable inferenceVariable = mySession.getInferenceVariable(parameters[i]);
+        LOG.assertTrue(inferenceVariable != null);
+
+        final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+        final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
+        final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
+
+        if (aType instanceof PsiWildcardType) {
+
+          for (PsiType eqBound : eqBounds) {
+            if (mySession.isProperType(eqBound)) return false;
+          }
+
+          final PsiClassType[] paramBounds = parameters[i].getExtendsListTypes();
+
+          if (!((PsiWildcardType)aType).isBounded()) {
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                for (PsiClassType paramBound : paramBounds) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, paramBound));
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) return false;
+            }
+
+          } else if (((PsiWildcardType)aType).isExtends()) {
+
+            final PsiType extendsBound = ((PsiWildcardType)aType).getExtendsBound();
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                if (paramBounds.length == 1 && paramBounds[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramBounds.length == 0) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, extendsBound));
+                } else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+                  for (PsiClassType paramBound : paramBounds) {
+                    addConstraint(new StrictSubtypingConstraint(upperBound, paramBound));
+                  }
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) return false;
+            }
+
+          } else {
+            LOG.assertTrue(((PsiWildcardType)aType).isSuper());
+            final PsiType superBound = ((PsiWildcardType)aType).getSuperBound();
+
+            for (PsiType upperBound : upperBounds) {
+              if (mySession.isProperType(upperBound)) {
+                for (PsiClassType paramBound : paramBounds) {
+                  addConstraint(new StrictSubtypingConstraint(paramBound, upperBound));
+                }
+              }
+            }
+
+            for (PsiType lowerBound : lowerBounds) {
+              if (mySession.isProperType(lowerBound)) {
+                addConstraint(new StrictSubtypingConstraint(lowerBound, superBound));
+              }
+            }
+          }
+        } else {
+          inferenceVariable.addBound(aType, InferenceBound.EQ);
+        }
+      }
+    }
+    return true;
   }
 
   boolean isFullyIncorporated() {
@@ -168,7 +262,21 @@ public class InferenceIncorporationPhase {
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
-  private void upUp(List<PsiType> upperBounds) {
+  private boolean upUp(List<PsiType> upperBounds) {
+    return findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
+      @Override
+      public boolean process(Pair<PsiType, PsiType> pair) {
+        final PsiType sType = pair.first;
+        final PsiType tType = pair.second;
+        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+          addConstraint(new TypeEqualityConstraint(sType, tType));
+        }
+        return true;
+      }
+    });
+  }
+
+  public static boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds, Processor<Pair<PsiType, PsiType>> processor) {
     for (int i = 0; i < upperBounds.size(); i++) {
       final PsiType sBound = upperBounds.get(i);
       final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
@@ -188,14 +296,15 @@ public class InferenceIncorporationPhase {
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substitute(typeParameter);
               final PsiType tType = tSubstitutor.substitute(typeParameter);
-              if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-                addConstraint(new TypeEqualityConstraint(sType, tType));
+              if (!processor.process(Pair.create(sType, tType))) {
+                return true;
               }
             }
           }
         }
       }
     }
+    return false;
   }
 
   private void addConstraint(ConstraintFormula constraint) {

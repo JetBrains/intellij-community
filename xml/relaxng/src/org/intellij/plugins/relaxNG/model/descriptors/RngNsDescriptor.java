@@ -189,7 +189,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
           dPatterns = new ArrayList<DElementPattern>();
           name2patterns.put(qName, dPatterns);
         }
-        dPatterns.add(pattern);
+        if (!dPatterns.contains(pattern)) dPatterns.add(pattern);
       }
     }
 

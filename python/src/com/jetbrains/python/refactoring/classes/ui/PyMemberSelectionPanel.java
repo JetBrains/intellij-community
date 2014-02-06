@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.classes.ui;
 
+import com.google.common.base.Preconditions;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -25,22 +26,24 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * Panel that handles table with list of class members with selection checkboxes.
- * @see com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionTable
  *
  * @author Dennis.Ushakov
  */
 public class PyMemberSelectionPanel extends JPanel {
   private static final List<PyMemberInfo> EMPTY_MEMBER_INFO = Collections.emptyList();
   private final PyMemberSelectionTable myTable;
+  private boolean myInitialized;
 
 
   /**
-   * Creates empty panel to be filled later by {@link #getTable()}
+   * Creates empty panel to be filled later by {@link #init(com.intellij.refactoring.classMembers.MemberInfoModel, java.util.Collection)}
+   *
    * @param title
    */
   public PyMemberSelectionPanel(@NotNull String title) {
@@ -48,13 +51,13 @@ public class PyMemberSelectionPanel extends JPanel {
   }
 
   /**
-   * Creates panel and fills its table (see {@link #getTable()}) with members info
-   * @param title Title for panel
+   * Creates panel and fills its table (see {@link #init(com.intellij.refactoring.classMembers.MemberInfoModel, java.util.Collection)} ) with members info
+   *
+   * @param title      Title for panel
    * @param memberInfo list of members
-   * @param model model
+   * @param model      model
    */
   public PyMemberSelectionPanel(String title, List<PyMemberInfo> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo> model) {
-    super();
     Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
@@ -68,7 +71,35 @@ public class PyMemberSelectionPanel extends JPanel {
     add(scrollPane, BorderLayout.CENTER);
   }
 
-  public PyMemberSelectionTable getTable() {
-    return myTable;
+
+  /**
+   * Inits panel.
+   *
+   * @param memberInfoModel model to display memebers in table
+   * @param members         members to display
+   */
+  public void init(@NotNull final MemberInfoModel<PyElement, PyMemberInfo> memberInfoModel,
+                   @NotNull final Collection<PyMemberInfo> members) {
+    Preconditions.checkState(!myInitialized, "Already myInitialized");
+    myTable.setMemberInfos(members);
+    myTable.setMemberInfoModel(memberInfoModel);
+    myTable.addMemberInfoChangeListener(memberInfoModel);
+    myInitialized = true;
+  }
+
+  /**
+   * @return list of members, selected by user
+   */
+  @NotNull
+  public Collection<PyMemberInfo> getSelectedMemberInfos() {
+    Preconditions.checkState(myInitialized, "Call #init first");
+    return myTable.getSelectedMemberInfos();
+  }
+
+  /**
+   * Redraws table. Call it when some new data is available.
+   */
+  public void redraw() {
+    myTable.fireExternalDataChange();
   }
 }

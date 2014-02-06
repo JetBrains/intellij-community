@@ -148,6 +148,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     pyVisitor.visitPyClass(this);
   }
 
+  @Override
   @NotNull
   public PyStatementList getStatementList() {
     final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);

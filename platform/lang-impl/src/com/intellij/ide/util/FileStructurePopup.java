@@ -567,7 +567,7 @@ public class FileStructurePopup implements Disposable {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         if (path == null) return false; // user wants to expand/collapse a node
         navigateSelectedElement();

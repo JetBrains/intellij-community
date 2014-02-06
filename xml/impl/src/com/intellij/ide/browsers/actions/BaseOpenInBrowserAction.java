@@ -195,7 +195,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     open(createRequest(event.getDataContext()), (event.getModifiers() & InputEvent.SHIFT_MASK) != 0, browser);
   }
 
-  public static void open(@Nullable OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
+  public static void open(@Nullable final OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
     if (request == null) {
       return;
     }
@@ -207,7 +207,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
           @Override
           public void consume(Url url) {
             ApplicationManager.getApplication().saveAll();
-            UrlOpener.launchBrowser(url.toExternalForm(), browser);
+            UrlOpener.launchBrowser(url.toExternalForm(), browser, request.getProject());
           }
         });
       }

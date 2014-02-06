@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -68,6 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -249,24 +247,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Set<Language> languages = new SmartHashSet<Language>();
     Map<String, Language> langIds = new SmartHashMap<String, Language>();
     Set<String> dialects = new SmartHashSet<String>();
-    for (PsiElement element : inside) {
-      Language language = element.getLanguage();
-      if (languages.add(language)) {
-        langIds.put(language.getID(), language);
-        for (Language dialect : language.getDialects()) {
-          dialects.add(dialect.getID());
-        }
-      }
-    }
-    for (PsiElement element : outside) {
-      Language language = element.getLanguage();
-      if (languages.add(language)) {
-        langIds.put(language.getID(), language);
-        for (Language dialect : language.getDialects()) {
-          dialects.add(dialect.getID());
-        }
-      }
-    }
+    calculateDialects(inside, languages, langIds, dialects);
+    calculateDialects(outside, languages, langIds, dialects);
     MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = new MultiMap<LocalInspectionToolWrapper, String>() {
       @Override
       protected Collection<String> createCollection() {
@@ -308,6 +290,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     }
     return toolToLanguages;
+  }
+
+  private static void calculateDialects(@NotNull List<PsiElement> inside,
+                                        @NotNull Set<Language> languages,
+                                        @NotNull Map<String, Language> langIds,
+                                        @NotNull Set<String> dialects) {
+    for (PsiElement element : inside) {
+      Language language = element.getLanguage();
+      if (languages.add(language)) {
+        langIds.put(language.getID(), language);
+        for (Language dialect : language.getDialects()) {
+          dialects.add(dialect.getID());
+        }
+      }
+    }
   }
 
   @NotNull

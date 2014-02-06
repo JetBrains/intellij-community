@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,12 @@ public class ClsParsingUtil {
   @NotNull
   private static PsiExpression psiToClsExpression(final PsiExpression expr, @Nullable final ClsElementImpl parent) {
     if (expr instanceof PsiLiteralExpression) {
-      return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
+      if (parent != null && ((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
+        return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
+      }
+      else {
+        return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
+      }
     }
     if (expr instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpr = (PsiPrefixExpression)expr;
@@ -155,6 +160,9 @@ public class ClsParsingUtil {
       }
     }
     else {
+      if (parent != null && ((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
+        return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
+      }
       final PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();
       final Object value = evaluator.computeConstantExpression(expr);
       if (value != null) {

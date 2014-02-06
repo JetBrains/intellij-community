@@ -15,6 +15,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class JavaBreakpointAdapter extends JavaBreakpointAdapterBase {
   private static final Key<LineBreakpoint> OLD_JAVA_BREAKPOINT_KEY = Key.create("oldJavaBreakpoint");
 
@@ -26,6 +28,35 @@ public class JavaBreakpointAdapter extends JavaBreakpointAdapterBase {
   protected void configureCreatedBreakpoint(LineBreakpoint oldBreakpoint, XLineBreakpoint<XBreakpointProperties> breakpoint) {
     oldBreakpoint.SUSPEND_POLICY = transformSuspendPolicy(breakpoint);
     applyCondition(oldBreakpoint, breakpoint);
+    applyFilters(oldBreakpoint, breakpoint);
+  }
+
+  private boolean applyFilters(LineBreakpoint oldBreakpoint, XLineBreakpoint<XBreakpointProperties> breakpoint) {
+    boolean changed = false;
+    JavaBreakpointProperties properties = (JavaBreakpointProperties)breakpoint.getProperties();
+
+    changed |= oldBreakpoint.COUNT_FILTER_ENABLED != properties.COUNT_FILTER_ENABLED;
+    oldBreakpoint.COUNT_FILTER_ENABLED = properties.COUNT_FILTER_ENABLED;
+
+    changed |= oldBreakpoint.COUNT_FILTER != properties.COUNT_FILTER;
+    oldBreakpoint.COUNT_FILTER = properties.COUNT_FILTER;
+
+    changed |= oldBreakpoint.CLASS_FILTERS_ENABLED != properties.CLASS_FILTERS_ENABLED;
+    oldBreakpoint.CLASS_FILTERS_ENABLED = properties.CLASS_FILTERS_ENABLED;
+
+    changed |= !Arrays.equals(oldBreakpoint.getClassFilters(), properties.getClassFilters());
+    oldBreakpoint.setClassFilters(properties.getClassFilters());
+
+    changed |= !Arrays.equals(oldBreakpoint.getClassExclusionFilters(), properties.getClassExclusionFilters());
+    oldBreakpoint.setClassExclusionFilters(properties.getClassExclusionFilters());
+
+    changed |= oldBreakpoint.INSTANCE_FILTERS_ENABLED != properties.INSTANCE_FILTERS_ENABLED;
+    oldBreakpoint.INSTANCE_FILTERS_ENABLED = properties.INSTANCE_FILTERS_ENABLED;
+
+    changed |= !Arrays.equals(oldBreakpoint.getInstanceFilters(), properties.getInstanceFilters());
+    oldBreakpoint.setInstanceFilters(properties.getInstanceFilters());
+
+    return changed;
   }
 
   private static void applyCondition(LineBreakpoint oldBreakpoint, XLineBreakpoint<XBreakpointProperties> breakpoint) {
@@ -57,6 +88,10 @@ public class JavaBreakpointAdapter extends JavaBreakpointAdapterBase {
 
     if (StringUtil.compare(breakpoint.getCondition(), jBreakpoint.getCondition().getText(), false) != 0) {
       applyCondition(jBreakpoint, breakpoint);
+      changed = true;
+    }
+
+    if (applyFilters(jBreakpoint, breakpoint)) {
       changed = true;
     }
 
@@ -101,6 +136,7 @@ public class JavaBreakpointAdapter extends JavaBreakpointAdapterBase {
       }
     };
 
+    lineBreakpoint.setVisible(false);
     lineBreakpoint.init();
     return lineBreakpoint;
   }

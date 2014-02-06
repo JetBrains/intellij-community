@@ -62,7 +62,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
         group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            UrlOpener.launchBrowser(url, browser);
+            UrlOpener.launchBrowser(url, browser, e.getProject());
           }
         });
       }
@@ -79,6 +79,6 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
 
   @Override
   public void navigate(Project project) {
-    UrlOpener.launchBrowser(url, browser);
+    UrlOpener.launchBrowser(url, browser, project);
   }
 }

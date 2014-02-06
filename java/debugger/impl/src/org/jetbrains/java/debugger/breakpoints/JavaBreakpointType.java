@@ -62,6 +62,12 @@ public class JavaBreakpointType extends XLineBreakpointTypeBase {
 
   @Nullable
   @Override
+  public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+    return new JavaBreakpointProperties();
+  }
+
+  @Nullable
+  @Override
   public XBreakpointCustomPropertiesPanel<XLineBreakpoint<XBreakpointProperties>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointPropertiesPanel(project);
   }

@@ -66,6 +66,9 @@ public abstract class ProjectCategory {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  /**
+   * Preselects the frameworks in tree.
+   */
   public String[] getPreselectedFrameworkIds() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }

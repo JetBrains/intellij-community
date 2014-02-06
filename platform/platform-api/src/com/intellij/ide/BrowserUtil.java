@@ -51,10 +51,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -251,7 +249,7 @@ public class BrowserUtil {
   @NotNull
   public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName, boolean newWindowIfPossible) {
     if (new File(browserPathOrName).isFile()) {
-      return newSmartList(browserPathOrName);
+      return Collections.singletonList(browserPathOrName);
     }
     else if (SystemInfo.isMac) {
       List<String> command = newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
@@ -261,10 +259,10 @@ public class BrowserUtil {
       return command;
     }
     else if (SystemInfo.isWindows) {
-      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
+      return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
     }
     else {
-      return newSmartList(browserPathOrName);
+      return Collections.singletonList(browserPathOrName);
     }
   }
 

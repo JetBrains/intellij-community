@@ -21,11 +21,57 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
+
+  private boolean oldRegistryValue;
+
+  @Override
+  public void setUp() {
+    super.setUp();
+    RegistryValue registryValue = Registry.get("show.live.templates.in.completion");
+    oldRegistryValue = registryValue.asBoolean();
+    registryValue.setValue(false);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    RegistryValue registryValue = Registry.get("show.live.templates.in.completion");
+    registryValue.setValue(oldRegistryValue);
+
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
+    assertNotNull(settings);
+    settings.setTemplatesState(ContainerUtil.<String, Boolean>newHashMap());
+    settings.setPostfixTemplatesEnabled(true);
+    settings.setTemplatesCompletionEnabled(true);
+    super.tearDown();
+  }
+
+  public void testSimpleCompletionList() {
+    Registry.get("show.live.templates.in.completion").setValue(true);
+
+    doAutoPopupTest("ins", InstanceofExpressionPostfixTemplate.class);
+  }
+
+  public void testAutopopupWithEnabledLiveTemplatesInCompletion() {
+    Registry.get("show.live.templates.in.completion").setValue(true);
+
+    configureByFile();
+    type("instanceof");
+    LookupImpl lookup = getLookup();
+    assertNotNull(lookup);
+    assertEquals(1, lookup.getItems().size());
+    LookupElement item = lookup.getCurrentItem();
+    assertNotNull(item);
+    assertInstanceOf(item, PostfixTemplateLookupElement.class);
+    assertInstanceOf(((PostfixTemplateLookupElement)item).getPostfixTemplate(), InstanceofExpressionPostfixTemplate.class);
+  }
+
   public void testDoNotShowTemplateInInappropriateContext() {
     doAutoPopupTest("instanceof", null);
   }
@@ -42,7 +88,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   public void testShowAutoPopupForAliases() {
     doAutoPopupTest("nn", NotNullCheckPostfixTemplate.class);
   }
-  
+
   public void testShowAutoPopupForFloatLiterals() {
     doAutoPopupTest("fori", ForAscendingPostfixTemplate.class);
   }
@@ -53,7 +99,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     settings.setPostfixTemplatesEnabled(false);
     doAutoPopupTest("instanceof", null);
   }
-  
+
   public void testDoNotShowTemplateIfTemplateCompletionIsDisabled() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -108,16 +154,6 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
     type("r");
     myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    assertNotNull(settings);
-    settings.setTemplatesState(ContainerUtil.<String, Boolean>newHashMap());
-    settings.setPostfixTemplatesEnabled(true);
-    settings.setTemplatesCompletionEnabled(true);
-    super.tearDown();
   }
 
   @Override

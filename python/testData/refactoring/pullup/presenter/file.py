@@ -53,3 +53,10 @@ class HugeChild(SubParent1, date): #SubParent1 is disabled
     @staticmethod
         def bad_method(): #Code has errors, so method should be not be marked as static
             pass
+
+class Bar(object):
+    C = 1
+
+class Foo(Bar):
+    def __init__(self):
+        self.foo = 12

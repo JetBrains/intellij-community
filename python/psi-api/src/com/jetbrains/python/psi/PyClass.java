@@ -36,7 +36,7 @@ import java.util.List;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner {
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @NotNull
     @Override
@@ -48,8 +48,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @Nullable
   ASTNode getNameNode();
 
-  @NotNull
-  PyStatementList getStatementList();
 
   /**
    * Returns types of all ancestors from the hierarchy.

@@ -24,6 +24,8 @@ import java.awt.event.MouseEvent;
  * Describes a hyperlink inside a debugger node
  */
 public abstract class XDebuggerTreeNodeHyperlink {
+  public static final SimpleTextAttributes TEXT_ATTRIBUTES = SimpleTextAttributes.GRAY_ATTRIBUTES;
+
   private final String linkText;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull String linkText) {
@@ -37,7 +39,7 @@ public abstract class XDebuggerTreeNodeHyperlink {
 
   @NotNull
   public SimpleTextAttributes getTextAttributes() {
-    return SimpleTextAttributes.GRAY_ATTRIBUTES;
+    return TEXT_ATTRIBUTES;
   }
 
   public abstract void onClick(MouseEvent event);

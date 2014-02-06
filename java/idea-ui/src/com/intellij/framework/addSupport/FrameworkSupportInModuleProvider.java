@@ -16,8 +16,8 @@
 package com.intellij.framework.addSupport;
 
 import com.intellij.framework.FrameworkOrGroup;
-import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
@@ -58,11 +58,6 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return getFrameworkType().getPresentableName();
   }
 
-  @NotNull
-  public String[] getProjectCategories() {
-    return getFrameworkType().getProjectCategories();
-  }
-
   public FrameworkRole[] getRoles() {
     return getFrameworkType().getRoles();
   }
@@ -71,7 +66,7 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return "Version:";
   }
 
-  public List<String> getOptionalDependenciesFrameworkIds() {
+  public List<FrameworkDependency> getDependenciesFrameworkIds() {
     return Collections.emptyList();
   }
 
@@ -89,5 +84,34 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
   @Override
   public String toString() {
     return getPresentableName();
+  }
+
+  public static class FrameworkDependency {
+    private final String myFrameworkId;
+    private final boolean myOptional;
+
+    private FrameworkDependency(String frameworkId, boolean optional) {
+      myFrameworkId = frameworkId;
+      myOptional = optional;
+    }
+
+    public static FrameworkDependency optional(String frameworkId) {
+      return new FrameworkDependency(frameworkId, true);
+    }
+
+    public static FrameworkDependency required(String frameworkId) {
+      return new FrameworkDependency(frameworkId, false);
+    }
+
+    public String getFrameworkId() {
+      return myFrameworkId;
+    }
+
+    /**
+     * True if dependency is not required.
+     */
+    public boolean isOptional() {
+      return myOptional;
+    }
   }
 }

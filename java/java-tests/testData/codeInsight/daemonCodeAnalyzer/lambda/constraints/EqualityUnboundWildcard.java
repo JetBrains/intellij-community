@@ -19,7 +19,7 @@ public class SampleExtendsWildcard {
 
 class SampleSuperWildcard {
   public void highlightsTheBug(Stream<String> stream) {
-    stream.flatMap((<error descr="Incompatible parameter types in lambda expression">Block<?> sink</error>, String element) -> {});
+    stream.flatMap(<error descr="Cannot infer functional interface type">(Block<?> sink, String element) -> {}</error>);
   }
 
   public interface Block<B> {

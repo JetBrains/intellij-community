@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -127,9 +128,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public boolean isValid() {
-    if (myIsForDecompiling) return true;
-    VirtualFile vFile = getVirtualFile();
-    return vFile.isValid();
+    return myIsForDecompiling || getVirtualFile().isValid();
+  }
+
+  protected boolean isForDecompiling() {
+    return myIsForDecompiling;
   }
 
   @Override
@@ -281,10 +284,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       @Override
       public Result<PsiElement> compute() {
         PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
-        return Result.create(target, 
-                             ClsFileImpl.this, 
-                             target.getContainingFile(), 
-                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
+        ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
+        return Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
       }
     });
   }

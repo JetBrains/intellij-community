@@ -631,7 +631,7 @@ public abstract class ChooseByNameBase {
                             ListSelectionModel.SINGLE_SELECTION);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!myTextField.hasFocus()) {
           myTextField.requestFocus();
         }

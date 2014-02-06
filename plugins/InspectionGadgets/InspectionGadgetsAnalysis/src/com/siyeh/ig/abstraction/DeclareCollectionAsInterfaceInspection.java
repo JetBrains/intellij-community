@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         }
       }
       final PsiType type = variable.getType();
-      if (!CollectionUtils.isCollectionClass(type) || LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
+      if (!CollectionUtils.isConcreteCollectionClass(type) || LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
         return;
       }
       final PsiTypeElement typeElement = variable.getTypeElement();
@@ -252,7 +252,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiType type = method.getReturnType();
-      if (type == null || !CollectionUtils.isCollectionClass(type)) {
+      if (!CollectionUtils.isConcreteCollectionClass(type)) {
         return;
       }
       if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
@@ -302,7 +302,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       final ProgressManager progressManager =
         ProgressManager.getInstance();
       final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
-      SearchScope useScope = element.getUseScope();
+      final SearchScope useScope = element.getUseScope();
       if (useScope instanceof GlobalSearchScope) {
         return searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
       }

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -52,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -362,13 +360,13 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrAnnotation[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAnnotation[]>() {
       @Nullable
       @Override
       public Result<GrAnnotation[]> compute() {
         return Result.create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
-    }).getValue();
+    });
   }
 
   @NotNull

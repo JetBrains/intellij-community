@@ -16,16 +16,15 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 
-import com.jetbrains.python.vp.Presenter;
+import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenter;
 
 /**
  * Presenter for pull-up refactoring
+ *
+ * TODO: Interface left empty. Remove?
+ *
  * @author Ilya.Kazakevich
  */
-public interface PyPullUpPresenter extends Presenter {
+public interface PyPullUpPresenter extends MembersBasedPresenter {
 
-  /**
-   * To be called by view when user clicks "ok"
-   */
-  void okClicked();
 }

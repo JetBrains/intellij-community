@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -32,7 +33,10 @@ import static com.intellij.codeInsight.template.postfix.completion.PostfixTempla
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
-    if (!isCompletionEnabled(parameters)) {
+    if (!isCompletionEnabled(parameters) || Registry.is("show.live.templates.in.completion")) {
+      /**
+       * disabled or covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
+       */
       return;
     }
 

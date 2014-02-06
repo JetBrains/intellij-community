@@ -70,7 +70,7 @@ public class JdkChooserPanel extends JPanel {
     });
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myProject == null) {
           editJdkTable();
         }

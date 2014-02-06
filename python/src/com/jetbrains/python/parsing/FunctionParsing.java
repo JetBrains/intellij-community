@@ -111,6 +111,7 @@ public class FunctionParsing extends Parsing {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
+      myBuilder.mark().done(PyElementTypes.STATEMENT_LIST); // To have non-empty empty statement list
       endMarker.done(getFunctionType());
     }
   }

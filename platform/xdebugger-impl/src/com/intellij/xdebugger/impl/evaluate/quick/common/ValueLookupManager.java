@@ -57,10 +57,14 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
   @Override
   public void mouseMoved(EditorMouseEvent e) {
-    if (e.isConsumed()) return;
+    if (e.isConsumed()) {
+      return;
+    }
 
     Editor editor = e.getEditor();
-    if (editor.getProject() != null && editor.getProject() != myProject) return;
+    if (editor.getProject() != null && editor.getProject() != myProject) {
+      return;
+    }
 
     Point point = e.getMouseEvent().getPoint();
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
@@ -92,7 +96,7 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   }
 
   public void hideHint() {
-    if(myRequest != null) {
+    if (myRequest != null) {
       myRequest.hideHint();
       myRequest = null;
     }
@@ -100,7 +104,9 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
   public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, ValueHintType type) {
     myAlarm.cancelAllRequests();
-    if (editor.isDisposed() || !handler.canShowHint(myProject)) return;
+    if (editor.isDisposed() || !handler.canShowHint(myProject)) {
+      return;
+    }
 
     final AbstractValueHint request = handler.createValueHint(myProject, editor, point, type);
     if (request != null) {
@@ -108,8 +114,12 @@ public class ValueLookupManager implements EditorMouseMotionListener {
         return;
       }
 
-      if (!request.canShowHint()) return;
-      if (myRequest != null && myRequest.isInsideHint(editor, point)) return;
+      if (!request.canShowHint()) {
+        return;
+      }
+      if (myRequest != null && myRequest.isInsideHint(editor, point)) {
+        return;
+      }
 
       hideHint();
 
