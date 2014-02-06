@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
@@ -106,8 +105,7 @@ public abstract class AbstractValueHint {
   }
 
   public static int calculateOffset(@NotNull Editor editor, @NotNull Point point) {
-    LogicalPosition pos = editor.xyToLogicalPosition(point);
-    return editor.logicalPositionToOffset(pos);
+    return editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
   }
 
   public void hideHint() {
