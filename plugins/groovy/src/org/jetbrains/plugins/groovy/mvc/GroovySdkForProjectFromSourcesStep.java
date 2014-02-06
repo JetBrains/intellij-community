@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.module.StdModuleTypes;
 
@@ -47,7 +48,7 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
     super.updateDataModel();
     List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
-      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<DetectedProjectRoot>emptyList());
+      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<DetectedSourceRoot>emptyList());
       descriptor.addConfigurationUpdater(createModuleConfigurationUpdater());
       modules.add(descriptor);
     }

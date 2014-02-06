@@ -222,6 +222,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
       if (builder.isTemplate()) {
         TemplatesGroup group = groupMap.get(builder.getGroupName());
+        if (group == null) {
+          group = new TemplatesGroup(builder);
+        }
         myTemplatesMap.putValue(group, template);
       }
       else {

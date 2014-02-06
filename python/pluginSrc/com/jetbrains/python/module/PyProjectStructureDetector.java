@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.module;
 
-import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -65,16 +63,6 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
                                     @NotNull ProjectDescriptor projectDescriptor,
                                     @NotNull ProjectFromSourcesBuilder builder) {
     builder.setupModulesByContentRoots(projectDescriptor, roots);
-    if (!roots.isEmpty() && !builder.hasRootsFromOtherDetectors(this)) {
-      List<ModuleDescriptor> modules = projectDescriptor.getModules();
-      if (modules.isEmpty()) {
-        modules = new ArrayList<ModuleDescriptor>();
-        for (DetectedProjectRoot root : roots) {
-          modules.add(new ModuleDescriptor(root.getDirectory(), PythonModuleType.getInstance(), root));
-        }
-        projectDescriptor.setModules(modules);
-      }
-    }
   }
 
   @Override

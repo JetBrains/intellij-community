@@ -322,7 +322,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
       List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
       for (DetectedProjectRoot root : roots) {
         if (root instanceof DetectedContentRoot) {
-          modules.add(new ModuleDescriptor(root.getDirectory(), ((DetectedContentRoot)root).getModuleType(), Collections.<DetectedProjectRoot>emptyList()));
+          modules.add(new ModuleDescriptor(root.getDirectory(), ((DetectedContentRoot)root).getModuleType(), Collections.<DetectedSourceRoot>emptyList()));
         }
       }
       projectDescriptor.setModules(modules);
@@ -357,8 +357,8 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
       VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
       if (moduleContentRoot != null) {
         final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final Collection<DetectedProjectRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
-        for (DetectedProjectRoot srcRoot : sourceRoots) {
+        final Collection<DetectedSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
+        for (DetectedSourceRoot srcRoot : sourceRoots) {
           final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
           final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
           if (sourceRoot != null) {
@@ -385,12 +385,10 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
         }
       }
     }
-
   }
 
-  public static String getPackagePrefix(final DetectedProjectRoot srcRoot) {
-    // TODO we can introduce DetectedProjectRootWithPackagePrefix interface
-    return srcRoot instanceof JavaModuleSourceRoot ? ((JavaModuleSourceRoot)srcRoot).getPackagePrefix() : "";
+  public static String getPackagePrefix(final DetectedSourceRoot srcRoot) {
+    return srcRoot.getPackagePrefix();
   }
 
   @NotNull
