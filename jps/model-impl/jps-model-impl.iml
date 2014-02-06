@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="core-api" />
   </component>
 </module>
 
