@@ -152,12 +152,6 @@ public class SvnUtil {
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
   }
 
-  public static Map<String, File> getLocationInfoForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
-    final LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(vcs.getProject(), path, crawler, progress);
-    return crawler.getLocationInfos();
-  }
-
   public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
@@ -412,35 +406,6 @@ public class SvnUtil {
     }
 
     return result;
-  }
-
-  private static class LocationsCrawler implements SvnWCRootCrawler {
-    private final SvnVcs myVcs;
-    private final Map<String, File> myLocations;
-
-    public LocationsCrawler(SvnVcs vcs) {
-      myVcs = vcs;
-      myLocations = new HashMap<String, File>();
-    }
-
-    public Map<String, File> getLocationInfos() {
-      return Collections.unmodifiableMap(myLocations);
-    }
-
-    public void handleWorkingCopyRoot(File root, ProgressIndicator progress) {
-      String oldText = null;
-      if (progress != null) {
-        oldText = progress.getText();
-        progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
-      }
-      SVNInfo info = myVcs.getInfo(root);
-      if (info != null && info.getURL() != null) {
-        myLocations.put(info.getURL().toString(), info.getFile());
-      }
-      if (progress != null) {
-        progress.setText(oldText);
-      }
-    }
   }
 
   @Nullable
@@ -738,6 +703,10 @@ public class SvnUtil {
     catch (SVNException e) {
       return false;
     }
+  }
+
+  public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
+    return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }
 
   public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {

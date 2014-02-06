@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
@@ -67,11 +68,16 @@ public class SvnRepositoryLocation implements RepositoryLocation {
   public static FilePath getLocalPath(final String fullPath, final NotNullFunction<File, Boolean> detector, final SvnVcs vcs) {
     if (vcs.getProject().isDefault()) return null;
     final RootUrlInfo rootForUrl = vcs.getSvnFileUrlMapping().getWcRootForUrl(fullPath);
+    FilePath result = null;
+
     if (rootForUrl != null) {
-      return LocationDetector.filePathByUrlAndPath(fullPath, rootForUrl.getUrl().toString(), rootForUrl.getIoFile().getAbsolutePath(), detector);
+      String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), fullPath);
+      File file = new File(rootForUrl.getPath(), relativePath);
+
+      result = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, detector);
     }
 
-    return null;
+    return result;
   }
 
   public SVNURL toSvnUrl() throws VcsException {
