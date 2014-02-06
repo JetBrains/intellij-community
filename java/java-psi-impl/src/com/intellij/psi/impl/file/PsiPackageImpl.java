@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,28 +30,27 @@ import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
   public static boolean DEBUG = false;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
-  private volatile Reference<Set<String>> myPublicClassNamesCache;
+  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -176,43 +176,66 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject());
   }
 
-  private Set<String> getClassNamesCache() {
-    Set<String> cache = SoftReference.dereference(myPublicClassNamesCache);
-    if (cache == null) {
-      GlobalSearchScope scope = allScope();
-
-      if (!scope.isForceSearchingInLibrarySources()) {
-        scope = new DelegatingGlobalSearchScope(scope) {
-          @Override
-          public boolean isForceSearchingInLibrarySources() {
-            return true;
-          }
-        };
-      }
-      cache = getFacade().getClassNames(this, scope);
-      myPublicClassNamesCache = new SoftReference<Set<String>>(cache);
-    }
-
-    return cache;
-  }
-
   @NotNull
-  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope) {
+  private PsiClass[] getCachedClassesByName(String name) {
+    SoftReference<Map<String, PsiClass[]>> ref = myClassCache;
+    Map<String, PsiClass[]> map = SoftReference.dereference(ref);
+    if (map == null) {
+      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = new ConcurrentSoftValueHashMap<String, PsiClass[]>());
+    }
+    PsiClass[] classes = map.get(name);
+    if (classes != null) {
+      return classes;
+    }
+    
+    GlobalSearchScope scope = new EverythingGlobalScope(getProject());
+
+    if (DumbService.getInstance(getProject()).isDumb()) {
+      if (ref == null) {
+        for (PsiClass psiClass : getClasses(scope)) {
+          String psiClassName = psiClass.getName();
+          if (psiClassName != null) {
+            PsiClass[] existing = map.get(psiClassName);
+            map.put(psiClassName, existing == null ? new PsiClass[]{psiClass} : ArrayUtil.append(existing, psiClass));
+          }
+        }
+      }
+      classes = map.get(name);
+      return classes == null ? PsiClass.EMPTY_ARRAY : classes;
+    }
+    
     final String qName = getQualifiedName();
     final String classQName = !qName.isEmpty() ? qName + "." + name : name;
-    return getFacade().findClasses(classQName, scope);
+    map.put(name, classes = getFacade().findClasses(classQName, scope));
+    return classes;
   }
-
+  
   @Override
   public boolean containsClassNamed(String name) {
-    return getClassNamesCache().contains(name);
+    return getCachedClassesByName(name).length > 0;
   }
 
   @NotNull
   @Override
-  public PsiClass[] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
-    if (!containsClassNamed(name)) return PsiClass.EMPTY_ARRAY;
-    return getFacade().findClassByShortName(name, this, scope);
+  public PsiClass[] findClassByShortName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
+    PsiClass[] allClasses = getCachedClassesByName(name);
+    if (allClasses.length == 0) return allClasses;
+    if (allClasses.length == 1) {
+      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses : PsiClass.EMPTY_ARRAY;
+    }
+    PsiClass[] array = ContainerUtil.findAllAsArray(allClasses, new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass aClass) {
+        return PsiSearchScopeUtil.isInScope(scope, aClass);
+      }
+    });
+    Arrays.sort(array, new Comparator<PsiClass>() {
+      @Override
+      public int compare(PsiClass o1, PsiClass o2) {
+        return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+      }
+    });
+    return array;
   }
 
   @Nullable
@@ -233,24 +256,18 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     final JavaPsiFacade facade = getFacade();
-    final Condition<String> prefixMatcher = processor.getHint(JavaCompletionHints.NAME_FILTER);
+    final Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
-        if (containsClassNamed(shortName) && processClassesByName(processor, state, scope, shortName)) return false;
-      }
-      else if (prefixMatcher != null) {
-        for (String className : getClassNamesCache()) {
-          if (prefixMatcher.value(className)) {
-            if (processClassesByName(processor, state, scope, className)) return false;
-          }
-        }
+        final PsiClass[] classes = findClassByShortName(shortName, scope);
+        if (!processClasses(processor, state, classes, Condition.TRUE)) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        if (!processClasses(processor, state, classes)) return false;
+        if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Condition.TRUE)) return false;
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
@@ -278,17 +295,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return true;
   }
 
-  private boolean processClassesByName(PsiScopeProcessor processor,
-                                       ResolveState state,
-                                       GlobalSearchScope scope,
-                                       String className) {
-    final PsiClass[] classes = findClassesByName(className, scope);
-    return !processClasses(processor, state, classes);
-  }
-
-  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes) {
+  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes, 
+                                        @NotNull Condition<String> nameCondition) {
     for (PsiClass aClass : classes) {
-      if (!processor.execute(aClass, state)) return false;
+      String name = aClass.getName();
+      if (name != null && nameCondition.value(name) && !processor.execute(aClass, state)) return false;
     }
     return true;
   }
