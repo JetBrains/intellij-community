@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
@@ -338,6 +339,29 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   public boolean isModified(@NotNull List<T> oldItems) {
     return model.isModified(oldItems);
+  }
+
+  public void selectItem(@NotNull final T item) {
+    table.clearSelection();
+
+    final Ref<T> ref;
+    if (model.modifiedToOriginal.isEmpty()) {
+      ref = null;
+    }
+    else {
+      ref = Ref.create();
+      model.modifiedToOriginal.forEachEntry(new TObjectObjectProcedure<T, T>() {
+        @Override
+        public boolean execute(T modified, T original) {
+          if (item == original) {
+            ref.set(modified);
+          }
+          return ref.isNull();
+        }
+      });
+    }
+
+    table.addSelection(ref == null || ref.isNull() ? item : ref.get());
   }
 
   @NotNull
