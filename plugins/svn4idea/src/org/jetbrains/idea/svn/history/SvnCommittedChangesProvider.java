@@ -51,9 +51,7 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -378,45 +376,23 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public Pair<SvnChangeList, FilePath> getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
     final RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
     if (rootUrlInfo == null) return null;
-    final VirtualFile root = rootUrlInfo.getVirtualFile();
-    final SvnRepositoryLocation svnRootLocation = (SvnRepositoryLocation)getLocationFor(new FilePathImpl(root));
-    if (svnRootLocation == null) return null;
-    final String url = svnRootLocation.getURL();
-    final long revision;
-    try {
-      revision = Long.parseLong(number.asString());
-    } catch (NumberFormatException e) {
-      throw new VcsException(e);
-    }
 
     final SvnChangeList[] result = new SvnChangeList[1];
-    final SVNLogClient logger;
-    final SVNRevision revisionBefore;
-    final SVNURL repositoryUrl;
-    final SVNURL svnurl;
-    final SVNInfo targetInfo;
-    try {
-      logger = myVcs.createLogClient();
-      revisionBefore = SVNRevision.create(revision);
-
-      svnurl = SVNURL.parseURIEncoded(url);
-      final SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
-      targetInfo = myVcs.getInfo(new File(file.getPath()));
-      if (info == null) {
-        throw new VcsException("Can not get repository URL");
-      }
-      repositoryUrl = info.getRepositoryRootURL();
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      throw new VcsException(e);
-    }
+    final SVNRevision revisionBefore = ((SvnRevisionNumber)number).getRevision();
+    final SVNURL repositoryUrl = rootUrlInfo.getRepositoryUrlUrl();
+    final SVNURL svnRootUrl = rootUrlInfo.getAbsoluteUrlAsUrl();
+    final SvnRepositoryLocation svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getAbsoluteUrl());
+    final String repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
+      SvnUtil.getRelativeUrl(repositoryUrl.toDecodedString(), svnRootUrl.toDecodedString()),
+      SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
     FilePath filePath = VcsUtil.getFilePath(file);
+    SVNLogClient logger = myVcs.createLogClient();
 
-    if (!tryExactHit(svnRootLocation, result, logger, revisionBefore, repositoryUrl, svnurl) &&
+    if (!tryExactHit(svnRootLocation, result, logger, revisionBefore, repositoryUrl, svnRootUrl) &&
         !tryByRoot(result, logger, revisionBefore, repositoryUrl)) {
-      filePath = getOneListStepByStep(svnRootLocation, result, logger, revisionBefore, svnurl, targetInfo, filePath);
+      filePath =
+        getOneListStepByStep(svnRootLocation, result, logger, revisionBefore, svnRootUrl, repositoryUrl, repositoryRelativeUrl, filePath);
     }
     else {
       Change change = ContainerUtil.getFirstItem(result[0].getChanges());
@@ -426,13 +402,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         filePath = afterRevision != null ? afterRevision.getFile() : filePath;
       }
       else {
-        String relativePath = SVNPathUtil.getRelativePath(targetInfo.getRepositoryRootURL().toString(), targetInfo.getURL().toString());
-        relativePath = relativePath.startsWith("/") ? relativePath : "/" + relativePath;
-        final Change targetChange = result[0].getByPath(relativePath);
+        final Change targetChange = result[0].getByPath(repositoryRelativeUrl);
 
-        filePath = targetChange == null
-                   ? getOneListStepByStep(svnRootLocation, result, logger, revisionBefore, svnurl, targetInfo, filePath)
-                   : filePath;
+        filePath = targetChange == null ? getOneListStepByStep(svnRootLocation, result, logger, revisionBefore, svnRootUrl, repositoryUrl,
+                                                               repositoryRelativeUrl, filePath) : filePath;
       }
     }
 
@@ -444,8 +417,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                         SVNLogClient logger,
                                         SVNRevision revisionBefore,
                                         SVNURL svnurl,
-                                        SVNInfo targetInfo, FilePath filePath) throws VcsException {
-    FilePath path = tryStepByStep(svnRootLocation, result, logger, revisionBefore, targetInfo, svnurl);
+                                        SVNURL repositoryUrl, String relativeUrl, FilePath filePath) throws VcsException {
+    FilePath path = tryStepByStep(svnRootLocation, result, logger, revisionBefore, repositoryUrl, relativeUrl, svnurl);
 
     return path == null ? filePath : path;
   }
@@ -471,12 +444,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   // return changed path, if any
   private FilePath tryStepByStep(final SvnRepositoryLocation svnRepositoryLocation,
-                             final SvnChangeList[] result,
-                             SVNLogClient logger,
-                             final SVNRevision revisionBefore, final SVNInfo info, SVNURL svnurl) throws VcsException {
-    final String repositoryRoot = info.getRepositoryRootURL().toString();
+                                 final SvnChangeList[] result,
+                                 SVNLogClient logger,
+                                 final SVNRevision revisionBefore, final SVNURL repositoryUrl, String relativeUrl, SVNURL svnurl)
+    throws VcsException {
     try {
-      final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(info);
+      final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), relativeUrl);
       // TODO: Implement this with command line
       logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
                    false, true, false, 0, null,
@@ -489,7 +462,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                        }
                        pathTracker.accept(logEntry);
                        if (logEntry.getRevision() == revisionBefore.getNumber()) {
-                         result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryRoot);
+                         result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryUrl.toDecodedString());
                        }
                      }
                    });

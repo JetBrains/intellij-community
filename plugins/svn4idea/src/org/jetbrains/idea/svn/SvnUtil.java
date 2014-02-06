@@ -709,6 +709,19 @@ public class SvnUtil {
     return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }
 
+  public static String getRelativePath(@NotNull String parentPath, @NotNull String childPath) {
+    return  FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(parentPath), FileUtil.toSystemIndependentName(childPath), '/');
+  }
+
+  public static String ensureStartSlash(@NotNull String path) {
+    return StringUtil.startsWithChar(path, '/') ? path : '/' + path;
+  }
+
+  @NotNull
+  public static String join(@NotNull final String... parts) {
+    return StringUtil.join(parts, "/");
+  }
+
   public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
     if (StringUtil.isEmpty(subPath)) return base;
     final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);

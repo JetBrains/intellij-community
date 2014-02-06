@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import java.io.File;
 import java.util.Map;
@@ -41,10 +40,9 @@ public class SvnCopyPathTracker {
   private String myRepositoryRoot;
   private boolean myHadChanged;
 
-  public SvnCopyPathTracker(@NotNull final SVNInfo info) {
-    myRepositoryRoot = info.getRepositoryRootURL().toString();
-    myCurrentPath = SVNPathUtil.getRelativePath(myRepositoryRoot, info.getURL().toString());
-    myCurrentPath = myCurrentPath.startsWith("/") ? myCurrentPath : ("/" + myCurrentPath);
+  public SvnCopyPathTracker(@NotNull String repositoryUrl, @NotNull String relativeUrl) {
+    myRepositoryRoot = repositoryUrl;
+    myCurrentPath = relativeUrl;
   }
 
   public void accept(@NotNull final SVNLogEntry entry) {
