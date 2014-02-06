@@ -77,7 +77,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       Object userObject = treeNode.getUserObject();
 
-      Rectangle visibleRect = tree == null ? EMPTY_RECTANGLE : tree.getVisibleRect();
+      Rectangle visibleRect = tree == null ? EMPTY_RECTANGLE : ((JViewport)tree.getParent()).getViewRect();
       if (!visibleRect.isEmpty()) {
         RowLocation visible = isRowVisible(row, visibleRect);
         if (visible != RowLocation.INSIDE_VISIBLE_RECT) {
@@ -241,7 +241,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       pref = cachedPreferredSize;
     }
     pref.width = Math.max(visibleRect.width, pref.width);
-    int y = pref.height * row;
+    int y = getTree().getRowBounds(row).y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);
     boolean inside = vis.contains(y);
     if (inside) {
