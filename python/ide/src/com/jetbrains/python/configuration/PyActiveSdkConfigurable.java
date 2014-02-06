@@ -32,52 +32,133 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private JPanel myPanel;
   private final Project myProject;
   @Nullable private final Module myModule;
-  private JComboBox mySdkCombo;
-  private JPanel myConfigureInterpretersPanel;
-  private PyConfigurableInterpreterList myInterpreterList;
-  private ProjectSdksModel myProjectSdksModel;
   private MyListener myListener;
 
-  public PyActiveSdkConfigurable(Project project) {
+  private PyConfigurableInterpreterList myInterpreterList;
+  private ProjectSdksModel myProjectSdksModel;
+  private ComboBox mySdkCombo;
+  private PyInstalledPackagesPanel myPackagesPanel;
+
+  public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
     myProject = project;
-    init();
+    layoutPanel();
+    initContent();
   }
 
   public PyActiveSdkConfigurable(@NotNull Module module) {
     myModule = module;
     myProject = module.getProject();
-    init();
+    layoutPanel();
+    initContent();
   }
 
-  private void init() {
-    mySdkCombo.setRenderer(new SdkListCellRenderer("<None>"));
-
+  private void initContent() {
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
+    myInterpreterList.setSdkCombo(mySdkCombo);
+
     myProjectSdksModel = myInterpreterList.getModel();
     myListener = new MyListener(this);
     myProjectSdksModel.addListener(myListener);
-    myConfigureInterpretersPanel.add(new PyConfigureInterpretersLinkPanel(myPanel), BorderLayout.CENTER);
-    myInterpreterList.setSdkCombo(mySdkCombo);
+
+    mySdkCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
+        myPackagesPanel.updatePackages(selectedSdk == null ? null : new PyPackageManagementService(myProject, selectedSdk));
+      }
+    });
+
+  }
+
+  private void layoutPanel() {
+    final GridBagLayout layout = new GridBagLayout();
+    myPanel = new JPanel(layout);
+    final JLabel label = new JLabel("Project Interpreter:");
+    final JLabel label1 = new JLabel("  ");
+    mySdkCombo = new ComboBox();
+    mySdkCombo.setRenderer(new SdkListCellRenderer("<None>"));
+
+    PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
+    final JComponent notificationsComponent = notificationsArea.getComponent();
+    notificationsComponent.setPreferredSize(new Dimension(500, 29));
+
+    JButton detailsButton = new JButton();
+    detailsButton.setIcon(PythonIcons.Python.InterpreterGear);
+    detailsButton.setIconTextGap(0);
+    detailsButton.setPreferredSize(new Dimension(29, 29));
+    if (((UIUtil.isUnderAquaLookAndFeel())) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+      detailsButton.putClientProperty("JButton.buttonType", "square");
+    }
+
+    myPackagesPanel = new PyInstalledPackagesPanel(myProject, notificationsArea);
+    mySdkCombo.setPreferredSize(new Dimension(250, 29));
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = new Insets(2,2,2,2);
+
+    c.gridx = 0;
+    c.gridy = 0;
+    myPanel.add(label, c);
+
+    c.gridx = 1;
+    c.gridy = 0;
+    c.weightx = 0.1;
+    myPanel.add(mySdkCombo, c);
+
+    c.insets = new Insets(0,5,0,2);
+    c.gridx = 2;
+    c.gridy = 0;
+    c.weightx = 0.0;
+    myPanel.add(detailsButton, c);
+
+    c.insets = new Insets(2,2,2,2);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridwidth = 3;
+    myPanel.add(label1, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
+    c.weighty = 0.5;
+    c.gridwidth = 3;
+    c.gridheight = GridBagConstraints.RELATIVE;
+    c.fill = GridBagConstraints.BOTH;
+    myPanel.add(myPackagesPanel, c);
+
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.gridx = 0;
+    c.gridy = 3;
+    c.gridwidth = 3;
+
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.anchor = GridBagConstraints.SOUTH;
+
+    myPanel.add(notificationsComponent, c);
   }
 
   @Override

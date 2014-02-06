@@ -32,6 +32,7 @@ public class PythonIcons {
 
     }
     public static final Icon Dotnet = load("/icons/com/jetbrains/python/dotnet.png"); // 16x16
+    public static final Icon InterpreterGear = load("/icons/com/jetbrains/python/interpreterGear.png"); // 16x16
     public static final Icon Jython = load("/icons/com/jetbrains/python/jython.png"); // 16x16
     
     public static class Nodes {
