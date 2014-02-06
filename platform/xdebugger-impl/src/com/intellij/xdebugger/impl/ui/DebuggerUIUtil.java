@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
@@ -99,12 +96,12 @@ public class DebuggerUIUtil {
     return new RelativePoint(editor.getContentComponent(), p);
   }
 
-  public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
+  public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
     EditorTextField textArea = new TextViewer("Evaluating...", project);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
-    text.startEvaluation(callback);
+    evaluator.startEvaluation(callback);
 
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {
@@ -114,7 +111,7 @@ public class DebuggerUIUtil {
 
     textArea.setPreferredSize(size);
 
-    JBPopupFactory.getInstance().createComponentPopupBuilder(textArea, null)
+    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(textArea, null)
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
@@ -125,8 +122,13 @@ public class DebuggerUIUtil {
           callback.setObsolete();
           return true;
         }
-      })
-      .createPopup().show(new RelativePoint(event.getComponent(), new Point(event.getX() - size.width, event.getY() - size.height)));
+      }).createPopup();
+    if (editor == null) {
+      popup.show(new RelativePoint(event.getComponent(), new Point(event.getX() - size.width, event.getY() - size.height)));
+    }
+    else {
+      popup.showInBestPositionFor(editor);
+    }
   }
 
   public static void showXBreakpointEditorBalloon(final Project project,

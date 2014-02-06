@@ -108,7 +108,7 @@ public class XValueHint extends AbstractValueHint {
                 component.append(myFullValueEvaluator.getLinkText(), XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES, new Consumer<MouseEvent>() {
                   @Override
                   public void consume(MouseEvent event) {
-                    DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject());
+                    DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject(), getEditor());
                   }
                 });
                 LinkMouseListenerBase.installSingleTagOn(component);
