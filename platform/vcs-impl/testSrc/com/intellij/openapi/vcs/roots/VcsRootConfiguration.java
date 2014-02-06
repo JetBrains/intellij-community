@@ -17,13 +17,14 @@ package com.intellij.openapi.vcs.roots;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootConfiguration {
+class VcsRootConfiguration {
 
   @NotNull private Collection<String> myMockRoots;
   @NotNull private Collection<String> myContentRoots;
@@ -40,28 +41,28 @@ public class VcsRootConfiguration {
     myExtraErrors = Collections.emptyList();
   }
 
-  public VcsRootConfiguration mock(@NotNull Collection<String> mockRoots) {
-    myMockRoots = mockRoots;
+  public VcsRootConfiguration mock(@NotNull String... mockRoots) {
+    myMockRoots = Arrays.asList(mockRoots);
     return this;
   }
 
-  public VcsRootConfiguration roots(@NotNull Collection<String> roots) {
-    myRoots = roots;
+  public VcsRootConfiguration roots(@NotNull String... roots) {
+    myRoots = Arrays.asList(roots);
     return this;
   }
 
-  public VcsRootConfiguration contentRoots(@NotNull Collection<String> contentRoots) {
-    myContentRoots = contentRoots;
+  public VcsRootConfiguration contentRoots(@NotNull String... contentRoots) {
+    myContentRoots = Arrays.asList(contentRoots);
     return this;
   }
 
-  public VcsRootConfiguration unregErrors(@NotNull Collection<String> unregErrors) {
-    myUnregErrors = unregErrors;
+  public VcsRootConfiguration unregErrors(@NotNull String... unregErrors) {
+    myUnregErrors = Arrays.asList(unregErrors);
     return this;
   }
 
-  public VcsRootConfiguration extraErrors(@NotNull Collection<String> extraErrors) {
-    myExtraErrors = extraErrors;
+  public VcsRootConfiguration extraErrors(@NotNull String... extraErrors) {
+    myExtraErrors = Arrays.asList(extraErrors);
     return this;
   }
 
