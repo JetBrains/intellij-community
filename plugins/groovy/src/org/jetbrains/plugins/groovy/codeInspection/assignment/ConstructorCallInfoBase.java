@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.navigation.NavigationItem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 
 /**
- * @author peter
+ * Created by Max Medvedev on 05/02/14
  */
-public interface GrMethodCall extends GrCallExpression, NavigationItem {
-  @NotNull
-  GrExpression getInvokedExpression();
+public abstract class ConstructorCallInfoBase<T extends GrConstructorCall> extends CallInfoBase<T> implements ConstructorCallInfo<T> {
+  public ConstructorCallInfoBase(T call) {
+    super(call);
+  }
 
-  @Override
-  @NotNull
-  GrArgumentList getArgumentList();
-
-  boolean isCommandExpression();
+  public GroovyResolveResult[] multiResolveClass() {
+    return getCall().multiResolveClass();
+  }
 }

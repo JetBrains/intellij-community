@@ -288,8 +288,8 @@ class Ca {
 }
 
 use(Ca) {
-  1.foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
-  (1 as int).foo<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">()</warning>
+  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
 }
 ''')
   }
