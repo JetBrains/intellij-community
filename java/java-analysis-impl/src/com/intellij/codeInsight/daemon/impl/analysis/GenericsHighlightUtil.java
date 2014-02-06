@@ -234,7 +234,7 @@ public class GenericsHighlightUtil {
     final PsiClass referenceClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
     final PsiType psiType = substitutor.substitute(classParameter);
     if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
-      if (checkNotInBounds(type, psiType, referenceParameterList)) {
+      if (GenericsUtil.checkNotInBounds(type, psiType, referenceParameterList)) {
         final String description = "Actual type argument and inferred type contradict each other";
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement2Highlight).descriptionAndTooltip(description).create();
       }
@@ -243,7 +243,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && checkNotInBounds(type, bound, referenceParameterList)) {
+      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && GenericsUtil.checkNotInBounds(type, bound, referenceParameterList)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
         @NonNls final String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
@@ -265,79 +265,6 @@ public class GenericsHighlightUtil {
       }
     }
     return null;
-  }
-
-  private static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
-    if (type instanceof PsiClassType) {
-      return checkNotAssignable(bound, type, allowUncheckedConversions((PsiClassType)type, referenceParameterList));
-    }
-    if (type instanceof PsiWildcardType) {
-      if (((PsiWildcardType)type).isExtends()) {
-        return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
-      }
-      else if (((PsiWildcardType)type).isSuper()) {
-        final PsiType superBound = ((PsiWildcardType)type).getSuperBound();
-        if (PsiUtil.resolveClassInType(superBound) instanceof PsiTypeParameter) return TypesDistinctProver.provablyDistinct(type, bound);
-        return checkNotAssignable(bound, superBound, false);
-      }
-    }
-    else if (type instanceof PsiArrayType) {
-      return checkNotAssignable(bound, type, true);
-    }
-    return false;
-  }
-
-  //JLS 5.1.10
-  private static boolean checkExtendsWildcardCaptureFailure(PsiWildcardType type, PsiType bound) {
-    LOG.assertTrue(type.isExtends());
-    final PsiType extendsBound = type.getExtendsBound();
-    PsiType boundBound = bound;
-    if (bound instanceof PsiWildcardType) {
-      if (((PsiWildcardType)bound).isBounded()) {
-        boundBound = ((PsiWildcardType)bound).isSuper()
-                     ? ((PsiWildcardType)bound).getSuperBound()
-                     : ((PsiWildcardType)bound).getExtendsBound();
-      }
-      else {
-        return false;
-      }
-    }
-    return !TypeConversionUtil.areTypesConvertible(boundBound, extendsBound) &&
-           !TypeConversionUtil.areTypesConvertible(extendsBound, boundBound);
-  }
-
-  private static boolean checkNotAssignable(final PsiType bound,
-                                            final PsiType type,
-                                            final boolean allowUncheckedConversion) {
-    if (bound instanceof PsiWildcardType) {
-      if (((PsiWildcardType)bound).isBounded()) {
-        final PsiType boundBound = ((PsiWildcardType)bound).isExtends()
-                                   ? ((PsiWildcardType)bound).getExtendsBound()
-                                   : ((PsiWildcardType)bound).getSuperBound();
-        return !TypeConversionUtil.isAssignable(boundBound, type, allowUncheckedConversion);
-      }
-      else {
-        return true;
-      }
-    }
-    else {
-      return !TypeConversionUtil.isAssignable(bound, type, allowUncheckedConversion);
-    }
-  }
-
-  private static boolean allowUncheckedConversions(PsiClassType type, PsiReferenceParameterList referenceParameterList) {
-    final PsiClass psiClass = type.resolve();
-    if (psiClass != null) {
-      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-        if (parameter.getExtendsListTypes().length != 0) {
-          return false;
-        }
-      }
-      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
-    }
-    if (!type.isRaw()) return true;
-    //allow unchecked conversions in method calls but not in type declaration
-    return referenceParameterList.getParent() instanceof PsiReferenceExpression;
   }
 
   private static String typeParameterListOwnerDescription(final PsiTypeParameterListOwner typeParameterListOwner) {

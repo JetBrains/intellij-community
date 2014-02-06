@@ -102,8 +102,7 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      final PsiSubstitutor substitutor = session.resolveBounds(true);
-
+      session.resolveBounds(false);
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
@@ -118,8 +117,7 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiClassType parameterization = elementFactory.createType(psiClass, newTypeParameters);
 
-      if (//todo !TypeConversionUtil.isAssignable(psiClassType, parameterization) || 
-          !GenericsUtil.isTypeArgumentsApplicable(typeParameters, PsiSubstitutor.EMPTY.putAll(psiClass, newTypeParameters), expr)) {
+      if (!isWellFormed(psiClass, typeParameters, newTypeParameters)) {
         return null;
       }
 
@@ -130,6 +128,18 @@ public class FunctionalInterfaceParameterizationUtil {
       return getNonWildcardParameterization(parameterization);
     }
     return null;
+  }
+
+  private static boolean isWellFormed(PsiClass psiClass, PsiTypeParameter[] typeParameters, PsiType[] newTypeParameters) {
+    final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.putAll(psiClass, newTypeParameters);
+    for (int i = 0; i < typeParameters.length; i++) {
+      for (PsiClassType bound : typeParameters[i].getExtendsListTypes()) {
+        if (GenericsUtil.checkNotInBounds(newTypeParameters[i], substitutor.substitute(bound), false)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   /**
