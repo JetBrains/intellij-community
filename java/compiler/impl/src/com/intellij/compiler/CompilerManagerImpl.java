@@ -240,12 +240,22 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @NotNull
   public CompileTask[] getBeforeTasks() {
-    return myBeforeTasks.toArray(new CompileTask[myBeforeTasks.size()]);
+    return getCompileTasks(myBeforeTasks, CompileTaskBean.CompileTaskExecutionPhase.BEFORE);
+  }
+
+  private CompileTask[] getCompileTasks(List<CompileTask> taskList, CompileTaskBean.CompileTaskExecutionPhase phase) {
+    List<CompileTask> beforeTasks = new ArrayList<CompileTask>(taskList);
+    for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
+      if (extension.myExecutionPhase == phase) {
+        beforeTasks.add(extension.getTaskInstance());
+      }
+    }
+    return beforeTasks.toArray(new CompileTask[beforeTasks.size()]);
   }
 
   @NotNull
   public CompileTask[] getAfterTasks() {
-    return myAfterTasks.toArray(new CompileTask[myAfterTasks.size()]);
+    return getCompileTasks(myAfterTasks, CompileTaskBean.CompileTaskExecutionPhase.AFTER);
   }
 
   public void compile(@NotNull VirtualFile[] files, CompileStatusNotification callback) {
