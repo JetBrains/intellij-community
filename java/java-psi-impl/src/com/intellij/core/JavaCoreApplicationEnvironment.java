@@ -26,6 +26,7 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
@@ -52,6 +53,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
     registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
+    registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
 
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
