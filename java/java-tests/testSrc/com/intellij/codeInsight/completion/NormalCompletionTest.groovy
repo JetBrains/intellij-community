@@ -1370,8 +1370,7 @@ class Foo {{
     myFixture.configureByText "a.java", """
 class Foo extends my<caret>
 """
-    myFixture.completeBasic()
-    myFixture.type('\n')
+    myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult '''import foo.myClass;
 
 class Foo extends myClass
@@ -1404,5 +1403,12 @@ class Bar {
   }
 
   public void testNoMathTargetMethods() { doAntiTest() }
+
+  public void testNoLowercaseClasses() {
+    myFixture.addClass("package foo; public class abcdefgXxx {}")
+    doAntiTest()
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertStringItems('abcdefgXxx')
+  }
 
 }
