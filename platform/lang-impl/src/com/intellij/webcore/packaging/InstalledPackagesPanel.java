@@ -99,6 +99,10 @@ public class InstalledPackagesPanel extends JPanel {
     myUninstallButton.setEnabled(false);
     myUpgradeButton.setEnabled(false);
 
+    myInstallButton.getTemplatePresentation().setText("Install");
+    myUninstallButton.getTemplatePresentation().setText("Uninstall");
+
+
     myPackagesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent event) {
