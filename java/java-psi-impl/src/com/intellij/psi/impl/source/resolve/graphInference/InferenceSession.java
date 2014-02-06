@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -345,9 +346,15 @@ public class InferenceSession {
   private InferenceVariable shouldResolveAndInstantiate(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
     if (inferenceVariable != null) {
-      if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable) ||
-          targetType instanceof PsiClassType && (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) || myErased)) {
+      if (targetType instanceof PsiPrimitiveType && hasPrimitiveWrapperBound(inferenceVariable)) {
         return inferenceVariable;
+      }
+      if (targetType instanceof PsiClassType) {
+        if (myErased ||
+            hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) ||
+            hasWildcardParameterization(inferenceVariable, (PsiClassType)targetType)) {
+          return inferenceVariable;
+        }
       }
     }
     return null;
@@ -381,6 +388,30 @@ public class InferenceSession {
     return false;
   }
 
+  private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
+    if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
+      final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
+      final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
+        @Override
+        public boolean process(Pair<PsiType, PsiType> pair) {
+          return pair.first == null || pair.second == null || pair.first.equals(pair.second);
+        }
+      };
+      if (InferenceIncorporationPhase.findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor)) return true;
+      final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+      for (PsiType lowBound : bounds) {
+        if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(lowBound)) {
+          for (PsiType bound : eqBounds) {
+            if (lowBound.equals(bound)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+  
   private PsiType getTargetType(final PsiExpression context, PsiType returnType) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {

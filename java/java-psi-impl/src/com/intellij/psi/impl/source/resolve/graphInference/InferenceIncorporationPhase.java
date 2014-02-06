@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
@@ -22,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqual
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Processor;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -168,7 +170,21 @@ public class InferenceIncorporationPhase {
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
-  private void upUp(List<PsiType> upperBounds) {
+  private boolean upUp(List<PsiType> upperBounds) {
+    return findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
+      @Override
+      public boolean process(Pair<PsiType, PsiType> pair) {
+        final PsiType sType = pair.first;
+        final PsiType tType = pair.second;
+        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+          addConstraint(new TypeEqualityConstraint(sType, tType));
+        }
+        return true;
+      }
+    });
+  }
+
+  public static boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds, Processor<Pair<PsiType, PsiType>> processor) {
     for (int i = 0; i < upperBounds.size(); i++) {
       final PsiType sBound = upperBounds.get(i);
       final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
@@ -188,14 +204,15 @@ public class InferenceIncorporationPhase {
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substitute(typeParameter);
               final PsiType tType = tSubstitutor.substitute(typeParameter);
-              if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-                addConstraint(new TypeEqualityConstraint(sType, tType));
+              if (!processor.process(Pair.create(sType, tType))) {
+                return true;
               }
             }
           }
         }
       }
     }
+    return false;
   }
 
   private void addConstraint(ConstraintFormula constraint) {
