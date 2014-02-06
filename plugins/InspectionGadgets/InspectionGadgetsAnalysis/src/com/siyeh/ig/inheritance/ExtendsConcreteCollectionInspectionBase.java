@@ -62,10 +62,7 @@ public class ExtendsConcreteCollectionInspectionBase extends BaseInspection {
         return;
       }
       final PsiClass superClass = aClass.getSuperClass();
-      if (superClass == null) {
-        return;
-      }
-      if (!CollectionUtils.isCollectionClass(superClass)) {
+      if (!CollectionUtils.isConcreteCollectionClass(superClass)) {
         return;
       }
       final String qualifiedName = superClass.getQualifiedName();
