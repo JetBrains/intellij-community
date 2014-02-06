@@ -192,6 +192,12 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
         multicaster.frameworkUnselected(oldProvider);
       }
     }
+    for (FrameworkSupportInModuleProvider.FrameworkDependency dependency : provider.getDependenciesFrameworkIds()) {
+      if (!dependency.isOptional()) {
+        String id = dependency.getFrameworkId();
+        setFrameworkComponentEnabled(id, true);
+      }
+    }
   }
 
   public void fireWizardStepUpdated() {
