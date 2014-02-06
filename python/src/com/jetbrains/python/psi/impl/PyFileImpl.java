@@ -59,8 +59,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
-  private SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
-  private final Object myENCLock = new Object();
+  private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
   private final PsiModificationTracker myModificationTracker;
 
   private class ExportedNameCache {
@@ -441,17 +440,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   private ExportedNameCache getExportedNameCache() {
     ExportedNameCache cache;
-    synchronized (myENCLock) {
-      cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
-      final long modificationStamp = getModificationStamp();
-      if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
-        myExportedNameCache.clear();
-        cache = null;
-      }
-      if (cache == null) {
-        cache = new ExportedNameCache(modificationStamp);
-        myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
-      }
+    cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+    final long modificationStamp = getModificationStamp();
+    if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
+      myExportedNameCache.clear();
+      cache = null;
+    }
+    if (cache == null) {
+      cache = new ExportedNameCache(modificationStamp);
+      myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
     }
     return cache;
   }
@@ -747,9 +744,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
-    synchronized (myENCLock) {
-      myExportedNameCache.clear();
-    }
+    myExportedNameCache.clear();
   }
 
   @Override
