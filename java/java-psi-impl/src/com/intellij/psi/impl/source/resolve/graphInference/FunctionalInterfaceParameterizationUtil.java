@@ -47,12 +47,12 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
+  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
 
-    if (expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr, resolve);
+    if (expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr);
 
     return getFunctionalTypeImplicit(psiClassType);
   }
@@ -90,11 +90,11 @@ public class FunctionalInterfaceParameterizationUtil {
     return psiClassType;
   }
 
-  private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
+  private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
     if (psiClassType instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr, false);
+        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr);
         if (functionalType != null) return functionalType;
       }
       return null;
@@ -110,28 +110,46 @@ public class FunctionalInterfaceParameterizationUtil {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod == null) return null;
 
-      final InferenceSession session = new InferenceSession(PsiSubstitutor.EMPTY, expr);
       PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       if (typeParameters.length != parameters.length) {
         return null;
       }
-
-      for (int i = 0; i < typeParameters.length; i++) {
-        session.addVariable(typeParameters[i], parameters[i]);
-      }
-
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       final PsiParameter[] targetMethodParams = interfaceMethod.getParameterList().getParameters();
       if (targetMethodParams.length != lambdaParams.length) {
         return null;
       }
+
+      final InferenceSession session = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, expr.getManager(), expr);
+
       for (int i = 0; i < targetMethodParams.length; i++) {
-        if (resolve) {
-          session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));
+        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));
+      }
+
+      if (!session.repeatInferencePhases(false)) {
+        return null;
+      }
+
+      final PsiSubstitutor substitutor = session.resolveBounds(true);
+
+      final PsiType[] newTypeParameters = new PsiType[parameters.length];
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiTypeParameter typeParameter = typeParameters[i];
+        final InferenceVariable variable = session.getInferenceVariable(typeParameter);
+        final PsiType instantiation = variable.getInstantiation();
+        if (instantiation != PsiType.NULL) {
+          newTypeParameters[i] = instantiation;
+        } else {
+          newTypeParameters[i] = parameters[i];
         }
       }
 
-      final PsiClassType parameterization = elementFactory.createType(psiClass, session.infer());
+      final PsiClassType parameterization = elementFactory.createType(psiClass, newTypeParameters);
+
+      if (//todo !TypeConversionUtil.isAssignable(psiClassType, parameterization) || 
+          !GenericsUtil.isTypeArgumentsApplicable(typeParameters, PsiSubstitutor.EMPTY.putAll(psiClass, newTypeParameters), expr)) {
+        return null;
+      }
       if (!TypeConversionUtil.containsWildcards(parameterization)) return parameterization;
     }
     return null;
