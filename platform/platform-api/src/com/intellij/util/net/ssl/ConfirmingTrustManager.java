@@ -24,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
@@ -328,17 +328,16 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     /**
-     * Select all available certificates from underlying trust store. Result list is not supposed to be modified.
+     * Select all available certificates from underlying trust store. Returned list is not supposed to be modified.
      *
      * @return certificates
      */
     public List<X509Certificate> getCertificates() {
       myReadLock.lock();
-      List<X509Certificate> certificates = new ArrayList<X509Certificate>();
       try {
-        Iterator<String> iterator = ContainerUtil.iterate(myKeyStore.aliases());
-        while (iterator.hasNext()) {
-          certificates.add(getCertificate(iterator.next()));
+        List<X509Certificate> certificates = new ArrayList<X509Certificate>();
+        for (String alias : Collections.list(myKeyStore.aliases())) {
+          certificates.add(getCertificate(alias));
         }
         return ContainerUtil.immutableList(certificates);
       }
