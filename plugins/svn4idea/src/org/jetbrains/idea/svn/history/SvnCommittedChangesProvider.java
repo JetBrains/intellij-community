@@ -120,11 +120,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    if (repositoryPath == null) {
-      return getLocationFor(root);
-    }
-
-    return new SvnLoadingRepositoryLocation(repositoryPath, myVcs);
+    return repositoryPath == null ? getLocationFor(root) : new SvnRepositoryLocation(repositoryPath);
   }
 
   @Nullable
