@@ -272,7 +272,8 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   private static String prepareParameter(String paramName, String value) {
-    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
+    // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
+    return "--" + paramName + "=" + StringUtil.escapeBackSlashes(value);
   }
 
   private static <T> String joinFilters(Collection<T> filters, Function<T, String> toString) {
