@@ -32,11 +32,6 @@ public class CollectionUtils {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls private static final Set<String> s_collectionClassesRequiringCapacity =
-    new HashSet<String>();
-  /**
-   * @noinspection StaticCollection
-   */
   @NonNls private static final Set<String> s_allCollectionClassesAndInterfaces =
     new HashSet<String>();
   /**
@@ -46,22 +41,6 @@ public class CollectionUtils {
     new HashMap<String, String>();
 
   static {
-    s_collectionClassesRequiringCapacity.add("java.util.BitSet");
-    s_collectionClassesRequiringCapacity.add("java.util.Vector");
-    s_collectionClassesRequiringCapacity.add("java.util.ArrayList");
-    s_collectionClassesRequiringCapacity.add("java.util.HashMap");
-    s_collectionClassesRequiringCapacity.add("java.util.LinkedHashMap");
-    s_collectionClassesRequiringCapacity.add("java.util.WeakHashMap");
-    s_collectionClassesRequiringCapacity.add("java.util.Hashtable");
-    s_collectionClassesRequiringCapacity.add("java.util.HashSet");
-    s_collectionClassesRequiringCapacity.add("java.util.LinkedHashSet");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.BitSet");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Vector");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.ArrayList");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashMap");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Hashtable");
-    s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashSet");
-
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractCollection");
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractList");
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractMap");
@@ -146,20 +125,6 @@ public class CollectionUtils {
 
   private CollectionUtils() {
     super();
-  }
-
-  public static boolean isCollectionWithInitialCapacity(
-    @Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass resolved = classType.resolve();
-    if (resolved == null) {
-      return false;
-    }
-    final String className = resolved.getQualifiedName();
-    return s_collectionClassesRequiringCapacity.contains(className);
   }
 
   @Contract("null -> false")
