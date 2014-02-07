@@ -29,19 +29,19 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="852e3" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/XmlBundle" key="label.text.path.to.profiles.ini"/>
-                </properties>
-              </component>
               <hspacer id="d637d">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
+              <component id="852e3" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="label.text.path.to.profiles.ini"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <component id="a31a5" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myProfilesIniPathField">
@@ -66,7 +66,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="c6e14"/>
-                  <text resource-bundle="messages/XmlBundle" key="label.text.profile"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.text.profile"/>
                 </properties>
               </component>
               <hspacer id="d3289">
