@@ -294,7 +294,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
     final Dimension fieldPreferredSize = field.getPreferredSize();
-    field.setPreferredSize(new Dimension(Math.max(160, fieldPreferredSize.width), fieldPreferredSize.height));
+    field.setPreferredSize(new Dimension(Math.max(210, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
