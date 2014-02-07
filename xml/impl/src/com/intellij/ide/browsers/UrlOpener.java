@@ -28,7 +28,6 @@ public abstract class UrlOpener {
     launchBrowser(url, browser, null);
   }
 
-  // different params order in order not to break compilation for launchBrowser(null, url)
   public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
       BrowserUtil.launchBrowser(url);
