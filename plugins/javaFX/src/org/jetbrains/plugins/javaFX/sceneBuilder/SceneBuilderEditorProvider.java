@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -10,6 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class SceneBuilderEditorProvider implements FileEditorProvider, DumbAware
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) &&
            SystemInfo.isJavaVersionAtLeast("1.8") &&
-           ApplicationManager.getApplication().isInternal();
+           Registry.is("embed.scene.builder", false);
   }
 
   @NotNull
