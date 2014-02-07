@@ -20,7 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.WarModel;
+import org.jetbrains.plugins.gradle.model.WebConfiguration;
 import org.junit.Test;
 
 import java.util.List;
@@ -32,9 +32,9 @@ import static org.junit.Assert.assertEquals;
  * @author Vladislav.Soroka
  * @since 11/29/13
  */
-public class WarModelBuilderImplTest extends AbstractModelBuilderTest {
+public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
-  public WarModelBuilderImplTest(@NotNull String gradleVersion) {
+  public WebConfigurationBuilderImplTest(@NotNull String gradleVersion) {
     super(gradleVersion);
   }
 
@@ -42,21 +42,23 @@ public class WarModelBuilderImplTest extends AbstractModelBuilderTest {
   public void testDefaultWarModel() throws Exception {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
-    List<WarModel> ideaModule = ContainerUtil.mapNotNull(ideaModules, new Function<IdeaModule, WarModel>() {
+    List<WebConfiguration> ideaModule = ContainerUtil.mapNotNull(ideaModules, new Function<IdeaModule, WebConfiguration>() {
       @Override
-      public WarModel fun(IdeaModule module) {
-        return allModels.getExtraProject(module, WarModel.class);
+      public WebConfiguration fun(IdeaModule module) {
+        return allModels.getExtraProject(module, WebConfiguration.class);
       }
     });
 
     assertEquals(1, ideaModule.size());
-    WarModel warModel = ideaModule.get(0);
+    WebConfiguration webConfiguration = ideaModule.get(0);
+    assertEquals(1, webConfiguration.getWarModels().size());
 
+    final WebConfiguration.WarModel warModel = webConfiguration.getWarModels().iterator().next();
     assertEquals("src/main/webapp", warModel.getWebAppDirName());
   }
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(WarModel.class);
+    return ContainerUtil.<Class>set(WebConfiguration.class);
   }
 }
