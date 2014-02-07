@@ -475,7 +475,6 @@ public class TypeMigrationLabeler {
         return JavaPsiFacade.getElementFactory(resolved.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
       }
     }
-    LOG.error("should not happen: " + resolved.getClass());
     return null;
   }
 
