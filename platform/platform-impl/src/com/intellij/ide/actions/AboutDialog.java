@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -261,7 +260,7 @@ public class AboutDialog extends JDialog {
         myImage.paintIcon(this, g2, 0, 0);
 
         g2.setColor(col);
-        TextRenderer renderer = new TextRenderer(0, 145, 398, 120, g2);
+        TextRenderer renderer = new TextRenderer(0, 165, 398, 120, g2);
         UIUtil.setupComposite(g2);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
