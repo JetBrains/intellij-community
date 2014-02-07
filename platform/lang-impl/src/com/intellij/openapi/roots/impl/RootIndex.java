@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -53,7 +52,6 @@ class RootIndex {
   };
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
-  private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
   private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
@@ -234,53 +232,38 @@ class RootIndex {
 
   @NotNull
   List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
-    Map<String, List<VirtualFile>> cacheMap = includeLibrarySources ? 
-                                              myDirectoriesByPackageNameCacheWithLibSrc : 
-                                              myDirectoriesByPackageNameCache;
-    final List<VirtualFile> cachedResult = cacheMap.get(packageName);
-    if (cachedResult != null) {
-      return cachedResult;
-    }
-
-    final ArrayList<VirtualFile> result = ContainerUtil.newArrayList();
-
-    if (StringUtil.isNotEmpty(packageName) && !packageName.startsWith(".")) {
-      String parentPackage = StringUtil.getPackageName(packageName);
-      String shortName = StringUtil.getShortName(packageName);
-      for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
-        VirtualFile child = parentDir.findChild(shortName);
-        if (isValidPackageDirectory(includeLibrarySources, child) && child.isDirectory() && packageName.equals(getPackageName(child))) {
-          result.add(child);
+    List<VirtualFile> result = myDirectoriesByPackageNameCache.get(packageName);
+    if (result == null) {
+      result = ContainerUtil.newSmartList();
+      
+      if (StringUtil.isNotEmpty(packageName) && !packageName.startsWith(".")) {
+        String shortName = StringUtil.getShortName(packageName);
+        for (VirtualFile parentDir : getDirectoriesByPackageName(StringUtil.getPackageName(packageName), true)) {
+          VirtualFile child = parentDir.findChild(shortName);
+          if (child != null && child.isDirectory() && getInfoForDirectory(child) != null && packageName.equals(getPackageName(child))) {
+            result.add(child);
+          }
         }
+      }
+
+      result.addAll(myPackagePrefixRoots.get(packageName));
+
+      if (!result.isEmpty()) {
+        myDirectoriesByPackageNameCache.put(packageName, result);
       }
     }
 
-    Collection<VirtualFile> packagePrefixRoots = myPackagePrefixRoots.get(packageName);
-    if (!packagePrefixRoots.isEmpty()) {
-      for (VirtualFile file : packagePrefixRoots) {
-        if (isValidPackageDirectory(includeLibrarySources, file)) {
-          result.add(file);
-        }
-      }
+    if (includeLibrarySources) {
+      return result;
     }
 
-    if (!result.isEmpty()) {
-      cacheMap.put(packageName, result);
-    }
-    return result;
-  }
-
-  @Contract("_,null->false")
-  private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
-    if (file != null) {
-      DirectoryInfo info = getInfoForDirectory(file);
-      if (info != null) {
-        if (includeLibrarySources || !info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {
-          return true;
-        }
+    return ContainerUtil.filter(result, new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        DirectoryInfo info = getInfoForDirectory(file);
+        return info != null && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
       }
-    }
-    return false;
+    });
   }
 
   @Nullable
