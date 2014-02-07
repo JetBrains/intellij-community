@@ -39,7 +39,7 @@ public abstract class UrlOpener {
     }
     else {
       for (UrlOpener urlOpener : EP_NAME.getExtensions()) {
-        if (urlOpener.openUrl(browser, url, null)) {
+        if (urlOpener.openUrl(browser, url, project)) {
           return;
         }
       }
