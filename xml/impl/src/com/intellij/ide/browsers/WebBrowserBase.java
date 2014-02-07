@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.browsers;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public abstract class WebBrowserBase extends WebBrowser {
   @Override
   @NotNull
   public String getBrowserNotFoundMessage() {
-    return XmlBundle.message("error.0.browser.path.not.specified", getName());
+    return IdeBundle.message("error.0.browser.path.not.specified", getName());
   }
 
   @Override

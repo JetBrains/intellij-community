@@ -15,30 +15,29 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link com.intellij.ide.browsers.BrowserLauncher#browse(String, WebBrowser)}
+   */
   public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser) {
-    launchBrowser(url, browser, null);
+    BrowserLauncher.getInstance().browse(url, browser);
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link com.intellij.ide.browsers.BrowserLauncher#browse(String, WebBrowser, com.intellij.openapi.project.Project)}
+   */
   public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
-    if (browser == null) {
-      BrowserUtil.launchBrowser(url);
-    }
-    else {
-      for (UrlOpener urlOpener : EP_NAME.getExtensions()) {
-        if (urlOpener.openUrl(browser, url, project)) {
-          return;
-        }
-      }
-    }
+    BrowserLauncher.getInstance().browse(url, browser, project);
   }
 
   public abstract boolean openUrl(@NotNull WebBrowser browser, @NotNull String url, @Nullable Project project);
