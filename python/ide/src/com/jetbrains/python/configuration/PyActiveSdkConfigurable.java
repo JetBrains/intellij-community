@@ -35,11 +35,14 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.DetailsChooser;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -62,6 +65,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private ProjectSdksModel myProjectSdksModel;
   private ComboBox mySdkCombo;
   private PyInstalledPackagesPanel myPackagesPanel;
+  private JButton myDetailsButton;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -89,9 +93,35 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       @Override
       public void actionPerformed(ActionEvent e) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        myPackagesPanel.updatePackages(selectedSdk == null ? null : new PyPackageManagementService(myProject, selectedSdk));
+        if (selectedSdk != null)
+          myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, selectedSdk));
       }
     });
+
+    myDetailsButton.addActionListener(new ActionListener() {
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                          DetailsChooser.show(myProject, myProjectSdksModel.getSdks(),
+                                                              RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
+                                                              new NullableConsumer<Sdk>() {
+                                                                @Override
+                                                                public void consume(Sdk sdk) {
+                                                                  if (sdk == null) return;
+                                                                  final Sdk existedSdk = myProjectSdksModel.findSdk(sdk.getName());
+                                                                  if (existedSdk == null) {
+                                                                    myProjectSdksModel.addSdk(sdk);
+                                                                  }
+                                                                  myInterpreterList.setSelectedSdk(sdk);
+
+                                                                  mySdkCombo.getModel().setSelectedItem(sdk);
+                                                                  myPackagesPanel
+                                                                    .updatePackages(new PyPackageManagementService(myProject, sdk));
+                                                                }
+                                                              }
+                                          );
+                                        }
+                                      }
+    );
 
   }
 
@@ -107,12 +137,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final JComponent notificationsComponent = notificationsArea.getComponent();
     notificationsComponent.setPreferredSize(new Dimension(500, 29));
 
-    JButton detailsButton = new JButton();
-    detailsButton.setIcon(PythonIcons.Python.InterpreterGear);
-    detailsButton.setIconTextGap(0);
-    detailsButton.setPreferredSize(new Dimension(29, 29));
+    myDetailsButton = new JButton();
+    myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
+    myDetailsButton.setIconTextGap(0);
+    myDetailsButton.setPreferredSize(new Dimension(29, 29));
     if (((UIUtil.isUnderAquaLookAndFeel())) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
-      detailsButton.putClientProperty("JButton.buttonType", "square");
+      myDetailsButton.putClientProperty("JButton.buttonType", "square");
     }
 
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, notificationsArea);
@@ -134,7 +164,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;
-    myPanel.add(detailsButton, c);
+    myPanel.add(myDetailsButton, c);
 
     c.insets = new Insets(2,2,2,2);
     c.gridx = 0;
@@ -183,6 +213,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
+    myProjectSdksModel.apply();
     final Sdk selectedSdk = myProjectSdksModel.findSdk((Sdk)mySdkCombo.getSelectedItem());
     if (myModule == null) {
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);

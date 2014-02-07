@@ -23,100 +23,75 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.SystemProperties;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
 * @author yole
 */
-public class InterpreterPathChooser extends BaseListPopupStep<String> {
+public class DetailsChooser extends BaseListPopupStep<String> {
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> myCallback;
 
-  private static final String LOCAL = "Local...";
-  private static final String REMOTE = "Remote...";
-  private static final String VIRTUALENV = "Create VirtualEnv...";
+  private static final String LOCAL = "Add Local";
+  private static final String REMOTE = "Add Remote";
+  private static final String VIRTUALENV = "Create VirtualEnv";
+  private static final String MORE = "More...";
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
                           final RelativePoint popupPoint,
-                          final boolean showVirtualEnv,
+                          final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
-    ListPopupStep sdkHomesStep = new InterpreterPathChooser(project, popupPoint.getComponent(), existingSdks, showVirtualEnv, callback);
+    final ListPopupStep sdkHomesStep = new DetailsChooser(project, popupPoint.getComponent(), existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.show(popupPoint);
   }
 
-  public InterpreterPathChooser(Project project,
-                                Component ownerComponent,
-                                Sdk[] existingSdks,
-                                boolean showVirtualEnv,
-                                NullableConsumer<Sdk> callback) {
-    super("Select Interpreter Path", getSuggestedPythonSdkPaths(existingSdks, showVirtualEnv));
+  public DetailsChooser(Project project,
+                        Component ownerComponent,
+                        Sdk[] existingSdks,
+                        boolean showMore,
+                        NullableConsumer<Sdk> callback) {
+    super(null, getAvailableOptions(showMore));
     myProject = project;
     myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
     myCallback = callback;
   }
 
-  private static List<String> getSuggestedPythonSdkPaths(Sdk[] existingSdks, boolean showVirtualEnv) {
-    List<String> paths = new ArrayList<String>();
-    Collection<String> sdkHomes = PythonSdkType.getInstance().suggestHomePaths();
-    for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, existingSdks)) {
-      paths.add(FileUtil.getLocationRelativeToUserHome(sdkHome));
-    }
-    paths.add(LOCAL);
+  private static List<String> getAvailableOptions(boolean showMore) {
+    final List<String> options = new ArrayList<String>();
+    options.add(LOCAL);
     if (PythonRemoteInterpreterManager.getInstance() != null) {
-      paths.add(REMOTE);
+      options.add(REMOTE);
     }
-    if (showVirtualEnv) {
-      paths.add(VIRTUALENV);
+    options.add(VIRTUALENV);
+
+    if (showMore) {
+      options.add(MORE);
     }
-    return paths;
+    return options;
   }
 
   @Nullable
   @Override
-  public Icon getIconFor(String aValue) {
-    if (LOCAL.equals(aValue) || REMOTE.equals(aValue) || VIRTUALENV.equals(aValue)) return null;
-    String filePath = aValue;
-    if (StringUtil.startsWithChar(filePath, '~')) {
-      String home = SystemProperties.getUserHome();
-      filePath = home + filePath.substring(1);
-    }
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(filePath);
-    return flavor != null ? flavor.getIcon() : PythonSdkType.getInstance().getIcon();
+  public ListSeparator getSeparatorAbove(String value) {
+    return MORE.equals(value) ? new ListSeparator() : null;
   }
 
-  @NotNull
-  @Override
-  public String getTextFor(String value) {
-    return FileUtil.toSystemDependentName(value);
-  }
-
-  private void sdkSelected(final String selectedValue) {
+  private void optionSelected(final String selectedValue) {
     if (LOCAL.equals(selectedValue)) {
       createLocalSdk();
     }
@@ -127,7 +102,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
       createVirtualEnvSdk();
     }
     else {
-      createSdkFromPath(selectedValue);
+      //createSdkFromPath(selectedValue);
     }
   }
 
@@ -135,7 +110,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, PythonSdkType.getInstance());
+        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, false, PythonSdkType.getInstance());
       }
     }, ModalityState.any());
   }
@@ -150,18 +125,6 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
                                ShowSettingsUtil.getSettingsMenuName() +
                                " | Plugins.", "Add Remote Interpreter");
     }
-  }
-
-  private void createSdkFromPath(String selectedPath) {
-    String filePath = selectedPath;
-    if (StringUtil.startsWithChar(filePath, '~')) {
-      String home = SystemProperties.getUserHome();
-      filePath = home + filePath.substring(1);
-    }
-    Sdk sdk = SdkConfigurationUtil.setupSdk(myExistingSdks,
-                                            LocalFileSystem.getInstance().findFileByPath(filePath),
-                                            PythonSdkType.getInstance(), false, null, null);
-    myCallback.consume(sdk);
   }
 
   private void createVirtualEnvSdk() {
@@ -193,7 +156,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
   public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
     return doFinalStep(new Runnable() {
       public void run() {
-        sdkSelected(selectedValue);
+        optionSelected(selectedValue);
       }
     });
   }

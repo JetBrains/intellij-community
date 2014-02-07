@@ -365,7 +365,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
   }
 
   private void addSdk(AnActionButton button) {
-    InterpreterPathChooser
+    DetailsChooser
       .show(myProject, myProjectSdksModel.getSdks(), button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
