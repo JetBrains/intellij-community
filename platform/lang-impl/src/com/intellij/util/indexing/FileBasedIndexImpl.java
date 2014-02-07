@@ -1322,19 +1322,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
-      try {
-        clearIndex(indexId);
-      } catch (StorageException ex) {
-        requestRebuild(indexId, new Throwable(ex));
-      }
-
+      advanceIndexVersion(indexId);
+      
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {
           try {
+            doClearIndex(indexId);
             if (!cleanupOnly) {
               scheduleIndexRebuild(false);
             }
+          }
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.info(e);
           }
           finally {
             status.compareAndSet(REBUILD_IN_PROGRESS, OK);
@@ -1381,9 +1382,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
+    advanceIndexVersion(indexId);
+    doClearIndex(indexId);
+  }
+
+  private void doClearIndex(ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null : "Index with key " + indexId + " not found or not registered properly";
     index.clear();
+  }
+
+  private void advanceIndexVersion(ID<?, ?> indexId) {
     try {
       IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
     }
