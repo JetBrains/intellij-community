@@ -353,11 +353,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
-          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(functionalInterfaceSubstitutor) : null;
+          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
           final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-          PsiFile containingFile = getContainingFile();
-          final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(containingFile);
           if (isConstructor && interfaceMethod != null) {
             final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
             final boolean isRawSubst = PsiUtil.isRawSubstitutor(containingClass, substitutor);
@@ -385,13 +382,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiConflictResolver[] resolvers;
           if (signature != null) {
             final PsiType[] parameterTypes = signature.getParameterTypes();
-            resolvers = new PsiConflictResolver[]{conflictResolver, new MethodRefsSpecificResolver(parameterTypes, languageLevel)};
+            resolvers = new PsiConflictResolver[]{conflictResolver, new MethodRefsSpecificResolver(parameterTypes, PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this))};
           }
           else {
             resolvers = new PsiConflictResolver[]{conflictResolver};
           }
           final MethodCandidatesProcessor processor =
-            new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, containingFile, resolvers, new SmartList<CandidateInfo>()) {
+            new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, getContainingFile(), resolvers, new SmartList<CandidateInfo>()) {
               @Override
               protected MethodCandidateInfo createCandidateInfo(final PsiMethod method,
                                                                 final PsiSubstitutor substitutor,
@@ -405,13 +402,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                   @NotNull
                   @Override
                   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                    if (functionalInterfaceSubstitutor == null) return PsiSubstitutor.EMPTY;
+                    if (interfaceMethod == null) return substitutor;
                     final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), PsiMethodReferenceExpressionImpl.this);
                     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
                     final PsiParameter[] parameters = method.getParameterList().getParameters();
                     if (parameters.length == functionalMethodParameters.length) {//static methods
                       for (int i = 0; i < functionalMethodParameters.length; i++) {
-                        final PsiType pType = functionalInterfaceSubstitutor.substitute(functionalMethodParameters[i].getType());
+                        final PsiType pType = signature.getParameterTypes()[i];
                         session.addConstraint(new TypeCompatibilityConstraint(parameters[i].getType(), pType));
                       }
                     }
@@ -420,10 +417,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                       session.initBounds(aClass.getTypeParameters());
                       final PsiSubstitutor qualifierResultSubstitutor = qualifierResolveResult.getSubstitutor();
 
-                      final PsiType pType = functionalInterfaceSubstitutor.substitute(functionalMethodParameters[0].getType());
+                      final PsiType pType = signature.getParameterTypes()[0];
 
                       PsiSubstitutor psiSubstitutor = qualifierResultSubstitutor;
-                      //15.28.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
+                      // 15.28.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
                       // the type to search is the result of capture conversion (5.1.10) applied to T; 
                       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
                       if (PsiUtil.isRawSubstitutor(aClass, qualifierResultSubstitutor)) {
@@ -440,7 +437,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                       session.addConstraint(new TypeCompatibilityConstraint(qType, pType));
                       
                       for (int i = 0; i < parameters.length; i++) {
-                        final PsiType interfaceParamType = functionalInterfaceSubstitutor.substitute(functionalMethodParameters[i + 1].getType());
+                        final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
                         session.addConstraint(new TypeCompatibilityConstraint(parameters[i].getType(), interfaceParamType));
                       }
                     }
