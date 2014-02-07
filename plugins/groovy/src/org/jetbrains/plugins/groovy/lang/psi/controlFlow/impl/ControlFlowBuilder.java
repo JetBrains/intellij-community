@@ -1120,7 +1120,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void finishNode(InstructionImpl instruction) {
     final InstructionImpl popped = myProcessingStack.pop();
     if (!instruction.equals(popped)) {
-      String description = "popped: " + popped.toString() + " : " + popped.hashCode() + "   ,  expected: " + instruction.toString() + " : " + instruction.hashCode();
+      String description = "popped: " + popped.toString() + " : " + popped.hashCode() +
+                           "   ,  expected: " + instruction.toString() + " : " + instruction.hashCode() +
+                           "same objects:" + (popped == instruction);
       error(description);
     }
   }
