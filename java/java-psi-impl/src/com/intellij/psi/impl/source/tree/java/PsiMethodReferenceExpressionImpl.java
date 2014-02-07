@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -65,7 +66,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
-    return LambdaUtil.getFunctionalInterfaceType(this, true);
+    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
   @Override
