@@ -251,7 +251,7 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
-    return repository.getBranches().keySet().contains(branchName) ||
+    return HgUtil.getNamesWithoutHashes(repository.getBranches()).contains(branchName) ||
            HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);
   }
 
