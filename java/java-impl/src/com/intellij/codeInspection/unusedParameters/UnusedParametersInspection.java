@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +53,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
-  @NonNls public static final String SHORT_NAME = "UnusedParameters";
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
@@ -229,7 +226,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @NotNull
   public String getShortName() {
-    return SHORT_NAME;
+    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   @Override

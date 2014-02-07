@@ -19,18 +19,22 @@ import com.intellij.codeHighlighting.MainHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspSpiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +46,7 @@ import java.util.Arrays;
 */
 public class PostHighlightingPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory");
-  private static final Key<Long> LAST_POST_PASS_TIMESTAMP = Key.create("LAST_POST_PASS_TIMESTAMP");
+
   public PostHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar, HighlightVisitorImpl hvi) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, true, Pass.POST_UPDATE_ALL);
@@ -65,26 +69,34 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (textRange == null) {
-      Long lastStamp = file.getUserData(LAST_POST_PASS_TIMESTAMP);
-      long currentStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
-      if (lastStamp != null && lastStamp == currentStamp || !ProblemHighlightFilter.shouldHighlightFile(file)) {
-        return null;
-      }
-    }
+    if (textRange == null && PostHighlightingPass.isUpToDate(file)) return null;
 
-    return new PostHighlightingPass(myProject, file, editor, editor.getDocument(), new DefaultHighlightInfoProcessor());
+    return create(file, editor.getDocument(), editor, new DefaultHighlightInfoProcessor());
   }
 
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    return new PostHighlightingPass(myProject, file, null, document, highlightInfoProcessor);
+    return create(file, document, null, highlightInfoProcessor);
   }
 
-  public static void markFileUpToDate(@NotNull PsiFile file) {
-    long lastStamp = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
-    file.putUserData(LAST_POST_PASS_TIMESTAMP, lastStamp);
+  private PostHighlightingPass create(@NotNull PsiFile file,
+                                      @NotNull Document document, Editor editor,
+                                      @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
+    return new PostHighlightingPass(myProject, file, editor, document, highlightInfoProcessor, isUnusedImportEnabled(unusedImportKey, file));
+  }
+
+  private static boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey, @NotNull PsiFile file) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
+    boolean unusedImportEnabled = profile.isToolEnabled(unusedImportKey, file);
+    if (unusedImportEnabled && JspPsiUtil.isInJspFile(file)) {
+      final JspFile jspFile = JspPsiUtil.getJspFile(file);
+      if (jspFile != null) {
+        unusedImportEnabled = !JspSpiUtil.isIncludedOrIncludesSomething(jspFile);
+      }
+    }
+    return unusedImportEnabled;
   }
 }
