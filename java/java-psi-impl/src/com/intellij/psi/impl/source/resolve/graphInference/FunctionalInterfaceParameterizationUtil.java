@@ -173,9 +173,9 @@ public class FunctionalInterfaceParameterizationUtil {
           if (bound == null) {
             parameters[i] = Bi;
           } else if (((PsiWildcardType)paramType).isExtends()){
-            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, bound);
+            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, GenericsUtil.eliminateWildcards(bound, false));
           } else {
-            parameters[i] = bound;
+            parameters[i] = GenericsUtil.eliminateWildcards(bound, false);
           }
         }
       }
