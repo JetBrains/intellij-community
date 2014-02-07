@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
-
 public abstract class WebBrowser {
   protected @NotNull BrowserFamily family;
   protected @NotNull String name;

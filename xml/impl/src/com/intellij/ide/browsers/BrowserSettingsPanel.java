@@ -49,7 +49,6 @@ import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 

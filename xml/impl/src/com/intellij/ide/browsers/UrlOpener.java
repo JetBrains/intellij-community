@@ -24,10 +24,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 
-  public static void launchBrowser(final @Nullable BrowsersConfiguration.BrowserFamily family, final @NotNull String url) {
-    launchBrowser(url, family == null ? null : WebBrowserManager.getInstance().findBrowser(family));
-  }
-
   public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser) {
     launchBrowser(url, browser, null);
   }

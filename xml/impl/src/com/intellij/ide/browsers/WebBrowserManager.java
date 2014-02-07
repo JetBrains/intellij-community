@@ -32,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
-
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/web-browsers.xml")})
 public class WebBrowserManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);

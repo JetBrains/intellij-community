@@ -13,7 +13,7 @@ final class CustomWebBrowser extends WebBrowser {
   private final String browserNotFoundMessage;
 
   CustomWebBrowser(@NotNull UUID id,
-                   @NotNull BrowsersConfiguration.BrowserFamily family,
+                   @NotNull BrowserFamily family,
                    @NotNull String name,
                    @NotNull Icon icon,
                    @NotNull Computable<String> pathComputable,

@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
-
 final class ConfigurableWebBrowser extends WebBrowser {
   private boolean active;
   private String path;
