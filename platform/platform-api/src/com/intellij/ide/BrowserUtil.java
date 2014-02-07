@@ -75,6 +75,10 @@ public class BrowserUtil {
     browse(url.toExternalForm());
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link #browse(String)}
+   */
   public static void launchBrowser(@NotNull @NonNls String url) {
     browse(url);
   }

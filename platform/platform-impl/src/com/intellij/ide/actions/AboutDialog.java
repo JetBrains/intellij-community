@@ -219,7 +219,7 @@ public class AboutDialog extends JDialog {
         public void mousePressed(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
-            BrowserUtil.launchBrowser(myActiveLink.url);
+            BrowserUtil.browse(myActiveLink.url);
           }
         }
       });

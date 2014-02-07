@@ -362,7 +362,7 @@ final class BrowserLauncherImpl extends BrowserLauncher {
   @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
-      BrowserUtil.launchBrowser(url);
+      BrowserUtil.browse(url);
     }
     else {
       for (UrlOpener urlOpener : UrlOpener.EP_NAME.getExtensions()) {
