@@ -197,10 +197,26 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     if (!cmp.isShowing()) return true;
     if (cmp == myCloseRec) return true;
-    if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
+    if (isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
     if (myComp == null || !myComp.isShowing()) return false;
     Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
     return rectangleOnScreen.contains(target.getScreenPoint());
+  }
+
+  private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
+    while (a != null) {
+      if (a == b) {
+        return true;
+      }
+
+      if (a instanceof JPopupMenu) {
+        a = ((JPopupMenu)a).getInvoker();
+      }
+      else {
+        a = a.getParent();
+      }
+    }
+    return false;
   }
 
   public boolean isMovingForward(RelativePoint target) {
