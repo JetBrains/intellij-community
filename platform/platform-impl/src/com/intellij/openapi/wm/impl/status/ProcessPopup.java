@@ -129,7 +129,6 @@ public class ProcessPopup  {
     builder.setResizable(true);
     builder.setTitle(IdeBundle.message("progress.window.title"));
     builder.setDimensionServiceKey(null, "ProcessPopupWindow", true);
-    builder.setMinSize(getMinSize());
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
@@ -138,22 +137,20 @@ public class ProcessPopup  {
     builder.setCancelButton(new MinimizeButton("Hide"));
 
     JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel);
-    Dimension contentSize = myRootContent.getPreferredSize();
     if (frame != null) {
+      Dimension contentSize = myRootContent.getPreferredSize();
       Rectangle bounds = frame.getBounds();
       int width = Math.max(bounds.width / 4, contentSize.width);
       int height = Math.min(bounds.height / 4, contentSize.height);
 
       int x = (int)(bounds.getMaxX() - width);
       int y = (int)(bounds.getMaxY() - height);
-      builder.setMinSize(new Dimension(width, height));
       myPopup = builder.createPopup();
 
       StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();
       if (sb.isVisible()) {
         y -= sb.getSize().height;
       }
-
 
       myPopup.showInScreenCoordinates(myProgressPanel.getRootPane(), new Point(x - 5, y - 5));
     } else {
@@ -188,13 +185,6 @@ public class ProcessPopup  {
     final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width *= 0.3d;
     size.height *= 0.3d;
-    return size;
-  }
-
-  private static Dimension getMinSize() {
-    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
-    size.width *= 0.1d;
-    size.height *= 0.1d;
     return size;
   }
 
