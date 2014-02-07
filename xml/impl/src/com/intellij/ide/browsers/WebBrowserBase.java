@@ -16,7 +16,6 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.util.xmlb.Converter;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,19 +77,5 @@ public abstract class WebBrowserBase extends WebBrowser {
   @Override
   public String toString() {
     return getName() + " (" + getPath() + ")";
-  }
-
-  public static final class ReferenceConverter extends Converter<WebBrowser> {
-    @Nullable
-    @Override
-    public WebBrowser fromString(@NotNull String value) {
-      return WebBrowserManager.getInstance().findBrowserById(value);
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull WebBrowser browser) {
-      return browser.getId().toString();
-    }
   }
 }
