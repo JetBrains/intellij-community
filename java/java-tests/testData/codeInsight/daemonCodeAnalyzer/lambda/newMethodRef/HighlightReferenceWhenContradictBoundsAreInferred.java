@@ -29,10 +29,10 @@ class Test {
     static void meth4(I3 s) { }
 
     static {
-        meth1<error descr="'meth1(Test.I1)' in 'Test' cannot be applied to '(<method reference>)'">(Foo::new)</error>;
+        meth1(<error descr="Inferred type 'java.lang.String' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Foo::new</error>);
         meth2(Foo::new);
-        meth3<error descr="'meth3(Test.I3)' in 'Test' cannot be applied to '(<method reference>)'">(Foo::new)</error>;
-        meth4<error descr="Cannot resolve method 'meth4(<method reference>)'">(Foo::new)</error>;
+        meth3(<error descr="Inferred type 'java.lang.Object' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Foo::new</error>);
+        meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Foo::new)</error>;
 
         meth1(<error descr="Inferred type 'java.lang.String' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Test::foo</error>);
         meth2(Test::foo);
