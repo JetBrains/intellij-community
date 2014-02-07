@@ -60,9 +60,10 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariabl
  */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
-  private List<InstructionImpl> myInstructions;
 
-  private Deque<InstructionImpl> myProcessingStack;
+  private final List<InstructionImpl> myInstructions = new ArrayList<InstructionImpl>();
+
+  private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<InstructionImpl>();
   private final PsiConstantEvaluationHelper myConstantEvaluator;
   private GroovyPsiElement myScope;
 
@@ -70,12 +71,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * stack of current catch blocks
    */
-  private Deque<ExceptionInfo> myCaughtExceptionInfos;
+  private final Deque<ExceptionInfo> myCaughtExceptionInfos = new ArrayDeque<ExceptionInfo>();
 
   /**
    * stack of current conditions
    */
-  private Deque<ConditionInstruction> myConditions;
+  private final Deque<ConditionInstruction> myConditions = new ArrayDeque<ConditionInstruction>();
 
 
   /**
@@ -91,7 +92,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * list of pending nodes and corresponding scopes sorted by scopes from the biggest to smallest.
    */
-  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
+  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
 
   private int myInstructionNumber;
   private final GrControlFlowPolicy myPolicy;
@@ -144,13 +145,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope) {
-    myInstructions = new ArrayList<InstructionImpl>();
-    myProcessingStack = new ArrayDeque<InstructionImpl>();
-    myCaughtExceptionInfos = new ArrayDeque<ExceptionInfo>();
-    myConditions = new ArrayDeque<ConditionInstruction>();
-
     myFinallyCount = 0;
-    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     myInstructionNumber = 0;
 
     myScope = scope;
