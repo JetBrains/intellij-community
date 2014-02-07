@@ -20,6 +20,7 @@ import com.intellij.psi.LambdaHighlightingUtil;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,6 +30,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -72,6 +75,14 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
         return;
       }
       if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
+        return;
+      }
+      final List<MethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
+      if (candidates == null || candidates.size() != 1) {
+        return;
+      }
+      final MethodSignature signature = candidates.get(0);
+      if (signature.getTypeParameters().length > 0) {
         return;
       }
       registerClassError(aClass, aClass);

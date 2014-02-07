@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -31,7 +33,7 @@ public class TreeNodePartListener extends LinkMouseListenerBase {
     myRenderer = renderer;
   }
 
-  protected Object getTagAt(final MouseEvent e) {
+  protected Object getTagAt(@NotNull final MouseEvent e) {
     final JTree tree = (JTree) e.getSource();
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {

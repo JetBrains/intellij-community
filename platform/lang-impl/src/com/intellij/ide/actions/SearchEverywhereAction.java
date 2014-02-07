@@ -63,6 +63,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -110,7 +111,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
-  public static final String SE_HISTORY_KEY = "SearchEverywhereHistory";
+  public static final String SE_HISTORY_KEY = "SearchEverywhereHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
   private static final int MAX_FILES = 6;
@@ -258,6 +259,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Editor myEditor;
   private PsiFile myFile;
+  private HistoryItem myHistoryItem;
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
@@ -540,6 +542,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     final String pattern = getField().getText();
     final Object value = myList.getSelectedValue();
+    saveHistory(project, pattern, value);
     IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getField().getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
@@ -682,25 +685,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final String last = editor.getText().trim();
-          if (project == null || project.isDisposed() || !project.isInitialized()) {
-            return true;
-          }
-          final PropertiesComponent storage = PropertiesComponent.getInstance(project);
-          final String historyString = storage.getValue(SE_HISTORY_KEY);
-          List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
-          history.remove(last);
-          history.add(0, last);
-          if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
-            history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
-          }
-          storage.setValue(SE_HISTORY_KEY, StringUtil.join(history, "\n"));
-          return true;
-        }
-      })
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
@@ -731,6 +715,43 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+  }
+
+  private void saveHistory(Project project, String text, Object value) {
+    if (project == null || project.isDisposed() || !project.isInitialized()) {
+      return;
+    }
+    HistoryType type = null;
+    String fqn = null;
+    if (value instanceof AnAction) {
+      type = HistoryType.ACTION;
+      fqn = ActionManager.getInstance().getId((AnAction)value);
+    } else if (value instanceof VirtualFile) {
+      type = HistoryType.FILE;
+      fqn = ((VirtualFile)value).getUrl();
+    }
+    final PropertiesComponent storage = PropertiesComponent.getInstance(project);
+    final String[] values = storage.getValues(SE_HISTORY_KEY);
+    List<HistoryItem> history = new ArrayList<HistoryItem>();
+    if (values != null) {
+      for (String s : values) {
+        final String[] split = s.split("\t");
+        if (split.length != 3 || text.equals(split[0])) {
+          continue;
+        }
+        history.add(new HistoryItem(split[0], split[1], split[2]));
+      }
+    }
+    history.add(0, new HistoryItem(text, type == null ? null : type.name(), fqn));
+
+    if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
+      history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
+    }
+    final String[] newValues = new String[history.size()];
+    for (int i = 0; i < newValues.length; i++) {
+      newValues[i] = history.get(i).toString();
+    }
+    storage.setValues(SE_HISTORY_KEY, newValues);
   }
 
   private void registerDataProvider(JPanel panel) {
@@ -787,13 +808,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void actionPerformed(AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
-        final String historyString = storage.getValue(SE_HISTORY_KEY);
-        if (historyString != null) {
-          final List<String> history = StringUtil.split(historyString, "\n");
-          if (history.size() > myHistoryIndex) {
-            final String text = history.get(myHistoryIndex);
-            editor.setText(text);
-            editor.setCaretPosition(text.length());
+        final String[] values = storage.getValues(SE_HISTORY_KEY);
+        if (values != null) {
+          if (values.length > myHistoryIndex) {
+            final List<String> data = StringUtil.split(values[myHistoryIndex], "\t");
+            myHistoryItem = new HistoryItem(data.get(0), data.get(1), data.get(2));
+            editor.setText(myHistoryItem.pattern);
+            editor.setCaretPosition(myHistoryItem.pattern.length());
             editor.moveCaretPosition(0);
             myHistoryIndex++;
           }
@@ -1430,6 +1451,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildTopHit(String pattern) {
       final List<Object> elements = new ArrayList<Object>();
+      HistoryItem history = myHistoryItem;
+      if (history != null) {
+        final HistoryType type = HistoryType.valueOf(history.type);
+        if (type != null) {
+          switch (type){
+            case CLASS:
+              break;
+            case FILE:
+              final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(history.fqn);
+              if (file != null) {
+                elements.add(file);
+              }
+              break;
+            case SYMBOL:
+              break;
+            case SETTING:
+              break;
+            case ACTION:
+              break;
+          }
+        }
+      }
       final Consumer<Object> consumer = new Consumer<Object>() {
         @Override
         public void consume(Object o) {
@@ -1875,4 +1918,37 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return result;
   }
 
+  private enum HistoryType {CLASS, FILE, SYMBOL, SETTING, ACTION}
+
+  private static class HistoryItem {
+    final String pattern, type, fqn;
+
+    private HistoryItem(String pattern, String type, String fqn) {
+      this.pattern = pattern;
+      this.type = type;
+      this.fqn = fqn;
+    }
+
+    public String toString() {
+      return pattern + "\t" + type + "\t" + fqn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      HistoryItem item = (HistoryItem)o;
+
+      if (!pattern.equals(item.pattern)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return pattern.hashCode();
+    }
+  }
 }
+

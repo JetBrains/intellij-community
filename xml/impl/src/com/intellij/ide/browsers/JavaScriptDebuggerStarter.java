@@ -48,7 +48,7 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
                                                                                @Nullable WebBrowser browser,
                                                                                boolean startDebugger) {
       if (!startDebugger || !start(runConfiguration, url)) {
-        UrlOpener.launchBrowser(url, browser);
+        UrlOpener.launchBrowser(url, browser, runConfiguration.getProject());
       }
     }
   }

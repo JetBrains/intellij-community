@@ -127,7 +127,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final FileDocumentManager myFileDocumentManager;
   private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
-  private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
+  private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;
@@ -157,18 +157,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
-          synchronized (myTransactionMap) {
-            myTransactionMap.put(doc, file);
-          }
+          myTransactionMap = myTransactionMap.plus(doc, file);
           myUpToDateIndices.clear();
         }
       }
 
       @Override
       public void transactionCompleted(final Document doc, final PsiFile file) {
-        synchronized (myTransactionMap) {
-          myTransactionMap.remove(doc);
-        }
+        myTransactionMap = myTransactionMap.minus(doc);
       }
     });
 
@@ -1403,9 +1399,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   private Set<Document> getTransactedDocuments() {
-    synchronized (myTransactionMap) {
-      return new THashSet<Document>(myTransactionMap.keySet());
-    }
+    return myTransactionMap.keySet();
   }
 
   private void indexUnsavedDocuments(@NotNull ID<?, ?> indexId,
@@ -1461,9 +1455,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private boolean hasActiveTransactions() {
-    synchronized (myTransactionMap) {
-      return !myTransactionMap.isEmpty();
-    }
+    return !myTransactionMap.isEmpty();
   }
 
   private interface DocumentContent {
@@ -1588,10 +1580,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Nullable
   private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
-    synchronized (myTransactionMap) {
-      PsiFile psiFile = myTransactionMap.get(document);
-      if (psiFile != null) return psiFile;
-    }
+    PsiFile psiFile = myTransactionMap.get(document);
+    if (psiFile != null) return psiFile;
 
     return project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
   }
@@ -1708,7 +1698,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-        if (shouldIndexFile(file, indexId)) {
+        if (myRequiringContentIndices.contains(indexId) && shouldIndexFile(file, indexId)) {
+          
           if (fc == null) {
             byte[] currentBytes;
             try {
@@ -2179,7 +2170,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    public Collection<VirtualFile> getAllFilesToUpdate() {
+    public List<VirtualFile> getAllFilesToUpdate() {
       if (myFilesToUpdate.isEmpty()) {
         return Collections.emptyList();
       }
@@ -2209,21 +2200,39 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       myUpdateSemaphoreRef.compareAndSet(semaphore, null);
     }
 
+    private static final int MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT = 5;    
+    
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       ProjectIndexableFilesFilter indexableFilesFilter = projectIndexableFiles(project);
+      int filesProcessedOutsideProject = 0;
 
       UpdateSemaphore updateSemaphore;
       do{
         updateSemaphore = obtainForceUpdateSemaphore();
         try {
-          for (VirtualFile file : getAllFilesToUpdate()) {
-            if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.containsFileId(
-              ((VirtualFileWithId)file).getId())) {
-              continue;
+          List<VirtualFile> filesToUpdate = getAllFilesToUpdate();
+          
+          //noinspection ForLoopReplaceableByForEach
+          for (int i = 0, size = filesToUpdate.size(); i < size; ++i) {
+            VirtualFile file = filesToUpdate.get(i);
+            boolean forceProcessFile;
+            
+            if (indexableFilesFilter != null && 
+                file instanceof VirtualFileWithId &&
+                !indexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) { // project files filtering
+              if (filesProcessedOutsideProject >= MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT) continue;
+              
+              // In order to have myFilesToUpdate empty for avoiding contention on scanning large concurrent set
+              // we need eventually to process all files in it including the ones that do not belong to any project 
+              // e.g. the files that have vfs built but avoided due to project exclusion: files under .git / user home / etc 
+              ++filesProcessedOutsideProject;
+              forceProcessFile = true;
+            } else {
+              forceProcessFile = Comparing.equal(file, restrictedTo);
             }
 
-            if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
+            if (filter == null || filter.accept(file) || forceProcessFile) {
               try {
                 updateSemaphore.down();
                 // process only files that can affect result

@@ -120,7 +120,7 @@ public class GrIntroduceFieldProcessor {
   @NotNull
   private List<PsiElement> processOccurrences(@NotNull PsiClass targetClass, @NotNull GrVariable field) {
     if (myContext.getStringPart() != null) {
-      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), myContext.getStringPart(), myContext.getProject());
+      final GrExpression expr = myContext.getStringPart().replaceLiteralWithConcatenation(field.getName());
       final PsiElement occurrence = replaceOccurrence(field, expr, targetClass);
       updateCaretPosition(occurrence);
       return Collections.singletonList(occurrence);
@@ -401,7 +401,7 @@ public class GrIntroduceFieldProcessor {
       return expression;
     }
     else if (stringPart != null) {
-      return GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPart, myContext.getProject());
+      return stringPart.createLiteralFromSelected();
     }
 
     throw new IncorrectOperationException("cannot be here!");

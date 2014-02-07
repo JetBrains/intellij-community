@@ -923,5 +923,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return result.toString();
   }
 
+  @Override
+  public String toString() {
+    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + "]";
+  }
 }
-

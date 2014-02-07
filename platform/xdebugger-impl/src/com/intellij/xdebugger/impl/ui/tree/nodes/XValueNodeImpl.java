@@ -183,13 +183,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
         @Override
         public void onClick(MouseEvent event) {
-          DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject());
+          DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
         }
       };
     }
     return null;
   }
 
+  @Override
   @Nullable
   public String getName() {
     return myName;
@@ -200,11 +201,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myValuePresentation;
   }
 
+  @Override
   @Nullable
   public String getRawValue() {
     return myRawValue;
   }
 
+  @Override
   public boolean isComputed() {
     return myValuePresentation != null;
   }

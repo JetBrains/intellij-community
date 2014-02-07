@@ -541,7 +541,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected Comparator<MyNode> getNodeComparator() {
     return new Comparator<MyNode>() {
       public int compare(final MyNode o1, final MyNode o2) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
       }
     };
   }

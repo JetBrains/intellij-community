@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.refactoring.classes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHelper;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 
 import java.util.Collections;
 
@@ -49,6 +51,25 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTest("Child", "Spam", "Parent_1");
   }
 
+  public void testMoveClassAttributesSimple() {
+    doHelperTest("Child", "#CLASS_VAR", "Parent");
+  }
+
+  public void testMoveClassAttributesNoPass() {
+    doHelperTest("Child2", "#CLASS_VAR", "Parent2");
+  }
+
+  public void testMoveInstanceAttributesSimple() {
+    doHelperTest("Child", "#instance_field", "Parent");
+  }
+
+  public void testMoveInstanceAttributesNoInit() {
+    doHelperTest("Child", "#instance_field", "Parent");
+  }
+  public void testMoveInstanceAttributesLeaveEmptyInit() {
+    doHelperTest("Child", "#foo", "Parent");
+  }
+
   public void testMultiFile() {   // PY-2810
     doMultiFileTest();
   }
@@ -76,6 +97,16 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final PyElement member = findMember(className, memberName);
     final PyClass superClass = findClass(superClassName);
-    PyPullUpHelper.pullUp(clazz, Collections.singleton(new PyMemberInfo(member)), superClass);
+    CommandProcessor.getInstance().executeCommand(clazz.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            MembersManager.moveAllMembers(clazz, superClass, Collections.singleton(MembersManager.findMember(clazz, member)));
+          }
+        });
+      }
+    }, null, null);
   }
 }

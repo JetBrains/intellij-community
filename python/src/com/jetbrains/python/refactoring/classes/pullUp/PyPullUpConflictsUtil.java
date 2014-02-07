@@ -21,7 +21,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,15 +29,17 @@ import java.util.Collection;
 /**
  * @author Dennis.Ushakov
  */
-public class PyPullUpConflictsUtil {
+final class PyPullUpConflictsUtil {
   private PyPullUpConflictsUtil() {
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {
+  @NotNull
+  static MultiMap<PsiElement, String> checkConflicts(final Collection<PyMemberInfo> infos, @NotNull final PyClass superClass) {
     final MultiMap<PsiElement, String> conflictsList = new MultiMap<PsiElement, String>();
     for (PyMemberInfo info : infos) {
       PsiElement member = info.getMember();
       boolean isConflict = false;
+      //TODO: Delegate to MemeberManagers here
       if (member instanceof PyFunction) {
         final String name = ((PyFunction)member).getName();
         if (name == null) continue;

@@ -21,7 +21,8 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.projectWizard.NewProjectWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.Disposable;
@@ -430,14 +431,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @Nullable
   ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport) {
-    AddModuleWizard wizard;
+    AbstractProjectWizard wizard;
     if (anImport) {
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
       if (wizard == null) return null;
       if (wizard.getStepCount() == 0) return wizard.getProjectBuilder();
     }
     else {
-      wizard = new AddModuleWizard(dialogParent, myProject, this);
+      wizard = new NewProjectWizard(myProject, dialogParent, this);
     }
     wizard.show();
     if (wizard.isOK()) {

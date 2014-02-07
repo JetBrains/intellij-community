@@ -35,6 +35,7 @@ import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -45,9 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -202,6 +201,7 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
+      LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
       throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
@@ -378,16 +378,13 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static File generateInitScript(boolean isBuildSrcProject) {
-    InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
+    InputStream stream = ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init.gradle");
     try {
       if (stream == null) {
         LOG.warn("Can't get init script template");
         return null;
       }
-
-      String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(GradleProjectResolver.class));
-      String s = FileUtil.loadTextAndClose(stream).replace("${JAR_PATH}", jarPath);
-
+      String s = FileUtil.loadTextAndClose(stream).replace("${EXTENSIONS_JARS_PATH}", getToolingExtensionsJarPaths());
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -410,7 +407,7 @@ public class GradleExecutionHelper {
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
     InputStream stream =
-      GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/buildSrcInit.gradle");
+      ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/buildSrcInit.gradle");
     try {
       if (stream == null) return null;
       return FileUtil.loadTextAndClose(stream);
@@ -433,5 +430,30 @@ public class GradleExecutionHelper {
       LOG.warn("can not get BuildEnvironment model", e);
       return null;
     }
+  }
+
+  @NotNull
+  private static String getToolingExtensionsJarPaths() throws ClassNotFoundException {
+    final ArrayList<Class<?>> list = ContainerUtil.newArrayList(
+      // add gradle-tooling-extension jar
+      Class.forName("org.jetbrains.plugins.gradle.model.ProjectImportAction"),
+      // add gradle-tooling-extension-v1.9 jar
+      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_9.builder.ModelBuildScriptClasspathBuilderImpl"),
+      // add gradle-tooling-extension-v1.11 jar
+      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_11.builder.ModelBuildScriptClasspathBuilderImpl")
+    );
+
+    StringBuilder buf = new StringBuilder();
+    buf.append('[');
+    for (Iterator<Class<?>> it = list.iterator(); it.hasNext(); ) {
+      Class<?> aClass = it.next();
+      String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(aClass));
+      buf.append('\"').append(jarPath).append('\"');
+      if (it.hasNext()) {
+        buf.append(',');
+      }
+    }
+    buf.append(']');
+    return buf.toString();
   }
 }

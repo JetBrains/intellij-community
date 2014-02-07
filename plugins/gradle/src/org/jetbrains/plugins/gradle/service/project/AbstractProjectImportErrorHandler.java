@@ -15,10 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.api.internal.LocationAwareException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +80,8 @@ public abstract class AbstractProjectImportErrorHandler {
       String location = error.getMessage();
       if (location != null && location.startsWith("Build file '")) {
         // Only the first line contains the location of the error. Discard the rest.
-        Iterable<String> lines = Splitter.on('\n').split(location);
-        return lines.iterator().next();
+        String[] lines = StringUtil.splitByLines(location);
+        return lines.length > 0 ? lines[0] : null;
       }
     }
     return null;
@@ -96,8 +95,7 @@ public abstract class AbstractProjectImportErrorHandler {
       newMsg = "Cause: " + newMsg;
     }
 
-    if (!Strings.isNullOrEmpty(location)) {
-      assert location != null;
+    if (!StringUtil.isEmpty(location)) {
       Matcher matcher = ERROR_LOCATION_PATTERN.matcher(location);
       if(matcher.find()) {
         String href = "error in file: " + matcher.group(1) + " at line: " + matcher.group(2);

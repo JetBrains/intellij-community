@@ -51,7 +51,10 @@ public class RatesPanel extends JPanel {
   }
 
   public void setRate(String rating) {
-    final Double dblRating = Double.valueOf(rating);
+    Double dblRating = 0d;
+    try {
+      dblRating = Double.valueOf(rating);
+    } catch (Exception ignore) {}
 
     final int intRating = dblRating.intValue();
 

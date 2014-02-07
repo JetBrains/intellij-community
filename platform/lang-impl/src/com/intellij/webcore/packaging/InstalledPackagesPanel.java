@@ -378,54 +378,55 @@ public class InstalledPackagesPanel extends JPanel {
     myPackageManagementService = packageManagementService;
     myPackagesTable.clearSelection();
     myPackagesTableModel.getDataVector().clear();
-    doUpdatePackages(packageManagementService);
+    myPackagesTableModel.fireTableDataChanged();
+    if (packageManagementService != null) {
+      doUpdatePackages(packageManagementService);
+    }
   }
 
-  public void doUpdatePackages(final PackageManagementService packageManagementService) {
+  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
     myPackagesTable.setPaintBusy(true);
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         Collection<InstalledPackage> packages = Lists.newArrayList();
-        if (packageManagementService != null) {
-          try {
-            packages = packageManagementService.getInstalledPackages();
-          }
-          catch (IOException e) {
-            // do nothing, we already have an empty list
-          }
-          finally {
-            final Collection<InstalledPackage> finalPackages = packages;
+        try {
+          packages = packageManagementService.getInstalledPackages();
+        }
+        catch (IOException e) {
+          // do nothing, we already have an empty list
+        }
+        finally {
+          final Collection<InstalledPackage> finalPackages = packages;
 
-            final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
-            final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
-            if (cache.isEmpty()) {
-              if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
-                refreshLatestVersions();
-              }
+          final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
+          final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
+          if (cache.isEmpty()) {
+            if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
+              refreshLatestVersions();
             }
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (packageManagementService == myPackageManagementService) {
-                  myPackagesTableModel.getDataVector().clear();
-                  for (InstalledPackage pkg : finalPackages) {
-                    RepoPackage repoPackage = cache.get(pkg.getName());
-                    final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
-                    myPackagesTableModel
-                      .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
-                  }
-                  if (!cache.isEmpty()) {
-                    myPackagesTable.setPaintBusy(false);
-                  }
-                  if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
-                    setLatestVersionsForInstalledPackages();
-                  }
+          }
+          application.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (packageManagementService == myPackageManagementService) {
+                myPackagesTableModel.getDataVector().clear();
+                for (InstalledPackage pkg : finalPackages) {
+                  RepoPackage repoPackage = cache.get(pkg.getName());
+                  final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
+                  myPackagesTableModel
+                    .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
+                }
+                if (!cache.isEmpty()) {
+                  myPackagesTable.setPaintBusy(false);
+                }
+                if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
+                  setLatestVersionsForInstalledPackages();
                 }
               }
-            }, ModalityState.any());
-          }
+            }
+          }, ModalityState.any());
         }
       }
     });
@@ -440,15 +441,18 @@ public class InstalledPackagesPanel extends JPanel {
     if (serviceEx == null) {
       return;
     }
-    final AtomicInteger restPackageCount = new AtomicInteger(0);
-    for (int i = 0; i < myPackagesTableModel.getRowCount(); ++i) {
+    int packageCount = myPackagesTableModel.getRowCount();
+    if (packageCount == 0) {
+      myPackagesTable.setPaintBusy(false);
+    }
+    final AtomicInteger inProgressPackageCount = new AtomicInteger(packageCount);
+    for (int i = 0; i < packageCount; ++i) {
       final int finalIndex = i;
       final InstalledPackage pkg = getInstalledPackageAt(finalIndex);
-      restPackageCount.incrementAndGet();
       serviceEx.fetchLatestVersion(pkg, new CatchingConsumer<String, Exception>() {
 
         private void decrement() {
-          if (restPackageCount.decrementAndGet() == 0) {
+          if (inProgressPackageCount.decrementAndGet() == 0) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {

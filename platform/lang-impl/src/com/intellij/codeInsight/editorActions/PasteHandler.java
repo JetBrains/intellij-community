@@ -89,7 +89,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
+    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
+        || editor.getCaretModel().supportsMultipleCarets() && editor.getCaretModel().getAllCarets().size() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, context);
       }

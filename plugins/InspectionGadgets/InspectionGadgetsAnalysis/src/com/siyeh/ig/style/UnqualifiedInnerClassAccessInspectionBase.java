@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 public class UnqualifiedInnerClassAccessInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreReferencesToLocalInnerClasses = false;
@@ -49,55 +45,6 @@ public class UnqualifiedInnerClassAccessInspectionBase extends BaseInspection {
     return new UnqualifiedInnerClassAccessVisitor();
   }
 
-  protected static class ReferenceCollector extends JavaRecursiveElementVisitor {
-
-    private final String name;
-    private final boolean onDemand;
-    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
-
-    ReferenceCollector(String name, boolean onDemand) {
-      this.name = name;
-      this.onDemand = onDemand;
-    }
-
-    @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      if (reference.isQualified()) {
-        return;
-      }
-      final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)target;
-      if (!onDemand) {
-        final String qualifiedName = aClass.getQualifiedName();
-        if (name.equals(qualifiedName)) {
-          references.add(reference);
-        }
-        return;
-      }
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (name.equals(qualifiedName)) {
-        references.add(reference);
-      }
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitReferenceElement(expression);
-    }
-
-    public Collection<PsiJavaCodeReferenceElement> getReferences() {
-      return references;
-    }
-  }
-
   private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -111,6 +58,9 @@ public class UnqualifiedInnerClassAccessInspectionBase extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      if (!aClass.hasModifierProperty(PsiModifier.STATIC) && reference.getParent() instanceof PsiNewExpression) {
+          return;
+      }
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass == null) {
         return;

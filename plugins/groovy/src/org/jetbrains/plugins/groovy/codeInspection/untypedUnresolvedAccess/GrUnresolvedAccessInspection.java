@@ -225,6 +225,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
           final PsiClass outerClass = clazz.getContainingClass();
           if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
               outerClass != null &&
+              newExpression.getArgumentList() != null &&
               !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
               !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
             String qname = clazz.getQualifiedName();
@@ -238,7 +239,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return null;
   }
 
-  private static boolean hasEnclosingInstanceInArgList(GrArgumentList list, PsiClass enclosingClass) {
+  private static boolean hasEnclosingInstanceInArgList(@NotNull GrArgumentList list, @NotNull PsiClass enclosingClass) {
     if (PsiImplUtil.hasNamedArguments(list)) return false;
 
     GrExpression[] args = list.getExpressionArguments();
@@ -547,24 +548,26 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
                                              HighlightInfo info,
                                              boolean compileStatic,
                                              final HighlightDisplayKey key) {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
-    if (targetClass == null || targetClass instanceof SyntheticElement && !(targetClass instanceof GroovyScriptClass)) return;
+   PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
+    if (targetClass == null) return;
 
-    if (!compileStatic) {
-      addDynamicAnnotation(info, refExpr, key);
-    }
+    if (!(targetClass instanceof SyntheticElement) || (targetClass instanceof GroovyScriptClass)) {
+      if (!compileStatic) {
+        addDynamicAnnotation(info, refExpr, key);
+      }
 
-    QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
+      QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
 
-    if (PsiUtil.isAccessedForReading(refExpr)) {
-      QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
-    }
-    if (PsiUtil.isLValue(refExpr)) {
-      QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
-    }
+      if (PsiUtil.isAccessedForReading(refExpr)) {
+        QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
+      }
+      if (PsiUtil.isLValue(refExpr)) {
+        QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
+      }
 
-    if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
-      QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
+      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
+        QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
+      }
     }
 
     if (!refExpr.isQualified()) {

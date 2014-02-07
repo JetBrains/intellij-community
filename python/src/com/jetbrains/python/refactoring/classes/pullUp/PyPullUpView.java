@@ -16,55 +16,19 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.classMembers.MemberInfoModel;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Ilya.Kazakevich
- * View for pull-up refactoring
+ *         View for pull-up refactoring
  */
-public interface PyPullUpView {
-  /**
-   * Launches view.
-   *
-   * @param parents         collection of class parents to display (first one would be displayed)
-   * @param memberInfoModel Member info model for members panel
-   * @param memberInfos     Member infos: list of class members
-   */
-  void init(@NotNull Collection<PyClass> parents,
-            @NotNull MemberInfoModel<PyElement, PyMemberInfo> memberInfoModel,
-            @NotNull List<PyMemberInfo> memberInfos);
+public interface PyPullUpView extends MembersBasedView<PyPullUpViewInitializationInfo> {
 
   /**
    * @return Parent that user selected
    */
   @NotNull
   PyClass getSelectedParent();
-
-  /**
-   * Closes view
-   */
-  void closeDialog();
-
-  /**
-   * @return List of members selected by user
-   */
-  @NotNull
-  Collection<PyMemberInfo> getSelectedMemberInfos();
-
-  /**
-   * Displays conflicts dialog
-   *
-   * @param conflicts map of conflicts
-   * @return true when user clicked "yes". False otherwise
-   */
-  boolean showConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts);
 }

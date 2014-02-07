@@ -34,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -253,8 +254,7 @@ public class PsiUtil {
       if (isLValue(index) && argTypes != null) {
         PsiType rawInitializer = TypeInferenceHelper.getInitializerTypeFor(index);
 
-        PsiType initializer = rawInitializer == null && !nullAsBottom ? TypesUtil.getJavaLangObject(index)
-                                                                      : rawInitializer;
+        PsiType initializer = notNullizeType(rawInitializer, nullAsBottom, index);
         return ArrayUtil.append(argTypes, initializer);
       }
       else {
@@ -272,16 +272,24 @@ public class PsiUtil {
     else if (parent instanceof GrAnonymousClassDefinition) {
       final GrArgumentList argList = ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
       if (argList == null) {
-        return getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt,
-                                byShape);
+        return getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt, byShape);
       }
       else {
-        return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom,
-                                stopAt, byShape);
+        return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt, byShape);
       }
+    }
+    else if (parent instanceof GrBinaryExpression) {
+      GrExpression right = ((GrBinaryExpression)parent).getRightOperand();
+      PsiType type = right != null ? right.getType() : null;
+      return new PsiType[] {notNullizeType(type, nullAsBottom, parent)};
     }
 
     return null;
+  }
+
+  @Contract("_, false, _ -> !null; !null, _, _ -> !null; null, true, _ -> null")
+  private static PsiType notNullizeType(PsiType type, boolean acceptNull, PsiElement context) {
+    return type != null || acceptNull ? type : TypesUtil.getJavaLangObject(context);
   }
 
   @Nullable
@@ -335,7 +343,7 @@ public class PsiUtil {
         if (stopAt == closure) {
           closureType = TypeConversionUtil.erasure(closureType);
         }
-        result.add(closureType == null && !nullAsBottom ? TypesUtil.getJavaLangObject(closure) : closureType);
+        result.add(notNullizeType(closureType, nullAsBottom, closure));
       }
       if (stopAt == closure) {
         break;

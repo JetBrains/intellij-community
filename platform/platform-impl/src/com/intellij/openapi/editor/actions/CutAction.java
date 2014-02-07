@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,25 @@ public class CutAction extends EditorAction {
 
   public static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      if(!editor.getSelectionModel().hasSelection()) {
+    public void executeWriteAction(final Editor editor, DataContext dataContext) {
+      if(!editor.getSelectionModel().hasSelection(true)) {
         if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;
         }
-        editor.getSelectionModel().selectLineAtCaret();
+        editor.getCaretModel().runForEachCaret(new Runnable() {
+          @Override
+          public void run() {
+            editor.getSelectionModel().selectLineAtCaret();
+          }
+        });
       }
       editor.getSelectionModel().copySelectionToClipboard();
-      EditorModificationUtil.deleteSelectedText(editor);
+      editor.getCaretModel().runForEachCaret(new Runnable() {
+        @Override
+        public void run() {
+          EditorModificationUtil.deleteSelectedText(editor);
+        }
+      });
     }
   }
 }

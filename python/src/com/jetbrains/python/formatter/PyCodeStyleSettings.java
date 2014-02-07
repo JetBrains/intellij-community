@@ -38,6 +38,9 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean NEW_LINE_AFTER_COLON = false;
   public boolean NEW_LINE_AFTER_COLON_MULTI_CLAUSE = true;
 
+  public boolean SPACE_AFTER_NUMBER_SIGN = true;
+  public boolean SPACE_BEFORE_NUMBER_SIGN = true;
+
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }

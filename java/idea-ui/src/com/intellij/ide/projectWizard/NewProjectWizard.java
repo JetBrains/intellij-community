@@ -24,17 +24,27 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
  * @author Dmitry Avdeev
  */
 public class NewProjectWizard extends AbstractProjectWizard {
 
-  private final StepSequence mySequence;
+  private final StepSequence mySequence = new StepSequence();
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(project == null ? IdeBundle.message("title.new.project") : IdeBundle.message("title.add.module"), project, defaultPath);
+    init(modulesProvider);
+  }
+
+  public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider) {
+    super(IdeBundle.message("title.add.module"), project, dialogParent);
+    init(modulesProvider);
+  }
+
+  protected void init(@NotNull ModulesProvider modulesProvider) {
     myWizardContext.setNewWizard(true);
-    mySequence = new StepSequence();
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     mySequence.addCommonStep(projectTypeStep);
     mySequence.addCommonStep(new ChooseTemplateStep(myWizardContext, projectTypeStep));
@@ -42,7 +52,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
     }
-    init();
+    super.init();
   }
 
   @Nullable

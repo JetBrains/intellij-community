@@ -386,14 +386,14 @@ public class HtmlParsing {
   }
 
   private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
-    boolean isTD = TD_TAG.equals(childName);
-    boolean isTR = TR_TAG.equals(childName);
+    boolean isCell = TD_TAG.equals(childName) || "th".equals(childName);
+    boolean isRow = TR_TAG.equals(childName);
 
     for (int i = myTagNamesStack.size() - 1; i >= 0; i--) {
       String parentName = myTagNamesStack.get(i);
       if (terminateOnNonOptionalTag && !HtmlUtil.isOptionalEndForHtmlTagL(parentName)) return false;
-      if (isTD && (TR_TAG.equals(parentName) || TABLE_TAG.equals(parentName)) ||
-          isTR && TABLE_TAG.equals(parentName)) {
+      if (isCell && (TR_TAG.equals(parentName) || TABLE_TAG.equals(parentName)) ||
+          isRow && TABLE_TAG.equals(parentName)) {
         return false;
       }
 

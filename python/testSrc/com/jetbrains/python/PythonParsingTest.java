@@ -251,6 +251,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testBadDecoratorNotMethod() {
+    doTest();
+  }
+
   public void testCommentAtEndOfMethod() { // PY-2137
     doTest();
   }

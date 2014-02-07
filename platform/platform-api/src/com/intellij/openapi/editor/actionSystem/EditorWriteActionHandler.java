@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
+  protected EditorWriteActionHandler() {
+  }
+
+  protected EditorWriteActionHandler(boolean runForEachCaret) {
+    super(runForEachCaret);
+  }
+
   @Override
   public final void execute(final Editor editor, final DataContext dataContext) {
     if (editor.isViewer()) return;

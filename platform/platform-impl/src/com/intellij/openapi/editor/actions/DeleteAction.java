@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ public class DeleteAction extends EditorAction {
   }
 
   public static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       MacUIUtil.hideCursor();
@@ -104,9 +108,12 @@ public class DeleteAction extends EditorAction {
 
   public static void deleteCharAtCaret(Editor editor) {
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && offset == editor.getDocument().getLineEndOffset(lineNumber)) {
+      return;
+    }
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();
-    int offset = editor.getCaretModel().getOffset();
     if (!EditorActionUtil.canEditAtOffset(editor, offset + 1)) return;
     if (afterLineEnd < 0
         // There is a possible case that caret is located right before the soft wrap position at the last logical line

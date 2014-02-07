@@ -13,6 +13,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,4 +53,24 @@ public class JavaBreakpointType extends XLineBreakpointTypeBase {
     FileType fileType = psiFile.getFileType();
     return StdFileTypes.CLASS.equals(fileType) || DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(psiFile);
   }
+
+  @Nullable
+  @Override
+  public XBreakpointProperties createProperties() {
+    return new JavaBreakpointProperties();
+  }
+
+  @Nullable
+  @Override
+  public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+    return new JavaBreakpointProperties();
+  }
+
+  @Nullable
+  @Override
+  public XBreakpointCustomPropertiesPanel<XLineBreakpoint<XBreakpointProperties>> createCustomRightPropertiesPanel(@NotNull Project project) {
+    return new JavaBreakpointPropertiesPanel(project);
+  }
+
+
 }

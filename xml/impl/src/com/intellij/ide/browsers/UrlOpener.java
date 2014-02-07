@@ -17,6 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,19 +28,24 @@ public abstract class UrlOpener {
     launchBrowser(url, family == null ? null : WebBrowserManager.getInstance().findBrowser(family));
   }
 
+  public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser) {
+    launchBrowser(url, browser, null);
+  }
+
   // different params order in order not to break compilation for launchBrowser(null, url)
-  public static void launchBrowser(final @NotNull String url, final @Nullable WebBrowser browser) {
+  public static void launchBrowser(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
       BrowserUtil.launchBrowser(url);
     }
     else {
       for (UrlOpener urlOpener : EP_NAME.getExtensions()) {
-        if (urlOpener.openUrl(browser, url)) {
+        if (urlOpener.openUrl(browser, url, null)) {
           return;
         }
       }
     }
   }
 
-  public abstract boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url);
+  public abstract boolean openUrl(@NotNull WebBrowser browser, @NotNull String url, @Nullable Project project);
 }
+

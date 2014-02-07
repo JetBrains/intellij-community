@@ -44,6 +44,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 

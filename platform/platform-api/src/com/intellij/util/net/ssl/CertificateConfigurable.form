@@ -63,7 +63,26 @@
         <border type="none">
           <title-color color="-16777216"/>
         </border>
-        <children/>
+        <children>
+          <grid id="2c4f3" binding="myEmptyPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <card name="Card1"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="fa818" class="com.intellij.ui.components.JBLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="No certificate selected"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
       </grid>
       <component id="3a890" class="com.intellij.openapi.ui.Splitter">
         <constraints>
@@ -72,7 +91,7 @@
         <properties>
           <firstComponent value="4918"/>
           <orientation value="true"/>
-          <proportion value="0.2"/>
+          <proportion value="0.3"/>
           <secondComponent value="9a985"/>
           <showDividerControls value="false"/>
         </properties>

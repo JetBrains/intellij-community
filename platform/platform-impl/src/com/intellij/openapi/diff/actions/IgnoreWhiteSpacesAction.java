@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
     }
   }
 
-  private static class IgnoringPolicyAction extends AnAction {
+  private static class IgnoringPolicyAction extends DumbAwareAction {
     private final ComparisonPolicy myPolicy;
 
     public IgnoringPolicyAction(String text, ComparisonPolicy policy) {

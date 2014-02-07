@@ -50,7 +50,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
     
       final PsiType exprType = myExpression.getType();
-      if (exprType != null && !exprType.equals(PsiType.NULL)) {
+      if (exprType != null) {
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
       return true;

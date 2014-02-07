@@ -113,6 +113,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
+    final PsiFile file = myElement.getContainingFile();
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
@@ -120,7 +121,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
-        if (qName.endsWith(name) && ImportFilter.shouldImport(qName)) {
+        if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
           }

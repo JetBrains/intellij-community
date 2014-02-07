@@ -67,7 +67,7 @@ public class RecentProjectPanel extends JPanel {
 
     new ClickListener(){
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex >= 0) {
           if (myList.getCellBounds(selectedIndex, selectedIndex).contains(event.getPoint())) {

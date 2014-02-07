@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
   @Nullable
   private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, @Nullable Set<PsiClass> types, boolean includeActions) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (!isPluginXml(pluginXml)) return types;
+    if (!DescriptorUtil.isPluginXml(pluginXml)) return types;
     assert pluginXml != null;
 
     final XmlDocument document = pluginXml.getDocument();
@@ -98,17 +98,6 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     }
 
     return types;
-  }
-
-  public static boolean isPluginXml(PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-    final XmlFile pluginXml = (XmlFile)file;
-
-    final XmlDocument document = pluginXml.getDocument();
-    if (document == null) return false;
-    final XmlTag rootTag = document.getRootTag();
-    return rootTag != null && "idea-plugin".equals(rootTag.getLocalName());
-
   }
 
   @Nullable

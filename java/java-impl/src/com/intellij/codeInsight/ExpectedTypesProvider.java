@@ -630,7 +630,8 @@ public class ExpectedTypesProvider {
       }
       else if (i == JavaTokenType.PLUS) {
         if (anotherType == null || anotherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          myResult.add(createInfoImpl(PsiType.getJavaLangObject(expr.getManager(), expr.getResolveScope()), anotherType));
+          PsiClassType objectType = PsiType.getJavaLangObject(expr.getManager(), expr.getResolveScope());
+          myResult.add(createInfoImpl(objectType, anotherType != null ? anotherType : objectType));
         }
         else if (PsiType.DOUBLE.isAssignableFrom(anotherType)) {
           myResult.add(createInfoImpl(PsiType.DOUBLE, anotherType));

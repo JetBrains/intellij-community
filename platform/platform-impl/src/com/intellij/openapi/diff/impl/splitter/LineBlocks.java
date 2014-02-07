@@ -165,7 +165,7 @@ public class LineBlocks {
     return LinearTransformation.oneToOne(location, leftInterval.getStart(), rightInterval);
   }
 
-  public static LineBlocks fromLineFragments(ArrayList<LineFragment> lines) {
+  public static LineBlocks fromLineFragments(List<LineFragment> lines) {
     ArrayList<LineBlock> filtered = new ArrayList<LineBlock>();
     for (LineFragment fragment : lines) {
       if (fragment.getType() != null) filtered.add(fragment);

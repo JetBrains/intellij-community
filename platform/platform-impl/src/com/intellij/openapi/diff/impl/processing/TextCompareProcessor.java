@@ -32,28 +32,38 @@ public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
   private final DiffPolicy myDiffPolicy;
   @NotNull private final ComparisonPolicy myComparisonPolicy;
+  private final boolean mySearchForSubFragments;
 
-  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
+  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy,
+                              final DiffPolicy diffPolicy,
+                              boolean searchForSubFragments) {
     myComparisonPolicy = comparisonPolicy;
     myDiffPolicy = diffPolicy;
+    mySearchForSubFragments = searchForSubFragments;
   }
 
-  public TextCompareProcessor(ComparisonPolicy comparisonPolicy) {
+  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
+    this(comparisonPolicy, diffPolicy, true);
+  }
+
+  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy) {
     this(comparisonPolicy, DiffPolicy.LINES_WO_FORMATTING);
   }
 
   public ArrayList<LineFragment> process(String text1, String text2) throws FilesTooBigForDiffException {
     DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(text1, text2);
-    DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).
-        correctAndNormalize(woFormattingBlocks);
+    DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
-    for (LineFragment lineBlock : lineBlocks) {
-      if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
-      String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
-      String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
-      ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
-      lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
-      lineBlock.adjustTypeFromChildrenTypes();
+
+    if (mySearchForSubFragments) {
+      for (LineFragment lineBlock : lineBlocks) {
+        if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
+        String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
+        String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
+        ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
+        lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
+        lineBlock.adjustTypeFromChildrenTypes();
+      }
     }
     return lineBlocks;
   }

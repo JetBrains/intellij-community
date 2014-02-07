@@ -20,7 +20,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -54,7 +53,7 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
-public class BrowserSettingsPanel {
+final class BrowserSettingsPanel {
   private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
 
   private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
@@ -323,7 +322,7 @@ public class BrowserSettingsPanel {
     return browsersEditor.isModified(browserManager.getList());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
     settings.setUseDefaultBrowser(getDefaultBrowser() == DefaultBrowser.SYSTEM);
@@ -355,5 +354,11 @@ public class BrowserSettingsPanel {
     customPathValue = settings.getBrowserPath();
     alternativeBrowserPathField.setEnabled(defaultBrowser == DefaultBrowser.ALTERNATIVE);
     updateCustomPathTextFieldValue(defaultBrowser);
+  }
+
+  public void selectBrowser(@NotNull WebBrowser browser) {
+    if (browser instanceof ConfigurableWebBrowser) {
+      browsersEditor.selectItem((ConfigurableWebBrowser)browser);
+    }
   }
 }

@@ -332,10 +332,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
       });
     }
 
-    final HintInfo info = new HintInfo(hint, flags, reviveOnEditorChange);
-    myHintsStack.add(info);
+    myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout",timeout, new ActionListener() {
+      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent event) {
           hint.hide();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * @author Vladimir Kondratyev
  */
 public final class TextEditorState implements FileEditorState {
 
-  public int   LINE;
-  public int   COLUMN;
+  public CaretState[] CARETS;
+
   public float VERTICAL_SCROLL_PROPORTION;
-  public int   SELECTION_START;
-  public int   SELECTION_END;
   public int   VERTICAL_SCROLL_OFFSET;
   public int   MAX_VERTICAL_SCROLL_OFFSET;
 
@@ -84,11 +84,8 @@ public final class TextEditorState implements FileEditorState {
 
     final TextEditorState textEditorState = (TextEditorState)o;
 
-    if (COLUMN != textEditorState.COLUMN) return false;
-    if (LINE != textEditorState.LINE) return false;
+    if (!Arrays.equals(CARETS, textEditorState.CARETS)) return false;
     if (VERTICAL_SCROLL_PROPORTION != textEditorState.VERTICAL_SCROLL_PROPORTION) return false;
-    if (SELECTION_START != textEditorState.SELECTION_START) return false;
-    if (SELECTION_END != textEditorState.SELECTION_END) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
     if (localFoldingState == null ? theirFoldingState != null : !localFoldingState.equals(theirFoldingState)) return false;
@@ -97,17 +94,59 @@ public final class TextEditorState implements FileEditorState {
   }
 
   public int hashCode() {
-    return LINE + COLUMN;
+    int result = 0;
+    if (CARETS != null) {
+      for (CaretState caretState : CARETS) {
+        if (caretState != null) {
+          result += caretState.hashCode();
+        }
+      }
+    }
+    return result;
   }
 
   @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState)) return false;
     TextEditorState other = (TextEditorState)otherState;
-    return level == FileEditorStateLevel.NAVIGATION && Math.abs(LINE - other.LINE) < MIN_CHANGE_DISTANCE;
+    return level == FileEditorStateLevel.NAVIGATION
+           && CARETS != null && CARETS.length == 1
+           && other.CARETS != null && other.CARETS.length == 1
+           && Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
   }
 
   public String toString() {
-    return "[" + LINE + "," + COLUMN + "]";
+    return Arrays.toString(CARETS);
+  }
+
+  public static class CaretState {
+    public int   LINE;
+    public int   COLUMN;
+    public int   SELECTION_START;
+    public int   SELECTION_END;
+
+    public boolean equals(Object o) {
+      if (!(o instanceof CaretState)) {
+        return false;
+      }
+
+      final CaretState caretState = (CaretState)o;
+
+      if (COLUMN != caretState.COLUMN) return false;
+      if (LINE != caretState.LINE) return false;
+      if (SELECTION_START != caretState.SELECTION_START) return false;
+      if (SELECTION_END != caretState.SELECTION_END) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return LINE + COLUMN;
+    }
+
+    public String toString() {
+      return "[" + LINE + "," + COLUMN + "]";
+    }
   }
 }

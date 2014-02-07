@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ public class IncrementalSearchHandler {
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.executeForAllCarets(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -416,7 +416,7 @@ public class IncrementalSearchHandler {
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.executeForAllCarets(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -449,7 +449,7 @@ public class IncrementalSearchHandler {
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.executeForAllCarets(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;

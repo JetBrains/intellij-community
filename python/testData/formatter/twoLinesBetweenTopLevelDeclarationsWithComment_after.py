@@ -2,7 +2,7 @@ class A(object):
     pass
 
 
-#comment
+# comment
 def one():
     pass
 
@@ -12,11 +12,11 @@ def two():
     pass
 
 
-#comment
+# comment
 class B(object):
     pass
 
 
-#comment
+# comment
 class C(object):
     pass

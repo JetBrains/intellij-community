@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.TypesDistinctProver;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -494,5 +495,82 @@ public class GenericsUtil {
       return eliminateWildcards(((PsiCapturedWildcardType)type).getWildcard(), eliminateInTypeArguments);
     }
     return type;
+  }
+
+  public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
+    //allow unchecked conversions in method calls but not in type declaration
+    return checkNotInBounds(type, bound, referenceParameterList.getParent() instanceof PsiReferenceExpression);
+  }
+
+  public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {
+    if (type instanceof PsiClassType) {
+      return checkNotAssignable(bound, type, allowUncheckedConversions((PsiClassType)type, uncheckedConversionByDefault));
+    }
+    if (type instanceof PsiWildcardType) {
+      if (((PsiWildcardType)type).isExtends()) {
+        return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
+      }
+      else if (((PsiWildcardType)type).isSuper()) {
+        final PsiType superBound = ((PsiWildcardType)type).getSuperBound();
+        if (PsiUtil.resolveClassInType(superBound) instanceof PsiTypeParameter) return TypesDistinctProver.provablyDistinct(type, bound);
+        return checkNotAssignable(bound, superBound, false);
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      return checkNotAssignable(bound, type, true);
+    }
+    return false;
+  }
+
+  //JLS 5.1.10
+  private static boolean checkExtendsWildcardCaptureFailure(PsiWildcardType type, PsiType bound) {
+    LOG.assertTrue(type.isExtends());
+    final PsiType extendsBound = type.getExtendsBound();
+    PsiType boundBound = bound;
+    if (bound instanceof PsiWildcardType) {
+      if (((PsiWildcardType)bound).isBounded()) {
+        boundBound = ((PsiWildcardType)bound).isSuper()
+                     ? ((PsiWildcardType)bound).getSuperBound()
+                     : ((PsiWildcardType)bound).getExtendsBound();
+      }
+      else {
+        return false;
+      }
+    }
+    return !TypeConversionUtil.areTypesConvertible(boundBound, extendsBound) &&
+           !TypeConversionUtil.areTypesConvertible(extendsBound, boundBound);
+  }
+
+  private static boolean checkNotAssignable(final PsiType bound,
+                                            final PsiType type,
+                                            final boolean allowUncheckedConversion) {
+    if (bound instanceof PsiWildcardType) {
+      if (((PsiWildcardType)bound).isBounded()) {
+        final PsiType boundBound = ((PsiWildcardType)bound).isExtends()
+                                   ? ((PsiWildcardType)bound).getExtendsBound()
+                                   : ((PsiWildcardType)bound).getSuperBound();
+        return !TypeConversionUtil.isAssignable(boundBound, type, allowUncheckedConversion);
+      }
+      else {
+        return true;
+      }
+    }
+    else {
+      return !TypeConversionUtil.isAssignable(bound, type, allowUncheckedConversion);
+    }
+  }
+
+  private static boolean allowUncheckedConversions(PsiClassType type, boolean uncheckedConversionByDefault) {
+    final PsiClass psiClass = type.resolve();
+    if (psiClass != null) {
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+        if (parameter.getExtendsListTypes().length != 0) {
+          return false;
+        }
+      }
+      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
+    }
+    if (!type.isRaw()) return true;
+    return uncheckedConversionByDefault;
   }
 }

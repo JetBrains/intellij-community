@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
@@ -79,7 +78,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     final StringPartInfo stringPartInfo = settings.getStringPartInfo();
     final GrExpression expression = stringPartInfo != null
-                                    ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, settings.getProject())
+                                    ? stringPartInfo.createLiteralFromSelected()
                                     : settings.getExpression();
     return new GrExpressionWrapper(expression);
   }
@@ -241,7 +240,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
     if (stringPartInfo != null) {
       final GrExpression
-        expr = GrIntroduceHandlerBase.processLiteral(mySettings.getName(), mySettings.getStringPartInfo(), mySettings.getProject());
+        expr = mySettings.getStringPartInfo().replaceLiteralWithConcatenation(mySettings.getName());
       final Editor editor = PsiUtilBase.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();

@@ -134,7 +134,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     final String encoding = defaultCharset != null ? defaultCharset.name() : "utf-8";
     setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
-    
+
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
   }
@@ -296,8 +296,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
     RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
+    assert data != null;
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
+
+
     commandLine.getEnvironment().putAll(env);
 
     commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
@@ -310,7 +313,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(3, "0");
 
     myCommandLine = commandLine.getCommandLineString();
-
 
     RemoteSshProcess remoteProcess =
       manager.createRemoteProcess(getProject(), data, commandLine, true);

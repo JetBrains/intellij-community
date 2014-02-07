@@ -81,4 +81,9 @@ public class BrowserSettings implements SearchableConfigurable, Configurable.NoS
   public void disposeUIResources() {
     myPanel = null;
   }
+
+  public void selectBrowser(@NotNull WebBrowser browser) {
+    createComponent();
+    myPanel.selectBrowser(browser);
+  }
 }

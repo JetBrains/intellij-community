@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 
@@ -47,128 +46,128 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
 
   public void testSameOneRootInBothThenNoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("."))
-        .roots(Arrays.asList("."));
+      new VcsRootConfiguration().mock(".")
+        .roots(".");
     doTest(vcsRootConfiguration);
   }
 
   public void testSameTwoRootsInBothThenNoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
-        .roots(Arrays.asList(".", "community"));
+      new VcsRootConfiguration().mock(".", "community")
+        .roots(".", "community");
     doTest(vcsRootConfiguration);
   }
 
   public void testOneMockRootNoVCSRootsThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("."))
-        .unregErrors(Arrays.asList("."));
+      new VcsRootConfiguration().mock(".")
+        .unregErrors(".");
     doTest(vcsRootConfiguration);
   }
 
   public void testOneVCSRootNoMockRootsThenError() throws IOException {
 
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().roots(Arrays.asList("."))
-        .extraErrors(Arrays.asList("."));
+      new VcsRootConfiguration().roots(".")
+        .extraErrors(".");
     doTest(vcsRootConfiguration);
   }
 
 
   public void testOneRootButDifferentThenTwoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("."))
-        .roots(Arrays.asList("community"))
-        .unregErrors(Arrays.asList(".")).extraErrors(Arrays.asList("community"));
+      new VcsRootConfiguration().mock(".")
+        .roots("community")
+        .unregErrors(".").extraErrors("community");
     doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsOneMatchingOneDifferentThenTwoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
-        .roots(Arrays.asList(".", "contrib"))
-        .unregErrors(Arrays.asList("community")).extraErrors(Arrays.asList("contrib"));
+      new VcsRootConfiguration().mock(".", "community")
+        .roots(".", "contrib")
+        .unregErrors("community").extraErrors("contrib");
     doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsInMockRootOneMatchingInVCSThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
-        .roots(Arrays.asList("."))
-        .unregErrors(Arrays.asList("community"));
+      new VcsRootConfiguration().mock(".", "community")
+        .roots(".")
+        .unregErrors("community");
     doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsBothNotMatchingThenFourErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
-        .roots(Arrays.asList("another", "contrib"))
-        .unregErrors(Arrays.asList("community", ".")).extraErrors(Arrays.asList("contrib", "another"));
+      new VcsRootConfiguration().mock(".", "community")
+        .roots("another", "contrib")
+        .unregErrors("community", ".").extraErrors("contrib", "another");
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootNoMockRootsThenErrorAboutExtraRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration()
-        .roots(Arrays.asList(PROJECT))
-        .extraErrors(Arrays.asList(PROJECT));
+        .roots(PROJECT)
+        .extraErrors(PROJECT);
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootFullUnderMockRootThenCorrect() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("."))
-        .roots(Arrays.asList(PROJECT));
+      new VcsRootConfiguration().mock(".")
+        .roots(PROJECT);
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootForAContentRootBelowProjectThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("content_root"))
-        .contentRoots(Arrays.asList("content_root")).roots(Arrays.asList(PROJECT))
-        .unregErrors(Arrays.asList("content_root")).extraErrors(Arrays.asList(PROJECT));
+      new VcsRootConfiguration().mock("content_root")
+        .contentRoots("content_root").roots(PROJECT)
+        .unregErrors("content_root").extraErrors(PROJECT);
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList("community"))
-        .contentRoots(Arrays.asList(".")).roots(Arrays.asList(PROJECT))
-        .unregErrors(Arrays.asList("community")).extraErrors(Arrays.asList(PROJECT));
+      new VcsRootConfiguration().mock("community")
+        .contentRoots(".").roots(PROJECT)
+        .unregErrors("community").extraErrors(PROJECT);
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "content_root", "../linked_source_root", "folder"))
-        .roots(Arrays.asList(PROJECT))
-        .contentRoots(Arrays.asList(".", "content_root", "../linked_source_root"))
-        .unregErrors(Arrays.asList("content_root", "../linked_source_root", "folder"));
+      new VcsRootConfiguration().mock(".", "content_root", "../linked_source_root", "folder")
+        .roots(PROJECT)
+        .contentRoots(".", "content_root", "../linked_source_root")
+        .unregErrors("content_root", "../linked_source_root", "folder");
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "content_root", "../linked_source_root", "folder"))
-        .roots(Arrays.asList(PROJECT, "folder"))
-        .contentRoots(Arrays.asList(".", "content_root", "../linked_source_root"))
-        .unregErrors(Arrays.asList("content_root", "../linked_source_root"));
+      new VcsRootConfiguration().mock(".", "content_root", "../linked_source_root", "folder")
+        .roots(PROJECT, "folder")
+        .contentRoots(".", "content_root", "../linked_source_root")
+        .unregErrors("content_root", "../linked_source_root");
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootLikeInIDEAProjectThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community", "contrib")).roots(Arrays.asList(PROJECT))
-        .contentRoots(Arrays.asList(".", "community", "contrib")).unregErrors(Arrays.asList("community", "contrib"));
+      new VcsRootConfiguration().mock(".", "community", "contrib").roots(PROJECT)
+        .contentRoots(".", "community", "contrib").unregErrors("community", "contrib");
     doTest(vcsRootConfiguration);
   }
 
   public void testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(Arrays.asList(".", "community", "contrib", "community/level1/level2/level3"))
-        .contentRoots(Arrays.asList(".", "community", "contrib")).roots(Arrays.asList(PROJECT, "community/level1/level2/level3"))
-        .unregErrors(Arrays.asList("community", "contrib"));
+      new VcsRootConfiguration().mock(".", "community", "contrib", "community/level1/level2/level3")
+        .contentRoots(".", "community", "contrib").roots(PROJECT, "community/level1/level2/level3")
+        .unregErrors("community", "contrib");
     doTest(vcsRootConfiguration);
   }
 

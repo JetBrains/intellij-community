@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -37,7 +36,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
     List<Module> pluginModules = new ArrayList<Module>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-      if (ModuleType.get(aModule) instanceof PluginModuleType) {
+      if (PluginModuleType.isOfType(aModule)) {
         pluginModules.add(aModule);
       }
     }
@@ -57,7 +56,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
-        if (ModuleType.get(aModule) instanceof PluginModuleType) {
+        if (PluginModuleType.isOfType(aModule)) {
           moduleCount++;
         }
       }
@@ -68,7 +67,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     }
     else if (moduleCount > 0) {
       final Module module = e.getData(LangDataKeys.MODULE);
-      if (module == null || !(ModuleType.get(module) instanceof PluginModuleType)) {
+      if (module == null || !(PluginModuleType.isOfType(module))) {
         enabled = true;
       }
     }

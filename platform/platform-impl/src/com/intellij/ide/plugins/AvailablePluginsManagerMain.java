@@ -25,6 +25,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -265,6 +266,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase();
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
+          TableUtil.ensureSelectionExists(getPluginTable());
         }
       };
     }

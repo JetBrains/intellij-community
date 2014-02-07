@@ -77,21 +77,20 @@ public class ProcessTerminatedListener extends ProcessAdapter {
 
   @NotNull
   private static String stringifyExitCode(int exitCode) {
-      // Quote from http://support.microsoft.com/kb/308558:
-      //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
-      //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
-      if (SystemInfo.isWindows && exitCode <= 0xC0000000 && exitCode > 0xD0000000) {
-          StringBuilder result = new StringBuilder();
-          result.append(exitCode);
-          result.append(" (0x").append(Integer.toHexString(exitCode).toUpperCase());
-          if (exitCode == 0xC000013A) {
-              // reporting a detailed reason for a well-known exit code
-              result.append(": interrupted by CTRL+C");
-          }
-          result.append(")");
-          return result.toString();
+    // Quote from http://support.microsoft.com/kb/308558:
+    //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
+    //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
+    if (SystemInfo.isWindows && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
+      StringBuilder result = new StringBuilder();
+      result.append(exitCode);
+      result.append(" (0x").append(Integer.toHexString(exitCode).toUpperCase());
+      if (exitCode == 0xC000013A) {
+        // reporting a detailed reason for a well-known exit code
+        result.append(": interrupted by Ctrl+C");
       }
-
-      return String.valueOf(exitCode);
+      result.append(")");
+      return result.toString();
+    }
+    return String.valueOf(exitCode);
   }
 }

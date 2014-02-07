@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
 public abstract class BaseEnterHandler extends EditorWriteActionHandler {
   private static final String GROUP_ID = "EnterHandler.GROUP_ID";
+
+  protected BaseEnterHandler() {
+    super(true);
+  }
 
   @Override
   public DocCommandGroupId getCommandGroupId(Editor editor) {

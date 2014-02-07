@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class ExtensionPointQuickDocProvider implements DocumentationProvider {
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (originalElement == null) return null;
-    if (originalElement.getLanguage() == XMLLanguage.INSTANCE || DevKitInspectionBase.isPluginXml(originalElement.getContainingFile())) {
+    if (originalElement.getLanguage() == XMLLanguage.INSTANCE || DescriptorUtil.isPluginXml(originalElement.getContainingFile())) {
       final PsiElement context = element.getContext();
       String fqn = null;
       if (originalElement instanceof XmlToken && ((XmlToken)originalElement).getTokenType() == XmlTokenType.XML_NAME) {

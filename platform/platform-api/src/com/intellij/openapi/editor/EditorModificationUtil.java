@@ -31,6 +31,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
 public class EditorModificationUtil {
@@ -133,13 +134,26 @@ public class EditorModificationUtil {
   }
 
   @Nullable
-  public static TextRange pasteTransferable(Editor editor, @Nullable Producer<Transferable> producer) {
+  public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
     String text = getStringContent(producer);
     if (text == null) return null;
 
-    int caretOffset = editor.getCaretModel().getOffset();
-    insertStringAtCaret(editor, text, false, true);
-    return new TextRange(caretOffset, caretOffset + text.length());
+    if (editor.getCaretModel().supportsMultipleCarets()) {
+      int caretCount = editor.getCaretModel().getAllCarets().size();
+      final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
+      editor.getCaretModel().runForEachCaret(new Runnable() {
+        @Override
+        public void run() {
+          insertStringAtCaret(editor, segments.next(), false, true);
+        }
+      });
+      return null;
+    }
+    else {
+      int caretOffset = editor.getCaretModel().getOffset();
+      insertStringAtCaret(editor, text, false, true);
+      return new TextRange(caretOffset, caretOffset + text.length());
+    }
   }
 
   public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {

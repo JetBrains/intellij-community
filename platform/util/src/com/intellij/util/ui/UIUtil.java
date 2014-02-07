@@ -356,9 +356,9 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
-    if (component instanceof JComboBox) {
+    if (component instanceof JComboBox && isUnderAquaLookAndFeel()) {
       // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-      // Disabling these children results in ugly UI. See WEB-10733
+      // Disabling these children results in ugly UI: WEB-10733
       return;
     }
     if (component instanceof JLabel) {

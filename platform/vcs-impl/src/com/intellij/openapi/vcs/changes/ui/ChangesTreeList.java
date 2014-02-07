@@ -189,7 +189,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final int idx = myList.locationToIndex(e.getPoint());
         if (idx >= 0) {
           final Rectangle baseRect = myList.getCellBounds(idx, idx);
@@ -544,7 +544,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           //noinspection unchecked
           List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
           for (T object : list) {
-            if (!checkSet.add(object.hashCode()) || !changes.contains(object)) {
+            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
               changes.add(object);
             }
           }

@@ -9,10 +9,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" exported="" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="platform-api" exported="" />
-    <orderEntry type="module" module-name="lang-api" exported="" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 

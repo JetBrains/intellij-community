@@ -25,10 +25,7 @@ import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
-import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
-import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,8 +125,11 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     return myBaseProjectPath;
   }
 
-  public void setProjectRoots(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
+  public void setupProjectStructure(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
     myRoots = roots;
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      detector.setupProjectStructure(roots.get(detector), getProjectDescriptor(detector), this);
+    }
   }
 
   @NotNull
@@ -316,6 +316,19 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     return false;
   }
 
+  @Override
+  public void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<DetectedProjectRoot> roots) {
+    if (projectDescriptor.getModules().isEmpty()) {
+      List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
+      for (DetectedProjectRoot root : roots) {
+        if (root instanceof DetectedContentRoot) {
+          modules.add(new ModuleDescriptor(root.getDirectory(), ((DetectedContentRoot)root).getModuleType(), Collections.<DetectedSourceRoot>emptyList()));
+        }
+      }
+      projectDescriptor.setModules(modules);
+    }
+  }
+
   @NotNull
   private static Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
                                      final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel)
@@ -344,8 +357,8 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
       VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
       if (moduleContentRoot != null) {
         final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final Collection<DetectedProjectRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
-        for (DetectedProjectRoot srcRoot : sourceRoots) {
+        final Collection<DetectedSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
+        for (DetectedSourceRoot srcRoot : sourceRoots) {
           final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
           final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
           if (sourceRoot != null) {
@@ -372,12 +385,10 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
         }
       }
     }
-
   }
 
-  public static String getPackagePrefix(final DetectedProjectRoot srcRoot) {
-    // TODO we can introduce DetectedProjectRootWithPackagePrefix interface
-    return srcRoot instanceof JavaModuleSourceRoot ? ((JavaModuleSourceRoot)srcRoot).getPackagePrefix() : "";
+  public static String getPackagePrefix(final DetectedSourceRoot srcRoot) {
+    return srcRoot.getPackagePrefix();
   }
 
   @NotNull

@@ -78,6 +78,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   private JPanel myCustomPropertiesPanelWrapper;
   private JPanel myCustomConditionsPanelWrapper;
   private JCheckBox myEnabledCheckbox;
+  private JPanel myCustomRightPropertiesPanelWrapper;
   private final List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
 
   private List<XBreakpointPropertiesSubPanel<B>> mySubPanels = new ArrayList<XBreakpointPropertiesSubPanel<B>>();
@@ -131,6 +132,12 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     if (customConditionPanel != null) {
       myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customConditionPanel);
+    }
+
+    XBreakpointCustomPropertiesPanel<B> customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);
+    if (customRightConditionPanel != null && (showAllOptions || customRightConditionPanel.isVisibleOnPopup(breakpoint))) {
+      myCustomRightPropertiesPanelWrapper.add(customRightConditionPanel.getComponent(), BorderLayout.CENTER);
+      myCustomPanels.add(customRightConditionPanel);
     }
 
     myMainPanel.addFocusListener(new FocusAdapter() {

@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import java.util.ArrayList;
 
 import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.deleteLocalVar;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.processLiteral;
 
 /**
  * @author Max Medvedev
@@ -86,7 +85,7 @@ public class GrIntroduceConstantProcessor {
       }
     }
     else if (context.getStringPart() != null) {
-      final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
+      final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(field.getName());
       final PsiElement element = replaceOccurrence(field, ref, isEscalateVisibility());
       updateCaretPosition(element);
     }
@@ -227,7 +226,7 @@ public class GrIntroduceConstantProcessor {
       return expression;
     }
     else {
-      return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
+      return context.getStringPart().createLiteralFromSelected();
     }
   }
 

@@ -97,6 +97,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testWildcardsAndFormalLambdaParams() {doTest();}
   public void testFinalInitializer() {doTest();}
   public void testBreakContinueInside() {doTest();}
+  public void testSameLambdaParamNames() {doTest();}
 
   private void doTest() {
     doTest(false);

@@ -33,6 +33,9 @@ public class InstanceFilter implements JDOMExternalizable{
   public long    ID      = 0;
   public boolean ENABLED = true;
 
+  public InstanceFilter() {
+  }
+
   protected InstanceFilter(long ID, boolean ENABLED) {
     this.ID = ID;
     this.ENABLED = ENABLED;

@@ -1463,7 +1463,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     String description = CustomAnnotationChecker.isAnnotationApplicable(annotation, annotation.getParent());
     if (description != null) {
-      myHolder.createErrorAnnotation(ref, description);
+      myHolder.createErrorAnnotation(ref, description).registerFix(new GrRemoveAnnotationIntention());
     }
   }
 

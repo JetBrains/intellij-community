@@ -58,10 +58,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,6 +69,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.net.URL;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -81,12 +80,17 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
-  private enum Cards { FRAMEWORKS, TEMPLATES, CUSTOM }
-
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
 
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
+  public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
+    new Convertor<FrameworkSupportInModuleProvider, String>() {
+      @Override
+      public String convert(FrameworkSupportInModuleProvider o) {
+        return o.getId();
+      }
+    };
 
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -108,11 +112,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       return (ModuleBuilder)key.createModuleBuilder();
     }
   };
-  private final Set<String> myCards = new HashSet<String>();
+  private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private boolean myRemoteTemplatesLoaded;
-  private Cards myCurrentCard;
-  private boolean myNeedDownload;
+  private String myCurrentCard;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -163,7 +166,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
       public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
-        if (myCurrentCard == Cards.FRAMEWORKS) {
+        if (isFrameworksMode()) {
           myFrameworksPanel.addSupport(module, rootModel);
         }
       }
@@ -210,6 +213,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myTemplatesList.restoreSelection();
   }
 
+  private boolean isFrameworksMode() {
+    return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
+  }
+
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
 
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
@@ -221,6 +228,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
       if (builder.isTemplate()) {
         TemplatesGroup group = groupMap.get(builder.getGroupName());
+        if (group == null) {
+          group = new TemplatesGroup(builder);
+        }
         myTemplatesMap.putValue(group, template);
       }
       else {
@@ -306,7 +316,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   // new TemplatesGroup selected
   public void projectTypeChanged() {
-    myNeedDownload = false;
     TemplatesGroup group = getSelectedGroup();
     if (group == null) return;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
@@ -318,13 +327,23 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(groupModuleBuilder);
       final ProjectCategory category = group.getProjectCategory();
       if (category != null) {
-        providers = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
+        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
                     @Override
                     public boolean value(FrameworkSupportInModuleProvider provider) {
                       return matchFramework(category, provider);
                     }
                   });
-        myFrameworksPanel.setProviders(providers,
+        // add associated
+        Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), PROVIDER_STRING_CONVERTOR);
+        Set<FrameworkSupportInModuleProvider> set = new HashSet<FrameworkSupportInModuleProvider>(filtered);
+        for (FrameworkSupportInModuleProvider provider : filtered) {
+          for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
+            FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
+            set.add(dependency);
+          }
+        }
+
+        myFrameworksPanel.setProviders(new ArrayList<FrameworkSupportInModuleProvider>(set),
                                        new HashSet<String>(Arrays.asList(category.getAssociatedFrameworkIds())),
                                        new HashSet<String>(Arrays.asList(category.getPreselectedFrameworkIds())));
       }
@@ -332,7 +351,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         myFrameworksPanel.setProviders(providers);
       }
       getSelectedBuilder().addModuleConfigurationUpdater(myConfigurationUpdater);
-      myNeedDownload = true;
 
       showCard(FRAMEWORKS_CARD);
     }
@@ -341,13 +359,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   private void showCard(String card) {
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
-    if (FRAMEWORKS_CARD.equals(card)) {
-      myCurrentCard = Cards.FRAMEWORKS;
-    }
-    else if (TEMPLATES_CARD.equals(card)) {
-      myCurrentCard = Cards.TEMPLATES;
-    }
-    else myCurrentCard = Cards.CUSTOM;
+    myCurrentCard = card;
   }
 
   private void showTemplates(TemplatesGroup group) {
@@ -380,14 +392,20 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
-    if (!myCards.contains(card)) {
-      JComponent panel = builder.getCustomOptionsPanel(this);
-      if (panel == null) return false;
-      myCards.add(card);
-      myOptionsPanel.add(panel, card);
+    if (!myCustomSteps.containsKey(card)) {
+      ModuleWizardStep step = builder.getCustomOptionsStep(this);
+      if (step == null) return false;
+      step.updateStep();
+      myCustomSteps.put(card, step);
+      myOptionsPanel.add(step.getComponent(), card);
     }
     showCard(card);
     return true;
+  }
+
+  @Nullable
+  private ModuleWizardStep getCustomStep() {
+    return myCustomSteps.get(myCurrentCard);
   }
 
   private TemplatesGroup getSelectedGroup() {
@@ -396,7 +414,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   @Nullable
   public ProjectTemplate getSelectedTemplate() {
-    return myCurrentCard == Cards.TEMPLATES ? myTemplatesList.getSelectedTemplate() : null;
+    return myCurrentCard == TEMPLATES_CARD ? myTemplatesList.getSelectedTemplate() : null;
   }
 
   private ModuleBuilder getSelectedBuilder() {
@@ -408,11 +426,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   public Collection<ProjectTemplate> getAvailableTemplates() {
-    return myCurrentCard != Cards.FRAMEWORKS ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
+    return myCurrentCard != FRAMEWORKS_CARD ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
   }
 
   public void onWizardFinished() throws CommitStepException {
-    if (myNeedDownload) {
+    if (isFrameworksMode()) {
       boolean ok = myFrameworksPanel.downloadLibraries();
       if (!ok) {
         int answer = Messages.showYesNoDialog(getComponent(),
@@ -434,6 +452,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   public void updateDataModel() {
     ModuleBuilder builder = getSelectedBuilder();
     myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    ModuleWizardStep step = getCustomStep();
+    if (step != null) {
+      step.updateDataModel();
+    }
   }
 
   @Override
@@ -441,10 +463,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
       loadRemoteTemplates();
     }
-  }
-
-  @Override
-  public void onStepLeaving() {
   }
 
   @Override
@@ -474,14 +492,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     Disposer.dispose(this);
   }
 
-  private static MultiMap<String, ProjectTemplate> loadLocalTemplates() {
+  private MultiMap<String, ProjectTemplate> loadLocalTemplates() {
     ConcurrentMultiMap<String, ProjectTemplate> map = new ConcurrentMultiMap<String, ProjectTemplate>();
     ProjectTemplateEP[] extensions = ProjectTemplateEP.EP_NAME.getExtensions();
     for (ProjectTemplateEP ep : extensions) {
       ClassLoader classLoader = ep.getLoaderForClass();
       URL url = classLoader.getResource(ep.templatePath);
       if (url != null) {
-        map.putValue(ep.projectType, new LocalArchivedTemplate(url, classLoader));
+        LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
+        if (ep.category) {
+          TemplateBasedCategory category = new TemplateBasedCategory(template);
+          myTemplatesMap.putValue(new TemplatesGroup(category), template);
+        }
+        else {
+          map.putValue(ep.projectType, template);
+        }
       }
     }
     return map;

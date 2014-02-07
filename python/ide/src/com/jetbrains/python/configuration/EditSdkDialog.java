@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.NullableFunction;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -82,7 +83,7 @@ public class EditSdkDialog extends DialogWrapper {
     init();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         myAssociateCheckbox.setSelected(false);
         myAssociateCheckbox.setEnabled(true);
         myAssociateCheckbox.setText("Associate this environment with current project");

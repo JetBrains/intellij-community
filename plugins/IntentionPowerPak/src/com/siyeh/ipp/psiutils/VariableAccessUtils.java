@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Bas Leijdekkers
+ * Copyright 2009-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public class VariableAccessUtils {
     final PsiBinaryExpression binaryExpression =
       (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (!ComparisonUtils.isComparison(tokenType)) {
+    if (!ComparisonUtils.isComparisonOperation(tokenType)) {
       return false;
     }
     final PsiExpression lhs = binaryExpression.getLOperand();

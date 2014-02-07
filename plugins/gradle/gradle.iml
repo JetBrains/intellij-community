@@ -9,8 +9,10 @@
       <sourceFolder url="file://$MODULE_DIR$/testData" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="external-system-api" exported="" />
+    <orderEntry type="module" module-name="external-system-impl" exported="" />
+    <orderEntry type="module" module-name="gradle-tooling-extension" exported="" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
@@ -20,107 +22,32 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="maven" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-core-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-plugins-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-build-init-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.9.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-native-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-ide-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/buildSrc/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/buildSrc/src/test/resources" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ui/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ui/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ui/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/cli/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/cpp/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/cpp/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ear/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ide/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ide/src/main/resources" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ivy/src/main/java/org/gradle/api/publish/ivy/tasks" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ivy/src/main/java/org/gradle/api/publish/ivy/plugins" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/ivy/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/testFixtures/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/osgi/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/osgi/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/antlr/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/jetty/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/maven/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/maven/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/scala/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/scala/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/jacoco/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/native/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/plugins/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/plugins/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/plugins/src/testFixtures/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/publish/src/main/groovy/org/gradle/api/publish/plugins" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/publish/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/announce/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/launcher/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/launcher/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/launcher/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/open-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/open-api/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core-impl/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core-impl/src/test/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/reporting/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/resources/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/javascript/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/testjar/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/testjar/src/test/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-impl/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-impl/src/test/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/singleModule/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/singleModule/src/test/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/enforcerplugin/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-impl/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-impl/src/test/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/diagnostics/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/diagnostics/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/diagnostics/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/performance/src/configPlugin" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/performance/src/testFixtures/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/integTest/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/testFixtures/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/code-quality/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/language-jvm/src/main/groovy/org/gradle/language/jvm/tasks" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/language-jvm/src/main/groovy/org/gradle/language/jvm/plugins" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/language-jvm/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/language-base/src/main/groovy/org/gradle/language/base/plugins" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/language-base/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-comparison/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-comparison/src/integTest/resources/org/gradle/api/plugins/buildcomparison/gradle/BuildComparisonIntegrationSpec/compareArchives/source/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/build-comparison/src/integTest/resources/org/gradle/api/plugins/buildcomparison/gradle/BuildComparisonIntegrationSpec/compareArchives/target/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/internal-testing/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services-groovy/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services-groovy/src/test/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -163,9 +90,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library name="GradleJnaPosix">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
@@ -186,8 +111,10 @@
         <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.3-rc-2.jar!/" recursive="false" />
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="maven" />
   </component>
 </module>
 

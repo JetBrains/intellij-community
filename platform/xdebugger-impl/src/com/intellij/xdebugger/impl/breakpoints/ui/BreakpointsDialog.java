@@ -301,6 +301,7 @@ public class BreakpointsDialog extends DialogWrapper {
       public void breakpointsChanged() {
         collectItems();
         myTreeController.rebuildTree(myBreakpointItems);
+        myDetailController.doUpdateDetailView(true);
       }
     };
 

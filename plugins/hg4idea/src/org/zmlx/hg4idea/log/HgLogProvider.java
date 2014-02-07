@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -166,8 +165,22 @@ public class HgLogProvider implements VcsLogProvider {
 
     // branch filter and user filter may be used several times without delimiter
     if (!branchFilters.isEmpty()) {
+      HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository not found for root " + root);
+        return Collections.emptyList();
+      }
+
+      boolean atLeastOneBranchExists = false;
       for (VcsLogBranchFilter branchFilter : branchFilters) {
-        filterParameters.add(prepareParameter("branch", branchFilter.getBranchName()));
+        String branchName = branchFilter.getBranchName();
+        if (branchExists(repository, branchName)) {
+          filterParameters.add(prepareParameter("branch", branchName));
+          atLeastOneBranchExists = true;
+        }
+      }
+      if (!atLeastOneBranchExists) { // no such branches => filter matches nothing
+        return Collections.emptyList();
       }
     }
 
@@ -219,11 +232,18 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
     String userName = HgConfig.getInstance(myProject, root).getNamedConfig("ui", "username");
+    //order of variables to identify hg username see at mercurial/ui.py
     if (userName == null) {
       userName = System.getenv("HGUSER");
-    }
-    if (userName == null) {
-      return null;
+      if (userName == null) {
+        userName = System.getenv("USER");
+        if (userName == null) {
+          userName = System.getenv("LOGNAME");
+          if (userName == null) {
+            return null;
+          }
+        }
+      }
     }
     Pair<String, String> userArgs = HgUtil.parseUserNameAndEmail(userName);
     return myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());
@@ -238,4 +258,10 @@ public class HgLogProvider implements VcsLogProvider {
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
+
+  private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
+    return repository.getBranches().keySet().contains(branchName) ||
+           HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);
+  }
+
 }

@@ -20,7 +20,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -55,11 +54,6 @@ public abstract class ProjectCategory {
     return createModuleBuilder().getGroupName();
   }
 
-  @Nullable
-  public String getParentId() {
-    return null;
-  }
-
   public FrameworkRole[] getAcceptableFrameworkRoles() {
     return new FrameworkRole[] {createModuleBuilder().getDefaultAcceptableRole()};
   }
@@ -72,6 +66,9 @@ public abstract class ProjectCategory {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  /**
+   * Preselects the frameworks in tree.
+   */
   public String[] getPreselectedFrameworkIds() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }

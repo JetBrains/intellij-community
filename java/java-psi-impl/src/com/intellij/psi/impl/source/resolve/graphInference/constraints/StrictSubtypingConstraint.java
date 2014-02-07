@@ -49,6 +49,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
       return TypeConversionUtil.isAssignable(myT, myS);
     }
+
+    if (PsiType.NULL.equals(myS)) return true;
+    if (PsiType.NULL.equals(myT)) return false;
+
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
       inferenceVariable.addBound(myT, InferenceBound.UPPER);
@@ -108,7 +112,6 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return true;
     }
 
-    if (PsiType.NULL.equals(myT)) return false;
     return true;
   }
 

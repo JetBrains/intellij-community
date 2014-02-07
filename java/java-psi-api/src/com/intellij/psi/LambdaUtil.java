@@ -250,7 +250,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
+  public static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
     }
@@ -590,7 +590,7 @@ public class LambdaUtil {
                                                    @NotNull PsiSubstitutor psiSubstitutor,
                                                    final LanguageLevel languageLevel,
                                                    final Project project) {
-    if (interfaceMethodReturnType == null) return psiSubstitutor;
+    if (returnType == PsiType.VOID || interfaceMethodReturnType == PsiType.VOID) return psiSubstitutor;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
     final PsiSubstitutor substitutor =
       resolveHelper.inferTypeArguments(typeParameters, new PsiType[]{interfaceMethodReturnType}, new PsiType[]{returnType}, languageLevel);

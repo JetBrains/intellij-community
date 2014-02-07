@@ -390,7 +390,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (file == null) {
       return false;
     }
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     PsiElement element = CustomTemplateCallback.getContext(file, offset);
     final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, wrapping);
     return applicableGenerator != null && applicableGenerator.isEnabled();

@@ -54,12 +54,18 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   @Override
   public AbstractValueHint createValueHint(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session == null) return null;
+    if (session == null) {
+      return null;
+    }
 
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    if (stackFrame == null) return null;
+    if (stackFrame == null) {
+      return null;
+    }
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-    if (evaluator == null) return null;
+    if (evaluator == null) {
+      return null;
+    }
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<XValueHint>() {
       @Override

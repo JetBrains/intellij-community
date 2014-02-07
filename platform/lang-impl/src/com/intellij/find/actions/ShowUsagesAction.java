@@ -46,18 +46,21 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
+import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
@@ -72,12 +75,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   private final boolean showSettingsDialogBefore;
@@ -578,21 +584,38 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     builder.setMovable(true).setResizable(true);
-    builder.setItemChoosenCallback(new Runnable() {
+    final AtomicReference<PsiElement> selectedUsage = new AtomicReference<PsiElement>();
+    table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
-      public void run() {
+      public void valueChanged(ListSelectionEvent e) {
+        selectedUsage.set(null);
         int[] selected = table.getSelectedRows();
         for (int i : selected) {
           Object value = table.getValueAt(i, 0);
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
             if (usage == MORE_USAGES_SEPARATOR) {
-              appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
-              return;
+              selectedUsage.set(PsiUtilCore.NULL_PSI_ELEMENT);
             }
-            navigateAndHint(usage, null, handler, popupPosition, maxUsages, options);
+            else if (usage instanceof PsiElementUsage) {
+              selectedUsage.set(((PsiElementUsage)usage).getElement());
+            }
+            break;
           }
         }
+      }
+    });
+    builder.setMovable(true).setResizable(true);
+    builder.setItemChoosenCallback(new Runnable() {
+      @Override
+      public void run() {
+        PsiElement usage = selectedUsage.get();
+        if (usage == null) return;
+        if (usage == PsiUtilCore.NULL_PSI_ELEMENT) {
+          appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
+          return;
+        }
+        ((Navigatable)usage).navigate(true);
       }
     });
     final JBPopup[] popup = new JBPopup[1];

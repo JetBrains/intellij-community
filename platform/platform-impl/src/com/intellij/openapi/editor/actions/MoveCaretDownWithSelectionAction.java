@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,18 @@ public class MoveCaretDownWithSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      editor.getCaretModel().moveCaretRelatively(0, 1, true, editor.isColumnMode(), true);
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
+        editor.getCaretModel().getCurrentCaret().clone(false);
+      }
+      else {
+        editor.getCaretModel().moveCaretRelatively(0, 1, true, editor.isColumnMode(), true);
+      }
     }
   }
 }

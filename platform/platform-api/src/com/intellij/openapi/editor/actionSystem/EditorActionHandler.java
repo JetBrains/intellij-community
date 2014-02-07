@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,16 @@ import com.intellij.openapi.editor.Editor;
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
 public abstract class EditorActionHandler {
+  private final boolean myRunForEachCaret;
+
+  protected EditorActionHandler() {
+    this(false);
+  }
+
+  protected EditorActionHandler(boolean runForEachCaret) {
+    myRunForEachCaret = runForEachCaret;
+  }
+
   /**
    * Checks if the action handler is currently enabled.
    *
@@ -45,6 +55,24 @@ public abstract class EditorActionHandler {
 
   public boolean executeInCommand(Editor editor, DataContext dataContext) {
     return true;
+  }
+
+  public boolean runForAllCarets() {
+    return myRunForEachCaret;
+  }
+
+  public void executeForAllCarets(final Editor editor, final DataContext dataContext) {
+    if (editor.getCaretModel().supportsMultipleCarets() && runForAllCarets()) {
+      editor.getCaretModel().runForEachCaret(new Runnable() {
+        @Override
+        public void run() {
+          execute(editor, dataContext);
+        }
+      });
+    }
+    else {
+      execute(editor, dataContext);
+    }
   }
 
   public DocCommandGroupId getCommandGroupId(Editor editor) {

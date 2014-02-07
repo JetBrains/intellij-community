@@ -188,9 +188,9 @@ public class CommitHelper {
     int failed = changesFailedToCommit.size();
     int committed = myIncludedChanges.size() - failed;
 
-    String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
+    String text = committed + " " + StringUtil.pluralize("file", committed) + " committed";
     if (failed > 0) {
-      text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
+      text += ", " + failed + " " + StringUtil.pluralize("file", failed) + " failed to commit";
     }
     StringBuilder content = new StringBuilder(StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage));
     for (String s : myFeedback) {

@@ -31,6 +31,7 @@ public final class ViewPresenterUtils {
   }
 
   /**
+   * TODO: Write about do not call anything in constructor
    * Creates link between view and presenter and launches them using {@link Presenter#launch()}. Be sure to read package info first.
    *
    * @param presenterInterface presenter interface
