@@ -119,7 +119,7 @@ public class DefaultUrlOpener extends UrlOpener {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"), XmlBundle.message("browser.error"), Messages.OK_BUTTON, "Fix\u2026", null) == Messages.NO) {
+        if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"), XmlBundle.message("browser.error"), Messages.OK_BUTTON, IdeBundle.message("button.fix"), null) == Messages.NO) {
           final BrowserSettings browserSettings = new BrowserSettings();
           ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser == null ? null : new Runnable() {
             @Override
