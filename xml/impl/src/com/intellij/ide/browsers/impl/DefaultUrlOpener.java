@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,33 +56,23 @@ public class DefaultUrlOpener extends UrlOpener {
                                       boolean newWindowIfPossible,
                                       @Nullable final Project project,
                                       @NotNull String... additionalParameters) {
-    final String browserPath = browser.getPath();
+    String browserPath = browser.getPath();
     if (StringUtil.isEmpty(browserPath)) {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(project, browser.getBrowserNotFoundMessage(), IdeBundle.message("title.browser.not.found"));
-        }
-      });
+      showError(browser.getBrowserNotFoundMessage(), browser, project, IdeBundle.message("title.browser.not.found"));
       return false;
     }
-
-    return doLaunchBrowser(browserPath, browser.getSpecificSettings(), url, newWindowIfPossible, project, browser, additionalParameters);
+    else {
+      return doLaunchBrowser(browser, browserPath, url, newWindowIfPossible, project, additionalParameters);
+    }
   }
 
-  private static boolean doLaunchBrowser(final String browserPath,
-                                         @Nullable BrowserSpecificSettings browserSpecificSettings,
-                                         final String url,
-                                         final boolean newWindowIfPossible,
-                                         @Nullable final Project project,
-                                         @NotNull final WebBrowser browser,
-                                         final String[] additionalParameters) {
+  private static boolean doLaunchBrowser(@NotNull final WebBrowser browser, String browserPath, String url, boolean newWindowIfPossible, @Nullable final Project project, String[] additionalParameters) {
     GeneralCommandLine commandLine = new GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, newWindowIfPossible));
     if (url != null) {
       commandLine.addParameter(url);
     }
 
-    addArgs(commandLine, browserSpecificSettings, additionalParameters);
+    addArgs(commandLine, browser.getSpecificSettings(), additionalParameters);
 
     try {
       final Process process = commandLine.createProcess();
@@ -92,7 +82,7 @@ public class DefaultUrlOpener extends UrlOpener {
           public void run() {
             try {
               if (process.waitFor() == 1) {
-                showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project);
+                showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null);
               }
             }
             catch (InterruptedException ignored) {
@@ -110,16 +100,16 @@ public class DefaultUrlOpener extends UrlOpener {
       return true;
     }
     catch (ExecutionException e) {
-      showError(e.getMessage(), browser, project);
+      showError(e.getMessage(), browser, project, null);
       return false;
     }
   }
 
-  private static void showError(@Nullable final String error, @Nullable final WebBrowser browser, @Nullable final Project project) {
+  private static void showError(@Nullable final String error, @Nullable final WebBrowser browser, @Nullable final Project project, @Nullable final String title) {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"), XmlBundle.message("browser.error"), Messages.OK_BUTTON, IdeBundle.message("button.fix"), null) == Messages.NO) {
+        if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"), title == null ? XmlBundle.message("browser.error") : title, Messages.OK_BUTTON, IdeBundle.message("button.fix"), null) == Messages.NO) {
           final BrowserSettings browserSettings = new BrowserSettings();
           ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser == null ? null : new Runnable() {
             @Override

@@ -226,7 +226,7 @@ public class BrowserUtil {
     return null;
   }
 
-  private static void launchBrowserByCommand(@NotNull final URI uri, @NotNull final List<String> command) {
+  private static void launchBrowserByCommand(@NotNull URI uri, @NotNull List<String> command) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine(command);
       commandLine.addParameter(uri.toString());
