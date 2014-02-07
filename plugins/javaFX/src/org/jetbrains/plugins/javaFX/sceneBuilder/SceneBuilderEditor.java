@@ -170,6 +170,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     removeSceneBuilder();
 
     try {
+      FileDocumentManager.getInstance().saveDocument(myDocument);
+
       if (myFileURL == null) {
         myFileURL = new File(myFile.getPath()).toURI().toURL();
       }
@@ -188,6 +190,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private void updateSceneBuilder() {
     if (mySceneBuilder != null) {
+      FileDocumentManager.getInstance().saveDocument(myDocument);
       mySceneBuilder.reloadFile();
     }
   }
