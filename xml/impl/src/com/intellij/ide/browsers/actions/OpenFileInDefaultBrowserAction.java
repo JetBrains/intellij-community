@@ -16,10 +16,7 @@
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.browsers.OpenInBrowserRequest;
-import com.intellij.ide.browsers.WebBrowser;
-import com.intellij.ide.browsers.WebBrowserManager;
-import com.intellij.ide.browsers.WebBrowserUrlProvider;
+import com.intellij.ide.browsers.*;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;

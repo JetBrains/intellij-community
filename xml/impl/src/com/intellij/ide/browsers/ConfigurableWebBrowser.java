@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.UUID;
 
-final class ConfigurableWebBrowser extends WebBrowser {
+final class ConfigurableWebBrowser extends WebBrowserBase {
   private boolean active;
   private String path;
 

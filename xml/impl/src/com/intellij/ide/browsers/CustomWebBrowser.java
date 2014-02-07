@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.UUID;
 
-final class CustomWebBrowser extends WebBrowser {
+final class CustomWebBrowser extends WebBrowserBase {
   private final Computable<String> pathComputable;
   private final Icon icon;
   private final String browserNotFoundMessage;

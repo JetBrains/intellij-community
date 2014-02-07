@@ -27,7 +27,7 @@ public class StartBrowserSettings {
   }
 
   @Nullable
-  @Attribute(value = "name", converter = WebBrowser.ReferenceConverter.class)
+  @Attribute(value = "name", converter = WebBrowserBase.ReferenceConverter.class)
   public WebBrowser getBrowser() {
     return myBrowser;
   }
