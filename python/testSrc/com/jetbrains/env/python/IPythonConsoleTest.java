@@ -1,12 +1,20 @@
 package com.jetbrains.env.python;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -32,7 +40,21 @@ public class IPythonConsoleTest extends PyEnvTestCase {
         addTextToEditor("sys?");
         PsiFile psi =
           PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
-        assertFalse(PsiTreeUtil.hasErrorElements(psi));
+        Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
+      }
+    });
+  }
+
+  @NotNull
+  private static Collection<String> getErrors(PsiFile psi) { //TODO: NotNull?
+    if (!PsiTreeUtil.hasErrorElements(psi)) {
+      return Collections.emptyList();
+    }
+
+    return Collections2.transform(PsiTreeUtil.findChildrenOfType(psi, PsiErrorElement.class), new Function<PsiErrorElement, String>() {
+      @Override
+      public String apply(PsiErrorElement input) {
+        return input.getErrorDescription();
       }
     });
   }
