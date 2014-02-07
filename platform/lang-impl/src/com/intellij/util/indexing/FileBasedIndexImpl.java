@@ -2200,12 +2200,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       myUpdateSemaphoreRef.compareAndSet(semaphore, null);
     }
 
-    private static final int MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT = 5;    
+    private static final int MAX_FILES_TO_PROCESS_OUTSIDE_SCOPE = 5;    
     
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       ProjectIndexableFilesFilter indexableFilesFilter = projectIndexableFiles(project);
-      int filesProcessedOutsideProject = 0;
+      int filesProcessedOutsideScope = 0;
 
       UpdateSemaphore updateSemaphore;
       do{
@@ -2216,36 +2216,34 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0, size = filesToUpdate.size(); i < size; ++i) {
             VirtualFile file = filesToUpdate.get(i);
-            boolean forceProcessFile;
-            
-            if (indexableFilesFilter != null && 
-                file instanceof VirtualFileWithId &&
-                !indexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) { // project files filtering
-              if (filesProcessedOutsideProject >= MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT) continue;
+                        
+            if ((indexableFilesFilter != null && // project files filtering
+                 file instanceof VirtualFileWithId &&
+                 !indexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())
+                 ) ||
+                filter != null && !filter.accept(file) ||
+                restrictedTo != null && restrictedTo != file
+              ) { 
+              if (filesProcessedOutsideScope >= MAX_FILES_TO_PROCESS_OUTSIDE_SCOPE) continue;
               
               // In order to have myFilesToUpdate empty for avoiding contention on scanning large concurrent set
-              // we need eventually to process all files in it including the ones that do not belong to any project 
-              // e.g. the files that have vfs built but avoided due to project exclusion: files under .git / user home / etc 
-              ++filesProcessedOutsideProject;
-              forceProcessFile = true;
-            } else {
-              forceProcessFile = Comparing.equal(file, restrictedTo);
+              // we need eventually to process all files in it including the ones that do not belong to any project or current scope 
+              // e.g. the files that have vfs built but avoided due to project / scope exclusion: workspace.xml / files under .git / user home / etc 
+              ++filesProcessedOutsideScope;              
             }
-
-            if (filter == null || filter.accept(file) || forceProcessFile) {
-              try {
-                updateSemaphore.down();
-                // process only files that can affect result
-                processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
-              }
-              catch (ProcessCanceledException e) {
-                updateSemaphore.reportUpdateCanceled();
-                throw e;
-              }
-              finally {
-                updateSemaphore.up();
-              }
+           
+            try {
+              updateSemaphore.down();
+              // process only files that can affect result
+              processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
             }
+            catch (ProcessCanceledException e) {
+              updateSemaphore.reportUpdateCanceled();
+              throw e;
+            }
+            finally {
+              updateSemaphore.up();
+            }            
           }
 
           // If several threads entered the method at the same time and there were files to update,

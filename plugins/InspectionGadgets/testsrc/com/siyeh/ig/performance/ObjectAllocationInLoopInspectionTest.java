@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model;
+package com.siyeh.ig.performance;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
- * @author Vladislav.Soroka
- * @since 11/5/13
+ * @author Bas Leijdekkers
  */
-public interface WarModel extends Serializable {
-  String getWebAppDirName();
+public class ObjectAllocationInLoopInspectionTest extends LightInspectionTestCase {
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ObjectAllocationInLoopInspection();
+  }
 
-  File getWebAppDir();
-
-  File getWebXml();
-
-  Map<String, Set<String>> getWebRoots();
-
-  Set<File> getClasspath();
-
-  String getManifestContent();
+  public void testObjectAllocationInLoop() { doTest(); }
 }

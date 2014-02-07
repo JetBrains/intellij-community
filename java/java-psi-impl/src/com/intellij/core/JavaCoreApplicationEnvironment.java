@@ -27,6 +27,8 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +42,7 @@ import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
+import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
@@ -54,6 +57,9 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerFileType(JavaFileType.INSTANCE, "java");
     registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
     registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
+
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextParserDefinition());
 
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());

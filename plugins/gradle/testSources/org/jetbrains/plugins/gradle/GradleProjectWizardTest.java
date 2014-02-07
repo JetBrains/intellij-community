@@ -36,7 +36,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         if (step instanceof ProjectTypeStep) {
           assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
           List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(4, steps.size());
+          assertEquals(3, steps.size());
         }
       }
     });
