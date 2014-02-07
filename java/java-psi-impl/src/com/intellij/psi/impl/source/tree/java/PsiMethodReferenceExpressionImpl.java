@@ -361,12 +361,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (isConstructor && interfaceMethod != null) {
             final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
             final boolean isRawSubst = PsiUtil.isRawSubstitutor(containingClass, substitutor);
-            Project project = containingClass.getProject();
-            final PsiClassType returnType = JavaPsiFacade.getElementFactory(project).createType(containingClass,
-                                                                                                     isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
+            final PsiClassType returnType = JavaPsiFacade.getElementFactory(containingClass.getProject())
+              .createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
 
-            substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, GenericsUtil.eliminateWildcards(interfaceMethodReturnType), substitutor, languageLevel,
-                                                         project);
+            final InferenceSession session = new InferenceSession(typeParameters, substitutor, getManager(), null);
+            if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
+              session.registerConstraints(returnType, interfaceMethodReturnType);
+              substitutor = session.infer();
+            }
 
             if (containingClass.getConstructors().length == 0) {
               ClassCandidateInfo candidateInfo = null;

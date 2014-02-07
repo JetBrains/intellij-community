@@ -583,26 +583,6 @@ public class LambdaUtil {
     return null;
   }
 
-  @NotNull
-  public static PsiSubstitutor inferFromReturnType(@NotNull PsiTypeParameter[] typeParameters,
-                                                   final PsiType returnType,
-                                                   @Nullable final PsiType interfaceMethodReturnType,
-                                                   @NotNull PsiSubstitutor psiSubstitutor,
-                                                   final LanguageLevel languageLevel,
-                                                   final Project project) {
-    if (returnType == PsiType.VOID || interfaceMethodReturnType == PsiType.VOID) return psiSubstitutor;
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-    final PsiSubstitutor substitutor =
-      resolveHelper.inferTypeArguments(typeParameters, new PsiType[]{interfaceMethodReturnType}, new PsiType[]{returnType}, languageLevel);
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      final PsiType inferredType = substitutor.substitute(typeParameter);
-      if (PsiUtil.resolveClassInType(inferredType) != typeParameter) {
-        psiSubstitutor = psiSubstitutor.put(typeParameter, inferredType);
-      }
-    }
-    return psiSubstitutor;
-  }
-
   public static boolean notInferredType(PsiType typeByExpression) {
     return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
   }
