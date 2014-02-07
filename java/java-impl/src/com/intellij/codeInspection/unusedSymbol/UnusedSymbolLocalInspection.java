@@ -18,7 +18,6 @@ package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;

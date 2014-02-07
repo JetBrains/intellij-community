@@ -34,6 +34,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;

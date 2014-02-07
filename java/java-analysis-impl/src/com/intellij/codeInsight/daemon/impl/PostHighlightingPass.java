@@ -28,7 +28,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
