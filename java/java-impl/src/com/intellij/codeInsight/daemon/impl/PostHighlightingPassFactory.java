@@ -22,6 +22,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,9 +33,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.JspPsiUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +88,21 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
                                       @NotNull Document document, Editor editor,
                                       @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
-    return new PostHighlightingPass(myProject, file, editor, document, highlightInfoProcessor, isUnusedImportEnabled(unusedImportKey, file));
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
+    boolean importEnabled = isUnusedImportEnabled(unusedImportKey, file, profile);
+    final UnusedDeclarationInspection myDeadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, file);
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
+    final boolean myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, file);
+
+    return new PostHighlightingPass(myProject, file, editor, document, highlightInfoProcessor, importEnabled, new Predicate<PsiElement>() {
+      @Override
+      public boolean apply(PsiElement member) {
+        return !myDeadCodeEnabled || myDeadCodeInspection.isEntryPoint(member);
+      }
+    });
   }
 
-  private static boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey, @NotNull PsiFile file) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
+  private static boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey, @NotNull PsiFile file, InspectionProfile profile) {
     boolean unusedImportEnabled = profile.isToolEnabled(unusedImportKey, file);
     if (unusedImportEnabled && JspPsiUtil.isInJspFile(file)) {
       final JspFile jspFile = JspPsiUtil.getJspFile(file);

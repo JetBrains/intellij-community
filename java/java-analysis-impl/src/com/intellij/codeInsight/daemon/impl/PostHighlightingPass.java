@@ -28,11 +28,11 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -66,6 +66,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.Predicate;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +84,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
   private final PsiFile myFile;
   @Nullable private final Editor myEditor;
   private final boolean myUnusedImportEnabled;
+  @NotNull private final Predicate<PsiElement> myIsEntryPointPredicate;
   private final int myStartOffset;
   private final int myEndOffset;
 
@@ -92,10 +94,8 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
   private int myCurrentEntryIndex;
   private boolean myHasMissortedImports;
   private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-  private UnusedDeclarationInspection myDeadCodeInspection;
   private UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
   private HighlightDisplayKey myUnusedSymbolKey;
-  private boolean myDeadCodeEnabled;
   private boolean myInLibrary;
   private HighlightDisplayKey myDeadCodeKey;
   private HighlightInfoType myDeadCodeInfoType;
@@ -105,11 +105,13 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                               @Nullable Editor editor,
                               @NotNull Document document,
                               @NotNull HighlightInfoProcessor highlightInfoProcessor,
-                              boolean unusedImportEnabled) {
+                              boolean unusedImportEnabled,
+                              @NotNull Predicate<PsiElement> isEntryPoint) {
     super(project, document, "Unused symbols", file, editor, file.getTextRange(), true, highlightInfoProcessor);
     myFile = file;
     myEditor = editor;
     myUnusedImportEnabled = unusedImportEnabled;
+    myIsEntryPointPredicate = isEntryPoint;
     myStartOffset = 0;
     myEndOffset = file.getTextLength();
 
@@ -207,20 +209,18 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedSymbolInspection != null);
 
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
-    myDeadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
-    myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
 
     myDeadCodeInfoType = myDeadCodeKey == null
-                         ? null
+                         ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
                                                                        HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
 
     GlobalUsageHelper helper = new GlobalUsageHelper() {
       @Override
       public boolean shouldCheckUsages(@NotNull PsiMember member) {
-        return !myInLibrary && myDeadCodeEnabled && !myDeadCodeInspection.isEntryPoint(member);
+        return !myInLibrary && !myIsEntryPointPredicate.apply(member);
       }
 
       @Override
@@ -363,8 +363,10 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     return isInjected(project, element);
   }
 
-  @Nullable 
-  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element, @NotNull String message, @NotNull final HighlightInfoType highlightInfoType) {
+  @Nullable
+  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
+                                                     @NotNull String message,
+                                                     @NotNull final HighlightInfoType highlightInfoType) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
     if (info == null) {
       return null; //filtered out
@@ -432,8 +434,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       return null;
     }
     else if (isFieldUnused(myProject, myFile, field, progress, helper)) {
-      return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType, identifier
-      );
+      return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType, identifier);
     }
     return null;
   }
@@ -446,8 +447,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     if (helper.isLocallyUsed(field) || !weAreSureThereAreNoUsages(project, containingFile, field, progress, helper)) {
       return false;
     }
-    return !(field instanceof PsiEnumConstant) || !isEnumValuesMethodUsed(project, containingFile, field, progress, helper
-    );
+    return !(field instanceof PsiEnumConstant) || !isEnumValuesMethodUsed(project, containingFile, field, progress, helper);
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {
@@ -597,14 +597,14 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     String name = member.getName();
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
+    PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
+    PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
     if (useScope instanceof GlobalSearchScope) {
       // some classes may have references from within XML outside dependent modules, e.g. our actions
       if (member instanceof PsiClass) {
         useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
       }
 
-      PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
-      PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
@@ -626,28 +626,20 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-
-    //FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    //FindUsagesHandler handler = new JavaFindUsagesHandler(member, new JavaFindUsagesHandlerFactory(project));
-    //FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions().clone();
-    //findUsagesOptions.searchScope = useScope;
-    //findUsagesOptions.isSearchForTextOccurrences = true;
-    //boolean old = !findUsagesManager.isUsed(member, findUsagesOptions);
-
-    //if (true) {
-      if (ReferencesSearch.search(member, useScope, true).findFirst() != null) return false;
-      return !(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope);
-    //}
-    //return old;
+    if (ReferencesSearch.search(member, useScope, true).findFirst() != null) return false;
+    return !(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope, searchHelper, ignoreFile);
   }
 
-  private static boolean foundUsageInText(PsiMember member, GlobalSearchScope scope) {
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(member.getProject());
-
-    return !helper.processUsagesInNonJavaFiles(member, member.getName(), new PsiNonJavaFileReferenceProcessor() {
+  private static boolean foundUsageInText(@NotNull PsiMember member,
+                                          @NotNull GlobalSearchScope scope,
+                                          @NotNull PsiSearchHelper searchHelper,
+                                          final PsiFile ignoreFile) {
+    return !searchHelper.processUsagesInNonJavaFiles(member, member.getName(), new PsiNonJavaFileReferenceProcessor() {
       @Override
       public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
-        return false;
+        if (psiFile == ignoreFile) return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
+        PsiElement element = psiFile.findElementAt(startOffset);
+        return element instanceof PsiComment; // ignore comments
       }
     }, scope);
   }
@@ -706,8 +698,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       highlightDisplayKey = myDeadCodeKey;
       highlightInfoType = myDeadCodeInfoType;
     }
-    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", highlightDisplayKey, highlightInfoType, identifier
-    );
+    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", highlightDisplayKey, highlightInfoType, identifier);
   }
 
   public static boolean isClassUsed(@NotNull Project project,
@@ -741,7 +732,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String pattern,
                                                                @NotNull final PsiNameIdentifierOwner aClass,
                                                                @NotNull final String element,
-                                                               @NotNull HighlightDisplayKey highlightDisplayKey,
+                                                               HighlightDisplayKey highlightDisplayKey,
                                                                @NotNull HighlightInfoType highlightInfoType,
                                                                @NotNull PsiElement identifier) {
     String symbolName = aClass.getName();
