@@ -25,8 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -1072,7 +1070,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       myUsageViewTreeCellRenderer.isRowVisible(myTree.getRowForPath(new TreePath(((DefaultMutableTreeNode)node).getPath())),
                                                myTree.getVisibleRect());
 
-    if (shouldCheckChildren && isVisible != UsageViewTreeCellRenderer.RowLocation.AFTER_VISIBLE_RECT) { // if row is below visible rectangle, no sense to update it or any children
+    // if row is below visible rectangle, no sense to update it or any children
+    if (shouldCheckChildren && isVisible != UsageViewTreeCellRenderer.RowLocation.AFTER_VISIBLE_RECT) {
       for (int i=0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
         checkNodeValidity(child, path.pathByAddingChild(child));

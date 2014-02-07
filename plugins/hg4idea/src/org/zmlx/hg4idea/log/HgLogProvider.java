@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -233,11 +232,18 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
     String userName = HgConfig.getInstance(myProject, root).getNamedConfig("ui", "username");
+    //order of variables to identify hg username see at mercurial/ui.py
     if (userName == null) {
       userName = System.getenv("HGUSER");
-    }
-    if (userName == null) {
-      return null;
+      if (userName == null) {
+        userName = System.getenv("USER");
+        if (userName == null) {
+          userName = System.getenv("LOGNAME");
+          if (userName == null) {
+            return null;
+          }
+        }
+      }
     }
     Pair<String, String> userArgs = HgUtil.parseUserNameAndEmail(userName);
     return myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());

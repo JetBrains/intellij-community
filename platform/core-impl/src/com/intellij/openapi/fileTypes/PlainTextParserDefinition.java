@@ -37,7 +37,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class PlainTextParserDefinition implements ParserDefinition {
-  private static final IFileElementType PLAIN_FILE_ELEMENT_TYPE = new IFileElementType(FileTypes.PLAIN_TEXT.getLanguage()) {
+  private static final IFileElementType PLAIN_FILE_ELEMENT_TYPE = new IFileElementType(PlainTextFileType.INSTANCE.getLanguage()) {
     @Override
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();

@@ -26,6 +26,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,7 +130,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @Override
       public Key read(DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
-        return isInclude ? new IncludeKey(in.readUTF()) : new FileKey(in.readInt());
+        return isInclude ? IncludeKey.read(in) : new FileKey(in.readInt());
       }
     };
   }
@@ -192,7 +193,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   interface Key {
@@ -202,6 +203,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   }
 
   private static class IncludeKey implements Key {
+    private static final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
     private final String myFileName;
 
     public IncludeKey(String fileName) {
@@ -215,7 +217,9 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
     @Override
     public void writeValue(DataOutput out) throws IOException {
-      out.writeUTF(myFileName);
+      synchronized (myBuffer) {
+        IOUtil.writeUTFFast(myBuffer, out, myFileName);
+      }
     }
 
     @Override
@@ -226,6 +230,12 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     @Override
     public boolean equals(Object obj) {
       return obj instanceof IncludeKey && ((IncludeKey)obj).myFileName.equals(myFileName);
+    }
+
+    static Key read(DataInput in) throws IOException {
+      synchronized (myBuffer){
+        return new IncludeKey(IOUtil.readUTFFast(myBuffer, in));
+      }
     }
   }
 

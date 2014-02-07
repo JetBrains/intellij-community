@@ -15,8 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.gradle.tooling.model.DomainObjectSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,16 +28,24 @@ import java.util.Set;
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-public interface WarModel extends Serializable {
-  String getWebAppDirName();
+public interface WebConfiguration extends Serializable {
 
-  File getWebAppDir();
+  List<? extends WarModel> getWarModels();
 
-  File getWebXml();
+  interface WarModel extends Serializable {
+    @NotNull
+    String getWarName();
 
-  Map<String, Set<String>> getWebRoots();
+    String getWebAppDirName();
 
-  Set<File> getClasspath();
+    File getWebAppDir();
 
-  String getManifestContent();
+    File getWebXml();
+
+    Map<String, Set<String>> getWebRoots();
+
+    Set<File> getClasspath();
+
+    String getManifestContent();
+  }
 }

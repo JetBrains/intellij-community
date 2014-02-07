@@ -18,13 +18,11 @@ public class HgEncodingUtil {
     if (HGENCODING != null && HGENCODING.length() > 0 && Charset.isSupported(HGENCODING)) {
       return Charset.forName(HGENCODING);
     }
-    else {
-      Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-      if (defaultCharset != null) {
-        return defaultCharset;
-      }
+    Charset defaultCharset = null;
+    if (!project.isDisposed()) {
+      defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     }
-    return Charset.defaultCharset();
+    return defaultCharset != null ? defaultCharset : Charset.defaultCharset();
   }
 
   @NotNull

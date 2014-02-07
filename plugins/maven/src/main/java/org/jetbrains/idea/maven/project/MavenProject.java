@@ -61,7 +61,10 @@ public class MavenProject {
     .put("5", "1.5")
     .put("1.6", "1.6")
     .put("1.7", "1.7")
-    .put("7", "1.7").build();
+    .put("7", "1.7")
+    .put("1.8", "1.8")
+    .put("8", "1.8")
+    .build();
 
   public enum ProcMode {BOTH, ONLY, NONE}
 
