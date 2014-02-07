@@ -132,7 +132,6 @@ public final class Urls {
 
     Matcher matcher = URI_PATTERN.matcher(urlToParse);
     if (!matcher.matches()) {
-      LOG.warn("Cannot parse url " + url);
       return null;
     }
     String scheme = matcher.group(1);
