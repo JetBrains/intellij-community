@@ -644,6 +644,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s11,s12_3)
     );
+
+    String source = "class A { String ss[][]; }";
+    String target = "String[][] $s$;";
+    assertEquals(
+      "should find multi dimensional c-style array declarations",
+      1,
+      findMatchesCount(source, target)
+    );
   }
 
   // @todo support back references (\1 in another reg exp or as fild member)

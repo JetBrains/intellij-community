@@ -652,7 +652,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           if (sibling instanceof PsiJavaToken) {
             final IElementType tokenType = ((PsiJavaToken)sibling).getTokenType();
             if (tokenType == JavaTokenType.LBRACKET) ++count;
-            if (tokenType != JavaTokenType.RBRACKET) break;
+            else if (tokenType != JavaTokenType.RBRACKET) break;
           }
         }
 
