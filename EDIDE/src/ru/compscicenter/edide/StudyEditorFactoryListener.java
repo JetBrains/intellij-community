@@ -3,6 +3,8 @@ package ru.compscicenter.edide;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,8 +35,15 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
             @Override
             public void run() {
                 try {
-                    VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(event.getEditor().getDocument());
+                    Editor editor = event.getEditor();
+                    VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                     if (vfOpenedFile != null) {
+                        TaskManager taskManager = TaskManager.getInstance();
+                        int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
+                        int finishedTask = taskManager.getCurrentTask();
+                        if (currentTask < finishedTask) {
+                            return;
+                        }
                         String fileName = vfOpenedFile.getNameWithoutExtension() + ".meta";
                         InputStream metaIS = StudyEditorFactoryListener.class.getResourceAsStream(fileName);
                         if (metaIS == null) {
@@ -42,32 +51,31 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                         }
                         BufferedReader metaReader = new BufferedReader(new InputStreamReader(metaIS));
                         int replaceNum = Integer.parseInt(metaReader.readLine());
-                        System.out.println("replaceNum = " + replaceNum);
                         int startOffset0 = 0;
-                        PsiFile psiOpenFile = PsiManager.getInstance(event.getEditor().getProject()).findFile(vfOpenedFile);
+                        Project project = editor.getProject();
+                        PsiFile psiOpenFile = PsiManager.getInstance(project).findFile(vfOpenedFile);
                         TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
                         for (int i = 0; i < replaceNum; i++) {
                             int line = Integer.parseInt(metaReader.readLine()) - 1;
-                            int lineOffset = event.getEditor().getDocument().getLineStartOffset(line);
+                            int lineOffset = editor.getDocument().getLineStartOffset(line);
                             int startOffset = lineOffset + Integer.parseInt(metaReader.readLine());
                             if (i == 0) {
                                 startOffset0 = startOffset;
                             }
-                            System.out.println("startOffset = " + startOffset);
                             String textToWrite = metaReader.readLine();
                             String answer = metaReader.readLine();
-                            event.getEditor().getDocument().createRangeMarker(startOffset, startOffset + textToWrite.length());
+                            editor.getDocument().createRangeMarker(startOffset, startOffset + textToWrite.length());
                             int endOffset = startOffset + textToWrite.length();
                             TextRange range = new TextRange(startOffset, endOffset);
                             builder.replaceRange(range, textToWrite);
                         }
                         Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
-                        Project project = event.getEditor().getProject();
-                        TemplateManager.getInstance(project).startTemplate(event.getEditor(), template);
-                        event.getEditor().getCaretModel().moveToOffset(startOffset0);
+                        TemplateManager.getInstance(project).startTemplate(editor, template);
+                        editor.getCaretModel().moveToOffset(startOffset0);
                     }
                 } catch (IOException e) {
-                    System.out.println("Something wrong with meta file");
+                    Log.print("Something wrong with meta file:" + e.getCause());
+                    Log.flush();
                 }
             }
         });

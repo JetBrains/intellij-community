@@ -1,16 +1,17 @@
 import unittest
 import sys
+import os
 
 class FirstTaskTestCase(unittest.TestCase):
 
     def task1_wrap(self):
-        from io import StringIO
+        from StringIO import StringIO
 
         saved_stdout = sys.stdout
         try:
             out = StringIO()
             sys.stdout = out
-            sys.path.append("task1")
+            sys.path.append(os.getcwd())
             import helloworld
             output = out.getvalue().strip()
         finally:

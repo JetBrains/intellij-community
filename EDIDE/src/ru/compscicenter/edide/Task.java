@@ -26,4 +26,7 @@ public class Task {
     public  String getTaskText() {
         return taskText.toString();
     }
+    public boolean contains(String filename) {
+        return fileNames.contains(filename);
+    }
 }

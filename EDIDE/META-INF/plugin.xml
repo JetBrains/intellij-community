@@ -45,5 +45,5 @@
     <configurationType implementation="ru.compscicenter.edide.StudyConfigurationType"/>
     <toolWindow id="Task Text" icon="/general/add.png" anchor="right" factoryClass="ru.compscicenter.edide.TaskTextToolWindowFactory"
             conditionClass="ru.compscicenter.edide.TaskToolWindowCondition" secondary="false"/>
-  </extensions>
+  </extensions>                                                                             1
 </idea-plugin>

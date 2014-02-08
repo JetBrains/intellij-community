@@ -5,6 +5,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.testing.unittest.PythonUnitTestCommandLineState;
 
 public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLineState {
@@ -23,11 +27,8 @@ public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLi
     protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
         ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
         assert script_params != null;
-        String resourcePath = StudyPythonUnitTestCommandLineState.class.getResource(UTRUNNER_PY).getPath();
-        //resourcePath = resourcePath.substring(1);
+        String resourcePath = ProjectManager.getInstance().getOpenProjects()[0].getBaseDir().getPath() + "/.idea/study_utrunner.py";
         script_params.addParameter(resourcePath);
-        addBeforeParameters(cmd);
         script_params.addParameters(getTestSpecs());
-        addAfterParameters(cmd);
     }
 }

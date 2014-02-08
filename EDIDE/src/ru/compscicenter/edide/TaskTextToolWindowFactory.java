@@ -1,7 +1,12 @@
 package ru.compscicenter.edide;
 
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -12,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: lia
@@ -34,6 +41,9 @@ public class TaskTextToolWindowFactory implements ToolWindowFactory{
     public TaskTextToolWindowFactory() {
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                Project project = ProjectManager.getInstance().getOpenProjects()[0];
+                List<RunnerAndConfigurationSettings> settings = RunManager.getInstance(project).getConfigurationSettingsList(new StudyConfigurationType());
+                ProgramRunnerUtil.executeConfiguration(project, settings.get(0), DefaultRunExecutor.getRunExecutorInstance()) ;
                 int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
                 if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
                     TaskManager.getInstance().incrementTask();

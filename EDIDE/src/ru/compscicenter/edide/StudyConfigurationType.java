@@ -49,6 +49,7 @@ public class StudyConfigurationType implements ConfigurationType {
         }
     }
 
+    @Override
     public ConfigurationFactory[] getConfigurationFactories(){
         return new ConfigurationFactory[]{myFactory};
     }
