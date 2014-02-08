@@ -185,9 +185,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
     else if (context.getStringPart() != null) {
       map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+      return map;
     }
     else if (context.getVar() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getVar()));
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Collections.<Object>singletonList(context.getVar()));
+      return map;
     }
 
     PsiElement[] occurrences = context.getOccurrences();
