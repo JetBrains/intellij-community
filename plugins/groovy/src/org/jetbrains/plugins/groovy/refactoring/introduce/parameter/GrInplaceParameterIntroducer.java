@@ -231,7 +231,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
                    expression != null ? expression.getType() :
                    null;
 
-    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, myParametersToRemove, false,
+    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, new TIntArrayList(), false,
                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, expression,
                                                  var, type, false, false, false);
 
