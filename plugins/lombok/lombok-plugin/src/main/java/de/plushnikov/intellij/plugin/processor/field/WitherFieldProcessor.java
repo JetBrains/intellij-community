@@ -194,7 +194,9 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
         }
         paramString.append(',');
       }
-      paramString.deleteCharAt(paramString.length() - 1);
+      if (paramString.length() > 1) {
+        paramString.deleteCharAt(paramString.length() - 1);
+      }
       return paramString.toString();
     } finally {
       StringBuilderSpinAllocator.dispose(paramString);

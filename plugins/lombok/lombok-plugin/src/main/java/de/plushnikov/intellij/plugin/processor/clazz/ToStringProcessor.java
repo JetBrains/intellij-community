@@ -150,7 +150,9 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
         paramString.append("+\", ");
       }
-      paramString.delete(paramString.length() - 2, paramString.length());
+      if (paramString.length() > 2) {
+        paramString.delete(paramString.length() - 2, paramString.length());
+      }
       return paramString.toString();
     } finally {
       StringBuilderSpinAllocator.dispose(paramString);
