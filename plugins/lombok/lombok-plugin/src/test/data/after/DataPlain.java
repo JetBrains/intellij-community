@@ -38,7 +38,7 @@ class Data1 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		final java.lang.Object $name = this.getName();
@@ -91,7 +91,7 @@ class Data2 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		final java.lang.Object $name = this.getName();
@@ -139,7 +139,7 @@ final class Data3 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		final java.lang.Object $name = this.getName();
@@ -187,7 +187,7 @@ final class Data4 extends java.util.Calendar {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + super.hashCode();
 		result = result * PRIME + this.getX();

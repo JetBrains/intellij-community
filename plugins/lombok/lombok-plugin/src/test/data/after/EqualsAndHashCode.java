@@ -29,7 +29,7 @@ class EqualsAndHashCode {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.x;
 		result = result * PRIME + java.util.Arrays.hashCode(this.y);
@@ -61,7 +61,7 @@ final class EqualsAndHashCode2 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.x;
 		final long $y = this.y;
@@ -111,7 +111,7 @@ class EqualsAndHashCode4 extends EqualsAndHashCode {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + super.hashCode();
 		return result;

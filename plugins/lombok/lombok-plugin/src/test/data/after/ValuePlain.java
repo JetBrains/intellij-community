@@ -30,7 +30,7 @@ final class Value1 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		final java.lang.Object $name = this.getName();
@@ -80,7 +80,7 @@ class Value2 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		final java.lang.Object $name = this.getName();
@@ -123,7 +123,7 @@ final class Value3 {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.getX();
 		result = result * PRIME + this.getY();

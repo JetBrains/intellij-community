@@ -69,7 +69,7 @@ class EqualsAndHashCodeWithNoExistingMethods {
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
 	public int hashCode() {
-		final int PRIME = 31;
+		final int PRIME = 59;
 		int result = 1;
 		result = result * PRIME + this.x;
 		return result;
