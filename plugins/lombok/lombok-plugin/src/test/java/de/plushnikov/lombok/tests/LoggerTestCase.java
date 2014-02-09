@@ -9,6 +9,7 @@ import java.io.IOException;
  * For this to work, the correct system property idea.home.path needs to be passed to the test runner.
  */
 public class LoggerTestCase extends LombokParsingTestCase {
+
   public void testLoggerCommons() throws IOException {
     doTest();
   }
