@@ -933,7 +933,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public void run() {
-      BrowserUtil.launchBrowser(myUrl);
+      BrowserUtil.browse(myUrl);
     }
   }
 

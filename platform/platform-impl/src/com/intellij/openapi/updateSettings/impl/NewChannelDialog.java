@@ -77,7 +77,7 @@ class NewChannelDialog extends AbstractUpdateDialog {
         public void actionPerformed(ActionEvent e) {
           LicensingFacade facade = LicensingFacade.getInstance();
           assert facade != null;
-          BrowserUtil.launchBrowser(facade.getUpgradeUrl());
+          BrowserUtil.browse(facade.getUpgradeUrl());
           doCancelAction();
         }
       });
@@ -108,7 +108,7 @@ class NewChannelDialog extends AbstractUpdateDialog {
 
   @Override
   protected void doOKAction() {
-    BrowserUtil.launchBrowser(myChannel.getHomePageUrl());
+    BrowserUtil.browse(myChannel.getHomePageUrl());
     super.doOKAction();
   }
 

@@ -15,55 +15,50 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.util.xmlb.Converter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
-
-public abstract class WebBrowser {
+public abstract class WebBrowserBase extends WebBrowser {
   protected @NotNull BrowserFamily family;
   protected @NotNull String name;
   private final UUID id;
 
-  protected WebBrowser(@NotNull UUID id, @NotNull BrowserFamily family, @NotNull String name) {
+  protected WebBrowserBase(@NotNull UUID id, @NotNull BrowserFamily family, @NotNull String name) {
     this.id = id;
     this.family = family;
     this.name = name;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return name;
   }
 
+  @Override
   @NotNull
   public final UUID getId() {
     return id;
   }
 
+  @Override
   @NotNull
   public BrowserFamily getFamily() {
     return family;
   }
 
-  @NotNull
-  public abstract Icon getIcon();
-
-  @Nullable
-  public abstract String getPath();
-
+  @Override
   @NotNull
   public String getBrowserNotFoundMessage() {
-    return IdeBundle.message("error.0.browser.path.not.specified", getFamily().getName(), CommonBundle.settingsActionPath());
+    return IdeBundle.message("error.0.browser.path.not.specified", getName());
   }
 
+  @Override
   @Nullable
   public BrowserSpecificSettings getSpecificSettings() {
     return null;
@@ -82,19 +77,5 @@ public abstract class WebBrowser {
   @Override
   public String toString() {
     return getName() + " (" + getPath() + ")";
-  }
-
-  public static final class ReferenceConverter extends Converter<WebBrowser> {
-    @Nullable
-    @Override
-    public WebBrowser fromString(@NotNull String value) {
-      return WebBrowserManager.getInstance().findBrowserById(value);
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull WebBrowser browser) {
-      return browser.getId().toString();
-    }
   }
 }

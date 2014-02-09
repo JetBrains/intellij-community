@@ -33,6 +33,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     myFileURL = url;
     myEditorCallback = editorCallback;
 
+    Platform.setImplicitExit(false);
+
     Platform.runLater(new Runnable() {
       @Override
       public void run() {

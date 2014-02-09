@@ -378,7 +378,7 @@ class GitPushResult {
           tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
         }
         else {
-          BrowserUtil.launchBrowser(event.getDescription());
+          BrowserUtil.browse(event.getDescription());
         }
       }
     }

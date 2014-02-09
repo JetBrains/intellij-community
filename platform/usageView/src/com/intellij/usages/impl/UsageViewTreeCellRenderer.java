@@ -241,7 +241,8 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       pref = cachedPreferredSize;
     }
     pref.width = Math.max(visibleRect.width, pref.width);
-    int y = getTree().getRowBounds(row).y;
+    final Rectangle bounds = getTree().getRowBounds(row);
+    int y = bounds == null ? 0 : bounds.y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);
     boolean inside = vis.contains(y);
     if (inside) {

@@ -4,14 +4,14 @@
     <file>BooleanConstructor.java</file>
     <line>7</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Boolean constructor call</problem_class>
-    <description>Boolean constructor call &lt;code&gt;new Boolean(b)&lt;/code&gt; #loc</description>
+    <description>Boolean constructor call #loc</description>
   </problem>
 
   <problem>
     <file>BooleanConstructor.java</file>
     <line>8</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Boolean constructor call</problem_class>
-    <description>Boolean constructor call &lt;code&gt;new Boolean(true)&lt;/code&gt; #loc</description>
+    <description>Boolean constructor call #loc</description>
   </problem>
 
 </problems>

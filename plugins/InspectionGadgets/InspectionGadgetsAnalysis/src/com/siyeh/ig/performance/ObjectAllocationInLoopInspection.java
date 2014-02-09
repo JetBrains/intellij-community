@@ -71,7 +71,7 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
       if (isAllocatedOnlyOnce(expression)) {
         return;
       }
-      registerError(expression);
+      registerNewExpressionError(expression);
     }
 
     private static boolean isAllocatedOnlyOnce(

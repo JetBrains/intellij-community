@@ -42,7 +42,7 @@ public class AppEngineSdkUtil {
   private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {
     @Override
     public void run(JComponent place) {
-      BrowserUtil.launchBrowser(APP_ENGINE_DOWNLOAD_URL);
+      BrowserUtil.browse(APP_ENGINE_DOWNLOAD_URL);
     }
   };
 

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerManagerHelper;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.List;
 
 public class MiscImportingTest extends MavenImportingTestCase {
@@ -275,6 +277,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals(0, myProjectsTree.getRootProjects().get(0).getProblems().size());
   }
 
+  @Bombed(year = 2014, month = Calendar.JUNE, day = 25, user = "sergey.evdokimov")
   public void testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
     setRepositoryPath(helper.getTestDataPath("plugins"));
@@ -303,6 +306,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals(myProjectPom.getPath().replace('\\', '/'), mavenProject.getProperties().getProperty("workspace-info"));
   }
 
+  @Bombed(year = 2014, month = Calendar.JUNE, day = 25, user = "sergey.evdokimov")
   public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
     setRepositoryPath(helper.getTestDataPath("plugins"));
@@ -326,7 +330,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     List<MavenProject> projects = myProjectsTree.getProjects();
     assertEquals(1, projects.size());
     MavenProject mavenProject = projects.get(0);
-    assertEquals(1, mavenProject.getProblems().size());
+    assertEquals(mavenProject.getProblems().toString(), 1, mavenProject.getProblems().size());
     assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
   }
 

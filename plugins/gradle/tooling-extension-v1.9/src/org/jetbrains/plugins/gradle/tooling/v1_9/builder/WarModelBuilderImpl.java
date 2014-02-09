@@ -25,16 +25,13 @@ import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.bundling.War;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.WebConfiguration;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.model.WarModel;
-import org.jetbrains.plugins.gradle.tooling.internal.WarModelImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.WebConfigurationImpl;
 
 import java.io.File;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -47,7 +44,7 @@ public class WarModelBuilderImpl implements ModelBuilderService {
 
   @Override
   public boolean canBuild(String modelName) {
-    return WarModel.class.getName().equals(modelName);
+    return WebConfiguration.class.getName().equals(modelName);
   }
 
   @Nullable
@@ -63,10 +60,14 @@ public class WarModelBuilderImpl implements ModelBuilderService {
                            ? new File(project.getProjectDir(), webAppDirName)
                            : (File)project.property(WEB_APP_DIR_PROPERTY);
 
-    WarModelImpl warModel = new WarModelImpl(webAppDirName, webAppDir);
+
+    List<WebConfiguration.WarModel> warModels = new ArrayList<WebConfiguration.WarModel>();
+
 
     for (Task task : project.getTasks()) {
       if (task instanceof War) {
+        final WebConfigurationImpl.WarModelImpl warModel = new WebConfigurationImpl.WarModelImpl(((War)task).getArchiveName(), webAppDirName, webAppDir);
+
         final War warTask = (War)task;
         warModel.setWebXml(warTask.getWebXml());
 
@@ -111,11 +112,11 @@ public class WarModelBuilderImpl implements ModelBuilderService {
           manifest.writeTo(writer);
           warModel.setManifestContent(writer.toString());
         }
-        break;
+        warModels.add(warModel);
       }
     }
 
-    return warModel;
+    return new WebConfigurationImpl(warModels);
   }
 
   private static void addPath(Map<String, Set<String>> webRoots, String relativePath, String path) {

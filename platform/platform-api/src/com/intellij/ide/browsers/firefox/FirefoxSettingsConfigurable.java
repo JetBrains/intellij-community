@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers.firefox;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.options.Configurable;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   public FirefoxSettingsConfigurable(FirefoxSettings settings) {
     mySettings = settings;
-    myProfilesIniPathField.addBrowseFolderListener(XmlBundle.message("chooser.title.select.profiles.ini.file"), null, null, PROFILES_INI_CHOOSER_DESCRIPTOR);
+    myProfilesIniPathField.addBrowseFolderListener(IdeBundle.message("chooser.title.select.profiles.ini.file"), null, null, PROFILES_INI_CHOOSER_DESCRIPTOR);
     myProfilesIniPathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -144,7 +144,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return XmlBundle.message("display.name.firefox.settings");
+    return IdeBundle.message("display.name.firefox.settings");
   }
 
   @Override

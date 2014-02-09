@@ -40,6 +40,7 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
@@ -1250,7 +1251,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults() && method instanceof PsiTypeParameterListOwner) {
-      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments((PsiTypeParameterListOwner)method, expression, result.getSubstitutor()));
+      PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)method).getTypeParameters();
+      if (method instanceof PsiMethod) {
+        final PsiClass containingClass = ((PsiMethod)method).getContainingClass();
+        assert containingClass != null : method;
+        typeParameters = ArrayUtil.mergeArrays(typeParameters, containingClass.getTypeParameters());
+      }
+      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments(typeParameters, expression, result.getSubstitutor()));
     }
   }
 

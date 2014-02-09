@@ -1322,19 +1322,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
-      try {
-        clearIndex(indexId);
-      } catch (StorageException ex) {
-        requestRebuild(indexId, new Throwable(ex));
-      }
-
+      advanceIndexVersion(indexId);
+      
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {
           try {
+            doClearIndex(indexId);
             if (!cleanupOnly) {
               scheduleIndexRebuild(false);
             }
+          }
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.info(e);
           }
           finally {
             status.compareAndSet(REBUILD_IN_PROGRESS, OK);
@@ -1381,9 +1382,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
+    advanceIndexVersion(indexId);
+    doClearIndex(indexId);
+  }
+
+  private void doClearIndex(ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null : "Index with key " + indexId + " not found or not registered properly";
     index.clear();
+  }
+
+  private void advanceIndexVersion(ID<?, ?> indexId) {
     try {
       IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
     }
@@ -1698,8 +1707,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-        if (myRequiringContentIndices.contains(indexId) && shouldIndexFile(file, indexId)) {
-          
+        if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
             byte[] currentBytes;
             try {
@@ -2066,9 +2074,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               IndexingStamp.removeAllIndexedState(file);
             }
           });
+          // the file is for sure not a dir and it was previously indexed by at least one index
+          if (!isTooLarge(file)) scheduleForUpdate(file);
         }
-        // the file is for sure not a dir and it was previously indexed by at least one index
-        if (!isTooLarge(file)) scheduleForUpdate(file);
       }
       else {
         myFilesToUpdate.remove(file);
@@ -2170,7 +2178,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    public List<VirtualFile> getAllFilesToUpdate() {
+    public Collection<VirtualFile> getAllFilesToUpdate() {
       if (myFilesToUpdate.isEmpty()) {
         return Collections.emptyList();
       }
@@ -2200,39 +2208,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       myUpdateSemaphoreRef.compareAndSet(semaphore, null);
     }
 
-    private static final int MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT = 5;    
-    
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       ProjectIndexableFilesFilter indexableFilesFilter = projectIndexableFiles(project);
-      int filesProcessedOutsideProject = 0;
 
       UpdateSemaphore updateSemaphore;
       do{
         updateSemaphore = obtainForceUpdateSemaphore();
         try {
-          List<VirtualFile> filesToUpdate = getAllFilesToUpdate();
-          
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0, size = filesToUpdate.size(); i < size; ++i) {
-            VirtualFile file = filesToUpdate.get(i);
-            boolean forceProcessFile;
-            
-            if (indexableFilesFilter != null && 
-                file instanceof VirtualFileWithId &&
-                !indexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) { // project files filtering
-              if (filesProcessedOutsideProject >= MAX_FILES_TO_PROCESS_OUTSIDE_PROJECT) continue;
-              
-              // In order to have myFilesToUpdate empty for avoiding contention on scanning large concurrent set
-              // we need eventually to process all files in it including the ones that do not belong to any project 
-              // e.g. the files that have vfs built but avoided due to project exclusion: files under .git / user home / etc 
-              ++filesProcessedOutsideProject;
-              forceProcessFile = true;
-            } else {
-              forceProcessFile = Comparing.equal(file, restrictedTo);
+          for (VirtualFile file : getAllFilesToUpdate()) {
+            if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.containsFileId(
+              ((VirtualFileWithId)file).getId())) {
+              continue;
             }
 
-            if (filter == null || filter.accept(file) || forceProcessFile) {
+            if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
               try {
                 updateSemaphore.down();
                 // process only files that can affect result
@@ -2466,11 +2456,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             if (file != null) {
               VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile instanceof VirtualFileWithId) {
+                boolean wasIndexed = false;
                 for(ID<?,?> psiBackedIndex:myPsiDependentIndices) {
-                  IndexingStamp.update(virtualFile, psiBackedIndex, IndexInfrastructure.INVALID_STAMP2);
+                  if (isFileIndexed(virtualFile, psiBackedIndex)) {
+                    IndexingStamp.update(virtualFile, psiBackedIndex, IndexInfrastructure.INVALID_STAMP2);
+                    wasIndexed = true;
+                  }
                 }
-                myChangedFilesCollector.scheduleForUpdate(virtualFile);
-                IndexingStamp.flushCache(virtualFile);
+                if (wasIndexed) {
+                  myChangedFilesCollector.scheduleForUpdate(virtualFile);
+                  IndexingStamp.flushCache(virtualFile);
+                }
               }
             }
           }
