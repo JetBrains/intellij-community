@@ -786,9 +786,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return false;
     }
 
-    final String text = el.getText();
+    if (el instanceof PsiIdentifier) {
+      final PsiElement parent = el.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        el = parent;
+      }
+    }
+    if (el2 instanceof PsiIdentifier) {
+      final PsiElement parent = el2.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        el2 = parent;
+      }
+    }
+    final String text = stripTypeParameters(el.getText());
     if (text.indexOf('.') == -1 || !(el2 instanceof PsiJavaReference)) {
-      return MatchUtils.compareWithNoDifferenceToPackage(text, el2.getText());
+      return MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(el2.getText()));
     }
     else {
       PsiElement element2 = ((PsiJavaReference)el2).resolve();
@@ -800,6 +812,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return MatchUtils.compareWithNoDifferenceToPackage(text, el2.getText());
       }
     }
+  }
+
+  private static String stripTypeParameters(String string) {
+    final int index = string.indexOf('<');
+    if (index == -1) {
+      return string;
+    }
+    return string.substring(0, index);
   }
 
   private boolean checkMatchWithingHierarchy(PsiElement el2, SubstitutionHandler handler, PsiElement context) {
@@ -1440,7 +1460,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeElement(final PsiTypeElement typeElement) {
-    myMatchingVisitor.setResult(matchType(typeElement, myMatchingVisitor.getElement()));
+    final boolean matchType = matchType(typeElement, myMatchingVisitor.getElement());
+    myMatchingVisitor.setResult(matchType);
   }
 
   @Override

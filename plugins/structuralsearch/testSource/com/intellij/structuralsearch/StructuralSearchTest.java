@@ -1323,6 +1323,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5,s82_9),
       1
     );
+    String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
+    String target1 = "java.util.Comparator 'a;";
+    assertEquals(
+      "qualified type should not match 1",
+      0,
+      findMatchesCount(source1, target1)
+    );
+
+    String target2 = "java.util.Comparator<String> 'a;";
+    assertEquals(
+      "qualified type should not match 2",
+      0,
+      findMatchesCount(source1, target2)
+    );
 
     // @todo typed vars constrains (super),
     // @todo generic method invocation
