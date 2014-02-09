@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,6 +379,9 @@ public class GroovyIntroduceParameterUtil {
 
   @Nullable
   static GrVariable findVar(IntroduceParameterInfo info) {
+    GrVariable variable = info.getVar();
+    if (variable != null) return variable;
+
     final GrStatement[] statements = info.getStatements();
     if (statements.length != 1) return null;
     return GrIntroduceHandlerBase.findVariable(statements[0]);

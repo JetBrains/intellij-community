@@ -439,18 +439,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                                        @Nullable StringPartInfo stringPart,
                                        @NotNull PsiElement scope) {
     if (variable != null) {
-      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          if (element != null) {
-            list.add(element);
-          }
-          return true;
-        }
-      });
-      final PsiElement[] occurrences = list.toArray(new PsiElement[list.size()]);
+      final PsiElement[] occurrences = collectVariableUsages(variable, scope);
       return new GrIntroduceContextImpl(project, editor, null, variable, stringPart, occurrences, scope);
     }
     else if (expression != null ) {
@@ -461,6 +450,21 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       assert stringPart != null;
       return new GrIntroduceContextImpl(project, editor, expression, variable, stringPart, new PsiElement[]{stringPart.getLiteral()}, scope);
     }
+  }
+
+  public static PsiElement[] collectVariableUsages(GrVariable variable, PsiElement scope) {
+    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+    ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
+      @Override
+      public boolean process(PsiReference psiReference) {
+        final PsiElement element = psiReference.getElement();
+        if (element != null) {
+          list.add(element);
+        }
+        return true;
+      }
+    });
+    return list.toArray(new PsiElement[list.size()]);
   }
 
   private boolean invokeImpl(final Project project, final GrIntroduceContext context, final Editor editor) {

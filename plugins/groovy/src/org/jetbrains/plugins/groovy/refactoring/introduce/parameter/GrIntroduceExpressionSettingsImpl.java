@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
   private final GrExpression myExpr;
   private final GrVariable myVar;
   private final PsiType mySelectedType;
+  private final boolean myRemoveLocalVar;
 
   public GrIntroduceExpressionSettingsImpl(IntroduceParameterInfo info,
                                            String name,
@@ -44,11 +45,13 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
                                            GrVariable var,
                                            PsiType selectedType,
                                            boolean replaceAllOccurrences,
+                                           boolean removeLocalVar,
                                            boolean forceReturn) {
     super(info, name, declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, forceReturn, replaceAllOccurrences, false);
     myExpr = expr;
     myVar = var;
     mySelectedType = selectedType;
+    myRemoveLocalVar = removeLocalVar;
   }
 
   @Override
@@ -67,4 +70,8 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
   }
 
 
+  @Override
+  public boolean removeLocalVariable() {
+    return myRemoveLocalVar;
+  }
 }
