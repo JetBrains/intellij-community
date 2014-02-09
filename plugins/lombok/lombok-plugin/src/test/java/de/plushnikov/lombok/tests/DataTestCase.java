@@ -9,6 +9,11 @@ import java.io.IOException;
  * For this to work, the correct system property idea.home.path needs to be passed to the test runner.
  */
 public class DataTestCase extends LombokParsingTestCase {
+
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
+
   public void testDataExtended() throws IOException {
     doTest();
   }

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -179,7 +178,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     if (doNotUseGetters) {
       return fieldName;
     } else {
-      final String getterName = LombokUtils.toGetterName(fieldName, PsiType.BOOLEAN.equals(classField.getType()));
+      final String getterName = getGetterName(classField);
 
       boolean hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
 

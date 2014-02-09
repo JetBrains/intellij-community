@@ -77,7 +77,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation, false));
+      target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
       target.addAll(new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));

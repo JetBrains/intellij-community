@@ -10,6 +10,10 @@ import java.io.IOException;
  */
 public class GetterTestCase extends LombokParsingTestCase {
 
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
+
   public void testGetterAccessLevel() throws IOException {
     doTest();
   }

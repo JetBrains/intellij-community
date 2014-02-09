@@ -6,18 +6,18 @@ class Test {
   private static String f;
 
     public static String getF() {
-        return f;
+        return Test.f;
     }
 
     public float getB() {
-        return b;
+        return this.b;
     }
 
     protected double getC() {
-        return c;
+        return this.c;
     }
 
     private String getD() {
-        return d;
+        return this.d;
     }
 }

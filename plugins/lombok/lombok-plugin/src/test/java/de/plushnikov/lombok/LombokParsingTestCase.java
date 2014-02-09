@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -36,6 +37,18 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
 
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
 
+  protected boolean shouldCompareAnnotations() {
+    return false;
+  }
+
+  protected boolean shouldCompareModifiers() {
+    return true;
+  }
+
+  protected boolean shouldCompareCodeBlocks() {
+    return true;
+  }
+
   public void doTest() throws IOException {
     doTest(getTestName(false).replace('$', '/') + ".java");
   }
@@ -48,126 +61,148 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
       fail("The test file type is not supported");
     }
 
-    final PsiJavaFile intellij = (PsiJavaFile) psiLombokFile;
-    final PsiJavaFile theirs = (PsiJavaFile) psiDelombokFile;
+    final PsiJavaFile beforeFile = (PsiJavaFile) psiLombokFile;
+    final PsiJavaFile afterFile = (PsiJavaFile) psiDelombokFile;
 
-    PsiClass[] intellijClasses = intellij.getClasses();
-    PsiClass[] theirsClasses = theirs.getClasses();
+    PsiClass[] beforeClasses = beforeFile.getClasses();
+    PsiClass[] afterClasses = afterFile.getClasses();
 
-    compareClasses(intellijClasses, theirsClasses);
+    compareClasses(beforeClasses, afterClasses);
   }
 
-  private void compareClasses(PsiClass[] intellijClasses, PsiClass[] theirsClasses) {
-    assertEquals("Class counts are different", theirsClasses.length, intellijClasses.length);
+  private void compareClasses(PsiClass[] beforeClasses, PsiClass[] afterClasses) {
+    assertEquals("Class counts are different", afterClasses.length, beforeClasses.length);
 
-    for (PsiClass theirsClass : theirsClasses) {
+    for (PsiClass afterClass : afterClasses) {
       boolean compared = false;
-      for (PsiClass intellijClass : intellijClasses) {
-        if (theirsClass.getName().equals(intellijClass.getName())) {
-          compareTwoClasses(intellijClass, theirsClass);
+      for (PsiClass beforeClass : beforeClasses) {
+        if (afterClass.getName().equals(beforeClass.getName())) {
+          compareTwoClasses(beforeClass, afterClass);
           compared = true;
         }
       }
-      assertTrue("Class names are not equal, class (" + theirsClass.getName() + ") not found", compared);
+      assertTrue("Class names are not equal, class (" + afterClass.getName() + ") not found", compared);
     }
   }
 
-  private void compareTwoClasses(PsiClass intellijClass, PsiClass theirsClass) {
-    LOG.info("Comparing classes IntelliJ " + intellijClass.getName() + " with " + theirsClass.getName());
-    PsiModifierList intellijFieldModifierList = intellijClass.getModifierList();
-    PsiModifierList theirsFieldModifierList = intellijClass.getModifierList();
+  private void compareTwoClasses(PsiClass beforeClass, PsiClass afterClass) {
+    LOG.info("Comparing classes " + beforeClass.getName() + " with " + afterClass.getName());
+    PsiModifierList beforeFieldModifierList = beforeClass.getModifierList();
+    PsiModifierList afterFieldModifierList = afterClass.getModifierList();
 
-    compareContainingClasses(intellijClass, theirsClass);
-    compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
-    compareFields(intellijClass, theirsClass);
-    compareMethods(intellijClass, theirsClass);
-    compareConstructors(intellijClass, theirsClass);
-    compareInnerClasses(intellijClass, theirsClass);
+    compareContainingClasses(beforeClass, afterClass);
+    compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+    compareFields(beforeClass, afterClass);
+    compareMethods(beforeClass, afterClass);
+    compareConstructors(beforeClass, afterClass);
+    compareInnerClasses(beforeClass, afterClass);
 
-    LOG.info("Compared classes IntelliJ " + intellijClass.getName() + " with " + theirsClass.getName());
+    LOG.debug("Compared classes IntelliJ " + beforeClass.getName() + " with " + afterClass.getName());
   }
 
-  private void compareFields(PsiClass intellij, PsiClass theirs) {
-    PsiField[] intellijFields = intellij.getFields();
-    PsiField[] theirsFields = theirs.getFields();
+  private void compareFields(PsiClass beforeClass, PsiClass afterClass) {
+    PsiField[] beforeClassFields = beforeClass.getFields();
+    PsiField[] afterClassFields = afterClass.getFields();
 
-    LOG.info("IntelliJ fields for class " + intellij.getName() + ": " + Arrays.toString(intellijFields));
-    LOG.info("Theirs fields for class " + theirs.getName() + ": " + Arrays.toString(theirsFields));
+    LOG.debug("IntelliJ fields for class " + beforeClass.getName() + ": " + Arrays.toString(beforeClassFields));
+    LOG.debug("Theirs fields for class " + afterClass.getName() + ": " + Arrays.toString(afterClassFields));
 
-    assertEquals("Field counts are different for Class " + intellij.getName(), theirsFields.length, intellijFields.length);
+    assertEquals("Field counts are different for Class " + beforeClass.getName(), afterClassFields.length, beforeClassFields.length);
 
-    for (PsiField theirsField : theirsFields) {
+    for (PsiField afterField : afterClassFields) {
       boolean compared = false;
-      final PsiModifierList theirsFieldModifierList = theirsField.getModifierList();
-      for (PsiField intellijField : intellijFields) {
-        if (theirsField.getName().equals(intellijField.getName())) {
-          final PsiModifierList intellijFieldModifierList = intellijField.getModifierList();
+      final PsiModifierList afterFieldModifierList = afterField.getModifierList();
+      for (PsiField beeforeField : beforeClassFields) {
+        if (afterField.getName().equals(beeforeField.getName())) {
+          final PsiModifierList beforeFieldModifierList = beeforeField.getModifierList();
 
-          compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
-          compareType(intellijField.getType(), theirsField.getType(), theirsField);
+          compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+          compareType(beeforeField.getType(), afterField.getType(), afterField);
           compared = true;
         }
       }
-      assertTrue("Fieldnames are not equal, Field (" + theirsField.getName() + ") not found", compared);
+      assertTrue("Fieldnames are not equal, Field (" + afterField.getName() + ") not found", compared);
     }
   }
 
-  private void compareType(PsiType intellij, PsiType theirs, PomNamedTarget whereTarget) {
-    if (null != intellij && null != theirs) {
-      final String theirsCanonicalText = stripJavaLang(theirs.getCanonicalText());
-      final String intellijCanonicalText = stripJavaLang(intellij.getCanonicalText());
+  private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
+    if (null != beforeType && null != afterType) {
+      final String theirsCanonicalText = stripJavaLang(afterType.getCanonicalText());
+      final String intellijCanonicalText = stripJavaLang(beforeType.getCanonicalText());
       assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), theirsCanonicalText, intellijCanonicalText);
     }
   }
 
-  private String stripJavaLang(String theirsCanonicalText) {
+  private String stripJavaLang(String canonicalText) {
     final String prefix = "java.lang.";
-    if (theirsCanonicalText.startsWith(prefix)) {
-      theirsCanonicalText = theirsCanonicalText.substring(prefix.length());
+    if (canonicalText.startsWith(prefix)) {
+      canonicalText = canonicalText.substring(prefix.length());
     }
-    return theirsCanonicalText;
+    return canonicalText;
   }
 
-  private void compareModifiers(PsiModifierList intellij, PsiModifierList theirs) {
-    assertNotNull(intellij);
-    assertNotNull(theirs);
+  private void compareModifiers(PsiModifierList beforeModifierList, PsiModifierList afterModifierList) {
+    assertNotNull(beforeModifierList);
+    assertNotNull(afterModifierList);
 
-    for (String modifier : modifiers) {
-      assertEquals(modifier + " Modifier is not equal; ", theirs.hasModifierProperty(modifier), intellij.hasModifierProperty(modifier));
+    if (shouldCompareModifiers()) {
+      for (String modifier : modifiers) {
+        assertEquals(modifier + " Modifier is not equal; ", afterModifierList.hasModifierProperty(modifier), beforeModifierList.hasModifierProperty(modifier));
+      }
     }
+    if (shouldCompareAnnotations()) {
+      Collection<String> beforeAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(beforeModifierList.getAnnotations()), new QualifiedNameFunction()));
+      Collection<String> afterAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(afterModifierList.getAnnotations()), new QualifiedNameFunction()));
 
-    Collection<String> intellijAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(intellij.getAnnotations()), new QualifiedNameFunction()));
-    Collection<String> theirsAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(theirs.getAnnotations()), new QualifiedNameFunction()));
-
-    Iterables.removeIf(intellijAnnotations, Predicates.containsPattern("lombok.*"));
-    //TODO assertEquals("Annotationcounts are different ", theirsAnnotations.size(), intellijAnnotations.size());
+      Iterables.removeIf(beforeAnnotations, Predicates.containsPattern("lombok.*"));
+      assertEquals("Annotationcounts are different ", afterAnnotations.size(), beforeAnnotations.size());
+    }
   }
 
-  private void compareMethods(PsiClass intellij, PsiClass theirs) {
-    PsiMethod[] intellijMethods = intellij.getMethods();
-    PsiMethod[] theirsMethods = theirs.getMethods();
 
-    LOG.info("IntelliJ methods for class " + intellij.getName() + ": " + Arrays.toString(intellijMethods));
-    LOG.info("Theirs methods for class " + theirs.getName() + ": " + Arrays.toString(theirsMethods));
+  private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {
+    PsiMethod[] beforeMethods = beforeClass.getMethods();
+    PsiMethod[] afterMethods = afterClass.getMethods();
 
-    assertEquals("Method counts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
+    LOG.info("Before methods for class " + beforeClass.getName() + ": " + Arrays.toString(beforeMethods));
+    LOG.info("After methods for class " + afterClass.getName() + ": " + Arrays.toString(afterMethods));
 
-    for (PsiMethod theirsMethod : theirsMethods) {
+    assertEquals("Method counts are different for Class: " + beforeClass.getName(), afterMethods.length, beforeMethods.length);
+
+    for (PsiMethod afterMethod : afterMethods) {
       boolean compared = false;
-      final PsiModifierList theirsMethodModifierList = theirsMethod.getModifierList();
-      for (PsiMethod intellijMethod : intellijMethods) {
-        if (theirsMethod.getName().equals(intellijMethod.getName()) &&
-            theirsMethod.getParameterList().getParametersCount() == intellijMethod.getParameterList().getParametersCount()) {
-          PsiModifierList intellijMethodModifierList = intellijMethod.getModifierList();
+      final PsiModifierList afterModifierList = afterMethod.getModifierList();
+      for (PsiMethod beforeMethod : beforeMethods) {
+        if (afterMethod.getName().equals(beforeMethod.getName()) &&
+            afterMethod.getParameterList().getParametersCount() == beforeMethod.getParameterList().getParametersCount()) {
+          PsiModifierList beforeModifierList = beforeMethod.getModifierList();
 
-          compareModifiers(intellijMethodModifierList, theirsMethodModifierList);
-          compareType(intellijMethod.getReturnType(), theirsMethod.getReturnType(), theirsMethod);
-          compareParams(intellijMethod.getParameterList(), theirsMethod.getParameterList());
+          compareModifiers(beforeModifierList, afterModifierList);
+          compareType(beforeMethod.getReturnType(), afterMethod.getReturnType(), afterMethod);
+          compareParams(beforeMethod.getParameterList(), afterMethod.getParameterList());
+
+          if (shouldCompareCodeBlocks()) {
+            final PsiCodeBlock beforeMethodBody = beforeMethod.getBody();
+            final PsiCodeBlock afterMethodBody = afterMethod.getBody();
+            if (null != beforeMethodBody && null != afterMethodBody) {
+
+              boolean codeBlocksAreEqual = beforeMethodBody.textMatches(afterMethodBody);
+              if (!codeBlocksAreEqual) {
+                String text1 = beforeMethodBody.getText().replaceAll("\\s+", "");
+                String text2 = afterMethodBody.getText().replaceAll("\\s+", "");
+                assertEquals("Methods not equal, Method: (" + afterMethod.getName() + ") Class:" + afterClass.getName(), text2, text1);
+              }
+            } else {
+              if (null != afterMethodBody) {
+                fail("MethodCodeBlocks is null: Method: (" + beforeMethod.getName() + ") Class:" + beforeClass.getName());
+              }
+            }
+          }
 
           compared = true;
         }
       }
-      assertTrue("Method names are not equal, Method: (" + theirsMethod.getName() + ") not found in class : " + intellij.getName(), compared);
+      assertTrue("Method names are not equal, Method: (" + afterMethod.getName() + ") not found in class : " + beforeClass.getName(), compared);
     }
   }
 
@@ -175,8 +210,8 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     PsiMethod[] intellijConstructors = intellij.getConstructors();
     PsiMethod[] theirsConstructors = theirs.getConstructors();
 
-    LOG.info("IntelliJ constructors for class " + intellij.getName() + ": " + Arrays.toString(intellijConstructors));
-    LOG.info("Theirs constructors for class " + theirs.getName() + ": " + Arrays.toString(theirsConstructors));
+    LOG.debug("IntelliJ constructors for class " + intellij.getName() + ": " + Arrays.toString(intellijConstructors));
+    LOG.debug("Theirs constructors for class " + theirs.getName() + ": " + Arrays.toString(theirsConstructors));
 
     assertEquals("Constructor counts are different for Class: " + intellij.getName(), theirsConstructors.length, intellijConstructors.length);
 
@@ -208,9 +243,8 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     String intellijContainingClassName = intellijContainingClass == null ? null : intellijContainingClass.toString();
     String theirsContainingClassName = theirsContainingClass == null ? null : theirsContainingClass.toString();
 
-
-    LOG.info("IntelliJ containing class for class " + intellij.getName() + ": " + intellijContainingClassName);
-    LOG.info("Theirs containing class for class " + theirs.getName() + ": " + theirsContainingClassName);
+    LOG.debug("IntelliJ containing class for class " + intellij.getName() + ": " + intellijContainingClassName);
+    LOG.debug("Theirs containing class for class " + theirs.getName() + ": " + theirsContainingClassName);
 
     assertEquals("Containing classes different for class: " + intellij.getName(), intellijContainingClassName, theirsContainingClassName);
   }
@@ -219,8 +253,8 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     PsiClass[] intellijClasses = intellij.getInnerClasses();
     PsiClass[] theirsClasses = theirs.getInnerClasses();
 
-    LOG.info("IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijClasses));
-    LOG.info("Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsClasses));
+    LOG.debug("IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijClasses));
+    LOG.debug("Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsClasses));
 
     compareClasses(intellijClasses, theirsClasses);
   }

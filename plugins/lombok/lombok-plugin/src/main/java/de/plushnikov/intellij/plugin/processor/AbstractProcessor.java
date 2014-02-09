@@ -5,6 +5,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -83,4 +87,14 @@ public abstract class AbstractProcessor implements Processor {
 
   @NotNull
   public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
+
+  protected String getGetterName(final @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+
+    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
+    if (accessorsInfo.isFluent()) {
+      return LombokUtils.decapitalize(fieldNameWithoutPrefix);
+    }
+    return LombokUtils.toGetterName(fieldNameWithoutPrefix, PsiType.BOOLEAN.equals(psiField.getType()));
+  }
 }

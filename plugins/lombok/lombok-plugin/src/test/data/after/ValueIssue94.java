@@ -13,11 +13,11 @@ public /*final*/ class Val {
   }
 
   public String getNonFinal() {
-    return nonFinal;
+    return this.nonFinal;
   }
 
   public String getOtherFinal() {
-    return otherFinal;
+    return this.otherFinal;
   }
 
   @Override

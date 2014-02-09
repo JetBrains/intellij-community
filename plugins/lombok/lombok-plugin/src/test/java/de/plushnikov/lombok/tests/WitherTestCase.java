@@ -6,6 +6,10 @@ import java.io.IOException;
 
 public class WitherTestCase extends LombokParsingTestCase {
 
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
+
   public void testWitherAccessLevel() throws IOException {
     doTest();
   }

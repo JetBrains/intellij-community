@@ -113,7 +113,7 @@ class EqualsAndHashCode4 extends EqualsAndHashCode {
 	public int hashCode() {
 		final int PRIME = 59;
 		int result = 1;
-		result = result * PRIME + super.hashCode();
+		result = ((result * PRIME) + super.hashCode());
 		return result;
 	}
 }

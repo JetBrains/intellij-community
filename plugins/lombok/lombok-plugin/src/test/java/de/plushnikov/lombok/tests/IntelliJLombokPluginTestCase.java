@@ -10,6 +10,10 @@ import java.io.IOException;
  */
 public class IntelliJLombokPluginTestCase extends LombokParsingTestCase {
 
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
+
   public void testNonNullPlain() throws IOException {
     doTest();
   }

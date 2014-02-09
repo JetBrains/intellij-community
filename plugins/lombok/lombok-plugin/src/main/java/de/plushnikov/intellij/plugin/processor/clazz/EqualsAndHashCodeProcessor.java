@@ -21,6 +21,8 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiFieldUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -104,15 +106,15 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    target.addAll(createEqualAndHashCode(psiClass, psiAnnotation, true));
+    target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 
-  protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean tryGenerateCanEqual) {
+  protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (areMethodsAlreadyExists(psiClass)) {
       return Collections.emptyList();
     }
 
-    final boolean shouldGenerateCanEqual = tryGenerateCanEqual && shouldGenerateCanEqual(psiClass);
+    final boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
 
     Collection<PsiMethod> result = new ArrayList<PsiMethod>(3);
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
@@ -129,10 +131,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private boolean shouldGenerateCanEqual(@NotNull PsiClass psiClass) {
-    boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL);
-    boolean isNotDirectDescendantOfObject = PsiClassUtil.hasSuperClass(psiClass);
+    final boolean isNotDirectDescendantOfObject = PsiClassUtil.hasSuperClass(psiClass);
+    if (isNotDirectDescendantOfObject) {
+      return isNotDirectDescendantOfObject;
+    }
 
-    return !isFinal || isNotDirectDescendantOfObject;
+    final boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL) ||
+        (PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class) && PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
+    return !isFinal;
   }
 
   @NotNull

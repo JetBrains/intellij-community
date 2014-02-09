@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -187,7 +188,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       builder.append(psiClass.getName());
       appendParamDeclaration(params, builder);
       builder.append("{");
-      builder.append("\nsuper();");
       appendParamInitialization(params, builder);
       builder.append("\n}");
 
@@ -215,10 +215,25 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     final String paramsText = joinParameters(method.getParameterList());
-    final String blockText = String.format("return new %s(%s);", psiClass.getName(), paramsText);
+    final String psiClassName = buildClassNameWithGenericTypeParameters(psiClass);
+    final String blockText = String.format("return new %s(%s);", psiClassName, paramsText);
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
     return method;
+  }
+
+  private String buildClassNameWithGenericTypeParameters(@NotNull final PsiClass psiClass) {
+    StringBuilder psiClassName = new StringBuilder(psiClass.getName());
+
+    final PsiTypeParameter[] psiClassTypeParameters = psiClass.getTypeParameters();
+    if (psiClassTypeParameters.length > 0) {
+      psiClassName.append('<');
+      for (PsiTypeParameter psiClassTypeParameter : psiClassTypeParameters) {
+        psiClassName.append(psiClassTypeParameter.getName()).append(',');
+      }
+      psiClassName.setCharAt(psiClassName.length() - 1, '>');
+    }
+    return psiClassName.toString();
   }
 
   private String joinParameters(PsiParameterList parameterList) {

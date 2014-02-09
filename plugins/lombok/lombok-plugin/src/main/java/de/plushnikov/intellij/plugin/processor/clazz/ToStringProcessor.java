@@ -102,7 +102,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
         .withModifier(PsiModifier.PUBLIC);
 
     final String paramString = createParamString(psiClass, psiAnnotation);
-    final String blockText = String.format("return \"%s(%s)\";", psiClass.getName(), paramString);
+    final String blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
     Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
@@ -142,7 +142,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
         }
 
         final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
-        paramString.append(fieldAccessor);
+        paramString.append("this.").append(fieldAccessor);
 
         if (classFieldType instanceof PsiArrayType) {
           paramString.append(")");

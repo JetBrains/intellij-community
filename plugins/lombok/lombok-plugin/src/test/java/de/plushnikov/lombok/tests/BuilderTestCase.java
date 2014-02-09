@@ -1,7 +1,6 @@
 package de.plushnikov.lombok.tests;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
-import org.junit.Ignore;
 
 import java.io.IOException;
 
@@ -10,6 +9,10 @@ import java.io.IOException;
  * For this to work, the correct system property idea.home.path needs to be passed to the test runner.
  */
 public class BuilderTestCase extends LombokParsingTestCase {
+
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
 
   // This test is lombok's homepage example.
   public void testBuilderExample() throws IOException {
@@ -22,7 +25,7 @@ public class BuilderTestCase extends LombokParsingTestCase {
   }
 
   // This test is lombok's homepage example with predefined elements and another inner class.
-  // Predefined inner builder class is not supported. There are no plans to support it.
+  // Predefined inner builder class is not supported.
   /*public void testBuilderPredefined() throws IOException {
     doTest();
   }*/
@@ -35,7 +38,7 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
-  // Predefined inner builder class is not supported. There are no plans to support it.
+  // Predefined inner builder class is not supported.
   /*public void testBuilderWithExistingBuilderClass() throws IOException {
     doTest();
   }*/

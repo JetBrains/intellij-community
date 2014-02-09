@@ -53,9 +53,6 @@ class SetterOnClass6 {
 	}
 	@java.lang.SuppressWarnings("all")
 	public void setNonNull(@lombok.NonNull final String nonNull) {
-		if (nonNull == null) {
-			throw new java.lang.NullPointerException("nonNull");
-		}
 		this.nonNull = nonNull;
 	}
 }
