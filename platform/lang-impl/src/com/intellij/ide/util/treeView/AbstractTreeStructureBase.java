@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
@@ -50,6 +51,9 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
       for (TreeStructureProvider provider : providers) {
         try {
           elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Exception e) {
           LOG.error(e);
