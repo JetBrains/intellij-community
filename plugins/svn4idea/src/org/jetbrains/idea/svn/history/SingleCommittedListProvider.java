@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
@@ -46,7 +45,6 @@ public class SingleCommittedListProvider {
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile file;
   @NotNull private final VcsRevisionNumber number;
-  private RootUrlInfo rootUrlInfo;
   private SvnChangeList[] changeList;
   private SVNRevision revisionBefore;
   private SVNURL repositoryUrl;
@@ -56,7 +54,7 @@ public class SingleCommittedListProvider {
   private FilePath filePath;
   private SVNLogClient logger;
 
-  SingleCommittedListProvider(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VcsRevisionNumber number) {
+  public SingleCommittedListProvider(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VcsRevisionNumber number) {
     myVcs = vcs;
     myProject = vcs.getProject();
     this.file = file;
@@ -77,7 +75,7 @@ public class SingleCommittedListProvider {
   private boolean setup() {
     boolean result = false;
 
-    rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
+    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
@@ -98,8 +96,8 @@ public class SingleCommittedListProvider {
   }
 
   private void calculate() throws VcsException {
-    if (!tryExactHit(svnRootUrl) && !tryByRoot(repositoryUrl)) {
-      filePath = getOneListStepByStep(svnRootUrl);
+    if (!searchForUrl(svnRootUrl) && !(hasAccess(repositoryUrl) && searchForUrl(repositoryUrl))) {
+      filePath = searchFromHead(svnRootUrl);
     }
     else {
       if (changeList[0].getChanges().size() == 1) {
@@ -110,44 +108,37 @@ public class SingleCommittedListProvider {
       else {
         final Change targetChange = changeList[0].getByPath(repositoryRelativeUrl);
 
-        filePath = targetChange == null ? getOneListStepByStep(svnRootUrl) : filePath;
+        filePath = targetChange == null ? searchFromHead(svnRootUrl) : filePath;
       }
     }
   }
 
-  private FilePath getOneListStepByStep(SVNURL svnurl) throws VcsException {
-    FilePath path = tryStepByStep(svnurl);
-
-    return path == null ? filePath : path;
-  }
-
-  private boolean tryByRoot(SVNURL repositoryUrl) throws VcsException {
-    final boolean authorized = SvnAuthenticationNotifier.passiveValidation(myProject, repositoryUrl);
-
-    return authorized && tryExactHit(repositoryUrl);
+  private boolean hasAccess(@NotNull SVNURL url) {
+    return SvnAuthenticationNotifier.passiveValidation(myProject, url);
   }
 
   // return changed path, if any
-  private FilePath tryStepByStep(SVNURL svnurl) throws VcsException {
+  private FilePath searchFromHead(@NotNull SVNURL url) throws VcsException {
     try {
       final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
       // TODO: Implement this with command line
-      logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
+      logger.doLog(url, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
                    false, true, false, 0, null,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
-                       if (myProject.isDisposed()) throw new ProcessCanceledException();
-                       if (logEntry.getDate() == null) {
-                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
-                         return;
-                       }
-                       pathTracker.accept(logEntry);
-                       if (logEntry.getRevision() == revisionBefore.getNumber()) {
-                         changeList[0] = new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
+                       checkDisposed();
+                       // date could be null for lists where there are paths that user has no rights to observe
+                       if (logEntry.getDate() != null) {
+                         pathTracker.accept(logEntry);
+                         if (logEntry.getRevision() == revisionBefore.getNumber()) {
+                           changeList[0] = createChangeList(logEntry);
+                         }
                        }
                      }
                    });
-      return pathTracker.getFilePath(myVcs);
+
+      FilePath path = pathTracker.getFilePath(myVcs);
+      return path == null ? filePath : path;
     }
     catch (SVNException e) {
       LOG.info(e);
@@ -155,20 +146,30 @@ public class SingleCommittedListProvider {
     }
   }
 
-  private boolean tryExactHit(SVNURL svnurl) throws VcsException {
+  @NotNull
+  private SvnChangeList createChangeList(@NotNull SVNLogEntry logEntry) {
+    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
+  }
+
+  private void checkDisposed() {
+    if (myProject.isDisposed()) {
+      throw new ProcessCanceledException();
+    }
+  }
+
+  private boolean searchForUrl(@NotNull SVNURL url) throws VcsException {
     ISVNLogEntryHandler handler = new ISVNLogEntryHandler() {
       public void handleLogEntry(SVNLogEntry logEntry) {
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        if (logEntry.getDate() == null) {
-          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
-          return;
+        checkDisposed();
+        // date could be null for lists where there are paths that user has no rights to observe
+        if (logEntry.getDate() != null) {
+          changeList[0] = createChangeList(logEntry);
         }
-        changeList[0] = new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toString());
       }
     };
     try {
       // TODO: Implement this with command line
-      logger.doLog(svnurl, null, SVNRevision.UNDEFINED, revisionBefore, revisionBefore, false, true, false, 1, null, handler);
+      logger.doLog(url, null, SVNRevision.UNDEFINED, revisionBefore, revisionBefore, false, true, false, 1, null, handler);
     }
     catch (SVNException e) {
       LOG.info(e);
