@@ -5,7 +5,7 @@ class Test {
      @Nullable private final String baseFile1;
 
 
-     public Test(@NotNull String baseFile) {
+     public Test(@NotNull String <warning descr="Constructor parameter for @Nullable field is annotated @NotNull">baseFile</warning>) {
          this.baseFile = baseFile;
          this.baseFile1 = null;
      }
