@@ -37,4 +37,16 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testParametersAreNonnullByDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+
+    myFixture.addClass("import javax.annotation.*; package foo; public interface NullableFunction { void fun(@Nullable Object o); }");
+    myFixture.addClass("package foo; public interface AnyFunction { void fun(Object o); }");
+
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
 }
