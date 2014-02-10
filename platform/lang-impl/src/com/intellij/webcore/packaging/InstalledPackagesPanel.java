@@ -16,6 +16,7 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,29 +223,39 @@ public class InstalledPackagesPanel extends JPanel {
           public void run() {
             final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
               @Override
-              public void operationStarted(String packageName) {
-                myPackagesTable.setPaintBusy(true);
-                myCurrentlyInstalling.add(packageName);
+              public void operationStarted(final String packageName) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    myPackagesTable.setPaintBusy(true);
+                    myCurrentlyInstalling.add(packageName);
+                  }
+                });
               }
 
               @Override
-              public void operationFinished(String packageName, @Nullable String errorDescription) {
-                myPackagesTable.clearSelection();
-                updatePackages(selPackageManagementService);
-                myPackagesTable.setPaintBusy(false);
-                myCurrentlyInstalling.remove(packageName);
-                if (errorDescription == null) {
-                  myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
-                }
-                else {
-                  myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
-                                               "Upgrade Packages Failed",
-                                               "Upgrade packages failed.\n" + errorDescription);
-                }
+              public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    myPackagesTable.clearSelection();
+                    updatePackages(selPackageManagementService);
+                    myPackagesTable.setPaintBusy(false);
+                    myCurrentlyInstalling.remove(packageName);
+                    if (errorDescription == null) {
+                      myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
+                    }
+                    else {
+                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
+                                                   "Upgrade Packages Failed",
+                                                   "Upgrade packages failed.\n" + errorDescription);
+                    }
 
-                if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
-                  upgradePostponedPackages();
-                }
+                    if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
+                      upgradePostponedPackages();
+                    }
+                  }
+                });
               }
             };
             PackageManagementServiceEx serviceEx = getServiceEx();
