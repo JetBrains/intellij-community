@@ -23,7 +23,6 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 public abstract class BaseLombokHandler implements CodeInsightActionHandler {
@@ -81,7 +80,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       final String presentAccessModifier = LombokProcessorUtil.getMethodModifier(presentAnnotation);
       final String currentAccessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(firstPropertyMethod.getModifierList()));
 
-      return Objects.equals(presentAccessModifier, currentAccessModifier);
+      return (presentAccessModifier == null && currentAccessModifier == null) ||
+          (presentAccessModifier != null && presentAccessModifier.equals(currentAccessModifier));
     }
     return true;
   }
