@@ -102,9 +102,8 @@ public class SingleCommittedListProvider {
       filePath = getOneListStepByStep(svnRootUrl);
     }
     else {
-      Change change = ContainerUtil.getFirstItem(changeList[0].getChanges());
-      if (change != null) {
-        final ContentRevision afterRevision = change.getAfterRevision();
+      if (changeList[0].getChanges().size() == 1) {
+        final ContentRevision afterRevision = changeList[0].getChanges().iterator().next().getAfterRevision();
 
         filePath = afterRevision != null ? afterRevision.getFile() : filePath;
       }
