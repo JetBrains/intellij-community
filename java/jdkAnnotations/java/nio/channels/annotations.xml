@@ -41,4 +41,35 @@
     <item name='java.nio.channels.Channels java.nio.channels.WritableByteChannel newChannel(java.io.OutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+  <item name='java.nio.channels.SelectableChannel int validOps()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
+  <item name='java.nio.channels.SelectableChannel java.nio.channels.SelectionKey register(java.nio.channels.Selector, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
+  <item
+      name='java.nio.channels.SelectableChannel java.nio.channels.SelectionKey register(java.nio.channels.Selector, int, java.lang.Object) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
+  <item name='java.nio.channels.SelectionKey int interestOps()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
+  <item name='java.nio.channels.SelectionKey java.nio.channels.SelectionKey interestOps(int) 0'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
+  <item name='java.nio.channels.SelectionKey int readyOps()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.nio.channels.SelectionKey.class" />
+    </annotation>
+  </item>
 </root>
