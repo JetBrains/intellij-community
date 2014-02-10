@@ -1710,7 +1710,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  private static String escapeChar(@NotNull final String str, final char character) {
+  public static String escapeChar(@NotNull final String str, final char character) {
     final StringBuilder buf = new StringBuilder(str);
     escapeChar(buf, character);
     return buf.toString();
