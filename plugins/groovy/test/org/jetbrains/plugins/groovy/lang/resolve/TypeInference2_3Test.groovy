@@ -72,4 +72,69 @@ class TestCase {
 }
 ''', 'java.lang.Integer')
   }
+
+  void testSAMInference() {
+    doTest('''\
+import groovy.transform.CompileStatic
+
+interface CustomCallable<T> {
+  T call()
+}
+
+class Thing {
+  static <T> T customType(CustomCallable<T> callable) {
+    callable.call()
+  }
+
+  @CompileStatic
+  static void run() {
+    customType { [] }.ad<caret>d(1) // return type is not inferred - fails compile
+  }
+}
+''', "java.lang.Boolean")
+  }
+
+  void testSAMInference2() {
+    doTest('''\
+import groovy.transform.CompileStatic
+
+interface CustomCallable<T> {
+  List<T> call()
+}
+
+class Thing {
+  static <T> T first(CustomCallable<T> callable) {
+    callable.call().iterator().next()
+  }
+
+  @CompileStatic
+  static void run() {
+    first { [[]] }.ad<caret>d(1) // return type is not inferred - fails compile
+  }
+}
+''', "java.lang.Boolean")
+  }
+
+  void testSAMInference3() {
+    doTest('''\
+import groovy.transform.CompileStatic
+
+interface CustomCallable<K, V> {
+    Map<K, V> call()
+}
+
+class Thing {
+    static <K, V> Map<K, V> customType(CustomCallable<K, V> callable) {
+        callable.call()
+    }
+
+    @CompileStatic
+    static void run() {
+        customType { [(1):3] }.pu<caret>t(1, 5) // return type is not inferred - fails compile
+    }
+}
+
+''', 'java.lang.Integer')
+  }
+
 }

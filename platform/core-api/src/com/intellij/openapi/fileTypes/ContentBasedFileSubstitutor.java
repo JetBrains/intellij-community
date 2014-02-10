@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated use com.intellij.psi.compiled.ClassFileDecompilers or com.intellij.psi.LanguageSubstitutors API (to remove in IDEA 14) */
+@SuppressWarnings("deprecation")
 public interface ContentBasedFileSubstitutor {
   ExtensionPointName<ContentBasedFileSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.contentBasedClassFileProcessor");
 
-  /**
-   * Checks whether appropriate specific activity is available on given file
-   */
   boolean isApplicable(Project project, VirtualFile vFile);
 
-  /**
-   * @return specific text representation of compiled classfile
-   */
   @NotNull
   String obtainFileText(Project project, VirtualFile file);
 
-  /**
-   * @return language for compiled classfile
-   */
   @Nullable
   Language obtainLanguageForFile(VirtualFile file);
 }

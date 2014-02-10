@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,22 +198,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     super.menuSelectionChanged(isIncluded);
   }
 
-  private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
-    while (a != null) {
-      if (a == b) {
-        return true;
-      }
-
-      if (a instanceof JPopupMenu) {
-        a = ((JPopupMenu)a).getInvoker();
-      }
-      else {
-        a = a.getParent();
-      }
-    }
-    return false;
-  }
-
   private boolean isActivated() {
     int index = getSelectionModel().getSelectedIndex();
     if (index == -1) {
@@ -311,7 +295,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       Component component = findActualComponent(mouseEvent);
 
       if (myState != State.EXPANDED /*&& !myState.isInProgress()*/) {
-        boolean mouseInside = myActivated || isDescendingFrom(component, this);
+        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
         if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
         if (mouseInside && myState == State.COLLAPSED) {
           setState(State.EXPANDING);

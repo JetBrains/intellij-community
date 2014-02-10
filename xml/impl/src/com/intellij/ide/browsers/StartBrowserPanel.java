@@ -104,7 +104,7 @@ public class StartBrowserPanel {
   }
 
   private void createUIComponents() {
-    myBrowserSelector = new BrowserSelector(true);
+    myBrowserSelector = new BrowserSelector();
     myBrowserComboBox = myBrowserSelector.getMainComponent();
     if (UIUtil.isUnderAquaLookAndFeel()) {
       myBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));

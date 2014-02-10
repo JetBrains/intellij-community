@@ -57,16 +57,10 @@ public class HighlightClassUtil {
    * new ref(...) or new ref(..) { ... } where ref is abstract class
    */
   @Nullable
-  static HighlightInfo checkAbstractInstantiation(PsiJavaCodeReferenceElement ref, PsiElement resolved) {
+  static HighlightInfo checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref, PsiElement resolved) {
     PsiElement parent = ref.getParent();
     HighlightInfo highlightInfo = null;
-    if (parent instanceof PsiNewExpression && !PsiUtilCore.hasErrorElementChild(parent)) {
-      if (((PsiNewExpression)parent).getType() instanceof PsiArrayType) return null;
-      if (resolved instanceof PsiClass) {
-        highlightInfo = checkInstantiationOfAbstractClass((PsiClass)resolved, ref);
-      }
-    }
-    else if (parent instanceof PsiAnonymousClass
+    if (parent instanceof PsiAnonymousClass
              && parent.getParent() instanceof PsiNewExpression
              && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
       PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
@@ -127,26 +121,21 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkInstantiationOfAbstractClass(PsiClass aClass, PsiElement highlightElement) {
+  public static HighlightInfo checkInstantiationOfAbstractClass(PsiClass aClass, @NotNull PsiElement highlightElement) {
     HighlightInfo errorResult = null;
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (aClass != null && aClass.hasModifierProperty(PsiModifier.ABSTRACT)
+        && (!(highlightElement instanceof PsiNewExpression) || !(((PsiNewExpression)highlightElement).getType() instanceof PsiArrayType))) {
       String baseClassName = aClass.getName();
       String message = JavaErrorMessages.message("abstract.cannot.be.instantiated", baseClassName);
-      PsiElement parent = highlightElement.getParent();
-      if (parent instanceof PsiNewExpression) {
-        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message).create();
-      } else {
-        errorResult =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(highlightElement).descriptionAndTooltip(message).create();
-      }
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(highlightElement).descriptionAndTooltip(message).create();
       final PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
       if (!aClass.isInterface() && anyAbstractMethod == null) {
         // suggest to make not abstract only if possible
         QuickFixAction.registerQuickFixAction(errorResult,
                                               QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, false, false));
       }
-      if (anyAbstractMethod != null && parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getClassReference() != null) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementAbstractClassMethodsFix(parent));
+      if (anyAbstractMethod != null && highlightElement instanceof PsiNewExpression && ((PsiNewExpression)highlightElement).getClassReference() != null) {
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementAbstractClassMethodsFix(highlightElement));
       }
     }
     return errorResult;
@@ -688,10 +677,9 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkQualifiedNew(PsiNewExpression expression) {
+  public static HighlightInfo checkQualifiedNew(PsiNewExpression expression, PsiType type, PsiClass aClass) {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier == null) return null;
-    PsiType type = expression.getType();
     if (type instanceof PsiArrayType) {
       String description = JavaErrorMessages.message("invalid.qualified.new");
       HighlightInfo info =
@@ -699,7 +687,6 @@ public class HighlightClassUtil {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, null));
       return info;
     }
-    PsiClass aClass = PsiUtil.resolveClassInType(type);
     HighlightInfo info = null;
     if (aClass != null) {
       if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -820,17 +807,15 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiNewExpression expression) {
-    PsiType type = expression.getType();
-    PsiExpression qualifier = expression.getQualifier();
+  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiNewExpression expression, PsiType type, PsiClass aClass) {
     if (type == null || type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
-    PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass == null) return null;
     if (aClass instanceof PsiAnonymousClass) {
       aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
       if (aClass == null) return null;
     }
 
+    PsiExpression qualifier = expression.getQualifier();
     return checkCreateInnerClassFromStaticContext(expression, qualifier, aClass);
   }
 

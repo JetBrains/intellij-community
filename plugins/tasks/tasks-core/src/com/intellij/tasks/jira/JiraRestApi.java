@@ -28,14 +28,14 @@ public abstract class JiraRestApi {
 
   public static JiraRestApi fromJiraVersion(@NotNull JiraVersion jiraVersion, @NotNull JiraRepository repository) {
     LOG.debug("JIRA version is " + jiraVersion);
-    if (jiraVersion.getMajorNumber() == 4) {
+    if (jiraVersion.getMajorNumber() == 4 && jiraVersion.getMinorNumber() >= 2) {
       return new JiraRestApi20Alpha1(repository);
     }
     else if (jiraVersion.getMajorNumber() >= 5) {
       return new JiraRestApi2(repository);
     }
     else {
-      LOG.warn("JIRA below 4.0.0 doesn't support REST API (" + jiraVersion + " used)");
+      LOG.warn("JIRA below 4.2.0 doesn't support REST API (" + jiraVersion + " used)");
       return null;
     }
   }

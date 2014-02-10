@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -28,10 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -130,7 +128,9 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
       return true;
     }
 
-    return owner instanceof PsiParameter && isContainerAnnotated(owner, "javax.annotation.ParametersAreNullableByDefault");
+    return owner instanceof PsiParameter && 
+           !AnnotationUtil.isAnnotated(owner, Arrays.asList(DEFAULT_NOT_NULLS), checkBases, false) && //honor annotation even if it's not configured
+           isContainerAnnotated(owner, "javax.annotation.ParametersAreNullableByDefault");
   }
 
   public boolean isNotNull(PsiModifierListOwner owner, boolean checkBases) {
@@ -138,7 +138,9 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
       return true;
     }
 
-    return owner instanceof PsiParameter && isContainerAnnotated(owner, "javax.annotation.ParametersAreNonnullByDefault");
+    return owner instanceof PsiParameter && 
+           !AnnotationUtil.isAnnotated(owner, Arrays.asList(DEFAULT_NULLABLES), checkBases, false) && //honor annotation even if it's not configured
+           isContainerAnnotated(owner, "javax.annotation.ParametersAreNonnullByDefault");
   }
 
   private static boolean isContainerAnnotated(PsiModifierListOwner owner, String annotationFQN) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,10 +241,10 @@ public class JavaResolveUtil {
 
   @NotNull
   public static <T extends PsiPolyVariantReference> JavaResolveResult[] resolveWithContainingFile(@NotNull T ref,
-                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver,
-                                                                                  boolean needToPreventRecursion,
-                                                                                  boolean incompleteCode,
-                                                                                  @NotNull PsiFile containingFile) {
+                                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver,
+                                                                                                  boolean needToPreventRecursion,
+                                                                                                  boolean incompleteCode,
+                                                                                                  @NotNull PsiFile containingFile) {
     boolean valid = containingFile.isValid();
     if (!valid) {
       return JavaResolveResult.EMPTY_ARRAY;

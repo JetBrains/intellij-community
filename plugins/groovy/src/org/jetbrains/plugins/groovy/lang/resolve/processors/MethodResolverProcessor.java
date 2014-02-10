@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   private boolean myStopExecuting = false;
 
   private final boolean myByShape;
-  
+
   private final SubstitutorComputer mySubstitutorComputer;
 
   private final boolean myTypedContext;
@@ -88,7 +88,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     myAllVariants = allVariants;
     myByShape = byShape;
 
-    mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place, myPlace.getParent());
+    mySubstitutorComputer = new SubstitutorComputer(myThisType, myArgumentTypes, typeArguments, myAllVariants, myPlace, myPlace.getParent());
     myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 
@@ -98,15 +98,12 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     if (myStopExecuting) {
       return false;
     }
-    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
 
       if (method.isConstructor() != myIsConstructor) return true;
-      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-      if (!myByShape) {
-        substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
-      }
+
+      PsiSubstitutor substitutor = inferSubstitutor(method, state);
 
       PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
@@ -124,11 +121,18 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       else {
         myInapplicableCandidates.add(candidate);
       }
-
-      return true;
     }
 
     return true;
+  }
+
+  @NotNull
+  private PsiSubstitutor inferSubstitutor(@NotNull PsiMethod method, @NotNull ResolveState state) {
+    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+
+    return myByShape ? substitutor
+                     : mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
   }
 
   @Override
@@ -226,7 +230,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
     return 0;
   }
-  
+
   private static boolean isMoreConcreteThan(@NotNull PsiMethod method,
                                             @NotNull final PsiSubstitutor substitutor,
                                             @NotNull PsiMethod another,

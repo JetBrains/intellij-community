@@ -29,8 +29,8 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -55,30 +55,29 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     myChunks = new LinkedList<List<Fragment>>();
 
-    final SVNURL[] repositoryRoot = new SVNURL[1];
-    final long[] youngRevision = new long[1];
     final VcsException[] exception = new VcsException[1];
+    final Ref<SVNInfo> infoRef = new Ref<SVNInfo>();
 
     Runnable process = new Runnable() {
       @Override
       public void run() {
-        SVNRepository repository = null;
         try {
-          repository = vcs.createRepository(location.getURL());
-          youngRevision[0] = repository.getLatestRevision();
-          repositoryRoot[0] = repository.getRepositoryRoot(false);
+          infoRef.set(vcs.getInfo(location.toSvnUrl(), SVNRevision.HEAD));
+        }
+        catch (VcsException e) {
+          exception[0] = e;
         }
         catch (SVNException e) {
           exception[0] = new VcsException(e);
         }
-        finally {
-          if (repository != null) {
-            repository.closeSession();
-          }
-        }
       }
     };
     underProgress(exception, process);
+
+    SVNInfo info = infoRef.get();
+    if (info == null || info.getRevision() == null || info.getRepositoryRootURL() == null) {
+      throw new VcsException("Could not get head info for " + location);
+    }
 
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
         CommittedChangesCache.getInstance(project).getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
@@ -87,8 +86,9 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     myInternallyCached = (internalIterator == null) ? null : new InternallyCachedProvider(internalIterator, myProject);
     myVisuallyCached = (visualIterator == null) ? null : new VisuallyCachedProvider(visualIterator, myProject, location);
 
-    myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached,
-                                      new LiveProvider(vcs, location, youngRevision[0], new SvnLogUtil(myProject, vcs, location, repositoryRoot[0])));
+    myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached, new LiveProvider(vcs, location, info.getRevision().getNumber(),
+                                                                                             new SvnLogUtil(myProject, vcs, location,
+                                                                                                            info.getRepositoryRootURL())));
 
     myCurrentIdx = -1;
 
@@ -133,13 +133,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     }
 
     final Ref<Boolean> canNotGoBackRef = new Ref<Boolean>();
-    final List<Fragment> fragments;
-    try {
-      fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    final List<Fragment> fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
     myCanNotGoBack = canNotGoBackRef.get().booleanValue();
 
     if (! fragments.isEmpty()) {

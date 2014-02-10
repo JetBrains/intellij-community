@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
       myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -34,7 +34,7 @@ public class Foo {
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -45,7 +45,7 @@ public class Foo {
     myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -54,7 +54,7 @@ public class Foo {
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''

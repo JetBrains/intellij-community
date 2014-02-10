@@ -44,7 +44,6 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -386,7 +385,10 @@ public class SvnHistoryProvider
 
         final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
-        final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
+        // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
+        // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
+        // TODO: non-interactive mode)
+        final SVNURL rootURL = SvnUtil.getRepositoryRoot(myVcs, svnurl);
         if (rootURL == null) {
           throw new VcsException("Could not find repository root for URL: " + myUrl);
         }
@@ -415,37 +417,30 @@ public class SvnHistoryProvider
     }
 
     private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
-        final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
-        final String root = rootURL.toString();
-        String relativeUrl = myUrl;
-        if (myUrl.startsWith(root)) {
-          relativeUrl = myUrl.substring(root.length());
-        }
+      // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
+      // command to get repository url
+      SVNInfo info = myVcs.getInfo(svnurl, myPeg, myPeg);
+      final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
+      final String root = rootURL != null ? rootURL.toString() : "";
+      String relativeUrl = myUrl;
+      if (myUrl.startsWith(root)) {
+        relativeUrl = myUrl.substring(root.length());
+      }
 
-      // TODO: Update this call to myVcs.getFactory.createHistoryClient
-        SVNLogClient client = myVcs.createLogClient();
-
-        final RepositoryLogEntryHandler repositoryLogEntryHandler =
+      final RepositoryLogEntryHandler repositoryLogEntryHandler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl,
                                         new ThrowableConsumer<VcsFileRevision, SVNException>() {
                                           @Override
                                           public void consume(VcsFileRevision revision) throws SVNException {
                                             myConsumer.consume(revision);
-                                            throw new SVNCancelException(); // load only one revision
                                           }
                                         }, rootURL);
-        repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
+      repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
-        client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 0, null, repositoryLogEntryHandler);
-    }
-
-    // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
-    // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
-    // TODO: non-interactive mode)
-    private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {
-      SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
-
-      return info != null ? info.getRepositoryRootURL() : null;
+      SvnTarget target = SvnTarget.fromURL(rootURL, myFrom);
+      myVcs.getFactory(target).createHistoryClient()
+        .doLog(target, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 1, null,
+               repositoryLogEntryHandler);
     }
 
     private boolean existsNow(SVNURL svnurl) {

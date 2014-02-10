@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -638,8 +638,8 @@ public class HighlightControlFlowUtil {
 
 
   @Nullable
-  static HighlightInfo checkVariableMustBeFinal(PsiVariable variable,
-                                                PsiJavaCodeReferenceElement context,
+  static HighlightInfo checkVariableMustBeFinal(@NotNull PsiVariable variable,
+                                                @NotNull PsiJavaCodeReferenceElement context,
                                                 @NotNull LanguageLevel languageLevel) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
