@@ -275,16 +275,26 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void updateInstalledPackages() {
-    try {
-      Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
-      myInstalledPackages.clear();
-      for (InstalledPackage pkg : installedPackages) {
-        myInstalledPackages.add(pkg.getName());
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myInstalledPackages.clear();
+              for (InstalledPackage pkg : installedPackages) {
+                myInstalledPackages.add(pkg.getName());
+              }
+            }
+          });
+        }
+        catch(IOException e) {
+          LOG.info("Error updating list of installed packages:" + e);
+        }
       }
-    }
-    catch(IOException e) {
-      LOG.info("Error updating list of installed packages:" + e);
-    }
+    });
   }
 
   public void initModel() {

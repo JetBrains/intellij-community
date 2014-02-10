@@ -123,7 +123,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void openDownloadPage() {
-    BrowserUtil.launchBrowser(myUpdatedChannel.getHomePageUrl());
+    BrowserUtil.browse(myUpdatedChannel.getHomePageUrl());
   }
 
   private static class ButtonAction extends AbstractAction {
@@ -136,7 +136,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      BrowserUtil.launchBrowser(myUrl);
+      BrowserUtil.browse(myUrl);
     }
   }
 

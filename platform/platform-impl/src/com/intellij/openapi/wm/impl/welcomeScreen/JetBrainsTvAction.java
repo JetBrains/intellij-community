@@ -42,6 +42,6 @@ public class JetBrainsTvAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    BrowserUtil.launchBrowser(myUrl);
+    BrowserUtil.browse(myUrl);
   }
 }

@@ -970,10 +970,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                     }
                   }
                 );
-                BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : url);
+                String url1 = urls != null && !urls.isEmpty() ? urls.get(0) : url;
+                BrowserUtil.browse(url1);
               }
               else {
-                BrowserUtil.launchBrowser(url);
+                BrowserUtil.browse(url);
               }
               return "";
             }

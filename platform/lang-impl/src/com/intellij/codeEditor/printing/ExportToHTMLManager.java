@@ -20,8 +20,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -117,7 +115,7 @@ class ExportToHTMLManager {
       }
       textPainter.paint(null, psiFile.getFileType());
       if (exportToHTMLSettings.OPEN_IN_BROWSER) {
-        BrowserUtil.launchBrowser(textPainter.getHTMLFileName());
+        BrowserUtil.browse(textPainter.getHTMLFileName());
       }
     }
     else {
@@ -269,7 +267,7 @@ class ExportToHTMLManager {
           dirToShow += File.separatorChar;
         }
         dirToShow += PsiDirectoryFactory.getInstance(myProject).getQualifiedName(myPsiDirectory, false).replace('.', File.separatorChar);
-        BrowserUtil.launchBrowser(dirToShow);
+        BrowserUtil.browse(dirToShow);
       }
     }
   }

@@ -213,5 +213,7 @@
       <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeImporter"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
   </extensionPoints>
 </idea-plugin>

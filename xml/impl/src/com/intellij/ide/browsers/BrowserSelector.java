@@ -88,7 +88,7 @@ public class BrowserSelector {
   /**
    * @deprecated  to remove in IDEA 14
    */
-  public BrowsersConfiguration.BrowserFamily getSelectedBrowser() {
+  public BrowserFamily getSelectedBrowser() {
     WebBrowser selected = getSelected();
     return selected == null ? null : selected.getFamily();
   }
@@ -109,7 +109,7 @@ public class BrowserSelector {
   /**
    * @deprecated  to remove in IDEA 14
    */
-  public void setSelectedBrowser(@SuppressWarnings("deprecation") @Nullable BrowsersConfiguration.BrowserFamily selectedItem) {
+  public void setSelectedBrowser(@SuppressWarnings("deprecation") @Nullable BrowserFamily selectedItem) {
     setSelected(selectedItem == null ? null : WebBrowserManager.getInstance().findBrowser(selectedItem));
   }
 

@@ -257,6 +257,10 @@ public class TypeMigrationDialog extends RefactoringDialog {
       return "type of variable " + ((PsiLocalVariable)element).getName();
     }
 
+    if (element instanceof PsiReferenceParameterList) {
+      return "class type arguments ";
+    }
+    
     if (element instanceof PsiParameter) {
       final PsiParameter param = (PsiParameter)element;
       String result = "type of parameter " + param.getName();

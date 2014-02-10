@@ -140,7 +140,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           return;
         }
         if (dialog.isOpenInBrowser()) {
-          BrowserUtil.launchBrowser(url.get());
+          BrowserUtil.browse(url.get());
         }
         else {
           GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());

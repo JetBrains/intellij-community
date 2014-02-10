@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -435,7 +435,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     myPhase = 1;
   }
 
-  public boolean isEntryPoint(final RefElement owner) {
+  public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
     if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
@@ -444,9 +444,11 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
         return true;
       }
     }
-    for (EntryPoint extension : myExtensions) {
-      if (extension.isEntryPoint(owner, element)) {
-        return true;
+    if (element != null) {
+      for (EntryPoint extension : myExtensions) {
+        if (extension.isEntryPoint(owner, element)) {
+          return true;
+        }
       }
     }
     return false;
@@ -482,7 +484,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     }
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
-      if (entryPointsManager.isEntryPoint((PsiModifierListOwner)element)) return true;
+      if (entryPointsManager.isEntryPoint(element)) return true;
       //if (AnnotationUtil
       //  .checkAnnotatedUsingPatterns((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
       //  AnnotationUtil

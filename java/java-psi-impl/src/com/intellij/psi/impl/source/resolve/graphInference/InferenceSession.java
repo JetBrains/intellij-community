@@ -330,7 +330,7 @@ public class InferenceSession {
     }
   }
 
-  private void registerConstraints(PsiType returnType, PsiType targetType) {
+  public void registerConstraints(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
       resolveBounds(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
@@ -574,7 +574,7 @@ public class InferenceSession {
     return dependencies != null ? !dependencies.isEmpty() : isProper;
   }
 
-  protected boolean repeatInferencePhases(boolean incorporate) {
+  public boolean repeatInferencePhases(boolean incorporate) {
     do {
       if (!reduceConstraints()) {
         //inference error occurred

@@ -44,7 +44,7 @@ public class RefCardAction extends AnAction implements DumbAware {
       final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
       String webUrl = SystemInfo.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
       if (webUrl != null) {
-        BrowserUtil.launchBrowser(webUrl);
+        BrowserUtil.browse(webUrl);
       }
     }
   }

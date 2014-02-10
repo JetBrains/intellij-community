@@ -95,13 +95,13 @@ public class ExternalJavaDocAction extends AnAction {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
         @Override
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          BrowserUtil.launchBrowser(selectedValue);
+          BrowserUtil.browse(selectedValue);
           return FINAL_CHOICE;
         }
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
     else if (set.size() == 1) {
-      BrowserUtil.launchBrowser(urls.get(0));
+      BrowserUtil.browse(urls.get(0));
     }
   }
 

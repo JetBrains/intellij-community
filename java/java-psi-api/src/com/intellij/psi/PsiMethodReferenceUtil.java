@@ -48,9 +48,7 @@ public class PsiMethodReferenceUtil {
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
     final PsiElement resolve = result.getElement();
     if (resolve instanceof PsiMethod) {
-      PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-      subst = subst.putAll(qualifierResolveResult.getSubstitutor());
-      subst = subst.putAll(result.getSubstitutor());
+      PsiSubstitutor subst = result.getSubstitutor();
 
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
 
@@ -197,9 +195,7 @@ public class PsiMethodReferenceUtil {
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(LambdaUtil.getSubstitutor(method, resolveResult));
-        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(TypeConversionUtil.getSuperClassSubstitutor(((PsiMethod)resolve).getContainingClass(), qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()));
-        subst = subst.putAll(result.getSubstitutor());
+        PsiSubstitutor subst = result.getSubstitutor();
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
         if (methodReferenceExpression.isExact()) {

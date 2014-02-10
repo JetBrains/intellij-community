@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.*;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.*;
@@ -42,7 +43,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,13 +207,13 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
           @Override
           public void consume(Url url) {
             ApplicationManager.getApplication().saveAll();
-            UrlOpener.launchBrowser(url.toExternalForm(), browser, request.getProject());
+            BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
           }
         });
       }
     }
     catch (WebBrowserUrlProvider.BrowserException e1) {
-      Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));
+      Messages.showErrorDialog(e1.getMessage(), IdeBundle.message("browser.error"));
     }
     catch (Exception e1) {
       LOG.error(e1);

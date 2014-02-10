@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 5, 2010 10:01:27 AM
  */
-public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener, Dumpable {
+public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
   
@@ -986,7 +986,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
   }
 
-  @Override
   public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
@@ -1002,7 +1001,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, recalculationStartOffset, recalculationEndOffset));
   }
 
-  @Override
   public void onFoldProcessingEnd() {
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxx On fold region processing end");
     recalculateSoftWraps();

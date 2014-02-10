@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -96,7 +97,7 @@ public class ArtifactErrorPanel {
     myCurrentQuickFixes = quickFixes;
     myFixButton.setVisible(!quickFixes.isEmpty());
     if (!quickFixes.isEmpty()) {
-      myFixButton.setText(quickFixes.size() == 1 ? ContainerUtil.getFirstItem(quickFixes, null).getActionName() : "Fix...");
+      myFixButton.setText(quickFixes.size() == 1 ? ContainerUtil.getFirstItem(quickFixes, null).getActionName() : IdeBundle.message("button.fix"));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -222,6 +223,26 @@ public abstract class QuickFixFactory {
 
   public abstract void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull QuickFixActionRegistrar registrar);
 
-  public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(PsiNameValuePair pair);
+  @NotNull
+  public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
+  @NotNull
+  public abstract IntentionAction createOptimizeImportsFix();
+
+  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
+
+  @NotNull
+  public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName, @NotNull String element);
+
+  @NotNull
+  public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
+
+  @NotNull
+  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement);
+
+  @NotNull
+  public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
+
+  @NotNull
+  public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 }
