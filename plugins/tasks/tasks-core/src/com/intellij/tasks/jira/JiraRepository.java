@@ -152,7 +152,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // may be used instead version string parsing
     JiraRestApi version = JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
     if (version == null) {
-      throw new Exception("JIRA below 4.0.0 doesn't have REST API and is no longer supported.");
+      throw new Exception("JIRA below 4.2.0 doesn't have REST API and is no longer supported.");
     }
     return version;
   }
@@ -178,7 +178,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       // may be null if 204 No Content received
       final InputStream stream = method.getResponseBodyAsStream();
       entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
-      LOG.debug(entityContent);
+      TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     }
     finally {
       method.releaseConnection();
