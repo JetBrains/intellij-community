@@ -17,9 +17,11 @@ package git4idea.branch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -58,12 +60,25 @@ public final class GitBranchesCollection {
     return Collections.unmodifiableCollection(myRemoteBranches);
   }
 
-  public GitLocalBranch findLocalBranch(@NotNull final String name) {
-    return ContainerUtil.find(myLocalBranches, new Condition<GitLocalBranch>() {
+  @Nullable
+  public GitLocalBranch findLocalBranch(@NotNull String name) {
+    return findByName(myLocalBranches, name);
+  }
+
+  @Nullable
+  public GitBranch findBranchByName(@NotNull String name) {
+    GitLocalBranch branch = findByName(myLocalBranches, name);
+    return branch != null ? branch : findByName(myRemoteBranches, name);
+  }
+
+  @Nullable
+  private static <T extends GitBranch> T findByName(Collection<T> branches, @NotNull final String name) {
+    return ContainerUtil.find(branches, new Condition<T>() {
       @Override
-      public boolean value(GitLocalBranch branch) {
+      public boolean value(T branch) {
         return name.equals(branch.getName());
       }
     });
   }
+
 }

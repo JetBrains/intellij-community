@@ -153,8 +153,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private String getMessageText(VcsFullCommitDetails commit) {
-      String subject = commit.getSubject();
-      String description = subject.length() < commit.getFullMessage().length() ? commit.getFullMessage().substring(subject.length()) : "";
+      String fullMessage = commit.getFullMessage();
+      int separator = fullMessage.indexOf("\n\n");
+      String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
+      String description = fullMessage.substring(subject.length());
       return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
              IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
     }
