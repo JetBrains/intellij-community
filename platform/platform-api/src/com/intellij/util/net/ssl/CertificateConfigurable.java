@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -230,6 +231,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(myTreeBuilder);
     myTrustManager.removeListener(this);
   }
 
