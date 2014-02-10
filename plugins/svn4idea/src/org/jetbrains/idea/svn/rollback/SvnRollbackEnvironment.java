@@ -28,7 +28,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.revert.RevertClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -99,7 +98,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     // adds (deletes)
     // deletes (adds)
     // modifications
-    final Reverter reverter = new Reverter(mySvnVcs.getFactory().createRevertClient(), revertHandler, exceptions);
+    final Reverter reverter = new Reverter(mySvnVcs, revertHandler, exceptions);
     reverter.revert(checker.getForAdds(), true);
     reverter.revert(checker.getForDeletes(), true);
     final List<File> edits = checker.getForEdits();
@@ -256,12 +255,12 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private static class Reverter {
-    private final RevertClient myClient;
+    @NotNull private final SvnVcs myVcs;
     private ISVNEventHandler myHandler;
     private final List<VcsException> myExceptions;
 
-    private Reverter(RevertClient client, ISVNEventHandler handler, List<VcsException> exceptions) {
-      myClient = client;
+    private Reverter(@NotNull SvnVcs vcs, ISVNEventHandler handler, List<VcsException> exceptions) {
+      myVcs = vcs;
       myHandler = handler;
       myExceptions = exceptions;
     }
@@ -269,7 +268,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     public void revert(final File[] files, final boolean recursive) {
       if (files.length == 0) return;
       try {
-        myClient.revert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, myHandler);
+        // Files passed here are split into groups by root and working copy format - thus we could determine factory based on first file
+        myVcs.getFactory(files[0]).createRevertClient().revert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, myHandler);
       }
       catch (VcsException e) {
         processRevertError(e);
