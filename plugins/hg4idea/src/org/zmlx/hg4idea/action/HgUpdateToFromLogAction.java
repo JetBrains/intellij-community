@@ -19,29 +19,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgUpdateCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
     String revisionHash = commit.getHash().asString();
     Project project = repository.getProject();
     VirtualFile rootFile = repository.getRoot();
-    HgUpdateCommand updateCommand = new HgUpdateCommand(project, rootFile);
-    updateCommand.setRevision(revisionHash);
-    HgCommandResult result = updateCommand.execute();
-    new HgConflictResolver(project).resolve(rootFile);
-    if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-      new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
-    }
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    String title = HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash);
+    HgUpdateToAction.runUpdateToInBackground(project, title, rootFile, revisionHash, false);
   }
 }
