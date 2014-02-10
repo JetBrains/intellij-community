@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 /**
@@ -34,6 +35,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/renameMethod/multi/";
