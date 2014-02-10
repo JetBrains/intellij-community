@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ public class HighlightInfo implements Segment {
   private static final int AFTER_END_OF_LINE_FLAG = 3;
   private static final int FILE_LEVEL_ANNOTATION_FLAG = 4;
   private static final int NEEDS_UPDATE_ON_TYPING_FLAG = 5;
+  PsiElement psiElement;
 
   @NotNull
   ProperTextRange getFixTextRange() {
@@ -432,6 +433,7 @@ public class HighlightInfo implements Segment {
         return false;
       }
     }
+    info.psiElement = psiElement;
     return true;
   }
 
