@@ -747,9 +747,7 @@ public class SvnUtil {
                                        @Nullable final SVNRevision revision,
                                        @Nullable final SVNRevision pegRevision)
     throws VcsException {
-    ClientFactory factory = target.isFile() ? vcs.getFactory(target.getFile()) : vcs.getFactory();
-
-    return factory.createContentClient().getContent(target, revision, pegRevision);
+    return vcs.getFactory(target).createContentClient().getContent(target, revision, pegRevision);
   }
 
   public static boolean hasDefaultPort(@NotNull SVNURL result) {
