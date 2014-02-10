@@ -6,6 +6,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -28,8 +29,22 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyFunction> members) {
-    PyClassRefactoringUtil.moveMethods(members, to);
+  protected void moveMembers(@NotNull PyClass from,
+                             @NotNull Collection<PyFunction> members,
+                             @NotNull PyClass... to) {
+    for (PyClass destClass : to) {
+      //We move copies here becase we there may be several destinations
+      List<PyFunction> copies = new ArrayList<PyFunction>(members.size());
+      for (PyFunction member : members) {
+        PyFunction newMethod = (PyFunction)member.copy();
+        copies.add(newMethod);
+      }
+
+      PyClassRefactoringUtil.copyMethods(copies, destClass);
+    }
+    deleteElements(members);
+
+    PyClassRefactoringUtil.insertPassIfNeeded(from);
   }
 
   @NotNull

@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +32,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -137,6 +140,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
       protected void run() throws Throwable {
+        //TODO: Test via presenter
         //noinspection ConstantConditions
         final String path = base_dir.getPath() + "/a/b";
         PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path + "/foo.py");

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.refactoring.classes;
+package com.jetbrains.python.refactoring.classes.pullUp;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 
 import java.util.Collections;
@@ -66,6 +65,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   public void testMoveInstanceAttributesNoInit() {
     doHelperTest("Child", "#instance_field", "Parent");
   }
+
   public void testMoveInstanceAttributesLeaveEmptyInit() {
     doHelperTest("Child", "#foo", "Parent");
   }
@@ -97,16 +97,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     final PyClass clazz = findClass(className);
     final PyElement member = findMember(className, memberName);
     final PyClass superClass = findClass(superClassName);
-    CommandProcessor.getInstance().executeCommand(clazz.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            MembersManager.moveAllMembers(clazz, superClass, Collections.singleton(MembersManager.findMember(clazz, member)));
-          }
-        });
-      }
-    }, null, null);
+    moveViaProcessor(clazz.getProject(),
+                     new PyPullUpProcessor(clazz, superClass, Collections.singleton(MembersManager.findMember(clazz, member))));
   }
 }

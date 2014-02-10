@@ -33,10 +33,7 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -55,7 +52,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * Accepts only those members whose element is PyClass object (new classes)
    */
-  private static final Predicate<PyMemberInfo> ALLOW_OBJECT = new ObjectPredicate(true);
+  private static final Predicate<PyMemberInfo> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
 
   private PyExtractSuperclassHelper() {
   }
@@ -81,8 +78,8 @@ public final class PyExtractSuperclassHelper {
 
     newClass = placeNewClass(project, newClass, clazz, targetFile);
 
-    MembersManager.moveAllMembers(clazz, newClass, selectedMemberInfos);
-    PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
+    MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
+    PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
 
   }
 
@@ -225,46 +222,5 @@ public final class PyExtractSuperclassHelper {
       ret = psi_mgr.findDirectory(the_root);
     }
     return ret;
-  }
-
-
-  private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-
-  }
-
-  /**
-   * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
-   * that should not be displayed in this refactoring (like object)
-   *
-   * @param pyMemberInfos collection to sort
-   * @return sorted collection
-   */
-  @NotNull
-  static Collection<PyMemberInfo> filterOutDeniedMembers(@NotNull final Collection<PyMemberInfo> pyMemberInfos) {
-    return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
-  }
-
-  /**
-   * Filters only pyclass object (new class)
-   */
-  private static class ObjectPredicate extends NotNullPredicate<PyMemberInfo> {
-    private final boolean myAllowObjects;
-
-    /**
-     * @param allowObjects allows only objects if true. Allows all but objects otherwise.
-     */
-    private ObjectPredicate(final boolean allowObjects) {
-      myAllowObjects = allowObjects;
-    }
-
-    @Override
-    public boolean applyNotNull(@NotNull final PyMemberInfo input) {
-      return myAllowObjects == isObject(input);
-    }
   }
 }

@@ -15,19 +15,20 @@
  */
 package com.jetbrains.python.refactoring.classes;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
@@ -53,158 +54,97 @@ public class PyClassRefactoringUtil {
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
+  private static final InitFirst INIT_FIRST = new InitFirst();
+
   private PyClassRefactoringUtil() {
   }
 
-  public static void moveSuperclasses(PyClass clazz, Set<String> superClasses, PyClass superClass) {
-    if (superClasses.size() == 0) return;
-    final Project project = clazz.getProject();
-    final List<PyExpression> toAdd = removeAndGetSuperClasses(clazz, superClasses);
-    addSuperclasses(project, superClass, toAdd, superClasses);
-  }
-
-  public static void addSuperclasses(Project project,
-                                     PyClass superClass,
-                                     @Nullable Collection<PyExpression> superClassesAsPsi,
-                                     Collection<String> superClassesAsStrings) {
-    if (superClassesAsStrings.size() == 0) return;
-    PyArgumentList argList = superClass.getSuperClassExpressionList();
-    if (argList != null) {
-      if (superClassesAsPsi != null) {
-        for (PyExpression element : superClassesAsPsi) {
-          argList.addArgument(element);
-        }
-      }
-      else {
-        for (String s : superClassesAsStrings) {
-          argList.addArgument(PyElementGenerator.getInstance(project).createExpressionFromText(s));
-        }
-      }
-    }
-    else {
-      addSuperclasses(project, superClass, superClassesAsStrings);
-    }
-  }
 
   /**
-   * Removes super classes by name and returns list of removed
+   * TODO: Doc
+   * Copies class field declarations to some other place
    *
-   * @param clazz                class to find super classes to remove
-   * @param superClassesToRemove list of super class names
-   * @return list of removed classes
+   * @param assignmentStatement list of class fields
    */
   @NotNull
-  public static List<PyExpression> removeAndGetSuperClasses(@NotNull PyClass clazz, @NotNull Set<String> superClassesToRemove) {
-    if (superClassesToRemove.isEmpty()) {
-      return Collections.emptyList();
-    }
-    final List<PyExpression> result = new ArrayList<PyExpression>();
-    for (final PyExpression superClassExpression : clazz.getSuperClassExpressions()) {
-      if (superClassesToRemove.contains(superClassExpression.getText())) {
-        result.add(superClassExpression);
-        superClassExpression.delete();
-      }
-    }
-    return result;
-  }
-
-  public static void addSuperclasses(Project project, PyClass superClass, Collection<String> superClasses) {
-    if (superClasses.size() == 0) return;
-    final StringBuilder builder = new StringBuilder("(");
-    boolean hasChanges = false;
-    for (String element : superClasses) {
-      if (builder.length() > 1) builder.append(",");
-      if (!alreadyHasSuperClass(superClass, element)) {
-        builder.append(element);
-        hasChanges = true;
-      }
-    }
-    builder.append(")");
-    if (!hasChanges) return;
-
-    final PsiFile file =
-      PsiFileFactory.getInstance(project).createFileFromText(superClass.getName() + "temp", PythonFileType.INSTANCE, builder.toString());
-    final PsiElement expression = file.getFirstChild().getFirstChild();
-    PsiElement colon = superClass.getFirstChild();
-    while (colon != null && !colon.getText().equals(":")) {
-      colon = colon.getNextSibling();
-    }
-    LOG.assertTrue(colon != null && expression != null);
-    PyPsiUtils.addBeforeInParent(colon, expression);
-  }
-
-  private static boolean alreadyHasSuperClass(PyClass superClass, String className) {
-    for (PyClass aClass : superClass.getSuperClasses()) {
-      if (Comparing.strEqual(aClass.getName(), className)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Moves class field declarations to some other place
-   * @param expressions list of class fields
-   * @param superClass where to move them
-   */
-  public static void moveFieldDeclarationToStatement(@NotNull final Collection<PyTargetExpression> expressions,
-                                                     @NotNull final PyStatementList superClassStatement) {
-    for (final PyTargetExpression expression : expressions) {
-      final PyAssignmentStatement expAssignmentStatement = PsiTreeUtil.getParentOfType(expression, PyAssignmentStatement.class);
-      assert expAssignmentStatement != null: "Target expression has no assignment statement";
-      PyUtil.addElementToStatementList(expAssignmentStatement.copy(), superClassStatement, true);
-      expAssignmentStatement.delete();
+  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatement,
+                                                                            @NotNull final PyStatementList superClassStatement) {
+    List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
+    for (final PyAssignmentStatement expression : assignmentStatement) {
+      PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
+      declations.add(newDeclaration);
+      declations.add((PyAssignmentStatement)PyUtil.addElementToStatementList(newDeclaration, superClassStatement, true));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
-
+    return declations;
   }
-  public static void moveMethods(Collection<PyFunction> methods, PyClass superClass) {
-    if (methods.size() == 0) return;
+
+  public static List<PyFunction> copyMethods(Collection<PyFunction> methods, PyClass superClass) {
+    if (methods.size() == 0) return null;
     for (PsiElement e : methods) {
       rememberNamedReferences(e);
     }
-    final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
-    addMethods(superClass, elements, true);
-    removeMethodsWithComments(elements);
+    final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
+    return addMethods(superClass, elements);
   }
 
-  private static void removeMethodsWithComments(PyElement[] elements) {
-    for (PyElement element : elements) {
-      final Set<PsiElement> comments = PyUtil.getComments(element);
-      if (comments.size() > 0) {
-        PyPsiUtils.removeElements(PsiUtilCore.toPsiElementArray(comments));
+  //TODO: Doct
+  @NotNull
+  public static List<PyFunction> addMethods(@NotNull PyClass destination, @NotNull PyFunction... methods) {
+    List<PyFunction> methodsToAdd = new ArrayList<PyFunction>(Arrays.asList(methods));
+    Collections.sort(methodsToAdd, INIT_FIRST);
+
+    PyStatementList destStatementList = destination.getStatementList();
+    List<PyFunction> newlyCreatedMethods = new ArrayList<PyFunction>(methods.length);
+
+    for (PyFunction method : methodsToAdd) {
+
+      if (destination.findMethodByName(method.getName(), false) != null) {
+        continue; //TODO: Doc why
+      }
+
+
+      PyFunction newMethod = insertMethodInProperPlace(destStatementList, method);
+      newlyCreatedMethods.add(newMethod);
+      restoreNamedReferences(newMethod);
+    }
+
+    PyPsiUtils.removeRedundantPass(destStatementList);
+    return newlyCreatedMethods;
+  }
+
+  //TODO: Doc algo
+  @NotNull
+  private static PyFunction insertMethodInProperPlace(
+    @NotNull PyStatementList destStatementList,
+    @NotNull PyFunction method) {
+    boolean methodIsInit = PyUtil.isInit(method);
+    if (!methodIsInit) {
+      //Not init method could be inserted in the bottom
+      return (PyFunction)destStatementList.add(method);
+    }
+
+    //We should find appropriate place for init
+    for (PsiElement element : destStatementList.getChildren()) {
+      boolean elementComment = element instanceof PyExpressionStatement;
+      boolean elementClassField = element instanceof PyAssignmentStatement;
+
+      if ((!(elementComment || elementClassField))) {
+        return (PyFunction)destStatementList.addBefore(method, element);
       }
     }
-    PyPsiUtils.removeElements(elements);
+    return (PyFunction)destStatementList.add(method);
   }
 
-  public static <T extends PyElement & PyStatementListContainer>void insertPassIfNeeded(@NotNull T element) {
+
+  public static <T extends PyElement & PyStatementListContainer> void insertPassIfNeeded(@NotNull T element) {
     final PyStatementList statements = element.getStatementList();
     if (statements.getStatements().length == 0) {
       statements.add(
-        PyElementGenerator.getInstance(element.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
+        PyElementGenerator.getInstance(element.getProject())
+          .createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS)
+      );
     }
-  }
-
-  public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
-    if (elements.length == 0) return;
-    final PyStatementList statements = superClass.getStatementList();
-    for (PyElement newStatement : elements) {
-      if (up && newStatement instanceof PyFunction) {
-        final String name = newStatement.getName();
-        if (name != null && superClass.findMethodByName(name, false) != null) {
-          continue;
-        }
-      }
-      if (newStatement instanceof PyExpressionStatement && newStatement.getFirstChild() instanceof PyStringLiteralExpression) continue;
-      final PsiElement anchor = statements.add(newStatement);
-      restoreNamedReferences(anchor);
-      final Set<PsiElement> comments = PyUtil.getComments(newStatement);
-      for (PsiElement comment : comments) {
-        statements.addBefore(comment, anchor);
-      }
-    }
-    PyPsiUtils.removeRedundantPass(statements);
   }
 
   public static void restoreNamedReferences(@NotNull PsiElement element) {
@@ -230,6 +170,7 @@ public class PyClassRefactoringUtil {
       }
     });
   }
+
 
   private static void restoreReference(final PyReferenceExpression node) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
@@ -443,9 +384,10 @@ public class PyClassRefactoringUtil {
 
   /**
    * Creates class method
-   * @param methodName name if new method (be sure to check {@link com.jetbrains.python.PyNames} for special methods)
-   * @param pyClass class to add method
-   * @param modifier if method static or class or simple instance method (null)>
+   *
+   * @param methodName     name if new method (be sure to check {@link com.jetbrains.python.PyNames} for special methods)
+   * @param pyClass        class to add method
+   * @param modifier       if method static or class or simple instance method (null)>
    * @param parameterNames method parameters
    * @return newly created method
    */
@@ -473,8 +415,55 @@ public class PyClassRefactoringUtil {
       builder.parameter(parameterName);
     }
 
-    final PyFunction function = builder.addFunction(pyClass.getStatementList(), LanguageLevel.getDefault());
-    addMethods(pyClass, new PyElement[]{function}, true);
-    return function;
+    final PyFunction function = builder.buildFunction(pyClass.getProject(), LanguageLevel.getDefault());
+    return addMethods(pyClass, function).get(0);
+  }
+
+  //TODO: Doc
+  @NotNull
+  public static void addSuperclasses(@NotNull final Project project,
+                                     @NotNull final PyClass clazz,
+                                     @NotNull final PyClass... superClasses) {
+
+    final List<String> superClassNames = new ArrayList<String>();
+
+
+    for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {
+      if (superClass.getName() != null) {
+        superClassNames.add(superClass.getName());
+        PyClassRefactoringUtil.insertImport(clazz, superClass);
+      }
+    }
+
+    PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
+    PyElementGenerator generator = PyElementGenerator.getInstance(project);
+
+    if (superClassExpressionList != null) {
+      for (String superClassName : superClassNames) {
+        superClassExpressionList.addArgument(generator.createExpressionFromText(superClassName));
+      }
+    }
+    //TODO: Doc why we do it manually
+    else {
+      String superClassText = String.format("(%s)", StringUtil.join(superClassNames, ","));
+      clazz.addAfter(generator.createExpressionFromText(superClassText),
+                     clazz.getNameNode().getPsi());
+    }
+  }
+
+  private static class NameExtractor implements Function<PyElement, String> {
+    @SuppressWarnings("NullableProblems") //We sure collection has no null
+    @Nullable
+    @Override
+    public String apply(@NotNull final PyElement input) {
+      return input.getName();
+    }
+  }
+
+  private static class InitFirst implements Comparator<PyFunction> {
+    @Override
+    public int compare(PyFunction o1, PyFunction o2) {
+      return (PyUtil.isInit(o1) ? 1 : 0) - (PyUtil.isInit(o2) ? 1 : 0);
+    }
   }
 }

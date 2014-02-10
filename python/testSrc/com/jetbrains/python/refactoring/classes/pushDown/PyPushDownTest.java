@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.refactoring.classes;
+package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownProcessor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,6 +39,10 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     doProcessorTest("Zope", null, "Foo");
   }
 
+  public void testFull() throws Exception {
+    doProcessorTest("Parent", null, "#CLASS_VAR_1", "#inst_var", ".method_1", "Dummny");
+  }
+
   public void testMultiple() throws Exception {
     doProcessorTest("Foo", null, ".foo");
   }
@@ -49,25 +55,20 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     doProcessorTest("Foo", "method <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.", ".foo");
   }
 
-  private void doProcessorTest(final String className, final String expectedError, final String... membersName) throws Exception {
+  private void doProcessorTest(final String className, final String expectedError, final String... memberNames) throws Exception {
     try {
     String baseName = "/refactoring/pushdown/" + getTestName(true);
     myFixture.configureByFile(baseName + ".before.py");
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
-    for (String memberName : membersName) {
+    for (String memberName : memberNames) {
       final PyElement member = findMember(className, memberName);
       members.add(MembersManager.findMember(clazz, member));
     }
 
-    final PyPushDownProcessor processor = new PyPushDownProcessor(myFixture.getProject(), clazz, members);
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        processor.run();
-      }
-    }.execute().throwException();
-    myFixture.checkResultByFile(baseName + ".after.py");
+    final PyPushDownProcessor processor = new PyPushDownProcessor(members, clazz);
+      moveViaProcessor(myFixture.getProject(), processor);
+      myFixture.checkResultByFile(baseName + ".after.py");
     } catch (Exception e) {
       if (expectedError == null) throw e;
       assertTrue(e.getMessage(), e.getMessage().contains(expectedError));
