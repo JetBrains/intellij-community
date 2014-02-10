@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.util.PlatformIcons;
-import org.jdesktop.swingx.combobox.ListComboBoxModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,9 +34,20 @@ import java.util.List;
 
 public class BrowserSelector {
   private final ComboboxWithBrowseButton myBrowserComboWithBrowse;
+  private MutableCollectionComboBoxModel<WebBrowser> myModel;
 
   public BrowserSelector(final boolean allowDefaultBrowser) {
-    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(createBrowsersComboModel(allowDefaultBrowser)));
+    this(new Condition<WebBrowser>() {
+      @Override
+      public boolean value(WebBrowser browser) {
+        return allowDefaultBrowser || browser != null;
+      }
+    });
+  }
+
+  public BrowserSelector(@NotNull final Condition<WebBrowser> browserCondition) {
+    myModel = createBrowsersComboModel(browserCondition);
+    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(myModel));
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -44,8 +57,9 @@ public class BrowserSelector {
 
         WebBrowser selectedItem = getSelected();
         if (modificationCount != browserManager.getModificationCount()) {
+          myModel = createBrowsersComboModel(browserCondition);
           //noinspection unchecked
-          myBrowserComboWithBrowse.getComboBox().setModel(createBrowsersComboModel(allowDefaultBrowser));
+          myBrowserComboWithBrowse.getComboBox().setModel(myModel);
         }
         if (selectedItem != null) {
           setSelected(selectedItem);
@@ -61,7 +75,14 @@ public class BrowserSelector {
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        Icon baseIcon = value != null ? value.getIcon() : PlatformIcons.WEB_ICON;
+        Icon baseIcon;
+        if (value == null) {
+          WebBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
+          baseIcon = defaultBrowser == null ? PlatformIcons.WEB_ICON : defaultBrowser.getIcon();
+        }
+        else {
+          baseIcon = value.getIcon();
+        }
         setIcon(myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon));
         setText(value != null ? value.getName() : "Default");
       }
@@ -72,30 +93,18 @@ public class BrowserSelector {
     return myBrowserComboWithBrowse;
   }
 
-  @SuppressWarnings("Since15")
-  private static ListComboBoxModel<WebBrowser> createBrowsersComboModel(boolean allowDefaultBrowser) {
-    List<WebBrowser> activeBrowsers = new ArrayList<WebBrowser>();
-    if (allowDefaultBrowser) {
-      activeBrowsers.add(null);
+  private static MutableCollectionComboBoxModel<WebBrowser> createBrowsersComboModel(@NotNull Condition<WebBrowser> browserCondition) {
+    List<WebBrowser> list = new ArrayList<WebBrowser>();
+    if (browserCondition.value(null)) {
+      list.add(null);
     }
-    activeBrowsers.addAll(WebBrowserManager.getInstance().getActiveBrowsers());
-    return new ListComboBoxModel<WebBrowser>(activeBrowsers);
-  }
-
-  @SuppressWarnings({"deprecation", "UnusedDeclaration"})
-  @Nullable
-  @Deprecated
-  /**
-   * @deprecated  to remove in IDEA 14
-   */
-  public BrowserFamily getSelectedBrowser() {
-    WebBrowser selected = getSelected();
-    return selected == null ? null : selected.getFamily();
+    list.addAll(WebBrowserManager.getInstance().getBrowsers(browserCondition));
+    return new MutableCollectionComboBoxModel<WebBrowser>(list);
   }
 
   @Nullable
   public WebBrowser getSelected() {
-    return (WebBrowser)myBrowserComboWithBrowse.getComboBox().getSelectedItem();
+    return myModel.getSelected();
   }
 
   @Nullable
@@ -104,16 +113,20 @@ public class BrowserSelector {
     return browser != null ? browser.getId().toString() : null;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated  to remove in IDEA 14
-   */
-  public void setSelectedBrowser(@SuppressWarnings("deprecation") @Nullable BrowserFamily selectedItem) {
-    setSelected(selectedItem == null ? null : WebBrowserManager.getInstance().findBrowser(selectedItem));
-  }
-
   public void setSelected(@Nullable WebBrowser selectedItem) {
     myBrowserComboWithBrowse.getComboBox().setSelectedItem(selectedItem);
+  }
+
+  public boolean addAndSelect(@NotNull WebBrowser browser) {
+    if (myModel.contains(browser)) {
+      return false;
+    }
+
+    myModel.addItem(browser);
+    return true;
+  }
+
+  public int getSize() {
+    return myModel.getSize();
   }
 }
