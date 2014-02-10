@@ -557,11 +557,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
         }
 
+        final boolean identifierRef = getReferenceNameElement() instanceof PsiIdentifier;
         //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
-        final List<CandidateInfo> firstCandidateInfos = filterStaticCorrectCandidates(firstCandidates, true);
+        final List<CandidateInfo> firstCandidateInfos = myQualifierResolveResult.isReferenceTypeQualified() && identifierRef ? filterStaticCorrectCandidates(firstCandidates, true) : firstCandidates;
 
         //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
-        final List<CandidateInfo> secondCandidateInfos = filterStaticCorrectCandidates(secondCandidates, false);
+        final List<CandidateInfo> secondCandidateInfos = myQualifierResolveResult.isReferenceTypeQualified() && identifierRef ? filterStaticCorrectCandidates(secondCandidates, false) : secondCandidates;
 
         final int acceptedCount = firstCandidateInfos.size() + secondCandidateInfos.size();
         if (acceptedCount == 1) {
@@ -569,8 +570,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
 
         conflicts.clear();
-        firstCandidates.addAll(secondCandidates);
-        conflicts.addAll(firstCandidates);
+        firstCandidateInfos.addAll(secondCandidateInfos);
+        conflicts.addAll(firstCandidateInfos);
         return null;
       }
 

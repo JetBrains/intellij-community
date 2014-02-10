@@ -123,13 +123,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) level = ApplicabilityLevel.NOT_APPLICABLE;
       return level;
     }
-    Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        return getApplicabilityLevelInner();
-      }
-    });
-    return boxedLevel != null ? boxedLevel : getApplicabilityLevel();
+    return getApplicabilityLevelInner();
   }
 
   public PsiSubstitutor getSiteSubstitutor() {
