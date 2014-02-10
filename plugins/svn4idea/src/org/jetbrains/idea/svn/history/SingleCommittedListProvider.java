@@ -28,9 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -52,7 +53,6 @@ public class SingleCommittedListProvider {
   private SvnRepositoryLocation svnRootLocation;
   private String repositoryRelativeUrl;
   private FilePath filePath;
-  private SVNLogClient logger;
 
   public SingleCommittedListProvider(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VcsRevisionNumber number) {
     myVcs = vcs;
@@ -87,7 +87,6 @@ public class SingleCommittedListProvider {
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
       filePath = VcsUtil.getFilePath(file);
-      logger = myVcs.createLogClient();
 
       result = true;
     }
@@ -96,6 +95,8 @@ public class SingleCommittedListProvider {
   }
 
   private void calculate() throws VcsException {
+    // TODO: Seems that filePath detection could be replaced with "svn info -r <revisionBefore>" - and not call
+    // TODO: "svn log -r HEAD:<revisionBefore>" and track copies manually (which also is not correct for all cases).
     if (!searchForUrl(svnRootUrl) && !(hasAccess(repositoryUrl) && searchForUrl(repositoryUrl))) {
       filePath = searchFromHead(svnRootUrl);
     }
@@ -119,31 +120,26 @@ public class SingleCommittedListProvider {
 
   // return changed path, if any
   private FilePath searchFromHead(@NotNull SVNURL url) throws VcsException {
-    try {
-      final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
-      // TODO: Implement this with command line
-      logger.doLog(url, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
-                   false, true, false, 0, null,
-                   new ISVNLogEntryHandler() {
-                     public void handleLogEntry(SVNLogEntry logEntry) {
-                       checkDisposed();
-                       // date could be null for lists where there are paths that user has no rights to observe
-                       if (logEntry.getDate() != null) {
-                         pathTracker.accept(logEntry);
-                         if (logEntry.getRevision() == revisionBefore.getNumber()) {
-                           changeList[0] = createChangeList(logEntry);
-                         }
-                       }
-                     }
-                   });
+    final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
+    SvnTarget target = SvnTarget.fromURL(url);
 
-      FilePath path = pathTracker.getFilePath(myVcs);
-      return path == null ? filePath : path;
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      throw new VcsException(e);
-    }
+    myVcs.getFactory(target).createHistoryClient().doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null,
+        new ISVNLogEntryHandler() {
+          public void handleLogEntry(SVNLogEntry logEntry) {
+            checkDisposed();
+            // date could be null for lists where there are paths that user has no rights to observe
+            if (logEntry.getDate() != null) {
+              pathTracker.accept(logEntry);
+              if (logEntry.getRevision() == revisionBefore.getNumber()) {
+                changeList[0] = createChangeList(logEntry);
+              }
+            }
+          }
+        }
+    );
+
+    FilePath path = pathTracker.getFilePath(myVcs);
+    return path == null ? filePath : path;
   }
 
   @NotNull
@@ -167,14 +163,15 @@ public class SingleCommittedListProvider {
         }
       }
     };
+
+    SvnTarget target = SvnTarget.fromURL(url);
     try {
-      // TODO: Implement this with command line
-      logger.doLog(url, null, SVNRevision.UNDEFINED, revisionBefore, revisionBefore, false, true, false, 1, null, handler);
+      myVcs.getFactory(target).createHistoryClient().doLog(target, revisionBefore, revisionBefore, false, true, false, 1, null, handler);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
-      if (SVNErrorCode.FS_CATEGORY != e.getErrorMessage().getErrorCode().getCategory()) {
-        throw new VcsException(e);
+      if (!e.containsCategory(SVNErrorCode.FS_CATEGORY)) {
+        throw e;
       }
     }
     return changeList[0] != null;
