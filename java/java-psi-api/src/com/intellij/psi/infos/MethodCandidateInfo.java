@@ -111,7 +111,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       else {
-        final PsiSubstitutor substitutor = getSubstitutor();
+        final PsiSubstitutor substitutor = getSubstitutor(false);
         Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
           @Override
           public Integer compute() {
@@ -120,7 +120,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         });
         level = boxedLevel != null ? boxedLevel : getApplicabilityLevel();
       }
-      if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
+      if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) level = ApplicabilityLevel.NOT_APPLICABLE;
       return level;
     }
     Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
@@ -145,7 +145,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
-    if (substitutor == null || !includeReturnConstraint) {
+    if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
@@ -153,7 +153,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
-         if (!stackStamp.mayCacheNow() || !includeReturnConstraint) {
+         if (!stackStamp.mayCacheNow() || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           return inferredSubstitutor;
         }
 
@@ -173,12 +173,16 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public boolean isTypeArgumentsApplicable() {
+    return isTypeArgumentsApplicable(false);
+  }
+
+  public boolean isTypeArgumentsApplicable(boolean includeReturnConstraint) {
     final PsiMethod psiMethod = getElement();
     PsiTypeParameter[] typeParams = psiMethod.getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length && !PsiUtil.isLanguageLevel7OrHigher(psiMethod)){
       return typeParams.length == 0 && JavaVersionService.getInstance().isAtLeast(psiMethod, JavaSdkVersion.JDK_1_7);
     }
-    PsiSubstitutor substitutor = getSubstitutor();
+    PsiSubstitutor substitutor = getSubstitutor(includeReturnConstraint);
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
   }
 
