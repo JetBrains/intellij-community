@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,16 +100,16 @@ public class FileStructurePopup implements Disposable {
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
   private boolean myShouldNarrowDown = true;
-  private FileStructureTree myTree;
+  private final FileStructureTree myTree;
   private final FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
-  private TreeSpeedSearch mySpeedSearch;
-  private SmartTreeStructure myTreeStructure;
+  private final TreeSpeedSearch mySpeedSearch;
+  private final SmartTreeStructure myTreeStructure;
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
-  private PsiElement myInitialPsiElement;
-  private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
-  private List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
+  private final PsiElement myInitialPsiElement;
+  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private final List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
@@ -877,7 +877,7 @@ public class FileStructurePopup implements Disposable {
 
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
-    private HashSet<Object> myVisibleParents = new HashSet<Object>();
+    private final Set<Object> myVisibleParents = new HashSet<Object>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
 
     @Override
