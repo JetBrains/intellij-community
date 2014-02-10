@@ -315,9 +315,13 @@ public class PsiMethodReferenceUtil {
       else if (!isVarargs) {
         return false;
       }
+    } else if (isVarargs) {
+      if (isReceiverType(signatureParameterTypes1[0], psiClass, psiSubstitutor)) {
+        offset++;
+      }
     }
 
-    final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length);
+    final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length - offset);
     for (int i = 0; i < min; i++) {
       final PsiType type1 = GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(signatureParameterTypes1[offset + i]));
       if (isVarargs && i == min - 1) {
@@ -435,7 +439,7 @@ public class PsiMethodReferenceUtil {
     LOG.assertTrue(signature != null);
     final PsiType[] parameterTypes = signature.getParameterTypes();
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
-    return method.getParameterList().getParametersCount() + 1 == parameterTypes.length &&
+    return (method.getParameterList().getParametersCount() + 1 == parameterTypes.length || method.isVarArgs() && parameterTypes.length > 0)&&
            hasReceiver(parameterTypes, qualifierResolveResult, methodRef);
   }
 

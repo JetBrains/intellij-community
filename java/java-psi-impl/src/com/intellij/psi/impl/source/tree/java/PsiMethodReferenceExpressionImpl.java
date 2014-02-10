@@ -352,7 +352,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
+          final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
+          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(functionalInterfaceSubstitutor) : null;
           final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
           if (isConstructor && interfaceMethod != null && containingClass.getConstructors().length == 0) {
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
@@ -395,12 +396,17 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                   @NotNull
                   @Override
                   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
+                    return inferTypeArguments(false);
+                  }
+
+                  public PsiSubstitutor inferTypeArguments(boolean varargs) {
                     if (interfaceMethod == null) return substitutor;
                     final PsiSubstitutor qualifierResultSubstitutor = qualifierResolveResult.getSubstitutor();
                     final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), PsiMethodReferenceExpressionImpl.this);
                     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
                     final PsiParameter[] parameters = method.getParameterList().getParameters();
-                    if (parameters.length == functionalMethodParameters.length) {//static methods
+                    final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+                    if (parameters.length == functionalMethodParameters.length && !varargs || isStatic && varargs) {//static methods
 
                       if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, qualifierResultSubstitutor)) {
                         session.initBounds(containingClass.getTypeParameters());
@@ -408,10 +414,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
                       for (int i = 0; i < functionalMethodParameters.length; i++) {
                         final PsiType pType = signature.getParameterTypes()[i];
-                        session.addConstraint(new TypeCompatibilityConstraint(parameters[i].getType(), pType));
+                        session.addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, varargs), pType));
                       }
                     }
-                    else if (parameters.length + 1 == functionalMethodParameters.length) { //instance methods
+                    else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || !isStatic && varargs && functionalMethodParameters.length > 0) { //instance methods
                       final PsiClass aClass = qualifierResolveResult.getContainingClass();
                       session.initBounds(aClass.getTypeParameters());
 
@@ -434,22 +440,36 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
                       session.addConstraint(new TypeCompatibilityConstraint(qType, pType));
                       
-                      for (int i = 0; i < parameters.length; i++) {
+                      for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
                         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
-                        session.addConstraint(new TypeCompatibilityConstraint(parameters[i].getType(), interfaceParamType));
+                        session.addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, varargs), interfaceParamType));
                       }
                     }
                     else {
                       return substitutor;
                     }
 
-                    boolean success = session.repeatInferencePhases(false);
+                    if (!session.repeatInferencePhases(false)) {
+                      if (method.isVarArgs() && !varargs) {
+                        return inferTypeArguments(true);
+                      }
+                      return substitutor;
+                    }
 
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerConstraints(returnType, interfaceMethodReturnType);
                     }
                     return session.infer(parameters, null, null);
+                  }
+
+                  private PsiType getParameterType(PsiParameter[] parameters, int i, boolean varargs) {
+                    if (varargs && i >= parameters.length - 1) {
+                      final PsiType type = parameters[parameters.length - 1].getType();
+                      LOG.assertTrue(type instanceof PsiEllipsisType);
+                      return ((PsiEllipsisType)type).getComponentType();
+                    }
+                    return parameters[i].getType();
                   }
                 };
               }
@@ -510,55 +530,88 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           PsiSubstitutor substitutor = conflict.getSubstitutor();
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(substitutor).getParameterTypes();
 
-          final boolean varArgs = psiMethod.isVarArgs();
+          boolean varArgs = psiMethod.isVarArgs();
 
-          if (parameterTypes.length == signatureParameterTypes2.length || (varArgs && !myFunctionalMethodVarArgs && Math.abs(parameterTypes.length - signatureParameterTypes2.length) <= 1)) {
-            boolean correct = true;
-            for (int i = 0; i < parameterTypes.length; i++) {
-              final PsiType type1 = substitutor.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));
-              if (varArgs && i >= signatureParameterTypes2.length - 1) {
-                final PsiType type2 = signatureParameterTypes2[signatureParameterTypes2.length - 1];
-                correct &= TypeConversionUtil.isAssignable(type2, type1) || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
-              }
-              else {
-                correct &= TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1);
-              }
-            }
-            if (correct) {
-              firstCandidates.add(conflict);
-            }
+          if (parameterTypes.length == signatureParameterTypes2.length &&
+              isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, false, 0)) {
+            firstCandidates.add(conflict);
+            varArgs = false;
           }
 
-          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1) {
-            boolean correct = true;
-            for (int i = 0; i < signatureParameterTypes2.length; i++) {
-              final PsiType type1 = substitutor.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i + 1]));
-              final PsiType type2 = signatureParameterTypes2[i];
-              final boolean assignable = TypeConversionUtil.isAssignable(type2, type1);
-              if (varArgs && i == signatureParameterTypes2.length - 1) {
-                correct &= assignable || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
-              }
-              else {
-                correct &= assignable;
-              }
+          if (hasReceiver &&
+              parameterTypes.length == signatureParameterTypes2.length + 1 &&
+              isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, false, 1)) {
+            secondCandidates.add(conflict);
+            varArgs = false;
+          }
+
+          if (varArgs && !myFunctionalMethodVarArgs) {
+
+            if (isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, true, 0)) {
+              firstCandidates.add(conflict);
             }
-            if (correct) {
+
+            if (hasReceiver && isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, true, 1)) {
               secondCandidates.add(conflict);
             }
           }
         }
 
-        final int acceptedCount = secondCandidates.size() + firstCandidates.size();
-        if (acceptedCount != 1) {
-          if (acceptedCount == 0) {
-            conflicts.clear();
-          }
-          firstCandidates.addAll(secondCandidates);
-          conflicts.clear();
-          conflicts.addAll(firstCandidates);
-          return null;
+        //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
+        final List<CandidateInfo> firstCandidateInfos = filterStaticCorrectCandidates(firstCandidates, true);
+
+        //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
+        final List<CandidateInfo> secondCandidateInfos = filterStaticCorrectCandidates(secondCandidates, false);
+
+        final int acceptedCount = firstCandidateInfos.size() + secondCandidateInfos.size();
+        if (acceptedCount == 1) {
+          return !firstCandidateInfos.isEmpty() ? firstCandidateInfos.get(0) : secondCandidateInfos.get(0);
         }
-        return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
+
+        conflicts.clear();
+        firstCandidates.addAll(secondCandidates);
+        conflicts.addAll(firstCandidates);
+        return null;
+      }
+
+      /**
+       * 15.13.1
+       */
+      private List<CandidateInfo> filterStaticCorrectCandidates(List<CandidateInfo> firstCandidates,
+                                                                boolean shouldBeStatic) {
+        final List<CandidateInfo> result = new ArrayList<CandidateInfo>();
+        for (CandidateInfo candidate : firstCandidates) {
+          final CandidateInfo candidateInfo = firstCandidates.get(0);
+          final PsiElement element = candidateInfo.getElement();
+          if (element instanceof PsiMethod) {
+            final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
+            if (shouldBeStatic && isStatic || !shouldBeStatic && !isStatic) {
+              result.add(candidate);
+            }
+          }
+        }
+        return result;
+      }
+
+      private boolean isCorrectAssignment(PsiType[] signatureParameterTypes2,
+                                          PsiType[] parameterTypes,
+                                          PsiSubstitutor substitutor,
+                                          boolean varargs,
+                                          int offset) {
+        final int min = Math.min(signatureParameterTypes2.length, parameterTypes.length - offset);
+        for (int i = 0; i < min; i++) {
+          final PsiType type1 = substitutor.substitute(parameterTypes[i + offset]);
+          final PsiType type2 = signatureParameterTypes2[i];
+          if (varargs && i == signatureParameterTypes2.length - 1) {
+            if (!TypeConversionUtil.isAssignable(type2, type1) && !TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1)) {
+              return false;
+            }
+          }
+          else if (!TypeConversionUtil.isAssignable(type2, type1)) {
+            return false;
+          }
+        }
+        return true;
       }
     }
 
