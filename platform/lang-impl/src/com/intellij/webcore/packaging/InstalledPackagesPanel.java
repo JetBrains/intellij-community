@@ -16,6 +16,7 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -395,8 +396,18 @@ public class InstalledPackagesPanel extends JPanel {
     }
   }
 
-  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
+  private void onUpdateStarted() {
     myPackagesTable.setPaintBusy(true);
+    myPackagesTable.getEmptyText().setText("Loading ...");
+  }
+
+  private void onUpdateFinished() {
+    myPackagesTable.setPaintBusy(false);
+    myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+  }
+
+  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
+    onUpdateStarted();
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
@@ -418,7 +429,7 @@ public class InstalledPackagesPanel extends JPanel {
               refreshLatestVersions();
             }
           }
-          application.invokeLater(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
               if (packageManagementService == myPackageManagementService) {
@@ -430,14 +441,14 @@ public class InstalledPackagesPanel extends JPanel {
                     .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
                 }
                 if (!cache.isEmpty()) {
-                  myPackagesTable.setPaintBusy(false);
+                  onUpdateFinished();
                 }
                 if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
                   setLatestVersionsForInstalledPackages();
                 }
               }
             }
-          }, ModalityState.any());
+          });
         }
       }
     });
@@ -454,7 +465,7 @@ public class InstalledPackagesPanel extends JPanel {
     }
     int packageCount = myPackagesTableModel.getRowCount();
     if (packageCount == 0) {
-      myPackagesTable.setPaintBusy(false);
+      onUpdateFinished();
     }
     final AtomicInteger inProgressPackageCount = new AtomicInteger(packageCount);
     for (int i = 0; i < packageCount; ++i) {
@@ -464,12 +475,12 @@ public class InstalledPackagesPanel extends JPanel {
 
         private void decrement() {
           if (inProgressPackageCount.decrementAndGet() == 0) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
               public void run() {
-                myPackagesTable.setPaintBusy(false);
+                onUpdateFinished();
               }
-            }, ModalityState.any());
+            });
           }
         }
 
