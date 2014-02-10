@@ -254,7 +254,13 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces() {
     GrIntroduceContext context = getContext();
     PsiElement[] occurrences = getOccurrences();
-    EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.of(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
+    EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.noneOf(GrIntroduceFieldSettings.Init.class);
+
+    if (context.getExpression() != null ||
+        context.getVar() != null && context.getVar().getInitializerGroovy() != null ||
+        context.getStringPart() != null) {
+      result.add(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
+    }
 
     if (!(context.getScope() instanceof GroovyScriptClass || context.getScope() instanceof GroovyFileBase)) {
       result.add(GrIntroduceFieldSettings.Init.CONSTRUCTOR);

@@ -67,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -454,6 +455,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   public static PsiElement[] collectVariableUsages(GrVariable variable, PsiElement scope) {
     final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+    if (scope instanceof GroovyScriptClass) {
+      scope = scope.getContainingFile();
+    }
     ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference psiReference) {
