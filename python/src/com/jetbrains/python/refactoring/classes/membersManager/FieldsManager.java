@@ -39,17 +39,16 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
     return Lists.<PyElement>newArrayList(Collections2.filter(getFieldsByClass(pyClass), SIMPLE_ASSIGNMENTS_ONLY));
   }
 
-  @NotNull
   @Override
-  protected void moveMembers(@NotNull PyClass from,
-                                                        @NotNull Collection<PyTargetExpression> members,
-                                                        @NotNull PyClass... to) {
+  protected void moveMembers(@NotNull final PyClass from,
+                             @NotNull final Collection<PyTargetExpression> members,
+                             @NotNull final PyClass... to) {
     moveAssignments(from, Collections2.transform(members, new AssignmentTransform()), to);
   }
 
-  protected abstract void  moveAssignments(@NotNull PyClass from,
-                                                            @NotNull Collection<PyAssignmentStatement> statements,
-                                                            @NotNull PyClass... to);
+  protected abstract void moveAssignments(@NotNull PyClass from,
+                                          @NotNull Collection<PyAssignmentStatement> statements,
+                                          @NotNull PyClass... to);
 
   /**
    * Checks if class has fields. Only child may know how to obtain field

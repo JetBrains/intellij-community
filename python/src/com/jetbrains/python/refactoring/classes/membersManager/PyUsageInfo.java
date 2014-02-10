@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * TODO: Make it generic to allow to reuse in another projects?
- * TODO: Document
+ * Usage info that displays destination (where should member be moved)
  *
  * @author Ilya.Kazakevich
  */
@@ -14,9 +14,9 @@ class PyUsageInfo extends UsageInfo {
   @NotNull
   private final PyClass myTo;
 
-  PyUsageInfo(@NotNull PyClass to) {
+  PyUsageInfo(@NotNull final PyClass to) {
     super(to, true); //TODO: Make super generic and get rid of field?
-    this.myTo = to;
+    myTo = to;
   }
 
   @NotNull

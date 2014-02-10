@@ -29,14 +29,14 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
   @Override
-  protected void moveMembers(@NotNull PyClass from,
-                             @NotNull Collection<PyFunction> members,
-                             @NotNull PyClass... to) {
-    for (PyClass destClass : to) {
-      //We move copies here becase we there may be several destinations
-      List<PyFunction> copies = new ArrayList<PyFunction>(members.size());
-      for (PyFunction member : members) {
-        PyFunction newMethod = (PyFunction)member.copy();
+  protected void moveMembers(@NotNull final PyClass from,
+                             @NotNull final Collection<PyFunction> members,
+                             @NotNull final PyClass... to) {
+    for (final PyClass destClass : to) {
+      //We move copies here because we there may be several destinations
+      final List<PyFunction> copies = new ArrayList<PyFunction>(members.size());
+      for (final PyFunction member : members) {
+        final PyFunction newMethod = (PyFunction)member.copy();
         copies.add(newMethod);
       }
 

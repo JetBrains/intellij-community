@@ -12,7 +12,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * TODO: Doc (and why it extends 2 classes)
+ * Processor for member-based refactorings. It moves members from one place to another using {@link com.jetbrains.python.refactoring.classes.membersManager.MembersManager}.
+ * Inheritors only need to implement {@link com.intellij.usageView.UsageViewDescriptor} methods (while this interface is also implemented by this class)
  *
  * @author Ilya.Kazakevich
  */
@@ -25,7 +26,11 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   @NotNull
   private final PyClass[] myTo;
 
-  //TODO: Doc
+  /**
+   * @param membersToMove what to move
+   * @param from          source
+   * @param to            where to move
+   */
   protected PyMembersRefactoringBaseProcessor(
     @NotNull final Collection<PyMemberInfo> membersToMove,
     @NotNull final PyClass from,
@@ -48,7 +53,9 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     return myTo.clone();
   }
 
-  //TODO: Doc
+  /**
+   * @return destinations (so user would be able to choose if she wants to move member to certain place or not)
+   */
   @NotNull
   @Override
   protected final PyUsageInfo[] findUsages() {
@@ -59,7 +66,6 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     return result.toArray(new PyUsageInfo[result.size()]);
   }
 
-  //TODO: Doc
   @Override
   protected final void performRefactoring(final UsageInfo[] usages) {
     final Collection<PyClass> destinations = new ArrayList<PyClass>(usages.length);
@@ -67,7 +73,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
       if (!(usage instanceof PyUsageInfo)) {
         throw new IllegalArgumentException("Only PyUsageInfo is accepted here");
       }
-      //TODO: Doc
+      //We collect destination info to pass it to members manager
       destinations.add(((PyUsageInfo)usage).getTo());
     }
     MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));

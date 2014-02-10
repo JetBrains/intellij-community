@@ -107,7 +107,10 @@ public class PyUtil {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
 
-  //TODO: Doctg
+  /**
+   * @param function function to check
+   * @return true if function is init
+   */
   public static boolean isInit(@NotNull final PyFunction function) {
     return PyNames.INIT.equals(function.getName());
   }

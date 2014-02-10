@@ -11,13 +11,15 @@ import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * TODO: Extract "from, to[], members, deleteFromOrigin" to separate class?
@@ -68,7 +70,6 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
 
   /**
-   * TODO: Doc  deleteFromOrigin
    * Moves members from one class to another
    *
    * @param memberInfos members to move
@@ -117,7 +118,11 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   }
 
   /**
-   * TODO: Docuyment
+   * Finds member by predicate
+   *
+   * @param members   where to find
+   * @param predicate what to find
+   * @return member or null if not found
    */
   @Nullable
   public static PyMemberInfo findMember(@NotNull final Collection<PyMemberInfo> members, @NotNull final Predicate<PyMemberInfo> predicate) {
@@ -130,7 +135,11 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   }
 
   /**
-   * TODO: Docuyment
+   * Finds member of class by predicate
+   *
+   * @param predicate what to find
+   * @param pyClass   class to find members
+   * @return member or null if not found
    */
   @Nullable
   public static PyMemberInfo findMember(@NotNull final PyClass pyClass, @NotNull final Predicate<PyMemberInfo> predicate) {
@@ -178,12 +187,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
   /**
    * Moves element from one class to another. Returns newly instered elements
-   * <p/>
-   * TODO: Doc
-   * TODO: Doc who and what should return (write about elemnents)
    */
-  @NotNull
-  protected  abstract void moveMembers(
+  protected abstract void moveMembers(
     @NotNull PyClass from,
     @NotNull Collection<T> members,
     @NotNull PyClass... to);

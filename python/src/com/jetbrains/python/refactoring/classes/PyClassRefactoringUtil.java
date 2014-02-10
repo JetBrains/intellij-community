@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.refactoring.classes;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,10 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
@@ -48,30 +51,29 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 /**
  * @author Dennis.Ushakov
  */
-public class PyClassRefactoringUtil {
+public final class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
-  private static final InitFirst INIT_FIRST = new InitFirst();
 
   private PyClassRefactoringUtil() {
   }
 
 
   /**
-   * TODO: Doc
    * Copies class field declarations to some other place
    *
    * @param assignmentStatement list of class fields
+   * @return new (copied) fields
    */
   @NotNull
   public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatement,
                                                                             @NotNull final PyStatementList superClassStatement) {
-    List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
+    final List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
     for (final PyAssignmentStatement expression : assignmentStatement) {
-      PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
+      final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
       declations.add(newDeclaration);
       declations.add((PyAssignmentStatement)PyUtil.addElementToStatementList(newDeclaration, superClassStatement, true));
       PyPsiUtils.removeRedundantPass(superClassStatement);
@@ -88,23 +90,27 @@ public class PyClassRefactoringUtil {
     return addMethods(superClass, elements);
   }
 
-  //TODO: Doct
+  /**
+   * Adds methods to class.
+   *
+   * @param destination where to add methods
+   * @param methods     methods
+   * @return newly added methods
+   */
   @NotNull
-  public static List<PyFunction> addMethods(@NotNull PyClass destination, @NotNull PyFunction... methods) {
-    List<PyFunction> methodsToAdd = new ArrayList<PyFunction>(Arrays.asList(methods));
-    Collections.sort(methodsToAdd, INIT_FIRST);
+  public static List<PyFunction> addMethods(@NotNull final PyClass destination, @NotNull final PyFunction... methods) {
 
-    PyStatementList destStatementList = destination.getStatementList();
-    List<PyFunction> newlyCreatedMethods = new ArrayList<PyFunction>(methods.length);
+    final PyStatementList destStatementList = destination.getStatementList();
+    final List<PyFunction> newlyCreatedMethods = new ArrayList<PyFunction>(methods.length);
 
-    for (PyFunction method : methodsToAdd) {
+    for (final PyFunction method : methods) {
 
       if (destination.findMethodByName(method.getName(), false) != null) {
-        continue; //TODO: Doc why
+        continue; //We skip adding if class already has this method. I am not sure if this behaviour is correct, but it was here, so I left if for backward compatibility
       }
 
 
-      PyFunction newMethod = insertMethodInProperPlace(destStatementList, method);
+      final PyFunction newMethod = insertMethodInProperPlace(destStatementList, method);
       newlyCreatedMethods.add(newMethod);
       restoreNamedReferences(newMethod);
     }
@@ -113,11 +119,18 @@ public class PyClassRefactoringUtil {
     return newlyCreatedMethods;
   }
 
-  //TODO: Doc algo
+  /**
+   * Adds init methods before all other methods (but after class vars and docs).
+   * Adds all other methods to the bottom
+   *
+   * @param destStatementList where to add methods
+   * @param method            method to add
+   * @return newlty added method
+   */
   @NotNull
   private static PyFunction insertMethodInProperPlace(
-    @NotNull PyStatementList destStatementList,
-    @NotNull PyFunction method) {
+    @NotNull final PyStatementList destStatementList,
+    @NotNull final PyFunction method) {
     boolean methodIsInit = PyUtil.isInit(method);
     if (!methodIsInit) {
       //Not init method could be inserted in the bottom
@@ -125,11 +138,11 @@ public class PyClassRefactoringUtil {
     }
 
     //We should find appropriate place for init
-    for (PsiElement element : destStatementList.getChildren()) {
-      boolean elementComment = element instanceof PyExpressionStatement;
-      boolean elementClassField = element instanceof PyAssignmentStatement;
+    for (final PsiElement element : destStatementList.getChildren()) {
+      final boolean elementComment = element instanceof PyExpressionStatement;
+      final boolean elementClassField = element instanceof PyAssignmentStatement;
 
-      if ((!(elementComment || elementClassField))) {
+      if (!(elementComment || elementClassField)) {
         return (PyFunction)destStatementList.addBefore(method, element);
       }
     }
@@ -419,51 +432,47 @@ public class PyClassRefactoringUtil {
     return addMethods(pyClass, function).get(0);
   }
 
-  //TODO: Doc
-  @NotNull
+  /**
+   * Adds super classes to certain class.
+   *
+   * @param project      project where refactoring takes place
+   * @param clazz        destination
+   * @param superClasses classes to add
+   */
   public static void addSuperclasses(@NotNull final Project project,
                                      @NotNull final PyClass clazz,
                                      @NotNull final PyClass... superClasses) {
 
-    final List<String> superClassNames = new ArrayList<String>();
+    final Collection<String> superClassNames = new ArrayList<String>();
 
 
     for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {
       if (superClass.getName() != null) {
         superClassNames.add(superClass.getName());
-        PyClassRefactoringUtil.insertImport(clazz, superClass);
+        insertImport(clazz, superClass);
       }
     }
 
-    PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
-    PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    final PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
+    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
 
     if (superClassExpressionList != null) {
-      for (String superClassName : superClassNames) {
+      for (final String superClassName : superClassNames) {
         superClassExpressionList.addArgument(generator.createExpressionFromText(superClassName));
       }
     }
-    //TODO: Doc why we do it manually
+    //If class has no expression list, then we need to add it manually.
+    //TODO: Investigate how to do that on PSI level, with out of stupid string concatenation
     else {
-      String superClassText = String.format("(%s)", StringUtil.join(superClassNames, ","));
-      clazz.addAfter(generator.createExpressionFromText(superClassText),
-                     clazz.getNameNode().getPsi());
-    }
-  }
-
-  private static class NameExtractor implements Function<PyElement, String> {
-    @SuppressWarnings("NullableProblems") //We sure collection has no null
-    @Nullable
-    @Override
-    public String apply(@NotNull final PyElement input) {
-      return input.getName();
-    }
-  }
-
-  private static class InitFirst implements Comparator<PyFunction> {
-    @Override
-    public int compare(PyFunction o1, PyFunction o2) {
-      return (PyUtil.isInit(o1) ? 1 : 0) - (PyUtil.isInit(o2) ? 1 : 0);
+      final String superClassText = String.format("(%s)", StringUtil.join(superClassNames, ","));
+      final ASTNode node = clazz.getNameNode();
+      if (node != null) {
+        clazz.addAfter(generator.createExpressionFromText(superClassText),
+                       node.getPsi());
+      }
+      else {
+        LOG.error("Class has no name node nor superclass list " + clazz);
+      }
     }
   }
 }

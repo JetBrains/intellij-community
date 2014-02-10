@@ -5,9 +5,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,12 +18,12 @@ class InstanceFieldsManager extends FieldsManager {
 
 
   @Override
-  protected void moveAssignments(@NotNull PyClass from,
-                                                            @NotNull Collection<PyAssignmentStatement> statements,
-                                                            @NotNull PyClass... to) {
+  protected void moveAssignments(@NotNull final PyClass from,
+                                 @NotNull final Collection<PyAssignmentStatement> statements,
+                                 @NotNull final PyClass... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
-    for (PyClass destClass : to) {
+    for (final PyClass destClass : to) {
       copyInstanceFields(statements, destClass);
     }
 
@@ -38,7 +36,13 @@ class InstanceFieldsManager extends FieldsManager {
     }
   }
 
-  //TODO: Doc
+   /**
+   * Copies class' fields in form of assignments (instance fields) to another class.
+    * Creates init method if there is no any
+   * @param members assignments to copy
+   * @param to destination
+   * @return newly created fields
+   */
   @NotNull
   private static List<PyAssignmentStatement> copyInstanceFields(@NotNull final Collection<PyAssignmentStatement> members,
                                                                 @NotNull final PyClass to) {

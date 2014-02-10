@@ -22,11 +22,11 @@ class ClassFieldsManager extends FieldsManager {
 
 
   @Override
-  protected void moveAssignments(@NotNull PyClass from,
-                                 @NotNull Collection<PyAssignmentStatement> statements,
-                                 @NotNull PyClass... to) {
+  protected void moveAssignments(@NotNull final PyClass from,
+                                 @NotNull final Collection<PyAssignmentStatement> statements,
+                                 @NotNull final PyClass... to) {
     //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
-    for (PyClass destClass : to) {
+    for (final PyClass destClass : to) {
       PyClassRefactoringUtil.copyFieldDeclarationToStatement(statements, destClass.getStatementList());
     }
     deleteElements(statements);

@@ -31,13 +31,13 @@ class SuperClassesManager extends MembersManager<PyClass> {
   }
 
   @Override
-  protected void moveMembers(@NotNull PyClass from, @NotNull Collection<PyClass> members, @NotNull PyClass... to) {
-    for (PyClass destClass : to) {
+  protected void moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyClass> members, @NotNull final PyClass... to) {
+    for (final PyClass destClass : to) {
       PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, members.toArray(new PyClass[members.size()]));
     }
 
-    for (PyExpression expression : from.getSuperClassExpressions()) {
-      for (PyClass member : members) {
+    for (final PyExpression expression : from.getSuperClassExpressions()) {
+      for (final PyClass member : members) {
         if (expression.getText().equals(member.getName())) {
           expression.delete();
         }
