@@ -374,6 +374,10 @@ public class SetValueAction extends DebuggerAction {
       }
 
       private void flushValue() {
+        if (comboBox.isPopupVisible()) {
+          comboBox.selectPopupValue();
+        }
+
         Editor editor = getEditor();
         if(editor == null) {
           return;
