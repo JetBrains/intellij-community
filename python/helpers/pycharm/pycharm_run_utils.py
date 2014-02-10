@@ -20,9 +20,10 @@ def adjust_sys_path(add_script_parent=True, script_index=1):
     insert_to_sys_path(script_path)
 
 def adjust_django_sys_path():
-  sys.path.pop(0)
+  pycharm_path = sys.path.pop(0)
   script_path = sys.argv[-1]
   insert_to_sys_path(script_path)
+  sys.path.append(pycharm_path)
 
 def import_system_module(name):
   f, filename, desc = imp.find_module(name)
