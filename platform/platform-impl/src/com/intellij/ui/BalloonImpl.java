@@ -203,20 +203,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     return rectangleOnScreen.contains(target.getScreenPoint());
   }
 
-  private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
-    while (a != null) {
-      if (a == b) {
-        return true;
-      }
-
-      if (a instanceof JPopupMenu) {
-        a = ((JPopupMenu)a).getInvoker();
-      }
-      else {
-        a = a.getParent();
-      }
+  private static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
+    while (child != null && child != parent) {
+      child =  child instanceof JPopupMenu  ? ((JPopupMenu)child).getInvoker()
+                                            : child.getParent();
     }
-    return false;
+    return child == parent;
   }
 
   public boolean isMovingForward(RelativePoint target) {
