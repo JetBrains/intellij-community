@@ -39,7 +39,8 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
       // TODO: handler should be called in parallel with command execution, but this will be in other thread
       // TODO: check if that is ok for current handler implementation
       // TODO: add possibility to invoke "handler.checkCancelled" - process should be killed
-      CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.revert, parameters, null);
+      CommandExecutor command =
+        CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), CommandUtil.getHomeDirectory(), SvnCommandName.revert, parameters, null);
       FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new RevertStatusConvertor());
       parser.parse(command.getOutput());
     }

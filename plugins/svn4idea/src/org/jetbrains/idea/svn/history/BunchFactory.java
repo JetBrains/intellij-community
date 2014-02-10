@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,7 +57,7 @@ public class BunchFactory {
     myYoungest = -1;
   }
 
-  public List<Fragment> goBack(final int bunchSize, final Ref<Boolean> myYoungestRead) throws SVNException {
+  public List<Fragment> goBack(final int bunchSize, final Ref<Boolean> myYoungestRead) throws VcsException {
     execute(bunchSize);
     myYoungestRead.set(myLiveProvider.isEarliestRevisionWasAccessed());
     return new ArrayList<Fragment>(myResult);
@@ -78,7 +78,7 @@ public class BunchFactory {
     myYoungest = subList.get(subList.size() - 1).getNumber();
   }
 
-  private void execute(final int bunchSize) throws SVNException {
+  private void execute(final int bunchSize) throws VcsException {
     myBunchSize = bunchSize;
     myResult.clear();
 

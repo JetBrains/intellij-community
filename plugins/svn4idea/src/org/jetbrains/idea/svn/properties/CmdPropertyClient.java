@@ -8,14 +8,8 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
@@ -96,6 +90,39 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable SVNDepth depth,
                           boolean force) throws VcsException {
     runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
+  }
+
+  @Override
+  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
+    SVNProperties currentProperties = collectPropertiesToDelete(file);
+    currentProperties.putAll(properties);
+
+    for (String propertyName : currentProperties.nameSet()) {
+      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), SVNDepth.EMPTY, true);
+    }
+  }
+
+  @NotNull
+  private SVNProperties collectPropertiesToDelete(@NotNull File file) throws VcsException {
+    final SVNProperties result = new SVNProperties();
+
+    list(SvnTarget.fromFile(file), null, SVNDepth.EMPTY, new ISVNPropertyHandler() {
+      @Override
+      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        // null indicates property will be deleted
+        result.put(property.getName(), (SVNPropertyValue)null);
+      }
+
+      @Override
+      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      }
+
+      @Override
+      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      }
+    });
+
+    return result;
   }
 
   @Override

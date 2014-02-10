@@ -20,12 +20,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.Iterator;
@@ -54,7 +55,7 @@ public class LiveProvider implements BunchProvider {
   }
 
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
-                                             final boolean includeYoungest, final boolean includeOldest) throws SVNException {
+                                             final boolean includeYoungest, final boolean includeOldest) throws VcsException {
     return getEarliestBunchInIntervalImpl(earliestRevision, oldestRevision, desirableSize, includeYoungest, includeOldest, earliestRevision);
   }
 
@@ -62,14 +63,14 @@ public class LiveProvider implements BunchProvider {
                                                   final long oldestRevision,
                                                   final int desirableSize,
                                                   final boolean includeYoungest,
-                                                  final boolean includeOldest, final long earliestToTake) throws SVNException {
+                                                  final boolean includeOldest, final long earliestToTake) throws VcsException {
     if ((myEarliestRevisionWasAccessed) || ((oldestRevision == myYoungestRevision) && ((! includeYoungest) || (! includeOldest)))) {
       return null;
     }
     final SVNRevision youngRevision = (earliestRevision == -1) ? SVNRevision.HEAD : SVNRevision.create(earliestRevision);
 
     final Ref<List<CommittedChangeList>> refToList = new Ref<List<CommittedChangeList>>();
-    final Ref<SVNException> exceptionRef = new Ref<SVNException>();
+    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
     final Runnable loader = new Runnable() {
       public void run() {
@@ -77,7 +78,7 @@ public class LiveProvider implements BunchProvider {
           refToList.set(
               myLoader.loadInterval(youngRevision, SVNRevision.create(oldestRevision), desirableSize, includeYoungest, includeOldest));
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           exceptionRef.set(e);
         }
       }
@@ -98,13 +99,13 @@ public class LiveProvider implements BunchProvider {
       }, SvnBundle.message("progress.live.provider.loading.revisions.text"), false, myVcs.getProject());
     }
 
-    if (exceptionRef.get() != null) {
-      final SVNException e = exceptionRef.get();
-      if (SVNErrorCode.FS_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
+    if (!exceptionRef.isNull()) {
+      final VcsException e = exceptionRef.get();
+      if (isElementNotFound(e)) {
         // occurs when target URL is deleted in repository
         // try to find latest existent revision. expensive ...
         final LatestExistentSearcher searcher = new LatestExistentSearcher(oldestRevision, myYoungestRevision, (oldestRevision != 0),
-                                                                           myVcs, SVNURL.parseURIEncoded(myLocation.getURL()));
+                                                                           myVcs, myLocation.toSvnUrl());
         final long existent = searcher.getLatestExistent();
         if ((existent == -1) || (existent == earliestRevision)) {
           myEarliestRevisionWasAccessed = true;
@@ -130,6 +131,10 @@ public class LiveProvider implements BunchProvider {
     }
     myEarliestRevisionWasAccessed = (oldestRevision == 0) && ((list.size() + ((! includeOldest) ? 1 : 0) + ((! includeYoungest) ? 1 : 0)) < desirableSize);
     return new Fragment(Origin.LIVE, list, true, true, null);
+  }
+
+  private static boolean isElementNotFound(@NotNull VcsException e) {
+    return e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.FS_NOT_FOUND);
   }
 
   public boolean isEarliestRevisionWasAccessed() {
