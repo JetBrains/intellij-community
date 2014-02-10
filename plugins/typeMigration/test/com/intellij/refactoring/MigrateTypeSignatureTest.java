@@ -7,8 +7,10 @@ package com.intellij.refactoring;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
+  @NotNull
   @Override
   public String getTestRoot() {
     return "/refactoring/migrateTypeSignature/";

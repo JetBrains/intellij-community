@@ -5,8 +5,10 @@
 package com.intellij.refactoring;
 
 import com.intellij.psi.CommonClassNames;
+import org.jetbrains.annotations.NotNull;
 
 public class WildcardTypeMigrationTest extends TypeMigrationTestBase{
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/wildcard/";

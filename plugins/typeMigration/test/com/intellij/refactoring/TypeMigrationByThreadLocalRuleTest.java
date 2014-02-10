@@ -8,8 +8,10 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeMigrationByThreadLocalRuleTest extends TypeMigrationTestBase{
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/typeMigrationByThreadLocal/";

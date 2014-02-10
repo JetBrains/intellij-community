@@ -5,11 +5,13 @@
 package com.intellij.refactoring;
 
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/typeMigrationByAtomic/";

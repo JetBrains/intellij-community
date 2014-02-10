@@ -6,12 +6,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
  * Date: 22.07.2003
  */
 public class TypeMigrationTest extends TypeMigrationTestBase {
+  @NotNull
   @Override
   public String getTestRoot() {
     return "/refactoring/typeMigration/";
