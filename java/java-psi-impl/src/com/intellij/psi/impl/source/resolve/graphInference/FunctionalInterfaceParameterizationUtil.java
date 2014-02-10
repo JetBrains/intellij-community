@@ -158,8 +158,11 @@ public class FunctionalInterfaceParameterizationUtil {
     final PsiClass psiClass = psiClassType.resolve();
     if (psiClass != null) {
       final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+      final PsiType[] parameters = psiClassType.getParameters();
+
+      if (parameters.length != typeParameters.length) return null;
+
       final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
-      PsiType[] parameters = psiClassType.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
