@@ -153,7 +153,7 @@ public class Main {
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath() + File.pathSeparator + PathManager.getLibPath() + "/log4j.jar",
+                         copyPatchFile.getPath() + File.pathSeparator + PathManager.getLibPath() + "/log4j.jar" + File.pathSeparator + PathManager.getLibPath() + "/openapi.jar",
                          "-Djava.io.tmpdir=" + tempDir,
                          "com.intellij.updater.Runner",
                          "install",
