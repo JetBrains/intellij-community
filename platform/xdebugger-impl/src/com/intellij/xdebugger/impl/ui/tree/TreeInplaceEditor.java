@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -233,6 +235,14 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         return; //mouse click inside lookup
       } else {
         activeLookup.hide(); //hide popup on mouse position changed
+      }
+    }
+
+    // do not cancel editing if we click in editor popup
+    final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
+    for (JBPopup popup : popups) {
+      if (SwingUtilities.isDescendingFrom(sourceComponent, popup.getContent())) {
+        return;
       }
     }
 
