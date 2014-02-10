@@ -36,6 +36,10 @@ public class BrowserSelector {
   private final ComboboxWithBrowseButton myBrowserComboWithBrowse;
   private MutableCollectionComboBoxModel<WebBrowser> myModel;
 
+  public BrowserSelector() {
+    this(true);
+  }
+
   public BrowserSelector(final boolean allowDefaultBrowser) {
     this(new Condition<WebBrowser>() {
       @Override
