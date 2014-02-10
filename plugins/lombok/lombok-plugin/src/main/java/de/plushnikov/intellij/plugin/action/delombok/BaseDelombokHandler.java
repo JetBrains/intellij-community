@@ -1,9 +1,6 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -13,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -31,7 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class BaseDelombokHandler implements CodeInsightActionHandler {
+public class BaseDelombokHandler {
 
   private final Collection<AbstractClassProcessor> classProcessors;
   private final Collection<AbstractFieldProcessor> fieldProcessors;
@@ -50,22 +48,35 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
     fieldProcessors.addAll(Arrays.asList(fieldProcessor));
   }
 
-  @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
-    if (null != psiClass) {
-      for (AbstractClassProcessor classProcessor : classProcessors) {
-        processClass(project, psiClass, classProcessor);
+  public void invoke(@NotNull Project project, @NotNull PsiJavaFile psiFile) {
+    for (PsiClass psiClass : psiFile.getClasses()) {
+      invoke(project, psiClass);
+
+      for (PsiClass innerClass : psiClass.getAllInnerClasses()) {
+        invoke(project, innerClass);
       }
-
-      for (AbstractFieldProcessor fieldProcessor : fieldProcessors) {
-        processFields(project, psiClass, fieldProcessor);
-      }
-
-      JavaCodeStyleManager.getInstance(project).optimizeImports(file);
-
-      UndoUtil.markPsiFileForUndo(file);
     }
+    finish(project, psiFile);
+  }
+
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiClass psiClass) {
+    invoke(project, psiClass);
+    finish(project, psiFile);
+  }
+
+  private void invoke(Project project, PsiClass psiClass) {
+    for (AbstractClassProcessor classProcessor : classProcessors) {
+      processClass(project, psiClass, classProcessor);
+    }
+
+    for (AbstractFieldProcessor fieldProcessor : fieldProcessors) {
+      processFields(project, psiClass, fieldProcessor);
+    }
+  }
+
+  private void finish(Project project, PsiFile psiFile) {
+    JavaCodeStyleManager.getInstance(project).optimizeImports(psiFile);
+    UndoUtil.markPsiFileForUndo(psiFile);
   }
 
   protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass, AbstractProcessor classProcessor) {
@@ -169,10 +180,5 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
     for (PsiAnnotation psiAnnotation : psiAnnotations) {
       psiAnnotation.delete();
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }
