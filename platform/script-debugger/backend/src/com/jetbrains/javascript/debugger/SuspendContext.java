@@ -1,6 +1,9 @@
 package com.jetbrains.javascript.debugger;
 
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * An object that matches the execution state of the JavaScript VM while
