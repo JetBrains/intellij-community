@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,30 +22,34 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassFileDecompiler implements BinaryFileDecompiler {
   @Override
   @NotNull
-  public CharSequence decompile(final VirtualFile file) {
-    assert file.getFileType() == StdFileTypes.CLASS;
+  public CharSequence decompile(@NotNull VirtualFile file) {
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
+    if (decompiler instanceof ClassFileDecompilers.Full) {
+      PsiManager manager = PsiManager.getInstance(ProjectManager.getInstance().getDefaultProject());
+      return ((ClassFileDecompilers.Full)decompiler).createFileViewProvider(file, manager, true).getContents();
+    }
 
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 0) return "";
-    final Project project = projects[0];
-
-    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
-    for (ContentBasedFileSubstitutor processor : processors) {
-      if (processor.isApplicable(project, file)) {
-        return processor.obtainFileText(project, file);
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length > 0) {
+      Project project = projects[0];
+      //noinspection deprecation
+      for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
+        if (processor.isApplicable(project, file)) {
+          return processor.obtainFileText(project, file);
+        }
       }
     }
 
-    return ClsFileImpl.decompile(PsiManager.getInstance(project), file);
+    return ClsFileImpl.decompile(file);
   }
 }

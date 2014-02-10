@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.psi.compiled;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/** @deprecated use com.intellij.psi.compiled.ClassFileDecompilers or com.intellij.psi.LanguageSubstitutors API (to remove in IDEA 14) */
-public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitutor {
-  @NotNull
-  SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
+public abstract class ClsStubBuilder {
+  /**
+   * Non-zero positive number expected.
+   */
+  public abstract int getStubVersion();
+
+  /**
+   * May return {@code null} for inner or synthetic classes - i.e. those indexed as a part of their parent .class file.
+   */
+  @Nullable
+  public abstract PsiFileStub<?> buildFileStub(@NotNull FileContent fileContent) throws ClsFormatException;
 }
