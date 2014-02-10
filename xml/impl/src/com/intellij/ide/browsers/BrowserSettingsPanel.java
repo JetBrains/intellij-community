@@ -112,6 +112,7 @@ final class BrowserSettingsPanel {
     @Override
     public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
       item.setFamily(value);
+      item.setSpecificSettings(value.createBrowserSpecificSettings());
     }
 
     @Nullable

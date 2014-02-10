@@ -18,13 +18,13 @@ public enum BrowserFamily implements Iconable {
       return new ChromeSettings();
     }
   },
-  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer16),
   FIREFOX(IdeBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", AllIcons.Xml.Browsers.Firefox16) {
     @Override
     public BrowserSpecificSettings createBrowserSpecificSettings() {
       return new FirefoxSettings();
     }
   },
+  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer16),
   OPERA(IdeBundle.message("browsers.opera"), "opera", "opera", "Opera", AllIcons.Xml.Browsers.Opera16),
   SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari16);
 
