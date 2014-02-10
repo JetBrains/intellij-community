@@ -5,14 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -77,6 +71,21 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
                           boolean force) throws VcsException {
     try {
       createClient().doSetProperty(file, property, value, force, depth, null, null);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  @Override
+  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
+    try {
+      createClient().doSetProperty(file, new ISVNPropertyValueProvider() {
+        @Override
+        public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
+          return properties;
+        }
+      }, true, SVNDepth.EMPTY, null, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
