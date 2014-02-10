@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.plugins.groovy;
 
-public class Groovy_1_1_plus_Importer extends GroovyImporter {
-  public Groovy_1_1_plus_Importer() {
-    super("org.codehaus.gmaven", "gmaven-plugin");
+public class Groovy_1_0_Importer extends GroovyImporter {
+  public Groovy_1_0_Importer() {
+    super("org.codehaus.groovy.maven", "gmaven-plugin");
   }
 }

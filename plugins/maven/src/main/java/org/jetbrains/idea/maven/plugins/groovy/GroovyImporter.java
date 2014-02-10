@@ -1,8 +1,11 @@
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.util.PairConsumer;
 import org.jdom.Element;
+import org.jetbrains.idea.maven.importing.MavenImporter;
+import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;

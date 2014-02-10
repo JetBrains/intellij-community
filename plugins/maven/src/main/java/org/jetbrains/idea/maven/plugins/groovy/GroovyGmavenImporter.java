@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.plugins.groovy;
 
 public class GroovyGmavenImporter extends GroovyImporter {
   public GroovyGmavenImporter() {
