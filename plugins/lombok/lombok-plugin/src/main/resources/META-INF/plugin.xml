@@ -144,16 +144,14 @@
     </group>
   </actions>
 
+  <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
+  <!--<li>TODO: Add delombok action for @Delegate, @Cleanup, @Synchronized and other annotations</li>-->
   <change-notes><![CDATA[
 		<ul>
-		<!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-		<!--<li>TODO: Add delombok action for @Delegate, @Cleanup, @Synchronized and other annotations</li>-->
 		<li>0.8.0
 				<ol>
-				    <li>Added refactoring action for Lombok @Log and friends</li>
-				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
-				    <li>Added refactoring actions to Delombok @Data, @Value, @Wither annotations</li>
-				    <li>Added refactoring actions to Delombok @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString and @Log annotations</li>
+				    <li>Added refactoring action for Lombok @Log and friends, @Getter and @Setter methods</li>
+				    <li>Added refactoring actions to Delombok @Data, @Value, @Wither, @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString and @Log annotations</li>
 				    <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
 				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>
