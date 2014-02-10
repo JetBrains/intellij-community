@@ -17,22 +17,22 @@
 import java.io.*;
 import java.util.*;
 
-<error descr="Static imports are not supported at this language level">import static java.lang.Math.*;</error>
+import static java.lang.Math.*;
 
-@interface <error descr="Annotations are not supported at this language level">Anno</error> { }
+@interface Anno { }
 
-<error descr="Annotations are not supported at this language level">@Anno</error>
+@Anno
 class UnsupportedFeatures {
-  void m(<error descr="Variable arity methods are not supported at this language level">String... args</error>) throws Exception {
-    <error descr="For-each loops are not supported at this language level">for (String s : args) { System.out.println(s); }</error>
+  void m(String... args) throws Exception {
+    for (String s : args) { System.out.println(s); }
 
-    List<error descr="Generics are not supported at this language level"><String></error> list =
-      new ArrayList<error descr="Generics are not supported at this language level"><></error>();
+    List<String> list =
+      new ArrayList<>();
 
-    <error descr="For-each loops are not supported at this language level">for (String s : list) {}</error>
-    Arrays.asList<error descr="'asList(java.lang.String...)' in 'java.util.Arrays' cannot be applied to '(java.lang.String)'">("")</error>;
-    <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Boolean'">Boolean b = true;</error>
-    <error descr="Incompatible types. Found: 'java.lang.Boolean', required: 'boolean'">boolean b1 = Boolean.TRUE;</error>
+    for (String s : list) {}
+    Arrays.asList("");
+    Boolean b = true;
+    boolean b1 = Boolean.TRUE;
 
     try { Reader r = new FileReader("/dev/null"); }
     catch (<error descr="Multi-catches are not supported at this language level">FileNotFoundException | IOException e</error>) { e.printStackTrace(); }
