@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -48,6 +51,19 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testDefaultPackage() { doTest(); }
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
+
+  public void testTextPsiMismatch() throws Exception {
+    CommonCodeStyleSettings.IndentOptions options =
+      CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getIndentOptions(JavaFileType.INSTANCE);
+    int indent = options.INDENT_SIZE;
+    options.INDENT_SIZE *= 2;
+    try {
+      doTest("Bounds");
+    }
+    finally {
+      options.INDENT_SIZE = indent;
+    }
+  }
 
   private void doTest() {
     doTest(getTestName(false));
