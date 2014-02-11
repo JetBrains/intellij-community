@@ -453,9 +453,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                       return substitutor;
                     }
 
-                    final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
-                    if (returnType != null) {
-                      session.registerConstraints(returnType, interfaceMethodReturnType);
+                    if (interfaceMethodReturnType != PsiType.VOID) {
+                      final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
+                      if (returnType != null) {
+                        session.registerConstraints(returnType, interfaceMethodReturnType);
+                      }
                     }
                     return session.infer(parameters, null, null);
                   }
