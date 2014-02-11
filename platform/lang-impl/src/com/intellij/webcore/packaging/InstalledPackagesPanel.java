@@ -344,27 +344,37 @@ public class InstalledPackagesPanel extends JPanel {
           PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
             public void operationStarted(String packageName) {
-              myPackagesTable.setPaintBusy(true);
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  myPackagesTable.setPaintBusy(true);
+                }
+              });
             }
 
             @Override
-            public void operationFinished(String packageName, @Nullable String errorDescription) {
-              myPackagesTable.clearSelection();
-              updatePackages(selPackageManagementService);
-              myPackagesTable.setPaintBusy(false);
-              if (errorDescription == null) {
-                if (packageName != null) {
-                  myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+            public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  myPackagesTable.clearSelection();
+                  updatePackages(selPackageManagementService);
+                  myPackagesTable.setPaintBusy(false);
+                  if (errorDescription == null) {
+                    if (packageName != null) {
+                      myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+                    }
+                    else {
+                      myNotificationArea.showSuccess("Packages successfully uninstalled");
+                    }
+                  }
+                  else {
+                    myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
+                                                 "Uninstall Packages Failed",
+                                                 "Uninstall packages failed.\n" + errorDescription);
+                  }
                 }
-                else {
-                  myNotificationArea.showSuccess("Packages successfully uninstalled");
-                }
-              }
-              else {
-                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
-                                             "Uninstall Packages Failed",
-                                             "Uninstall packages failed.\n" + errorDescription);
-              }
+              });
             }
           };
           myPackageManagementService.uninstallPackages(packages, listener);
