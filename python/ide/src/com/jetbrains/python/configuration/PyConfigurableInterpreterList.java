@@ -18,15 +18,18 @@ package com.jetbrains.python.configuration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
@@ -65,19 +68,66 @@ public class PyConfigurableInterpreterList {
     }
   }
 
-  public List<Sdk> getAllPythonSdks() {
+  public List<Sdk> getAllPythonSdks(final Project project) {
     List<Sdk> result = new ArrayList<Sdk>();
     for (Sdk sdk : getModel().getSdks()) {
       if (sdk.getSdkType() instanceof PythonSdkType) {
         result.add(sdk);
       }
     }
+    Collection<String> sdkHomes = PythonSdkType.getInstance().suggestHomePaths();
+
     Collections.sort(result, new Comparator<Sdk>() {
       @Override
       public int compare(Sdk o1, Sdk o2) {
+        if (!(o1.getSdkType() instanceof PythonSdkType) ||
+            !(o2.getSdkType() instanceof PythonSdkType))
+          return -Comparing.compare(o1.getName(), o2.getName());
+
+        final boolean isVEnv1 = PythonSdkType.isVirtualEnv(o1);
+        final boolean isVEnv2 = PythonSdkType.isVirtualEnv(o2);
+        final boolean isRemote1 = PySdkUtil.isRemote(o1);
+        final boolean isRemote2 = PySdkUtil.isRemote(o2);
+        final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
+        final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
+        final LanguageLevel level1 = flavor1 != null ? flavor1.getLanguageLevel(o1) : LanguageLevel.getDefault();
+        final LanguageLevel level2 = flavor2 != null ? flavor2.getLanguageLevel(o2) : LanguageLevel.getDefault();
+
+        if (isVEnv1) {
+          if (associatedWithCurrent(o1, project)) return -1;
+          if (isVEnv2) {
+            final int compare = Comparing.compare(level1, level2);
+            if (compare != 0) return -compare;
+            return Comparing.compare(o1.getName(), o2.getName());
+          }
+          return -1;
+        }
+        if (isVEnv2) {
+          return 1;
+        }
+        if (isRemote1) return 1;
+        if (isRemote2) return -1;
+
+        final int compare = Comparing.compare(level1, level2);
+        if (compare != 0) return -compare;
         return Comparing.compare(o1.getName(), o2.getName());
       }
     });
+    for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
+      result.add(new PyDetectedSdk(sdkHome, PythonSdkType.getInstance()));
+    }
     return result;
+  }
+
+  private static boolean associatedWithCurrent(Sdk o1, Project project) {
+    final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
+    if (data != null) {
+      final String path = data.getAssociatedProjectPath();
+      final String projectBasePath = project.getBasePath();
+      if (path != null && path.equals(projectBasePath)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

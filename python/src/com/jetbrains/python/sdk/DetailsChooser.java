@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -30,6 +31,7 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +41,7 @@ import java.util.List;
 * @author yole
 */
 public class DetailsChooser extends BaseListPopupStep<String> {
+  private static JComponent myMore;
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
@@ -51,9 +54,10 @@ public class DetailsChooser extends BaseListPopupStep<String> {
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
-                          final RelativePoint popupPoint,
+                          JComponent component, final RelativePoint popupPoint,
                           final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
+    myMore = component;
     final ListPopupStep sdkHomesStep = new DetailsChooser(project, popupPoint.getComponent(), existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.show(popupPoint);
@@ -102,7 +106,10 @@ public class DetailsChooser extends BaseListPopupStep<String> {
       createVirtualEnvSdk();
     }
     else {
-      //createSdkFromPath(selectedValue);
+      DialogBuilder dialog = new DialogBuilder(myProject);
+      dialog.setTitle("Python Interpreters");
+      dialog.setCenterPanel(myMore);
+      dialog.show();
     }
   }
 

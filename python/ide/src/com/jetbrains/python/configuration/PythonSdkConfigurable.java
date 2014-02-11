@@ -247,7 +247,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
         addCreatedSdk(sdk, true);
       }
     };
-    final List<Sdk> allSdks = PyConfigurableInterpreterList.getInstance(myProject).getAllPythonSdks();
+    final List<Sdk> allSdks = PyConfigurableInterpreterList.getInstance(myProject).getAllPythonSdks(myProject);
     final CreateVirtualEnvDialog dialog = new CreateVirtualEnvDialog(myProject, myNewProject, allSdks, sdk);
     dialog.show();
     if (dialog.isOK()) {
@@ -335,7 +335,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
   }
 
   private void refreshSdkList() {
-    final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks();
+    final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     Sdk projectSdk = myProjectSdksModel.getProjectSdk();
     if (!myShowOtherProjectVirtualenvs) {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
@@ -366,7 +366,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
 
   private void addSdk(AnActionButton button) {
     DetailsChooser
-      .show(myProject, myProjectSdksModel.getSdks(), button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
+      .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkConfigurable(myProject).createComponent(), button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
           myMakeActiveAdded = false;

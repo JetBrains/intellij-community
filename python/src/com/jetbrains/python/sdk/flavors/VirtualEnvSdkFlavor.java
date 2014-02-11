@@ -83,7 +83,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   public static Collection<String> findInDirectory(VirtualFile rootDir) {
     List<String> candidates = new ArrayList<String>();
     if (rootDir != null) {
-      rootDir.refresh(false, false);
+      rootDir.refresh(true, false);
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (child.isDirectory()) {
