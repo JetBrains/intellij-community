@@ -228,7 +228,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
-    LOG.error("Mirror wasn't set for " + this + ", expected text:\n" + buffer);
+    LOG.error("Mirror wasn't set for " + this + " in " + getContainingFile() + ", expected text '" + buffer + "'");
     return buffer.toString();
   }
 
