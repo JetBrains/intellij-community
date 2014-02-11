@@ -32,14 +32,14 @@ final class LinkedDiffPaths {
   private static final int DISTANCE_MASK = ~VERTICAL_DIRECTION_FLAG;
 
   public LinkedDiffPaths(int maxX, int maxY) {
-    myMaxX = maxX-1;
-    myMaxY = maxY-1;
+    myMaxX = maxX;
+    myMaxY = maxY;
   }
 
   public void applyChanges(final int start1, final int start2, final BitSet changes1, final BitSet changes2) {
     decodePath(new LCSBuilder() {
-      int x = myMaxX + 1;
-      int y = myMaxY + 1;
+      int x = myMaxX;
+      int y = myMaxY;
 
       @Override
       public void addEqual(int length) {
@@ -77,11 +77,11 @@ final class LinkedDiffPaths {
   }
 
   public int getXSize() {
-    return myMaxX + 1;
+    return myMaxX;
   }
 
   public int getYSize() {
-    return myMaxY + 1;
+    return myMaxY;
   }
 
   public int encodeStep(int x, int y, int diagLength, boolean afterVertical, int prevIndex) throws FilesTooBigForDiffException {
@@ -91,7 +91,7 @@ final class LinkedDiffPaths {
 
     myPrevSteps[position] = prevIndex;
     mySteps[position] = encodedPath;
-    if (x == myMaxX && y == myMaxY) myCornerIndex = position;
+    if (x == myMaxX - 1 && y == myMaxY - 1) myCornerIndex = position;
     return position;
   }
 
