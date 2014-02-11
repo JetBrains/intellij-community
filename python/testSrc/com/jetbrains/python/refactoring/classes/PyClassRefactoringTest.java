@@ -15,18 +15,25 @@
  */
 package com.jetbrains.python.refactoring.classes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -75,5 +82,20 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
     final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
     Assert.assertThat(String.format("Expected one class named %s", name), classes, Matchers.hasSize(1));
     return classes.iterator().next();
+  }
+
+
+  protected void moveViaProcessor(@NotNull Project project, @NotNull final BaseRefactoringProcessor processor) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            processor.run();
+          }
+        });
+      }
+    }, null, null);
   }
 }

@@ -19,15 +19,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
-* @author Vladislav.Soroka
-* @since 2/10/14
-*/
-public class War {
+ * @author Vladislav.Soroka
+ * @since 2/10/14
+ */
+public class War implements Serializable {
+  private static final long serialVersionUID = 1L;
 
   @NotNull
   private final String myName;

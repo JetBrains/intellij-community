@@ -16,11 +16,11 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
   private PsiType myT;
   private PsiType myS;
 
-  public TypeEqualityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
+  public TypeEqualityConstraint(PsiType t, PsiType s) {
     myT = t;
     myS = s;
   }
@@ -72,7 +72,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      return myT.equals(myS);
+      return Comparing.equal(myT, myS);
     }
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
@@ -123,16 +123,19 @@ public class TypeEqualityConstraint implements ConstraintFormula {
 
     TypeEqualityConstraint that = (TypeEqualityConstraint)o;
 
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
+    if (myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
+    if (myT instanceof PsiCapturedWildcardType && myT != that.myT) return false;
+
+    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
+    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myT.hashCode();
-    result = 31 * result + myS.hashCode();
+    int result = myT != null ? myT.hashCode() : 0;
+    result = 31 * result + (myS != null ? myS.hashCode() : 0);
     return result;
   }
 }

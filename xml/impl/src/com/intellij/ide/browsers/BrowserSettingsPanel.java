@@ -309,7 +309,7 @@ final class BrowserSettingsPanel {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     DefaultBrowser defaultBrowser = getDefaultBrowser();
-    if (browserManager.getDefaultBrowser() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    if (browserManager.getDefaultBrowserMode() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
@@ -344,7 +344,7 @@ final class BrowserSettingsPanel {
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
+    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowserMode();
     defaultBrowserComboBox.setSelectedItem(defaultBrowser);
 
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());

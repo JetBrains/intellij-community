@@ -118,25 +118,11 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
       return false;
     } else {
-      InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
       if (myS instanceof PsiWildcardType) {
-        return inferenceVariable != null;
-      } else {
-        final InferenceVariable inferenceVariableS = session.getInferenceVariable(myS);
-        if (inferenceVariableS != null) {
-          inferenceVariableS.addBound(myT, InferenceBound.EQ);
-          return true;
-        }
-
-        if (inferenceVariable != null) {
-          inferenceVariable.addBound(myS, InferenceBound.EQ);
-          return true;
-        }
-        if (myT != null && myS != null) {
-          constraints.add(new TypeEqualityConstraint(myT, myS));
-          return true;
-        }
         return false;
+      } else {
+        constraints.add(new TypeEqualityConstraint(myT, myS));
+        return true;
       }
     }
   }

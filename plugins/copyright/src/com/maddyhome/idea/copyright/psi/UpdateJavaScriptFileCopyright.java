@@ -34,6 +34,12 @@ public class UpdateJavaScriptFileCopyright extends UpdatePsiFileCopyright
     protected void scanFile()
     {
         PsiElement first = getFile().getFirstChild();
+        if (first != null) {
+          final PsiElement child = first.getFirstChild();
+          if (child instanceof PsiComment) {
+            first = child;
+          }
+        }
         PsiElement last = first;
         PsiElement next = first;
         while (next != null)

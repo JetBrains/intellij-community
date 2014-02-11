@@ -2222,6 +2222,20 @@ public class StringUtil extends StringUtilRt {
     return EOL_SPLIT_DONT_TRIM_PATTERN.split(string);
   }
 
+  /**
+   * Splits string by lines, keeping all line separators at the line ends and in the empty lines.
+   * <br> E.g. splitting text
+   * <blockquote>
+   *   foo\r\n<br>
+   *   \n<br>
+   *   bar\n<br>
+   *   \r\n<br>
+   *   baz\r<br>
+   *   \r<br>
+   * </blockquote>
+   * will return the following array: foo\r\n, \n, bar\n, \r\n, baz\r, \r
+   *   
+   */
   @NotNull
   public static String[] splitByLinesKeepSeparators(@NotNull String string) {
     return EOL_SPLIT_KEEP_SEPARATORS.split(string);

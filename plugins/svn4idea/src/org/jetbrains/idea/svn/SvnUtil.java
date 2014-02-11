@@ -152,12 +152,6 @@ public class SvnUtil {
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
   }
 
-  public static Map<String, File> getLocationInfoForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
-    final LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(vcs.getProject(), path, crawler, progress);
-    return crawler.getLocationInfos();
-  }
-
   public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
@@ -414,35 +408,6 @@ public class SvnUtil {
     return result;
   }
 
-  private static class LocationsCrawler implements SvnWCRootCrawler {
-    private final SvnVcs myVcs;
-    private final Map<String, File> myLocations;
-
-    public LocationsCrawler(SvnVcs vcs) {
-      myVcs = vcs;
-      myLocations = new HashMap<String, File>();
-    }
-
-    public Map<String, File> getLocationInfos() {
-      return Collections.unmodifiableMap(myLocations);
-    }
-
-    public void handleWorkingCopyRoot(File root, ProgressIndicator progress) {
-      String oldText = null;
-      if (progress != null) {
-        oldText = progress.getText();
-        progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
-      }
-      SVNInfo info = myVcs.getInfo(root);
-      if (info != null && info.getURL() != null) {
-        myLocations.put(info.getURL().toString(), info.getFile());
-      }
-      if (progress != null) {
-        progress.setText(oldText);
-      }
-    }
-  }
-
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
     final SVNInfo info = vcs.getInfo(file);
@@ -569,6 +534,7 @@ public class SvnUtil {
       return repository.hasCapability(SVNCapability.MERGE_INFO);
     }
     catch (SVNException e) {
+      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
       return false;
     }
     finally {
@@ -739,6 +705,23 @@ public class SvnUtil {
     }
   }
 
+  public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
+    return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
+  }
+
+  public static String getRelativePath(@NotNull String parentPath, @NotNull String childPath) {
+    return  FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(parentPath), FileUtil.toSystemIndependentName(childPath), '/');
+  }
+
+  public static String ensureStartSlash(@NotNull String path) {
+    return StringUtil.startsWithChar(path, '/') ? path : '/' + path;
+  }
+
+  @NotNull
+  public static String join(@NotNull final String... parts) {
+    return StringUtil.join(parts, "/");
+  }
+
   public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
     if (StringUtil.isEmpty(subPath)) return base;
     final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
@@ -764,9 +747,7 @@ public class SvnUtil {
                                        @Nullable final SVNRevision revision,
                                        @Nullable final SVNRevision pegRevision)
     throws VcsException {
-    ClientFactory factory = target.isFile() ? vcs.getFactory(target.getFile()) : vcs.getFactory();
-
-    return factory.createContentClient().getContent(target, revision, pegRevision);
+    return vcs.getFactory(target).createContentClient().getContent(target, revision, pegRevision);
   }
 
   public static boolean hasDefaultPort(@NotNull SVNURL result) {

@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -47,6 +46,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,6 @@ import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
-import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
@@ -355,9 +354,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
-      AbstractVcsHelper.getInstance(myProject).showFileHistory(new SvnHistoryProvider(myVCS),
-              VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(node.getURL().toDecodedString(), isDirectory),
-              myVCS, node.getURL().toDecodedString());
+      String url = node.getURL().toDecodedString();
+
+      AbstractVcsHelper.getInstance(myProject)
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
       node.reload(false);
     }
   }

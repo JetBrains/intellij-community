@@ -66,7 +66,7 @@ public abstract class MemberInfoBase<T extends PsiElement> {
   }
 
   public T getMember() {
-    LOG.assertTrue(myMember.isValid());
+    LOG.assertTrue(myMember.isValid(), myMember.getText() + " is invalid");
     return myMember;
   }
 

@@ -123,7 +123,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             if (methodParameters.length == 0) continue;
             final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
             final PsiType paramType = param.getType();
-            if (!LambdaUtil.isAcceptable(lambdaExpression, conflict.getSubstitutor().substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
+            if (!LambdaUtil.isAcceptable(lambdaExpression, ((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType),
+                                         lambdaExpression.hasFormalParameterTypes())) {
               iterator.remove();
             }
           }
@@ -147,7 +148,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
           if (nonComparable(method, conflict)) continue; 
-          switch (isMoreSpecific(method, conflict, applicabilityLevel, languageLevel)) {
+          switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, languageLevel)) {
             case FIRST:
               conflicts.remove(conflict);
               break;
@@ -217,7 +218,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
 
       PsiClass class1 = method.getContainingClass();
-      PsiSubstitutor infoSubstitutor = info.getSubstitutor();
+      PsiSubstitutor infoSubstitutor = ((MethodCandidateInfo)info).getSubstitutor(false);
       MethodSignature signature = method.getSignature(infoSubstitutor);
       CandidateInfo existing = signatures.get(signature);
 
@@ -276,7 +277,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         PsiType returnType2 = existingMethod.getReturnType();
         if (returnType1 != null && returnType2 != null) {
           returnType1 = infoSubstitutor.substitute(returnType1);
-          returnType2 = existing.getSubstitutor().substitute(returnType2);
+          returnType2 = ((MethodCandidateInfo)existing).getSubstitutor(false).substitute(returnType2);
           if (!returnType1.equals(returnType2) && returnType1.isAssignableFrom(returnType2)) {
             conflicts.remove(i);
             i--;
@@ -437,12 +438,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
   }
 
-  private Specifics isMoreSpecific(final CandidateInfo info1,
-                                   final CandidateInfo info2,
+  private Specifics isMoreSpecific(final MethodCandidateInfo info1,
+                                   final MethodCandidateInfo info2,
                                    @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
                                    @NotNull LanguageLevel languageLevel) {
-    PsiMethod method1 = (PsiMethod)info1.getElement();
-    PsiMethod method2 = (PsiMethod)info2.getElement();
+    PsiMethod method1 = info1.getElement();
+    PsiMethod method2 = info2.getElement();
     final PsiClass class1 = method1.getContainingClass();
     final PsiClass class2 = method2.getContainingClass();
 
@@ -451,8 +452,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
     final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
-    final PsiSubstitutor classSubstitutor1 = info1.getSubstitutor(); //substitutions for method type parameters will be ignored
-    final PsiSubstitutor classSubstitutor2 = info2.getSubstitutor();
+    final PsiSubstitutor classSubstitutor1 = info1.getSubstitutor(false); //substitutions for method type parameters will be ignored
+    final PsiSubstitutor classSubstitutor2 = info2.getSubstitutor(false);
 
     final int max = Math.max(params1.length, params2.length);
     PsiType[] types1 = PsiType.createArray(max);
@@ -504,8 +505,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.SECOND;
 
     if (sameBoxing) {
-      final PsiSubstitutor siteSubstitutor1 = ((MethodCandidateInfo)info1).getSiteSubstitutor();
-      final PsiSubstitutor siteSubstitutor2 = ((MethodCandidateInfo)info2).getSiteSubstitutor();
+      final PsiSubstitutor siteSubstitutor1 = info1.getSiteSubstitutor();
+      final PsiSubstitutor siteSubstitutor2 = info2.getSiteSubstitutor();
 
       final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor2, typeParameters2);
       final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1, typeParameters1);
@@ -607,7 +608,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
-        if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
+        if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor(false)), method2.getSignature(info2.getSubstitutor(false)))) {
           return Specifics.SECOND;
         }
         else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
@@ -616,7 +617,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
         if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) && 
-            MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
+            MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor(false)), method1.getSignature(info1.getSubstitutor(false)))) {
           return Specifics.FIRST;
         }
         else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {

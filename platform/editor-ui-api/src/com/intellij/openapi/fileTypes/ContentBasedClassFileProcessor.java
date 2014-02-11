@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Perfroms additional analyses on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
- * compiled from other than Java source language).
- *
- * @author ilyas
- */
+/** @deprecated use com.intellij.psi.compiled.ClassFileDecompilers or com.intellij.psi.LanguageSubstitutors API (to remove in IDEA 14) */
 public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitutor {
-
-  /**
-   * @return syntax highlighter for recognized classfile
-   */
   @NotNull
   SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
 }

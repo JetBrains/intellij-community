@@ -15,9 +15,11 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,9 @@ import java.util.regex.Matcher;
  * Marker exception
  */
 public class SvnBindException extends VcsException {
+
+  public static final int ERROR_BASE = 120000;
+  public static final int CATEGORY_SIZE = 5000;
 
   private Map<Integer, String> errors = new HashMap<Integer, String>();
 
@@ -65,6 +70,21 @@ public class SvnBindException extends VcsException {
 
   public boolean contains(@NotNull SVNErrorCode error) {
     return errors.containsKey(error.getCode());
+  }
+
+  public boolean containsCategory(int category) {
+    final int categoryCode = getCategoryCode(category);
+
+    return ContainerUtil.exists(errors.keySet(), new Condition<Integer>() {
+      @Override
+      public boolean value(Integer code) {
+        return getCategoryCode(code) == categoryCode;
+      }
+    });
+  }
+
+  private static int getCategoryCode(int category) {
+    return (category - ERROR_BASE) / CATEGORY_SIZE;
   }
 
   private void parseErrors(@NotNull String message) {

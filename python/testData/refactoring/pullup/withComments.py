@@ -3,6 +3,8 @@ class Foo:
         print("a")
 
 class Boo(Foo):
-    # this is boo
     def boo(self):
+        """
+        In python we use multi-line comments inside of method body
+        """
         print "rrrrr"

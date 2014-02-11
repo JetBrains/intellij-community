@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = documentManager.getDocument(containingFile);
-    if (document == null || documentManager.isUncommited(document)) {
+    Document document = documentManager.getCachedDocument(containingFile);
+    if (document != null && documentManager.isUncommited(document)) {
       mySyncMarkerIsValid = false;
-      return;
     }
-
-    mySyncMarkerIsValid = true;
-    setRange(range);
+    else {
+      mySyncMarkerIsValid = true;
+      setRange(range);
+    }
   }
 
   protected void setRange(@NotNull Segment range) {
