@@ -1,6 +1,6 @@
-from os import abort
+from shared_module import module_function
 
 
 class Parent(object):
     def should_be_pushed(self):
-        abort()
+        module_function()

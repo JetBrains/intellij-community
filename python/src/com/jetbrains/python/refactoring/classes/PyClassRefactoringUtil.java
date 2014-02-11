@@ -27,10 +27,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -74,7 +76,6 @@ public final class PyClassRefactoringUtil {
     final List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
     for (final PyAssignmentStatement expression : assignmentStatement) {
       final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
-      declations.add(newDeclaration);
       declations.add((PyAssignmentStatement)PyUtil.addElementToStatementList(newDeclaration, superClassStatement, true));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
@@ -160,7 +161,12 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  public static void restoreNamedReferences(@NotNull PsiElement element) {
+  /**
+   * Restores references saved by {@link #rememberNamedReferences(com.intellij.psi.PsiElement, String...)}.
+   * @see #rememberNamedReferences(com.intellij.psi.PsiElement, String...)
+   * @param element newly created element to restore references
+   */
+  public static void restoreNamedReferences(@NotNull final PsiElement element) {
     restoreNamedReferences(element, null);
   }
 
@@ -270,7 +276,16 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  public static void rememberNamedReferences(@NotNull final PsiElement element) {
+  /**
+   * Searches for references inside some element (like {@link com.jetbrains.python.psi.PyAssignmentStatement}, {@link com.jetbrains.python.psi.PyFunction} etc
+   * and stored them.
+   * After that you can add element to some new parent. Newly created element then should be processed via {@link #restoreNamedReferences(com.intellij.psi.PsiElement)}
+   * and all references would be restored.
+   *
+   * @param element element to store references for
+   * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
+   */
+  public static void rememberNamedReferences(@NotNull final PsiElement element, @NotNull final String... namesToSkip) {
     element.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -282,7 +297,9 @@ public final class PyClassRefactoringUtil {
         if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
           return;
         }
-        rememberReference(node, element);
+        if (!ArrayUtil.contains(node.getText(), namesToSkip)) { //Do not remember name if it should be skipped
+          rememberReference(node, element);
+        }
       }
     });
   }
@@ -474,5 +491,13 @@ public final class PyClassRefactoringUtil {
         LOG.error("Class has no name node nor superclass list " + clazz);
       }
     }
+  }
+
+  /**
+   * Optimizes imports resorting them and removing unneeded
+   * @param file file to optimize imports
+   */
+  public static void optimizeImports(@NotNull final PsiFile file) {
+    new PyImportOptimizer().processFile(file).run();
   }
 }

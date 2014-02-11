@@ -23,6 +23,7 @@ import java.util.List;
  */
 abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   private static final SimpleAssignmentsOnly SIMPLE_ASSIGNMENTS_ONLY = new SimpleAssignmentsOnly();
+  private static final AssignmentTransform ASSIGNMENT_TRANSFORM = new AssignmentTransform();
   private final boolean myStatic;
 
   /**
@@ -33,6 +34,12 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
     myStatic = isStatic;
   }
 
+  @Override
+  protected Collection<? extends PyElement> getElementsToStoreReferences(@NotNull final Collection<PyTargetExpression> elements) {
+    // We need to save references from assignments
+    return Collections2.transform(elements, ASSIGNMENT_TRANSFORM);
+  }
+
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
@@ -40,15 +47,16 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from,
-                             @NotNull final Collection<PyTargetExpression> members,
-                             @NotNull final PyClass... to) {
-    moveAssignments(from, Collections2.transform(members, new AssignmentTransform()), to);
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
+                                              @NotNull final Collection<PyTargetExpression> members,
+                                              @NotNull final PyClass... to) {
+    return moveAssignments(from, Collections2.filter(Collections2.transform(members, ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
+                           to);
   }
 
-  protected abstract void moveAssignments(@NotNull PyClass from,
-                                          @NotNull Collection<PyAssignmentStatement> statements,
-                                          @NotNull PyClass... to);
+  protected abstract Collection<PyElement> moveAssignments(@NotNull PyClass from,
+                                                           @NotNull Collection<PyAssignmentStatement> statements,
+                                                           @NotNull PyClass... to);
 
   /**
    * Checks if class has fields. Only child may know how to obtain field
@@ -100,9 +108,11 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   }
 
 
-  private class AssignmentTransform implements Function<PyTargetExpression, PyAssignmentStatement> {
+  //Transforms expressions to its assignment step
+  private static class AssignmentTransform implements Function<PyTargetExpression, PyAssignmentStatement> {
+    @Nullable
     @Override
-    public PyAssignmentStatement apply(PyTargetExpression input) {
+    public PyAssignmentStatement apply(@NotNull final PyTargetExpression input) {
       return PsiTreeUtil.getParentOfType(input, PyAssignmentStatement.class);
     }
   }

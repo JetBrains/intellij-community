@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.classes.pushDown;
 
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
@@ -34,10 +35,10 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     super("pushdown");
   }
 
-  //TODO: Doc
+  // Tests that pushing down methods moves imports as well (PY-10963)
   public void testMultiFileImports() {
     final String[] modules = {"child_module", "parent_module"};
-    configureMultiFile(modules);
+    configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
     final PyClass parentClass = findClass("Parent");
     final PyMemberInfo methodToMove = MembersManager.findMember(parentClass, findMember("Parent", ".should_be_pushed"));
 

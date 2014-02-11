@@ -5,6 +5,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,13 +19,14 @@ class InstanceFieldsManager extends FieldsManager {
 
 
   @Override
-  protected void moveAssignments(@NotNull final PyClass from,
+  protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
                                  @NotNull final Collection<PyAssignmentStatement> statements,
                                  @NotNull final PyClass... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
+    List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
-      copyInstanceFields(statements, destClass);
+      result.addAll(copyInstanceFields(statements, destClass));
     }
 
     deleteElements(statements);
@@ -34,6 +36,7 @@ class InstanceFieldsManager extends FieldsManager {
       //We can't leave class constructor with empty body
       PyClassRefactoringUtil.insertPassIfNeeded(fromInitMethod);
     }
+    return result;
   }
 
    /**

@@ -140,7 +140,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
     // TODO: Remove extra empty lines after the removed element
     element.delete();
     if (file != null) {
-      optimizeImports(file);
+      PyClassRefactoringUtil.optimizeImports(file);
     }
   }
 
@@ -209,15 +209,12 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       if (resolvesToLocalStarImport(usage)) {
         PyClassRefactoringUtil.insertImport(usage, newElement);
         if (usageFile != null) {
-          optimizeImports(usageFile);
+          PyClassRefactoringUtil.optimizeImports(usageFile);
         }
       }
     }
   }
 
-  private static void optimizeImports(@NotNull PsiFile file) {
-    new PyImportOptimizer().processFile(file).run();
-  }
 
   private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
     final PsiReference ref = element.getReference();

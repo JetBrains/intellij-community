@@ -84,6 +84,14 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doMultiFileTest();
   }
 
+  public void testFieldMove() {
+    final String[] modules = {"Class", "SuperClass"};
+    configureMultiFile(modules);
+    doPullUp("AnyClass", "#COPYRIGHT", "SuperClass");
+    doPullUp("AnyClass", "#version", "SuperClass");
+    checkMultiFile(modules);
+  }
+
   private void doMultiFileTest() {
     final String[] modules = {"Class", "SuperClass"};
     configureMultiFile(modules);

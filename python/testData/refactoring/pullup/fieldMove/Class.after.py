@@ -2,5 +2,5 @@ from SuperClass import SuperClass
 
 
 class AnyClass(SuperClass):
-    pass
-
+    def __init__(self):
+        super().__init__()

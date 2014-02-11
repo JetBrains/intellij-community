@@ -20,12 +20,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,13 +43,28 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     super("extractsuperclass");
   }
 
-  //TODO: Doc
+  // Checks that moving methods between files moves imports as well
   public void testImportMultiFile() throws Throwable {
+    multiFileTestHelper(".do_useful_stuff");
+  }
+
+  // Checks that moving methods between files moves superclass expressions as well
+  public void testMoveExtends() throws Throwable {
+    multiFileTestHelper("TheParentOfItAll");
+  }
+
+  /**
+   * Moves member from class <pre>MyClass</pre> in module <pre>source_module</pre> to class <pre>NewParent</pre> in module <pre>dest_module</pre>.
+   * Ensures it is moved correctly.
+   *
+   * @param memberToMove name of the member to move
+   */
+  private void multiFileTestHelper(@NotNull final String memberToMove) {
     final String[] modules = {"dest_module", "source_module"};
-    configureMultiFile(modules);
+    configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
     myFixture.configureByFile("source_module.py");
     final String sourceClass = "MyClass";
-    final PyMemberInfo member = findMemberInfo(sourceClass, ".do_useful_stuff");
+    final PyMemberInfo member = findMemberInfo(sourceClass, memberToMove);
     final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override

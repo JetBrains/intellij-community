@@ -29,9 +29,10 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from,
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                              @NotNull final Collection<PyFunction> members,
                              @NotNull final PyClass... to) {
+    final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       //We move copies here because we there may be several destinations
       final List<PyFunction> copies = new ArrayList<PyFunction>(members.size());
@@ -40,11 +41,12 @@ class MethodsManager extends MembersManager<PyFunction> {
         copies.add(newMethod);
       }
 
-      PyClassRefactoringUtil.copyMethods(copies, destClass);
+      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass));
     }
     deleteElements(members);
 
     PyClassRefactoringUtil.insertPassIfNeeded(from);
+    return result;
   }
 
   @NotNull

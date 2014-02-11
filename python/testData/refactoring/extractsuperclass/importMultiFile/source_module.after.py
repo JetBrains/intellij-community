@@ -1,4 +1,5 @@
-import dest_module
+from dest_module import NewParent
 
-class MyClass(dest_module.MyNewParent):
+
+class MyClass(NewParent):
     pass

@@ -1,4 +1,2 @@
-
-
 class Parent(object):
     pass

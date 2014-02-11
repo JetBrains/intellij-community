@@ -40,11 +40,21 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
   @NotNull
   private final String myRefactoringName;
 
+  /**
+   * @param refactoringName name of the refactoring. It will be used as folder name for tests
+   */
   protected PyClassRefactoringTest(@NotNull final String refactoringName) {
     myRefactoringName = refactoringName;
   }
 
-  //TODO: Doct
+  /**
+   * Finds memberInfo by class name and member name.
+   *
+   * @param clazzName  name of class
+   * @param memberName name of member (See {@link #findMember(String, String)} for naming protocol)
+   * @return member info
+   * @see #findMember(String, String)
+   */
   @NotNull
   protected PyMemberInfo findMemberInfo(@NotNull final String clazzName, @NotNull final String memberName) {
     final PyClass clazz = findClass(clazzName);
@@ -111,7 +121,14 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
     }, null, null);
   }
 
-  //TODO: Doc
+  /**
+   * Adds several files to project from folder {@link #myRefactoringName} with extension <pre>py</pre>.
+   * Call it <strong>before</strong> refactoring.
+   * After refactoring use {@link #checkMultiFile(String...)} to make sure refactoring is ok.
+   *
+   * @param fileNamesNoExtensions file (module) names to add with out of extensions
+   * @see #checkMultiFile(String...)
+   */
   protected void configureMultiFile(@NotNull final String... fileNamesNoExtensions) {
     final String baseName = getMultiFileBaseName() + "/";
 
@@ -121,7 +138,12 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
     }
   }
 
-  //TODO: Doc
+  /**
+   * Checks files <strong>after</strong> refactoring. See {@link #configureMultiFile(String...)} for more info.
+   *
+   * @param fileNamesNoExtensions file names to check with out of extension
+   * @see #configureMultiFile(String...)
+   */
   protected void checkMultiFile(@NotNull final String... fileNamesNoExtensions) {
     for (final String fileNameNoExtension : fileNamesNoExtensions) {
       final String fileNameAfter = String.format("%s.after.py", fileNameNoExtension);
@@ -130,7 +152,9 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
     }
   }
 
-  //TODO: Doc
+  /**
+   * @return folder name with {@link #myRefactoringName} and test name added
+   */
   @NotNull
   protected String getMultiFileBaseName() {
     return "refactoring/" + myRefactoringName + "/" + getTestName(true);

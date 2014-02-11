@@ -31,7 +31,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyClass> members, @NotNull final PyClass... to) {
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyClass> members, @NotNull final PyClass... to) {
     for (final PyClass destClass : to) {
       PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, members.toArray(new PyClass[members.size()]));
     }
@@ -43,6 +43,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
         }
       }
     }
+    return Collections.emptyList(); //Hack: we know that "superclass expression" can't have reference
   }
 
   @NotNull

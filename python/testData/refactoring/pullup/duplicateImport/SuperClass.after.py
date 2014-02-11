@@ -1,5 +1,5 @@
 from sys import argv
-import os
+import sys
 
 
 class SuperClass(object):
@@ -10,4 +10,4 @@ class SuperClass(object):
         if not self.args:
             self.args = argv
         self.argument = some_argument
-        os.abort()
+        print(sys.api_version)
