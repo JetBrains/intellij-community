@@ -398,7 +398,7 @@ public class InstalledPackagesPanel extends JPanel {
 
   private void onUpdateStarted() {
     myPackagesTable.setPaintBusy(true);
-    myPackagesTable.getEmptyText().setText("Loading ...");
+    myPackagesTable.getEmptyText().setText("Loading...");
   }
 
   private void onUpdateFinished() {
