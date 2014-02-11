@@ -3,8 +3,6 @@
 
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
-  <module value="com.intellij.modules.python"/>
-
   <extensions defaultExtensionNs="com.intellij">
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>

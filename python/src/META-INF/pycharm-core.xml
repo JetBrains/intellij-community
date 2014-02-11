@@ -24,6 +24,7 @@
   </project-components>
 
   <module value="com.intellij.modules.xml"/>
+  <module value="com.intellij.modules.python"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
