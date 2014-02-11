@@ -330,12 +330,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     return false;
   }
 
-  private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
+  private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMethodReferenceExpression> {
     @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
-      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(
-        PsiMethodReferenceExpressionImpl.this);
+    public ResolveResult[] resolve(@NotNull final PsiMethodReferenceExpression reference, boolean incompleteCode) {
+      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
       final PsiClass containingClass = qualifierResolveResult.getContainingClass();
       PsiSubstitutor substitutor = qualifierResolveResult.getSubstitutor();
@@ -350,7 +349,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           PsiType functionalInterfaceType = null;
           final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
           if (map != null) {
-            functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(PsiMethodReferenceExpressionImpl.this));
+            functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(reference));
           }
           if (functionalInterfaceType == null) {
             functionalInterfaceType = getFunctionalInterfaceType();
@@ -379,14 +378,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final MethodReferenceConflictResolver conflictResolver =
             new MethodReferenceConflictResolver(qualifierResolveResult, signature, interfaceMethod != null && interfaceMethod.isVarArgs());
           final MethodCandidatesProcessor processor =
-            new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, getContainingFile(), new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
+            new MethodCandidatesProcessor(reference, getContainingFile(), new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
               @Override
               protected MethodCandidateInfo createCandidateInfo(final PsiMethod method,
                                                                 final PsiSubstitutor substitutor,
                                                                 final boolean staticProblem,
                                                                 final boolean accessible) {
                 final PsiExpressionList argumentList = getArgumentList();
-                final PsiType[] typeParameters = PsiMethodReferenceExpressionImpl.this.getTypeParameters();
+                final PsiType[] typeParameters = reference.getTypeParameters();
                 return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                                argumentList != null ? argumentList.getExpressionTypes() : null, typeParameters.length > 0 ? typeParameters : null,
                                                getLanguageLevel()) {
@@ -399,7 +398,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                   public PsiSubstitutor inferTypeArguments(boolean varargs) {
                     if (interfaceMethod == null) return substitutor;
                     final PsiSubstitutor qualifierResultSubstitutor = qualifierResolveResult.getSubstitutor();
-                    final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), PsiMethodReferenceExpressionImpl.this);
+                    final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), reference);
                     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
                     final PsiParameter[] parameters = method.getParameterList().getParameters();
                     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
@@ -484,9 +483,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
              processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
           }
           ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-          containingClass.processDeclarations(processor, state,
-                                              PsiMethodReferenceExpressionImpl.this,
-                                              PsiMethodReferenceExpressionImpl.this);
+          containingClass.processDeclarations(processor, state, reference, reference);
           return processor.getResult();
         }
       }
