@@ -118,7 +118,7 @@ class MyTest2 {
           call3(MyTest2::m1);
           call3<error descr="Ambiguous method call: both 'MyTest2.call3(I1)' and 'MyTest2.call3(I2)' match">(MyTest2::m2)</error>;
           call3(MyTest2::m3);
-          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m4)</error>;
+          call3<error descr="'call3(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
     }
 }
 

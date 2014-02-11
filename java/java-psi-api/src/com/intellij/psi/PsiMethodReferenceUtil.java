@@ -163,7 +163,12 @@ public class PsiMethodReferenceUtil {
     if (methodReferenceExpression == null) return false;
     final PsiElement argsList = PsiTreeUtil.getParentOfType(methodReferenceExpression, PsiExpressionList.class);
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      if (!methodReferenceExpression.isExact()) return true;
+      if (!methodReferenceExpression.isPotentiallyCompatible(left)) {
+        return false;
+      }
+      if (!methodReferenceExpression.isExact()) {
+        return true;
+      }
     }
     if (left instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {

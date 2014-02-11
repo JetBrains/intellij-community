@@ -37,6 +37,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
@@ -72,6 +73,48 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @Override
   public boolean isExact() {
     return getPotentiallyApplicableMember() != null;
+  }
+
+  @Override
+  public boolean isPotentiallyCompatible(final PsiType functionalInterfaceType) {
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (interfaceMethod == null) return false;
+
+    final MethodReferenceResolver resolver = new MethodReferenceResolver() {
+      @Override
+      protected PsiConflictResolver createResolver(PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
+                                                   PsiMethod interfaceMethod,
+                                                   MethodSignature signature) {
+        return DuplicateConflictResolver.INSTANCE;
+      }
+
+      @Override
+      protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
+        return functionalInterfaceType;
+      }
+    };
+
+    final ResolveResult[] result = resolver.resolve(this, false);
+    final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
+    final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
+    for (ResolveResult resolveResult : result) {
+      final PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiMethod) {
+        final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
+        if (qualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
+          final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
+          if (parametersCount == interfaceArity && isStatic) {
+            return true;
+          }
+          if (parametersCount == interfaceArity - 1 && !isStatic) {
+            return true;
+          }
+        } else if (!isStatic) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public PsiMember getPotentiallyApplicableMember() {
@@ -346,14 +389,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (isConstructor && (containingClass.isEnum() || containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
             return JavaResolveResult.EMPTY_ARRAY;
           }
-          PsiType functionalInterfaceType = null;
-          final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-          if (map != null) {
-            functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(reference));
-          }
-          if (functionalInterfaceType == null) {
-            functionalInterfaceType = getFunctionalInterfaceType();
-          }
+          final PsiType functionalInterfaceType = getInterfaceType(reference);
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
           final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
@@ -375,8 +411,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
           }
 
-          final MethodReferenceConflictResolver conflictResolver =
-            new MethodReferenceConflictResolver(qualifierResolveResult, signature, interfaceMethod != null && interfaceMethod.isVarArgs());
+          final PsiConflictResolver conflictResolver = createResolver(qualifierResolveResult, interfaceMethod, signature);
           final MethodCandidatesProcessor processor =
             new MethodCandidatesProcessor(reference, getContainingFile(), new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
               @Override
@@ -488,6 +523,26 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
       }
       return JavaResolveResult.EMPTY_ARRAY;
+    }
+
+    protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
+      PsiType functionalInterfaceType = null;
+      final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
+      if (map != null) {
+        functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(reference));
+      }
+
+      if (functionalInterfaceType == null) {
+        functionalInterfaceType = reference.getFunctionalInterfaceType();
+      }
+
+      return functionalInterfaceType;
+    }
+
+    protected PsiConflictResolver createResolver(PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
+                                                             PsiMethod interfaceMethod,
+                                                             MethodSignature signature) {
+      return new MethodReferenceConflictResolver(qualifierResolveResult, signature, interfaceMethod != null && interfaceMethod.isVarArgs());
     }
 
     private PsiClassType composeReturnType(PsiClass containingClass, PsiSubstitutor substitutor) {
