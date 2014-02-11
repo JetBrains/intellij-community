@@ -32,6 +32,7 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -466,6 +467,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
       loadRemoteTemplates();
     }
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    ModuleWizardStep step = getCustomStep();
+    return step != null ? step.validate() : super.validate();
   }
 
   @Override
