@@ -84,28 +84,20 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private boolean myIsPhysical = true;
 
   public ClsFileImpl(@NotNull FileViewProvider viewProvider) {
-    this(viewProvider, null);
+    this(viewProvider, false);
   }
 
   /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 14) */
   @SuppressWarnings("unused")
   public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
-    this(viewProvider, null);
+    this(viewProvider, false);
   }
 
-  private ClsFileImpl(@NotNull FileViewProvider viewProvider, @Nullable PsiClassHolderFileStub<?> stub) {
+  private ClsFileImpl(@NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     //noinspection ConstantConditions
     super(null);
-
     myViewProvider = viewProvider;
-    if (stub != null) {
-      myStub = new SoftReference<StubTree>(new StubTree(stub));
-      myIsForDecompiling = true;
-    }
-    else {
-      myIsForDecompiling = false;
-    }
-
+    myIsForDecompiling = forDecompiling;
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
@@ -503,26 +495,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
-    PsiClassHolderFileStub<?> stub = null;
-    try {
-      stub = buildFileStub(file, file.contentsToByteArray());
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-    if (stub == null) {
-      return "";
-    }
-
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
-    ClsFileImpl psi = new ClsFileImpl(new ClassFileViewProvider(manager, file), stub);
-    if (stub.getPsi() == null) {
-      @SuppressWarnings("unchecked") PsiFileStubImpl<PsiFile> impl = (PsiFileStubImpl)stub;
-      impl.setPsi(psi);
-    }
-
     StringBuilder buffer = new StringBuilder();
-    psi.appendMirrorText(0, buffer);
+    new ClsFileImpl(new ClassFileViewProvider(manager, file), true).appendMirrorText(0, buffer);
     return buffer;
   }
 
