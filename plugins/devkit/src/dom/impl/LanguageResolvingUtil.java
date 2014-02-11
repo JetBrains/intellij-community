@@ -45,7 +45,7 @@ import java.util.List;
 
 class LanguageResolvingUtil {
 
-  private static String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
+  private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
 
   static Collection<LanguageDefinition> getAllLanguageDefinitions(ConvertContext context) {
     List<LanguageDefinition> languageDefinitions = collectLanguageDefinitions(context);
