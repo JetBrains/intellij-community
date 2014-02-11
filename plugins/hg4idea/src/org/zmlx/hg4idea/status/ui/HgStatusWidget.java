@@ -153,8 +153,8 @@ public class HgStatusWidget extends EditorBasedWidget
           emptyTextAndTooltip();
           return;
         }
-        myText = StringUtil.shortenTextWithEllipsis(HgUtil.getDisplayableBranchOrBookmarkText(repo), MAX_STRING.length(), 5);
         myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
+        myText = StringUtil.shortenTextWithEllipsis(myTooltip, MAX_STRING.length(), 5);
         if (!isDisposed() && myStatusBar != null) {
           myStatusBar.updateWidget(ID());
         }
