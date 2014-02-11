@@ -1247,7 +1247,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       Point point = new Point(hintInfo.getOriginalPoint());
       hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
-      hintInfo.setBorderColor(new JBColor(Gray._0, Gray._111));
+      hintInfo.setBorderColor(myEditor.getColorsScheme().getDefaultForeground());
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       myPointHolder.set(point);
       myHintHolder.set(hintInfo);
