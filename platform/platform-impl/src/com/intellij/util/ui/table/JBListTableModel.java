@@ -17,9 +17,6 @@ package com.intellij.util.ui.table;
 
 import com.intellij.util.ui.EditableModel;
 
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -31,19 +28,6 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
 
   public JBListTableModel(TableModel model) {
     myModel = model;
-    model.addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        //notify the model only after all listeners of the internal model have been notified
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            fireTableDataChanged();
-          }
-        });
-      }
-    });
   }
 
   @Override
