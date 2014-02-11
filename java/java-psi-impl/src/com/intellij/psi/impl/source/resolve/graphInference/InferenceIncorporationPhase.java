@@ -53,12 +53,47 @@ public class InferenceIncorporationPhase {
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
 
       eqEq(eqBounds);
-      upperLower(upperBounds, lowerBounds);
 
+      upDown(lowerBounds, upperBounds);
       upDown(eqBounds, upperBounds);
       upDown(lowerBounds, eqBounds);
 
       upUp(upperBounds);
+
+      for (PsiType eqBound : eqBounds) {
+        if (mySession.isProperType(eqBound)) {
+          final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(inferenceVariable.getParameter(), eqBound);
+          for (PsiType upperBound : upperBounds) {
+            if (!mySession.isProperType(upperBound)) {
+              addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), eqBound));
+            }
+          }
+
+          for (PsiType lowerBound : lowerBounds) {
+            if (!mySession.isProperType(lowerBound)) {
+              addConstraint(new StrictSubtypingConstraint(eqBound, substitutor.substitute(lowerBound)));
+            }
+          }
+
+          for (PsiType otherEqBound : eqBounds) {
+            if (eqBound != otherEqBound && !mySession.isProperType(otherEqBound)) {
+              addConstraint(new TypeEqualityConstraint(substitutor.substitute(otherEqBound), eqBound));
+            }
+          }
+        }
+      }
+
+      //todo no such a rule in spec?!
+      for (PsiType lowerBound : lowerBounds) {
+        if (mySession.isProperType(lowerBound)) {
+          final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(inferenceVariable.getParameter(), lowerBound);
+          for (PsiType upperBound : upperBounds) {
+            if (!mySession.isProperType(upperBound)) {
+              addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), lowerBound));
+            }
+          }
+        }
+      }
     }
 
     if (myCapture != null) {
@@ -219,24 +254,19 @@ public class InferenceIncorporationPhase {
    * a = S & a <: T imply S <: T
    *           or
    * a = S & T <: a imply T <: S
+   *           or
+   * S <: a & a <: T imply S <: T
    */
   private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
-      if (upperBound == null) continue;
-      for (PsiType eqBound : eqBounds) {
-        addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
+      if (mySession.isProperType(upperBound)) {
+        continue;
       }
-    }
-  }
-
-  /**
-   * S <: a & a <: T imply S <: T
-   */
-  private void upperLower(List<PsiType> upperBounds, List<PsiType> lowerBounds) {
-    for (PsiType upperBound : upperBounds) {
-      if (upperBound == null) continue;
-      for (PsiType lowerBound : lowerBounds) {
-        addConstraint(new StrictSubtypingConstraint(upperBound, lowerBound));
+      for (PsiType eqBound : eqBounds) {
+        if (mySession.isProperType(eqBound)) {
+          continue;
+        }
+        addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
   }
@@ -247,10 +277,14 @@ public class InferenceIncorporationPhase {
   private void eqEq(List<PsiType> eqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound= eqBounds.get(i);
-      if (sBound == null) continue;
+      if (mySession.isProperType(sBound)) {
+        continue;
+      }
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
-        if (tBound == null) continue;
+        if (mySession.isProperType(tBound)) {
+          continue;
+        }
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
       }
     }
@@ -268,8 +302,10 @@ public class InferenceIncorporationPhase {
       public boolean process(Pair<PsiType, PsiType> pair) {
         final PsiType sType = pair.first;
         final PsiType tType = pair.second;
-        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-          addConstraint(new TypeEqualityConstraint(sType, tType));
+        if (!mySession.isProperType(sType) && !mySession.isProperType(tType)) {
+          if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+            addConstraint(new TypeEqualityConstraint(sType, tType));
+          }
         }
         return true;
       }
