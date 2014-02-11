@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
     }
 
     TemplateImpl template = ((LiveTemplateElement)element).getTemplate();
+    StringBuilder doc = new StringBuilder("<h2>").append(template.getKey()).append("</h2>");
     String description = template.getDescription();
-    if (StringUtil.isEmpty(description)) {
-      description = template.getTemplateText();
+    if (StringUtil.isNotEmpty(description)) {
+      doc.append("<pre>").append(StringUtil.escapeXml(description)).append("</pre><h2>template text</h2>");
     }
-    return "<h2>" + template.getKey() + "</h2>" +
-           "<pre>" + StringUtil.escapeXml(description) + "</pre>";
+    return doc.append("<pre>").append(StringUtil.escapeXml(template.getString())).append("</pre>").toString();
   }
 
   private static class LiveTemplateElement extends FakePsiElement {
