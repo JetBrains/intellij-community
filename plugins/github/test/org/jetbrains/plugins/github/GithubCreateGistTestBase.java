@@ -15,13 +15,16 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.DateFormatUtil;
+import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.test.GithubTest;
+import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -128,5 +131,14 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void checkEquals(@NotNull List<FileContent> expected, @NotNull List<FileContent> actual) {
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
+  }
+
+  protected void registerDefaultLoginDialogHandler() {
+    myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
+      @Override
+      public int handleDialog(GithubLoginDialog dialog) {
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
   }
 }

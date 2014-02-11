@@ -15,23 +15,25 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
+import java.io.IOException;
+
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubJsonException extends GithubConfusingException {
-  public GithubJsonException() {
+public class GithubOperationCanceledException extends IOException {
+  public GithubOperationCanceledException() {
     super();
   }
 
-  public GithubJsonException(String message) {
+  public GithubOperationCanceledException(String message) {
     super(message);
   }
 
-  public GithubJsonException(String message, Throwable cause) {
+  public GithubOperationCanceledException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public GithubJsonException(Throwable cause) {
+  public GithubOperationCanceledException(Throwable cause) {
     super(cause);
   }
 }
