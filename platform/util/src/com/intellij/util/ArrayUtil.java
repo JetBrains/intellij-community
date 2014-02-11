@@ -492,12 +492,9 @@ public class ArrayUtil extends ArrayUtilRt {
     return true;
   }
 
-  public static <T> boolean equals(T[] a1, T[] a2, @NotNull Equality<? super T> comparator) {
+  public static <T> boolean equals(@NotNull T[] a1, @NotNull T[] a2, @NotNull Equality<? super T> comparator) {
     if (a1 == a2) {
       return true;
-    }
-    if (a1 == null || a2 == null) {
-      return false;
     }
 
     int length = a2.length;
@@ -513,14 +510,10 @@ public class ArrayUtil extends ArrayUtilRt {
     return true;
   }
 
-  public static <T> boolean equals(T[] a1, T[] a2, @NotNull Comparator<? super T> comparator) {
+  public static <T> boolean equals(@NotNull T[] a1, @NotNull T[] a2, @NotNull Comparator<? super T> comparator) {
     if (a1 == a2) {
       return true;
     }
-    if (a1 == null || a2 == null) {
-      return false;
-    }
-
     int length = a2.length;
     if (a1.length != length) {
       return false;
