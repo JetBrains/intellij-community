@@ -87,7 +87,7 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
         GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(externalProjectPath);
         if (settings == null || settings.getDistributionType() == null) return null;
 
-        final Set<String> gradleSdkLibraries = ContainerUtil.newHashSet();
+        final Set<String> gradleSdkLibraries = ContainerUtil.newLinkedHashSet();
         File gradleHome =
           gradleInstallationManager.getGradleHome(settings.getDistributionType(), externalProjectPath, settings.getGradleHome());
         if (gradleHome != null && gradleHome.isDirectory()) {
