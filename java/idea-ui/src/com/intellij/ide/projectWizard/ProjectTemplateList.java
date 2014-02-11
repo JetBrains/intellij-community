@@ -25,8 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.*;
+import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,7 +99,7 @@ public class ProjectTemplateList extends JPanel {
       }
     };
     myList.setCellRenderer(renderer);
-
+    myList.setSelectionModel(new SingleSelectionModel());
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
