@@ -37,7 +37,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
-  public void testParametersAreNonnullByDefault() {
+  public void testHonorSuperParameterDefault() {
     myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
     myFixture.addClass("package javax.annotation; public @interface Nullable {}");
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
@@ -45,8 +45,26 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.addClass("import javax.annotation.*; package foo; public interface NullableFunction { void fun(@Nullable Object o); }");
     myFixture.addClass("package foo; public interface AnyFunction { void fun(Object o); }");
 
-    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
+  }
+
+  public void testHonorThisParameterDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testHonorParameterDefaultInSetters() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
   }
 
 }
