@@ -13,36 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.compiled.ClassFileDecompilers;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassFileDecompiler implements BinaryFileDecompiler {
+/** @deprecated temporary solution, to remove in IDEA 14 */
+@SuppressWarnings("deprecation")
+public class DeprecatedClassFileDecompiler implements ClassFileDecompiler.PlatformDecompiler {
   @Override
-  @NotNull
   public CharSequence decompile(@NotNull VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
-    if (decompiler instanceof ClassFileDecompilers.Full) {
-      PsiManager manager = PsiManager.getInstance(ProjectManager.getInstance().getDefaultProject());
-      return ((ClassFileDecompilers.Full)decompiler).createFileViewProvider(file, manager, true).getContents();
-    }
-
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length > 0) {
       Project project = projects[0];
-      //noinspection deprecation
       for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
         if (processor.isApplicable(project, file)) {
           return processor.obtainFileText(project, file);
@@ -50,6 +37,6 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
       }
     }
 
-    return ClsFileImpl.decompile(file);
+    return null;
   }
 }

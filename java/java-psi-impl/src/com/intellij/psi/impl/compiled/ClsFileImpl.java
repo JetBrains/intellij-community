@@ -35,7 +35,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
@@ -72,6 +71,8 @@ import static com.intellij.reference.SoftReference.dereference;
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
+
+  private static final ThreadLocal<PsiClassHolderFileStub<?>> ourStubToProcess = new ThreadLocal<PsiClassHolderFileStub<?>>();
 
   /** NOTE: you absolutely MUST NOT hold PsiLock under the mirror lock */
   private final Object myMirrorLock = new Object();
@@ -317,7 +318,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         mirrorTreeElement = myMirrorFileElement;
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
-          CharSequence mirrorText = decompile(file, getStub());
+          CharSequence mirrorText = decompileInternal(file);
 
           String ext = JavaFileType.INSTANCE.getDefaultExtension();
           PsiClass[] classes = getClasses();
@@ -496,30 +497,36 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   // default decompiler implementation
 
-  @NotNull
-  public static CharSequence decompile(@NotNull VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
-    if (decompiler instanceof ClassFileDecompilers.Light) {
-      return ((ClassFileDecompilers.Light)decompiler).getText(file);
-    }
-
-    PsiJavaFileStub stub = null;
+  private CharSequence decompileInternal(VirtualFile file) {
+    ourStubToProcess.set(getStub());
     try {
-      stub = buildFileStub(file, file.contentsToByteArray());
+      return ClassFileDecompiler.decompileText(file);
     }
-    catch (Exception e) {
-      LOG.warn(e);
+    finally {
+      ourStubToProcess.set(null);
     }
-    return stub == null ? "" : decompile(file, stub);
   }
 
   @NotNull
-  private static CharSequence decompile(@NotNull VirtualFile file, @NotNull PsiClassHolderFileStub<?> stub) {
-    PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
+  public static CharSequence decompile(@NotNull VirtualFile file) {
+    PsiClassHolderFileStub<?> stub = ourStubToProcess.get();
+    if (stub == null) {
+      try {
+        stub = buildFileStub(file, file.contentsToByteArray());
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
+    if (stub == null) {
+      return "";
+    }
 
+    PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
     ClsFileImpl psi = new ClsFileImpl(new ClassFileViewProvider(manager, file), stub);
     if (stub.getPsi() == null) {
-      ((PsiJavaFileStubImpl)stub).setPsi(psi);
+      @SuppressWarnings("unchecked") PsiFileStubImpl<PsiFile> impl = (PsiFileStubImpl)stub;
+      impl.setPsi(psi);
     }
 
     StringBuilder buffer = new StringBuilder();
