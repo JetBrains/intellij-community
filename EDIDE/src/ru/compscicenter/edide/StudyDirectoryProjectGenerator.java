@@ -82,6 +82,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             public void run() {
                 try {
                     TaskManager taskManager = TaskManager.getInstance();
+                    taskManager.setCurrentTask(0);
                     int tasksNumber = taskManager.getTasksNum();
                     for (int task = 0; task < tasksNumber; task++) {
                         VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
