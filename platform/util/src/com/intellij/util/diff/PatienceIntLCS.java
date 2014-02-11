@@ -83,7 +83,7 @@ public class PatienceIntLCS {
           new PatienceIntLCS(myFirst, mySecond, start1, matching[0][0], start2, matching[1][0], myChanges1, myChanges2);
         patienceDiff.execute();
 
-        for (int i = 1; i < matching[0].length - 1; i++) {
+        for (int i = 1; i < matching[0].length; i++) {
           s1 = matching[0][i - 1] + 1;
           s2 = matching[1][i - 1] + 1;
 

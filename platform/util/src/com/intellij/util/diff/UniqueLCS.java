@@ -18,8 +18,6 @@ package com.intellij.util.diff;
 import gnu.trove.TIntIntHashMap;
 
 public class UniqueLCS {
-  private static final int NON_UNIQUE_FLAG = 1 << 31;
-
   private final int[] myFirst;
   private final int[] mySecond;
 
@@ -27,6 +25,10 @@ public class UniqueLCS {
   private final int myStart2;
   private final int myCount1;
   private final int myCount2;
+
+  public UniqueLCS(int[] first, int[] second) {
+    this(first, second, 0, first.length, 0, second.length);
+  }
 
   public UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
     myFirst = first;
@@ -47,12 +49,12 @@ public class UniqueLCS {
       int index = myStart1 + i;
       int val = map.get(myFirst[index]);
 
-      if ((val & NON_UNIQUE_FLAG) != 0) continue;
+      if (val == -1) continue;
       if (val == 0) {
         map.put(myFirst[index], i + 1);
       }
       else {
-        map.put(myFirst[index], NON_UNIQUE_FLAG);
+        map.put(myFirst[index], -1);
       }
     }
 
@@ -61,14 +63,14 @@ public class UniqueLCS {
       int index = myStart2 + i;
       int val = map.get(mySecond[index]);
 
-      if (val == 0 || (val & NON_UNIQUE_FLAG) != 0) continue;
+      if (val == 0 || val == -1) continue;
       if (match[val - 1] == 0) {
         match[val - 1] = i + 1;
         count++;
       }
       else {
         match[val - 1] = 0;
-        map.put(mySecond[index], NON_UNIQUE_FLAG);
+        map.put(mySecond[index], -1);
         count--;
       }
     }
