@@ -325,9 +325,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass != null) {
-      final PsiMethod originalMethod = ((PsiClass)containingClass.getOriginalElement()).findMethodBySignature(this, false);
-      if (originalMethod != null) {
-        return originalMethod;
+      PsiElement original = containingClass.getOriginalElement();
+      if (original != containingClass) {
+        final PsiMethod originalMethod = ((PsiClass)original).findMethodBySignature(this, false);
+        if (originalMethod != null) {
+          return originalMethod;
+        }
       }
     }
     return this;

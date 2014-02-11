@@ -23,6 +23,8 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +62,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
   @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
   @Nullable private final Document                      myDocument;
+
+  @Nullable private Set<PsiField> classFields;
 
   public JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                                 @Nullable Document document,
@@ -164,26 +168,35 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     if (entry == null)
       return;
 
-    PsiExpression fieldInitializer = field.getInitializer();
-    processEntry(entry, field, fieldInitializer);
+    processEntry(entry, field, field.getInitializer());
     myInfo.onFieldEntryCreated(field, entry);
 
-    if (fieldInitializer != null) {
-      List<PsiField> referencedFields = getReferencedFields(fieldInitializer);
-      for (PsiField referencedField : referencedFields) {
-        myInfo.registerFieldInitializationDependency(field, referencedField);
-      }
+    List<PsiField> referencedFields = getReferencedFields(field);
+    for (PsiField referencedField : referencedFields) {
+      myInfo.registerFieldInitializationDependency(field, referencedField);
     }
   }
 
   @NotNull
-  private List<PsiField> getReferencedFields(@NotNull PsiExpression expression) {
+  private List<PsiField> getReferencedFields(@NotNull PsiField field) {
     final List<PsiField> referencedElements = new ArrayList<PsiField>();
-    expression.accept(new JavaRecursiveElementVisitor() {
+
+    PsiExpression fieldInitializer = field.getInitializer();
+    PsiClass containingClass = field.getContainingClass();
+
+    if (fieldInitializer == null || containingClass == null) {
+      return referencedElements;
+    }
+
+    if (classFields == null) {
+      classFields = ContainerUtil.map2Set(containingClass.getFields(), new Function.Self<PsiField, PsiField>());
+    }
+
+    fieldInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
-        if (ref instanceof PsiField) {
+        if (ref instanceof PsiField && classFields.contains(ref)) {
           referencedElements.add((PsiField)ref);
         }
       }

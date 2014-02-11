@@ -1,10 +1,13 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -22,9 +25,11 @@ public class GithubLoginDialog extends DialogWrapper {
 
   protected final GithubLoginPanel myGithubLoginPanel;
   protected final GithubSettings mySettings;
+  protected final Project myProject;
 
   public GithubLoginDialog(@Nullable final Project project) {
     super(project, true);
+    myProject = project;
     myGithubLoginPanel = new GithubLoginPanel(this);
 
     mySettings = GithubSettings.getInstance();
@@ -68,7 +73,13 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      GithubUtil.checkAuthData(auth);
+      GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
+        @NotNull
+        @Override
+        public GithubUser convert(ProgressIndicator indicator) throws IOException {
+          return GithubUtil.checkAuthData(auth);
+        }
+      });
 
       saveCredentials(auth);
       if (mySettings.isSavePasswordMakesSense()) {

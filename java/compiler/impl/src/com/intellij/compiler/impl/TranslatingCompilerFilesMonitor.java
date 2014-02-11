@@ -89,6 +89,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private final Object myDataLock = new Object();
 
   private final TIntHashSet mySuspendedProjects = new TIntHashSet(); // projectId for all projects that should not be monitored
+  private volatile int myWatchedProjectsCount;
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
@@ -195,6 +196,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         return;
       }
       FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
+      --myWatchedProjectsCount;
       // cleanup internal structures to free memory
       mySourcesToRecompile.remove(projectId);
       myOutputsToDelete.remove(projectId);
@@ -216,6 +218,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public void watchProject(Project project) {
     synchronized (myDataLock) {
       mySuspendedProjects.remove(getProjectId(project));
+      ++myWatchedProjectsCount;
     }
   }
 
@@ -1473,6 +1476,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
+      if (myWatchedProjectsCount == 0) return;
       final VirtualFile eventFile = event.getFile();
       if ((LOG.isDebugEnabled() && eventFile.isDirectory()) || ourDebugMode) {
         final String message = "Processing file deletion: " + eventFile.getPresentableUrl();
@@ -1612,6 +1616,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
+      if (myWatchedProjectsCount == 0) return;
       final Ref<Boolean> isInContent = Ref.create(false);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list

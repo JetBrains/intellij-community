@@ -50,11 +50,13 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   private JPanel myEmptyPanel;
   private MutableTrustManager myTrustManager;
 
-  private Tree myTree = new Tree();
-  private CertificateTreeBuilder myTreeBuilder = new CertificateTreeBuilder(myTree);
+  private Tree myTree;
+  private CertificateTreeBuilder myTreeBuilder;
   private Set<X509Certificate> myCertificates = new HashSet<X509Certificate>();
 
-  public CertificateConfigurable() {
+  private void initializeUI() {
+    myTree = new Tree();
+    myTreeBuilder = new CertificateTreeBuilder(myTree);
 
     // not fully functional by now
     myCheckHostname.setVisible(false);
@@ -167,6 +169,9 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Nullable
   @Override
   public JComponent createComponent() {
+    // lazily initialized to ensure that disposeUIResources() will be called, if
+    // tree builder was created
+    initializeUI();
     return myRootPanel;
   }
 
@@ -240,7 +245,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (!myCertificates.contains(certificate)) {
+        if (myTreeBuilder != null && !myCertificates.contains(certificate)) {
           myCertificates.add(certificate);
           myTreeBuilder.addCertificate(certificate);
           addCertificatePanel(certificate);
@@ -253,7 +258,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   public void certificateRemoved(final X509Certificate certificate) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        if (myCertificates.contains(certificate)) {
+        if (myTreeBuilder != null && myCertificates.contains(certificate)) {
           myCertificates.remove(certificate);
           myTreeBuilder.removeCertificate(certificate);
         }

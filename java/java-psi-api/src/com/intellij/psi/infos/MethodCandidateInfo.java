@@ -104,26 +104,26 @@ public class MethodCandidateInfo extends CandidateInfo{
       return getApplicabilityLevel();
     }
 
-    final PsiMethod method = getElement();
-    if (method != null && method.hasTypeParameters() || myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
-      @ApplicabilityLevelConstant int level;
-      if (myArgumentTypes == null) {
-        return ApplicabilityLevel.NOT_APPLICABLE;
-      }
-      else {
-        final PsiSubstitutor substitutor = getSubstitutor(false);
-        Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
-          @Override
-          public Integer compute() {
-            return PsiUtil.getApplicabilityLevel(getElement(), substitutor, myArgumentTypes, myLanguageLevel);
-          }
-        });
-        level = boxedLevel != null ? boxedLevel : getApplicabilityLevel();
-      }
-      if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) level = ApplicabilityLevel.NOT_APPLICABLE;
-      return level;
+    if (myArgumentTypes == null) {
+      return ApplicabilityLevel.NOT_APPLICABLE;
     }
-    return getApplicabilityLevelInner();
+
+    @ApplicabilityLevelConstant int level;
+    Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
+      @Override
+      public Integer compute() {
+        
+        final PsiMethod method = getElement();
+        if (method != null && method.hasTypeParameters() || myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
+          return PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(false), myArgumentTypes, myLanguageLevel);
+        }
+        return getApplicabilityLevelInner();
+      }
+
+    });
+    level = boxedLevel != null ? boxedLevel : getApplicabilityLevel();
+    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) level = ApplicabilityLevel.NOT_APPLICABLE;
+    return level;
   }
 
   public PsiSubstitutor getSiteSubstitutor() {

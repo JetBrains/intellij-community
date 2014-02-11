@@ -117,20 +117,24 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
           thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
         }
       } else {
+
+        final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)myExpression);
+        final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+        final PsiMethod method;
         if (((PsiMethodReferenceExpression)myExpression).isExact()) {
           final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).resolve();
           if (resolve instanceof PsiMethod) {
-            for (PsiClassType type : ((PsiMethod)resolve).getThrowsList().getReferencedTypes()) {
-              if (!ExceptionUtil.isUncheckedException(type)) {
-                thrownTypes.add(type);
-              }
-            }
+            method = (PsiMethod)resolve;
+          } else {
+            method = null;
           }
         }
         else {
-          PsiSubstitutor psiSubstitutor =
-            PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)myExpression).getSubstitutor();
-          for (PsiType type : interfaceMethod.getThrowsList().getReferencedTypes()) {
+          method = interfaceMethod;
+        }
+
+        if (method != null) {
+          for (PsiType type : method.getThrowsList().getReferencedTypes()) {
             type = psiSubstitutor.substitute(type);
             if (type instanceof PsiClassType && !ExceptionUtil.isUncheckedException((PsiClassType)type)) {
               thrownTypes.add(type);

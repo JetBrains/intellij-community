@@ -52,6 +52,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testSlotsAsExternal() {
+    doTest();
+  }
+
   public void testImportExceptImportError() {
     doTest();
   }

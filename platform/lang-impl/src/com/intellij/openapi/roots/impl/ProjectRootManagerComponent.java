@@ -36,8 +36,11 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +57,11 @@ import java.util.Set;
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
-
+  private static final boolean ourScheduleCacheUpdateInDumbMode = SystemProperties.getBooleanProperty(
+    "idea.schedule.cache.update.in.dumb.mode", ApplicationManager.getApplication().isInternal());
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
+  private boolean myLargeVfsUpdateDetected;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
@@ -83,10 +88,22 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       }
     });
 
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {
+        myLargeVfsUpdateDetected |= DirectoryIndexImpl.isLargeVfsChange(events);
+      }
+    });
+
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
       @Override
+      public void beforeRefreshStart(boolean asynchronous) {
+        myLargeVfsUpdateDetected = false;
+      }
+
+      @Override
       public void afterRefreshFinish(boolean asynchronous) {
-        doUpdateOnRefresh();
+        doUpdateOnRefresh(myLargeVfsUpdateDetected);
       }
     }, project);
 
@@ -168,11 +185,20 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     getBatchSession(fileTypes).rootsChanged();
   }
 
-  private void doUpdateOnRefresh() {
+  private void doUpdateOnRefresh(boolean largeChange) {
     if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
       return; // in test mode suppress addition to a queue unless project is properly initialized
     }
-    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
+    if (myRefreshCacheUpdaters.size() == 0) {
+      return; // default project
+    }
+    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    if (largeChange && ourScheduleCacheUpdateInDumbMode) {
+      dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
+    }
+    else {
+      dumbService.queueCacheUpdate(myRefreshCacheUpdaters);
+    }
   }
 
   private boolean affectsRoots(VirtualFilePointer[] pointers) {
@@ -279,7 +305,13 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   @Override
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
-    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRootsChangeUpdaters);
+
+    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    if (ourScheduleCacheUpdateInDumbMode) {
+      dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
+    } else {
+      dumbService.queueCacheUpdate(myRootsChangeUpdaters);
+    }
   }
 
   private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {

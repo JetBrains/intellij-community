@@ -112,6 +112,8 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongLogin() throws Throwable {
+    registerDefaultLoginDialogHandler();
+
     List<FileContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();
@@ -123,6 +125,8 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongPassword() throws Throwable {
+    registerDefaultLoginDialogHandler();
+
     List<FileContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();

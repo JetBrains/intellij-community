@@ -29,7 +29,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -41,7 +40,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
@@ -56,7 +55,6 @@ import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
@@ -78,7 +76,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
-  public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
@@ -106,7 +103,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private CommitExecutor myCommitAndPushExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  private HgCurrentBranchStatusUpdater myHgCurrentBranchStatusUpdater;
   private HgStatusWidget myStatusWidget;
   private HgIncomingOutgoingWidget myIncomingWidget;
   private HgIncomingOutgoingWidget myOutgoingWidget;
@@ -228,7 +224,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         final S sParent = in.get(j);
         final VirtualFile parent = convertor.convert(sParent);
         // if the parent is an ancestor of the child and that they share common root, the child is removed
-        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
           //noinspection AssignmentToForLoopParameter
           --i;
@@ -291,9 +287,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
                                 projectSettings);
     myHgRemoteStatusUpdater.activate();
 
-    myHgCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(this, myStatusWidget.getCurrentBranchStatus());
-    myHgCurrentBranchStatusUpdater.activate();
-
     messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
@@ -328,23 +321,19 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void deactivate() {
-    if (null != myHgRemoteStatusUpdater) {
+    if (myHgRemoteStatusUpdater != null) {
       myHgRemoteStatusUpdater.deactivate();
       myHgRemoteStatusUpdater = null;
     }
-    if (null != myHgCurrentBranchStatusUpdater) {
-      myHgCurrentBranchStatusUpdater.deactivate();
-      myHgCurrentBranchStatusUpdater = null;
-    }
-    if (null != myStatusWidget) {
+    if (myStatusWidget != null) {
       myStatusWidget.deactivate();
       myStatusWidget = null;
     }
-    if (null != myIncomingWidget) {
+    if (myIncomingWidget != null) {
       myIncomingWidget.deactivate();
       myIncomingWidget = null;
     }
-    if (null != myOutgoingWidget) {
+    if (myOutgoingWidget != null) {
       myOutgoingWidget.deactivate();
       myOutgoingWidget = null;
     }
@@ -370,15 +359,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       return null;
     }
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
-  }
-
-  private static String ourTestHgExecutablePath; // path to hg in test mode
-
-  /**
-   * Sets the path to hg executable used in the test mode.
-   */
-  public static void setTestHgExecutablePath(String path) {
-    ourTestHgExecutablePath = path;
   }
 
   @NotNull

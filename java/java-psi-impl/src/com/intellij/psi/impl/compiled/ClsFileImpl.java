@@ -72,8 +72,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
-  private static final ThreadLocal<PsiClassHolderFileStub<?>> ourStubToProcess = new ThreadLocal<PsiClassHolderFileStub<?>>();
-
   /** NOTE: you absolutely MUST NOT hold PsiLock under the mirror lock */
   private final Object myMirrorLock = new Object();
   private final Object myStubLock = new Object();
@@ -318,7 +316,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         mirrorTreeElement = myMirrorFileElement;
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
-          CharSequence mirrorText = decompileInternal(file);
+          CharSequence mirrorText = ClassFileDecompiler.decompileText(file);
 
           String ext = JavaFileType.INSTANCE.getDefaultExtension();
           PsiClass[] classes = getClasses();
@@ -497,26 +495,20 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   // default decompiler implementation
 
-  private CharSequence decompileInternal(VirtualFile file) {
-    ourStubToProcess.set(getStub());
-    try {
-      return ClassFileDecompiler.decompileText(file);
-    }
-    finally {
-      ourStubToProcess.set(null);
-    }
+  /** @deprecated use {@link #decompile(VirtualFile)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
+  public static String decompile(@NotNull PsiManager manager, @NotNull VirtualFile file) {
+    return decompile(file).toString();
   }
 
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
-    PsiClassHolderFileStub<?> stub = ourStubToProcess.get();
-    if (stub == null) {
-      try {
-        stub = buildFileStub(file, file.contentsToByteArray());
-      }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
+    PsiClassHolderFileStub<?> stub = null;
+    try {
+      stub = buildFileStub(file, file.contentsToByteArray());
+    }
+    catch (Exception e) {
+      LOG.warn(e);
     }
     if (stub == null) {
       return "";
