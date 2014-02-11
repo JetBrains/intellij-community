@@ -24,6 +24,7 @@ class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
 
   private List<StdArrangementMatchRule> defaultFieldsArrangement = [
     rule(CLASS),
+    rule(FIELD, STATIC, FINAL),
     rule(FIELD, PUBLIC),
     rule(FIELD, PROTECTED),
     rule(FIELD, PACKAGE_PRIVATE),
@@ -251,6 +252,52 @@ public class Alfa {
 ''',
            rules: defaultFieldsArrangement
     );
+  }
+
+  void "test field references work ok with enums"() {
+    doTest(
+      initial: '''\
+public class Q {
+    private static final Q A = new Q(Q.E.EC);
+    private static final Q B = new Q(Q.E.EB);
+    private static final Q C = new Q(Q.E.EA);
+    private static final Q D = new Q(Q.E.EA);
+    private final E e;
+    private static final int seven = 7;
+
+    private Q(final Q.E e) {
+        this.e = e;
+    }
+
+    public static enum E {
+        EA,
+        EB,
+        EC,
+    }
+}
+''',
+      expected: '''\
+public class Q {
+    private static final Q A = new Q(Q.E.EC);
+    private static final Q B = new Q(Q.E.EB);
+    private static final Q C = new Q(Q.E.EA);
+    private static final Q D = new Q(Q.E.EA);
+    private static final int seven = 7;
+    private final E e;
+
+    private Q(final Q.E e) {
+        this.e = e;
+    }
+
+    public static enum E {
+        EA,
+        EB,
+        EC,
+    }
+}
+''',
+      rules: defaultFieldsArrangement
+    )
   }
 
 }
