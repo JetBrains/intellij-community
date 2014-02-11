@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 /**
  * @author dyoma
@@ -52,12 +54,30 @@ public class Diff {
     Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
-    Reindexer reindexer = new Reindexer();
+    Reindexer reindexer = new Reindexer(); // discard unique elements, that have no chance to be matched
     int[][] discarded = reindexer.discardUnique(ints1, ints2);
-    IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-    intLCS.execute();
     ChangeBuilder builder = new ChangeBuilder(startShift);
-    reindexer.reindex(intLCS.getChanges(), builder);
+
+    if (discarded[0].length == 0 && discarded[1].length == 0) {
+      if (ints1.length !=0 || ints2.length != 0) {
+        builder.addChange(ints1.length, ints2.length);
+      }
+      return builder.getFirstChange();
+    }
+
+    BitSet[] changes;
+    if (Registry.is("diff.patience.alg")) {
+      PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
+      patienceIntLCS.execute();
+      changes = patienceIntLCS.getChanges();
+    }
+    else {
+      IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
+      intLCS.execute();
+      changes = intLCS.getChanges();
+    }
+
+    reindexer.reindex(changes, builder);
     return builder.getFirstChange();
   }
 
