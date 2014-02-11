@@ -396,7 +396,8 @@ public class SvnChangeList implements CommittedChangeList {
         if (revision == null) {
           continue;
         }
-        final boolean status = SVNNodeKind.DIR.equals(myRepository.checkPath(revision.getPath(), getRevision(idxData.second.booleanValue())));
+        final boolean status = SVNNodeKind.DIR
+          .equals(myRepository.checkPath(revision.getRelativePath(myRepositoryRoot), getRevision(idxData.second.booleanValue())));
         final Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision) sourceChange.getBeforeRevision(), status),
                                                   createRevision((SvnRepositoryContentRevision) sourceChange.getAfterRevision(), status));
         replacingChange.setIsReplaced(sourceChange.isIsReplaced());
@@ -409,9 +410,9 @@ public class SvnChangeList implements CommittedChangeList {
     @Nullable
     private SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
       return previousRevision == null ? null :
-             SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, previousRevision.getPath(),
-             new FilePathImpl(previousRevision.getFile().getIOFile(), isDir),
-             ((SvnRevisionNumber) previousRevision.getRevisionNumber()).getRevision().getNumber());
+             SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
+                                                 new FilePathImpl(previousRevision.getFile().getIOFile(), isDir),
+                                                 ((SvnRevisionNumber)previousRevision.getRevisionNumber()).getRevision().getNumber());
     }
 
     private void uploadDeletedRenamedChildren() throws SVNException {
@@ -421,10 +422,12 @@ public class SvnChangeList implements CommittedChangeList {
       final Set<Pair<Boolean, String>> duplicateControl = new HashSet<Pair<Boolean, String>>();
       for (Change change : myDetailedList) {
         if (change.getBeforeRevision() != null) {
-          duplicateControl.add(Pair.create(Boolean.TRUE, ((SvnRepositoryContentRevision)change.getBeforeRevision()).getPath()));
+          duplicateControl.add(Pair.create(Boolean.TRUE, ((SvnRepositoryContentRevision)change.getBeforeRevision()).getRelativePath(
+            myRepositoryRoot)));
         }
         if (change.getAfterRevision() != null) {
-          duplicateControl.add(Pair.create(Boolean.FALSE, ((SvnRepositoryContentRevision) change.getAfterRevision()).getPath()));
+          duplicateControl.add(Pair.create(Boolean.FALSE, ((SvnRepositoryContentRevision) change.getAfterRevision()).getRelativePath(
+            myRepositoryRoot)));
         }
       }
 
@@ -434,19 +437,19 @@ public class SvnChangeList implements CommittedChangeList {
         // directory statuses are already uploaded
         if ((change.getAfterRevision() == null) && (change.getBeforeRevision().getFile().isDirectory())) {
           final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) change.getBeforeRevision();
-          detailsOnly.addAll(getChildrenAsChanges(revision.getPath(), true, duplicateControl));
+          detailsOnly.addAll(getChildrenAsChanges(revision.getRelativePath(myRepositoryRoot), true, duplicateControl));
         } else if ((change.getBeforeRevision() == null) && (change.getAfterRevision().getFile().isDirectory())) {
           // look for renamed folders contents
           final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) change.getAfterRevision();
-          if (myCopiedAddedPaths.containsKey(revision.getPath())) {
-            detailsOnly.addAll(getChildrenAsChanges(revision.getPath(), false, duplicateControl));
+          if (myCopiedAddedPaths.containsKey(revision.getRelativePath(myRepositoryRoot))) {
+            detailsOnly.addAll(getChildrenAsChanges(revision.getRelativePath(myRepositoryRoot), false, duplicateControl));
           }
         } else if ((change.isIsReplaced() || change.isMoved() || change.isRenamed()) && change.getAfterRevision().getFile().isDirectory()) {
           final SvnRepositoryContentRevision beforeRevision = (SvnRepositoryContentRevision) change.getBeforeRevision();
-          detailsOnly.addAll(getChildrenAsChanges(beforeRevision.getPath(), true, duplicateControl));
+          detailsOnly.addAll(getChildrenAsChanges(beforeRevision.getRelativePath(myRepositoryRoot), true, duplicateControl));
 
           final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) change.getAfterRevision();
-          detailsOnly.addAll(getChildrenAsChanges(revision.getPath(), false, duplicateControl));
+          detailsOnly.addAll(getChildrenAsChanges(revision.getRelativePath(myRepositoryRoot), false, duplicateControl));
         }
       }
 
