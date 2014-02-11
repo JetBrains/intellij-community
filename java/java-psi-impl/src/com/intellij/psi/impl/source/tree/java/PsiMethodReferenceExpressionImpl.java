@@ -175,9 +175,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               }
             }
           } else if (qualifier instanceof PsiReferenceExpression) {
-            final PsiReferenceParameterList parameterList = ((PsiReferenceExpression)qualifier).getParameterList();
-            if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
-              return null;
+            final PsiReferenceExpression expression = (PsiReferenceExpression)qualifier;
+            if (qualifierResolveResult.isReferenceTypeQualified()) {
+              final PsiReferenceParameterList parameterList = expression.getParameterList();
+              if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
+                return null;
+              }
             }
           }
         }
