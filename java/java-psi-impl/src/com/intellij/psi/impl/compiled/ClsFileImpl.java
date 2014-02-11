@@ -507,6 +507,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  /** @deprecated use {@link #decompile(VirtualFile)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
+  public static String decompile(@NotNull PsiManager manager, @NotNull VirtualFile file) {
+    return decompile(file).toString();
+  }
+
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
     PsiClassHolderFileStub<?> stub = ourStubToProcess.get();
