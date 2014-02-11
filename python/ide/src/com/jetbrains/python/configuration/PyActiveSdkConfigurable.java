@@ -63,6 +63,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private final Project myProject;
   @Nullable private final Module myModule;
   private MyListener myListener;
+  boolean mySdkAdded = false;
 
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
@@ -111,15 +112,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                                                 @Override
                                                                 public void consume(Sdk sdk) {
                                                                   if (sdk == null) return;
-                                                                  final Sdk existedSdk = myProjectSdksModel.findSdk(sdk.getName());
-                                                                  if (existedSdk == null) {
-                                                                    myProjectSdksModel.addSdk(sdk);
-                                                                  }
-                                                                  myInterpreterList.setSelectedSdk(sdk);
-
+                                                                  mySdkAdded = true;
+                                                                  updateSdkList(false);
                                                                   mySdkCombo.getModel().setSelectedItem(sdk);
-                                                                  myPackagesPanel.updatePackages(
-                                                                    new PyPackageManagementService(myProject, sdk));
+                                                                  myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
                                                                 }
                                                               }
                                           );
@@ -219,7 +215,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public boolean isModified() {
     final Sdk sdk = getSdk();
     final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
-    return selectedItem instanceof PyDetectedSdk || sdk != myProjectSdksModel.findSdk(selectedItem);
+    return mySdkAdded || selectedItem instanceof PyDetectedSdk || sdk != myProjectSdksModel.findSdk(selectedItem);
   }
 
   @Nullable
@@ -243,7 +239,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
       }, ModalityState.any());
     }
-    myProjectSdksModel.apply();
+    if (mySdkAdded) {
+      myProjectSdksModel.addSdk(item);
+      myProjectSdksModel.apply(null, true);
+    }
     final Sdk selectedSdk = myProjectSdksModel.findSdk(item);
     if (myModule == null) {
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
@@ -258,14 +257,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       ModuleRootModificationUtil.setModuleSdk(myModule, selectedSdk);
     }
     final Sdk prevSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(myProject).setProjectSdk(selectedSdk);
-      }
-    });
-
-    myProjectSdksModel.setProjectSdk(selectedSdk);
 
     // update string literals if different LanguageLevel was selected
     if (prevSdk != null && selectedSdk != null) {
