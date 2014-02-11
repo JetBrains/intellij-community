@@ -50,9 +50,10 @@ import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
+
+import static org.zmlx.hg4idea.util.HgUtil.*;
 
 /**
  * @author Nadya Zabrodina
@@ -77,7 +78,7 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Bookmarks");
-    List<String> bookmarkNames = HgUtil.getNamesWithoutHashes(myRepository.getBookmarks());
+    List<String> bookmarkNames = getNamesWithoutHashes(myRepository.getBookmarks());
     String currentBookmark = myRepository.getCurrentBookmark();
     Collections.sort(bookmarkNames);
     for (String bookmark : bookmarkNames) {
@@ -109,7 +110,7 @@ public class HgBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = HgUtil.getNewBranchNameFromUser(myProject, "Create New Branch");
+      final String name = getNewBranchNameFromUser(myProject, "Create New Branch");
       if (name == null) {
         return;
       }
@@ -117,7 +118,7 @@ public class HgBranchPopupActions {
         new HgBranchCreateCommand(myProject, myPreselectedRepo, name).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
-            myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+            getRepositoryManager(myProject).updateRepository(myPreselectedRepo);
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(myProject)
                 .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
@@ -163,7 +164,7 @@ public class HgBranchPopupActions {
                                       bookmarkDialog.isActive()).execute(new HgCommandResultHandler() {
             @Override
             public void process(@Nullable HgCommandResult result) {
-              myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+              getRepositoryManager(myProject).updateRepository(myPreselectedRepo);
               if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
                 new HgCommandResultNotifier(myProject)
                   .notifyError(result, "Creation failed", "Bookmark creation [" + name + "] failed");
