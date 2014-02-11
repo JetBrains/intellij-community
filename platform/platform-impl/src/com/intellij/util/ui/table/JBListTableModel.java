@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.util.ui.table;
 
 import com.intellij.util.ui.EditableModel;
 
+import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -28,6 +31,19 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
 
   public JBListTableModel(TableModel model) {
     myModel = model;
+    model.addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        //notify the model only after all listeners of the internal model have been notified
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            fireTableDataChanged();
+          }
+        });
+      }
+    });
   }
 
   @Override
