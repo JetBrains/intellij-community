@@ -4,15 +4,6 @@ import datetime
 
 from tcmessages import TeamcityServiceMessages
 
-class StudyTestMessages(TeamcityServiceMessages):
-    def testFailed(self, testName, message='', details='', expected='', actual=''):
-        if self.prepend_linebreak: self.output.write("\n")
-        self.output.write("Test " + testName + " falls")
-
-    def testError(self, testName, message='', details='', expected='', actual=''):
-        if self.prepend_linebreak: self.output.write("\n")
-        self.output.write("Test " + testName + " make an error")
-
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 
 def strclass(cls):
@@ -48,7 +39,7 @@ class StudyTestResult(TestResult):
     for arg, value in kwargs.items():
       setattr(self, arg, value)
     self.output = stream
-    self.messages = StudyTestMessages(self.output, prepend_linebreak=True)
+    self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
     self.messages.testMatrixEntered()
     self.current_suite = None
 
