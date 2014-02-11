@@ -145,7 +145,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           dialog.show();
           return;
         }
-        if (!PySdkListCellRenderer.SEPARATOR.equals(item.toString()))
+        if (!PySdkListCellRenderer.SEPARATOR.equals(item))
           super.setSelectedItem(item);
       }
     };
