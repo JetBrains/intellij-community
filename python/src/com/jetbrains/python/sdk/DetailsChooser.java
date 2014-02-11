@@ -138,16 +138,16 @@ public class DetailsChooser extends BaseListPopupStep<String> {
     final CreateVirtualEnvDialog dialog;
     final List<Sdk> allSdks = Arrays.asList(myExistingSdks);
     if (myProject != null) {
-      dialog = new CreateVirtualEnvDialog(myProject, false, allSdks, null);
+      dialog = new CreateVirtualEnvDialog(myProject, allSdks, null);
     }
     else {
-      dialog = new CreateVirtualEnvDialog(myOwnerComponent, false, allSdks, null);
+      dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks, null);
     }
     dialog.show();
     if (dialog.isOK()) {
       dialog.createVirtualEnv(allSdks, new CreateVirtualEnvDialog.VirtualEnvCallback() {
         @Override
-        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject, boolean setAsProjectInterpreter) {
+        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
           myCallback.consume(sdk);
         }
       });

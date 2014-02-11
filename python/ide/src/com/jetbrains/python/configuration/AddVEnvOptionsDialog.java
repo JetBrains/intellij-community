@@ -25,7 +25,6 @@ import java.awt.*;
  * @author yole
  */
 public class AddVEnvOptionsDialog extends DialogWrapper {
-  private JBCheckBox myUseForThisProjectJBCheckBox;
   private JBCheckBox myMakeAvailableToAllJBCheckBox;
   private JPanel myMainPanel;
 
@@ -38,10 +37,6 @@ public class AddVEnvOptionsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
-  }
-
-  public boolean useForThisProject() {
-    return myUseForThisProjectJBCheckBox.isSelected();
   }
 
   public boolean makeAvailableToAll() {
