@@ -36,9 +36,7 @@ final class LinkedDiffPaths {
     myMaxY = maxY-1;
   }
 
-  public BitSet[] getChanges() {
-    final BitSet[] ret = new BitSet[]{new BitSet(myMaxX + 1), new BitSet(myMaxY + 1)};
-
+  public void applyChanges(final int start1, final int start2, final BitSet changes1, final BitSet changes2) {
     decodePath(new LCSBuilder() {
       int x = myMaxX + 1;
       int y = myMaxY + 1;
@@ -52,16 +50,15 @@ final class LinkedDiffPaths {
       @Override
       public void addChange(int first, int second) {
         if (first > 0) {
-          ret[0].set(x - first, x);
+          changes1.set(start1 + x - first, start1 + x);
           x -= first;
         }
         if (second > 0) {
-          ret[1].set(y - second, y);
+          changes2.set(start2 + y - second, start2 + y);
           y -= second;
         }
       }
     });
-    return ret;
   }
 
   /**
