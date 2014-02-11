@@ -57,7 +57,7 @@ public class Diff {
     IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
     intLCS.execute();
     ChangeBuilder builder = new ChangeBuilder(startShift);
-    reindexer.reindex(intLCS.getPaths(), builder);
+    reindexer.reindex(intLCS.getPaths().getChanges(), builder);
     return builder.getFirstChange();
   }
 

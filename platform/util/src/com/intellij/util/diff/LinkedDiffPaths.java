@@ -15,6 +15,8 @@
  */
 package com.intellij.util.diff;
 
+import java.util.BitSet;
+
 /**
  * @author dyoma
  */
@@ -34,6 +36,37 @@ final class LinkedDiffPaths {
     myMaxY = maxY-1;
   }
 
+  public BitSet[] getChanges() {
+    final BitSet[] ret = new BitSet[]{new BitSet(myMaxX + 1), new BitSet(myMaxY + 1)};
+
+    decodePath(new LCSBuilder() {
+      int x = myMaxX + 1;
+      int y = myMaxY + 1;
+
+      @Override
+      public void addEqual(int length) {
+        x -= length;
+        y -= length;
+      }
+
+      @Override
+      public void addChange(int first, int second) {
+        if (first > 0) {
+          ret[0].set(x - first, x);
+          x -= first;
+        }
+        if (second > 0) {
+          ret[1].set(y - second, y);
+          y -= second;
+        }
+      }
+    });
+    return ret;
+  }
+
+  /**
+   * Path is decoded in reverse order (from the last change to the first)
+   */
   public <Builder extends LCSBuilder> Builder decodePath(Builder builder) {
     Decoder decoder = new Decoder(getXSize(), getYSize(), builder);
     int index = myCornerIndex;
