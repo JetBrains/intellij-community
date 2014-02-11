@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Vladislav.Soroka
  * @since 12/20/13
  */
-@TargetVersions("1.11+")
+@TargetVersions("1.11")
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
 
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();

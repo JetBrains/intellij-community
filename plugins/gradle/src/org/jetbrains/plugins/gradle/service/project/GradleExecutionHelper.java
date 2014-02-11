@@ -440,7 +440,9 @@ public class GradleExecutionHelper {
       // add gradle-tooling-extension-v1.9 jar
       Class.forName("org.jetbrains.plugins.gradle.tooling.v1_9.builder.ModelBuildScriptClasspathBuilderImpl"),
       // add gradle-tooling-extension-v1.11 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_11.builder.ModelBuildScriptClasspathBuilderImpl")
+      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_11.builder.ModelBuildScriptClasspathBuilderImpl"),
+      // add gradle-tooling-extension-v1.12 jar
+      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_12.builder.ModelBuildScriptClasspathBuilderImpl")
     );
 
     StringBuilder buf = new StringBuilder();
