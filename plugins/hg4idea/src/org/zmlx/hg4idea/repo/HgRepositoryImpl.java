@@ -27,9 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +46,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull private final HgRepositoryReader myReader;
   @NotNull private final VirtualFile myHgDir;
   @NotNull private volatile HgRepoInfo myInfo;
+  @NotNull private Set<String> myOpenedBranches = Collections.emptySet();
 
   @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
@@ -103,6 +107,12 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myInfo.getBranches();
   }
 
+  @Override
+  @NotNull
+  public Set<String> getOpenedBranches() {
+    return myOpenedBranches;
+  }
+
   @NotNull
   @Override
   public Collection<HgNameWithHashInfo> getBookmarks() {
@@ -145,8 +155,15 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     // Then blinking and do not work properly;
     if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
+      myOpenedBranches = updateOpenedBranches();
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
+  }
+
+  @NotNull
+  private Set<String> updateOpenedBranches() {
+    HgCommandResult branchCommandResult = new HgTagBranchCommand(getProject(), getRoot()).collectBranches();
+    return HgTagBranchCommand.collectNames(branchCommandResult);
   }
 
   @NotNull

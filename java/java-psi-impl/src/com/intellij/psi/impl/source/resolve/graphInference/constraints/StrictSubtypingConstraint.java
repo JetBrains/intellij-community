@@ -46,19 +46,18 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myS) && session.isProperType(myT)) {
       if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
-      if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
+      if (myS == null) return true; 
       return TypeConversionUtil.isAssignable(myT, myS);
     }
 
-    if (PsiType.NULL.equals(myS)) return true;
-    if (PsiType.NULL.equals(myT)) return false;
+    if (PsiType.NULL.equals(myS) || myS == null) return true;
+    if (PsiType.NULL.equals(myT) || myT == null) return false;
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
       inferenceVariable.addBound(myT, InferenceBound.UPPER);
       return true;
     }
-    if (PsiType.NULL.equals(myS) || myS == null) return true;
     inferenceVariable = session.getInferenceVariable(myT);
     if (inferenceVariable != null) {
       inferenceVariable.addBound(myS, InferenceBound.LOWER);

@@ -25,6 +25,8 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -94,7 +94,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        BrowserUtil.launchBrowser("http://account.jetbrains.com");
+        BrowserUtil.browse("http://account.jetbrains.com");
         return true;
       }
     }.installOn(myCreateAccountLabel);

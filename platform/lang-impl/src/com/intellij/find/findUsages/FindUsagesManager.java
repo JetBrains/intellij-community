@@ -298,7 +298,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     return used.get();
   }
 
-  private static boolean isInComment(Usage usage) {
+  private static boolean isInComment(@NotNull Usage usage) {
     if (!(usage instanceof UsageInfo2UsageAdapter)) return false;
     UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
     if (!usageInfo.isNonCodeUsage()) return false;

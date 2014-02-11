@@ -32,6 +32,7 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -56,6 +57,7 @@ import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.*;
@@ -125,6 +127,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     List<TemplatesGroup> groups = fillTemplatesMap(context);
 
     myProjectTypeList.setModel(new CollectionListModel<TemplatesGroup>(groups));
+    myProjectTypeList.setSelectionModel(new SingleSelectionModel());
     myProjectTypeList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -178,6 +181,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         projectTypeChanged();
       }
     });
+
     myTemplatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -236,7 +240,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       else {
         TemplatesGroup group = new TemplatesGroup(builder);
         groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
+        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>(Collections.singletonList(template)));
       }
     }
 
@@ -463,6 +467,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
       loadRemoteTemplates();
     }
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    ModuleWizardStep step = getCustomStep();
+    return step != null ? step.validate() : super.validate();
   }
 
   @Override

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class PyPushDownConflicts {
+class PyPushDownConflicts {
   private static final Logger LOG = Logger.getInstance(PyPushDownProcessor.class.getName());
 
   private final PyClass myClass;
@@ -47,11 +47,11 @@ public class PyPushDownConflicts {
     myConflicts = new MultiMap<PsiElement, String>();
   }
 
-  public MultiMap<PsiElement, String> getConflicts() {
+  MultiMap<PsiElement, String> getConflicts() {
     return myConflicts;
   }
 
-  public void checkTargetClassConflicts(PyClass clazz) {
+  void checkTargetClassConflicts(PyClass clazz) {
     checkPlacementConflicts(clazz);    
   }
 

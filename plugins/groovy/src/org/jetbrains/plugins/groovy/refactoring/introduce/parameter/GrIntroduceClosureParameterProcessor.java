@@ -92,7 +92,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   private GrExpressionWrapper myParameterInitializer;
   private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
-  public GrIntroduceClosureParameterProcessor(GrIntroduceParameterSettings settings) {
+  public GrIntroduceClosureParameterProcessor(@NotNull GrIntroduceParameterSettings settings) {
     super(settings.getProject(), null);
     mySettings = settings;
 

@@ -50,7 +50,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
   @Test
   public void testGradleSourcesSetsInterpretation() throws Exception {
-    final int modulesSize = 7;
+    final int modulesSize = 8;
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
@@ -117,6 +117,16 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
             assertEquals(ContainerUtil.newArrayList("some-extra-resource-folder", "src/main/resources"), resourceDirectories);
             assertTrue(testDirectories.isEmpty());
             assertEquals(ContainerUtil.newArrayList("some-extra-test-resource-folder"), testResourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          }
+          else if (module.getName().equals("withIdeaPluginCustomization3")) {
+            assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(
+              "src/awesome-test/resources", "src/main/resources"), resourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(
+              "src/awesome-test/java", "src/awesome-with-resource-test/java", "src/test/java"), testDirectories);
+            assertEquals(ContainerUtil.newArrayList(
+              "src/awesome-with-resource-test/resources", "src/test/resources"), testResourceDirectories);
             assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
           }
           else {

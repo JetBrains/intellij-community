@@ -46,7 +46,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
       .replace("$EVAL", isEvaluationLicense() ? "true" : "false")
       .replace("$DESCR", getDescription());
-    BrowserUtil.launchBrowser(urlTemplate);
+    BrowserUtil.browse(urlTemplate);
   }
 
   private static String getDescription() {

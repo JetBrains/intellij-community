@@ -40,7 +40,7 @@ import static org.jetbrains.plugins.gradle.tooling.v1_11.internal.ModelDependenc
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-@TargetVersions("1.11+")
+@TargetVersions("1.11")
 public class ModelDependenciesBuilderImpl implements ModelBuilderService {
 
   @Override

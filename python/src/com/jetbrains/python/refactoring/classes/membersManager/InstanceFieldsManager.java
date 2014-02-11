@@ -18,22 +18,41 @@ class InstanceFieldsManager extends FieldsManager {
 
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from,
-                             @NotNull final PyClass to,
-                             @NotNull final Collection<PyTargetExpression> members) {
+  protected void moveAssignments(@NotNull final PyClass from,
+                                 @NotNull final Collection<PyAssignmentStatement> statements,
+                                 @NotNull final PyClass... to) {
+    //TODO: Copy/paste with ClassFieldsManager. Move to parent?
+
+    for (final PyClass destClass : to) {
+      copyInstanceFields(statements, destClass);
+    }
+
+    deleteElements(statements);
+
+    final PyFunction fromInitMethod = from.findMethodByName(PyNames.INIT, false);
+    if (fromInitMethod != null) {
+      //We can't leave class constructor with empty body
+      PyClassRefactoringUtil.insertPassIfNeeded(fromInitMethod);
+    }
+  }
+
+   /**
+   * Copies class' fields in form of assignments (instance fields) to another class.
+    * Creates init method if there is no any
+   * @param members assignments to copy
+   * @param to destination
+   * @return newly created fields
+   */
+  @NotNull
+  private static List<PyAssignmentStatement> copyInstanceFields(@NotNull final Collection<PyAssignmentStatement> members,
+                                                                @NotNull final PyClass to) {
     //We need __init__ method, and if there is no any -- we need to create it
     PyFunction toInitMethod = to.findMethodByName(PyNames.INIT, false);
     if (toInitMethod == null) {
       toInitMethod = PyClassRefactoringUtil.createMethod(PyNames.INIT, to, null);
     }
     final PyStatementList statementList = toInitMethod.getStatementList();
-    PyClassRefactoringUtil.moveFieldDeclarationToStatement(members, statementList);
-
-    final PyFunction fromInitMethod = from.findMethodByName(PyNames.INIT, false);
-    if (fromInitMethod !=null) {
-      //We can't leave class constructor with empty body
-      PyClassRefactoringUtil.insertPassIfNeeded(fromInitMethod);
-    }
+    return PyClassRefactoringUtil.copyFieldDeclarationToStatement(members, statementList);
   }
 
   @Override

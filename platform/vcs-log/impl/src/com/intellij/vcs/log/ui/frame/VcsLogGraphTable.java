@@ -222,7 +222,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   public List<Change> getSelectedChanges() {
     TableModel model = getModel();
     if (!(model instanceof AbstractVcsLogTableModel)) {
-      LOG.error("Unexpected table model passed to the VcsLogGraphTable: " + model);
       return null;
     }
     List<Change> changes = ((AbstractVcsLogTableModel)model).getSelectedChanges(sortSelectedRows());

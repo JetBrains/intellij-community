@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -21,10 +22,15 @@ class ClassFieldsManager extends FieldsManager {
 
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from,
-                             @NotNull final PyClass to,
-                             @NotNull final Collection<PyTargetExpression> members) {
-    PyClassRefactoringUtil.moveFieldDeclarationToStatement(members, to.getStatementList());
+  protected void moveAssignments(@NotNull final PyClass from,
+                                 @NotNull final Collection<PyAssignmentStatement> statements,
+                                 @NotNull final PyClass... to) {
+    //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
+    for (final PyClass destClass : to) {
+      PyClassRefactoringUtil.copyFieldDeclarationToStatement(statements, destClass.getStatementList());
+    }
+    deleteElements(statements);
+    PyClassRefactoringUtil.insertPassIfNeeded(from);
   }
 
   @Override

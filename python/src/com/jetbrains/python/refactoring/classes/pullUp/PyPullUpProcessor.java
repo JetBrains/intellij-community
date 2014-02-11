@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -11,18 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ *
+ *
  * @author Ilya.Kazakevich
  */
 class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
 
   PyPullUpProcessor(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyMemberInfo> membersToMove) {
-    super(from, to, membersToMove);
-  }
-
-  @NotNull
-  @Override
-  public PsiElement[] getElements() {
-    return new PsiElement[]{myTo};
+    super(membersToMove, from, to);
   }
 
 

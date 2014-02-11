@@ -51,9 +51,9 @@ class Test {
 
     static {
         Test s1 = staticCall(Test::n0);
-        Test s2 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<String & Test>)' and 'Test.staticCall(I2<Test,String>)' match">(Test::n1)</error>;
-        Test s3 = staticCall(<error descr="Non-static method cannot be referenced from a static context">Test::n2</error>);
+        Test s2 = staticCall(Test::n1);
+        Test s3 = staticCall<error descr="Cannot resolve method 'staticCall(<method reference>)'">(Test::n2)</error>;
         Test s4 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Test>)' and 'Test.staticCall(I2<Test,String>)' match">(Test::n01)</error>;
-        Test s5 = staticCall<error descr="Cannot resolve method 'staticCall(<method reference>)'">(Test::n012)</error>;
+        Test s5 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Test>)' and 'Test.staticCall(I2<Test,String>)' match">(Test::n012)</error>;
     }
 }

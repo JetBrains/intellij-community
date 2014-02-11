@@ -35,7 +35,7 @@ import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
@@ -138,13 +138,14 @@ public class GithubCreatePullRequestWorker {
     try {
       auth = GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+          @NotNull
           @Override
           public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil.getValidAuthDataFromConfig(project, indicator);
           }
         });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {
@@ -160,6 +161,7 @@ public class GithubCreatePullRequestWorker {
     try {
       GithubInfo info =
         GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
+          @NotNull
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
             // configure remote
@@ -208,6 +210,7 @@ public class GithubCreatePullRequestWorker {
       if (canShowDiff()) {
         for (final String branch : info.getBranches()) {
           myDiffInfos.put(branch, new FutureTask<DiffInfo>(new Callable<DiffInfo>() {
+            @Nullable
             @Override
             public DiffInfo call() throws Exception {
               return loadDiffInfo(myProject, myGitRepository, myCurrentBranch, myTargetRemote + "/" + branch);
@@ -218,7 +221,7 @@ public class GithubCreatePullRequestWorker {
 
       return new GithubTargetInfo(info.getBranches());
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {
@@ -453,6 +456,7 @@ public class GithubCreatePullRequestWorker {
     try {
       return GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo2, IOException>() {
+          @NotNull
           @Override
           public GithubInfo2 convert(ProgressIndicator indicator) throws IOException {
             final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
@@ -475,7 +479,7 @@ public class GithubCreatePullRequestWorker {
           }
         });
     }
-    catch (GithubAuthenticationCanceledException e) {
+    catch (GithubOperationCanceledException e) {
       return null;
     }
     catch (IOException e) {

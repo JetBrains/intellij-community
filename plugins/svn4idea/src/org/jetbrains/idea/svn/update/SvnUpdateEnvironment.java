@@ -96,13 +96,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     }
 
     private UpdateClient createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
-      boolean is17 = WorkingCopyFormat.ONE_DOT_SEVEN.equals(myVcs.getWorkingCopyFormat(root));
-      boolean isSupportedProtocol =
-        SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol());
-
-      // TODO: Update this with just myVcs.getFactory(root) when switch and authentication protocols are implemented for command line
-      ClientFactory factory = is17 && (isSwitch || !isSupportedProtocol) ? myVcs.getSvnKitFactory() : myVcs.getFactory(root);
-      final UpdateClient updateClient = factory.createUpdateClient();
+      final UpdateClient updateClient = myVcs.getFactory(root).createUpdateClient();
 
       if (! isSwitch) {
         updateClient.setIgnoreExternals(configuration.isIgnoreExternals());

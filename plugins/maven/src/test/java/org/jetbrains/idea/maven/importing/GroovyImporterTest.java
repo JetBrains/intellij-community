@@ -101,6 +101,36 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  public void testAddingGroovySpecificSources2() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.gmaven</groupId>" +
+                  "      <artifactId>groovy-maven-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/groovy");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/groovy");
+    assertTestResources("project", "src/test/resources");
+  }
+
   public void testAddingCustomGroovySpecificSources() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",

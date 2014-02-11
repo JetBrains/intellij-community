@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -49,7 +48,6 @@ import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
@@ -114,6 +112,7 @@ final class BrowserSettingsPanel {
     @Override
     public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
       item.setFamily(value);
+      item.setSpecificSettings(value.createBrowserSpecificSettings());
     }
 
     @Nullable
@@ -153,7 +152,7 @@ final class BrowserSettingsPanel {
 
     //noinspection unchecked
     defaultBrowserComboBox.setModel(new EnumComboBoxModel<DefaultBrowser>(DefaultBrowser.class));
-    if (BrowserUtil.canStartDefaultBrowser()) {
+    if (BrowserLauncherImpl.canStartDefaultBrowser()) {
       defaultBrowserComboBox.addItemListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -203,7 +202,7 @@ final class BrowserSettingsPanel {
     clearExtractedFiles.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        BrowserUtil.clearExtractedFiles();
+        BrowserLauncherImpl.clearExtractedFiles();
       }
     });
   }
@@ -310,7 +309,7 @@ final class BrowserSettingsPanel {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     DefaultBrowser defaultBrowser = getDefaultBrowser();
-    if (browserManager.getDefaultBrowser() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    if (browserManager.getDefaultBrowserMode() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
@@ -345,7 +344,7 @@ final class BrowserSettingsPanel {
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
+    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowserMode();
     defaultBrowserComboBox.setSelectedItem(defaultBrowser);
 
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());

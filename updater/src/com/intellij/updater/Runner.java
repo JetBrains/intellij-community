@@ -1,5 +1,7 @@
 package com.intellij.updater;
 
+import com.intellij.openapi.application.PathManager;
+
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -65,21 +67,30 @@ public class Runner {
     }
   }
 
+  private static String getLogDir(){
+    // String uHome = System.getProperty("user.home");
+    String logDir = System.getProperty("java.io.tmpdir");
+    File ideaLogDir = new File(PathManager.getLogPath());
+    if (ideaLogDir.exists()){
+      return ideaLogDir.getAbsolutePath();
+    } else{
+      return logDir;
+    }
+  }
+
   public static void initLogger() {
     if (logger == null) {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      System.out.println("java.io.tmpdir: " + tmpDir);
-      //    String uHome = System.getProperty("user.home");
+      String logDir = getLogDir();
       FileAppender update = new FileAppender();
 
-      update.setFile(new File(tmpDir, "idea_updater.log").getAbsolutePath());
+      update.setFile(new File(logDir, "idea_updater.log").getAbsolutePath());
       update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(tmpDir, "idea_updater_error.log").getAbsolutePath());
+      updateError.setFile(new File(logDir, "idea_updater_error.log").getAbsolutePath());
       updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
@@ -93,18 +104,19 @@ public class Runner {
     }
   }
 
-  public static void printStackTrace(Exception e){
+/*  public static void printStackTrace(Exception e){
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
     logger.error(sw.toString());
-  }
+  } */
 
   public static void printStackTrace(Throwable e){
-    StringWriter sw = new StringWriter();
+    logger.error(e.getMessage(), e);
+/*    StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
-    logger.error(sw.toString());
+    logger.error(sw.toString());*/
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {

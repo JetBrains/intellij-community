@@ -108,7 +108,7 @@ class ParameterIsEffectivelyFinal {
       new Runnable() {
         @Override
         public void run() {
-          System.out.println(<error descr="Variable 'o' is accessed from within inner class. Needs to be declared final.">o</error>);
+          System.out.println(<error descr="Variable 'o' is accessed from within inner class, needs to be declared final">o</error>);
         }
       }.run();
       return 0;

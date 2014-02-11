@@ -22,7 +22,7 @@ class a {
     for (Object oi: (Iterable)o) {}
 
 
-    for (<error descr="Incompatible types. Found: 'double', required: 'int'">int i:db</error>) {
+    for (int i:db) {
       for (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">int p: list</error>) {}
     }
   }

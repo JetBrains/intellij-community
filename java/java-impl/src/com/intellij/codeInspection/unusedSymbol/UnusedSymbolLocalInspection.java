@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,13 @@
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.psi.PsiModifierListOwner;
 import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,18 +37,7 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements PairedUnfairLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
-  @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
-
-  public boolean LOCAL_VARIABLE = true;
-  public boolean FIELD = true;
-  public boolean METHOD = true;
-  public boolean CLASS = true;
-  public boolean PARAMETER = true;
-  public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
-
-
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements PairedUnfairLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -153,17 +135,5 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   @Nullable
   public JComponent createOptionsPanel() {
     return new OptionsPanel().getPanel();
-  }
-
-  public static IntentionAction createQuickFix(@NonNls String qualifiedName, @Nls String element, Project project) {
-    final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
-    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
-      QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
-  }
-
-  public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
-    return EntryPointsManagerBase.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
   }
 }

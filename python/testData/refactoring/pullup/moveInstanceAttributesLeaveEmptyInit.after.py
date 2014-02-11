@@ -1,11 +1,11 @@
 class Parent(object):
     C = 12
 
-    def foo(self):
-        pass
-
     def __init__(self):
         self.foo = 12
+
+    def foo(self):
+        pass
 
 
 class Child(Parent, object):

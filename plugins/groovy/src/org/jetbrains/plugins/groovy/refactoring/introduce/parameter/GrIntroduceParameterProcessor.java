@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
@@ -77,9 +78,10 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     LOG.assertTrue(settings.getToSearchFor() instanceof PsiMethod);
 
     final StringPartInfo stringPartInfo = settings.getStringPartInfo();
-    final GrExpression expression = stringPartInfo != null
-                                    ? stringPartInfo.createLiteralFromSelected()
-                                    : settings.getExpression();
+    GrVariable var = settings.getVar();
+    final GrExpression expression = stringPartInfo != null ? stringPartInfo.createLiteralFromSelected() :
+                                    var != null ? var.getInitializerGroovy()
+                                                : settings.getExpression();
     return new GrExpressionWrapper(expression);
   }
 
@@ -176,9 +178,16 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
-      for (PsiElement expr : exprs) {
-        result.add(new InternalUsageInfo(expr));
+      if (mySettings.getVar() != null) {
+        for (PsiElement element : GrIntroduceHandlerBase.collectVariableUsages(mySettings.getVar(), mySettings.getToReplaceIn())) {
+          result.add(new InternalUsageInfo(element));
+        }
+      }
+      else {
+        PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
+        for (PsiElement expr : exprs) {
+          result.add(new InternalUsageInfo(expr));
+        }
       }
     }
     else {

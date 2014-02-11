@@ -58,6 +58,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private File myWorkDirectory = null;
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private boolean myPassParentEnvironment = true;
+  private boolean myPassShellEnvironmentAsParent = !PlatformUtils.isAppCode();
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -140,6 +141,21 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
+  }
+
+  /**
+   * @param passShellEnvironmentAsParent if true, a shell (Terminal.app) environment will be used as parent (see {@link EnvironmentUtil#getEnvironmentMap}).
+   *                                     Otherwise, {@link System#getenv()} will be used.
+   */
+  @Deprecated
+  public void setPassShellEnvironmentAsParent(boolean passShellEnvironmentAsParent) {
+    // Temporarily fix for OC-8606
+    myPassShellEnvironmentAsParent = passShellEnvironmentAsParent;
+  }
+
+  @Deprecated
+  public boolean isPassShellEnvironmentAsParent() {
+    return myPassShellEnvironmentAsParent;
   }
 
   public void addParameters(final String... parameters) {
@@ -278,8 +294,7 @@ public class GeneralCommandLine implements UserDataHolder {
     environment.clear();
 
     if (myPassParentEnvironment) {
-      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                                   : EnvironmentUtil.getEnvironmentMap());
+      environment.putAll(myPassShellEnvironmentAsParent ? EnvironmentUtil.getEnvironmentMap() : System.getenv());
     }
 
     if (!myEnvParams.isEmpty()) {

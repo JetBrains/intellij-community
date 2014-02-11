@@ -234,12 +234,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
         return false;
       }
 
       @Override
-      public boolean isEntryPoint(PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
         return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getName().equals("myTestMethod");
       }
 

@@ -310,6 +310,10 @@ public class VcsUtil {
     return getFilePath(new File(path));
   }
 
+  public static FilePath getFilePath(@NotNull VirtualFile file) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+  }
+
   public static FilePath getFilePath(File file) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
   }

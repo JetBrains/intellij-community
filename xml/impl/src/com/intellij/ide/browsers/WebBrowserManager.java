@@ -17,6 +17,8 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,8 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-
-import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/web-browsers.xml")})
 public class WebBrowserManager implements PersistentStateComponent<Element>, ModificationTracker {
@@ -77,7 +77,8 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     SYSTEM, FIRST, ALTERNATIVE
   }
 
-  public DefaultBrowser getDefaultBrowser() {
+  @NotNull
+  public DefaultBrowser getDefaultBrowserMode() {
     return defaultBrowser;
   }
 
@@ -248,9 +249,19 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   @NotNull
   public List<WebBrowser> getActiveBrowsers() {
+    return getBrowsers(Conditions.<WebBrowser>alwaysTrue(), true);
+  }
+
+  @NotNull
+  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition) {
+    return getBrowsers(condition, true);
+  }
+
+  @NotNull
+  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
     List<WebBrowser> result = new SmartList<WebBrowser>();
     for (ConfigurableWebBrowser browser : browsers) {
-      if (browser.isActive()) {
+      if ((!onlyActive || browser.isActive()) && condition.value(browser)) {
         result.add(browser);
       }
     }
@@ -264,6 +275,15 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   public void setBrowserPath(@NotNull WebBrowser browser, @Nullable String path, boolean isActive) {
     ((ConfigurableWebBrowser)browser).setPath(path);
     ((ConfigurableWebBrowser)browser).setActive(isActive);
+  }
+
+  public void addBrowser(final @NotNull UUID id,
+                         final @NotNull BrowserFamily family,
+                         final @NotNull String name,
+                         final @Nullable String path,
+                         final boolean active,
+                         final BrowserSpecificSettings specificSettings) {
+    browsers.add(new ConfigurableWebBrowser(id, family, name, path, active, specificSettings));
   }
 
   @Nullable
@@ -289,7 +309,9 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     UUID id = parseUuid(idOrName);
     if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getFamily().name().equalsIgnoreCase(idOrName) || browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
+        if (browser.getName().equals(idOrName) ||
+            browser.getFamily().name().equalsIgnoreCase(idOrName) ||
+            browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
           return browser;
         }
       }
@@ -314,6 +336,12 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   @Nullable
   public WebBrowser findBrowser(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.isActive() && family.equals(browser.getFamily())) {
+        return browser;
+      }
+    }
+
+    for (ConfigurableWebBrowser browser : browsers) {
       if (family.equals(browser.getFamily())) {
         return browser;
       }
@@ -324,6 +352,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   public boolean isActive(@NotNull WebBrowser browser) {
     return !(browser instanceof ConfigurableWebBrowser) || ((ConfigurableWebBrowser)browser).isActive();
+  }
+
+  @Nullable
+  public WebBrowser getDefaultBrowser() {
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.isActive()) {
+        return browser;
+      }
+    }
+    return null;
   }
 
   @Override

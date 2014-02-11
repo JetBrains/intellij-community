@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
@@ -115,7 +115,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       try {
         auth = getValidAuthData(project);
       }
-      catch (GithubAuthenticationCanceledException e) {
+      catch (GithubOperationCanceledException e) {
         return;
       }
       catch (IOException e) {
@@ -140,7 +140,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           return;
         }
         if (dialog.isOpenInBrowser()) {
-          BrowserUtil.launchBrowser(url.get());
+          BrowserUtil.browse(url.get());
         }
         else {
           GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
@@ -153,11 +153,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
     return GithubUtil.computeValueInModal(project, "Access to GitHub",
                                           new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+                                            @NotNull
                                             @Override
                                             public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
                                               return GithubUtil.getValidAuthDataFromConfig(project, indicator);
                                             }
-                                          });
+                                          }
+    );
   }
 
   @NotNull

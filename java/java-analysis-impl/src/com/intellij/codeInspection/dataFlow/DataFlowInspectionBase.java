@@ -107,6 +107,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       public void visitIfStatement(PsiIfStatement statement) {
         PsiExpression condition = statement.getCondition();
         if (BranchingInstruction.isBoolConst(condition)) {
+          assert condition != null;
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
         }
@@ -499,12 +500,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         holder.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
-        final String defaultNullable = NullableNotNullManager.getInstance(holder.getProject()).getPresentableDefaultNullable();
-        final String text = isNullLiteralExpression(expr)
-                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", defaultNullable)
-                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", defaultNullable);
         final NullableNotNullManager manager = NullableNotNullManager.getInstance(expr.getProject());
-        holder.registerProblem(expr, text, new AnnotateMethodFix(manager.getDefaultNullable(), ArrayUtil.toStringArray(manager.getNotNulls())){
+        final String defaultNullable = manager.getDefaultNullable();
+        final String presentableNullable = StringUtil.getShortName(defaultNullable);
+        final String text = isNullLiteralExpression(expr)
+                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
+                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
+        holder.registerProblem(expr, text, new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())){
           @Override
           public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
             return 1;

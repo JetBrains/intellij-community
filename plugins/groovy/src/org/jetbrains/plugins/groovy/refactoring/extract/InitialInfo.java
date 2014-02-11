@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -47,6 +48,7 @@ public class InitialInfo implements ExtractInfoHelper {
   private final boolean myHasReturnValue;
   private final String[] myArgumentNames;
   private final StringPartInfo myStringPartInfo;
+  private final GrVariable myVariable;
 
   public InitialInfo(VariableInfo[] inputInfos,
                      VariableInfo[] outputInfos,
@@ -54,11 +56,12 @@ public class InitialInfo implements ExtractInfoHelper {
                      GrStatement[] statements,
                      ArrayList<GrStatement> returnStatements,
                      StringPartInfo stringPartInfo,
-                     Project project) {
+                     Project project, GrVariable variable) {
     myInnerElements = innerElements;
     myStatements = statements;
     myOutputNames = outputInfos;
     myStringPartInfo = stringPartInfo;
+    myVariable = variable;
 
     myHasReturnValue = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
       @Override
@@ -193,5 +196,11 @@ public class InitialInfo implements ExtractInfoHelper {
   @Nullable
   public StringPartInfo getStringPartInfo() {
     return myStringPartInfo;
+  }
+
+  @Nullable
+  @Override
+  public GrVariable getVar() {
+    return myVariable;
   }
 }

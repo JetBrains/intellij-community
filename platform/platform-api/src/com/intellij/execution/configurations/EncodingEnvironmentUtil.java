@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +72,7 @@ public class EncodingEnvironmentUtil {
     }
     if (commandLine.isPassParentEnvironment()) {
       // 'parentEnv' calculation logic should be kept in sync with GeneralCommandLine.setupEnvironment
-      Map<String, String> parentEnv = PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                                                : EnvironmentUtil.getEnvironmentMap();
+      Map<String, String> parentEnv = commandLine.isPassShellEnvironmentAsParent() ? EnvironmentUtil.getEnvironmentMap() : System.getenv();
       if (isLocaleDefined(parentEnv)) {
         return true;
       }

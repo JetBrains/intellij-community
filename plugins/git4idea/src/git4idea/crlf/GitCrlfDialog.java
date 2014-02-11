@@ -79,7 +79,7 @@ public class GitCrlfDialog extends DialogWrapper {
     JLabel readMore = new LinkLabel("Read more", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        BrowserUtil.launchBrowser("https://help.github.com/articles/dealing-with-line-endings");
+        BrowserUtil.browse("https://help.github.com/articles/dealing-with-line-endings");
       }
     });
 

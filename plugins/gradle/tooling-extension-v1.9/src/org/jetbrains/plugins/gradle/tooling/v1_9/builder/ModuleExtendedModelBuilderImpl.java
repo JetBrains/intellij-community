@@ -131,11 +131,14 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     }
 
     ideaSourceDirectories.removeAll(resourceDirectories);
+    sourceDirectories.removeAll(ideaTestDirectories);
     sourceDirectories.addAll(ideaSourceDirectories);
     ideaTestDirectories.removeAll(testResourceDirectories);
     testDirectories.addAll(ideaTestDirectories);
 
+    resourceDirectories.removeAll(ideaExtTestResourceDirectories);
     resourceDirectories.addAll(ideaExtResourceDirectories);
+    testResourceDirectories.removeAll(ideaExtResourceDirectories);
     testResourceDirectories.addAll(ideaExtTestResourceDirectories);
 
     // ensure disjoint directories with different type

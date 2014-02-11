@@ -767,7 +767,7 @@ public class RefactoringUtil {
   }
 
   public static void makeMethodDefault(@NotNull PsiMethod method) throws IncorrectOperationException {
-    PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
+    PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, !method.hasModifierProperty(PsiModifier.STATIC));
     PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
 
     prepareForInterface(method);

@@ -164,8 +164,6 @@ public class AbstractPopup implements JBPopup {
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
 
-
-
   AbstractPopup() {
   }
 
@@ -700,17 +698,9 @@ public class AbstractPopup implements JBPopup {
       sizeToSet = myForcedSize;
     }
 
-    if (myMinSize == null) {
-      myMinSize = myContent.getMinimumSize();
-    }
-
-    if (sizeToSet == null) {
-      sizeToSet = myContent.getPreferredSize();
-    }
-
     if (sizeToSet != null) {
-      sizeToSet.width = Math.max(sizeToSet.width, myMinSize.width);
-      sizeToSet.height = Math.max(sizeToSet.height, myMinSize.height);
+      sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
+      sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
 
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
@@ -838,6 +828,7 @@ public class AbstractPopup implements JBPopup {
       }
     }
 
+    setMinimumSize(myMinSize);
 
     final Runnable afterShow = new Runnable() {
       @Override
@@ -1656,7 +1647,17 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void setMinimumSize(Dimension size) {
-    myMinSize = size;
+    if (size == null) {
+      myMinSize =  myHeaderPanel.getPreferredSize();
+    } else {
+      final int width = Math.max(size.width, myHeaderPanel.getPreferredSize().width);
+      final int height = Math.max(size.height, myHeaderPanel.getPreferredSize().height);
+      myMinSize = new Dimension(width, height);
+    }
+
+    if (myWindow != null) {
+      myWindow.setMinimumSize(myMinSize);
+    }
   }
 
   public Runnable getFinalRunnable() {

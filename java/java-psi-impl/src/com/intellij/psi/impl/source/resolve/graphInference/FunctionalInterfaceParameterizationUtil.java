@@ -158,8 +158,11 @@ public class FunctionalInterfaceParameterizationUtil {
     final PsiClass psiClass = psiClassType.resolve();
     if (psiClass != null) {
       final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+      final PsiType[] parameters = psiClassType.getParameters();
+
+      if (parameters.length != typeParameters.length) return null;
+
       final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
-      PsiType[] parameters = psiClassType.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
@@ -173,9 +176,9 @@ public class FunctionalInterfaceParameterizationUtil {
           if (bound == null) {
             parameters[i] = Bi;
           } else if (((PsiWildcardType)paramType).isExtends()){
-            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, bound);
+            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, GenericsUtil.eliminateWildcards(bound, false));
           } else {
-            parameters[i] = bound;
+            parameters[i] = GenericsUtil.eliminateWildcards(bound, false);
           }
         }
       }

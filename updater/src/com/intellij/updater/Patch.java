@@ -183,7 +183,7 @@ public class Patch {
     forEach(actionsToProcess, "Backing up files...", ui, true,
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
-                Runner.logger.info("Backing up files dir: " + toDir.getCanonicalFile() + " to backupDir " + backupDir.getCanonicalFile());
+                Runner.logger.info("Backing up files dir: " + toDir.getCanonicalFile());
                 each.backup(toDir, backupDir);
               }
             });

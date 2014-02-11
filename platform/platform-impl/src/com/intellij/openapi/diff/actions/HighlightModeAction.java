@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -52,7 +51,7 @@ public class HighlightModeAction extends ComboBoxAction implements DumbAware {
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(CommonBundle.message("diff.acton.highlight.mode.action.name"));
+    final JLabel label = new JLabel(DiffBundle.message("diff.acton.highlight.mode.action.name"));
     label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
     panel.add(label, BorderLayout.WEST);
     panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);

@@ -33,6 +33,6 @@ public class BrowserHyperlinkInfo implements HyperlinkInfo {
   }
 
   public static void openUrl(String url) {
-    BrowserUtil.launchBrowser(url);
+    BrowserUtil.browse(url);
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +68,10 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   @Nullable
   private static WebBrowser findUsingBrowser() {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    if (browserManager.getDefaultBrowser() == WebBrowserManager.DefaultBrowser.FIRST) {
-      return ContainerUtil.getFirstItem(browserManager.getActiveBrowsers());
+    if (browserManager.getDefaultBrowserMode() == WebBrowserManager.DefaultBrowser.FIRST) {
+      return browserManager.getDefaultBrowser();
     }
-    else if (browserManager.getDefaultBrowser() == WebBrowserManager.DefaultBrowser.ALTERNATIVE) {
+    else if (browserManager.getDefaultBrowserMode() == WebBrowserManager.DefaultBrowser.ALTERNATIVE) {
       String path = GeneralSettings.getInstance().getBrowserPath();
       if (!StringUtil.isEmpty(path)) {
         WebBrowser browser = browserManager.findBrowserById(path);

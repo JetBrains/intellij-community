@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,18 +45,13 @@ public class ClosureToSamConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType ltype, @NotNull PsiType rtype, @NotNull final GroovyPsiElement context) {
     if (rtype instanceof GrClosureType && ltype instanceof PsiClassType && GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY2_2)) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)ltype).resolveGenerics();
-      final PsiClass resolved = resolveResult.getElement();
-      if (resolved != null) {
-        final MethodSignature signature = findSingleAbstractMethodClass(resolved, resolveResult.getSubstitutor());
-        if (signature != null) {
+      MethodSignature signature = findSAMSignature(ltype);
+      if (signature != null) {
+        final PsiType[] samParameterTypes = signature.getParameterTypes();
 
-          final PsiType[] samParameterTypes = signature.getParameterTypes();
-
-          GrSignature closureSignature = ((GrClosureType)rtype).getSignature();
-          if (GrClosureSignatureUtil.isSignatureApplicable(closureSignature, samParameterTypes, context)) {
-            return true;
-          }
+        GrSignature closureSignature = ((GrClosureType)rtype).getSignature();
+        if (GrClosureSignatureUtil.isSignatureApplicable(closureSignature, samParameterTypes, context)) {
+          return true;
         }
       }
     }
@@ -65,16 +60,15 @@ public class ClosureToSamConverter extends GrTypeConverter {
   }
 
   @Nullable
-  private static MethodSignature findSingleAbstractMethodClass(@NotNull PsiClass aClass,
-                                                               @NotNull PsiSubstitutor substitutor) {
+  public static MethodSignature findSingleAbstractMethod(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor) {
     MethodSignature signature;
     Ref<MethodSignature> cached = SAM_SIGNATURE_LIGHT_CACHE_KEY.getCachedValue(aClass);
     if (cached != null) {
       signature = cached.get();
     }
     else {
-      cached = Ref.create(doFindSingleAbstractMethodClass(aClass));
-      signature = SAM_SIGNATURE_LIGHT_CACHE_KEY.putCachedValue(aClass, cached).get();
+      Ref<MethodSignature> newCached = Ref.create(doFindSingleAbstractMethodClass(aClass));
+      signature = SAM_SIGNATURE_LIGHT_CACHE_KEY.putCachedValue(aClass, newCached).get();
     }
 
     return signature != null ? substitute(signature, substitutor): null;
@@ -99,5 +93,19 @@ public class ClosureToSamConverter extends GrTypeConverter {
   @NotNull
   private static MethodSignature substitute(@NotNull MethodSignature signature, @NotNull PsiSubstitutor substitutor) {
     return MethodSignatureUtil.createMethodSignature(signature.getName(), signature.getParameterTypes(), PsiTypeParameter.EMPTY_ARRAY, substitutor, false);
+  }
+
+  @Nullable
+  public static MethodSignature findSAMSignature(@Nullable PsiType type) {
+    if (type instanceof PsiClassType) {
+      PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      PsiClass aClass = result.getElement();
+
+      if (aClass != null) {
+        return findSingleAbstractMethod(aClass, result.getSubstitutor());
+      }
+    }
+
+    return null;
   }
 }

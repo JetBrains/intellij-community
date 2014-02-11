@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
@@ -33,7 +32,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
@@ -305,19 +307,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
-    final FileViewProvider viewProvider = getViewProvider();
-    final Language lang;
-    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      lang = viewProvider.getBaseLanguage();
-    }
-    else {
-      lang = getLanguage();
-    }
-    final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);
-    if (filters.isEmpty()) return true;
-    for (PythonVisitorFilter filter : filters) {
-      if (!filter.isSupported(visitorClass, this))
-        return false;
+    for (Language lang : getViewProvider().getLanguages()) {
+      final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);
+      for (PythonVisitorFilter filter : filters) {
+        if (!filter.isSupported(visitorClass, this))
+          return false;
+      }
     }
     return true;
   }

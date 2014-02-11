@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String GROOVY2_0 = "2.0";
   public static final String GROOVY2_1 = "2.1";
   public static final String GROOVY2_2 = "2.2";
+  public static final String GROOVY2_2_2 = "2.2.2";
+  public static final String GROOVY2_3 = "2.3";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
 

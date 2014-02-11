@@ -18,12 +18,13 @@ package com.intellij.spi;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
         for (Object condition : Extensions.getExtensions("com.intellij.vetoSPICondition")) {
           if (((Condition<String>)condition).value(fileName)) return false;
         }
-        return true;
+        return FileTypeRegistry.getInstance().getFileTypeByFileName(fileName) == FileTypes.UNKNOWN;
       }
     }
     return false;

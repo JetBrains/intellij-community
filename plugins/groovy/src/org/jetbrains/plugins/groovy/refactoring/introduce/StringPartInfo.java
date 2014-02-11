@@ -282,6 +282,7 @@ public class StringPartInfo {
     return myInjections;
   }
 
+  @NotNull
   public GrLiteral createLiteralFromSelected() {
     return (GrLiteral)GroovyPsiElementFactory.getInstance(myLiteral.getProject()).createExpressionFromText(prepareSelected());
   }

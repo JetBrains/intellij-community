@@ -99,7 +99,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     String urlToOpen = getGithubUrl(project, virtualFile, editor);
     if (urlToOpen != null) {
-      BrowserUtil.launchBrowser(urlToOpen);
+      BrowserUtil.browse(urlToOpen);
     }
   }
 

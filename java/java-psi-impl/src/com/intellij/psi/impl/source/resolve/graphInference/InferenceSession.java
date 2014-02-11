@@ -199,10 +199,19 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               ParameterTypeInferencePolicy policy) {
-    boolean doesNotContainFalseBound = repeatInferencePhases(parameters == null);
+    return infer(parameters, args, parent, false, policy);
+  }
+
+  @NotNull
+  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
+                              @Nullable PsiExpression[] args,
+                              @Nullable PsiElement parent,
+                              boolean acceptNonPertinentArgs,
+                              ParameterTypeInferencePolicy policy) {
+    boolean doesNotContainFalseBound = repeatInferencePhases(parameters == null || !policy.allowPostponeInference());
 //    if (!doesNotContainFalseBound) return prepareSubstitution();
 
-    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
 
     final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
     if (pair != null) {
@@ -220,7 +229,7 @@ public class InferenceSession {
       MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
     }
 
-    if (parameters != null && args != null) {
+    if (parameters != null && args != null && (acceptNonPertinentArgs || pair != null)) {
       final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
       if (parameters.length > 0) {
         for (int i = 0; i < args.length; i++) {
@@ -330,7 +339,7 @@ public class InferenceSession {
     }
   }
 
-  private void registerConstraints(PsiType returnType, PsiType targetType) {
+  public void registerConstraints(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
       resolveBounds(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
@@ -574,7 +583,7 @@ public class InferenceSession {
     return dependencies != null ? !dependencies.isEmpty() : isProper;
   }
 
-  protected boolean repeatInferencePhases(boolean incorporate) {
+  public boolean repeatInferencePhases(boolean incorporate) {
     do {
       if (!reduceConstraints()) {
         //inference error occurred

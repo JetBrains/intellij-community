@@ -48,9 +48,7 @@ public class PsiMethodReferenceUtil {
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
     final PsiElement resolve = result.getElement();
     if (resolve instanceof PsiMethod) {
-      PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-      subst = subst.putAll(qualifierResolveResult.getSubstitutor());
-      subst = subst.putAll(result.getSubstitutor());
+      PsiSubstitutor subst = result.getSubstitutor();
 
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
 
@@ -165,7 +163,12 @@ public class PsiMethodReferenceUtil {
     if (methodReferenceExpression == null) return false;
     final PsiElement argsList = PsiTreeUtil.getParentOfType(methodReferenceExpression, PsiExpressionList.class);
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      if (!methodReferenceExpression.isExact()) return true;
+      if (!methodReferenceExpression.isPotentiallyCompatible(left)) {
+        return false;
+      }
+      if (!methodReferenceExpression.isExact()) {
+        return true;
+      }
     }
     if (left instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
@@ -197,9 +200,7 @@ public class PsiMethodReferenceUtil {
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(LambdaUtil.getSubstitutor(method, resolveResult));
-        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(TypeConversionUtil.getSuperClassSubstitutor(((PsiMethod)resolve).getContainingClass(), qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()));
-        subst = subst.putAll(result.getSubstitutor());
+        PsiSubstitutor subst = result.getSubstitutor();
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
         if (methodReferenceExpression.isExact()) {
@@ -319,9 +320,13 @@ public class PsiMethodReferenceUtil {
       else if (!isVarargs) {
         return false;
       }
+    } else if (isVarargs) {
+      if (isReceiverType(signatureParameterTypes1[0], psiClass, psiSubstitutor)) {
+        offset++;
+      }
     }
 
-    final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length);
+    final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length - offset);
     for (int i = 0; i < min; i++) {
       final PsiType type1 = GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(signatureParameterTypes1[offset + i]));
       if (isVarargs && i == min - 1) {
@@ -439,7 +444,7 @@ public class PsiMethodReferenceUtil {
     LOG.assertTrue(signature != null);
     final PsiType[] parameterTypes = signature.getParameterTypes();
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
-    return method.getParameterList().getParametersCount() + 1 == parameterTypes.length &&
+    return (method.getParameterList().getParametersCount() + 1 == parameterTypes.length || method.isVarArgs() && parameterTypes.length > 0)&&
            hasReceiver(parameterTypes, qualifierResolveResult, methodRef);
   }
 
