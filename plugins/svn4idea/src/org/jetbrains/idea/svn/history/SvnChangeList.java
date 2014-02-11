@@ -24,6 +24,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -100,19 +102,15 @@ public class SvnChangeList implements CommittedChangeList {
     myVcs = vcs;
     myLocation = location;
     myRevision = logEntry.getRevision();
-    final String author = logEntry.getAuthor();
-    myAuthor = author == null ? "" : author;
+    myAuthor = StringUtil.notNullize(logEntry.getAuthor());
     myDate = logEntry.getDate();
-    final String message = logEntry.getMessage();
-    myMessage = message == null ? "" : message;
-
-    myRepositoryRoot = repositoryRoot.endsWith("/") ? repositoryRoot.substring(0, repositoryRoot.length() - 1) : repositoryRoot;
+    myMessage = StringUtil.notNullize(logEntry.getMessage());
+    myRepositoryRoot = UriUtil.trimTrailingSlashes(repositoryRoot);
 
     myCommonPathSearcher = new CommonPathSearcher();
 
     myKnownAsDirectories = new HashSet<String>(0);
-    for(Object o: logEntry.getChangedPaths().values()) {
-      final SVNLogEntryPath entry = (SVNLogEntryPath) o;
+    for(SVNLogEntryPath entry : logEntry.getChangedPaths().values()) {
       final String path = entry.getPath();
 
       if (SVNNodeKind.DIR.equals(entry.getKind())) {
@@ -146,15 +144,9 @@ public class SvnChangeList implements CommittedChangeList {
     myKnownAsDirectories = new HashSet<String>();
     readFromStream(stream, supportsCopyFromInfo, supportsReplaced);
     myCommonPathSearcher = new CommonPathSearcher();
-    for (String path : myAddedPaths) {
-      myCommonPathSearcher.next(path);
-    }
-    for (String path : myDeletedPaths) {
-      myCommonPathSearcher.next(path);
-    }
-    for (String path : myChangedPaths) {
-      myCommonPathSearcher.next(path);
-    }
+    myCommonPathSearcher.next(myAddedPaths);
+    myCommonPathSearcher.next(myDeletedPaths);
+    myCommonPathSearcher.next(myChangedPaths);
   }
 
   public Change getByPath(final String path) {
@@ -244,11 +236,7 @@ public class SvnChangeList implements CommittedChangeList {
           renamedChange.setIsReplaced(replaced);
 
           final ExternallyRenamedChange addedChange = copiedAddedChanges.get(myCopiedAddedPaths.get(addedPath));
-          if ((addedChange != null) && (addedChange.isCopied())) {
-            renamedChange.setCopied(true);
-          } else {
-            renamedChange.setCopied(false);
-          }
+          renamedChange.setCopied(addedChange != null && addedChange.isCopied());
 
           myListsHolder.add(path, renamedChange);
           break;
@@ -345,7 +333,7 @@ public class SvnChangeList implements CommittedChangeList {
       final boolean knownAsDirectory = myKnownAsDirectories.contains(path);
       final String fullPath = myRepositoryRoot + path;
       if (! knownAsDirectory) {
-        myWithoutDirStatus.add(new Pair<Integer, Boolean>(myList.size(), isBeforeRevision));
+        myWithoutDirStatus.add(Pair.create(myList.size(), isBeforeRevision));
       }
       return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(fullPath, knownAsDirectory),
                                                  getRevision(isBeforeRevision));
@@ -433,10 +421,10 @@ public class SvnChangeList implements CommittedChangeList {
       final Set<Pair<Boolean, String>> duplicateControl = new HashSet<Pair<Boolean, String>>();
       for (Change change : myDetailedList) {
         if (change.getBeforeRevision() != null) {
-          duplicateControl.add(new Pair<Boolean, String>(Boolean.TRUE, ((SvnRepositoryContentRevision) change.getBeforeRevision()).getPath()));
+          duplicateControl.add(Pair.create(Boolean.TRUE, ((SvnRepositoryContentRevision)change.getBeforeRevision()).getPath()));
         }
         if (change.getAfterRevision() != null) {
-          duplicateControl.add(new Pair<Boolean, String>(Boolean.FALSE, ((SvnRepositoryContentRevision) change.getAfterRevision()).getPath()));
+          duplicateControl.add(Pair.create(Boolean.FALSE, ((SvnRepositoryContentRevision) change.getAfterRevision()).getPath()));
         }
       }
 
@@ -704,37 +692,45 @@ public class SvnChangeList implements CommittedChangeList {
   }
 
   public SVNURL getBranchUrl() {
-    if (!myCachedInfoLoaded) {
-      updateCachedInfo();
-    }
+    ensureCacheUpdated();
+
     return myBranchUrl;
   }
 
   @Nullable
   public VirtualFile getVcsRoot() {
-    if (!myCachedInfoLoaded) {
-      updateCachedInfo();
-    }
-    return (myWcRoot == null) ? null : myWcRoot.getRoot();
+    ensureCacheUpdated();
+
+    return myWcRoot == null ? null : myWcRoot.getRoot();
   }
 
   @Nullable
   public VirtualFile getRoot() {
-    if (!myCachedInfoLoaded) {
-      updateCachedInfo();
-    }
-    return (myWcRoot == null) ? null : myWcRoot.getVirtualFile();
+    ensureCacheUpdated();
+
+    return myWcRoot == null ? null : myWcRoot.getVirtualFile();
   }
 
   public RootUrlInfo getWcRootInfo() {
+    ensureCacheUpdated();
+
+    return myWcRoot;
+  }
+
+  private void ensureCacheUpdated() {
     if (!myCachedInfoLoaded) {
       updateCachedInfo();
     }
-    return myWcRoot;
   }
 
   private static class CommonPathSearcher {
     private String myCommon;
+
+    public void next(Iterable<String> values) {
+      for (String value : values) {
+        next(value);
+      }
+    }
 
     public void next(final String value) {
       if (value == null) {
@@ -799,17 +795,13 @@ public class SvnChangeList implements CommittedChangeList {
   @Nullable
   public String getWcPath() {
     final RootUrlInfo rootInfo = getWcRootInfo();
-    if (rootInfo == null) {
-      return null;
-    }
-    return rootInfo.getIoFile().getAbsolutePath();
+
+    return rootInfo == null ? null : rootInfo.getIoFile().getAbsolutePath();
   }
 
   public boolean allPathsUnder(final String path) {
     final String commonRelative = myCommonPathSearcher.getCommon();
-    if (commonRelative != null) {
-      return SVNPathUtil.isAncestor(path, SVNPathUtil.append(myRepositoryRoot, commonRelative));
-    }
-    return false;
+
+    return commonRelative != null && SVNPathUtil.isAncestor(path, SVNPathUtil.append(myRepositoryRoot, commonRelative));
   }
 }
