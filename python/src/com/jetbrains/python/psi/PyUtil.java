@@ -51,7 +51,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -963,6 +962,17 @@ public class PyUtil {
   public static List<String> strListValue(PyExpression value) {
     while (value instanceof PyParenthesizedExpression) {
       value = ((PyParenthesizedExpression)value).getContainedExpression();
+    }
+    if (value instanceof PyReferenceExpression) {
+      PyReferenceExpression refExpr = (PyReferenceExpression)value;
+      PsiElement deref = refExpr.getReference().resolve();
+      if (deref instanceof PyTargetExpression) {
+        PyTargetExpression te = (PyTargetExpression)deref;
+        PyExpression assignedValue = te.findAssignedValue();
+        if (assignedValue instanceof PySequenceExpression) {
+          value = assignedValue;
+        }
+      }
     }
     if (value instanceof PySequenceExpression) {
       final PyExpression[] elements = ((PySequenceExpression)value).getElements();
