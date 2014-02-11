@@ -20,10 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -53,8 +50,10 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,47 +156,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
       .setRemoveActionName(ProjectBundle.message("library.remove.action"))
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Object[] selectedElements = getSelectedElements();
-          if (selectedElements.length == 0) {
-            return;
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (Object selectedElement : selectedElements) {
-                if (selectedElement instanceof ItemElement) {
-                  final ItemElement itemElement = (ItemElement)selectedElement;
-                  getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
-                }
-                else if (selectedElement instanceof OrderRootTypeElement) {
-                  final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
-                  final String[] urls = getLibraryEditor().getUrls(rootType);
-                  for (String url : urls) {
-                    getLibraryEditor().removeRoot(url, rootType);
-                  }
-                }
-                else if (selectedElement instanceof ExcludedRootElement) {
-                  getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
-                }
-              }
-            }
-          });
-          libraryChanged(true);
-        }
-      });
+      .disableRemoveAction();
 
-    List<String> actionsOrder = new ArrayList<String>();
-    actionsOrder.add("Add");
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<AttachRootButtonDescriptor>();
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       Icon icon = descriptor.getToolbarIcon();
       if (icon != null) {
         AttachItemAction action = new AttachItemAction(descriptor, descriptor.getButtonText(), icon);
         toolbarDecorator.addExtraAction(AnActionButton.fromAction(action));
-        actionsOrder.add(action.getTemplatePresentation().getText());
       }
       else {
         popupItems.add(descriptor);
@@ -205,9 +171,55 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
     myAddExcludedRootActionButton = new AddExcludedRootActionButton();
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
-    actionsOrder.add(myAddExcludedRootActionButton.getTemplatePresentation().getText());
-    actionsOrder.add("Remove");
+    toolbarDecorator.addExtraAction(new AnActionButton("Remove", IconUtil.getRemoveIcon()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final Object[] selectedElements = getSelectedElements();
+        if (selectedElements.length == 0) {
+          return;
+        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (Object selectedElement : selectedElements) {
+              if (selectedElement instanceof ItemElement) {
+                final ItemElement itemElement = (ItemElement)selectedElement;
+                getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+              }
+              else if (selectedElement instanceof OrderRootTypeElement) {
+                final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+                final String[] urls = getLibraryEditor().getUrls(rootType);
+                for (String url : urls) {
+                  getLibraryEditor().removeRoot(url, rootType);
+                }
+              }
+              else if (selectedElement instanceof ExcludedRootElement) {
+                getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
+              }
+            }
+          }
+        });
+        libraryChanged(true);
+      }
 
+      @Override
+      public void updateButton(AnActionEvent e) {
+        super.updateButton(e);
+        Object[] elements = getSelectedElements();
+        Presentation presentation = e.getPresentation();
+        if (ContainerUtil.and(elements, new FilteringIterator.InstanceOf<ExcludedRootElement>(ExcludedRootElement.class))) {
+          presentation.setText("Cancel Exclusion");
+        }
+        else {
+          presentation.setText(getTemplatePresentation().getText());
+        }
+      }
+
+      @Override
+      public ShortcutSet getShortcut() {
+        return CommonShortcuts.DELETE;
+      }
+    });
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -228,7 +240,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           .show(button.getPreferredPopupPoint());
       }
     });
-    toolbarDecorator.setButtonComparator(ArrayUtil.toStringArray(actionsOrder));
 
     myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     Disposer.register(this, myTreeBuilder);
