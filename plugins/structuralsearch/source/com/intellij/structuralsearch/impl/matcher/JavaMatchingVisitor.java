@@ -395,6 +395,33 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    final PsiLambdaExpression expression2 = (PsiLambdaExpression)myMatchingVisitor.getElement();
+    myMatchingVisitor.setResult(true);
+    final PsiParameterList parameterList1 = expression.getParameterList();
+    if (parameterList1.getParametersCount() != 0) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList()));
+    }
+    final PsiElement body1 = getElementToMatch(expression.getBody());
+    if (body1 != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1, getElementToMatch(expression2.getBody())));
+    }
+  }
+
+  private static PsiElement getElementToMatch(PsiElement element) {
+    if (element instanceof PsiCodeBlock) {
+      element = PsiTreeUtil.getChildOfAnyType(element, PsiStatement.class, PsiComment.class);
+    }
+    if (element instanceof PsiExpressionStatement) {
+      element = ((PsiExpressionStatement)element).getExpression();
+    }
+    if (element instanceof PsiReturnStatement) {
+      element = ((PsiReturnStatement)element).getReturnValue();
+    }
+    return element;
+  }
+
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
     final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
@@ -912,9 +939,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     try {
       myMatchingVisitor.setResult((var.getName().equals(var2.getName()) || isTypedVar) &&
                                   ((var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
-                                   myMatchingVisitor.match(var.getModifierList(), var2.getModifierList())
-                                  ) &&
-                                  myMatchingVisitor.match(var.getTypeElement(), var2.getTypeElement()));
+                                   myMatchingVisitor.match(var.getModifierList(), var2.getModifierList())));
+      if (myMatchingVisitor.getResult()) {
+        final PsiTypeElement typeElement1 = var.getTypeElement();
+        if (typeElement1 != null) {
+          PsiTypeElement typeElement2 = var2.getTypeElement();
+          if (typeElement2 == null) {
+            typeElement2 = JavaPsiFacade.getElementFactory(var2.getProject()).createTypeElement(var2.getType());
+          }
+          myMatchingVisitor.setResult(myMatchingVisitor.match(typeElement1, typeElement2));
+        }
+      }
 
       if (myMatchingVisitor.getResult()) {
         // Check initializer

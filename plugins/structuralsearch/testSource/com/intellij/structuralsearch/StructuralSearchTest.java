@@ -2856,4 +2856,36 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern = "'_var='_var";
     assertEquals(3, findMatchesCount(source, pattern));
   }
+
+  public void testFindLambdas() {
+    String source = "public interface IntFunction<R> {" +
+                    "    R apply(int value);" +
+                    "}" +
+                    "public interface Function<T, R> {" +
+                    "    R apply(T t);" +
+                    "}" +
+                    "class A {" +
+                    "  void m() {" +
+                    "    Runnable q = () -> { /*comment*/ };" +
+                    "    Runnable r = () -> { System.out.println(); };" +
+                    "    IntFunction<String> f = a -> \"hello\";" +
+                    "    Function<String, String> g = a -> \"world\";" +
+                    "  }" +
+                    "}";
+
+    String pattern1 = "() ->";
+    assertEquals("should find lamdas", 4, findMatchesCount(source, pattern1));
+
+    String pattern2 = "(int '_a) -> {}";
+    assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
+
+    String pattern3 = "('_a{0,0})->{}";
+    assertEquals("should find lambdas without any parameters", 2, findMatchesCount(source, pattern3));
+
+    String pattern4 = "()->System.out.println()";
+    assertEquals("should find lambdas with matching body", 1, findMatchesCount(source, pattern4));
+
+    String pattern5 = "()->{/*comment*/}";
+    assertEquals("should find lambdas with comment body", 1, findMatchesCount(source, pattern5));
+  }
 }
