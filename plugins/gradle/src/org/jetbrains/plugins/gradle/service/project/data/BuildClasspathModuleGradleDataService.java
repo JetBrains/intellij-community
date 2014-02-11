@@ -118,15 +118,13 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
         GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
         if (settings == null || settings.getDistributionType() == null) continue;
 
-        final Set<String> buildClasspath = ContainerUtil.newHashSet();
+        final Set<String> buildClasspath = ContainerUtil.newLinkedHashSet();
         BuildScriptClasspathData buildScriptClasspathData = node.getData();
         for (BuildScriptClasspathData.ClasspathEntry classpathEntry : buildScriptClasspathData.getClasspathEntries()) {
           if (classpathEntry.getSourcesFile() != null) {
             buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getSourcesFile().getPath()));
           }
-          else {
-            buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getClassesFile().getPath()));
-          }
+          buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getClassesFile().getPath()));
         }
 
         ExternalProjectBuildClasspathPojo projectBuildClasspathPojo =

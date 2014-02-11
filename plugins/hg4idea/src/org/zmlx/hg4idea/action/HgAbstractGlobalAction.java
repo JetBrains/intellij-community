@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -75,7 +74,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
   }
 
-  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+  static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     try {
       HgUtil.markDirectoryDirty(project, repository);
     }
