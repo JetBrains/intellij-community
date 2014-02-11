@@ -26,19 +26,31 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dennis.Ushakov
  */
 public abstract class PyClassRefactoringTest extends PyTestCase {
+  @NotNull
+  private final String myRefactoringName;
+
+  protected PyClassRefactoringTest(@NotNull final String refactoringName) {
+    myRefactoringName = refactoringName;
+  }
+
+  //TODO: Doct
+  @NotNull
+  protected PyMemberInfo findMemberInfo(@NotNull final String clazzName, @NotNull final String memberName) {
+    final PyClass clazz = findClass(clazzName);
+    return MembersManager.findMember(clazz, findMember(clazzName, memberName));
+  }
+
   /**
    * @param className  class where member should be found
    * @param memberName member that starts with dot (<code>.</code>) is treated as method.
@@ -47,7 +59,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @return member or null if not found
    */
   @NotNull
-  protected PyElement findMember(@NotNull String className, @NotNull String memberName) {
+  protected PyElement findMember(@NotNull final String className, @NotNull String memberName) {
     final PyElement result;
     //TODO: Get rid of this chain of copy pastes
     if (memberName.contains(".")) {
@@ -97,5 +109,30 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
         });
       }
     }, null, null);
+  }
+
+  //TODO: Doc
+  protected void configureMultiFile(@NotNull final String... fileNamesNoExtensions) {
+    final String baseName = getMultiFileBaseName() + "/";
+
+    for (final String fileNameNoExtension : fileNamesNoExtensions) {
+      final String fileNameBefore = String.format("%s.py", fileNameNoExtension);
+      myFixture.copyFileToProject(baseName + fileNameBefore, fileNameBefore);
+    }
+  }
+
+  //TODO: Doc
+  protected void checkMultiFile(@NotNull final String... fileNamesNoExtensions) {
+    for (final String fileNameNoExtension : fileNamesNoExtensions) {
+      final String fileNameAfter = String.format("%s.after.py", fileNameNoExtension);
+      final String fileNameBefore = String.format("%s.py", fileNameNoExtension);
+      myFixture.checkResultByFile(fileNameBefore, "/" + getMultiFileBaseName() + "/" + fileNameAfter, true);
+    }
+  }
+
+  //TODO: Doc
+  @NotNull
+  protected String getMultiFileBaseName() {
+    return "refactoring/" + myRefactoringName + "/" + getTestName(true);
   }
 }

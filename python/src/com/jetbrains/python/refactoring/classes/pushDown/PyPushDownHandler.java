@@ -20,9 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Query;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
@@ -50,19 +48,20 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
       return;
     }
 
-    ViewPresenterUtils.linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<PyPushDownView, PyPushDownPresenter>() {
-      @NotNull
-      @Override
-      public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
-        return new PyPushDownPresenterImpl(view, classUnderRefactoring, infoStorage);
-      }
+    ViewPresenterUtils
+      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<PyPushDownView, PyPushDownPresenter>() {
+        @NotNull
+        @Override
+        public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
+          return new PyPushDownPresenterImpl(project, view, classUnderRefactoring, infoStorage);
+        }
 
-      @NotNull
-      @Override
-      public PyPushDownView createView(@NotNull PyPushDownPresenter presenter) {
-        return new PyPushDownViewSwingImpl(classUnderRefactoring, project, presenter);
-      }
-    });
+        @NotNull
+        @Override
+        public PyPushDownView createView(@NotNull PyPushDownPresenter presenter) {
+          return new PyPushDownViewSwingImpl(classUnderRefactoring, project, presenter);
+        }
+      });
   }
 
   @Override
@@ -74,5 +73,4 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
   protected String getHelpId() {
     return "members.push.down";
   }
-
 }

@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -26,6 +27,11 @@ import java.util.Collections;
  * @author Dennis.Ushakov
  */
 public class PyPullUpTest extends PyClassRefactoringTest {
+
+  public PyPullUpTest() {
+    super("pullup");
+  }
+
   public void testSimple() {
     doHelperTest("Boo", ".boo", "Foo");
   }
@@ -79,18 +85,16 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   }
 
   private void doMultiFileTest() {
-    String baseName = "refactoring/pullup/" + getTestName(true) + "/";
-    myFixture.copyFileToProject(baseName + "Class.py", "Class.py");
-    myFixture.copyFileToProject(baseName + "SuperClass.py", "SuperClass.py");
+    final String[] modules = {"Class", "SuperClass"};
+    configureMultiFile(modules);
     doPullUp("AnyClass", ".this_should_be_in_super", "SuperClass");
-    myFixture.checkResultByFile("SuperClass.py", "/" + baseName + "/SuperClass.after.py", true);
+    checkMultiFile(modules);
   }
 
   private void doHelperTest(final String className, final String memberName, final String superClassName) {
-    String baseName = "/refactoring/pullup/" + getTestName(true);
-    myFixture.configureByFile(baseName + ".py");
+    myFixture.configureByFile(getMultiFileBaseName() + ".py");
     doPullUp(className, memberName, superClassName);
-    myFixture.checkResultByFile(baseName + ".after.py");
+    myFixture.checkResultByFile(getMultiFileBaseName() + ".after.py");
   }
 
   private void doPullUp(String className, String memberName, String superClassName) {

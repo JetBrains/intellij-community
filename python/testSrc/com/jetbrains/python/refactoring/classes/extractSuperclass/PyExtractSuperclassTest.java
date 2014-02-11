@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +24,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
-import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
@@ -39,6 +36,28 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class PyExtractSuperclassTest extends PyClassRefactoringTest {
+
+  public PyExtractSuperclassTest() {
+    super("extractsuperclass");
+  }
+
+  //TODO: Doc
+  public void testImportMultiFile() throws Throwable {
+    final String[] modules = {"dest_module", "source_module"};
+    configureMultiFile(modules);
+    myFixture.configureByFile("source_module.py");
+    final String sourceClass = "MyClass";
+    final PyMemberInfo member = findMemberInfo(sourceClass, ".do_useful_stuff");
+    final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
+    new WriteCommandAction.Simple(myFixture.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        PyExtractSuperclassHelper.extractSuperclass(findClass(sourceClass), Collections.singleton(member), "NewParent", destUrl);
+      }
+    }.execute();
+    checkMultiFile(modules);
+  }
+
   public void testSimple() throws Exception {
     doSimpleTest("Foo", "Suppa", null, true, ".foo");
   }
@@ -55,28 +74,33 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doSimpleTest("FromClass", "ToClass", null, true, "#instance_field", "#CLASS_FIELD");
   }
 
-  private void doSimpleTest(final String className, final String superclassName, final String expectedError, final boolean sameFile, final String... membersName) throws Exception {
+  private void doSimpleTest(final String className,
+                            final String superclassName,
+                            final String expectedError,
+                            final boolean sameFile,
+                            final String... membersName) throws Exception {
     try {
-    String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
-    myFixture.configureByFile(baseName + ".before.py");
-    final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
-    for (String memberName : membersName) {
-      final PyElement member = findMember(className, memberName);
-      members.add(MembersManager.findMember(clazz, member));
-    }
-
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        //noinspection ConstantConditions
-        final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
-                                      myFixture.getFile().getVirtualFile().getParent().getUrl();
-        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
+      String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
+      myFixture.configureByFile(baseName + ".before.py");
+      final PyClass clazz = findClass(className);
+      final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+      for (String memberName : membersName) {
+        final PyElement member = findMember(className, memberName);
+        members.add(MembersManager.findMember(clazz, member));
       }
-    }.execute();
-    myFixture.checkResultByFile(baseName + ".after.py");
-    } catch (Exception e) {
+
+      new WriteCommandAction.Simple(myFixture.getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          //noinspection ConstantConditions
+          final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
+                             myFixture.getFile().getVirtualFile().getParent().getUrl();
+          PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
+        }
+      }.execute();
+      myFixture.checkResultByFile(baseName + ".after.py");
+    }
+    catch (Exception e) {
       if (expectedError == null) throw e;
       assertEquals(expectedError, e.getMessage());
     }
@@ -164,5 +188,4 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     String expected = psi_mgr.findFile(LocalFileSystem.getInstance().findFileByIoFile(expected_file)).getText().trim();
     assertEquals(expected, result);
   }
-
 }

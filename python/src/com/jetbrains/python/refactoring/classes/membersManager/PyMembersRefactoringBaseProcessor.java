@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -32,10 +33,11 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
    * @param to            where to move
    */
   protected PyMembersRefactoringBaseProcessor(
+    @NotNull final Project project,
     @NotNull final Collection<PyMemberInfo> membersToMove,
     @NotNull final PyClass from,
     @NotNull final PyClass... to) {
-    super(from.getProject());
+    super(project);
     myFrom = from;
     myMembersToMove = new ArrayList<PyMemberInfo>(membersToMove);
     myTo = to.clone();

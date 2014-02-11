@@ -1,4 +1,6 @@
 from SuperClass import SuperClass
+import os
+
 
 from sys import argv
 
@@ -7,3 +9,4 @@ class AnyClass(SuperClass):
         if not self.args:
             self.args = argv
         self.argument = some_argument
+        os.abort()

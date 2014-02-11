@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -56,10 +57,13 @@ public final class PyExtractSuperclassHelper {
   }
 
   static void extractSuperclass(final PyClass clazz,
-                                final Collection<PyMemberInfo> selectedMemberInfos,
+                                @NotNull Collection<PyMemberInfo> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
 
+    //We will need to change it probably while param may be read-only
+    //noinspection AssignmentToMethodParameter
+    selectedMemberInfos = new ArrayList<PyMemberInfo>(selectedMemberInfos);
     // 'object' superclass is always pulled up, even if not selected explicitly
     if (MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT) == null) {
       final PyMemberInfo object = MembersManager.findMember(clazz, ALLOW_OBJECT);

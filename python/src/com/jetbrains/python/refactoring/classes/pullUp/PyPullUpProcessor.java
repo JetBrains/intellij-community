@@ -17,7 +17,7 @@ import java.util.Collection;
 class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
 
   PyPullUpProcessor(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyMemberInfo> membersToMove) {
-    super(membersToMove, from, to);
+    super(from.getProject(), membersToMove, from, to);
   }
 
 
