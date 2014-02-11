@@ -41,6 +41,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -375,34 +377,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       public void run() {
         final Document document = EditorFactory.getInstance().createDocument(fileText);
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0
-                                           ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                           : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0
-                                         ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                         : null;
-
         if (ignoreTrailingSpaces) {
           ((DocumentImpl)document).stripTrailingSpaces(getProject());
         }
 
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(),
-                                selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(),
-                                selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
+        List<Pair<Integer, TextRange>> carets = extractCaretAndSelectionMarkers(document);
 
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         String newFileText = document.getText();
@@ -415,10 +394,68 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         }
         assertEquals(failMessage, newFileText, fileText);
 
-        checkCaretPosition(caretMarker, newFileText, message);
-        checkSelection(selStartMarker, selEndMarker, newFileText, message);
+        checkCaretAndSelectionPositions(carets, newFileText, message);
       }
     });
+  }
+
+  private static List<Pair<Integer, TextRange>> extractCaretAndSelectionMarkers(Document document) {
+    List<Pair<Integer, TextRange>> carets = new ArrayList<Pair<Integer, TextRange>>();
+
+    int pos = 0;
+    while (pos < document.getTextLength()) {
+      String fileText = document.getText();
+      int caretIndex = fileText.indexOf(CARET_MARKER, pos);
+      int selStartIndex = fileText.indexOf(SELECTION_START_MARKER, pos);
+      int selEndIndex = fileText.indexOf(SELECTION_END_MARKER, pos);
+
+      if (caretIndex < 0 && selStartIndex < 0 && selEndIndex < 0) {
+        break;
+      }
+      if ((selStartIndex ^ selEndIndex) < 0) {
+        throw new IllegalArgumentException("Both selection opening and closing tag must be present");
+      }
+      if (0 <= selEndIndex && selEndIndex < selStartIndex) {
+        throw new IllegalArgumentException("Wrong order of selection opening and closing tags");
+      }
+      if (caretIndex < selStartIndex) {
+        selStartIndex = -1;
+        selEndIndex = -1;
+      }
+      if (caretIndex > selEndIndex && selEndIndex >= 0) {
+        caretIndex = -1;
+      }
+
+      final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+      final RangeMarker selStartMarker = selStartIndex >= 0
+                                         ? document.createRangeMarker(selStartIndex, selStartIndex)
+                                         : null;
+      final RangeMarker selEndMarker = selEndIndex >= 0
+                                       ? document.createRangeMarker(selEndIndex, selEndIndex)
+                                       : null;
+
+      if (caretMarker != null) {
+        document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+      }
+      if (selStartMarker != null) {
+        document.deleteString(selStartMarker.getStartOffset(),
+                              selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+      }
+      if (selEndMarker != null) {
+        document.deleteString(selEndMarker.getStartOffset(),
+                              selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+      }
+
+      carets.add(new Pair<Integer, TextRange>(caretMarker == null ? null : caretMarker.getStartOffset(),
+                                              selStartMarker == null || selEndMarker == null ? null : new TextRange(selStartMarker.getStartOffset(), selEndMarker.getEndOffset())));
+
+      pos = Math.max(caretMarker == null ? -1 : caretMarker.getStartOffset(), selEndMarker == null ? -1 : selEndMarker.getEndOffset()) + 1;
+    }
+    if (carets.isEmpty()) {
+      carets.add(new Pair<Integer, TextRange>(null, null));
+    }
+
+    return carets;
   }
 
   private static String getMessage(@NonNls String engineMessage, String userMessage) {
@@ -426,53 +463,69 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return userMessage + " [" + engineMessage + "]";
   }
 
-  private static void checkSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker, String newFileText, String message) {
-    if (selStartMarker != null && selEndMarker != null) {
-      int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
-      int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
-
-      int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
-      int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
-
-      assertEquals(
-          getMessage("selectionStartLine", message),
-          selStartLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
-
-      assertEquals(
-          getMessage("selectionStartCol", message),
-          selStartCol + 1,
-          myEditor.getSelectionModel().getSelectionStart() -
-          StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-                                                                   1);
-
-      assertEquals(
-          getMessage("selectionEndLine", message),
-          selEndLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
-
-      assertEquals(
-          getMessage("selectionEndCol", message),
-          selEndCol + 1,
-          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
-          1);
-    }
-    else {
-      assertTrue(getMessage("must not have selection", message), !myEditor.getSelectionModel().hasSelection());
-    }
+  private static String getCaretDescription(int caretNumber, int totalCarets) {
+    return totalCarets == 1 ? "" : "(caret " + caretNumber + "/" + totalCarets + ")";
   }
 
-  private static void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-      //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-      int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
-                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0),
-                                                 caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+  @SuppressWarnings("ConstantConditions")
+  private static void checkCaretAndSelectionPositions(List<Pair<Integer, TextRange>> carets, String newFileText, String message) {
+    CaretModel caretModel = myEditor.getCaretModel();
+    List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
+    assertEquals("Unexpected number of carets", carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
+    for (int i = 0; i < carets.size(); i++) {
+      String caretDescription = getCaretDescription(i, carets.size());
+      Caret currentCaret = caretModel.supportsMultipleCarets() ? allCarets.get(i) : null;
+      LogicalPosition actualCaretPosition;
+      if (caretModel.supportsMultipleCarets()) {
+        actualCaretPosition = currentCaret.getLogicalPosition();
+      }
+      else {
+        actualCaretPosition = caretModel.getLogicalPosition();
+      }
+      Pair<Integer, TextRange> expected = carets.get(i);
+      if (expected.first != null) {
+        int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.first);
+        int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
+                                                   StringUtil.lineColToOffset(newFileText, caretLine, 0),
+                                                   expected.first,
+                                                   CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
-      assertEquals(getMessage("caretLine", message), caretLine, myEditor.getCaretModel().getLogicalPosition().line);
-      assertEquals(getMessage("caretColumn", message), caretCol, myEditor.getCaretModel().getLogicalPosition().column);
+        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine, actualCaretPosition.line);
+        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol, actualCaretPosition.column);
+      }
+      if (expected.second != null) {
+        int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.second.getStartOffset());
+        int selStartCol = expected.second.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
+
+        int selEndLine = StringUtil.offsetToLineNumber(newFileText, expected.second.getEndOffset());
+        int selEndCol = expected.second.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
+
+        assertEquals(
+            getMessage("selectionStartLine" + caretDescription, message),
+            selStartLine + 1,
+            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) + 1);
+
+        assertEquals(
+            getMessage("selectionStartCol" + caretDescription, message),
+            selStartCol + 1,
+            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) -
+            StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
+                                                                     1);
+
+        assertEquals(
+            getMessage("selectionEndLine" + caretDescription, message),
+            selEndLine + 1,
+            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) + 1);
+
+        assertEquals(
+            getMessage("selectionEndCol" + caretDescription, message),
+            selEndCol + 1,
+            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
+            1);
+      }
+      else {
+        assertFalse(getMessage("must not have selection" + caretDescription, message), caretModel.supportsMultipleCarets() ? currentCaret.hasSelection() : myEditor.getSelectionModel().hasSelection());
+      }
     }
   }
 
