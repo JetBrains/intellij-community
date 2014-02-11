@@ -535,14 +535,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Nullable
-  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile vFile, @NotNull byte[] bytes) throws ClsFormatException {
-    if (ClassFileViewProvider.isInnerClass(vFile)) {
+  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
+    if (ClassFileViewProvider.isInnerClass(file)) {
       return null;
     }
 
     try {
-      PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
-      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(vFile, STRATEGY, file, 0, vFile.getNameWithoutExtension());
+      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
+      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, file.getNameWithoutExtension());
       try {
         new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
@@ -553,11 +553,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       PsiClassStub<?> result = visitor.getResult();
       if (result == null) return null;
 
-      file.setPackageName(getPackageName(result));
-      return file;
+      stub.setPackageName(getPackageName(result));
+      return stub;
     }
     catch (Exception e) {
-      throw new ClsFormatException(vFile.getPath() + ": " + e.getMessage());
+      throw new ClsFormatException(file.getPath() + ": " + e.getMessage());
     }
   }
 
