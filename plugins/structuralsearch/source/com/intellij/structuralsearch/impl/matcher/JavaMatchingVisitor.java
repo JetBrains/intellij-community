@@ -1460,8 +1460,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeElement(final PsiTypeElement typeElement) {
-    final boolean matchType = matchType(typeElement, myMatchingVisitor.getElement());
-    myMatchingVisitor.setResult(matchType);
+    myMatchingVisitor.setResult(matchType(typeElement, myMatchingVisitor.getElement()));
   }
 
   @Override
