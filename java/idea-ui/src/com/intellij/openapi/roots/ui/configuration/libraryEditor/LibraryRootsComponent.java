@@ -156,7 +156,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
-      .setRemoveActionName(ProjectBundle.message("library.detach.action"))
+      .setRemoveActionName(ProjectBundle.message("library.remove.action"))
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -511,13 +511,13 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AddExcludedRootActionButton extends AnActionButton {
     public AddExcludedRootActionButton() {
-      super("Add Excluded", null, AllIcons.Modules.ExcludeRoot);
+      super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle("Add Excluded Roots");
+      descriptor.setTitle("Exclude from Library");
       descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(new VirtualFile[roots.size()]));
