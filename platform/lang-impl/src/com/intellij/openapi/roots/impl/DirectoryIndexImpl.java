@@ -177,9 +177,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter implements BulkFileListener {
-    private static final int MAX_DEPTH_TO_COUNT = 20;
-    private static final int DIRECTORIES_CHANGED_THRESHOLD = 50;
-
     @Override
     public void fileCreated(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
@@ -357,45 +354,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       myBatchChangePlanned = false;
-      int directoriesRemoved = 0;
-      int directoriesCreated = 0;
-
-      for (VFileEvent event : events) {
-        if (event instanceof VFileDeleteEvent) {
-          VirtualFile file = event.getFile();
-          if (file != null && file.isDirectory()) {
-            directoriesRemoved += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
-          }
-        }
-        else if (event instanceof VFileCreateEvent) {
-          VirtualFile file = event.getFile();
-          if (file != null && file.isDirectory() ||
-              file == null && ((VFileCreateEvent)event).isDirectory()) {
-            directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
-          }
-        }
-      }
-
-      final boolean willDoBatchUpdate = directoriesCreated + directoriesRemoved > DIRECTORIES_CHANGED_THRESHOLD;
+      final boolean willDoBatchUpdate = isLargeVfsChange(events);
       if (willDoBatchUpdate) {
         myBatchChangePlanned = true;
-        LOG.info("Too many directories created / deleted: " + directoriesCreated + "," + directoriesRemoved + ", will rebuild index state");
+        LOG.info("will rebuild index state");
       }
       else {
         for (VFileEvent event : events) {
           BulkVirtualFileListenerAdapter.fireBefore(this, event);
         }
       }
-    }
-
-    private int countDirectories(@Nullable VirtualFile file, int depth) {
-      if (!(file instanceof NewVirtualFile)) return 0;
-
-      int counter = 0;
-      for (VirtualFile child : ((NewVirtualFile)file).iterInDbChildren()) {
-        if (child.isDirectory()) counter += 1 + (depth > 0 ? countDirectories(child, depth - 1) : 0);
-      }
-      return counter;
     }
 
     @Override
@@ -1662,5 +1630,45 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       "; my classRoot: " + info.getLibraryClassRoot() +
       "; path is substring: " + FileUtil.isAncestor(root.getPath(), myFile.getPath(), false)
       ;
+  }
+
+  private static final int MAX_DEPTH_TO_COUNT = 20;
+  private static final int DIRECTORIES_CHANGED_THRESHOLD = 50;
+
+  public static boolean isLargeVfsChange(List<? extends VFileEvent> events) {
+    int directoriesRemoved = 0;
+    int directoriesCreated = 0;
+
+    for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null && file.isDirectory()) {
+          directoriesRemoved += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+        }
+      }
+      else if (event instanceof VFileCreateEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null && file.isDirectory() ||
+            file == null && ((VFileCreateEvent)event).isDirectory()) {
+          directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+        }
+      }
+    }
+
+    boolean largeChange = directoriesCreated + directoriesRemoved > DIRECTORIES_CHANGED_THRESHOLD;
+    if (largeChange) {
+      LOG.info("Too many directories created / deleted: " + directoriesCreated + "," + directoriesRemoved);
+    }
+    return largeChange;
+  }
+
+  private static int countDirectories(@Nullable VirtualFile file, int depth) {
+    if (!(file instanceof NewVirtualFile)) return 0;
+
+    int counter = 0;
+    for (VirtualFile child : ((NewVirtualFile)file).iterInDbChildren()) {
+      if (child.isDirectory()) counter += 1 + (depth > 0 ? countDirectories(child, depth - 1) : 0);
+    }
+    return counter;
   }
 }
