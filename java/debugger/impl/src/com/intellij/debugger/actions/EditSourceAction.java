@@ -31,19 +31,21 @@ public class EditSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
-    if(project == null) return;
+    if(project == null) {
+      return;
+    }
 
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(debuggerContext != null && selectedNode != null) {
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-          public void threadAction() {
-            final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
-            if (sourcePosition != null) {
-              sourcePosition.navigate(true);
-            }
+        public void threadAction() {
+          final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
+          if (sourcePosition != null) {
+            sourcePosition.navigate(true);
           }
-        });
+        }
+      });
     }
   }
 
@@ -51,21 +53,24 @@ public class EditSourceAction extends DebuggerAction{
     DebuggerTreeNodeImpl node = selectedNode;
     final DebuggerContextImpl context = debuggerContext;
 
-    if(node == null) return null;
-    if(context == null) return null;
+    if(node == null || context == null) {
+      return null;
+    }
 
     final Project project = context.getProject();
 
     final DebuggerSession debuggerSession = context.getDebuggerSession();
 
-    if(debuggerSession == null) return null;
+    if(debuggerSession == null) {
+      return null;
+    }
 
     NodeDescriptorImpl nodeDescriptor = node.getDescriptor();
     if(nodeDescriptor instanceof WatchItemDescriptor) {
       Modifier modifier = ((WatchItemDescriptor)nodeDescriptor).getModifier();
-
-      if(modifier == null) return null;
-
+      if(modifier == null) {
+        return null;
+      }
       nodeDescriptor = (NodeDescriptorImpl)modifier.getInspectItem(project);
     }
 
@@ -90,32 +95,24 @@ public class EditSourceAction extends DebuggerAction{
     final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
 
     final Presentation presentation = e.getPresentation();
-
-    presentation.setEnabled(true);
-
-    //if user used shortcut actionPerformed is called immediately after update
-    //we not disable presentation here to allow actionPerform work
-    DebuggerInvocationUtil.invokeLater(project, new Runnable() {
-      public void run() {
-        presentation.setEnabled(false);
-      }
-    });
-
     if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
+      presentation.setEnabled(true);
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
-          if (position != null) {
+          if (position == null) {
             DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
               public void run() {
-                presentation.setEnabled(true);
+                presentation.setEnabled(false);
               }
             });
           }
         }
       });
     }
-
+    else {
+      presentation.setEnabled(false);
+    }
     e.getPresentation().setText(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getTemplatePresentation().getText());
   }
 
