@@ -524,7 +524,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       return stub;
     }
     catch (Exception e) {
-      throw new ClsFormatException(file.getPath() + ": " + e.getMessage());
+      throw new ClsFormatException(file.getPath() + ": " + e.getMessage(), e);
     }
   }
 
