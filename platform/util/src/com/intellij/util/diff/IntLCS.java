@@ -24,6 +24,9 @@ class IntLCS {
   private final int[] myFirst;
   private final int[] mySecond;
 
+  private final int myStart1;
+  private final int myStart2;
+
   private final LinkedDiffPaths myPathsMatrix;
   private final int[] myPrevPathKey;
   private int[] myPrevEnds;
@@ -32,10 +35,16 @@ class IntLCS {
   private final int myMaxY;
 
   public IntLCS(int[] first, int[] second) {
+    this(first, second, 0, first.length, 0, second.length);
+  }
+
+  public IntLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
     myFirst = first;
     mySecond = second;
-    myMaxX = myFirst.length;
-    myMaxY = mySecond.length;
+    myStart1 = start1;
+    myStart2 = start2;
+    myMaxX = count1;
+    myMaxY = count2;
 
     myPathsMatrix = new LinkedDiffPaths(myMaxX, myMaxY);
     myPrevPathKey = new int[myMaxX + myMaxY + 1];
@@ -122,7 +131,7 @@ class IntLCS {
 
   private int skipEquals(int x, int y) {
     int skipped = 0;
-    while (x < myMaxX && y < myMaxY && myFirst[x] == mySecond[y]) {
+    while (x < myMaxX && y < myMaxY && myFirst[myStart1 + x] == mySecond[myStart2 + y]) {
       skipped += 1;
       x++;
       y++;
