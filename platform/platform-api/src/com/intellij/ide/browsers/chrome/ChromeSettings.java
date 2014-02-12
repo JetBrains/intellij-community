@@ -58,7 +58,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   }
 
   public void setUserDataDirectoryPath(@Nullable String value) {
-    myUserDataDirectoryPath = StringUtil.nullize(value);
+    myUserDataDirectoryPath = FileUtilRt.toSystemIndependentName(StringUtil.nullize(value));
   }
 
   public void setUseCustomProfile(boolean useCustomProfile) {
