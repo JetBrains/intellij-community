@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
@@ -27,10 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
@@ -90,16 +90,19 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   }
 
   private boolean mergeinfoChanged(final File file) {
-    final SVNWCClient client = myVcs.createWCClient();
+    SvnTarget target = SvnTarget.fromFile(file);
+
     try {
-      SVNPropertyData current = client.doGetProperty(file, SvnPropertyKeys.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-      SVNPropertyData base = client.doGetProperty(file, SvnPropertyKeys.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.BASE);
+      SVNPropertyData current =
+        myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.WORKING);
+      SVNPropertyData base =
+        myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.BASE);
 
       if (current != null) {
         return base == null || !Comparing.equal(current.getValue(), base.getValue());
       }
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       LOG.info(e);
     }
     return false;
