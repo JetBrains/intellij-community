@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
@@ -148,7 +148,16 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     };
 
     final CreateVirtualEnvDialog dialog;
-    final List<Sdk> allSdks = Arrays.asList(myExistingSdks);
+    final List<Sdk> allSdks = Lists.newArrayList(myExistingSdks);
+
+    final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
+    for (PythonSdkFlavor flavor : flavors) {
+      final Collection<String> strings = flavor.suggestHomePaths();
+      for (String string : strings) {
+        allSdks.add(new PyDetectedSdk(string));
+      }
+    }
+
     if (myProject != null) {
       dialog = new CreateVirtualEnvDialog(myProject, allSdks, null);
     }

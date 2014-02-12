@@ -122,7 +122,7 @@ public class PyConfigurableInterpreterList {
     }
 
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
-      result.add(new PyDetectedSdk(sdkHome, PythonSdkType.getInstance()));
+      result.add(new PyDetectedSdk(sdkHome));
     }
     return result;
   }

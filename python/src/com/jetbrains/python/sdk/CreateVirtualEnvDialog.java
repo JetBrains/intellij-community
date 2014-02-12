@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.Application;
@@ -114,6 +116,12 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     init();
     setTitle("Create Virtual Environment");
     if (suggestedBaseSdk == null && allSdks.size() > 0) {
+      Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+        @Override
+        public boolean apply(Sdk s) {
+          return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkDataHolder.isRemoteSdk(s.getHomePath());
+        }
+      });
       List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
       Collections.sort(sortedSdks, new PreferredSdkComparator());
       suggestedBaseSdk = sortedSdks.get(0);
@@ -229,17 +237,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    List<Sdk> baseSdks = new ArrayList<Sdk>();
-    for (Sdk s : allSdks) {
-      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder.isRemoteSdk(s.getHomePath())) {
-        baseSdks.add(s);
-      }
-      else if (s.equals(initialSelection)){
-        initialSelection = null;
-      }
-    }
-
-    mySdkCombo.setModel(new CollectionComboBoxModel(baseSdks, initialSelection));
+    mySdkCombo.setModel(new CollectionComboBoxModel(allSdks, initialSelection));
   }
 
   @Override
