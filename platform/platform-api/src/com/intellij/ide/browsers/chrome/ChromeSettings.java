@@ -102,6 +102,6 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     ChromeSettings settings = (ChromeSettings)o;
     return myUseCustomProfile == settings.myUseCustomProfile &&
            Comparing.equal(myCommandLineOptions, settings.myCommandLineOptions) &&
-           Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath);
+           (!myUseCustomProfile || Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath));
   }
 }
