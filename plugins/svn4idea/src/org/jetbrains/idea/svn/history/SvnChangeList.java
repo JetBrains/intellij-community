@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,8 +44,8 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -375,7 +376,7 @@ public class SvnChangeList implements CommittedChangeList {
         catch (SVNException e) {
           LOG.info(e);
         }
-        catch (SvnBindException e) {
+        catch (VcsException e) {
           LOG.info(e);
         }
       }
@@ -390,6 +391,8 @@ public class SvnChangeList implements CommittedChangeList {
         if (revision == null) {
           continue;
         }
+        // TODO: Logic with detecting "isDirectory" status is not clear enough. Why we can't just collect this info from logEntry and
+        // TODO: if loading from disk - use cached values? Not to invoke separate call here.
         SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
         SVNInfo info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
         boolean isDirectory = info != null && SVNNodeKind.DIR.equals(info.getKind());
@@ -410,7 +413,7 @@ public class SvnChangeList implements CommittedChangeList {
                                                  ((SvnRevisionNumber)previousRevision.getRevisionNumber()).getRevision().getNumber());
     }
 
-    private void uploadDeletedRenamedChildren() throws SVNException, SvnBindException {
+    private void uploadDeletedRenamedChildren() throws VcsException {
       Set<Pair<Boolean, String>> duplicates = collectDuplicates();
       List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(myDetailedList);
 
@@ -418,7 +421,7 @@ public class SvnChangeList implements CommittedChangeList {
     }
 
     private List<Change> collectDetails(@NotNull List<Change> changes, @NotNull Set<Pair<Boolean, String>> duplicates)
-      throws SVNException, SvnBindException {
+      throws VcsException {
       List<Change> result = ContainerUtil.newArrayList();
 
       for (Change change : changes) {
@@ -467,15 +470,15 @@ public class SvnChangeList implements CommittedChangeList {
     private Collection<Change> getChildrenAsChanges(@NotNull ContentRevision contentRevision,
                                                     final boolean isBefore,
                                                     @NotNull final Set<Pair<Boolean, String>> duplicates)
-      throws SVNException, SvnBindException {
+      throws VcsException {
       final List<Change> result = new ArrayList<Change>();
 
       final String path = getRelativePath(contentRevision);
       SVNURL fullPath = SvnUtil.createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
+      SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
 
-      final SVNLogClient client = myVcs.createLogClient();
-      client.doList(fullPath, revisionNumber, revisionNumber, true, new ISVNDirEntryHandler() {
+      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, SVNDepth.INFINITY, new ISVNDirEntryHandler() {
         public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
           final String childPath = path + '/' + dirEntry.getRelativePath();
 
