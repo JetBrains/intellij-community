@@ -4,9 +4,10 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.UnsupportedPatternException;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Bas Leijdekkers
@@ -44,8 +45,8 @@ public class StringToConstraintsTransformerTest {
   public void testZeroOccurs() {
     test("'a{,}");
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
-    Assert.assertEquals(0, constraint.getMinCount());
-    Assert.assertEquals(0, constraint.getMaxCount());
+    assertEquals(0, constraint.getMinCount());
+    assertEquals(0, constraint.getMaxCount());
   }
 
   @Test(expected = MalformedPatternException.class)
@@ -66,7 +67,7 @@ public class StringToConstraintsTransformerTest {
   @Test
   public void testColon() {
     test("for('_t 'a : '_b) {}");
-    Assert.assertEquals("for($t$ $a$ : $b$) {}", myOptions.getSearchPattern());
+    assertEquals("for($t$ $a$ : $b$) {}", myOptions.getSearchPattern());
   }
 
   @Test(expected = MalformedPatternException.class)
@@ -110,7 +111,7 @@ public class StringToConstraintsTransformerTest {
   }
 
   @Test(expected = MalformedPatternException.class)
-  public void invalidRegularExpression() {
+  public void testInvalidRegularExpression() {
     test("'a:x!(");
   }
 
