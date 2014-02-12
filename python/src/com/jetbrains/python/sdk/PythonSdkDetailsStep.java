@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -128,6 +131,22 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void createVirtualEnvSdk() {
+    CreateVirtualEnvDialog.VirtualEnvCallback callback = new CreateVirtualEnvDialog.VirtualEnvCallback() {
+      @Override
+      public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
+        PythonSdkType.setupSdkPaths(sdk, myProject, null);
+        if (associateWithProject) {
+          SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
+          if (additionalData == null) {
+            additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
+            ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
+          }
+          ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
+        }
+        myCallback.consume(sdk);
+      }
+    };
+
     final CreateVirtualEnvDialog dialog;
     final List<Sdk> allSdks = Arrays.asList(myExistingSdks);
     if (myProject != null) {
@@ -138,12 +157,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     }
     dialog.show();
     if (dialog.isOK()) {
-      dialog.createVirtualEnv(allSdks, new CreateVirtualEnvDialog.VirtualEnvCallback() {
-        @Override
-        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-          myCallback.consume(sdk);
-        }
-      });
+      dialog.createVirtualEnv(allSdks, callback);
     }
   }
 
