@@ -86,10 +86,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (argLine != null) {
       String value = argLine.getTextTrim();
       if (StringUtil.isNotEmpty(value)) {
-        CommandLineTokenizer tokenizer = new CommandLineTokenizer(value);
-        while (tokenizer.hasMoreTokens()) {
-          javaParameters.getVMParametersList().add(tokenizer.nextToken());
-        }
+        javaParameters.getVMParametersList().addParametersString(value);
       }
     }
   }
