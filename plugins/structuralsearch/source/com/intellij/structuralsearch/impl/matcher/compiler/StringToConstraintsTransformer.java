@@ -5,7 +5,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.StringTokenizer;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -191,7 +191,7 @@ class StringToConstraintsTransformer {
 
             if (index < length && pattern.charAt(index) == ':') {
               ++index;
-              if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
+              if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ':'));
               ch = pattern.charAt(index);
               if (ch == ':') {
                 // double colon instead of condition
@@ -240,7 +240,7 @@ class StringToConstraintsTransformer {
       }
 
       ++index;
-      if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
+      if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ch));
       ch = pattern.charAt(index);
     }
 
@@ -266,12 +266,15 @@ class StringToConstraintsTransformer {
                                   String pattern,
                                   StringBuilder miscBuffer,
                                   MatchVariableConstraint constraint) {
+    char c = pattern.charAt(index - 1);
     final int length = pattern.length();
     for(char ch; index < length && !Character.isWhitespace(ch = pattern.charAt(index)); ++index) {
       miscBuffer.append(ch);
     }
 
-    if (miscBuffer.length()==0) return index;
+    if (miscBuffer.length() == 0)
+      if (c == ':') throw new MalformedPatternException(SSRBundle.message("error.expected.condition", c));
+      else return index;
     String regexp = miscBuffer.toString();
 
     if (constraint.getRegExp()!=null &&
@@ -290,17 +293,19 @@ class StringToConstraintsTransformer {
     return index;
   }
 
-  private static void parseCondition(MatchVariableConstraint constraint, String s) {
-      StringTokenizer tokenizer = new StringTokenizer(s,"&&");
+  private static void parseCondition(MatchVariableConstraint constraint, String condition) {
+      if (condition.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "["));
+      final List<String> tokens = StringUtil.split(condition, "&&", true, false);
 
-      while(tokenizer.hasMoreElements()) {
-        String token = tokenizer.nextToken().trim();
+      for (String token : tokens) {
+        token = token.trim();
+        if (token.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "&&"));
         boolean hasNot = false;
         boolean consumed = false;
 
         if (StringUtil.startsWithChar(token, '!')) {
           token = token.substring(1);
-          if (token.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.option"));
+          if (token.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "!"));
           hasNot = true;
         }
 
@@ -340,6 +345,7 @@ class StringToConstraintsTransformer {
 
               if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
                 String typePattern = getSingleParameter(m, SSRBundle.message("reg.exp.should.be.delimited.with.spaces.error.message"));
+                if (typePattern.isEmpty()) throw new MalformedPatternException(SSRBundle.message("no.reg.exp.specified.error.message"));
 
                 if (StringUtil.startsWithChar(typePattern, '*')) {
                   typePattern = typePattern.substring(1);

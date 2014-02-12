@@ -132,7 +132,7 @@ public class PredefinedConfiguration extends Configuration {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.direct.subclasses"),
-        "class 'Class extends '_Parent: {}",
+        "class 'Class extends '_Parent {}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(

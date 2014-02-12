@@ -80,7 +80,7 @@ public class StringToConstraintsTransformerTest {
     test("'a:[");
   }
 
-  @Test
+  @Test(expected = MalformedPatternException.class)
   public void testClosedCondition() {
     test("'a:[]");
   }
@@ -100,12 +100,12 @@ public class StringToConstraintsTransformerTest {
     test("'a:[regex(]");
   }
 
-  @Test
+  @Test(expected = MalformedPatternException.class)
   public void testIncompleteCondition2() {
     test("'a:[regex()]");
   }
 
-  @Test
+  @Test(expected = MalformedPatternException.class)
   public void testIncompleteMultipleCondition() {
     test("'a:[regex( a ) &&]");
   }
