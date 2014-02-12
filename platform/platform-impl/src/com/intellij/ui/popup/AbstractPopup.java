@@ -1647,12 +1647,23 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void setMinimumSize(Dimension size) {
-    final Dimension sz = myHeaderPanel.getPreferredSize();
-    if (size == null || sz == null) {
-      myMinSize = sz == null ? new Dimension(0, 0) : sz;
+    //todo: consider changing only the caption panel minimum size
+    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
+
+    if (sizeFromHeader == null) {
+      sizeFromHeader = myHeaderPanel.getMinimumSize();
+    }
+
+    if (sizeFromHeader == null) {
+      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      sizeFromHeader = new Dimension(minimumSize, minimumSize);
+    }
+
+    if (size == null) {
+      myMinSize = sizeFromHeader;
     } else {
-      final int width = Math.max(size.width, sz.width);
-      final int height = Math.max(size.height, sz.height);
+      final int width = Math.max(size.width, sizeFromHeader.width);
+      final int height = Math.max(size.height, sizeFromHeader.height);
       myMinSize = new Dimension(width, height);
     }
 
