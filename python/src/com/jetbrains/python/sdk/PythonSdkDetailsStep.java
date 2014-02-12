@@ -36,10 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
-* @author yole
-*/
-public class DetailsChooser extends BaseListPopupStep<String> {
+public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private static DialogWrapper myMore;
   private final Project myProject;
   private final Component myOwnerComponent;
@@ -57,16 +54,16 @@ public class DetailsChooser extends BaseListPopupStep<String> {
                           final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
     myMore = component;
-    final ListPopupStep sdkHomesStep = new DetailsChooser(project, popupPoint.getComponent(), existingSdks, showMore, callback);
+    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, popupPoint.getComponent(), existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.show(popupPoint);
   }
 
-  public DetailsChooser(Project project,
-                        Component ownerComponent,
-                        Sdk[] existingSdks,
-                        boolean showMore,
-                        NullableConsumer<Sdk> callback) {
+  public PythonSdkDetailsStep(Project project,
+                              Component ownerComponent,
+                              Sdk[] existingSdks,
+                              boolean showMore,
+                              NullableConsumer<Sdk> callback) {
     super(null, getAvailableOptions(showMore));
     myProject = project;
     myOwnerComponent = ownerComponent;

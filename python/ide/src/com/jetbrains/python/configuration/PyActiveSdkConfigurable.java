@@ -44,9 +44,9 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.DetailsChooser;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkDetailsStep;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -108,19 +108,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          DetailsChooser.show(myProject, myProjectSdksModel.getSdks(), new PythonSdkOptions(myProject),
-                                                              RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
-                                                              new NullableConsumer<Sdk>() {
-                                                                @Override
-                                                                public void consume(Sdk sdk) {
-                                                                  if (sdk == null) return;
-                                                                  mySdkAdded = true;
-                                                                  updateSdkList(false);
-                                                                  mySdkCombo.getModel().setSelectedItem(sdk);
-                                                                  myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
-                                                                }
-                                                              }
-                                          );
+                                          PythonSdkDetailsStep
+                                            .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkOptions(myProject),
+                                                  RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
+                                                  new NullableConsumer<Sdk>() {
+                                                    @Override
+                                                    public void consume(Sdk sdk) {
+                                                      if (sdk == null) return;
+                                                      mySdkAdded = true;
+                                                      updateSdkList(false);
+                                                      mySdkCombo.getModel().setSelectedItem(sdk);
+                                                      myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
+                                                    }
+                                                  }
+                                            );
                                         }
                                       }
     );

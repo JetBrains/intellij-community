@@ -45,7 +45,10 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remotesdk.RemoteSdkData;
@@ -277,15 +280,16 @@ public class PythonSdkType extends SdkType {
 
   public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    DetailsChooser.show(project, sdkModel.getSdks(), null, RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
-      @Override
-      public void consume(@Nullable Sdk sdk) {
-        if (sdk != null) {
-          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
-          sdkCreatedCallback.consume(sdk);
+    PythonSdkDetailsStep
+      .show(project, sdkModel.getSdks(), null, RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
+        @Override
+        public void consume(@Nullable Sdk sdk) {
+          if (sdk != null) {
+            sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
+            sdkCreatedCallback.consume(sdk);
+          }
         }
-      }
-    });
+      });
   }
 
   public static boolean isVirtualEnv(Sdk sdk) {

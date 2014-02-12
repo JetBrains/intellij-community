@@ -269,7 +269,7 @@ public class PythonSdkOptions extends DialogWrapper {
   }
 
   private void addSdk(AnActionButton button) {
-    DetailsChooser
+    PythonSdkDetailsStep
       .show(myProject, myProjectSdksModel.getSdks(), this, button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
