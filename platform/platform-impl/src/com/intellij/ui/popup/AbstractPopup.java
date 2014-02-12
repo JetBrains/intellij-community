@@ -1647,11 +1647,12 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void setMinimumSize(Dimension size) {
-    if (size == null) {
-      myMinSize =  myHeaderPanel.getPreferredSize();
+    final Dimension sz = myHeaderPanel.getPreferredSize();
+    if (size == null || sz == null) {
+      myMinSize = sz == null ? new Dimension(0, 0) : sz;
     } else {
-      final int width = Math.max(size.width, myHeaderPanel.getPreferredSize().width);
-      final int height = Math.max(size.height, myHeaderPanel.getPreferredSize().height);
+      final int width = Math.max(size.width, sz.width);
+      final int height = Math.max(size.height, sz.height);
       myMinSize = new Dimension(width, height);
     }
 
