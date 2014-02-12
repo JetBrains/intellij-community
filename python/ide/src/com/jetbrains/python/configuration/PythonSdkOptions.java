@@ -455,7 +455,10 @@ public class PythonSdkOptions extends DialogWrapper {
       component.setPreferredSize(new Dimension(600, 400));
       component.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
       dialog.setCenterPanel(component);
-      editor.reload(getSelectedSdk().getSdkModificator());
+      final Sdk sdk = getSelectedSdk();
+      if (sdk != null) {
+        editor.reload(sdk.getSdkModificator());
+      }
 
       dialog.setTitle("Interpreter Paths");
       dialog.show();
