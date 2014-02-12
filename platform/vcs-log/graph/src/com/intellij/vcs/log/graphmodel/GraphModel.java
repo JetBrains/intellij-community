@@ -18,8 +18,6 @@ public interface GraphModel {
   @NotNull
   public Graph getGraph();
 
-  public void appendCommitsToGraph(@NotNull List<GraphCommit> commitParentses);
-
   public void setVisibleBranchesNodes(@NotNull Function<Node, Boolean> isStartedNode);
 
   @NotNull

@@ -53,10 +53,6 @@ public class ShortFragmentGenerator {
 
   @Nullable
   public GraphFragment getDownShortFragment(@NotNull Node startNode) {
-    if (startNode.getType() == Node.NodeType.EDGE_NODE) {
-      throw new IllegalArgumentException("small fragment may start only with COMMIT_NODE, but this node is: " + startNode);
-    }
-
     Set<Node> upNodes = new HashSet<Node>();
     upNodes.add(startNode);
     Set<Node> notAddedNodes = new HashSet<Node>();
@@ -122,10 +118,6 @@ public class ShortFragmentGenerator {
 
   @Nullable
   public GraphFragment getUpShortFragment(@NotNull Node startNode) {
-    if (startNode.getType() == Node.NodeType.EDGE_NODE) {
-      throw new IllegalArgumentException("small fragment may start only with COMMIT_NODE, but this node is: " + startNode);
-    }
-
     Set<Node> downNodes = new HashSet<Node>();
     downNodes.add(startNode);
     Set<Node> notAddedNodes = new HashSet<Node>();

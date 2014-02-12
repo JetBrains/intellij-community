@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graphmodel.fragment;
 
 import com.intellij.util.Function;
-import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphTestUtils;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +33,7 @@ public class GraphModelTest {
     @NotNull
     public GraphModel buildGraphModel(@NotNull String inputGraph) {
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
-        return new GraphModelImpl(graph, Collections.<VcsRef>emptyList());
+        return new GraphModelImpl(graph);
     }
 
 
@@ -116,10 +114,10 @@ public class GraphModelTest {
      *  |  |
      *  | a8
      *  | /
-     *  *  a9
-     *  | /
-     *  *  a10
-     *  |   |
+     *  | | a9
+     *  | | /
+     *  | || a10
+     *  |//  /
      * a11  |
      *  |   |
      * a12  |
@@ -169,11 +167,9 @@ public class GraphModelTest {
                 "a6|-a2:a6:USUAL:a2#a6 a5:a6:USUAL:a3|-a6:a7:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-6\n" +
                 "a7|-a6:a7:USUAL:a2#a6|-a7:a8:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-7\n" +
                 "a8|-a7:a8:USUAL:a2#a6|-a8:a11:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-8\n" +
-                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-9\n" +
-                "   a9|-|-a9:a11:USUAL:a9|-COMMIT_NODE|-a9|-9\n" +
+                "a9|-|-a9:a11:USUAL:a9|-COMMIT_NODE|-a9|-9\n" +
                 "a10|-|-a10:a13:USUAL:a10|-COMMIT_NODE|-a10|-10\n" +
-                "   a11|-a11:a11:USUAL:a2#a11 a9:a11:USUAL:a9|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-10\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-11\n" +
+                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6 a9:a11:USUAL:a9|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-11\n" +
                 "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-12\n" +
                 "a13|-a10:a13:USUAL:a10|-a13:a14:USUAL:a10|-COMMIT_NODE|-a10|-13\n" +
                 "a14|-a13:a14:USUAL:a10|-a14:a15:USUAL:a10|-COMMIT_NODE|-a10|-14\n" +
@@ -286,13 +282,11 @@ public class GraphModelTest {
                 "a6|-a2:a6:USUAL:a2#a6|-a6:a7:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-3\n" +
                 "a7|-a6:a7:USUAL:a2#a6|-a7:a8:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-4\n" +
                 "a8|-a7:a8:USUAL:a2#a6|-a8:a11:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-5\n" +
-                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-6\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-7\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
-                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-9\n" +
-                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-10\n" +
-                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-11\n" +
-                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-12"
+                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-6\n" +
+                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-7\n" +
+                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
+                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-9\n" +
+                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-10"
         );
 
     }
@@ -314,16 +308,14 @@ public class GraphModelTest {
                 "a6|-a5:a6:USUAL:a3|-a6:a7:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-3\n" +
                 "a7|-a6:a7:USUAL:a2#a6|-a7:a8:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-4\n" +
                 "a8|-a7:a8:USUAL:a2#a6|-a8:a11:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-5\n" +
-                "a11|-a8:a11:USUAL:a2#a6|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-6\n" +
-                "a10|-|-a10:a13:USUAL:a10|-COMMIT_NODE|-a10|-7\n" +
-                "   a11|-a11:a11:USUAL:a2#a11|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-7\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
-                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-9\n" +
-                "a13|-a10:a13:USUAL:a10|-a13:a14:USUAL:a10|-COMMIT_NODE|-a10|-10\n" +
-                "a14|-a13:a14:USUAL:a10|-a14:a15:USUAL:a10|-COMMIT_NODE|-a10|-11\n" +
-                "a15|-a12:a15:USUAL:a2#a11 a14:a15:USUAL:a10|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-12\n" +
-                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-13\n" +
-                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-14"
+                "a10|-|-a10:a13:USUAL:a10|-COMMIT_NODE|-a10|-6\n" +
+                "a11|-a8:a11:USUAL:a2#a6|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-7\n" +
+                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
+                "a13|-a10:a13:USUAL:a10|-a13:a14:USUAL:a10|-COMMIT_NODE|-a10|-9\n" +
+                "a14|-a13:a14:USUAL:a10|-a14:a15:USUAL:a10|-COMMIT_NODE|-a10|-10\n" +
+                "a15|-a12:a15:USUAL:a2#a11 a14:a15:USUAL:a10|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-11\n" +
+                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-12\n" +
+                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-13"
         );
 
     }
@@ -339,12 +331,11 @@ public class GraphModelTest {
                 startNodes,
 
                 "a9|-|-a9:a11:USUAL:a9|-COMMIT_NODE|-a9|-0\n" +
-                "a11|-a9:a11:USUAL:a9|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-1\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-2\n" +
-                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-3\n" +
-                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-4\n" +
-                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-5\n" +
-                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-6"
+                "a11|-a9:a11:USUAL:a9|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-1\n" +
+                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-2\n" +
+                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-3\n" +
+                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-4\n" +
+                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-5"
         );
 
     }
@@ -470,11 +461,9 @@ public class GraphModelTest {
 
                 "a3|-|-a3:a8:HIDE_FRAGMENT:a3|-COMMIT_NODE|-a3|-0\n" +
                 "a8|-a3:a8:HIDE_FRAGMENT:a3|-a8:a11:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-1\n" +
-                "a11|-a8:a11:USUAL:a2#a6|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-2\n" +
-                "   a9|-|-a9:a11:USUAL:a9|-COMMIT_NODE|-a9|-2\n" +
+                "a9|-|-a9:a11:USUAL:a9|-COMMIT_NODE|-a9|-2\n" +
                 "a10|-|-a10:a13:USUAL:a10|-COMMIT_NODE|-a10|-3\n" +
-                "   a11|-a11:a11:USUAL:a2#a11 a9:a11:USUAL:a9|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-3\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-4\n" +
+                "a11|-a8:a11:USUAL:a2#a6 a9:a11:USUAL:a9|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-4\n" +
                 "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-5\n" +
                 "a13|-a10:a13:USUAL:a10|-a13:a14:USUAL:a10|-COMMIT_NODE|-a10|-6\n" +
                 "a14|-a13:a14:USUAL:a10|-a14:a15:USUAL:a10|-COMMIT_NODE|-a10|-7\n" +
@@ -527,13 +516,11 @@ public class GraphModelTest {
                 "a6|-a2:a6:USUAL:a2#a6|-a6:a7:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-3\n" +
                 "a7|-a6:a7:USUAL:a2#a6|-a7:a8:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-4\n" +
                 "a8|-a7:a8:USUAL:a2#a6|-a8:a11:USUAL:a2#a6|-COMMIT_NODE|-a2#a6|-5\n" +
-                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-6\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a11:USUAL:a2#a11|-EDGE_NODE|-a2#a11|-7\n" +
-                "a11|-a11:a11:USUAL:a2#a11|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
-                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-9\n" +
-                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-10\n" +
-                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-11\n" +
-                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-12",
+                "a11|-a2:a11:USUAL:a2#a11 a8:a11:USUAL:a2#a6|-a11:a12:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-6\n" +
+                "a12|-a11:a12:USUAL:a2#a11|-a12:a15:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-7\n" +
+                "a15|-a12:a15:USUAL:a2#a11|-a15:a16:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-8\n" +
+                "a16|-a15:a16:USUAL:a2#a11|-a16:a17:USUAL:a2#a11|-COMMIT_NODE|-a2#a11|-9\n" +
+                "a17|-a16:a17:USUAL:a2#a11|-|-COMMIT_NODE|-a2#a11|-10",
 
                 toStr(hardGraph.getGraph())
         );

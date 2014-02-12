@@ -42,7 +42,7 @@ public class DataPack {
 
     MutableGraph graph = GraphBuilder.build(commits, allRefs);
 
-    GraphModel graphModel = new GraphModelImpl(graph, allRefs);
+    GraphModel graphModel = new GraphModelImpl(graph);
 
     final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
     graphModel.addUpdateListener(new Consumer<UpdateRequest>() {
@@ -75,10 +75,6 @@ public class DataPack {
     myPrintCellModel = printCellModel;
     myHashGetter = hashGetter;
     myIndexGetter = indexGetter;
-  }
-
-  public void appendCommits(@NotNull List<GraphCommit> commitParentsList) {
-    myGraphModel.appendCommitsToGraph(commitParentsList);
   }
 
   @NotNull
