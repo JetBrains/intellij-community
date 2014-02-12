@@ -70,7 +70,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   };
   private Set<SdkModificator> myModifiedModificators = new HashSet<SdkModificator>();
-  private boolean myFirstReset;
   private final Project myProject;
 
   private boolean myNewProject = false;
@@ -87,7 +86,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myProject = project;
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
-    myFirstReset = true;
     init();
     updateOkButton();
   }
@@ -220,22 +218,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Nullable
   public Sdk getSelectedSdk() {
     return (Sdk)mySdkList.getSelectedValue();
-  }
-
-  public void reset() {
-    clearModificators();
-    if (myFirstReset) {
-      myFirstReset = false;
-    }
-    else {
-      myProjectSdksModel.reset(null);
-    }
-    refreshSdkList();
-  }
-
-  private void clearModificators() {
-    myModificators.clear();
-    myModifiedModificators.clear();
   }
 
   private void refreshSdkList() {
