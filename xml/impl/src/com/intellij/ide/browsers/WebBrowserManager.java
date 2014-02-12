@@ -277,15 +277,6 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     ((ConfigurableWebBrowser)browser).setActive(isActive);
   }
 
-  public void addBrowser(final @NotNull UUID id,
-                         final @NotNull BrowserFamily family,
-                         final @NotNull String name,
-                         final @Nullable String path,
-                         final boolean active,
-                         final BrowserSpecificSettings specificSettings) {
-    browsers.add(new ConfigurableWebBrowser(id, family, name, path, active, specificSettings));
-  }
-
   @Nullable
   private static UUID parseUuid(@NotNull String id) {
     if (id.indexOf('-') == -1) {
@@ -309,9 +300,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     UUID id = parseUuid(idOrName);
     if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getName().equals(idOrName) ||
-            browser.getFamily().name().equalsIgnoreCase(idOrName) ||
-            browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
+        if (browser.getFamily().name().equalsIgnoreCase(idOrName) || browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
           return browser;
         }
       }

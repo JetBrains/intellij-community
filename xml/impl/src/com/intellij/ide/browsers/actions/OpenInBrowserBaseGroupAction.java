@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ComputableActionGroup;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +43,15 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       @Nullable
       @Override
       public Result<AnAction[]> compute() {
+        List<AnAction> actionsByEP = new SmartList<AnAction>();
+        for (OpenInBrowserActionProducer actionProducer : OpenInBrowserActionProducer.EP_NAME.getExtensions()) {
+          actionsByEP.addAll(actionProducer.getActions());
+        }
+
         List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
         boolean addDefaultBrowser = isPopup();
         int offset = addDefaultBrowser ? 1 : 0;
-        AnAction[] actions = new AnAction[browsers.size() + offset];
+        AnAction[] actions = new AnAction[browsers.size() + offset + actionsByEP.size()];
 
         if (addDefaultBrowser) {
           if (myDefaultBrowserAction == null) {
@@ -58,6 +65,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
         for (int i = 0, size = browsers.size(); i < size; i++) {
           actions[i + offset] = new BaseWebBrowserAction(browsers.get(i));
         }
+
+        ArrayUtil.copy(actionsByEP, actions, offset + browsers.size());
 
         return Result.create(actions, WebBrowserManager.getInstance());
       }
