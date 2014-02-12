@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,6 +310,10 @@ public class VcsUtil {
     return getFilePath(new File(path));
   }
 
+  public static FilePath getFilePath(@NotNull VirtualFile file) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+  }
+
   public static FilePath getFilePath(File file) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
   }
@@ -585,7 +589,7 @@ public class VcsUtil {
     return (! s1Trimmed.equals(s2Trimmed)) && s1Trimmed.equalsIgnoreCase(s2Trimmed);
   }
 
-  private static String ANNO_ASPECT = "show.vcs.annotation.aspect.";
+  private static final String ANNO_ASPECT = "show.vcs.annotation.aspect.";
   //public static boolean isAspectAvailableByDefault(LineAnnotationAspect aspect) {
   //  if (aspect.getId() == null) return aspect.isShowByDefault();
   //  return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + aspect.getId(), aspect.isShowByDefault());

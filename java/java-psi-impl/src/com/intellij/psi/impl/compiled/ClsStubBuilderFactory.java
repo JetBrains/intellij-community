@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,32 +21,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.util.cls.ClsFormatException;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
+/** @deprecated API no longer supported, use {@link com.intellij.psi.compiled.ClassFileDecompilers} instead (to remove in IDEA 14) */
+@SuppressWarnings({"deprecation", "unused"})
 public abstract class ClsStubBuilderFactory<T extends PsiFile> {
-
   public static final ExtensionPointName<ClsStubBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.clsStubBuilderFactory");
 
-  @Nullable
-  public abstract PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes) throws ClsFormatException;
+  public abstract PsiFileStub<T> buildFileStub(final VirtualFile file, byte[] bytes) throws ClsFormatException;
 
-  @Nullable
-  public PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes, Project project) throws ClsFormatException {
+  public PsiFileStub<T> buildFileStub(final VirtualFile file, byte[] bytes, Project project) throws ClsFormatException {
     return buildFileStub(file, bytes);
   }
 
   public abstract boolean canBeProcessed(final VirtualFile file, byte[] bytes);
 
-  /**
-   * Should be fast, because of processing file only according to the name.
-   * It can be inconsistent with 'canBeProcessed' method.
-   * @param file classFile
-   * @return false in case if it's not inner class
-   */
   public abstract boolean isInnerClass(final VirtualFile file);
 
-  public int getStubVersion() { return 1; }
+  public int getStubVersion() {
+    return 1;
+  }
 }

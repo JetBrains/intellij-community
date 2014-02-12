@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,61 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ReplacePrimitiveWithBoxedTypeAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl");
+
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierList modifierList,
@@ -561,9 +592,177 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     PullAsAbstractUpFix.registerQuickFix(method, registrar);
   }
 
+  @NotNull
   @Override
-  public IntentionAction createCreateAnnotationMethodFromUsageFix(PsiNameValuePair pair) {
+  public IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair) {
     return new CreateAnnotationMethodFromUsageFix(pair);
   }
 
+  @NotNull
+  @Override
+  public IntentionAction createOptimizeImportsFix() {
+    final OptimizeImportsFix fix = new OptimizeImportsFix();
+
+    return new IntentionAction() {
+      @NotNull
+      @Override
+      public String getText() {
+        return fix.getText();
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return fix.getFamilyName();
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        return timeToOptimizeImports(file) && fix.isAvailable(project, editor, file);
+      }
+
+      @Override
+      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+        invokeOnTheFlyImportOptimizer(new Runnable() {
+          @Override
+          public void run() {
+            fix.invoke(project, editor, file);
+          }
+        }, file, editor);
+      }
+
+      @Override
+      public boolean startInWriteAction() {
+        return fix.startInWriteAction();
+      }
+    };
+  }
+
+  @Override
+  public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
+    Project myProject = parameter.getProject();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    UnusedParametersInspection unusedParametersInspection =
+      (UnusedParametersInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, parameter);
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
+    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
+    options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
+    if (unusedParametersInspection != null) {
+      SuppressQuickFix[] batchSuppressActions = unusedParametersInspection.getBatchSuppressActions(parameter);
+      Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
+    }
+    //need suppress from Unused Parameters but settings from Unused Symbol
+    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new RemoveUnusedParameterFix(parameter),
+                                          options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
+                                                                      @NotNull String qualifiedName,
+                                                                      @NotNull String element) {
+    final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
+    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
+      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.family"),
+      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
+    return new CreateGetterOrSetterFix(createGetter, createSetter, field);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement) {
+    return new RenameToIgnoredFix(namedElement);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createEnableOptimizeImportsOnTheFlyFix() {
+    return new EnableOptimizeImportsOnTheFlyFix();
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      PsiClass containingClass = method.getContainingClass();
+      if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
+        //ignore methods with deleted return types as they are always marked as unused without any reason
+        ChangeSignatureGestureDetector.getInstance(method.getProject()).dismissForElement(method);
+      }
+    }
+    return new SafeDeleteFix(element);
+  }
+
+  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
+                                                   @NotNull final PsiFile file,
+                                                   @NotNull final Editor editor) {
+    final long stamp = editor.getDocument().getModificationStamp();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+        //no need to optimize imports on the fly during undo/redo
+        final UndoManager undoManager = UndoManager.getInstance(editor.getProject());
+        if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+        String beforeText = file.getText();
+        final long oldStamp = editor.getDocument().getModificationStamp();
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(runnable);
+          }
+        });
+        if (oldStamp != editor.getDocument().getModificationStamp()) {
+          String afterText = file.getText();
+          if (Comparing.strEqual(beforeText, afterText)) {
+            LOG.error(
+              LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
+                                       AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
+          }
+        }
+      }
+    });
+  }
+
+  private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
+    if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
+
+    DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject());
+    // dont optimize out imports in JSP since it can be included in other JSP
+    if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
+
+    if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
+    boolean errors = containsErrorsPreventingOptimize(file);
+
+    return !errors && DaemonListeners.canChangeFileSilently(file);
+  }
+
+  private static boolean containsErrorsPreventingOptimize(@NotNull PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return true;
+    // ignore unresolved imports errors
+    PsiImportList importList = ((PsiJavaFile)file).getImportList();
+    final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
+    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
+      .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+        @Override
+        public boolean process(HighlightInfo error) {
+          int infoStart = error.getActualStartOffset();
+          int infoEnd = error.getActualEndOffset();
+
+          return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
+        }
+      });
+
+    return hasErrorsExceptUnresolvedImports;
+  }
 }

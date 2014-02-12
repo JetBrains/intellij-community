@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import org.gradle.tooling.model.DomainObjectSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,10 +40,22 @@ public interface WebConfiguration extends Serializable {
 
     File getWebXml();
 
-    Map<String, Set<String>> getWebRoots();
+    List<WebResource> getWebResources();
 
     Set<File> getClasspath();
 
     String getManifestContent();
+  }
+
+  interface WebResource extends Serializable {
+
+    @NotNull
+    String getWarDirectory();
+
+    @NotNull
+    String getRelativePath();
+
+    @NotNull
+    File getFile();
   }
 }

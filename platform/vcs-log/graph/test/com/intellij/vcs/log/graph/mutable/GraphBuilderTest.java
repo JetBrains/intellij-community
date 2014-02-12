@@ -71,8 +71,7 @@ public class GraphBuilderTest {
             "a0|-|-a0:a1:USUAL:a0#a1 a0:a3:USUAL:a0#a3|-COMMIT_NODE|-a0|-0\n" +
             "a1|-a0:a1:USUAL:a0#a1|-a1:a2:USUAL:a1#a2 a1:a3:USUAL:a1#a3|-COMMIT_NODE|-a0#a1|-1\n" +
             "a2|-a1:a2:USUAL:a1#a2|-|-COMMIT_NODE|-a1#a2|-2\n" +
-            "   a3|-a0:a3:USUAL:a0#a3 a1:a3:USUAL:a1#a3|-a3:a3:USUAL:a0#a3|-EDGE_NODE|-a0#a3|-2\n" +
-            "a3|-a3:a3:USUAL:a0#a3|-|-COMMIT_NODE|-a0#a3|-3");
+            "a3|-a0:a3:USUAL:a0#a3 a1:a3:USUAL:a1#a3|-|-COMMIT_NODE|-a0#a3|-3");
   }
 
   @Test
@@ -85,8 +84,7 @@ public class GraphBuilderTest {
             "a0|-|-a0:a1:USUAL:a0#a1 a0:a3:USUAL:a0#a3|-COMMIT_NODE|-a0|-0\n" +
             "a1|-a0:a1:USUAL:a0#a1|-a1:a3:USUAL:a0#a1|-COMMIT_NODE|-a0#a1|-1\n" +
             "a2|-|-|-COMMIT_NODE|-a2|-2\n" +
-            "   a3|-a0:a3:USUAL:a0#a3 a1:a3:USUAL:a0#a1|-a3:a3:USUAL:a0#a3|-EDGE_NODE|-a0#a3|-2\n" +
-            "a3|-a3:a3:USUAL:a0#a3|-|-COMMIT_NODE|-a0#a3|-3");
+            "a3|-a0:a3:USUAL:a0#a3 a1:a3:USUAL:a0#a1|-|-COMMIT_NODE|-a0#a3|-3");
   }
 
   @Test

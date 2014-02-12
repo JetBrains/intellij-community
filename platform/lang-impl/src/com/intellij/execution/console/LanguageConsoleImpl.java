@@ -46,7 +46,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -192,10 +191,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
-    if (isConsoleEditorEnabled() == consoleEditorEnabled) return;
-    final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
+    if (isConsoleEditorEnabled() == consoleEditorEnabled) {
+      return;
+    }
+
     if (consoleEditorEnabled) {
-      fileManager.closeFile(myVirtualFile);
+      FileEditorManager.getInstance(getProject()).closeFile(myVirtualFile);
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent());
       myPanel.add(myConsoleEditor.getComponent());
@@ -384,7 +385,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setTitle(@NotNull String title) {
-    this.myTitle = title;
+    myTitle = title;
   }
 
   public void printToHistory(@NotNull CharSequence text, @NotNull TextAttributes attributes) {

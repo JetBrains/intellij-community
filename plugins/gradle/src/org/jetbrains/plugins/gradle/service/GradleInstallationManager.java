@@ -419,6 +419,15 @@ public class GradleInstallationManager {
       return result;
     }
 
+    File src = new File(gradleHome, "src");
+    if (src.isDirectory()) {
+      if(new File(src, "org").isDirectory()) {
+        addRoots(result, src);
+      } else {
+        addRoots(result, src.listFiles());
+      }
+    }
+
     final Collection<File> libraries = getAllLibraries(gradleHome);
     if (libraries == null) {
       return result;
@@ -427,15 +436,6 @@ public class GradleInstallationManager {
     for (File file : libraries) {
       if (isGradleBuildClasspathLibrary(file)) {
         ContainerUtil.addIfNotNull(result, file);
-      }
-    }
-
-    File src = new File(gradleHome, "src");
-    if (src.isDirectory()) {
-      if(new File(src, "org").isDirectory()) {
-        addRoots(result, src);
-      } else {
-        addRoots(result, src.listFiles());
       }
     }
 
@@ -454,7 +454,7 @@ public class GradleInstallationManager {
     if (files == null) return;
     for (File file : files) {
       if (file == null || !file.isDirectory()) continue;
-      result.add(0, file);
+      result.add(file);
     }
   }
 

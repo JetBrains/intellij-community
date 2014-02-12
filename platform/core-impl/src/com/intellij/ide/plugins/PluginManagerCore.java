@@ -27,12 +27,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtilsCore;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -69,6 +72,7 @@ public class PluginManagerCore {
   static final String EDIT = "edit";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   static List<String> ourDisabledPlugins = null;
+  static MultiMap<String, String> ourDisabledPluginVersions = null;
   static IdeaPluginDescriptor[] ourPlugins;
   static String myPluginError = null;
   static List<String> myPlugins2Disable = null;
@@ -114,6 +118,42 @@ public class PluginManagerCore {
       }
     }
     return ourDisabledPlugins;
+  }
+
+  public static MultiMap<String, String> getDisabledPluginVersions() {
+    if (ourDisabledPluginVersions == null) {
+      ourDisabledPluginVersions = MultiMap.createSet();
+
+      if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
+        BufferedReader br = new BufferedReader(new InputStreamReader(PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt")));
+        try {
+          String s;
+          while ((s = br.readLine()) != null) {
+            s = s.trim();
+            if (s.startsWith("//")) continue;
+
+            List<String> tokens = ParametersListUtil.parse(s);
+            if (tokens.isEmpty()) continue;
+
+            if (tokens.size() == 1) {
+              throw new RuntimeException("brokenPlugins.txt is broken. The line contains plugin name, but does not contains version: " + s);
+            }
+
+            String pluginId = tokens.get(0);
+            List<String> versions = tokens.subList(1, tokens.size());
+
+            ourDisabledPluginVersions.putValues(pluginId, versions);
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException("Failed to read /brokenPlugins.txt", e);
+        }
+        finally {
+          StreamUtil.closeStream(br);
+        }
+      }
+    }
+    return ourDisabledPluginVersions;
   }
 
   static boolean isUnitTestMode() {
@@ -947,12 +987,17 @@ public class PluginManagerCore {
             map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
           }
           addModulesAsDependents(map);
-          final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(pluginId));
-          shouldLoad = descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map,
-                                                                     checkModuleDependencies);
+          for (String id : pluginIds) {
+            final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(id));
+            if (descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map, checkModuleDependencies)) {
+              shouldLoad = true;
+              break;
+            }
+          }
         }
       } else {
-        shouldLoad = !getDisabledPlugins().contains(idString);
+        shouldLoad = !getDisabledPlugins().contains(idString) &&
+                     !getDisabledPluginVersions().get(idString).contains(descriptor.getVersion());
       }
       if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
         if (isIncompatible(descriptor)) return true;

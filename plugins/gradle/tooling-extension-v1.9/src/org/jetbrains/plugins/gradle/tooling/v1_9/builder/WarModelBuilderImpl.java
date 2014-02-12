@@ -27,11 +27,14 @@ import org.gradle.api.tasks.bundling.War;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.WebConfiguration;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.internal.WarModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.WebConfigurationImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.WebResourceImpl;
 
 import java.io.File;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -66,13 +69,12 @@ public class WarModelBuilderImpl implements ModelBuilderService {
 
     for (Task task : project.getTasks()) {
       if (task instanceof War) {
-        final WebConfigurationImpl.WarModelImpl warModel = new WebConfigurationImpl.WarModelImpl(((War)task).getArchiveName(), webAppDirName, webAppDir);
+        final WarModelImpl warModel =
+          new WarModelImpl(((War)task).getArchiveName(), webAppDirName, webAppDir);
+        final List<WebConfiguration.WebResource> webResources = new ArrayList<WebConfiguration.WebResource>();
 
         final War warTask = (War)task;
         warModel.setWebXml(warTask.getWebXml());
-
-        final Map<String, Set<String>> webRoots = new HashMap<String, Set<String>>();
-        addPath(webRoots, "", webAppDir.getPath());
 
         warTask.getRootSpec().walk(new Action<CopySpecInternal>() {
           @Override
@@ -82,7 +84,7 @@ public class WarModelBuilderImpl implements ModelBuilderService {
               @Override
               public void visitDir(FileVisitDetails dirDetails) {
                 try {
-                  addPath(webRoots, relativePath, dirDetails.getFile().getPath());
+                  addPath(webResources, relativePath, dirDetails.getPath(), dirDetails.getFile());
                 }
                 catch (Exception ignore) {
                 }
@@ -93,7 +95,7 @@ public class WarModelBuilderImpl implements ModelBuilderService {
                 try {
                   if (warTask.getWebXml() == null ||
                       !fileDetails.getFile().getCanonicalPath().equals(warTask.getWebXml().getCanonicalPath())) {
-                    addPath(webRoots, relativePath, fileDetails.getFile().getParent());
+                    addPath(webResources, relativePath, fileDetails.getPath(), fileDetails.getFile());
                   }
                 }
                 catch (Exception ignore) {
@@ -103,11 +105,11 @@ public class WarModelBuilderImpl implements ModelBuilderService {
           }
         });
 
-        warModel.setWebRoots(webRoots);
+        warModel.setWebResources(webResources);
         warModel.setClasspath(warTask.getClasspath().getFiles());
 
         Manifest manifest = warTask.getManifest();
-        if(manifest != null) {
+        if (manifest != null) {
           StringWriter writer = new StringWriter();
           manifest.writeTo(writer);
           warModel.setManifestContent(writer.toString());
@@ -119,13 +121,10 @@ public class WarModelBuilderImpl implements ModelBuilderService {
     return new WebConfigurationImpl(warModels);
   }
 
-  private static void addPath(Map<String, Set<String>> webRoots, String relativePath, String path) {
-    relativePath = relativePath == null ? "" : relativePath;
-    Set<String> paths = webRoots.get(relativePath);
-    if (paths == null) {
-      paths = new LinkedHashSet<String>();
-      webRoots.put(relativePath, paths);
-    }
-    paths.add(path);
+  private static void addPath(List<WebConfiguration.WebResource> webResources, String warRelativePath, String fileRelativePath, File file) {
+    warRelativePath = warRelativePath == null ? "" : warRelativePath;
+
+    WebConfiguration.WebResource webResource = new WebResourceImpl(warRelativePath, fileRelativePath, file);
+    webResources.add(webResource);
   }
 }

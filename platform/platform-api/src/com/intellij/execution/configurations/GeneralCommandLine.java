@@ -147,11 +147,13 @@ public class GeneralCommandLine implements UserDataHolder {
    * @param passShellEnvironmentAsParent if true, a shell (Terminal.app) environment will be used as parent (see {@link EnvironmentUtil#getEnvironmentMap}).
    *                                     Otherwise, {@link System#getenv()} will be used.
    */
+  @Deprecated
   public void setPassShellEnvironmentAsParent(boolean passShellEnvironmentAsParent) {
     // Temporarily fix for OC-8606
     myPassShellEnvironmentAsParent = passShellEnvironmentAsParent;
   }
 
+  @Deprecated
   public boolean isPassShellEnvironmentAsParent() {
     return myPassShellEnvironmentAsParent;
   }

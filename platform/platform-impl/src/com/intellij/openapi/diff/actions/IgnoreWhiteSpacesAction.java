@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -50,7 +49,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(CommonBundle.message("comparison.ignore.whitespace.acton.name"));
+    final JLabel label = new JLabel(DiffBundle.message("ignore.whitespace.acton.name"));
     label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
     panel.add(label, BorderLayout.WEST);
     panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);

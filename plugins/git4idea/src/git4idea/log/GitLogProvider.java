@@ -15,7 +15,6 @@
  */
 package git4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -62,11 +61,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
+  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
-    myVcsObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = factory;
   }
 
   @NotNull
@@ -222,7 +221,7 @@ public class GitLogProvider implements VcsLogProvider {
           return filter.getUserName(root);
         }
       });
-      filterParameters.add(prepareParameter("author", authorFilter));
+      filterParameters.add(prepareParameter("author", StringUtil.escapeChar(StringUtil.escapeBackSlashes(authorFilter), '|')));
     }
 
     if (!dateFilters.isEmpty()) {
@@ -240,7 +239,7 @@ public class GitLogProvider implements VcsLogProvider {
       LOG.warn("Expected only one text filter: " + textFilters);
     }
     else if (!textFilters.isEmpty()) {
-      String textFilter = textFilters.iterator().next().getText();
+      String textFilter = StringUtil.escapeBackSlashes(textFilters.iterator().next().getText());
       filterParameters.add(prepareParameter("grep", textFilter));
     }
 
@@ -278,12 +277,11 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   private static String prepareParameter(String paramName, String value) {
-    // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
-    return "--" + paramName + "=" + StringUtil.escapeBackSlashes(value);
+    return "--" + paramName + "=" + value; // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 
   private static <T> String joinFilters(Collection<T> filters, Function<T, String> toString) {
-    return StringUtil.join(filters, toString, "\\|");
+    return StringUtil.join(filters, toString, "|");
   }
 
   @Nullable

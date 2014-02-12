@@ -20,13 +20,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -36,9 +31,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsUtil;
@@ -50,7 +42,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.*;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import git4idea.validators.GitNewBranchNameValidator;
-import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -373,40 +364,10 @@ public class GitBranchUtil {
   }
 
   /**
-   * Returns the currently selected file, based on which GitBranch components ({@link git4idea.ui.branch.GitBranchPopup}, {@link git4idea.ui.branch.GitBranchWidget})
-   * will identify the current repository root.
-   */
-  @Nullable
-  static VirtualFile getSelectedFile(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
-    VirtualFile result = null;
-    if (fileEditor != null) {
-      if (fileEditor instanceof TextEditor) {
-        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-        result = FileDocumentManager.getInstance().getFile(document);
-      } else if (fileEditor instanceof ImageFileEditor) {
-        result = ((ImageFileEditor)fileEditor).getImageEditor().getFile();
-      }
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      if (manager != null) {
-        Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
    * Guesses the Git root on which a Git action is to be invoked.
    * <ol>
    *   <li>
-   *     Returns the root for the selected file. Selected file is determined by {@link #getSelectedFile(com.intellij.openapi.project.Project)}.
+   *     Returns the root for the selected file. Selected file is determined by {@link DvcsUtil#getSelectedFile(com.intellij.openapi.project.Project)}.
    *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
    *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
    *     <code>null</code> will be returned - the file is definitely determined, but it is not under Git.
@@ -431,7 +392,7 @@ public class GitBranchUtil {
   @Nullable
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    VirtualFile file = getSelectedFile(project);
+    VirtualFile file = DvcsUtil.getSelectedFile(project);
     VirtualFile root = getVcsRootOrGuess(project, file);
     return manager.getRepositoryForRoot(root);
   }

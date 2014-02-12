@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,7 +123,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myFile.findElementAt(offset);
   }
 
-  protected void configure(String path, String dataName) throws Exception {
+  protected void configure(@NotNull String path, String dataName) throws Exception {
     myDataRoot = getTestDataPath() + path;
 
     myTestDataBefore = loadData(dataName);

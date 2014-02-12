@@ -44,7 +44,7 @@ public class LayoutModelBuilderTest {
             "a3 a1:a4 a2:a8 a2:a5\n" +
             "a3:a6 a4 a2:a8 a2:a5\n" +
             "a3:a6 a4:a7 a2:a8 a5\n" +
-            "a6 a7 a2:a8\n" +
+            "a6 a4:a7 a2:a8 a5:a7\n" +
             "a7 a2:a8\n" +
             "a8");
 

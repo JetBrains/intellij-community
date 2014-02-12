@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,12 +188,12 @@ public abstract class InspectionTestCase extends PsiTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
         return isEntryPoint(psiElement);
       }
 
       @Override
-      public boolean isEntryPoint(PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
         return ext_src != null && VfsUtilCore.isAncestor(ext_src, PsiUtilCore.getVirtualFile(psiElement), false);
       }
 

@@ -25,7 +25,6 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   public void showError(Throwable e) {
-    Runner.printStackTrace(e);
     e.printStackTrace();
   }
 
@@ -38,7 +37,6 @@ public class ConsoleUpdaterUI implements UpdaterUI {
 
   @Override
   public String toString() {
-    Runner.logger.info("Status: '" + myStatus + '\'');
     return "Status: '" + myStatus + '\'';
   }
 }

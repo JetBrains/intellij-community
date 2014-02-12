@@ -16,11 +16,9 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.NullableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.UUID;
 
 public abstract class WebBrowserBase extends WebBrowser {
@@ -62,16 +60,6 @@ public abstract class WebBrowserBase extends WebBrowser {
   @Nullable
   public BrowserSpecificSettings getSpecificSettings() {
     return null;
-  }
-
-  @NotNull
-  public static WebBrowser createCustomBrowser(@NotNull BrowserFamily family,
-                                               @NotNull String name,
-                                               @NotNull UUID id,
-                                               @NotNull Icon icon,
-                                               @NotNull NullableComputable<String> pathComputable,
-                                               @Nullable String browserNotFoundMessage) {
-    return new CustomWebBrowser(id, family, name, icon, pathComputable, browserNotFoundMessage);
   }
 
   @Override

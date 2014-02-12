@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,12 +90,16 @@ public abstract class Intention implements IntentionAction {
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-      PsiElement element = GroovyRefactoringUtil
-        .findElementInRange(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), PsiElement.class);
-      while (element != null && element.getTextRange() != null && selectionRange.contains(element.getTextRange())) {
-        if (predicate.satisfiedBy(element)) return element;
-        element = element.getParent();
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+
+      if (0 <= start && start <= end) {
+        TextRange selectionRange = new TextRange(start, end);
+        PsiElement element = GroovyRefactoringUtil.findElementInRange(file, start, end, PsiElement.class);
+        while (element != null && element.getTextRange() != null && selectionRange.contains(element.getTextRange())) {
+          if (predicate.satisfiedBy(element)) return element;
+          element = element.getParent();
+        }
       }
     }
 

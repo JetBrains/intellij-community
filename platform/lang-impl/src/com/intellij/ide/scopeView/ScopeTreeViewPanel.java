@@ -298,7 +298,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
       }
     });
-    CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
   @NotNull

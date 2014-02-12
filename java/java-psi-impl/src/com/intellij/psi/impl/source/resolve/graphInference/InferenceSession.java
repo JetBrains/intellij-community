@@ -199,10 +199,21 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               ParameterTypeInferencePolicy policy) {
-    boolean doesNotContainFalseBound = repeatInferencePhases(parameters == null);
-//    if (!doesNotContainFalseBound) return prepareSubstitution();
+    return infer(parameters, args, parent, false, policy);
+  }
 
-    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+  @NotNull
+  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
+                              @Nullable PsiExpression[] args,
+                              @Nullable PsiElement parent,
+                              boolean acceptNonPertinentArgs,
+                              ParameterTypeInferencePolicy policy) {
+
+    if (!repeatInferencePhases(parameters == null || !policy.allowPostponeInference())) {
+      return prepareSubstitution();
+    }
+
+    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
 
     final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
     if (pair != null) {
@@ -210,8 +221,9 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
         inferenceVariable.ignoreInstantiation();
       }
-      doesNotContainFalseBound = repeatInferencePhases(true);
-//      if (!doesNotContainFalseBound) return prepareSubstitution();
+      if (!repeatInferencePhases(true)) {
+        return prepareSubstitution();
+      }
 
       PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
       LOG.assertTrue(parent != null);
@@ -220,7 +232,7 @@ public class InferenceSession {
       MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
     }
 
-    if (parameters != null && args != null) {
+    if (parameters != null && args != null && (acceptNonPertinentArgs || pair != null)) {
       final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
       if (parameters.length > 0) {
         for (int i = 0; i < args.length; i++) {
@@ -238,8 +250,9 @@ public class InferenceSession {
         for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
           inferenceVariable.ignoreInstantiation();
         }
-        doesNotContainFalseBound = proceedWithAdditionalConstraints(additionalConstraints);
-//        if (!doesNotContainFalseBound) return prepareSubstitution();
+        if (!proceedWithAdditionalConstraints(additionalConstraints)) {
+          return prepareSubstitution();
+        }
       }
     }
 
@@ -580,6 +593,13 @@ public class InferenceSession {
         //inference error occurred
         return false;
       }
+    } while (myConstraintIdx < myConstraints.size()); 
+
+    do {
+      if (!reduceConstraints()) {
+        //inference error occurred
+        return false;
+      }
       if (incorporate) {
         if (!myIncorporationPhase.incorporate()) {
           return false;
@@ -616,9 +636,9 @@ public class InferenceSession {
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
 
-        if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
         final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
         try {
+          if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
           final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
           final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
           final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
@@ -744,50 +764,9 @@ public class InferenceSession {
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
     while (!additionalConstraints.isEmpty()) {
-      final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
-      for (ConstraintFormula constraint : additionalConstraints) {
-        if (constraint instanceof InputOutputConstraintFormula) {
-          final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
-          final Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(inputVariables, this);
-          if (outputVars != null) {
-            outputVariables.addAll(outputVars);
-          }
-        }
-      }
-      Set<ConstraintFormula> subset = new HashSet<ConstraintFormula>();
-      final Set<InferenceVariable> varsToResolve = new HashSet<InferenceVariable>(); 
-      for (ConstraintFormula constraint : additionalConstraints) {
-        if (constraint instanceof InputOutputConstraintFormula) {
-          final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
-          if (inputVariables != null) {
-            boolean dependsOnOutput = false;
-            for (InferenceVariable inputVariable : inputVariables) {
-              final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
-              dependencies.add(inputVariable);
-              dependencies.retainAll(outputVariables);
-              if (!dependencies.isEmpty()) {
-                dependsOnOutput = true;
-                break;
-              }
-            }
-            if (!dependsOnOutput) {
-              subset.add(constraint);
-              varsToResolve.addAll(inputVariables);
-            }
-          }
-          else {
-            subset.add(constraint);
-          }
-        }
-        else {
-          subset.add(constraint);
-        }
-      }
-      if (subset.isEmpty()) {
-        subset = Collections.singleton(additionalConstraints.iterator().next()); //todo choose one constraint
-      }
+      final Set<InferenceVariable> varsToResolve = new HashSet<InferenceVariable>();
 
-      additionalConstraints.removeAll(subset);
+      final Set<ConstraintFormula> subset = buildSubset(additionalConstraints, varsToResolve);
 
       PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, true);
 
@@ -808,6 +787,59 @@ public class InferenceSession {
 
     }
     return true;
+  }
+
+  private Set<ConstraintFormula> buildSubset(final Set<ConstraintFormula> additionalConstraints,
+                                             final Set<InferenceVariable> varsToResolve) {
+
+    final Set<ConstraintFormula> subset = new HashSet<ConstraintFormula>();
+    final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
+    for (ConstraintFormula constraint : additionalConstraints) {
+      if (constraint instanceof InputOutputConstraintFormula) {
+        final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
+        final Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(inputVariables, this);
+        if (outputVars != null) {
+          outputVariables.addAll(outputVars);
+        }
+      }
+    }
+
+    for (ConstraintFormula constraint : additionalConstraints) {
+      if (constraint instanceof InputOutputConstraintFormula) {
+        final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
+        if (inputVariables != null) {
+          boolean dependsOnOutput = false;
+          for (InferenceVariable inputVariable : inputVariables) {
+            final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
+            dependencies.add(inputVariable);
+            dependencies.retainAll(outputVariables);
+            if (!dependencies.isEmpty()) {
+              dependsOnOutput = true;
+              break;
+            }
+          }
+          if (!dependsOnOutput) {
+            subset.add(constraint);
+            for (InferenceVariable variable : inputVariables) {
+              varsToResolve.addAll(variable.getDependencies(this));
+              varsToResolve.add(variable);
+            }
+          }
+        }
+        else {
+          subset.add(constraint);
+        }
+      }
+      else {
+        subset.add(constraint);
+      }
+    }
+    if (subset.isEmpty()) {
+      subset.add(additionalConstraints.iterator().next()); //todo choose one constraint
+    }
+
+    additionalConstraints.removeAll(subset);
+    return subset;
   }
 
   public void setErased() {

@@ -46,9 +46,8 @@ class ShiftUtils {
     return intValue == 1;
   }
 
-  public static int getLogBaseTwo(PsiExpression rhs) {
-    final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
-    final Object value = literal.getValue();
+  public static int getLogBaseTwo(PsiLiteralExpression rhs) {
+    final Object value = rhs.getValue();
     int log = 0;
     if (value == null) {
       return log;

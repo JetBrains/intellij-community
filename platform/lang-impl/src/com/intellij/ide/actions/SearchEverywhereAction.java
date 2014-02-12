@@ -717,15 +717,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
 
-  private void saveHistory(Project project, String text, Object value) {
+  private static void saveHistory(Project project, String text, Object value) {
     if (project == null || project.isDisposed() || !project.isInitialized()) {
       return;
     }
     HistoryType type = null;
     String fqn = null;
-    if (value instanceof AnAction) {
+    if (isActionValue(value)) {
       type = HistoryType.ACTION;
-      fqn = ActionManager.getInstance().getId((AnAction)value);
+      AnAction action = (AnAction)(value instanceof Map.Entry ? ((Map.Entry)value).getKey() : value);
+      fqn = ActionManager.getInstance().getId(action);
     } else if (value instanceof VirtualFile) {
       type = HistoryType.FILE;
       fqn = ((VirtualFile)value).getUrl();
@@ -813,10 +814,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (values.length > myHistoryIndex) {
             final List<String> data = StringUtil.split(values[myHistoryIndex], "\t");
             myHistoryItem = new HistoryItem(data.get(0), data.get(1), data.get(2));
+            myHistoryIndex++;
             editor.setText(myHistoryItem.pattern);
             editor.setCaretPosition(myHistoryItem.pattern.length());
             editor.moveCaretPosition(0);
-            myHistoryIndex++;
           }
         }
       }
@@ -1162,6 +1163,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         updatePopup();
       }
       catch (Exception ignore) {
+        ignore.printStackTrace();
       }
       finally {
         myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
@@ -1453,7 +1455,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final List<Object> elements = new ArrayList<Object>();
       HistoryItem history = myHistoryItem;
       if (history != null) {
-        final HistoryType type = HistoryType.valueOf(history.type);
+        final HistoryType type = parseHistoryType(history.type);
         if (type != null) {
           switch (type){
             case CLASS:
@@ -1469,6 +1471,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             case SETTING:
               break;
             case ACTION:
+              final AnAction action = ActionManager.getInstance().getAction(history.fqn);
+              if (action != null) {
+                elements.add(action);
+              }
               break;
           }
         }
@@ -1919,6 +1925,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private enum HistoryType {CLASS, FILE, SYMBOL, SETTING, ACTION}
+
+  @Nullable
+  private static HistoryType parseHistoryType(@Nullable String name) {
+    try {
+      return HistoryType.valueOf(name);
+    } catch (Exception e) {
+      return null;
+    }
+  }
 
   private static class HistoryItem {
     final String pattern, type, fqn;

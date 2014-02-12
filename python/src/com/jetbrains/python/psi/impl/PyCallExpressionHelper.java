@@ -507,7 +507,9 @@ public class PyCallExpressionHelper {
                 }
               }
             }
-            else if (((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
+            else if ((call.getContainingFile() instanceof PyFile) &&
+                     ((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() &&
+                     (containingClass != null)) {
               return new Maybe<PyType>(getSuperClassUnionType(containingClass));
             }
           }

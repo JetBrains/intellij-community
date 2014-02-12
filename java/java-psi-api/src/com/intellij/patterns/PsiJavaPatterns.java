@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ public class PsiJavaPatterns extends StandardPatterns{
     return new PsiJavaElementPattern.Capture<T>(aClass);
   }
 
-  public static PsiJavaElementPattern.Capture<PsiElement> psiElement(final Class<? extends PsiElement>... classAlternatives) {
+  @SafeVarargs
+  public static PsiJavaElementPattern.Capture<PsiElement> psiElement(@NotNull final Class<? extends PsiElement>... classAlternatives) {
     return new PsiJavaElementPattern.Capture<PsiElement>(new InitialPatternCondition<PsiElement>(PsiElement.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {

@@ -24,6 +24,8 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
+import com.jetbrains.python.vp.Creator;
+import com.jetbrains.python.vp.ViewPresenterUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,12 +35,12 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   @Override
-  protected void doRefactorImpl(@NotNull Project project,
-                                @NotNull PyClass classUnderRefactoring,
-                                @NotNull PyMemberInfoStorage infoStorage,
+  protected void doRefactorImpl(@NotNull final Project project,
+                                @NotNull final PyClass classUnderRefactoring,
+                                @NotNull final PyMemberInfoStorage infoStorage,
                                 @NotNull Editor editor) {
 
-
+    //TODO: Move to presenter?
     final Query<PyClass> query = PyClassInheritorsSearch.search(classUnderRefactoring, false);
     if (query.findFirst() == null) {
       final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", classUnderRefactoring.getName());
@@ -46,8 +48,20 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
       return;
     }
 
-    final PyPushDownDialog dialog = new PyPushDownDialog(project, classUnderRefactoring, infoStorage);
-    dialog.show();
+    ViewPresenterUtils
+      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<PyPushDownView, PyPushDownPresenter>() {
+        @NotNull
+        @Override
+        public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
+          return new PyPushDownPresenterImpl(project, view, classUnderRefactoring, infoStorage);
+        }
+
+        @NotNull
+        @Override
+        public PyPushDownView createView(@NotNull PyPushDownPresenter presenter) {
+          return new PyPushDownViewSwingImpl(classUnderRefactoring, project, presenter);
+        }
+      });
   }
 
   @Override
@@ -59,5 +73,4 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
   protected String getHelpId() {
     return "members.push.down";
   }
-
 }

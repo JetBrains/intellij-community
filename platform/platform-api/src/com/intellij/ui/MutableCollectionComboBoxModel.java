@@ -47,4 +47,13 @@ public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBo
     myItems = items;
     super.update();
   }
+
+  public void addItem(T item) {
+    myItems.add(item);
+
+    fireIntervalAdded(this, myItems.size() - 1, myItems.size() - 1);
+    if (myItems.size() == 1 && getSelectedItem() == null && item != null) {
+      setSelectedItem(item);
+    }
+  }
 }

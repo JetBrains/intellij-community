@@ -53,6 +53,11 @@ public abstract class AbstractCollectionComboBoxModel<T> extends AbstractListMod
     return mySelection;
   }
 
+  @Nullable
+  public T getSelected() {
+    return mySelection;
+  }
+
   public void update() {
     super.fireContentsChanged(this, -1, -1);
   }

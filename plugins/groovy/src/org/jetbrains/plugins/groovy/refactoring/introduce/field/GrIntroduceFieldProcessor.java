@@ -125,25 +125,34 @@ public class GrIntroduceFieldProcessor {
       updateCaretPosition(occurrence);
       return Collections.singletonList(occurrence);
     }
-    else {
-      if (mySettings.replaceAllOccurrences()) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-        ArrayList<PsiElement> result = ContainerUtil.newArrayList();
-        for (PsiElement occurrence : myContext.getOccurrences()) {
-          result.add(replaceOccurrence(field, occurrence, targetClass));
-        }
-        return result;
+
+    if (mySettings.replaceAllOccurrences()) {
+      GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+      ArrayList<PsiElement> result = ContainerUtil.newArrayList();
+      for (PsiElement occurrence : myContext.getOccurrences()) {
+        result.add(replaceOccurrence(field, occurrence, targetClass));
+      }
+      return result;
+    }
+
+    GrVariable var = myContext.getVar();
+    if (var != null) {
+      GrExpression initializer = var.getInitializerGroovy();
+      if (initializer != null) {
+        return Collections.singletonList(replaceOccurrence(field, initializer, targetClass));
       }
       else {
-        final GrExpression expression = myContext.getExpression();
-        assert expression != null;
-        if (PsiUtil.isExpressionStatement(expression)) {
-          return Collections.<PsiElement>singletonList(expression);
-        }
-        else {
-          return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
-        }
+        return Collections.emptyList();
       }
+    }
+
+    final GrExpression expression = myContext.getExpression();
+    assert expression != null;
+    if (PsiUtil.isExpressionStatement(expression)) {
+      return Collections.<PsiElement>singletonList(expression);
+    }
+    else {
+      return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
     }
   }
 

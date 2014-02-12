@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
+import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -85,7 +86,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (argLine != null) {
       String value = argLine.getTextTrim();
       if (StringUtil.isNotEmpty(value)) {
-        javaParameters.getVMParametersList().add(value);
+        javaParameters.getVMParametersList().addParametersString(value);
       }
     }
   }

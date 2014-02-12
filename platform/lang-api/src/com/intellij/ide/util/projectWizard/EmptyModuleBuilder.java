@@ -56,11 +56,6 @@ public class EmptyModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public boolean isTemplate() {
-    return true;
-  }
-
-  @Override
   public boolean isTemplateBased() {
     return true;
   }

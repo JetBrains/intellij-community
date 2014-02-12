@@ -84,13 +84,11 @@ class PrePrintCellModel {
             break;
           case LAST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge), isMarked(edge),
-                                           0));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge), isMarked(edge), 0));
             break;
           case FIRST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge), isMarked(edge),
-                                           0));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge), isMarked(edge), 0));
             break;
           default:
             throw new IllegalStateException();
@@ -130,31 +128,21 @@ class PrePrintCellModel {
   }
 
   private static class GetterGraphElementPosition {
-    private final Map<Node, Integer> mapNodes = new HashMap<Node, Integer>();
+    private final Map<GraphElement, Integer> mapNodes = new HashMap<GraphElement, Integer>();
 
     public GetterGraphElementPosition(List<GraphElement> graphElements) {
       mapNodes.clear();
       for (int p = 0; p < graphElements.size(); p++) {
-        mapNodes.put(getDownNode(graphElements.get(p)), p);
-      }
-    }
-
-    private Node getDownNode(@NotNull GraphElement element) {
-      Node node = element.getNode();
-      if (node != null) {
-        return node;
-      }
-      else {
-        Edge edge = element.getEdge();
-        if (edge == null) {
-          throw new IllegalStateException();
-        }
-        return edge.getDownNode();
+        mapNodes.put(graphElements.get(p), p);
       }
     }
 
     public int getPosition(Edge edge) {
-      Integer p = mapNodes.get(edge.getDownNode());
+      Integer p = mapNodes.get(edge);
+      if (p == null) {
+        p = mapNodes.get(edge.getDownNode());
+      }
+
       if (p == null) {
         // i.e. hide branch
         return -1;

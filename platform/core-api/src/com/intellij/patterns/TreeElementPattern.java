@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
 
   protected abstract ParentType[] getChildren(@NotNull final ParentType parentType);
 
-  public Self withParents(@NotNull final Class<? extends ParentType>... types) {
+  @SafeVarargs
+  public final Self withParents(@NotNull final Class<? extends ParentType>... types) {
     return with(new PatternCondition<T>("withParents") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -170,7 +171,8 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
    * @param strict
    * @return Ensures that first elements in hierarchy accepted by patterns appear in specified order
    */
-  public Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
+  @SafeVarargs
+  public final Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
     return with(new PatternCondition<T>("insideSequence") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         int i = 0;

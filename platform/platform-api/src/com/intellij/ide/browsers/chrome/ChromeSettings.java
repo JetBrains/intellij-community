@@ -58,7 +58,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   }
 
   public void setUserDataDirectoryPath(@Nullable String value) {
-    myUserDataDirectoryPath = StringUtil.nullize(value);
+    myUserDataDirectoryPath = FileUtilRt.toSystemIndependentName(StringUtil.nullize(value));
   }
 
   public void setUseCustomProfile(boolean useCustomProfile) {
@@ -102,6 +102,6 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     ChromeSettings settings = (ChromeSettings)o;
     return myUseCustomProfile == settings.myUseCustomProfile &&
            Comparing.equal(myCommandLineOptions, settings.myCommandLineOptions) &&
-           Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath);
+           (!myUseCustomProfile || Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath));
   }
 }

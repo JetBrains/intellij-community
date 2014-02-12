@@ -8,8 +8,8 @@ abstract class B {
 
     void bar(List<List<?>> x, List<List<List<?>>> y){
         foo(x)  [0] = "";
-        foo1<error descr="'foo1(java.util.List<? extends java.util.List<java.lang.Object>>)' in 'B' cannot be applied to '(java.util.List<java.util.List<?>>)'">(x)</error> [0] = "";
-        foo2<error descr="'foo2(java.util.List<java.util.List<? super java.util.List<java.lang.Object>>>)' in 'B' cannot be applied to '(java.util.List<java.util.List<java.util.List<?>>>)'">(y)</error> [0] = "";
+        foo1<error descr="'foo1(java.util.List<? extends java.util.List<T>>)' in 'B' cannot be applied to '(java.util.List<java.util.List<?>>)'">(x)</error> [0] = "";
+        foo2<error descr="'foo2(java.util.List<java.util.List<? super java.util.List<T>>>)' in 'B' cannot be applied to '(java.util.List<java.util.List<java.util.List<?>>>)'">(y)</error> [0] = "";
 
         String s = foo0(x);
     }

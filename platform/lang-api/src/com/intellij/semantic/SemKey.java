@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class SemKey<T extends SemElement> {
   private final SemKey<? super T>[] mySupers;
   private final int myUniqueId;
 
+  @SafeVarargs
   private SemKey(String debugName, SemKey<? super T>... supers) {
     myDebugName = debugName;
     mySupers = supers;
@@ -59,6 +60,7 @@ public class SemKey<T extends SemElement> {
     return myDebugName;
   }
 
+  @SafeVarargs
   public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
     return new SemKey<T>(debugName, supers);
   }
@@ -67,7 +69,8 @@ public class SemKey<T extends SemElement> {
     return myUniqueId;
   }
 
-  public <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
+  @SafeVarargs
+  public final <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
     if (otherSupers.length == 0) {
       return new SemKey<K>(debugName, this);
     }

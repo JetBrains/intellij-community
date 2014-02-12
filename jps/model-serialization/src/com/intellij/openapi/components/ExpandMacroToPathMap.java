@@ -48,6 +48,10 @@ public class ExpandMacroToPathMap extends PathMacroMap {
       //noinspection ConstantConditions
       return null;
     }
+    
+    if (text.indexOf('$') < 0) {
+      return text;
+    }
 
     for (Map.Entry<String, String> entry : myPlainMap.entrySet()) {
       // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'

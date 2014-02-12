@@ -2243,6 +2243,24 @@ public class UIUtil {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
+
+  /**
+   * The main difference from javax.swing.SwingUtilities#isDescendingFrom(Component, Component) is that this method
+   * uses getInvoker() instead of getParent() when it meets JPopupMenu
+   * @param child child component
+   * @param parent parent component
+   * @return true if parent if a top parent of child, false otherwise
+   *
+   * @see javax.swing.SwingUtilities#isDescendingFrom(java.awt.Component, java.awt.Component)
+   */
+  public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
+    while (child != null && child != parent) {
+      child =  child instanceof JPopupMenu  ? ((JPopupMenu)child).getInvoker()
+                                            : child.getParent();
+    }
+    return child == parent;
+  }
+
   @Nullable
   public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
     Component eachParent = c;

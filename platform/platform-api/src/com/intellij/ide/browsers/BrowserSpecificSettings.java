@@ -21,12 +21,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BrowserSpecificSettings {
+public abstract class BrowserSpecificSettings implements Cloneable {
   @NotNull
   public abstract Configurable createConfigurable();
 
   @NotNull
   public List<String> getAdditionalParameters() {
     return Collections.emptyList();
+  }
+
+  public BrowserSpecificSettings clone() {
+    try {
+      return (BrowserSpecificSettings)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

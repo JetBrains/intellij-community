@@ -3,12 +3,9 @@ package com.intellij.vcs.log.graphmodel.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graph.mutable.GraphAppendBuilder;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphModel;
@@ -16,7 +13,6 @@ import com.intellij.vcs.log.graphmodel.fragment.FragmentManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +21,6 @@ import java.util.Set;
  */
 public class GraphModelImpl implements GraphModel {
   private final MutableGraph graph;
-  private final Collection<VcsRef> myRefs;
   private final FragmentManagerImpl fragmentManager;
   private final BranchVisibleNodes visibleNodes;
   private final List<Consumer<UpdateRequest>> listeners = new ArrayList<Consumer<UpdateRequest>>();
@@ -41,9 +36,8 @@ public class GraphModelImpl implements GraphModel {
     }
   };
 
-  public GraphModelImpl(MutableGraph graph, Collection<VcsRef> allRefs) {
+  public GraphModelImpl(MutableGraph graph) {
     this.graph = graph;
-    myRefs = allRefs;
     this.fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
       @Override
       public UpdateRequest runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
@@ -101,17 +95,6 @@ public class GraphModelImpl implements GraphModel {
   @Override
   public Graph getGraph() {
     return graph;
-  }
-
-  @Override
-  public void appendCommitsToGraph(@NotNull List<GraphCommit> commitParentses) {
-    int oldSize = graph.getNodeRows().size();
-    new GraphAppendBuilder(graph, myRefs).appendToGraph(commitParentses);
-    visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
-    graph.updateVisibleRows();
-
-    UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
-    callUpdateListener(updateRequest);
   }
 
   @Override

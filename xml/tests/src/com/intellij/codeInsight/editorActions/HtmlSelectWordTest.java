@@ -54,6 +54,10 @@ public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testSelectTag() {
+    doTest();
+  }
+
   private void doTest() {
     CodeInsightTestUtil.doWordSelectionTestOnDirectory(myFixture, getTestName(true), "html");
   }

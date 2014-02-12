@@ -200,14 +200,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog) {
-    doShowDialogAndStartFind(psiElement, scopeFile, editor, showDialog, false);
-  }
-
-  private void doShowDialogAndStartFind(@NotNull PsiElement psiElement,
-                                        PsiFile scopeFile,
-                                        FileEditor editor,
-                                        boolean showDialog,
-                                        boolean useMaximalScope) {
     FindUsagesHandler handler = getNewFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
@@ -224,8 +216,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     setOpenInNewTab(dialog.isShowInSeparateWindow());
 
     FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
-    if (!showDialog && useMaximalScope) {
-      findUsagesOptions.searchScope = getMaximalScope(handler);
+    if (!showDialog) {
+      findUsagesOptions.searchScope = GlobalSearchScope.projectScope(myProject);
     }
 
     clearFindingNextUsageInFile();
@@ -282,34 +274,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  public boolean isUsed(@NotNull PsiElement element, @NotNull FindUsagesOptions findUsagesOptions) {
-    FindUsagesHandler handler = getFindUsagesHandler(element, true);
-    if (handler == null) return false;
-    UsageSearcher usageSearcher = createUsageSearcher(new PsiElement[]{element}, PsiElement.EMPTY_ARRAY, handler, findUsagesOptions, null);
-    final AtomicBoolean used = new AtomicBoolean();
-    usageSearcher.generate(new Processor<Usage>() {
-      @Override
-      public boolean process(final Usage usage) {
-        if (isInComment(usage)) return true;
-        used.set(true);
-        return false;
-      }
-    });
-    return used.get();
-  }
-
-  private static boolean isInComment(Usage usage) {
-    if (!(usage instanceof UsageInfo2UsageAdapter)) return false;
-    UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-    if (!usageInfo.isNonCodeUsage()) return false;
-    SmartPsiFileRange psiRangePointer = usageInfo.getPsiFileRange();
-    if (psiRangePointer == null) return false;
-    Segment range = psiRangePointer.getRange();
-    PsiFile file = psiRangePointer.getContainingFile();
-    if (file == null || range == null) return false;
-    PsiElement element = file.findElementAt(range.getStartOffset());
-    return element instanceof PsiComment;
-  }
 
   @NotNull
   public static ProgressIndicator startProcessUsages(@NotNull FindUsagesHandler handler,

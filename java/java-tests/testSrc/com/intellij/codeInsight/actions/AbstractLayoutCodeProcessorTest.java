@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,8 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     EditorFactory.getInstance().releaseEditor(editor);
   }
 
-  protected void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
+  @SafeVarargs
+  protected final void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
     for (List<PsiFile> files : fileCollection) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -168,7 +169,8 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }
   }
 
-  protected void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
+  @SafeVarargs
+  protected final void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -177,7 +179,8 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }
   }
 
-  protected void checkRearrangeReformatAndOptimizeImportsHappend(@NotNull List<PsiFile>... fileCollections) {
+  @SafeVarargs
+  protected final void checkRearrangeReformatAndOptimizeImportsHappend(@NotNull List<PsiFile>... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);

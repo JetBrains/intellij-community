@@ -23,9 +23,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,11 +87,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   @Nullable
   private String getConfiguredProfileIniPath() {
-    final String path = myProfilesIniPathField.getText();
-    if (myDefaultProfilesIniPath.equals(path)) {
-      return null;
-    }
-    return FileUtil.toSystemIndependentName(path);
+    String path = myProfilesIniPathField.getText();
+    return myDefaultProfilesIniPath.equals(path) ? null : FileUtilRt.toSystemIndependentName(StringUtil.nullize(path));
   }
 
   @Nullable
@@ -109,19 +108,20 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   @Override
   public void reset() {
-    final File defaultFile = FirefoxUtil.getDefaultProfileIniPath();
+    File defaultFile = FirefoxUtil.getDefaultProfileIniPath();
     myDefaultProfilesIniPath = defaultFile != null ? defaultFile.getAbsolutePath() : "";
 
-    final String path = mySettings.getProfilesIniPath();
-    myProfilesIniPathField.setText(path != null ? FileUtil.toSystemDependentName(path) : myDefaultProfilesIniPath);
+    String path = mySettings.getProfilesIniPath();
+    myProfilesIniPathField.setText(path != null ? FileUtilRt.toSystemDependentName(path) : myDefaultProfilesIniPath);
     updateProfilesList();
-    final String profileName = mySettings.getProfile();
-    myProfileCombobox.setSelectedItem(profileName != null ? profileName : myDefaultProfile);
+    myProfileCombobox.setSelectedItem(ObjectUtils.notNull(mySettings.getProfile(), myDefaultProfile));
   }
 
   private void updateProfilesList() {
     final String profilesIniPath = myProfilesIniPathField.getText();
-    if (myLastProfilesIniPath != null && myLastProfilesIniPath.equals(profilesIniPath)) return;
+    if (myLastProfilesIniPath != null && myLastProfilesIniPath.equals(profilesIniPath)) {
+      return;
+    }
 
     myProfileCombobox.removeAllItems();
     final List<FirefoxProfile> profiles = FirefoxUtil.computeProfiles(new File(profilesIniPath));

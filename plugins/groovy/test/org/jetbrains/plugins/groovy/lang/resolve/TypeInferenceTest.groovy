@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,20 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
-import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
-import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static com.intellij.psi.CommonClassNames.*
 
 /**
  * @author ven
  */
-public class TypeInferenceTest extends GroovyResolveTestCase {
-  final String basePath = TestUtils.testDataPath + "resolve/inference/"
-
-  @Override
-  protected void setUp() {
-    super.setUp()
-
-    myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
-  }
+public class TypeInferenceTest extends TypeInferenceTestBase {
 
   public void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element;
@@ -707,17 +696,4 @@ class Any {
     doExprTest('1f/2.4', 'java.lang.Double')
   }
 
-  private void doTest(@Language("Groovy") String text, String type) {
-    def file = myFixture.configureByText('_.groovy', text)
-    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
-    def actual = ref.type
-    assertType(type, actual)
-  }
-
-  private void doExprTest(@Language("Groovy") String text, String expectedType) {
-    GroovyFile file = myFixture.configureByText('_.groovy', text) as GroovyFile
-    GrStatement lastStatement = file.statements.last()
-    assertInstanceOf lastStatement, GrExpression
-    assertType(expectedType, (lastStatement as GrExpression).type)
-  }
 }

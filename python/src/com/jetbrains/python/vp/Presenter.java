@@ -23,6 +23,7 @@ package com.jetbrains.python.vp;
 public interface Presenter {
   /**
    * Launches dialog. Presenter should fetch data and start view.
+   * TODO: Say you run initand show and launch
    */
   void launch();
 }

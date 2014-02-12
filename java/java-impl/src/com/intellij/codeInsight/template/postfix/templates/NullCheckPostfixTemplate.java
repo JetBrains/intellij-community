@@ -20,7 +20,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +49,7 @@ public abstract class NullCheckPostfixTemplate extends PostfixTemplate {
 
     Project project = expr.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiBinaryExpression condition = (PsiBinaryExpression)factory.createExpressionFromText(expr.getText() + getTail(), context);
+    PsiExpression condition = factory.createExpressionFromText(expr.getText() + getTail(), context);
 
     PsiElement replace = expr.replace(condition);
     assert replace instanceof PsiExpression;

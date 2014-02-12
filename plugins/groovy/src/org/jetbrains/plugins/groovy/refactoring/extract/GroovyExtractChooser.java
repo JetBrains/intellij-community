@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -78,18 +82,37 @@ public class GroovyExtractChooser {
     SelectionModel selectionModel = editor.getSelectionModel();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final StringPartInfo stringPart =
-      StringPartInfo.findStringPart(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-
+    final StringPartInfo stringPart = StringPartInfo.findStringPart(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     if (stringPart != null) {
-      return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<GrStatement>(), stringPart, project);
+      return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<GrStatement>(), stringPart, project, null);
     }
 
+    if (!forceStatements) {
+      GrVariable variable = GrIntroduceHandlerBase.findVariable(file, start, end);
+      if (variable != null) {
+        GrExpression initializer = variable.getInitializerGroovy();
+        if (initializer != null) {
+          TextRange range = initializer.getTextRange();
+          return buildInfo(project, file, range.getStartOffset(), range.getEndOffset(), forceStatements, selectionModel, variable);
+        }
+      }
+    }
 
+    return buildInfo(project, file, start, end, forceStatements, selectionModel, null);
+  }
+
+  @NotNull
+  private static InitialInfo buildInfo(@NotNull Project project,
+                                       @NotNull PsiFile file,
+                                       int start,
+                                       int end,
+                                       boolean forceStatements,
+                                       @NotNull SelectionModel selectionModel,
+                                       @Nullable GrVariable variable) throws GrRefactoringError {
     PsiElement[] elements = getElementsInOffset(file, start, end, forceStatements);
-    if (elements.length == 1 && elements[0] instanceof GrExpression) {
-      selectionModel.setSelection(start, elements[0].getTextRange().getEndOffset());
-    }
+    //if (elements.length == 1 && elements[0] instanceof GrExpression) {
+    //  selectionModel.setSelection(start, elements[0].getTextRange().getEndOffset());
+    //}
 
     GrStatement[] statements = getStatementsByElements(elements);
 
@@ -171,7 +194,7 @@ public class GroovyExtractChooser {
         GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow"));
     }
 
-    return new InitialInfo(inputInfos, outputInfos, elements, statements, returnStatements, null, project);
+    return new InitialInfo(inputInfos, outputInfos, elements, statements, returnStatements, null, project, variable);
   }
 
   private static boolean isLastStatementOfMethodOrClosure(GrStatement[] statements) {
