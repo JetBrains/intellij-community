@@ -39,6 +39,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
@@ -231,8 +233,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final Runnable runnable = new Runnable() {
       public void run() {
+        final String refactoringId = "refactoring.inline.local.variable";
         try{
           SmartPsiElementPointer<PsiExpression>[] exprs = new SmartPsiElementPointer[refsToInline.length];
+
+          RefactoringEventData beforeData = new RefactoringEventData();
+          beforeData.addElements(refsToInline);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+
           final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
           for(int idx = 0; idx < refsToInline.length; idx++){
             PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
@@ -265,6 +273,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         }
         catch (IncorrectOperationException e){
           LOG.error(e);
+        }
+        finally {
+          final RefactoringEventData afterData = new RefactoringEventData();
+          afterData.addElement(containingClass);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, afterData);
         }
       }
     };
