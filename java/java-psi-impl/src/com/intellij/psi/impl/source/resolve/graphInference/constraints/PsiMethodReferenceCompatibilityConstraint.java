@@ -165,14 +165,19 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         return false;
       }
  
-      session.initBounds(method.getTypeParameters());
-      session.initBounds(containingClass.getTypeParameters());
+      int idx = 0;
+      PsiSubstitutor psiSubstitutor = PsiSubstitutor.EMPTY;
+      for (PsiTypeParameter param : method.getTypeParameters()) {
+        if (idx < typeParameters.length) {
+          psiSubstitutor = psiSubstitutor.put(param, typeParameters[idx++]);
+        }
+      }
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (targetParameters.length == parameters.length + 1 && !method.isVarArgs()) {
         specialCase(session, constraints, substitutor, targetParameters);
       }
-      constraints.add(new TypeCompatibilityConstraint(returnType, referencedMethodReturnType));
+      constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(referencedMethodReturnType)));
     }
     
     return true;
