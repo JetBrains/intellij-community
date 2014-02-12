@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -959,7 +960,10 @@ public class PyUtil {
     while (value instanceof PyParenthesizedExpression) {
       value = ((PyParenthesizedExpression)value).getContainedExpression();
     }
-    if (value instanceof PyReferenceExpression) {
+    // Don't allow the ``getReference()`` call before the actual full analysis
+    // engine is up and running, otherwise it will throw IndexNotReadyException
+    final boolean isDumb = null == value || DumbService.isDumb(value.getProject());
+    if ( !isDumb && value instanceof PyReferenceExpression) {
       PyReferenceExpression refExpr = (PyReferenceExpression)value;
       PsiElement deref = refExpr.getReference().resolve();
       if (deref instanceof PyTargetExpression) {
