@@ -162,6 +162,12 @@ public class PythonSdkOptions extends DialogWrapper {
     myProjectSdksModel.setProjectSdk(selectedSdk);
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return mySdkList;
+  }
+
   public boolean isModified() {
     return mySdkListChanged ||
            myProjectSdksModel.isModified() ||
