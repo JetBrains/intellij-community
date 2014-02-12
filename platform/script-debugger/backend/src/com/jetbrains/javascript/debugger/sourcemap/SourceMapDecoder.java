@@ -1,9 +1,9 @@
 package com.jetbrains.javascript.debugger.sourcemap;
 
 import com.google.gson.stream.JsonToken;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
@@ -135,8 +135,7 @@ public final class SourceMapDecoder {
 
   @Nullable
   private static String readSourcePath(JsonReaderEx reader) {
-    String path = reader.nextString().trim();
-    return path.isEmpty() ? null : FileUtilRt.toSystemIndependentName(path);
+    return PathUtil.toSystemIndependentName(StringUtil.nullize(reader.nextString().trim()));
   }
 
   private static void readMappings(@NotNull String value,
