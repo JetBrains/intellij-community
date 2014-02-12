@@ -487,7 +487,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         catch (ConfigurationException ignored) {
         }
 
-        final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getName(), PythonSdkType.getInstance());
+        final Sdk addedSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdk.getHomeDirectory(),
+                                                          PythonSdkType.getInstance(), true,
+                                                           null, null);
         myProjectSdksModel.addSdk(addedSdk);
         myProjectSdksModel.removeSdk(sdk);
         refreshSdkList();
