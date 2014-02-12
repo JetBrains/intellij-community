@@ -25,6 +25,6 @@ import org.jetbrains.annotations.Nullable;
 final class DefaultUrlOpener extends UrlOpener {
   @Override
   public boolean openUrl(@NotNull WebBrowser browser, @NotNull String url, @Nullable Project project) {
-    return BrowserLauncher.getInstance().browse(url, browser.getPath(), browser, project);
+    return BrowserLauncher.getInstance().browseUsingPath(url, null, browser, project);
   }
 }

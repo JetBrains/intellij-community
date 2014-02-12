@@ -375,7 +375,7 @@ public class FileUtil extends FileUtilRt {
       final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
       executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       new Thread(deleteFilesTask, "File deletion thread").start();
     }
     return deleteFilesTask;
@@ -611,13 +611,13 @@ public class FileUtil extends FileUtilRt {
     return candidate;
   }
 
-  @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
+  @Contract("null -> null")
+  public static String toSystemDependentName(@NonNls @Nullable String aFileName) {
     return FileUtilRt.toSystemDependentName(aFileName);
   }
 
-  @NotNull
-  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
+  @Contract("null -> null")
+  public static String toSystemIndependentName(@NonNls @Nullable String aFileName) {
     return FileUtilRt.toSystemIndependentName(aFileName);
   }
 

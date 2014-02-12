@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
@@ -58,7 +59,7 @@ final class BrowserSettingsPanel {
     new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
-        return item.getPath();
+        return FileUtilRt.toSystemDependentName(item.getPath());
       }
 
       @Override
@@ -69,7 +70,7 @@ final class BrowserSettingsPanel {
       @Nullable
       @Override
       public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
+        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR).normalizePath(true);
       }
     };
 
@@ -138,7 +139,7 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox defaultBrowserComboBox;
+  private ComboBox  defaultBrowserComboBox;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
