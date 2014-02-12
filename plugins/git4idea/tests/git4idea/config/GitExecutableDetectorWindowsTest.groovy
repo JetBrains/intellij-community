@@ -207,7 +207,7 @@ class GitExecutableDetectorWindowsTest {
     file.createNewFile()
   }
 
-  private String convertPath(String path) {
+  private String convertPath(@NotNull String path) {
     path = FileUtil.toSystemDependentName(replaceDiskColon(path))
     return testRoot.getPath() + File.separator + path
   }
