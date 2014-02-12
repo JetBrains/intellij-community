@@ -109,7 +109,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
                                           PythonSdkDetailsStep
-                                            .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkOptions(myProject),
+                                            .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkDetailsDialog(myProject),
                                                   RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
                                                   new NullableConsumer<Sdk>() {
                                                     @Override
@@ -141,7 +141,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       public void setSelectedItem(Object item)
       {
         if (SHOW_ALL.equals(item)) {
-          PythonSdkOptions options = new PythonSdkOptions(myProject);
+          PythonSdkDetailsDialog options = new PythonSdkDetailsDialog(myProject);
           options.show();
           return;
         }

@@ -55,7 +55,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class PythonSdkOptions extends DialogWrapper {
+public class PythonSdkDetailsDialog extends DialogWrapper {
   private JPanel myPanel;
   private JList mySdkList;
   private boolean mySdkListChanged = false;
@@ -80,7 +80,7 @@ public class PythonSdkOptions extends DialogWrapper {
     myNewProject = newProject;
   }
 
-  public PythonSdkOptions(Project project) {
+  public PythonSdkDetailsDialog(Project project) {
     super(project);
 
     setTitle("Project Interpreters");
