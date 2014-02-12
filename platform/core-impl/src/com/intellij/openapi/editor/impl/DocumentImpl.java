@@ -713,7 +713,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners.set(null);
 
-    LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: " + listener);
+    if (myDocumentListeners.contains(listener)) {
+      LOG.error("Already registered: " + listener);
+    }
     boolean added = myDocumentListeners.add(listener);
     LOG.assertTrue(added, listener);
   }
