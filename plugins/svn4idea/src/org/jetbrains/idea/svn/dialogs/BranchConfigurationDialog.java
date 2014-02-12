@@ -34,8 +34,8 @@ import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
@@ -164,7 +164,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       try {
         result = SvnUtil.createUrl(url);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         myErrorPrompt.setText(e.getMessage());
       }
 

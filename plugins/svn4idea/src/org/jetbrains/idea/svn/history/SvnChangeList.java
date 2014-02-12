@@ -39,6 +39,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -374,11 +375,14 @@ public class SvnChangeList implements CommittedChangeList {
         catch (SVNException e) {
           LOG.info(e);
         }
+        catch (SvnBindException e) {
+          LOG.info(e);
+        }
       }
       return myDetailedList;
     }
 
-    private void doRemoteDetails() throws SVNException {
+    private void doRemoteDetails() throws SVNException, SvnBindException {
       for (Pair<Integer, Boolean> idxData : myWithoutDirStatus) {
         final Change sourceChange = myDetailedList.get(idxData.first.intValue());
         final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision)
@@ -406,14 +410,15 @@ public class SvnChangeList implements CommittedChangeList {
                                                  ((SvnRevisionNumber)previousRevision.getRevisionNumber()).getRevision().getNumber());
     }
 
-    private void uploadDeletedRenamedChildren() throws SVNException {
+    private void uploadDeletedRenamedChildren() throws SVNException, SvnBindException {
       Set<Pair<Boolean, String>> duplicates = collectDuplicates();
       List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(myDetailedList);
 
       myDetailedList.addAll(collectDetails(preprocessed, duplicates));
     }
 
-    private List<Change> collectDetails(@NotNull List<Change> changes, @NotNull Set<Pair<Boolean, String>> duplicates) throws SVNException {
+    private List<Change> collectDetails(@NotNull List<Change> changes, @NotNull Set<Pair<Boolean, String>> duplicates)
+      throws SVNException, SvnBindException {
       List<Change> result = ContainerUtil.newArrayList();
 
       for (Change change : changes) {
@@ -462,7 +467,7 @@ public class SvnChangeList implements CommittedChangeList {
     private Collection<Change> getChildrenAsChanges(@NotNull ContentRevision contentRevision,
                                                     final boolean isBefore,
                                                     @NotNull final Set<Pair<Boolean, String>> duplicates)
-      throws SVNException {
+      throws SVNException, SvnBindException {
       final List<Change> result = new ArrayList<Change>();
 
       final String path = getRelativePath(contentRevision);

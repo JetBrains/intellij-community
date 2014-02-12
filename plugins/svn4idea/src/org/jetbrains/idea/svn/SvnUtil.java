@@ -44,8 +44,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -763,16 +763,21 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNURL createUrl(@NotNull String url) throws SVNException {
-    SVNURL result = SVNURL.parseURIEncoded(url);
+  public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+    try {
+      SVNURL result = SVNURL.parseURIEncoded(url);
 
-    // explicitly check if port corresponds to default port and recreate url specifying default port indicator
-    if (result.hasPort() && hasDefaultPort(result)) {
-      result = SVNURL
-        .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+      // explicitly check if port corresponds to default port and recreate url specifying default port indicator
+      if (result.hasPort() && hasDefaultPort(result)) {
+        result = SVNURL
+          .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+      }
+
+      return result;
     }
-
-    return result;
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   public static SVNURL parseUrl(@NotNull String url) {
