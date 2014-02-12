@@ -318,12 +318,14 @@ public class InferenceIncorporationPhase {
       final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
       if (sClass == null) continue;
       final LinkedHashSet<PsiClass> superClasses = InheritanceUtil.getSuperClasses(sClass);
+      superClasses.add(sClass);
       for (int j = i + 1; j < upperBounds.size(); j++) {
         final PsiType tBound = upperBounds.get(j);
         final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
         if (tClass != null) {
 
           final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
+          tSupers.add(tClass);
           tSupers.retainAll(superClasses);
 
           for (PsiClass gClass : tSupers) {
