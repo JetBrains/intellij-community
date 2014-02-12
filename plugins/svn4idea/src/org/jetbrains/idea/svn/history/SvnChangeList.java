@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -301,7 +301,6 @@ public class SvnChangeList implements CommittedChangeList {
     private final Map<String, Change> myPathToChangeMapping;
     private List<Change> myDetailedList;
     private final List<Pair<Integer, Boolean>> myWithoutDirStatus;
-    private SVNRepository myRepository;
 
     private ChangesListCreationHelper() {
       myList = new ArrayList<Change>();
@@ -368,19 +367,12 @@ public class SvnChangeList implements CommittedChangeList {
         myDetailedList = new ArrayList<Change>(myList);
 
         try {
-          myRepository = myVcs.createRepository(myRepositoryRoot);
-
           doRemoteDetails();
           uploadDeletedRenamedChildren();
           ContainerUtil.removeDuplicates(myDetailedList);
         }
         catch (SVNException e) {
           LOG.info(e);
-        } finally {
-          if (myRepository != null) {
-            myRepository.closeSession();
-            myRepository = null;
-          }
         }
       }
       return myDetailedList;
@@ -394,10 +386,11 @@ public class SvnChangeList implements CommittedChangeList {
         if (revision == null) {
           continue;
         }
-        final boolean status = SVNNodeKind.DIR
-          .equals(myRepository.checkPath(revision.getRelativePath(myRepositoryRoot), getRevision(idxData.second.booleanValue())));
-        final Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision) sourceChange.getBeforeRevision(), status),
-                                                  createRevision((SvnRepositoryContentRevision) sourceChange.getAfterRevision(), status));
+        SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
+        SVNInfo info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
+        boolean isDirectory = info != null && SVNNodeKind.DIR.equals(info.getKind());
+        Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
+                                            createRevision((SvnRepositoryContentRevision)sourceChange.getAfterRevision(), isDirectory));
         replacingChange.setIsReplaced(sourceChange.isIsReplaced());
         myDetailedList.set(idxData.first.intValue(), replacingChange);
       }
@@ -473,10 +466,11 @@ public class SvnChangeList implements CommittedChangeList {
       final List<Change> result = new ArrayList<Change>();
 
       final String path = getRelativePath(contentRevision);
+      SVNURL fullPath = SvnUtil.createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
 
       final SVNLogClient client = myVcs.createLogClient();
-      client.doList(myRepository.getLocation().appendPath(path, true), revisionNumber, revisionNumber, true, new ISVNDirEntryHandler() {
+      client.doList(fullPath, revisionNumber, revisionNumber, true, new ISVNDirEntryHandler() {
         public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
           final String childPath = path + '/' + dirEntry.getRelativePath();
 
