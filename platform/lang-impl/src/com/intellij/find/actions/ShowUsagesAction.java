@@ -46,21 +46,20 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
-import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
@@ -83,6 +82,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
@@ -584,7 +584,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     builder.setMovable(true).setResizable(true);
-    final AtomicReference<PsiElement> selectedUsage = new AtomicReference<PsiElement>();
+    final AtomicReference<UsageInfo> selectedUsage = new AtomicReference<UsageInfo>();
+    final AtomicBoolean moreUsages = new AtomicBoolean();
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -595,10 +596,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
             if (usage == MORE_USAGES_SEPARATOR) {
-              selectedUsage.set(PsiUtilCore.NULL_PSI_ELEMENT);
+              moreUsages.set(true);
+              selectedUsage.set(null);
             }
-            else if (usage instanceof PsiElementUsage) {
-              selectedUsage.set(((PsiElementUsage)usage).getElement());
+            else {
+              moreUsages.set(false);
+              selectedUsage.set(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : null);
             }
             break;
           }
@@ -609,13 +612,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     builder.setItemChoosenCallback(new Runnable() {
       @Override
       public void run() {
-        PsiElement usage = selectedUsage.get();
-        if (usage == null) return;
-        if (usage == PsiUtilCore.NULL_PSI_ELEMENT) {
+        if (moreUsages.get()) {
           appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
           return;
         }
-        ((Navigatable)usage).navigate(true);
+        UsageInfo usage = selectedUsage.get();
+        if (usage != null) {
+          UsageViewUtil.navigateTo(usage, true);
+        }
       }
     });
     final JBPopup[] popup = new JBPopup[1];
