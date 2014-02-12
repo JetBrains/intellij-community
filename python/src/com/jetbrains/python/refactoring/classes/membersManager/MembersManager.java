@@ -97,13 +97,13 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   @SuppressWarnings({"unchecked", "rawtypes"}) //We check classes at runtime
   private static void moveSafely(
     @NotNull final PyClass from,
-    @NotNull final MembersManager<?> manager,
+    @NotNull final MembersManager manager,
     @NotNull final Collection<PyElement> elementsToMove,
     @NotNull final PyClass... to) {
     manager.checkElementTypes(elementsToMove);
 
-    for (final PyElement element : manager.getElementsToStoreReferences((Collection)elementsToMove)) {
-      PyClassRefactoringUtil.rememberNamedReferences(element, PyNames.CANONICAL_SELF); //"self" is not reference we need to move
+    for (final Object element : manager.getElementsToStoreReferences(elementsToMove)) {
+      PyClassRefactoringUtil.rememberNamedReferences((PyElement)element, PyNames.CANONICAL_SELF); //"self" is not reference we need to move
     }
 
     final Collection<PyElement> newElements = manager.moveMembers(from, (Collection)elementsToMove, to);
