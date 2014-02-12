@@ -16,7 +16,6 @@
 
 package org.zmlx.hg4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -52,11 +51,11 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager) {
+  public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new HgRefManager();
-    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = factory;
   }
 
   @NotNull
