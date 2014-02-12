@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithStoredHistory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +40,7 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     @Override
-    public void setText(JTextField textField, String text) {
+    public void setText(JTextField textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -55,7 +56,7 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     @Override
-    public void setText(JTextField textField, String text) {
+    public void setText(JTextField textField, @NotNull String text) {
       if (textField.getSelectedText() != null) textField.replaceSelection(text);
       else textField.setText(text);
     }
@@ -72,7 +73,7 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     @Override
-    public void setText(JComboBox comboBox, String text) {
+    public void setText(JComboBox comboBox, @NotNull String text) {
       comboBox.getEditor().setItem(text);
     }
   };
@@ -86,7 +87,7 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     @Override
-    public void setText(TextFieldWithHistory textField, String text) {
+    public void setText(TextFieldWithHistory textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -101,7 +102,7 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     @Override
-    public void setText(TextFieldWithStoredHistory textField, String text) {
+    public void setText(TextFieldWithStoredHistory textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -118,5 +119,5 @@ public interface TextComponentAccessor<T extends Component> {
    * @param component the component
    * @param text the text to set
    */
-  void setText(T component, String text);
+  void setText(T component, @NotNull String text);
 }
