@@ -221,9 +221,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModifiedModificators.clear();
     myProjectSdksModel.apply();
     mySdkListChanged = false;
-    if (myAddedSdk != null) {
-      myInterpreterList.setSelectedSdk(myAddedSdk);
-    }
     myShowMoreCallback.consume(getSelectedSdk());
   }
 
@@ -484,11 +481,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       final Sdk sdk = getSelectedSdk();
       if (sdk instanceof PyDetectedSdk) {
+        try {
+          myProjectSdksModel.apply();
+        }
+        catch (ConfigurationException ignored) {
+        }
 
         final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getName(), PythonSdkType.getInstance());
         myProjectSdksModel.addSdk(addedSdk);
         myProjectSdksModel.removeSdk(sdk);
         refreshSdkList();
+        mySdkList.setSelectedValue(addedSdk, true);
         updateOkButton();
       }
     }
