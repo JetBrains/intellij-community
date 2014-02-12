@@ -189,7 +189,18 @@ class StringToConstraintsTransformer {
               constraint.setPartOfSearchResults(!anonymous);
             }
 
-            index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
+            if (index < length && pattern.charAt(index) == ':') {
+              ++index;
+              if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
+              ch = pattern.charAt(index);
+              if (ch == ':') {
+                // double colon instead of condition
+                buf.append(ch);
+              }
+              else {
+                index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
+              }
+            }
 
             if (constraintCreated) {
               if (constraint.getWithinConstraint().length() > 0) {
@@ -215,42 +226,38 @@ class StringToConstraintsTransformer {
                                           StringBuilder miscBuffer,
                                           MatchVariableConstraint constraint) {
     final int length = pattern.length();
-    if (index < length && pattern.charAt(index) == ':') {
+
+    char ch = pattern.charAt(index);
+    if (ch == '+' || ch == '*') {
+      // this is type axis navigation relation
+      switch(ch) {
+        case '+':
+          constraint.setStrictlyWithinHierarchy(true);
+          break;
+        case '*':
+          constraint.setWithinHierarchy(true);
+          break;
+      }
+
       ++index;
       if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
+      ch = pattern.charAt(index);
+    }
 
-      char ch = pattern.charAt(index);
-      if (ch == '+' || ch == '*') {
-        // this is type axis navigation relation
-        switch(ch) {
-          case '+':
-            constraint.setStrictlyWithinHierarchy(true);
-            break;
-          case '*':
-            constraint.setWithinHierarchy(true);
-            break;
-        }
+    if (ch == '[') {
+      // eat complete condition
 
-        ++index;
-        if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
-        ch = pattern.charAt(index);
+      miscBuffer.setLength(0);
+      for(++index; index < length && ((ch = pattern.charAt(index))!=']' || pattern.charAt(index-1)=='\\'); ++index) {
+        miscBuffer.append(ch);
       }
-
-      if (ch == '[') {
-        // eat complete condition
-
-        miscBuffer.setLength(0);
-        for(++index; index < length && ((ch = pattern.charAt(index))!=']' || pattern.charAt(index-1)=='\\'); ++index) {
-          miscBuffer.append(ch);
-        }
-        if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
-        ++index;
-        parseCondition(constraint, miscBuffer.toString());
-      } else {
-        // eat reg exp constraint
-        miscBuffer.setLength(0);
-        index = handleRegExp(index, pattern, miscBuffer, constraint);
-      }
+      if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
+      ++index;
+      parseCondition(constraint, miscBuffer.toString());
+    } else {
+      // eat reg exp constraint
+      miscBuffer.setLength(0);
+      index = handleRegExp(index, pattern, miscBuffer, constraint);
     }
     return index;
   }

@@ -115,6 +115,12 @@ public class StringToConstraintsTransformerTest {
     test("'a:x!(");
   }
 
+  @Test
+  public void testMethodReference() {
+    test("'_a::'_b");
+    assertEquals("$a$::$b$", myOptions.getSearchPattern());
+  }
+
   private void test(String pattern) {
     myOptions.setSearchPattern(pattern);
     StringToConstraintsTransformer.transformOldPattern(myOptions);
