@@ -51,11 +51,11 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   @NotNull
   @Override
-  public PyMemberInfo apply(@NotNull final PyFunction pyFunction) {
+  public PyMemberInfo<PyElement> apply(@NotNull final PyFunction pyFunction) {
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(pyFunction);
     assert flags != null : "No flags return while element is function " + pyFunction;
     final boolean isStatic = flags.isStaticMethod() || flags.isClassMethod();
-    return new PyMemberInfo(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
+    return new PyMemberInfo<PyElement>(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
   }
 
   @Nullable

@@ -28,10 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -51,22 +48,22 @@ public final class PyExtractSuperclassHelper {
   /**
    * Accepts only those members whose element is PyClass object (new classes)
    */
-  private static final Predicate<PyMemberInfo> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
+  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
 
   private PyExtractSuperclassHelper() {
   }
 
   static void extractSuperclass(final PyClass clazz,
-                                @NotNull Collection<PyMemberInfo> selectedMemberInfos,
+                                @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
 
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
-    selectedMemberInfos = new ArrayList<PyMemberInfo>(selectedMemberInfos);
+    selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
     // 'object' superclass is always pulled up, even if not selected explicitly
     if (MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT) == null) {
-      final PyMemberInfo object = MembersManager.findMember(clazz, ALLOW_OBJECT);
+      final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
       if (object != null) {
         selectedMemberInfos.add(object);
       }

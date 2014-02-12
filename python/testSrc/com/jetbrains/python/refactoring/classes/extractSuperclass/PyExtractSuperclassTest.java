@@ -64,7 +64,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
     myFixture.configureByFile("source_module.py");
     final String sourceClass = "MyClass";
-    final PyMemberInfo member = findMemberInfo(sourceClass, memberToMove);
+    final PyMemberInfo<PyElement> member = findMemberInfo(sourceClass, memberToMove);
     final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
@@ -100,7 +100,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
-      final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
       for (String memberName : membersName) {
         final PyElement member = findMember(className, memberName);
         members.add(MembersManager.findMember(clazz, member));
@@ -130,7 +130,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
@@ -173,7 +173,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();

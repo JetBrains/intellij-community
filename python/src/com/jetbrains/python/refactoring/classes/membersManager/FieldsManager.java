@@ -79,8 +79,8 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
 
   @NotNull
   @Override
-  public PyMemberInfo apply(@NotNull final PyTargetExpression input) {
-    return new PyMemberInfo(input, myStatic, input.getText(), isOverrides(input), this);
+  public PyMemberInfo<PyElement> apply(@NotNull final PyTargetExpression input) {
+    return new PyMemberInfo<PyElement>(input, myStatic, input.getText(), isOverrides(input), this);
   }
 
   @Nullable

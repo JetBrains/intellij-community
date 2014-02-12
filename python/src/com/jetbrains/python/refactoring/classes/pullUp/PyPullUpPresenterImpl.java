@@ -76,7 +76,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   }
 
   private boolean isWritable() {
-    final Collection<PyMemberInfo> infos = myView.getSelectedMemberInfos();
+    final Collection<PyMemberInfo<PyElement>> infos = myView.getSelectedMemberInfos();
     if (infos.isEmpty()) {
       return true;
     }
@@ -85,7 +85,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myView.getSelectedParent())) return false;
     final PyClass container = PyUtil.getContainingClassOrSelf(element);
     if (container == null || !CommonRefactoringUtil.checkReadOnlyStatus(project, container)) return false;
-    for (final PyMemberInfo info : infos) {
+    for (final PyMemberInfo<PyElement> info : infos) {
       final PyElement member = info.getMember();
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return false;
     }
@@ -96,30 +96,30 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   @Override
   @NotNull
   public MultiMap<PsiElement, String> getConflicts() {
-    final Collection<PyMemberInfo> infos = myView.getSelectedMemberInfos();
+    final Collection<PyMemberInfo<PyElement>> infos = myView.getSelectedMemberInfos();
     final PyClass superClass = myView.getSelectedParent();
     return PyPullUpConflictsUtil.checkConflicts(infos, superClass);
   }
 
-  private class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo> {
+  private class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
 
     PyPullUpInfoModel() {
       super(myClassUnderRefactoring, null, false);
     }
 
     @Override
-    public boolean isAbstractEnabled(final PyMemberInfo member) {
+    public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
       return false;
     }
 
     @Override
-    public int checkForProblems(@NotNull final PyMemberInfo member) {
+    public int checkForProblems(@NotNull final PyMemberInfo<PyElement> member) {
       return member.isChecked() ? OK : super.checkForProblems(member);
     }
 
 
     @Override
-    protected int doCheck(@NotNull final PyMemberInfo memberInfo, final int problem) {
+    protected int doCheck(@NotNull final PyMemberInfo<PyElement> memberInfo, final int problem) {
       if (problem == ERROR && memberInfo.isStatic()) {
         return WARNING;
       }
@@ -127,7 +127,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
     }
 
     @Override
-    public boolean isMemberEnabled(final PyMemberInfo member) {
+    public boolean isMemberEnabled(final PyMemberInfo<PyElement> member) {
       final PyClass currentSuperClass = myView.getSelectedParent();
       if (member.getMember() instanceof PyClass) {
         //TODO: Delegate to Memebers Managers

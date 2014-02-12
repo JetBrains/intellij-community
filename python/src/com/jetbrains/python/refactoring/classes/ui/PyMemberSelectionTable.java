@@ -30,13 +30,13 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyElement, PyMemberInfo> {
-  public PyMemberSelectionTable(final List<PyMemberInfo> memberInfos,
-                                  final MemberInfoModel<PyElement, PyMemberInfo> model) {
+public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyElement, PyMemberInfo<PyElement>> {
+  public PyMemberSelectionTable(final List<PyMemberInfo<PyElement>> memberInfos,
+                                  final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
     super(memberInfos, model, null);
   }
 
-  protected Object getAbstractColumnValue(PyMemberInfo memberInfo) {
+  protected Object getAbstractColumnValue(PyMemberInfo<PyElement> memberInfo) {
     return null;
   }
 
@@ -44,9 +44,9 @@ public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyEleme
     return false;
   }
 
-  protected void setVisibilityIcon(PyMemberInfo memberInfo, RowIcon icon) {}
+  protected void setVisibilityIcon(PyMemberInfo<PyElement> memberInfo, RowIcon icon) {}
 
-  protected Icon getOverrideIcon(PyMemberInfo memberInfo) {
+  protected Icon getOverrideIcon(PyMemberInfo<PyElement> memberInfo) {
     final PsiElement member = memberInfo.getMember();
     Icon overrideIcon = EMPTY_OVERRIDE_ICON;
     if (member instanceof PyFunction && memberInfo.getOverrides() != null && memberInfo.getOverrides()) {

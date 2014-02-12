@@ -36,7 +36,7 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class PyMemberSelectionPanel extends JPanel {
-  private static final List<PyMemberInfo> EMPTY_MEMBER_INFO = Collections.emptyList();
+  private static final List<PyMemberInfo<PyElement>> EMPTY_MEMBER_INFO = Collections.emptyList();
   private final PyMemberSelectionTable myTable;
   private boolean myInitialized;
 
@@ -57,7 +57,7 @@ public class PyMemberSelectionPanel extends JPanel {
    * @param memberInfo list of members
    * @param model      model
    */
-  public PyMemberSelectionPanel(String title, List<PyMemberInfo> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo> model) {
+  public PyMemberSelectionPanel(String title, List<PyMemberInfo<PyElement>> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
     Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
@@ -78,8 +78,8 @@ public class PyMemberSelectionPanel extends JPanel {
    * @param memberInfoModel model to display memebers in table
    * @param members         members to display
    */
-  public void init(@NotNull final MemberInfoModel<PyElement, PyMemberInfo> memberInfoModel,
-                   @NotNull final Collection<PyMemberInfo> members) {
+  public void init(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel,
+                   @NotNull final Collection<PyMemberInfo<PyElement>> members) {
     Preconditions.checkState(!myInitialized, "Already myInitialized");
     myTable.setMemberInfos(members);
     myTable.setMemberInfoModel(memberInfoModel);
@@ -91,7 +91,7 @@ public class PyMemberSelectionPanel extends JPanel {
    * @return list of members, selected by user
    */
   @NotNull
-  public Collection<PyMemberInfo> getSelectedMemberInfos() {
+  public Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos() {
     Preconditions.checkState(myInitialized, "Call #init first");
     return myTable.getSelectedMemberInfos();
   }

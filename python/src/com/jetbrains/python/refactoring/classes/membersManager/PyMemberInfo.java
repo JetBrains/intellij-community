@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public class PyMemberInfo extends MemberInfoBase<PyElement> {
+public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   @NotNull
   private final MembersManager<?> myMembersManager;
 
@@ -35,7 +35,7 @@ public class PyMemberInfo extends MemberInfoBase<PyElement> {
    *                  TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
    * @param membersManager manager that knows how to handle this member
    */
-  PyMemberInfo(@NotNull final PyElement member,
+  PyMemberInfo(@NotNull final T member,
                       final boolean isStatic,
                       @NotNull final String displayName,
                       @Nullable final Boolean overrides,
@@ -55,7 +55,7 @@ public class PyMemberInfo extends MemberInfoBase<PyElement> {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof PyMemberInfo) {
-      return getMember().equals(((PyMemberInfo)obj).getMember());
+      return getMember().equals(((PyMemberInfo<?>)obj).getMember());
     }
     return false;
   }

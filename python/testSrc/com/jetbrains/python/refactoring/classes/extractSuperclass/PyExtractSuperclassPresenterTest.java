@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.PyPresenterTestMemberEntry;
 import com.jetbrains.python.refactoring.classes.PyRefactoringPresenterTestCase;
@@ -43,7 +44,7 @@ public class PyExtractSuperclassPresenterTest
    * Tests that if no members selected, presenter shows error
    */
   public void testNoSelectedMembersLeadsToError() {
-    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.<PyMemberInfo>emptyList()).anyTimes();
+    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.<PyMemberInfo<PyElement>>emptyList()).anyTimes();
 
     final Capture<String> errorMessageCapture = configureViewToCaptureError();
 
@@ -64,9 +65,9 @@ public class PyExtractSuperclassPresenterTest
   public void testInvalidSuperClassNameLeadsToError() {
     final String className = "Child";
     final PyClass aClass = getClassByName(className);
-    final List<PyMemberInfo> classMemberInfos = new PyMemberInfoStorage(aClass).getClassMemberInfos(aClass);
+    final List<PyMemberInfo<PyElement>> classMemberInfos = new PyMemberInfoStorage(aClass).getClassMemberInfos(aClass);
     assert !classMemberInfos.isEmpty() : "No member infos for " + className;
-    final PyMemberInfo pyMemberInfo = classMemberInfos.get(0);
+    final PyMemberInfo<PyElement> pyMemberInfo = classMemberInfos.get(0);
     EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.singletonList(pyMemberInfo)).anyTimes();
     EasyMock.expect(myView.getSuperClassName()).andReturn("INVALID CLASS NAME").anyTimes();
     final Capture<String> errorMessageCapture = configureViewToCaptureError();

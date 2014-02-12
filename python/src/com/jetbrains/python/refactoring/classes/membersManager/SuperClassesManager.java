@@ -48,9 +48,9 @@ class SuperClassesManager extends MembersManager<PyClass> {
 
   @NotNull
   @Override
-  public PyMemberInfo apply(@NotNull final PyClass input) {
+  public PyMemberInfo<PyElement> apply(@NotNull final PyClass input) {
     final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
     //TODO: Check for "overrides"
-    return new PyMemberInfo(input, false, name, false, this);
+    return new PyMemberInfo<PyElement>(input, false, name, false, this);
   }
 }

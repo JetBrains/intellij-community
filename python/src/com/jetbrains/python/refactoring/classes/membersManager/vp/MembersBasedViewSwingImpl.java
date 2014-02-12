@@ -8,6 +8,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
 
   @NotNull
   @Override
-  public Collection<PyMemberInfo> getSelectedMemberInfos() {
+  public Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos() {
     return myPyMemberSelectionPanel.getSelectedMemberInfos();
   }
 
