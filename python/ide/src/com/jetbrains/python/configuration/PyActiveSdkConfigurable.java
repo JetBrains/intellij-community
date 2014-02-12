@@ -109,7 +109,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
       @Override
       public void consume(@Nullable Sdk sdk) {
-        if (getSdk() != sdk) {
+        if (sdk instanceof PyDetectedSdk) {
+          final Sdk addedSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdk.getHomeDirectory(),
+                                                             PythonSdkType.getInstance(), true,
+                                                             null, null);
+          myAddedSdk = addedSdk;
+          myProjectSdksModel.addSdk(addedSdk);
+          myProjectSdksModel.removeSdk(sdk);
+          mySdkCombo.setSelectedItem(addedSdk);
+        }
+        else if (getSdk() != sdk) {
           mySdkCombo.setSelectedItem(sdk);
         }
       }
