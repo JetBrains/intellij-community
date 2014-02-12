@@ -15,14 +15,12 @@
  */
 package com.jetbrains.python.configuration;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -33,21 +31,15 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
-import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -61,18 +53,13 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class PythonSdkConfigurable implements Configurable, Configurable.NoScroll {
+public class PythonSdkOptions extends DialogWrapper {
   private JPanel myPanel;
   private JList mySdkList;
-  private JPanel mySplitterHolder;
-  private PackagesNotificationPanel myNotificationsArea;
-  private JPanel myNotificationsPlaceholder;
-  private PythonPathEditor myPathEditor;
   private boolean mySdkListChanged = false;
   private Sdk myAddedSdk;
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
-  private final PyInstalledPackagesPanel myPackagesPanel;
 
   private Map<Sdk, SdkModificator> myModificators = new FactoryMap<Sdk, SdkModificator>() {
     @Override
@@ -81,7 +68,6 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     }
   };
   private Set<SdkModificator> myModifiedModificators = new HashSet<SdkModificator>();
-  private Sdk myPreviousSelection;
   private boolean myFirstReset;
   private final Project myProject;
 
@@ -92,13 +78,21 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     myNewProject = newProject;
   }
 
-  public PythonSdkConfigurable(Project project) {
+  public PythonSdkOptions(Project project) {
+    super(project);
+
+    setTitle("Project Interpreters");
     myProject = project;
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
     myFirstReset = true;
+    init();
+    updateOkButton();
+  }
 
-
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
     mySdkList = new JBList();
     mySdkList.setCellRenderer(new PySdkListCellRenderer("", myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -108,65 +102,32 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
         @Override
         public void run(AnActionButton button) {
           addSdk(button);
+          updateOkButton();
         }
       })
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           editSdk();
+          updateOkButton();
         }
       })
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           removeSdk();
+          updateOkButton();
         }
       })
       .addExtraAction(new CreateVirtualEnvButton())
-      .addExtraAction(new ToggleVirtualEnvFilterButton());
+      .addExtraAction(new ToggleVirtualEnvFilterButton())
+      .addExtraAction(new ShowPathButton());
 
-
-    final Splitter splitter = new Splitter(true);
-    /*
-    final JScrollPane sdkListPane = ScrollPaneFactory.createScrollPane(mySdkList,
-                                                                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    sdkListPane.setPreferredSize(new Dimension(10, 10));
-    */
-    splitter.setFirstComponent(decorator.createPanel());
-
-    myPathEditor =
-      new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
-        @Override
-        protected void onReloadButtonClicked() {
-          reloadSdk();
-        }
-      };
-
-    myNotificationsArea = new PackagesNotificationPanel(project);
-    myNotificationsPlaceholder.add(myNotificationsArea.getComponent(), BorderLayout.CENTER);
-
-    final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.TOP);
-    myPackagesPanel = new PyInstalledPackagesPanel(project, myNotificationsArea);
-    tabbedPane.addTab("Packages", myPackagesPanel);
-
-    JPanel panel1 = new JPanel(new GridBagLayout());
-    Insets anInsets1 = new Insets(2, 2, 2, 2);
-    JScrollPane scrollPane1 = ScrollPaneFactory.createScrollPane(myPathEditor.createComponent(),
-                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane1.setPreferredSize(new Dimension(500, 500));
-    panel1.add(scrollPane1, new GridBagConstraints(0, 0, 1, 8, 1.0, 1.0,
-                                                   GridBagConstraints.CENTER,
-                                                   GridBagConstraints.BOTH,
-                                                   anInsets1, 0, 0));
-
-    tabbedPane.addTab("Paths", panel1);
-
-    splitter.setSecondComponent(tabbedPane);
-    mySplitterHolder.add(splitter, BorderLayout.CENTER);
-
+    decorator.setPreferredSize(new Dimension(600, 500));
+    myPanel = decorator.createPanel();
+    refreshSdkList();
     addListeners();
+    return myPanel;
   }
 
   private void addListeners() {
@@ -188,19 +149,6 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
       public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       }
     });
-    myPackagesPanel.addPathChangedListener(new Consumer<Sdk>() {
-      @Override
-      public void consume(Sdk sdk) {
-        updateSdkPaths(sdk);
-      }
-    });
-
-    myNotificationsArea.addLinkHandler(PyInstalledPackagesPanel.CREATE_VENV, new Runnable() {
-      @Override
-      public void run() {
-        createVirtualEnv(getSelectedSdk());
-      }
-    });
     mySdkList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent event) {
         updateUI(getSelectedSdk());
@@ -209,17 +157,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
   }
 
   private void updateUI(final Sdk selectedSdk) {
-    if (myPreviousSelection != null) {
-      saveSdkPaths(myPreviousSelection);
-    }
     myProjectSdksModel.setProjectSdk(selectedSdk);
-    updateSdkPaths(selectedSdk);
-    myPreviousSelection = selectedSdk;
-    myPackagesPanel.updatePackages(selectedSdk == null ? null : new PyPackageManagementService(myProject, selectedSdk));
-
-    if (selectedSdk != null) {
-      myPackagesPanel.updateNotifications(selectedSdk);
-    }
   }
 
   private void createVirtualEnv(Sdk sdk) {
@@ -251,22 +189,9 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     }
   }
 
-  public String getDisplayName() {
-    return "Python Interpreters";
-  }
-
-  public String getHelpTopic() {
-    return "python_interpreter";
-  }
-
-  public JComponent createComponent() {
-    return myPanel;
-  }
-
   public boolean isModified() {
     return mySdkListChanged ||
            myProjectSdksModel.isModified() ||
-           myPathEditor.isModified() ||
            !myModifiedModificators.isEmpty();
   }
 
@@ -276,10 +201,21 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     return selectedSdk == null ? null : selectedSdk.getName();
   }
 
-  public void apply() throws ConfigurationException {
-    if (myPreviousSelection != null) {
-      saveSdkPaths(myPreviousSelection);
+  protected void updateOkButton() {
+    super.setOKActionEnabled(isModified());
+  }
+
+  @Override
+  protected void doOKAction() {
+    try {
+      apply();
     }
+    catch (ConfigurationException ignored) {
+    }
+    super.doOKAction();
+  }
+
+  public void apply() throws ConfigurationException {
     for (SdkModificator modificator : myModifiedModificators) {
       modificator.commitChanges();
     }
@@ -316,16 +252,11 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
       myProjectSdksModel.reset(null);
     }
     refreshSdkList();
-    final Sdk selectedSdk = getRealSelectedSdk();
-    if (selectedSdk != null) {
-      myPackagesPanel.updateNotifications(selectedSdk);
-    }
   }
 
   private void clearModificators() {
     myModificators.clear();
     myModifiedModificators.clear();
-    myPreviousSelection = null;
   }
 
   private void refreshSdkList() {
@@ -360,7 +291,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
 
   private void addSdk(AnActionButton button) {
     DetailsChooser
-      .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkOptions(myProject), button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
+      .show(myProject, myProjectSdksModel.getSdks(), this, button.getPreferredPopupPoint(), false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
           addCreatedSdk(sdk, false);
@@ -504,43 +435,6 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
 
   private void reloadSdk(Sdk currentSdk) {
     PythonSdkType.setupSdkPaths(myProject, null, currentSdk, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
-    reloadSdkPaths(currentSdk);
-  }
-
-  public void disposeUIResources() {
-    myInterpreterList.disposeModel();
-    clearModificators();
-    myFirstReset = true;
-  }
-
-  private void saveSdkPaths(Sdk selection) {
-    SdkModificator modificator = myModificators.get(selection);
-    if (myPathEditor.isModified()) {
-      myPathEditor.apply(modificator);
-      myModifiedModificators.add(modificator);
-    }
-  }
-
-  private void reloadSdkPaths(Sdk selection) {
-    List<VirtualFile> rootPaths = Lists.newArrayList();
-    if (selection != null) {
-      Collections.addAll(rootPaths, selection.getRootProvider().getFiles(OrderRootType.CLASSES));
-      myPathEditor.reload(myModificators.get(selection));
-    }
-    else {
-      myPathEditor.reload(null);
-    }
-  }
-
-  private void updateSdkPaths(final Sdk selection) {
-    final List<VirtualFile> rootPaths = Lists.newArrayList();
-    if (selection != null) {
-      Collections.addAll(rootPaths, selection.getRootProvider().getFiles(OrderRootType.CLASSES));
-      myPathEditor.reset(myModificators.get(selection));
-    }
-    else {
-      myPathEditor.reset(null);
-    }
   }
 
   private class CreateVirtualEnvButton extends AnActionButton implements DumbAware {
@@ -552,6 +446,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     public void actionPerformed(AnActionEvent e) {
       Sdk selectedSdk = getSelectedSdk();
       createVirtualEnv(selectedSdk);
+      updateOkButton();
     }
   }
 
@@ -569,6 +464,39 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
     public void setSelected(AnActionEvent e, boolean state) {
       myShowOtherProjectVirtualenvs = state;
       refreshSdkList();
+      updateOkButton();
+    }
+  }
+  private class ShowPathButton extends AnActionButton implements DumbAware {
+    public ShowPathButton() {
+      super("Show path for the selected interpreter", AllIcons.Actions.ShowAsTree);
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return !(getSelectedSdk() instanceof PyDetectedSdk);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      DialogBuilder dialog = new DialogBuilder(myProject);
+
+      final PythonPathEditor editor =
+        new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
+          @Override
+          protected void onReloadButtonClicked() {
+            reloadSdk();
+          }
+        };
+      final JComponent component = editor.createComponent();
+      component.setPreferredSize(new Dimension(600, 400));
+      component.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      dialog.setCenterPanel(component);
+      editor.reload(getSelectedSdk().getSdkModificator());
+
+      dialog.setTitle("Interpreter Paths");
+      dialog.show();
+      updateOkButton();
     }
   }
 }

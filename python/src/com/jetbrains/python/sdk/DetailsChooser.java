@@ -22,7 +22,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -31,7 +31,6 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ import java.util.List;
 * @author yole
 */
 public class DetailsChooser extends BaseListPopupStep<String> {
-  private static JComponent myMore;
+  private static DialogWrapper myMore;
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
@@ -54,7 +53,7 @@ public class DetailsChooser extends BaseListPopupStep<String> {
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
-                          JComponent component, final RelativePoint popupPoint,
+                          DialogWrapper component, final RelativePoint popupPoint,
                           final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
     myMore = component;
@@ -106,10 +105,7 @@ public class DetailsChooser extends BaseListPopupStep<String> {
       createVirtualEnvSdk();
     }
     else {
-      DialogBuilder dialog = new DialogBuilder(myProject);
-      dialog.setTitle("Python Interpreters");
-      dialog.setCenterPanel(myMore);
-      dialog.show();
+      myMore.show();
     }
   }
 

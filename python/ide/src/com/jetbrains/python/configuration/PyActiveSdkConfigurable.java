@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.awt.RelativePoint;
@@ -45,7 +44,10 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.DetailsChooser;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +108,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          DetailsChooser.show(myProject, myProjectSdksModel.getSdks(), new PythonSdkConfigurable(myProject).createComponent(),
+                                          DetailsChooser.show(myProject, myProjectSdksModel.getSdks(), new PythonSdkOptions(myProject),
                                                               RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
                                                               new NullableConsumer<Sdk>() {
                                                                 @Override
@@ -135,10 +137,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       public void setSelectedItem(Object item)
       {
         if (SHOW_ALL.equals(item)) {
-          DialogBuilder dialog = new DialogBuilder(myProject);
-          dialog.setTitle("Python Interpreters");
-          dialog.setCenterPanel(new PythonSdkConfigurable(myProject).createComponent());
-          dialog.show();
+          PythonSdkOptions options = new PythonSdkOptions(myProject);
+          options.show();
           return;
         }
         if (!PySdkListCellRenderer.SEPARATOR.equals(item))
@@ -306,7 +306,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (!sdkList.contains(selection)) {
       selection = null;
     }
-    VirtualEnvProjectFilter.removeNotMatching(myProject, sdkList);
+    final boolean showAll = VirtualEnvProjectFilter.removeNotMatching(myProject, sdkList);
     // if the selection is a non-matching virtualenv, show it anyway
     if (selection != null && !sdkList.contains(selection)) {
       sdkList.add(0, selection);
@@ -317,8 +317,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     boolean remoteSeparator = true;
     boolean separator = true;
     boolean detectedSeparator = true;
-    boolean hasAssociationsWithDifferentProject = false;
-    final String projectBasePath = myProject.getBasePath();
     for (Sdk sdk : sdkList) {
       if (!PythonSdkType.isVirtualEnv(sdk) && !PythonSdkType.isRemote(sdk) &&
           !(sdk instanceof PyDetectedSdk) && separator) {
@@ -334,15 +332,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         detectedSeparator = false;
       }
       items.add(sdk);
-
-      final PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
-      if (data != null) {
-        final String path = data.getAssociatedProjectPath();
-        if (path != null && !path.equals(projectBasePath)) hasAssociationsWithDifferentProject = true;
-      }
     }
 
-    if (hasAssociationsWithDifferentProject) {
+    if (showAll) {
       items.add(PySdkListCellRenderer.SEPARATOR);
       items.add(SHOW_ALL);
     }

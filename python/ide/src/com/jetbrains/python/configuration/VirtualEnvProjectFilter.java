@@ -50,13 +50,14 @@ public class VirtualEnvProjectFilter implements Predicate<Sdk> {
     return false;
   }
 
-  public static void removeNotMatching(Project project, List<Sdk> sdks) {
+  public static boolean removeNotMatching(Project project, List<Sdk> sdks) {
     if (project != null) {
       final String basePath = project.getBasePath();
       if (basePath != null) {
-        Iterables.removeIf(sdks, new VirtualEnvProjectFilter(FileUtil.toSystemIndependentName(basePath)));
+        return Iterables.removeIf(sdks, new VirtualEnvProjectFilter(FileUtil.toSystemIndependentName(basePath)));
       }
     }
+    return false;
   }
 
   public static void removeAllAssociated(List<Sdk> sdks) {
