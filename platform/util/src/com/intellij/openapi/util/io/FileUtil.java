@@ -611,12 +611,12 @@ public class FileUtil extends FileUtilRt {
     return candidate;
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@NonNls @Nullable String aFileName) {
     return FileUtilRt.toSystemDependentName(aFileName);
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String toSystemIndependentName(@NonNls @Nullable String aFileName) {
     return FileUtilRt.toSystemIndependentName(aFileName);
   }

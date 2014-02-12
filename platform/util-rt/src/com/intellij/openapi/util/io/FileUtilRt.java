@@ -81,17 +81,17 @@ public class FileUtilRt {
            && fileName.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@NonNls @Nullable String fileName) {
     return fileName == null ? null : toSystemDependentName(fileName, File.separatorChar);
   }
 
-  @Contract("null, _ -> null")
+  @Contract("null, _ -> null; !null, _ -> !null")
   public static String toSystemDependentName(@NonNls @Nullable String fileName, final char separatorChar) {
     return fileName == null ? null : fileName.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String toSystemIndependentName(@NonNls @Nullable String fileName) {
     return fileName == null ? null : fileName.replace('\\', '/');
   }
