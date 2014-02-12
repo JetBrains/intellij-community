@@ -360,7 +360,7 @@ public class PythonSdkConfigurable implements Configurable, Configurable.NoScrol
 
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
-      .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkDetailsDialog(myProject), button.getPreferredPopupPoint(), false,
+      .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkDetailsDialog(myProject, null), button.getPreferredPopupPoint(), false,
             new NullableConsumer<Sdk>() {
               @Override
               public void consume(Sdk sdk) {

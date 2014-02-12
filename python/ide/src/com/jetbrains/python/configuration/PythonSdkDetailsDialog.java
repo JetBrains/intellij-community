@@ -20,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -74,16 +73,33 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private boolean myNewProject = false;
   private boolean myShowOtherProjectVirtualenvs = true;
+  private final Module myModule;
+  private NullableConsumer<Sdk> myShowMoreCallback;
 
   public void setNewProject(final boolean newProject) {
     myNewProject = newProject;
   }
 
-  public PythonSdkDetailsDialog(Project project) {
+  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
     super(project);
+    myModule = null;
 
     setTitle("Project Interpreters");
+    myShowMoreCallback = showMoreCallback;
     myProject = project;
+    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
+    myProjectSdksModel = myInterpreterList.getModel();
+    init();
+    updateOkButton();
+  }
+
+  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback) {
+    super(module.getProject());
+    myModule = module;
+
+    setTitle("Project Interpreters");
+    myShowMoreCallback = showMoreCallback;
+    myProject = module.getProject();
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
     init();
@@ -151,6 +167,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     });
     mySdkList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent event) {
+        updateOkButton();
         updateUI(getSelectedSdk());
       }
     });
@@ -167,7 +184,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   public boolean isModified() {
-    return mySdkListChanged ||
+    Sdk projectSdk = getSdk();
+    if (projectSdk != null) {
+      projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
+    }
+    return getSelectedSdk() != projectSdk || mySdkListChanged ||
            myProjectSdksModel.isModified() ||
            !myModifiedModificators.isEmpty();
   }
@@ -200,9 +221,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModifiedModificators.clear();
     myProjectSdksModel.apply();
     mySdkListChanged = false;
-    SdkConfigurationUtil.setDirectoryProjectSdk(myProject, myAddedSdk);
-    myProjectSdksModel.setProjectSdk(myAddedSdk);
-    myInterpreterList.setSelectedSdk(myAddedSdk);
+    if (myAddedSdk != null) {
+      myInterpreterList.setSelectedSdk(myAddedSdk);
+    }
+    myShowMoreCallback.consume(getSelectedSdk());
   }
 
   /**
@@ -222,7 +244,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void refreshSdkList() {
     final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks(myProject);
-    Sdk projectSdk = myProjectSdksModel.getProjectSdk();
+    Sdk projectSdk = getSdk();
     if (!myShowOtherProjectVirtualenvs) {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
     }
@@ -230,7 +252,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     mySdkList.setModel(new CollectionListModel<Sdk>(pythonSdks));
 
     mySdkListChanged = false;
-    if (projectSdk == null) projectSdk = getSdk();
     if (projectSdk != null) {
       projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
       mySdkList.clearSelection();
@@ -238,16 +259,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       mySdkList.updateUI();
     }
   }
-
   @Nullable
   private Sdk getSdk() {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    if (modules.length > 0) {
-      final Module module = modules[0];
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      return rootManager.getSdk();
+    if (myModule == null) {
+      return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
-    return ProjectRootManager.getInstance(myProject).getProjectSdk();
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    return rootManager.getSdk();
   }
 
   private void addSdk(AnActionButton button) {

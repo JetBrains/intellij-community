@@ -73,6 +73,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private PyInstalledPackagesPanel myPackagesPanel;
   private JButton myDetailsButton;
   private static final String SHOW_ALL = "Show All";
+  private NullableConsumer<Sdk> myDetailsCallback;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -104,12 +105,23 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, selectedSdk));
       }
     });
+    myDetailsCallback = new NullableConsumer<Sdk>() {
+
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (getSdk() != sdk) {
+          mySdkCombo.setSelectedItem(sdk);
+        }
+      }
+    };
 
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
                                           PythonSdkDetailsStep
-                                            .show(myProject, myProjectSdksModel.getSdks(), new PythonSdkDetailsDialog(myProject),
+                                            .show(myProject, myProjectSdksModel.getSdks(),
+                                                  myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                                  new PythonSdkDetailsDialog(myModule, myDetailsCallback),
                                                   RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
                                                   new NullableConsumer<Sdk>() {
                                                     @Override
@@ -141,7 +153,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       public void setSelectedItem(Object item)
       {
         if (SHOW_ALL.equals(item)) {
-          PythonSdkDetailsDialog options = new PythonSdkDetailsDialog(myProject);
+          PythonSdkDetailsDialog options = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                           new PythonSdkDetailsDialog(myModule, myDetailsCallback);
           options.show();
           return;
         }
