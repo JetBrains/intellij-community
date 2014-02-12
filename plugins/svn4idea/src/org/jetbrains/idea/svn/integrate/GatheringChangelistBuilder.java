@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
@@ -23,10 +23,11 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -36,16 +37,17 @@ import java.io.File;
 import java.util.*;
 
 public class GatheringChangelistBuilder implements ChangelistBuilder {
-  private final Set<VirtualFile> myCheckSet;
-  private final List<Change> myChanges;
-  private final UpdatedFilesReverseSide myFiles;
-  private final VirtualFile myMergeRoot;
-  private final SvnVcs myVcs;
 
-  public GatheringChangelistBuilder(final Project project, final UpdatedFilesReverseSide files, final VirtualFile mergeRoot) {
-    myVcs = SvnVcs.getInstance(project);
+  private static final Logger LOG = Logger.getInstance(GatheringChangelistBuilder.class);
+
+  @NotNull private final Set<VirtualFile> myCheckSet;
+  @NotNull private final List<Change> myChanges;
+  @NotNull private final UpdatedFilesReverseSide myFiles;
+  @NotNull private final SvnVcs myVcs;
+
+  public GatheringChangelistBuilder(@NotNull SvnVcs vcs, @NotNull UpdatedFilesReverseSide files) {
+    myVcs = vcs;
     myFiles = files;
-    myMergeRoot = mergeRoot;
     myChanges = new ArrayList<Change>();
     myCheckSet = new HashSet<VirtualFile>();
   }
@@ -90,20 +92,15 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   private boolean mergeinfoChanged(final File file) {
     final SVNWCClient client = myVcs.createWCClient();
     try {
-      final SVNPropertyData current = client.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-      final SVNPropertyData base = client.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.BASE);
+      SVNPropertyData current = client.doGetProperty(file, SvnPropertyKeys.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+      SVNPropertyData base = client.doGetProperty(file, SvnPropertyKeys.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.BASE);
+
       if (current != null) {
-        if (base == null) {
-          return true;
-        } else {
-          final SVNPropertyValue currentValue = current.getValue();
-          final SVNPropertyValue baseValue = base.getValue();
-          return ! Comparing.equal(currentValue, baseValue);
-        }
+        return base == null || !Comparing.equal(current.getValue(), base.getValue());
       }
     }
     catch (SVNException e) {
-      //
+      LOG.info(e);
     }
     return false;
   }
@@ -153,10 +150,7 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
   }
 
-  public void reportWarningMessage(final String message) {
-    // todo maybe, use further
-  }
-
+  @NotNull
   public List<Change> getChanges() {
     return myChanges;
   }
