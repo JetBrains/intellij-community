@@ -17,13 +17,13 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -32,11 +32,10 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
-public class GatheringChangelistBuilder implements ChangelistBuilder {
+public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 
   private static final Logger LOG = Logger.getInstance(GatheringChangelistBuilder.class);
 
@@ -48,8 +47,8 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   public GatheringChangelistBuilder(@NotNull SvnVcs vcs, @NotNull UpdatedFilesReverseSide files) {
     myVcs = vcs;
     myFiles = files;
-    myChanges = new ArrayList<Change>();
-    myCheckSet = new HashSet<VirtualFile>();
+    myChanges = ContainerUtil.newArrayList();
+    myCheckSet = ContainerUtil.newHashSet();
   }
 
   public void processChange(final Change change, VcsKey vcsKey) {
@@ -83,13 +82,13 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   private void addChange(final Change change) {
     final FilePath path = ChangesUtil.getFilePath(change);
     final VirtualFile vf = path.getVirtualFile();
-    if ((mergeinfoChanged(path.getIOFile()) || ((vf != null) && myFiles.containsFile(vf))) && (! myCheckSet.contains(vf))) {
+    if ((mergeInfoChanged(path.getIOFile()) || (vf != null && myFiles.containsFile(vf))) && !myCheckSet.contains(vf)) {
       myCheckSet.add(vf);
       myChanges.add(change);
     }
   }
 
-  private boolean mergeinfoChanged(final File file) {
+  private boolean mergeInfoChanged(final File file) {
     SvnTarget target = SvnTarget.fromFile(file);
 
     try {
@@ -108,49 +107,8 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
     return false;
   }
 
-  public void processUnversionedFile(final VirtualFile file) {
-
-  }
-
-  public void processLocallyDeletedFile(final FilePath file) {
-
-  }
-
-  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
-    
-  }
-
-  public void processModifiedWithoutCheckout(final VirtualFile file) {
-
-  }
-
-  public void processIgnoredFile(final VirtualFile file) {
-
-  }
-
-  public void processLockedFolder(final VirtualFile file) {
-  }
-
-  public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
-  }
-
-  public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
-
-  }
-
-  public void processRootSwitch(VirtualFile file, String branch) {
-  }
-
   public boolean reportChangesOutsideProject() {
     return true;
-  }
-
-  @Override
-  public void reportAdditionalInfo(String text) {
-  }
-
-  @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
   }
 
   @NotNull
