@@ -115,7 +115,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                                     @Override
                                                     public void consume(Sdk sdk) {
                                                       if (sdk == null) return;
-                                                      mySdkAdded = true;
+                                                      mySdkAdded = myProjectSdksModel.findSdk(sdk) == null;
+                                                      if (mySdkAdded) {
+                                                        myProjectSdksModel.addSdk(sdk);
+                                                      }
                                                       updateSdkList(false);
                                                       mySdkCombo.getModel().setSelectedItem(sdk);
                                                       myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
