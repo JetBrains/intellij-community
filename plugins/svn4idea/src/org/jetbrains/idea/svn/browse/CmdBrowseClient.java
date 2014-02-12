@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -129,12 +130,12 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     }
 
     public SVNDirEntry toDirEntry(@NotNull SVNURL url) throws SVNException {
-      // TODO: repository root and relative path are not used for now
+      // TODO: repository is not used for now
       SVNDirEntry entry =
-        new SVNDirEntry(url.appendPath(name, false), null, name, SVNNodeKind.parseKind(kind), size, false, revision(), date(),
-                        author());
+        new SVNDirEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), SVNNodeKind.parseKind(kind), size, false, revision(),
+                        date(), author());
 
-      entry.setRelativePath(null);
+      entry.setRelativePath(name);
       entry.setLock(lock != null ? lock.toLock(entry.getRelativePath()) : null);
 
       return entry;
