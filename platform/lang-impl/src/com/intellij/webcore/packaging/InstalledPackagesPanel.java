@@ -271,7 +271,7 @@ public class InstalledPackagesPanel extends JPanel {
       public void run() {
         final int[] selected = myPackagesTable.getSelectedRows();
         boolean upgradeAvailable = false;
-        boolean canUninstall = true;
+        boolean canUninstall = selected.length != 0;
         boolean canUpgrade = true;
         if (myPackageManagementService != null && selected.length != 0) {
           for (int i = 0; i != selected.length; ++i) {
