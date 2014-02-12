@@ -90,7 +90,7 @@ public class GrIntroduceFieldProcessor {
       myLocalVariable = GrIntroduceHandlerBase.resolveLocalVar(myContext);
       assert myLocalVariable != null : myContext.getExpression() + ", " + myContext.getVar() + ", " + myContext.getStringPart();
     }
-    myInitializer = getInitializer();
+    myInitializer = (GrExpression)getInitializer().copy();
 
     List<PsiElement> replaced = processOccurrences(targetClass, field);
 
