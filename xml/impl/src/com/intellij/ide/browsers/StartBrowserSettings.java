@@ -1,6 +1,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -43,7 +44,7 @@ public class StartBrowserSettings {
   }
 
   public void setUrl(@Nullable String value) {
-    myUrl = value;
+    myUrl = StringUtil.nullize(value);
   }
 
   @Attribute("with-js-debugger")
