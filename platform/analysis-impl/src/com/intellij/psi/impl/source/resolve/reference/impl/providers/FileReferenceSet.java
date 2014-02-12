@@ -123,6 +123,10 @@ public class FileReferenceSet {
     return "/";
   }
 
+  /**
+   * This should be removed. Please use {@link FileReference#getContexts()} instead.
+   */
+  @Deprecated
   protected Collection<PsiFileSystemItem> getExtraContexts() {
     return Collections.emptyList();
   }

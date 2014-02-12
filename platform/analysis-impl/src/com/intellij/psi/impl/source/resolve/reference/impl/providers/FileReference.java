@@ -141,9 +141,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new THashSet<ResolveResult>();
     for (final PsiFileSystemItem context : contexts) {
-      if (context != null) {
-        innerResolveInContext(referenceText, context, result, caseSensitive);
-      }
+      innerResolveInContext(referenceText, context, result, caseSensitive);
     }
     if (contexts.isEmpty() && isAllowedEmptyPath(referenceText)) {
       result.add(new PsiElementResolveResult(getElement().getContainingFile()));
