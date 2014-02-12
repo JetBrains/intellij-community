@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -41,7 +42,7 @@ public class ConcurrentTasks<T> {
     final EmptyProgressIndicator pi = new EmptyProgressIndicator() {
       @Override
       public void checkCanceled() {
-        if (myResultKnown || (myParentIndicator != null) && myParentIndicator.isCanceled()) {
+        if (myResultKnown || myParentIndicator != null && myParentIndicator.isCanceled()) {
           super.cancel();
         }
         super.checkCanceled();
@@ -91,7 +92,7 @@ public class ConcurrentTasks<T> {
     }
     // in it possible to even interrupt() threads involved, but at the moment it's better for tasks themselves to check cancel status
     for (Future<?> future : futures) {
-      if ((! future.isCancelled() && (! future.isDone()))) {
+      if (!future.isCancelled() && !future.isDone()) {
         future.cancel(true);
       }
     }
@@ -105,7 +106,8 @@ public class ConcurrentTasks<T> {
     return myResult;
   }
 
-  public ConcurrentTasks(final ProgressIndicator parentIndicator, final Consumer<Consumer<T>>... tasks) {
+  @SafeVarargs
+  public ConcurrentTasks(final ProgressIndicator parentIndicator, @NotNull Consumer<Consumer<T>>... tasks) {
     myParentIndicator = parentIndicator;
     myTasks = Arrays.asList(tasks);
     mySemaphore = new Semaphore();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,8 @@ public class NavigationGutterIconBuilder<T> {
     return setTargets(ContainerUtil.createMaybeSingletonList(target));
   }
 
-  public NavigationGutterIconBuilder<T> setTargets(@NotNull T... targets) {
+  @SafeVarargs
+  public final NavigationGutterIconBuilder<T> setTargets(@NotNull T... targets) {
     return setTargets(Arrays.asList(targets));
   }
 

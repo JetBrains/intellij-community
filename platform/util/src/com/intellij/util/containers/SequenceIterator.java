@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ public class SequenceIterator<T> implements Iterator<T> {
   private final Iterator<T>[] myIterators;
   private int myCurrentIndex;
 
+  @SafeVarargs
   public SequenceIterator(@NotNull Iterator<T>... iterators){
     myIterators = new Iterator[iterators.length];
     System.arraycopy(iterators, 0, myIterators, 0, iterators.length);

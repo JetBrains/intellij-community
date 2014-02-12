@@ -50,6 +50,7 @@ public class ModelMergerUtil {
     return null;
   }
 
+  @SafeVarargs
   @Nullable
   public static <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
     return getImplementation(clazz, Arrays.asList(elements));

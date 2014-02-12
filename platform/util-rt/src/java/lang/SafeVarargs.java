@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package java.lang;
 
+import java.lang.annotation.*;
+
+@Deprecated
 /**
- * @author peter
- */
-public interface ArrayConsumer<T> extends Consumer<T[]>{
+ as soon as we migrate jdk7+, remove this
+ see also {@link com.intellij.Patches.USE_REFLECTION_TO_ACCESS_JDK7}
 
-  @SuppressWarnings("unchecked")
-  @Override
-  void consume(final T... ts);
+ retention changed to source because it is not the real SafeVarargs, it's just a stub to be compilation-compatible with jdk7
+*/
+@Retention(RetentionPolicy.SOURCE)
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+public @interface SafeVarargs {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -61,7 +62,8 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(ts, strategy);
   }
 
-  public OpenTHashSet(final TObjectHashingStrategy<T> strategy, final T... ts) {
+  @SafeVarargs
+  public OpenTHashSet(final TObjectHashingStrategy<T> strategy, @NotNull T... ts) {
     super(Arrays.asList(ts), strategy);
   }
 

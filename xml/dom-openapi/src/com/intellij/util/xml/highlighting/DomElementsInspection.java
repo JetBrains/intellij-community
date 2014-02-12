@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
 
   private final Set<Class<? extends T>> myDomClasses;
 
+  @SafeVarargs
   public DomElementsInspection(Class<? extends T> domClass, @NotNull Class<? extends T>... additionalClasses) {
     myDomClasses = new THashSet<Class<? extends T>>(Arrays.asList(additionalClasses));
     myDomClasses.add(domClass);

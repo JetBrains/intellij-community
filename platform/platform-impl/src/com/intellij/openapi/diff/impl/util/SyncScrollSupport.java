@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,8 @@ public class SyncScrollSupport implements Disposable {
                       new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[0]));
   }
 
-  private void addSlavesScroller(Editor editor, Pair<FragmentSide, EditingSides>... contexts) {
+  @SafeVarargs
+  private final void addSlavesScroller(Editor editor, Pair<FragmentSide, EditingSides>... contexts) {
     ScrollListener scroller = new ScrollListener(contexts, editor);
     scroller.install();
     myScrollers.add(scroller);

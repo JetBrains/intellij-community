@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,7 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
+  @SafeVarargs
   public static boolean assertPhase(Class<? extends CompletionPhase>... possibilities) {
     if (!isPhase(possibilities)) {
       LOG.error(ourPhase + "; set at " + ourPhaseTrace);
@@ -204,6 +205,7 @@ public class CompletionServiceImpl extends CompletionService{
     return true;
   }
 
+  @SafeVarargs
   public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
     CompletionPhase phase = getCompletionPhase();
     for (Class<? extends CompletionPhase> possibility : possibilities) {

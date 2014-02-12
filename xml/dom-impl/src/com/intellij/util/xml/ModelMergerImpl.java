@@ -200,7 +200,8 @@ public class ModelMergerImpl implements ModelMerger {
     myMergingStrategyClasses.add(aClass);
   }
 
-  public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
+  @SafeVarargs
+  public final <T> T mergeModels(final Class<T> aClass, final T... implementations) {
     if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(aClass, Arrays.asList(implementations));
     return _mergeModels(aClass, handler, implementations);
@@ -211,7 +212,8 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
 
-  private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
+  @SafeVarargs
+  private final <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
     final Set<Class> commonClasses = getCommonClasses(new THashSet<Class>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
