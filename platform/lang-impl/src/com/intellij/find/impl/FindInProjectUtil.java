@@ -683,8 +683,8 @@ public class FindInProjectUtil {
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
-    @NotNull private final Project myProject;
-    @NotNull private final FindModel myFindModel;
+    @NotNull protected final Project myProject;
+    @NotNull protected final FindModel myFindModel;
 
     public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;

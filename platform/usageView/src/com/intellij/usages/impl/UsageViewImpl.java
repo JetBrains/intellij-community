@@ -477,7 +477,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
           return coloredRenderer.getPlainTextForNode(value);
         }
-        return value == null? null : value.toString();
+        return value == null ? null : value.toString();
       }
     }, true);
   }
@@ -617,9 +617,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @NotNull
   private AnAction showSettings() {
-    return new AnAction("Settings...", "Show find usages settings dialog", AllIcons.General.ProjectSettings) {
+    final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
+    String description = configurableUsageTarget == null ? "Show find usages settings dialog" : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
-        KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut(myTargets);
+        KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
           registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
         }
@@ -629,6 +631,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
+  }
+
+  private static ConfigurableUsageTarget getConfigurableTarget(@NotNull UsageTarget[] targets) {
+    ConfigurableUsageTarget configurableUsageTarget = null;
+    if (targets.length != 0) {
+      NavigationItem target = targets[0];
+      if (target instanceof ConfigurableUsageTarget) {
+        configurableUsageTarget = (ConfigurableUsageTarget)target;
+      }
+    }
+    return configurableUsageTarget;
   }
 
   @NotNull
@@ -756,13 +769,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
-    if (targets.length != 0) {
-      NavigationItem target = targets[0];
-      if (target instanceof ConfigurableUsageTarget) {
-        return ((ConfigurableUsageTarget)target).getShortcut();
-      }
-    }
-    return getShowUsagesWithSettingsShortcut();
+    ConfigurableUsageTarget configurableTarget = getConfigurableTarget(targets);
+    return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
   void associateProgress(ProgressIndicator indicator) {
