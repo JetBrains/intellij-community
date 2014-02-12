@@ -48,14 +48,15 @@ public abstract class BaseRefactorAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final BaseRefactorHandler handler = initHandler(e.getProject(), e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final BaseRefactorHandler handler = initHandler(project, e.getDataContext());
 
     boolean processChooser = handler.processChooser();
 
     if (processChooser) {
       final Editor editor = getEditor(e);
 
-      CommandProcessor.getInstance().executeCommand(e.getProject(), new Runnable() {
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(handler);

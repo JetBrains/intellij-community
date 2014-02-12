@@ -23,17 +23,11 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
 public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCase {
-
-  private static final Set<String> modifiers = new HashSet<String>(Arrays.asList(
-      PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
-      PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
 
@@ -146,7 +140,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     assertNotNull(afterModifierList);
 
     if (shouldCompareModifiers()) {
-      for (String modifier : modifiers) {
+      for (String modifier : PsiModifier.MODIFIERS) {
         assertEquals(modifier + " Modifier is not equal; ", afterModifierList.hasModifierProperty(modifier), beforeModifierList.hasModifierProperty(modifier));
       }
     }

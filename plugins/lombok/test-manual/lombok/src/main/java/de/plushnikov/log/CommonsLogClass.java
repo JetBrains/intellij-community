@@ -5,13 +5,13 @@ import lombok.extern.apachecommons.CommonsLog;
 @CommonsLog
 public class CommonsLogClass {
 
-    private int intProperty;
+  private int intProperty;
 
-    private float floatProperty;
+  private float floatProperty;
 
-    private String stringProperty;
+  private String stringProperty;
 
-    public void doSomething() {
-        CommonsLogClass.log.error("Error Message Text");
-    }
+  public void doSomething() {
+    log.error("Error Message Text");
+  }
 }

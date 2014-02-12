@@ -4,22 +4,22 @@ import lombok.extern.java.Log;
 
 @Log
 public class LogClass {
-    private int intProperty;
+  private int intProperty;
 
-    private float floatProperty;
+  private float floatProperty;
 
-    private String stringProperty;
+  private String stringProperty;
 
-    public void doSomething() {
-        LogClass.log.fine("Messsdage");
-    }
+  public void doSomething() {
+    log.fine("Messsdage");
+  }
 
-    public int getIntProperty() {
-        LogClass.log.entering("LogClass","getIntProperty");
-        return intProperty;
-    }
+  public int getIntProperty() {
+    log.entering("LogClass", "getIntProperty");
+    return intProperty;
+  }
 
-    public void setIntProperty(int intProperty) {
-        this.intProperty = intProperty;
-    }
+  public void setIntProperty(int intProperty) {
+    this.intProperty = intProperty;
+  }
 }

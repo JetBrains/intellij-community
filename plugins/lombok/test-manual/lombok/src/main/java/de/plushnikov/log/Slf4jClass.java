@@ -11,7 +11,7 @@ public class Slf4jClass {
   private String stringProperty;
 
   public void doSomething() {
-    Slf4jClass.log.info("Information message text");
-    Slf4jClass.log.getName();
+    log.info("Information message text");
+    log.getName();
   }
 }
