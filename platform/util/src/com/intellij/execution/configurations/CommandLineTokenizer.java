@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.StringTokenizer;
  */
 public class CommandLineTokenizer extends StringTokenizer {
 
-    private static String DEFAULT_DELIMITERS = " \t\n\r\f";
+    private static final String DEFAULT_DELIMITERS = " \t\n\r\f";
     // keep source level 1.4
     private List myTokens = new ArrayList();
     private int myCurrentToken = 0;

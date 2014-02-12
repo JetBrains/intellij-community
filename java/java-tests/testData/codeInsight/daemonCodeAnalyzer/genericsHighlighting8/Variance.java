@@ -87,7 +87,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     <error descr="Inferred type 'capture<? extends CaptureTest.Emum<CaptureTest>>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<capture<? extends CaptureTest.Emum<CaptureTest>>>'">Emum.valueOf(clazz, "CCC")</error>;
+     Emum.valueOf<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'CaptureTest.Emum' cannot be applied to '(java.lang.Class<capture<? extends CaptureTest.Emum<CaptureTest>>>, java.lang.String)'">(clazz, "CCC")</error>;
    }
 }
 
@@ -182,7 +182,7 @@ class TypeBug {
 
         multiList.add(intHolder);
         multiList.add(doubleHolder);
-        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<java.lang.Object>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
+        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<T>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
 
         // this line causes a ClassCastException when checked.
         Integer value = intHolder.value;

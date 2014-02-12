@@ -211,10 +211,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
   @NotNull
   public static String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
-    if (scopeText == null) {
-      return UsageViewBundle.message("progress.searching.for", StringUtil.capitalize(presentation.getUsagesString()));
-    }
-    return UsageViewBundle.message("progress.searching.for.in", StringUtil.capitalize(presentation.getUsagesString()), scopeText);
+    String usagesString = StringUtil.capitalize(presentation.getUsagesString());
+    String result = scopeText == null
+                    ? UsageViewBundle.message("progress.searching.for", usagesString)
+                    : UsageViewBundle.message("progress.searching.for.in", usagesString, scopeText);
+    return StringUtil.escapeXml(result);
   }
 
   private void showToolWindow(boolean activateWindow) {
@@ -341,7 +342,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          String balloon = "Searching for " + myPresentation.getUsagesString()+"...";
+          String balloon = UsageViewBundle.message("progress.searching.for", StringUtil.escapeXml(myPresentation.getUsagesString()));
           notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, UsageViewManagerImpl.this.myProject,
                               balloon);
           findStartedBalloonShown.set(true);

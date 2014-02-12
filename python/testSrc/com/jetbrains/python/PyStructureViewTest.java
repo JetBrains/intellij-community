@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
  * @author vlan
  */
 public class PyStructureViewTest extends PyTestCase {
-  private static String TEST_DIRECTORY = "structureView/";
+  private static final String TEST_DIRECTORY = "structureView/";
 
   public void testBaseClassNames() {
     myFixture.configureByFiles(TEST_DIRECTORY + "baseClassNames.py",
