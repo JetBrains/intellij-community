@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.psi
+
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -22,6 +23,7 @@ import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Processor
+
 /**
  * @author peter
  */
@@ -35,9 +37,8 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction project, {
       file.viewProvider.document.insertString(0, ' ')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
-      assert file.findElementAt(0) instanceof PsiWhiteSpace
     }
-
+    assert file.findElementAt(0) instanceof PsiWhiteSpace
     LeakHunter.checkLeak(file, JavaFileElement)
   }
 
@@ -49,8 +50,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
     myFixture.doHighlighting()
 
-    def mainClass = ((PsiJavaFile) file).classes[0]
-
+    def mainClass = ((PsiJavaFile)file).classes[0]
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       superClass == node.psi.parent
     } as Processor<MethodElement>)
@@ -75,12 +75,15 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
 
   public void "test no hard refs to Default File Template inspection internal AST"() {
     myFixture.addFileToProject('sup.java', 'class Super { void bar() {} }')
-    PsiJavaFile foo = myFixture.addFileToProject('a.java', 'class Foo { void bar() { bar(); } }')
-    myFixture.configureFromExistingVirtualFile(foo.virtualFile)
+    def file = myFixture.addFileToProject('a.java', 'class Foo { void bar() { bar(); } }')
+    myFixture.configureFromExistingVirtualFile(file.virtualFile)
     myFixture.enableInspections(new DefaultFileTemplateUsageInspection())
     myFixture.doHighlighting()
 
-    LeakHunter.checkLeak(foo.classes[0], MethodElement, { MethodElement node -> !node.psi.physical } as Processor<MethodElement>)
+    def mainClass = ((PsiJavaFile)file).classes[0]
+    LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
+      !node.psi.physical
+    } as Processor<MethodElement>)
   }
 
 }
