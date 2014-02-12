@@ -2888,4 +2888,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern5 = "()->{/*comment*/}";
     assertEquals("should find lambdas with comment body", 1, findMatchesCount(source, pattern5));
   }
+
+  public void testFindDefaultMethods() {
+    String source = "interface XYZ {" +
+                    "  default void m() {" +
+                    "    System.out.println();" +
+                    "  }" +
+                    "  void f();" +
+                    "}" +
+                    "interface ABC {" +
+                    "  void m();" +
+                    "}";
+
+    String pattern1 = "interface '_Class {  default '_ReturnType+ 'MethodName+('_ParameterType* '_Parameter*);}";
+    assertEquals("should find default method", 1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "interface 'Class {  default '_ReturnType+ '_MethodName{0,0}('_ParameterType* '_Parameter*);}";
+    assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
+  }
 }

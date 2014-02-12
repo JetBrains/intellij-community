@@ -30,7 +30,7 @@ import java.util.*;
 public class JavaMatchingVisitor extends JavaElementVisitor {
   public static final String[] MODIFIERS = {
     PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.ABSTRACT, PsiModifier.FINAL,
-    PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE
+    PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.DEFAULT
   };
   private final GlobalMatchingVisitor myMatchingVisitor;
   private PsiClass myClazz;
