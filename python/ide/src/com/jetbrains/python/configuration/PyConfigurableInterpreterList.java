@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 
 import javax.swing.*;
 import java.util.*;
@@ -75,7 +76,6 @@ public class PyConfigurableInterpreterList {
         result.add(sdk);
       }
     }
-    Collection<String> sdkHomes = PythonSdkType.getInstance().suggestHomePaths();
 
     Collections.sort(result, new Comparator<Sdk>() {
       @Override
@@ -113,6 +113,14 @@ public class PyConfigurableInterpreterList {
         return Comparing.compare(o1.getName(), o2.getName());
       }
     });
+
+    Collection<String> sdkHomes = new ArrayList<String>();
+    sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
+    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
+      if (flavor instanceof VirtualEnvSdkFlavor) continue;
+      sdkHomes.addAll(flavor.suggestHomePaths());
+    }
+
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
       result.add(new PyDetectedSdk(sdkHome, PythonSdkType.getInstance()));
     }
