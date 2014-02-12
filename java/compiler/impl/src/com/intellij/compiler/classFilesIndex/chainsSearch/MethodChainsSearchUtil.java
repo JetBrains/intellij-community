@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public final class MethodChainsSearchUtil {
     return false;
   }
 
+  @SafeVarargs
   public static <T> HashSet<T> unionToHashSet(final Collection<T> collection, final T... items) {
     final HashSet<T> result = new HashSet<T>();
     result.addAll(collection);

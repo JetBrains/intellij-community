@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
     private final SearchScope myScope;
     private final Class<? extends PsiModifierListOwner>[] myTypes;
 
-    public Parameters(final PsiClass annotationClass, final SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
+    @SafeVarargs
+    public Parameters(final PsiClass annotationClass, final SearchScope scope, @NotNull Class<? extends PsiModifierListOwner>... types) {
       myAnnotationClass = annotationClass;
       myScope = scope;
       myTypes = types;
@@ -46,16 +47,19 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
       return myScope;
     }
 
+    @NotNull
     public Class<? extends PsiModifierListOwner>[] getTypes() {
       return myTypes;
     }
   }
 
-  private static Query<PsiModifierListOwner> createDelegateQuery(PsiClass annotationClass, SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
+  @SafeVarargs
+  private static Query<PsiModifierListOwner> createDelegateQuery(PsiClass annotationClass, SearchScope scope, @NotNull Class<? extends PsiModifierListOwner>... types) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope, types));
   }
 
-  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, Class<? extends T>... types) {
+  @SafeVarargs
+  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T>... types) {
     return new InstanceofQuery<T>(createDelegateQuery(annotationClass, scope, types), types);
   }
 

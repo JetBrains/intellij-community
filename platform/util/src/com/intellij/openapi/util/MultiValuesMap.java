@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -38,7 +39,8 @@ public class MultiValuesMap<K, V>{
     }
   }
 
-  public void putAll(K key, V... values) {
+  @SafeVarargs
+  public final void putAll(K key, @NotNull V... values) {
     for (V value : values) {
       put(key, value);
     }

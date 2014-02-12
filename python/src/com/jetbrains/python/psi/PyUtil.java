@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1003,6 +1003,7 @@ public class PyUtil {
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
+  @SafeVarargs
   public static <T> boolean among(@NotNull T what, T... variants) {
     for (T s : variants) {
       if (what.equals(s)) return true;

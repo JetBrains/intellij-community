@@ -149,6 +149,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return null;
   }
 
+  @SafeVarargs
   protected static void parseString(String string, List<String>... outs) {
     final List<String> strings = StringUtil.split(string, ",");
     for (List<String> out : outs) {
@@ -168,6 +169,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
+  @SafeVarargs
   protected static String formatString(List<String>... strings) {
     final StringBuilder buffer = new StringBuilder();
     final int size = strings[0].size();

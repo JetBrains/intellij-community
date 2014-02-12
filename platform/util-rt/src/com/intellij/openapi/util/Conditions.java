@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
@@ -43,7 +44,8 @@ public class Conditions {
     };
   }
 
-  public static <T> Condition<T> oneOf(final T... options) {
+  @SafeVarargs
+  public static <T> Condition<T> oneOf(@NotNull final T... options) {
     return new Condition<T>() {
       @Override
       public boolean value(T t) {

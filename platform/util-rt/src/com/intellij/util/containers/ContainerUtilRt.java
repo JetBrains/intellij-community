@@ -107,6 +107,7 @@ public class ContainerUtilRt {
     return new LinkedList<T>();
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
     final LinkedList<T> list = newLinkedList();
@@ -124,6 +125,7 @@ public class ContainerUtilRt {
     return new ArrayList<T>();
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
     ArrayList<T> list = newArrayListWithCapacity(elements.length);
@@ -168,6 +170,7 @@ public class ContainerUtilRt {
     return new com.intellij.util.containers.HashSet<T>(initialCapacity);
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
     return new com.intellij.util.containers.HashSet<T>(Arrays.asList(elements));
@@ -194,6 +197,7 @@ public class ContainerUtilRt {
     return new com.intellij.util.containers.LinkedHashSet<T>();
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
     return newLinkedHashSet(Arrays.asList(elements));
@@ -213,6 +217,7 @@ public class ContainerUtilRt {
     return new TreeSet<T>();
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
     TreeSet<T> set = newTreeSet();
@@ -240,6 +245,7 @@ public class ContainerUtilRt {
     return new Stack<T>(elements);
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> Stack<T> newStack(@NotNull T... initial) {
     return new Stack<T>(Arrays.asList(initial));

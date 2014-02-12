@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
   final private String END_MARKER = "<end>";
   final private String RESULT_MARKER = "<result>";
 
-  private void doTest(Pair<String, String>... files2Create) throws Exception {
+  @SafeVarargs
+  private final void doTest(Pair<String, String>... files2Create) throws Exception {
     final String testName = getTestName(false).toLowerCase();
     final String fullPath = getTestDataPath() + testName + ".test";
 

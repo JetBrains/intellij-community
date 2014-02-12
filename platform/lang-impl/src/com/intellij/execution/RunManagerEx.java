@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
+  @SafeVarargs
   public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {
       List<? extends BeforeRunTask> tasks = getInstanceEx(project).getBeforeRunTasks(settings, key);
@@ -95,6 +96,7 @@ public abstract class RunManagerEx extends RunManager {
     }
   }
 
+  @SafeVarargs
   public static int getTasksCount(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
     int result = 0;
     for (Key<? extends BeforeRunTask> key : keys) {

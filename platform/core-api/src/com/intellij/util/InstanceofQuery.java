@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public class InstanceofQuery<T> implements Query<T> {
   private final Class<? extends T>[] myClasses;
   private final Query<?> myDelegate;
 
+  @SafeVarargs
   public InstanceofQuery(Query<?> delegate, Class<? extends T>... aClasses) {
     myClasses = aClasses;
     myDelegate = delegate;
