@@ -114,7 +114,7 @@ public class PyConfigurableInterpreterList {
       }
     });
 
-    Collection<String> sdkHomes = new ArrayList<String>();
+    final Collection<String> sdkHomes = new ArrayList<String>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       if (flavor instanceof VirtualEnvSdkFlavor) continue;

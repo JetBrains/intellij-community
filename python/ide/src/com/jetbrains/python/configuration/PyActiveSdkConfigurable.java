@@ -236,7 +236,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         @Override
         public void run() {
           final Sdk sdk = SdkConfigurationUtil.createAndAddSDK(item.getName(), PythonSdkType.getInstance());
-          SdkConfigurationUtil.setDirectoryProjectSdk(myProject, sdk);
+          myProjectSdksModel.removeSdk(item);
+          myProjectSdksModel.addSdk(sdk);
+          updateSdkList(true);
+          mySdkCombo.setSelectedItem(sdk);
+          setSdk(sdk);
         }
       }, ModalityState.any());
     }
@@ -244,19 +248,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       myProjectSdksModel.addSdk(item);
       myProjectSdksModel.apply(null, true);
     }
-    final Sdk selectedSdk = myProjectSdksModel.findSdk(item);
-    if (myModule == null) {
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          rootManager.setProjectSdk(selectedSdk);
-        }
-      });
-    }
-    else {
-      ModuleRootModificationUtil.setModuleSdk(myModule, selectedSdk);
-    }
+    final Sdk selectedSdk = setSdk(item);
     final Sdk prevSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
 
     // update string literals if different LanguageLevel was selected
@@ -273,6 +265,23 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       }
     }
     rehighlightStrings(myProject);
+  }
+
+  private Sdk setSdk(Sdk item) {
+    final Sdk selectedSdk = myProjectSdksModel.findSdk(item);
+    if (myModule == null) {
+      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          rootManager.setProjectSdk(selectedSdk);
+        }
+      });
+    }
+    else {
+      ModuleRootModificationUtil.setModuleSdk(myModule, selectedSdk);
+    }
+    return selectedSdk;
   }
 
   public static void rehighlightStrings(final @NotNull Project project) {
