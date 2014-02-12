@@ -45,6 +45,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -121,7 +122,8 @@ public class PythonSdkOptions extends DialogWrapper {
         }
       })
       .addExtraAction(new ToggleVirtualEnvFilterButton())
-      .addExtraAction(new ShowPathButton());
+      .addExtraAction(new ShowPathButton())
+      .addExtraAction(new GenerateSkeletonsButton());
 
     decorator.setPreferredSize(new Dimension(600, 500));
     myPanel = decorator.createPanel();
@@ -427,6 +429,7 @@ public class PythonSdkOptions extends DialogWrapper {
       updateOkButton();
     }
   }
+
   private class ShowPathButton extends AnActionButton implements DumbAware {
     public ShowPathButton() {
       super("Show path for the selected interpreter", AllIcons.Actions.ShowAsTree);
@@ -457,6 +460,30 @@ public class PythonSdkOptions extends DialogWrapper {
       dialog.setTitle("Interpreter Paths");
       dialog.show();
       updateOkButton();
+    }
+  }
+
+  private class GenerateSkeletonsButton extends AnActionButton implements DumbAware {
+    public GenerateSkeletonsButton() {
+      super("Generate skeletons for the selected interpreter", PythonIcons.Python.Skeleton);
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return (getSelectedSdk() instanceof PyDetectedSdk);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final Sdk sdk = getSelectedSdk();
+      if (sdk instanceof PyDetectedSdk) {
+
+        final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getName(), PythonSdkType.getInstance());
+        myProjectSdksModel.addSdk(addedSdk);
+        myProjectSdksModel.removeSdk(sdk);
+        refreshSdkList();
+        updateOkButton();
+      }
     }
   }
 }
