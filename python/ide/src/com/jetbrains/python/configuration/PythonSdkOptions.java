@@ -24,8 +24,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -43,7 +45,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -72,7 +73,7 @@ public class PythonSdkOptions extends DialogWrapper {
   private final Project myProject;
 
   private boolean myNewProject = false;
-  private boolean myShowOtherProjectVirtualenvs = false;
+  private boolean myShowOtherProjectVirtualenvs = true;
 
   public void setNewProject(final boolean newProject) {
     myNewProject = newProject;
@@ -119,7 +120,6 @@ public class PythonSdkOptions extends DialogWrapper {
           updateOkButton();
         }
       })
-      .addExtraAction(new CreateVirtualEnvButton())
       .addExtraAction(new ToggleVirtualEnvFilterButton())
       .addExtraAction(new ShowPathButton());
 
@@ -158,35 +158,6 @@ public class PythonSdkOptions extends DialogWrapper {
 
   private void updateUI(final Sdk selectedSdk) {
     myProjectSdksModel.setProjectSdk(selectedSdk);
-  }
-
-  private void createVirtualEnv(Sdk sdk) {
-    CreateVirtualEnvDialog.VirtualEnvCallback callback = new CreateVirtualEnvDialog.VirtualEnvCallback() {
-      @Override
-      public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-        PythonSdkType.setupSdkPaths(sdk, myProject, null);
-        if (associateWithProject) {
-          SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-          if (additionalData == null) {
-            additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
-            ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
-          }
-          if (myNewProject) {
-            ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
-          }
-          else {
-            ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
-          }
-        }
-        addCreatedSdk(sdk, true);
-      }
-    };
-    final List<Sdk> allSdks = PyConfigurableInterpreterList.getInstance(myProject).getAllPythonSdks(myProject);
-    final CreateVirtualEnvDialog dialog = new CreateVirtualEnvDialog(myProject, allSdks, sdk);
-    dialog.show();
-    if (dialog.isOK()) {
-      dialog.createVirtualEnv(allSdks, callback);
-    }
   }
 
   public boolean isModified() {
@@ -313,7 +284,9 @@ public class PythonSdkOptions extends DialogWrapper {
         setSdkAssociated(modificator, !dialog.makeAvailableToAll());
         myModifiedModificators.add(modificator);
       }
-      myProjectSdksModel.addSdk(sdk);
+      final Sdk oldSdk = myProjectSdksModel.findSdk(sdk);
+      if (oldSdk == null)
+        myProjectSdksModel.addSdk(sdk);
       refreshSdkList();
       mySdkList.setSelectedValue(sdk, true);
       mySdkListChanged = true;
@@ -435,19 +408,6 @@ public class PythonSdkOptions extends DialogWrapper {
 
   private void reloadSdk(Sdk currentSdk) {
     PythonSdkType.setupSdkPaths(myProject, null, currentSdk, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
-  }
-
-  private class CreateVirtualEnvButton extends AnActionButton implements DumbAware {
-    public CreateVirtualEnvButton() {
-      super("Create Virtual Environment", PythonIcons.Python.Virtualenv);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      Sdk selectedSdk = getSelectedSdk();
-      createVirtualEnv(selectedSdk);
-      updateOkButton();
-    }
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
