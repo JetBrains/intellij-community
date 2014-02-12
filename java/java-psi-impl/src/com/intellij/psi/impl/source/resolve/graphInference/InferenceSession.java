@@ -251,7 +251,7 @@ public class InferenceSession {
           inferenceVariable.ignoreInstantiation();
         }
         if (!proceedWithAdditionalConstraints(additionalConstraints)) {
-          //return prepareSubstitution();
+          return prepareSubstitution();
         }
       }
     }
@@ -636,9 +636,9 @@ public class InferenceSession {
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
 
-        if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
         final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
         try {
+          if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
           final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
           final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
           final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
@@ -820,7 +820,10 @@ public class InferenceSession {
           }
           if (!dependsOnOutput) {
             subset.add(constraint);
-            varsToResolve.addAll(inputVariables);
+            for (InferenceVariable variable : inputVariables) {
+              varsToResolve.addAll(variable.getDependencies(this));
+              varsToResolve.add(variable);
+            }
           }
         }
         else {
