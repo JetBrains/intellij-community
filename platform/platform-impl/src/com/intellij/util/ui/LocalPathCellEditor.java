@@ -21,11 +21,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +72,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   @Override
   public Object getCellEditorValue() {
     String value = myComponent.getChildComponent().getText();
-    return myNormalizePath ? FileUtilRt.toSystemDependentName(StringUtil.nullize(value)) : value;
+    return myNormalizePath ? PathUtil.toSystemDependentName(StringUtil.nullize(value)) : value;
   }
 
   @Override

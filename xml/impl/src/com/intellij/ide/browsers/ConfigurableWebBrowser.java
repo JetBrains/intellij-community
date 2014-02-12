@@ -2,8 +2,8 @@ package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ final class ConfigurableWebBrowser extends WebBrowserBase {
   }
 
   public void setPath(@Nullable String value) {
-    path = FileUtilRt.toSystemIndependentName(StringUtil.nullize(value, true));
+    path = PathUtil.toSystemIndependentName(StringUtil.nullize(value));
   }
 
   @Override
