@@ -2906,4 +2906,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern2 = "interface 'Class {  default '_ReturnType+ '_MethodName{0,0}('_ParameterType* '_Parameter*);}";
     assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
   }
+
+  public void testFindMethodReferences() {
+    String source = "class A {" +
+                    "  Runnable r = System.out::println;" +
+                    "  Runnable s = this::hashCode;" +
+                    "  Runnable t = this::new;" +
+                    "  static {" +
+                    "    System.out.println();" +
+                    "  }" +
+                    "}";
+
+    String pattern1 = "System . out :: println";
+    assertEquals("should find method reference", 1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "this::'_a";
+    assertEquals("should find method reference 2", 2, findMatchesCount(source, pattern2));
+
+    String pattern3 = "'_a::'_b";
+    assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
+  }
 }

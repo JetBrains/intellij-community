@@ -577,6 +577,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    final PsiElement element = myMatchingVisitor.getElement();
+    if (!(element instanceof PsiMethodReferenceExpression)) {
+      myMatchingVisitor.setResult(false);
+      return;
+    }
+    super.visitMethodReferenceExpression(expression);
+  }
+
+  @Override
   public void visitReferenceExpression(final PsiReferenceExpression reference) {
     final PsiExpression qualifier = reference.getQualifierExpression();
 
