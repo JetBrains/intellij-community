@@ -239,11 +239,11 @@ public class GroovyCompletionData {
       elem = PsiUtil.skipWhitespacesAndComments(context.getPrevSibling(), false);
     }
     else {
-      if (elem instanceof GrReferenceExpression && elem.getPrevSibling() instanceof GrTypeDefinition) {
-        elem = elem.getPrevSibling();
+      if (elem instanceof GrReferenceExpression && PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false) instanceof GrTypeDefinition) {
+        elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
       }
       else if (elem.getParent() != null) {
-        elem = elem.getParent().getPrevSibling();
+        elem = PsiUtil.skipWhitespacesAndComments(elem.getParent().getPrevSibling(), false);
       }
     }
 
@@ -594,7 +594,7 @@ public class GroovyCompletionData {
       candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false, skipNLs);
     }
     else {
-     candidate = PsiTreeUtil.prevLeaf(context);
+     candidate = PsiUtil.skipWhitespacesAndComments(PsiTreeUtil.prevLeaf(context), false);
     }
     if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
 
