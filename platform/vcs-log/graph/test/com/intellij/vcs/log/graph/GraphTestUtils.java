@@ -47,7 +47,7 @@ public class GraphTestUtils {
 
   @NotNull
   public static MutableGraph buildGraph(@NotNull List<GraphCommit> commitParentses, @NotNull List<VcsRef> refs) {
-    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, GraphBuilder.calcCommitLogIndices(commitParentses), refs) {
+    GraphBuilder builder = new GraphBuilder(refs) {
       @NotNull
       @Override
       protected Branch createBranch(int commitHash, @NotNull Collection<VcsRef> refs) {

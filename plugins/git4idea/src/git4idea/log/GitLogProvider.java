@@ -15,7 +15,6 @@
  */
 package git4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -62,11 +61,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
+  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
-    myVcsObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = factory;
   }
 
   @NotNull

@@ -18,7 +18,7 @@ import static com.intellij.vcs.log.printmodel.impl.GraphElementsVisibilityContro
 class GraphElementsVisibilityController {
   private static final int LONG_EDGE = 20;
   private static final int EDGE_PART_SHOW = 1;
-
+  private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
   private final LayoutModel layoutModel;
   private boolean hideLongEdge;
@@ -34,7 +34,7 @@ class GraphElementsVisibilityController {
 
   @NotNull
   public VisibilityType visibilityTypeEdge(Edge edge, int rowIndex) {
-    if (!hideLongEdge) {
+    if (!hideLongEdge && !SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
       return USUAL;
     }
     int upRowIndex = edge.getUpNode().getRowIndex();
@@ -55,7 +55,11 @@ class GraphElementsVisibilityController {
       return FIRST_VISIBLE;
     }
 
-    return HIDE;
+    if (hideLongEdge) {
+      return HIDE;
+    } else {
+      return USUAL;
+    }
   }
 
   @NotNull

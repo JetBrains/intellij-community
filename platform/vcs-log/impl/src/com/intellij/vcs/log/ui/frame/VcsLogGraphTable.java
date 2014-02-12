@@ -317,6 +317,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         Node jumpToNode = arrowToNode(e);
         if (jumpToNode != null) {
           jumpToRow(jumpToNode.getRowIndex());
+          return;
         }
         GraphElement graphElement = overCell(e);
         myUI.click(graphElement);
@@ -336,7 +337,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       else {
         setCursor(DEFAULT_CURSOR);
       }
-      myUI.over(overCell(e));
+
+      if (jumpToNode == null) {
+        myUI.over(overCell(e));
+      } else {
+        myUI.over(null);
+      }
     }
 
     private boolean isAboveLink(MouseEvent e) {
