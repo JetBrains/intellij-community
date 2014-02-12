@@ -31,14 +31,15 @@ class SuperClassesManager extends MembersManager<PyClass> {
   }
 
   @Override
-  protected Collection<PyElement> moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyClass> members, @NotNull final PyClass... to) {
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyMemberInfo<PyClass>> members, @NotNull final PyClass... to) {
+    final Collection<PyClass> elements = fetchElements(members);
     for (final PyClass destClass : to) {
-      PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, members.toArray(new PyClass[members.size()]));
+      PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));
     }
 
     for (final PyExpression expression : from.getSuperClassExpressions()) {
-      for (final PyClass member : members) {
-        if (expression.getText().equals(member.getName())) {
+      for (final PyClass element : elements) {
+        if (expression.getText().equals(element.getName())) {
           expression.delete();
         }
       }
@@ -48,9 +49,9 @@ class SuperClassesManager extends MembersManager<PyClass> {
 
   @NotNull
   @Override
-  public PyMemberInfo<PyElement> apply(@NotNull final PyClass input) {
+  public PyMemberInfo<PyClass> apply(@NotNull final PyClass input) {
     final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
     //TODO: Check for "overrides"
-    return new PyMemberInfo<PyElement>(input, false, name, false, this);
+    return new PyMemberInfo<PyClass>(input, false, name, false, this);
   }
 }

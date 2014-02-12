@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   @NotNull
-  private final MembersManager<?> myMembersManager;
+  private final MembersManager<T> myMembersManager;
 
   /**
    * @param member element itself
@@ -39,7 +39,7 @@ public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
                       final boolean isStatic,
                       @NotNull final String displayName,
                       @Nullable final Boolean overrides,
-                      @NotNull final MembersManager<?> membersManager) {
+                      @NotNull final MembersManager<T> membersManager) {
     super(member);
     this.isStatic = isStatic;
     this.displayName = displayName;
@@ -48,7 +48,7 @@ public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   }
 
   @NotNull
-  MembersManager<?> getMembersManager() {
+  MembersManager<T> getMembersManager() {
     return myMembersManager;
   }
 

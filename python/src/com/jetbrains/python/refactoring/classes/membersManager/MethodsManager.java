@@ -30,20 +30,21 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   @Override
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
-                             @NotNull final Collection<PyFunction> members,
+                             @NotNull final Collection<PyMemberInfo<PyFunction>> members,
                              @NotNull final PyClass... to) {
+    final Collection<PyFunction> elements = fetchElements(members);
     final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       //We move copies here because we there may be several destinations
-      final List<PyFunction> copies = new ArrayList<PyFunction>(members.size());
-      for (final PyFunction member : members) {
-        final PyFunction newMethod = (PyFunction)member.copy();
+      final List<PyFunction> copies = new ArrayList<PyFunction>(elements.size());
+      for (final PyFunction element : elements) {
+        final PyFunction newMethod = (PyFunction)element.copy();
         copies.add(newMethod);
       }
 
       result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass));
     }
-    deleteElements(members);
+    deleteElements(elements);
 
     PyClassRefactoringUtil.insertPassIfNeeded(from);
     return result;
@@ -51,11 +52,11 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   @NotNull
   @Override
-  public PyMemberInfo<PyElement> apply(@NotNull final PyFunction pyFunction) {
+  public PyMemberInfo<PyFunction> apply(@NotNull final PyFunction pyFunction) {
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(pyFunction);
     assert flags != null : "No flags return while element is function " + pyFunction;
     final boolean isStatic = flags.isStaticMethod() || flags.isClassMethod();
-    return new PyMemberInfo<PyElement>(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
+    return new PyMemberInfo<PyFunction>(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this);
   }
 
   @Nullable

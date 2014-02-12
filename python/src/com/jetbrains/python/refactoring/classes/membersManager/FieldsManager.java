@@ -48,9 +48,9 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
 
   @Override
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
-                                              @NotNull final Collection<PyTargetExpression> members,
+                                              @NotNull final Collection<PyMemberInfo<PyTargetExpression>> members,
                                               @NotNull final PyClass... to) {
-    return moveAssignments(from, Collections2.filter(Collections2.transform(members, ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
+    return moveAssignments(from, Collections2.filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
                            to);
   }
 
@@ -79,8 +79,8 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
 
   @NotNull
   @Override
-  public PyMemberInfo<PyElement> apply(@NotNull final PyTargetExpression input) {
-    return new PyMemberInfo<PyElement>(input, myStatic, input.getText(), isOverrides(input), this);
+  public PyMemberInfo<PyTargetExpression> apply(@NotNull final PyTargetExpression input) {
+    return new PyMemberInfo<PyTargetExpression>(input, myStatic, input.getText(), isOverrides(input), this);
   }
 
   @Nullable
