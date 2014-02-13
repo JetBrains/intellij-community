@@ -25,9 +25,6 @@
   </application-components>
 
   <actions>
-    <action id="images.color.picker" class="org.intellij.images.actions.ColorPickerForImageAction" text="Show Color Picker">
-      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-    </action>
     <action class="org.intellij.images.actions.EditExternallyAction"
             id="Images.EditExternally"
             icon="ImagesIcons.EditExternally"
@@ -88,7 +85,7 @@
       <separator/>
       <reference id="VersionControlsGroup"/>
       <separator/>
-      <reference id="images.color.picker" />
+      <reference id="ShowColorPicker" />
       <reference id="Images.EditExternally"/>
       <reference id="ExternalToolsGroup"/>
     </group>
