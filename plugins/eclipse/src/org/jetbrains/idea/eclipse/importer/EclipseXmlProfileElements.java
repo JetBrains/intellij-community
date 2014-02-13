@@ -63,6 +63,9 @@ public interface EclipseXmlProfileElements {
   String OPTION_ALIGN_CHAINED_CALLS = "org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation";
   String OPTION_ALIGN_CONDITIONALS = "org.eclipse.jdt.core.formatter.alignment_for_conditional_expression";
 
+  String OPTION_BLANK_LINES_BEFORE_FIRST_DECLARATION_IN_CLASS = "org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration";
+  String OPTION_EMPTY_LINES_TO_PRESERVE = "org.eclipse.jdt.core.formatter.number_of_empty_lines_to_preserve";
+
   int WRAP_MASK = 0x70;
 
   int DO_NOT_WRAP                       = 0x00;
