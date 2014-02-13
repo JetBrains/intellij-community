@@ -156,16 +156,12 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogBranchFilter> branchFilters,
-                                                                 @NotNull Collection<VcsLogUserFilter> userFilters,
-                                                                 @NotNull Collection<VcsLogDateFilter> dateFilters,
-                                                                 @NotNull Collection<VcsLogTextFilter> textFilters,
-                                                                 @NotNull Collection<VcsLogStructureFilter> structureFilters,
+                                                                 @NotNull VcsLogFilterCollection filterCollection,
                                                                  int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    if (!branchFilters.isEmpty()) {
+    if (filterCollection.getBranchFilter() != null) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);
@@ -173,8 +169,7 @@ public class HgLogProvider implements VcsLogProvider {
       }
 
       boolean atLeastOneBranchExists = false;
-      for (VcsLogBranchFilter branchFilter : branchFilters) {
-        String branchName = branchFilter.getBranchName();
+      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
         if (branchExists(repository, branchName)) {
           filterParameters.add(prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
@@ -185,17 +180,17 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    if (!userFilters.isEmpty()) {
-      for (VcsLogUserFilter authorFilter : userFilters) {
-        filterParameters.add(prepareParameter("user", authorFilter.getUserName(root)));
+    if (filterCollection.getUserFilter() != null) {
+      for (String authorName : filterCollection.getUserFilter().getUserNames(root)) {
+        filterParameters.add(prepareParameter("user", authorName));
       }
     }
 
-    if (!dateFilters.isEmpty()) {
+    if (filterCollection.getDateFilter() != null) {
       StringBuilder args = new StringBuilder();
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
       filterParameters.add("-r");
-      VcsLogDateFilter filter = dateFilters.iterator().next();
+      VcsLogDateFilter filter = filterCollection.getDateFilter();
       if (filter.getAfter() != null) {
         args.append("date('>").append(dateFormatter.format(filter.getAfter())).append("')");
       }
@@ -210,19 +205,14 @@ public class HgLogProvider implements VcsLogProvider {
       filterParameters.add(args.toString());
     }
 
-    if (textFilters.size() > 1) {
-      LOG.warn("Expected only one text filter: " + textFilters);
-    }
-    else if (!textFilters.isEmpty()) {
-      String textFilter = textFilters.iterator().next().getText();
+    if (filterCollection.getTextFilter() != null) {
+      String textFilter = filterCollection.getTextFilter().getText();
       filterParameters.add(prepareParameter("keyword", textFilter));
     }
 
-    if (!structureFilters.isEmpty()) {
-      for (VcsLogStructureFilter filter : structureFilters) {
-        for (VirtualFile file : filter.getFiles(root)) {
-          filterParameters.add(file.getPath());
-        }
+    if (filterCollection.getStructureFilter() != null) {
+      for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
+        filterParameters.add(file.getPath());
       }
     }
 
