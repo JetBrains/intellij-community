@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -52,8 +51,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
-import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -65,7 +62,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
-import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,12 +103,19 @@ public class PyUtil {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
 
-  /**
-   * @param function function to check
-   * @return true if function is init
-   */
-  public static boolean isInit(@NotNull final PyFunction function) {
-    return PyNames.INIT.equals(function.getName());
+
+  @NotNull
+  public static Set<PsiElement> getComments(PsiElement start) {
+    final Set<PsiElement> comments = new HashSet<PsiElement>();
+    PsiElement seeker = start.getPrevSibling();
+    if (seeker == null) seeker = start.getParent().getPrevSibling();
+    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
+      if (seeker instanceof PsiComment) {
+        comments.add(seeker);
+      }
+      seeker = seeker.getPrevSibling();
+    }
+    return comments;
   }
 
   @Nullable
@@ -1003,7 +1006,6 @@ public class PyUtil {
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
-  @SafeVarargs
   public static <T> boolean among(@NotNull T what, T... variants) {
     for (T s : variants) {
       if (what.equals(s)) return true;
@@ -1413,47 +1415,5 @@ public class PyUtil {
       }
     }
     return false;
-  }
-
-
-  private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-
-  }
-
-  /**
-   * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
-   * that should not be displayed in this refactoring (like object)
-   *
-   * @param pyMemberInfos collection to sort
-   * @return sorted collection
-   */
-  @NotNull
-  public static Collection<PyMemberInfo> filterOutObject(@NotNull final Collection<PyMemberInfo> pyMemberInfos) {
-    return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
-  }
-
-
-  /**
-   * Filters only pyclass object (new class)
-   */
-  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo> {
-    private final boolean myAllowObjects;
-
-    /**
-     * @param allowObjects allows only objects if true. Allows all but objects otherwise.
-     */
-    public ObjectPredicate(final boolean allowObjects) {
-      myAllowObjects = allowObjects;
-    }
-
-    @Override
-    public boolean applyNotNull(@NotNull final PyMemberInfo input) {
-      return myAllowObjects == isObject(input);
-    }
   }
 }
