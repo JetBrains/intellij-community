@@ -33,6 +33,7 @@ public interface GraphInfoProvider {
    * Some information about row highlighting etc. TBD
    */
   interface RowInfo {
+    int getOneOfHeads();
   }
 
 }

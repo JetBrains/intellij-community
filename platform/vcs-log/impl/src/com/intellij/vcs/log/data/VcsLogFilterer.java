@@ -68,7 +68,7 @@ public class VcsLogFilterer {
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
-      List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
+      List<VcsFullCommitDetails> filteredCommits = filterByDetails(detailsFilters);
       model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), LoadMoreStage.INITIAL);
     }
     else {
@@ -142,16 +142,13 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private List<VcsFullCommitDetails> filterByDetails(@NotNull GraphModel graphModel, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<VcsFullCommitDetails> filterByDetails(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    for (int i = 0; i < topCommits && i < graphModel.getGraph().getNodeRows().size(); i++) {
-      Node node = graphModel.getGraph().getCommitNodeInRow(i);
-      if (node == null) {
-        // there can be nodes which contain no commits (IDEA-115442, branch filter case)
-        continue;
-      }
-      final VcsFullCommitDetails details = getDetailsFromCache(node);
+    List<Integer> visibleCommits = myLogDataHolder.getDataPack().getGraphFacade().getVisibleCommits();
+    for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
+      int commitIndex = visibleCommits.get(i);
+      final VcsFullCommitDetails details = getDetailsFromCache(commitIndex);
       if (details == null) {
         // Details for recent commits should be available in the cache.
         // However if they are not there for some reason, we stop filtering.
@@ -160,7 +157,7 @@ public class VcsLogFilterer {
         // then we will return the list which incorrectly misses some matching commit in the middle.
         // => Instead we rather will return a smaller list: this is not a problem,
         // because the VCS will be requested for filtered details if there are not enough of them.
-        LOG.debug("No details found for a recent commit " + myLogDataHolder.getHash(node.getCommitIndex()));
+        LOG.debug("No details found for a recent commit " + myLogDataHolder.getHash(commitIndex));
         break;
       }
       boolean allFiltersMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
@@ -177,12 +174,12 @@ public class VcsLogFilterer {
   }
 
   @Nullable
-  private VcsFullCommitDetails getDetailsFromCache(@NotNull final Node node) {
+  private VcsFullCommitDetails getDetailsFromCache(final int commitIndex) {
     final Ref<VcsFullCommitDetails> ref = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(myLogDataHolder.getHash(node.getCommitIndex())));
+        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(myLogDataHolder.getHash(commitIndex)));
       }
     });
     return ref.get();

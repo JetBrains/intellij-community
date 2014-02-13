@@ -1,7 +1,10 @@
 package com.intellij.vcs.log.ui.tables;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
@@ -16,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,6 +27,8 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, Node> {
+
+  private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
 
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
@@ -34,7 +40,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
 
   @Override
   public int getRowCount() {
-    return myDataPack.getGraphModel().getGraph().getNodeRows().size();
+    return myDataPack.getGraphFacade().getVisibleCommitCount();
   }
 
   @Nullable
@@ -76,8 +82,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @NotNull
   @Override
   public VirtualFile getRoot(int rowIndex) {
-    Node commitNode = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    return commitNode != null ? commitNode.getBranch().getRepositoryRoot() : FAKE_ROOT;
+    int head = myDataPack.getGraphFacade().getInfoProvider().getRowInfo(rowIndex).getOneOfHeads();
+    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
+    if (refs.isEmpty()) {
+      LOG.error("No references pointing to head " + head + " identified for commit at row " + rowIndex);
+      return FAKE_ROOT;
+    }
+    return refs.iterator().next().getRoot();
   }
 
   @NotNull
@@ -102,19 +113,30 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @Nullable
   @Override
   public Hash getHashAtRow(int row) {
-    Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
-    return node == null ? null : myDataHolder.getHash(node.getCommitIndex());
+    return myDataHolder.getHash(myDataPack.getGraphFacade().getCommitAtRow(row));
   }
 
   @Override
   public int getRowOfCommit(@NotNull final Hash hash) {
-    return myDataPack.getRowByHash(hash);
+    final int commitIndex = myDataHolder.putHash(hash);
+    return ContainerUtil.indexOf(myDataPack.getGraphFacade().getVisibleCommits(), new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return integer == commitIndex;
+      }
+    });
   }
 
   @Override
-  public int getRowOfCommitByPartOfHash(@NotNull String hash) {
-    Node node = myDataPack.getNodeByPartOfHash(hash);
-    return node != null ? node.getRowIndex() : -1;
+  public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
+    final String pHash = partialHash.toLowerCase();
+    return ContainerUtil.indexOf(myDataPack.getGraphFacade().getVisibleCommits(), new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        Hash hash = myDataHolder.getHash(integer);
+        return hash.toString().toLowerCase().startsWith(pHash);
+      }
+    });
   }
 
 }

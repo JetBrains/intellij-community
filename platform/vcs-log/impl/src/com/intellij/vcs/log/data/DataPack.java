@@ -8,7 +8,8 @@ import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
-import com.intellij.vcs.log.graph.Graph;
+import com.intellij.vcs.log.graph.GraphBlackBox;
+import com.intellij.vcs.log.graph.GraphFacadeImpl;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.GraphBuilder;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
@@ -32,6 +33,7 @@ public class DataPack {
   @NotNull private final GraphPrintCellModel myPrintCellModel;
   private final NotNullFunction<Integer, Hash> myHashGetter;
   private final NotNullFunction<Hash, Integer> myIndexGetter;
+  @NotNull private final GraphFacadeImpl myGraphFacade;
 
   @NotNull
   public static DataPack build(@NotNull List<? extends GraphCommit> commits, @NotNull Collection<VcsRef> allRefs, @NotNull ProgressIndicator indicator,
@@ -73,6 +75,12 @@ public class DataPack {
     myPrintCellModel = printCellModel;
     myHashGetter = hashGetter;
     myIndexGetter = indexGetter;
+    myGraphFacade = new GraphFacadeImpl(graphModel, printCellModel);
+  }
+
+  @NotNull
+  public GraphBlackBox getGraphFacade() {
+    return myGraphFacade;
   }
 
   @NotNull
@@ -93,36 +101,6 @@ public class DataPack {
   @Nullable
   public Node getNode(int rowIndex) {
     return getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-  }
-
-  public int getRowByHash(Hash commitHash) {
-    Node node = getNodeByHash(commitHash);
-    return node == null ? -1 : node.getRowIndex();
-  }
-
-  @Nullable
-  public Node getNodeByHash(Hash hash) {
-    int index = myIndexGetter.fun(hash);
-    Graph graph = getGraphModel().getGraph();
-    for (int i = 0; i < graph.getNodeRows().size(); i++) {
-      Node node = graph.getCommitNodeInRow(i);
-      if (node != null && node.getCommitIndex() == index) {
-        return node;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public Node getNodeByPartOfHash(@NotNull String hash) {
-    Graph graph = getGraphModel().getGraph();
-    for (int i = 0; i < graph.getNodeRows().size(); i++) {
-      Node node = graph.getCommitNodeInRow(i);
-      if (node != null && myHashGetter.fun(node.getCommitIndex()).asString().startsWith(hash.toLowerCase())) {
-        return node;
-      }
-    }
-    return null;
   }
 
 }

@@ -58,6 +58,16 @@ public interface GraphBlackBox {
   @NotNull
   List<Integer> getVisibleCommits();
 
+  /**
+   * A shorthand to getVisibleCommits().get(visibleRow), but may be faster.
+   */
+  int getCommitAtRow(int visibleRow);
+
+  /**
+   * A shorthand to {@code getVisibleCommits().size()}, but is faster.
+   */
+  int getVisibleCommitCount();
+
   void setVisibleBranches(@Nullable Collection<Integer> heads);
 
   void setFilter(@NotNull Condition<Integer> visibilityPredicate);
