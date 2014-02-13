@@ -81,11 +81,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) return false;
 
-    if (!areOnAdjacentLines(body.getLBrace(), statements[0]) || !areOnAdjacentLines(statements[statements.length - 1], body.getRBrace())) {
-      //the user might intend to type at an empty line
-      return false;
-    }
-
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
@@ -533,8 +528,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
       if (child instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)child;
-        boolean accessor = isSimplePropertyAccessor(method) && addInlineAccessorFolding(list, method);
-        if (!accessor) {
+        boolean oneLiner = addOneLineMethodFolding(list, method);
+        if (!oneLiner) {
           addToFold(list, method, document, true);
         }
         addAnnotationsToFold(method.getModifierList(), list, document);
@@ -547,7 +542,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
 
         PsiCodeBlock body = method.getBody();
-        if (body != null && !accessor) {
+        if (body != null && !oneLiner) {
           addCodeBlockFolds(body, list, processedComments, document, quick);
         }
       }
@@ -581,23 +576,33 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private static boolean addInlineAccessorFolding(List<FoldingDescriptor> descriptorList, PsiMethod accessor) {
-    if (!JavaCodeFoldingSettings.getInstance().isCollapseAccessors()) {
+  private static boolean addOneLineMethodFolding(List<FoldingDescriptor> descriptorList, PsiMethod method) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseOneLineMethods()) {
       return false;
     }
 
-    PsiCodeBlock body = accessor.getBody();
-    assert body != null;
-    if (body.getStatements().length > 1) {
+    PsiCodeBlock body = method.getBody();
+    if (body == null) {
+      return false;
+    }
+    PsiJavaToken lBrace = body.getLBrace();
+    PsiJavaToken rBrace = body.getRBrace();
+    PsiStatement[] statements = body.getStatements();
+    if (lBrace == null || rBrace == null || statements.length != 1) {
       return false;
     }
 
-    PsiStatement statement = body.getStatements()[0];
+    PsiStatement statement = statements[0];
     if (statement.textContains('\n')) {
       return false;
     }
 
-    int leftStart = accessor.getParameterList().getTextRange().getEndOffset();
+    if (!areOnAdjacentLines(body.getLBrace(), statement) || !areOnAdjacentLines(statement, body.getRBrace())) {
+      //the user might intend to type at an empty line
+      return false;
+    }
+
+    int leftStart = method.getParameterList().getTextRange().getEndOffset();
     int leftEnd = statement.getTextRange().getStartOffset();
     int rightStart = statement.getTextRange().getEndOffset();
     int rightEnd = body.getTextRange().getEndOffset();
@@ -605,9 +610,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return false;
     }
 
-    FoldingGroup group = FoldingGroup.newGroup("simple property accessor");
-    PsiJavaToken lBrace = body.getLBrace();
-    assert lBrace != null;
+    FoldingGroup group = FoldingGroup.newGroup("one-liner");
     descriptorList.add(new FoldingDescriptor(lBrace.getNode(), new TextRange(leftStart, leftEnd), group) {
       @Nullable
       @Override
@@ -616,8 +619,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     });
 
-    PsiJavaToken rBrace = body.getRBrace();
-    assert rBrace != null;
     descriptorList.add(new FoldingDescriptor(rBrace.getNode(), new TextRange(rightStart, rightEnd), group) {
       @Nullable
       @Override
@@ -627,7 +628,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     });
     return true;
   }
-
+  
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
@@ -644,7 +645,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (element instanceof PsiJavaToken &&
         element.getParent() instanceof PsiCodeBlock &&
         element.getParent().getParent() instanceof PsiMethod) {
-      return settings.isCollapseAccessors();
+      return settings.isCollapseOneLineMethods();
     }
     if (element instanceof PsiReferenceParameterList) {
       return settings.isCollapseConstructorGenericParameters();
@@ -654,9 +655,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return settings.isCollapseImports();
     }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiCodeBlock) {
-      if (!settings.isCollapseAccessors() && !settings.isCollapseMethods()) {
-        return false;
-      }
       if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
         return settings.isCollapseAccessors();
       }

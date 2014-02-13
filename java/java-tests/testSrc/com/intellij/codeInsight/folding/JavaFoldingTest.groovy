@@ -481,22 +481,35 @@ class Test {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.size() == 6
     
-    Closure checkAccessorFolding = { FoldRegion region1, FoldRegion region2, PsiMethod method ->
-      assert region1.startOffset == method.parameterList.textRange.endOffset
-      assert region1.endOffset == method.body.statements[0].textRange.startOffset
-      assert region1.placeholderText == ' { '
-
-      assert region2.startOffset == method.body.statements[0].textRange.endOffset
-      assert region2.endOffset == method.textRange.endOffset
-      assert region2.placeholderText == ' }'
-      assert region1.group == region2.group
-    }
-    
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
     checkAccessorFolding(regions[2], regions[3], fooClass.methods[1])
     
     assert regions[4].placeholderText == '{...}'
     assert regions[5].placeholderText == '{...}'
+  }
+
+  static checkAccessorFolding(FoldRegion region1, FoldRegion region2, PsiMethod method) {
+    assert region1.startOffset == method.parameterList.textRange.endOffset
+    assert region1.endOffset == method.body.statements[0].textRange.startOffset
+    assert region1.placeholderText == ' { '
+
+    assert region2.startOffset == method.body.statements[0].textRange.endOffset
+    assert region2.endOffset == method.textRange.endOffset
+    assert region2.placeholderText == ' }'
+    assert region1.group == region2.group
+  }
+
+  public void "test fold one-line methods"() {
+    configure """class Foo {
+ int someMethod() {
+   return 0;
+ }
+ 
+}"""
+    PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 2
+    checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
   private def changeFoldRegions(Closure op) {
