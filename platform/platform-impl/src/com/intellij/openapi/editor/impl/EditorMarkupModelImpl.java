@@ -1170,6 +1170,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 if (tooltip == null) continue;
                 String s = String.valueOf(tooltip);
                 if (s.isEmpty()) continue;
+                s = s.replaceAll("\\s+", " ");
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);
