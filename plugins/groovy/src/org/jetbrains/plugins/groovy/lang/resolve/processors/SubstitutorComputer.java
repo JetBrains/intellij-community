@@ -153,10 +153,10 @@ public class SubstitutorComputer {
     return substitutor;
   }
 
-  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method,
-                                                   PsiSubstitutor partialSubstitutor,
-                                                   final PsiTypeParameter[] typeParameters,
-                                                   final PsiType[] argTypes) {
+  private PsiSubstitutor inferMethodTypeParameters(@NotNull PsiMethod method,
+                                                   @NotNull PsiSubstitutor partialSubstitutor,
+                                                   @NotNull PsiTypeParameter[] typeParameters,
+                                                   @NotNull PsiType[] argTypes) {
     if (typeParameters.length == 0 || myArgumentTypes == null) return partialSubstitutor;
 
     final GrClosureSignature erasedSignature = GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method);
@@ -235,12 +235,15 @@ public class SubstitutorComputer {
 
           PsiMethod samMethod = MethodSignatureUtil.findMethodBySignature(samClass, samSignature, true);
           if (samMethod != null) {
-            PsiSubstitutor substitutor = myHelper.inferTypeArguments(samClass.getTypeParameters(),
-                                                                     new PsiType[]{samMethod.getReturnType()},
-                                                                     closure.getParameters(),
-                                                                     LanguageLevel.JDK_1_7);
+            PsiType[] closureArgs = closure.getParameters();
+            if (closureArgs.length == 1 && samMethod.getReturnType() != null) {
+              PsiSubstitutor substitutor = myHelper.inferTypeArguments(samClass.getTypeParameters(),
+                                                                       new PsiType[]{samMethod.getReturnType()},
+                                                                       closureArgs,
+                                                                       LanguageLevel.JDK_1_7);
 
-            return JavaPsiFacade.getElementFactory(myPlace.getProject()).createType(samClass, substitutor);
+              return JavaPsiFacade.getElementFactory(myPlace.getProject()).createType(samClass, substitutor);
+            }
           }
         }
       }
