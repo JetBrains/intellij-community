@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.ui.tables;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -13,7 +12,6 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,15 +24,11 @@ import java.util.List;
  */
 public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, Node> {
 
-  private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
-
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogUI myUi;
 
-  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI ui) {
+  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder) {
     myDataHolder = dataHolder;
-    myUi = ui;
     myDataPack = dataHolder.getDataPack();
   }
 
@@ -79,16 +73,6 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
     return changes;
   }
 
-  @Nullable
-  private GraphPrintCell getGraphPrintCellForRow(int row) {
-    Object commitValue = getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
-    if (commitValue instanceof GraphCommitCell) {
-      GraphCommitCell commitCell = (GraphCommitCell)commitValue;
-      return commitCell.getPrintCell();
-    }
-    return null;
-  }
-
   @NotNull
   @Override
   public VirtualFile getRoot(int rowIndex) {
@@ -102,9 +86,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
     GraphPrintCell graphPrintCell = myDataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
     String message = "";
     List<VcsRef> refs = Collections.emptyList();
-    Hash hash = null;
     if (details != null) {
-      hash = details.getHash();
       message = details.getSubject();
       refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
     }

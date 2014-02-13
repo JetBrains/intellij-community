@@ -4,14 +4,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.Predicate;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
-import com.intellij.vcs.log.graph.elements.Edge;
-import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.GraphBuilder;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
@@ -22,7 +19,8 @@ import com.intellij.vcs.log.printmodel.impl.GraphPrintCellModelImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -92,29 +90,6 @@ public class DataPack {
     return myPrintCellModel;
   }
 
-  public boolean isSameBranch(@NotNull Node nodeA, @NotNull Node nodeB) {
-    Node up, down;
-    if (nodeA.getRowIndex() > nodeB.getRowIndex()) {
-      up = nodeB;
-      down = nodeA;
-    } else {
-      up = nodeA;
-      down = nodeB;
-    }
-    return getGraphModel().getFragmentManager().getUpNodes(down).contains(up);
-  }
-
-  @NotNull
-  public Set<Node> getUpRefNodes(@NotNull GraphElement graphElement) {
-    Set<Node> nodes = new HashSet<Node>();
-    for (Node node : getGraphModel().getFragmentManager().getUpNodes(graphElement)) {
-      if (getRefsModel().isBranchRef(node.getCommitIndex())) {
-        nodes.add(node);
-      }
-    }
-    return nodes;
-  }
-
   @Nullable
   public Node getNode(int rowIndex) {
     return getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
@@ -148,66 +123,6 @@ public class DataPack {
       }
     }
     return null;
-  }
-
-  @Nullable
-  public Node getCommonParent(Node a, Node b) {
-    List<Node> commitDiff = getCommitsDownToCommon(a, b);
-    return commitDiff.isEmpty() ? null : commitDiff.get(commitDiff.size() - 1);
-  }
-
-  public boolean isAncestorOf(Node ancestor, Node child) {
-    return ancestor != child && getGraphModel().getFragmentManager().getUpNodes(ancestor).contains(child);
-  }
-
-  @Nullable
-  public Node getCommonParent(Node a, Node b, Node c) {
-    return null;
-  }
-
-  public List<Node> getCommitsDownToCommon(Node newBase, Node head) {
-    final List<Node> all = getAllAncestors(newBase, new Predicate<Node>() {
-      @Override
-      public boolean apply(@Nullable Node input) {
-        return false;
-      }
-    });
-    return getAllAncestors(head, new Predicate<Node>() {
-      @Override
-      public boolean apply(@Nullable Node input) {
-        return all.contains(input);
-      }
-    });
-  }
-
-  private List<Node> getAllAncestors(Node a, Predicate<Node> stop) {
-    Set<Node> all = new LinkedHashSet<Node>();
-    Queue<Node> queue = new ArrayDeque<Node>();
-    queue.add(a);
-    while (!queue.isEmpty()) {
-      Node aNode = queue.remove();
-      all.add(aNode);
-      if (stop.apply(aNode)) {
-        return new ArrayList<Node>(all);
-      }
-      for (Edge edge : aNode.getDownEdges()) {
-        queue.add(edge.getDownNode());
-      }
-    }
-    return new ArrayList<Node>(all);
-  }
-
-  public List<Node> getCommitsInBranchAboveBase(Node base, Node branchHead) {
-    List<Node> result = new ArrayList<Node>();
-    Node node = branchHead;
-    while (node != base) {
-      result.add(node);
-      // TODO: multiple edges must not appear
-      // TODO: if there are no edges, we are in the wrong branch
-      node = node.getDownEdges().get(0).getDownNode();
-    }
-    //Collections.reverse(result);
-    return result;
   }
 
 }

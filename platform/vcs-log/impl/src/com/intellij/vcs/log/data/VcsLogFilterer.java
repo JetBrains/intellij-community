@@ -72,7 +72,7 @@ public class VcsLogFilterer {
       model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), LoadMoreStage.INITIAL);
     }
     else {
-      model = new GraphTableModel(myLogDataHolder, myUI);
+      model = new GraphTableModel(myLogDataHolder);
     }
 
     updateUi(model);

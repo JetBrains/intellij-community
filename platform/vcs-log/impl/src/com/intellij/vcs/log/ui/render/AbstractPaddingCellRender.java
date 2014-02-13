@@ -6,21 +6,19 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer {
-
-  public static final Color MARKED_BACKGROUND = new Color(200, 255, 250);
 
   @NotNull protected final RefPainter myRefPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
@@ -37,19 +35,6 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   protected abstract String getCellText(@Nullable Object value);
 
   protected abstract void additionPaint(Graphics g, Object value);
-
-  public static boolean isMarked(@Nullable Object value) {
-    if (!(value instanceof GraphCommitCell)) {
-      return false;
-    }
-    GraphCommitCell cell = (GraphCommitCell)value;
-    for (SpecialPrintElement printElement : cell.getPrintCell().getSpecialPrintElements()) {
-      if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE && printElement.isMarked()) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   @Override
   protected void customizeCellRenderer(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

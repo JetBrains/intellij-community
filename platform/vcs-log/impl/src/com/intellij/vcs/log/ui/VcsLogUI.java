@@ -142,16 +142,6 @@ public class VcsLogUI {
     });
   }
 
-  public void addToSelection(final Hash hash) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        int row = myLogDataHolder.getDataPack().getRowByHash(hash);
-        myMainFrame.getGraphTable().getSelectionModel().addSelectionInterval(row, row);
-      }
-    });
-  }
-
   public void showAll() {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
