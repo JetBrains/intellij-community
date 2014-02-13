@@ -148,7 +148,6 @@ public class PyPackagingTest extends PyEnvTestCase {
     return null;
   }
 
-  @SafeVarargs
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }
