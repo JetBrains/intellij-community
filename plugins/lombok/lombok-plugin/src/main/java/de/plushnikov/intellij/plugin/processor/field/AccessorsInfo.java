@@ -100,6 +100,6 @@ public class AccessorsInfo {
   private boolean canPrefixApply(String fieldName, String prefix) {
     final int prefixLength = prefix.length();
     return fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-        (prefixLength == 0 || Character.isUpperCase(fieldName.charAt(prefixLength)) || prefix.matches("_|\\$"));
+        (prefixLength == 0 || Character.isUpperCase(fieldName.charAt(prefixLength)) || !Character.isLetter(fieldName.charAt(prefixLength-1)) );
   }
 }
