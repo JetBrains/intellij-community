@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -24,6 +25,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -46,18 +48,18 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   public PluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
 
-    final Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
-    final Font miniFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
+    final Font smallFont = UIUtil.getLabelFont(SystemInfo.isMac ? UIUtil.FontSize.MINI : UIUtil.FontSize.SMALL);
     myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
-    myDownloads.setFont(miniFont);
+    myDownloads.setFont(smallFont);
     myStatus.setText("");
     myCategory.setText("");
-    myLastUpdated.setFont(miniFont);
+    myLastUpdated.setFont(smallFont);
     if (! (pluginDescriptor instanceof PluginNode)) {
       myPanel.remove(myRightPanel);
     }
+    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4,3,4,3) : new EmptyBorder(2,3,2,3));
   }
 
   @Override
