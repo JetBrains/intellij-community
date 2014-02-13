@@ -34,8 +34,7 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
     super(GrCallExpression.class);
   }
 
-  @SafeVarargs
-  public final GroovyMethodCallPattern withArguments(final ElementPattern<? extends GrExpression>... arguments) {
+  public GroovyMethodCallPattern withArguments(final ElementPattern<? extends GrExpression>... arguments) {
     return with(new PatternCondition<GrCallExpression>("withArguments") {
       @Override
       public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {

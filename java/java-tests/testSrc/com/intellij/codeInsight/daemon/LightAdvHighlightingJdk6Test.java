@@ -61,4 +61,5 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testUnhandledExceptions() { doTest(true, false); }
   public void testUnhandledExceptionsValueOf() { doTest(true, false); }
   public void testUnsupportedFeatures7() { doTest(false, false); }
+  public void testEnumInitializers() { doTest(false, false); }
 }

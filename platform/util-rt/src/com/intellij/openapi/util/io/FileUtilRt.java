@@ -18,7 +18,10 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -81,19 +84,19 @@ public class FileUtilRt {
            && fileName.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
-  @Contract("null -> null; !null -> !null")
-  public static String toSystemDependentName(@NonNls @Nullable String fileName) {
-    return fileName == null ? null : toSystemDependentName(fileName, File.separatorChar);
+  @NotNull
+  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
+    return toSystemDependentName(fileName, File.separatorChar);
   }
 
-  @Contract("null, _ -> null; !null, _ -> !null")
-  public static String toSystemDependentName(@NonNls @Nullable String fileName, final char separatorChar) {
-    return fileName == null ? null : fileName.replace('/', separatorChar).replace('\\', separatorChar);
+  @NotNull
+  public static String toSystemDependentName(@NonNls @NotNull String fileName, final char separatorChar) {
+    return fileName.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
-  @Contract("null -> null; !null -> !null")
-  public static String toSystemIndependentName(@NonNls @Nullable String fileName) {
-    return fileName == null ? null : fileName.replace('\\', '/');
+  @NotNull
+  public static String toSystemIndependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('\\', '/');
   }
 
   @Nullable

@@ -1795,8 +1795,8 @@ public class StringUtil extends StringUtilRt {
     return '\"' + str + "\"";
   }
 
-  @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
+  @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;", "&nbsp;"};
+  @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\"", " "};
 
   public static String unescapeXml(@Nullable final String text) {
     if (text == null) return null;

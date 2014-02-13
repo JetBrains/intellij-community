@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -58,7 +57,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private PsiElementFinder[] myElementFinders; //benign data race
+  private volatile PsiElementFinder[] myElementFinders;
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
@@ -92,7 +91,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
   }
 
   @Override

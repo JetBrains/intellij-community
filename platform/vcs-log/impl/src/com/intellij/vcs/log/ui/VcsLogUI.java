@@ -10,7 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -326,7 +325,7 @@ public class VcsLogUI {
   }
 
   @NotNull
-  public Collection<VcsLogFilter> collectFilters() {
+  public VcsLogFilterCollection collectFilters() {
     return myMainFrame.getFilterUi().getFilters();
   }
 

@@ -226,6 +226,27 @@ public class Alarm implements Disposable {
     return count;
   }
 
+  public void flush() {
+    List<Request> requests;
+    synchronized (LOCK) {
+      if (myRequests.isEmpty()) {
+        return;
+      }
+
+      requests = new SmartList<Request>();
+      for (Request request : myRequests) {
+        if (request.cancel()) {
+          requests.add(request);
+        }
+      }
+      myRequests.clear();
+    }
+
+    for (Request request : requests) {
+      request.run();
+    }
+  }
+
   public int getActiveRequestCount() {
     synchronized (LOCK) {
       return myRequests.size();
@@ -268,7 +289,9 @@ public class Alarm implements Disposable {
           return;
         }
         synchronized (LOCK) {
-          if (myTask == null) return;
+          if (myTask == null) {
+            return;
+          }
         }
 
         final Runnable scheduledTask = new Runnable() {
@@ -289,7 +312,9 @@ public class Alarm implements Disposable {
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  QueueProcessor.runSafely(task);
+                  if (!myDisposed) {
+                    QueueProcessor.runSafely(task);
+                  }
                 }
               });
             }
@@ -315,6 +340,9 @@ public class Alarm implements Disposable {
           if (app == null) {
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(scheduledTask);
+          }
+          else if (app.isDispatchThread() && app.getCurrentModalityState().equals(myModalityState)) {
+            scheduledTask.run();
           }
           else {
             app.invokeLater(scheduledTask, myModalityState);
@@ -342,16 +370,21 @@ public class Alarm implements Disposable {
       return myModalityState;
     }
 
-    private void cancel() {
+    private boolean cancel() {
+      boolean result;
       synchronized (LOCK) {
         if (myFuture != null) {
-          myFuture.cancel(false);
+          result = myFuture.cancel(false);
           // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
           ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
           myFuture = null;
         }
+        else {
+          result = false;
+        }
         myTask = null;
       }
+      return result;
     }
 
     @Override

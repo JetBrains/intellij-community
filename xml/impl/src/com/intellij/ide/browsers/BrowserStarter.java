@@ -31,7 +31,7 @@ public class BrowserStarter {
   }
 
   public void start() {
-    if (!mySettings.isSelected() || StringUtil.isEmptyOrSpaces(mySettings.getUrl())) {
+    if (!mySettings.isSelected() || mySettings.getUrl() == null) {
       return;
     }
 

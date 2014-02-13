@@ -1253,7 +1253,7 @@
     <lang.implementationTextSelectioner language="JAVA"
                                         implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
-    <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
+    <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension" order="after defaultNavbar"/>
     <typeDeclarationProvider implementation="com.intellij.codeInsight.navigation.actions.JavaTypeDeclarationProvider"/>
     <gotoTargetRendererProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetRendererProvider"/>
 

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class BranchFilterPopupComponent extends FilterPopupComponent {
+class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter> {
 
   @NotNull private final VcsLogUI myUi;
 
@@ -124,10 +124,10 @@ class BranchFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected Collection<VcsLogFilter> getFilters() {
+  protected VcsLogBranchFilter getFilter() {
     String value = getValue();
     Collection<VcsRef> allBranches = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
-    return value == ALL ? null : Collections.<VcsLogFilter>singleton(new VcsLogBranchFilterImpl(allBranches, value));
+    return value == ALL ? null : new VcsLogBranchFilterImpl(allBranches, Collections.singletonList(value));
   }
 
 }

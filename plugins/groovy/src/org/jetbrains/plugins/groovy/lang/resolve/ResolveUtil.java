@@ -392,7 +392,6 @@ public class ResolveUtil {
     return resolveExistingElement(place, processor, PsiClass.class);
   }
 
-  @SafeVarargs
   @Nullable
   public static <T> T resolveExistingElement(PsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor, true);

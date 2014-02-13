@@ -28,8 +28,7 @@ public class PsiMethodCallPattern extends PsiExpressionPattern<PsiMethodCallExpr
     super(PsiMethodCallExpression.class);
   }
 
-  @SafeVarargs
-  public final PsiMethodCallPattern withArguments(final ElementPattern<? extends PsiExpression>... arguments) {
+  public PsiMethodCallPattern withArguments(final ElementPattern<? extends PsiExpression>... arguments) {
     return with(new PatternCondition<PsiMethodCallExpression>("withArguments") {
       @Override
       public boolean accepts(@NotNull PsiMethodCallExpression callExpression, ProcessingContext context) {

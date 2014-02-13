@@ -987,9 +987,13 @@ public class PluginManagerCore {
             map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
           }
           addModulesAsDependents(map);
-          final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(pluginId));
-          shouldLoad = descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map,
-                                                                     checkModuleDependencies);
+          for (String id : pluginIds) {
+            final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(id));
+            if (descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map, checkModuleDependencies)) {
+              shouldLoad = true;
+              break;
+            }
+          }
         }
       } else {
         shouldLoad = !getDisabledPlugins().contains(idString) &&

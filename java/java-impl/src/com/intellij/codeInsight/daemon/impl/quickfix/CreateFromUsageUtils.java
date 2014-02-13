@@ -482,7 +482,6 @@ public class CreateFromUsageUtils {
     });
   }
 
-  @SafeVarargs
   public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class<? extends PsiElement>... scopes) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 

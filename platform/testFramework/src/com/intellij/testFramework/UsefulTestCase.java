@@ -384,12 +384,10 @@ public abstract class UsefulTestCase extends TestCase {
     return builder.toString();
   }
 
-  @SafeVarargs
   public static <T> void assertOrderedEquals(T[] actual, T... expected) {
     assertOrderedEquals(Arrays.asList(actual), expected);
   }
 
-  @SafeVarargs
   public static <T> void assertOrderedEquals(Iterable<T> actual, T... expected) {
     assertOrderedEquals(null, actual, expected);
   }
@@ -403,7 +401,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SafeVarargs
   public static <T> void assertOrderedEquals(final String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
     Assert.assertNotNull(actual);
     Assert.assertNotNull(expected);
@@ -429,18 +426,15 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SafeVarargs
   public static <T> void assertOrderedCollection(T[] collection, @NotNull Consumer<T>... checkers) {
     Assert.assertNotNull(collection);
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
-  @SafeVarargs
   public static <T> void assertSameElements(T[] collection, T... expected) {
     assertSameElements(Arrays.asList(collection), expected);
   }
 
-  @SafeVarargs
   public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
     assertSameElements(collection, Arrays.asList(expected));
   }
@@ -458,8 +452,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SafeVarargs
-  public final <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
+  public <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
@@ -469,8 +462,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(toString(collection), copy, expected);
   }
 
-  @SafeVarargs
-  public final <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
+  public <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
@@ -484,8 +476,7 @@ public abstract class UsefulTestCase extends TestCase {
     return toString(Arrays.asList(collection), separator);
   }
 
-  @SafeVarargs
-  public final <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
+  public <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
@@ -515,7 +506,6 @@ public abstract class UsefulTestCase extends TestCase {
     return builder.toString();
   }
 
-  @SafeVarargs
   public static <T> void assertOrderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
     Assert.assertNotNull(collection);
     if (collection.size() != checkers.length) {
@@ -534,12 +524,10 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SafeVarargs
   public static <T> void assertUnorderedCollection(T[] collection, Consumer<T>... checkers) {
     assertUnorderedCollection(Arrays.asList(collection), checkers);
   }
 
-  @SafeVarargs
   public static <T> void assertUnorderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
     Assert.assertNotNull(collection);
     if (collection.size() != checkers.length) {
@@ -598,7 +586,6 @@ public abstract class UsefulTestCase extends TestCase {
     return ts[0];
   }
 
-  @SafeVarargs
   public static <T> void assertOneOf(T value, T... values) {
     boolean found = false;
     for (T v : values) {

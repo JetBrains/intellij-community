@@ -23,17 +23,15 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
-class DateFilterPopupComponent extends FilterPopupComponent {
+class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
 
   private Date myAfter;
   private Date myBefore;
@@ -68,8 +66,8 @@ class DateFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected Collection<VcsLogFilter> getFilters() {
-    return myAfter == null && myBefore == null ? null : Collections.<VcsLogFilter>singleton(new VcsLogDateFilterImpl(myAfter, myBefore));
+  protected VcsLogDateFilter getFilter() {
+    return myAfter == null && myBefore == null ? null : new VcsLogDateFilterImpl(myAfter, myBefore);
   }
 
   private void setOnlyAfter(Date after) {

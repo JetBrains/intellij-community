@@ -67,8 +67,9 @@ public class GrIntroduceFieldProcessor {
 
   private final GrIntroduceContext myContext;
   private final GrIntroduceFieldSettings mySettings;
-  private GrExpression myInitializer;
-  private GrVariable myLocalVariable;
+
+  @Nullable private GrExpression myInitializer;
+  @Nullable private GrVariable myLocalVariable;
 
   public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context,
                                    @NotNull GrIntroduceFieldSettings settings) {
@@ -294,9 +295,10 @@ public class GrIntroduceFieldProcessor {
                                   @Nullable GrStatement anchor,
                                   @NotNull GrStatementOwner defaultContainer,
                                   @Nullable PsiElement occurrenceToDelete) {
-    final GrExpression initializer = myInitializer;
+    if (myInitializer == null) return;
+
     GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(myContext.getProject())
-      .createExpressionFromText(mySettings.getName() + " = " + initializer.getText());
+      .createExpressionFromText(mySettings.getName() + " = " + myInitializer.getText());
 
     GrStatementOwner block;
     if (anchor != null) {
@@ -316,12 +318,10 @@ public class GrIntroduceFieldProcessor {
     }
   }
 
-  @NotNull
+  @Nullable
   private GrExpression extractVarInitializer() {
     assert myLocalVariable != null;
-    GrExpression initializer = myLocalVariable.getInitializerGroovy();
-    LOG.assertTrue(initializer != null);
-    return initializer;
+    return myLocalVariable.getInitializerGroovy();
   }
 
   @Nullable
@@ -398,7 +398,7 @@ public class GrIntroduceFieldProcessor {
     }
   }
 
-  @NotNull
+  @Nullable
   protected GrExpression getInitializer() {
     if (mySettings.removeLocalVar()) {
       return extractVarInitializer();

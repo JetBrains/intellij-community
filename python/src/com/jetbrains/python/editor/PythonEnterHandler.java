@@ -295,7 +295,6 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     return findAfterCaret(node, PyStatement.class);
   }
 
-  @SafeVarargs
   private static PsiElement findBeforeCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {
     while (atCaret != null) {
       atCaret = TreeUtil.prevLeaf(atCaret);
@@ -306,7 +305,6 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     return null;
   }
 
-  @SafeVarargs
   private static PsiElement findAfterCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {
     while (atCaret != null) {
       if (atCaret.getElementType() != TokenType.WHITE_SPACE) {
@@ -317,7 +315,6 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     return null;
   }
 
-  @SafeVarargs
   @Nullable
   private static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
     PsiElement run = element;

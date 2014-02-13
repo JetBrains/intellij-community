@@ -191,7 +191,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
+    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension" order="after defaultNavbar"/>
 
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>

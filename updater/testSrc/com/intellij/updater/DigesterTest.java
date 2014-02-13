@@ -16,6 +16,6 @@ public class DigesterTest extends UpdaterTestCase {
     assertEquals(CHECKSUMS.README_TXT, (long)checkSums.get("Readme.txt"));
     assertEquals(CHECKSUMS.FOCUSKILLER_DLL, (long)checkSums.get("bin/focuskiller.dll"));
     assertEquals(CHECKSUMS.BOOTSTRAP_JAR, (long)checkSums.get("lib/bootstrap.jar"));
-    Runner.initLogger();
+    Runner.initLogger(System.getProperty("java.io.tmpdir"));
   }
 }

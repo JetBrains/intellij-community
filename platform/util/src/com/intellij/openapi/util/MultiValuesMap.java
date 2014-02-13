@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -39,8 +38,7 @@ public class MultiValuesMap<K, V>{
     }
   }
 
-  @SafeVarargs
-  public final void putAll(K key, @NotNull V... values) {
+  public void putAll(K key, V... values) {
     for (V value : values) {
       put(key, value);
     }
