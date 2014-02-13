@@ -400,7 +400,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   private static String getCaretDescription(int caretNumber, int totalCarets) {
-    return totalCarets == 1 ? "" : "(caret " + caretNumber + "/" + totalCarets + ")";
+    return totalCarets == 1 ? "" : "(caret " + (caretNumber + 1) + "/" + totalCarets + ")";
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -426,8 +426,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                                    expected.offset,
                                                    CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
-        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine, actualCaretPosition.line);
-        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol, actualCaretPosition.column);
+        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine + 1, actualCaretPosition.line + 1);
+        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol + 1, actualCaretPosition.column + 1);
       }
       if (expected.selection != null) {
         int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getStartOffset());

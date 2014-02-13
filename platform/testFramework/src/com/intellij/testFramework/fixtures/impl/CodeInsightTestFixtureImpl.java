@@ -1759,7 +1759,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertEquals("Unexpected number of carets", loader.caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
     for (int i = 0; i < loader.caretState.carets.size(); i++) {
       EditorTestUtil.Caret expected = loader.caretState.carets.get(i);
-      String caretDescription = loader.caretState.carets.size() == 1 ? "" : "(" + i + "/" + loader.caretState.carets.size() + ") ";
+      String caretDescription = loader.caretState.carets.size() == 1 ? "" : "(" + (i + 1) + "/" + loader.caretState.carets.size() + ") ";
       if (expected.offset != null) {
         final int tabSize = CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE;
 

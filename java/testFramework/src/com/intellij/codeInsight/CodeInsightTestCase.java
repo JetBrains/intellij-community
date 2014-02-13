@@ -542,7 +542,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
         assertEquals("Unexpected number of carets", caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
         for (int i = 0; i < caretState.carets.size(); i++) {
-          String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + i + "/" + caretState.carets.size() + " ";
+          String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
           Caret currentCaret = caretModel.supportsMultipleCarets() ? allCarets.get(i) : null;
           LogicalPosition actualCaretPosition;
           if (caretModel.supportsMultipleCarets()) {
