@@ -87,9 +87,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   private static DocumentListener REPLACE_NEWLINES_LISTENER = new DocumentAdapter() {
     @Override
     public void documentChanged(DocumentEvent e) {
-      String text = e.getNewFragment().toString();
-      if (text.contains("\n")) {
-        e.getDocument().replaceString(e.getOffset(), e.getOffset() + e.getNewLength(), text.replace('\n', ' '));
+      final String text = e.getNewFragment().toString();
+      final String replaced = text.replace('\n', ' ');
+      if (replaced != text) {
+        e.getDocument().replaceString(e.getOffset(), e.getOffset() + e.getNewLength(), replaced);
       }
     }
   };
