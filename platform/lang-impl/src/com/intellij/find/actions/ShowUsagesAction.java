@@ -757,7 +757,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final String title = getSecondInvocationTitle(options, handler);
 
     if (title != null) {
-        text += "<br><small>Press " + title + "</small>";
+        text += "<br><small> " + title + "</small>";
     }
     return XmlStringUtil.wrapInHtml(text);
   }
