@@ -159,8 +159,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     EditorFactory.getInstance().releaseEditor(editor);
   }
 
-  @SafeVarargs
-  protected final void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
+  protected void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
     for (List<PsiFile> files : fileCollection) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -169,8 +168,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }
   }
 
-  @SafeVarargs
-  protected final void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
+  protected void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -179,8 +177,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }
   }
 
-  @SafeVarargs
-  protected final void checkRearrangeReformatAndOptimizeImportsHappend(@NotNull List<PsiFile>... fileCollections) {
+  protected void checkRearrangeReformatAndOptimizeImportsHappend(@NotNull List<PsiFile>... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);

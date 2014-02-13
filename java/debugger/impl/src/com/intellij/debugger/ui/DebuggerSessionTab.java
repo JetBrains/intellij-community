@@ -485,6 +485,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         }
       }
     });
+    Disposer.register(content, consoleView);
     myUi.selectAndFocus(content, true, false);
     if (threads.size() > 0) {
       panel.selectStackFrame(0);

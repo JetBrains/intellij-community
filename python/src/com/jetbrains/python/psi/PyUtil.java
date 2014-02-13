@@ -52,7 +52,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -107,12 +106,19 @@ public class PyUtil {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
 
-  /**
-   * @param function function to check
-   * @return true if function is init
-   */
-  public static boolean isInit(@NotNull final PyFunction function) {
-    return PyNames.INIT.equals(function.getName());
+
+  @NotNull
+  public static Set<PsiElement> getComments(PsiElement start) {
+    final Set<PsiElement> comments = new HashSet<PsiElement>();
+    PsiElement seeker = start.getPrevSibling();
+    if (seeker == null) seeker = start.getParent().getPrevSibling();
+    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
+      if (seeker instanceof PsiComment) {
+        comments.add(seeker);
+      }
+      seeker = seeker.getPrevSibling();
+    }
+    return comments;
   }
 
   @Nullable
@@ -1003,7 +1009,6 @@ public class PyUtil {
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
-  @SafeVarargs
   public static <T> boolean among(@NotNull T what, T... variants) {
     for (T s : variants) {
       if (what.equals(s)) return true;
@@ -1415,14 +1420,8 @@ public class PyUtil {
     return false;
   }
 
-
-  private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-
+  public static boolean isInit(@NotNull final PyFunction function) {
+    return PyNames.INIT.equals(function.getName());
   }
 
   /**
@@ -1436,7 +1435,6 @@ public class PyUtil {
   public static Collection<PyMemberInfo> filterOutObject(@NotNull final Collection<PyMemberInfo> pyMemberInfos) {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
   }
-
 
   /**
    * Filters only pyclass object (new class)
@@ -1454,6 +1452,14 @@ public class PyUtil {
     @Override
     public boolean applyNotNull(@NotNull final PyMemberInfo input) {
       return myAllowObjects == isObject(input);
+    }
+
+    private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
+      final PyElement element = classMemberInfo.getMember();
+      if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
+        return true;
+      }
+      return false;
     }
   }
 }

@@ -11,11 +11,11 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('w')
-    PsiWhiteSpace(' ')
     Extends clause
       <empty list>
     Implements clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
@@ -31,9 +31,9 @@ Groovy script
         Parameter list
           <empty list>
         PsiElement())(')')
-        PsiWhiteSpace(' ')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

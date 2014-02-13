@@ -75,7 +75,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       return true;
     }
     if (myExpression instanceof PsiLambdaExpression || myExpression instanceof PsiMethodReferenceExpression) {
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
+      if (!LambdaUtil.isFunctionalType(myT)) {
         return false;
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);

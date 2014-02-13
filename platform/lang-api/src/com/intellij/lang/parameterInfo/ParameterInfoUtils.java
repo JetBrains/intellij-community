@@ -40,7 +40,6 @@ public class ParameterInfoUtils {
     return findParentOfTypeWithStopElements(file, offset, parentClass);
   }
 
-  @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, @NotNull Class<? extends PsiElement>... stopAt) {
     PsiElement element = file.findElementAt(offset);

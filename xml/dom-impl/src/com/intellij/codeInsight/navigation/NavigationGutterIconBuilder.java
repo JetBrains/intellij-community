@@ -131,8 +131,7 @@ public class NavigationGutterIconBuilder<T> {
     return setTargets(ContainerUtil.createMaybeSingletonList(target));
   }
 
-  @SafeVarargs
-  public final NavigationGutterIconBuilder<T> setTargets(@NotNull T... targets) {
+  public NavigationGutterIconBuilder<T> setTargets(@NotNull T... targets) {
     return setTargets(Arrays.asList(targets));
   }
 

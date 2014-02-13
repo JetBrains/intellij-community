@@ -43,7 +43,6 @@ public abstract class InspectionValidator {
   private final String myProgressIndicatorText;
   private final Class<? extends LocalInspectionTool>[] myInspectionToolClasses;
 
-  @SafeVarargs
   protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText, final Class<? extends LocalInspectionTool>... inspectionToolClasses) {
     myDescription = description;
     myProgressIndicatorText = progressIndicatorText;

@@ -1,13 +1,10 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author ksafonov
@@ -15,14 +12,28 @@ import java.awt.*;
 public class CommentsTabForm {
   private LabeledTextComponent myCommentsArea;
   private JPanel myContentPane;
-  private LabeledComponent<JTextArea> myErrorComponent;
+  private LabeledTextComponent myErrorComponent;
+  private JPanel myErrorPanel;
+  private JPanel myCommentsPanel;
 
   public CommentsTabForm() {
+    myErrorComponent = new LabeledTextComponent();
+    myErrorComponent.setTitle(DiagnosticBundle.message("error.dialog.error.prompt"));
+    
+    myCommentsArea = new LabeledTextComponent();
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
-    myErrorComponent.getComponent().setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
-    myErrorComponent.getComponent().setEditable(false);
-    myErrorComponent.getComponent().setBackground(UIUtil.getTextFieldBackground());
-    myErrorComponent.getComponent().setBorder(IdeBorderFactory.createBorder());
+    
+    JTextArea errorArea = myErrorComponent.getTextComponent();
+    //errorArea.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
+    errorArea.setLineWrap(true);
+    errorArea.setEditable(false);
+    errorArea.setBackground(UIUtil.getTextFieldBackground());
+    errorArea.setBorder(IdeBorderFactory.createBorder());
+
+    myCommentsArea.getTextComponent().setLineWrap(true);
+
+    myErrorPanel.add(myErrorComponent.getContentPane());
+    myCommentsPanel.add(myCommentsArea.getContentPane());
   }
 
   public JPanel getContentPane() {
@@ -30,8 +41,8 @@ public class CommentsTabForm {
   }
 
   public void setErrorText(String s) {
-    myErrorComponent.getComponent().setText(s);
-    myErrorComponent.getComponent().setCaretPosition(0);
+    myErrorComponent.getTextComponent().setText(s);
+    myErrorComponent.getTextComponent().setCaretPosition(0);
   }
 
   public void setCommentText(String s) {

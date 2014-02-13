@@ -250,7 +250,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
       ID types = null;
       if (!chooserDescriptor.isChooseFiles() && chooserDescriptor.isChooseJars()) {
-        types = invoke("NSArray", "arrayWithObject:", Foundation.nsString("jar"));
+        types = invoke("NSArray", "arrayWithObjects:", Foundation.nsString("jar"), Foundation.nsString("zip"), null);
       }
 
       final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

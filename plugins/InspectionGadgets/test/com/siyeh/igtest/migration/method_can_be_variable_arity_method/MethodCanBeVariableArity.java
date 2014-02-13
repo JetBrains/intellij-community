@@ -27,4 +27,9 @@ class Sub extends MethodCanBeVariableArity {
 }
 class Annotated {
   public void nullable(@org.jetbrains.annotations.Nullable String[] ss) {}
+
+  void m(String[] ss) {}
+}
+interface X {
+  void m(String[] ss);
 }

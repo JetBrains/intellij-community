@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -66,6 +67,10 @@ public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements Call
   @NotNull
   @Override
   public PsiElement getElementToHighlight() {
-    return getCall().getArgumentList();
+    GrArgumentList argList = getCall().getArgumentList();
+    if (argList.getTextLength() == 0) {
+      return getCall();
+    }
+    return argList;
   }
 }

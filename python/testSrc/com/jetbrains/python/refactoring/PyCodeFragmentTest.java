@@ -44,8 +44,7 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
   final private String END_MARKER = "<end>";
   final private String RESULT_MARKER = "<result>";
 
-  @SafeVarargs
-  private final void doTest(Pair<String, String>... files2Create) throws Exception {
+  private void doTest(Pair<String, String>... files2Create) throws Exception {
     final String testName = getTestName(false).toLowerCase();
     final String fullPath = getTestDataPath() + testName + ".test";
 

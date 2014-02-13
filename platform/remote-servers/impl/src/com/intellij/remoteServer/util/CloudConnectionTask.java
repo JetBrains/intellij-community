@@ -15,10 +15,6 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfigurationBase;
@@ -29,6 +25,7 @@ import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,95 +36,34 @@ public abstract class CloudConnectionTask<
   T,
   SC extends ServerConfigurationBase,
   DC extends DeploymentConfiguration,
-  SR extends CloudServerRuntimeInstance<DC>> {
+  SR extends CloudServerRuntimeInstance<DC>> extends CloudRuntimeTask<T, DC, SR> {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudConnectionTask.class.getName());
+  private final RemoteServer<SC> myServer;
 
-  private final Project myProject;
-  private final String myTitle;
-  private final boolean myModal;
-  private final boolean myCancellable;
-
-  public CloudConnectionTask(Project project, String title, boolean modal, boolean cancellable) {
-    myProject = project;
-    myTitle = title;
-    myModal = modal;
-    myCancellable = cancellable;
+  public CloudConnectionTask(Project project, String title, @Nullable RemoteServer<SC> server) {
+    super(project, title);
+    myServer = server;
   }
 
-  public T perform() {
-    RemoteServer<SC> server = getServer();
-    if (server == null) {
-      return null;
+  @Override
+  protected void run(final Semaphore semaphore, final AtomicReference<T> result) {
+    if (myServer == null) {
+      semaphore.up();
+      return;
     }
 
-    ServerConnection<DC> connection = ServerConnectionManager.getInstance().getOrCreateConnection(server);
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    final Progressive progressive = new Progressive() {
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        while (!indicator.isCanceled()) {
-          if (semaphore.waitFor(500)) {
-            break;
-          }
-        }
-      }
-    };
-
-    Task task;
-    if (myModal) {
-      task = new Task.Modal(myProject, myTitle, myCancellable) {
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          progressive.run(indicator);
-        }
-      };
-    }
-    else {
-      task = new Task.Backgroundable(myProject, myTitle, myCancellable) {
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          progressive.run(indicator);
-        }
-      };
-    }
-
-    AtomicReference<T> result = new AtomicReference<T>();
+    final ServerConnection<DC> connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
     run(connection, semaphore, result);
-
-    task.queue();
-
-    return result.get();
   }
 
-  protected void run(final ServerConnection<DC> connection, final Semaphore semaphore, final AtomicReference<T> result) {
+  protected void run(final ServerConnection<DC> connection,
+                     final Semaphore semaphore,
+                     final AtomicReference<T> result) {
     connection.connectIfNeeded(new ServerConnector.ConnectionCallback<DC>() {
 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {
-        final SR serverRuntime = (SR)serverRuntimeInstance;
-        serverRuntime.getTaskExecutor().submit(new Runnable() {
-
-          @Override
-          public void run() {
-            try {
-              result.set(CloudConnectionTask.this.run(serverRuntime));
-            }
-            catch (ServerRuntimeException e) {
-              runtimeErrorOccurred(e.getMessage());
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-        });
+        run((SR)serverRuntimeInstance, semaphore, result);
       }
 
       @Override
@@ -138,11 +74,12 @@ public abstract class CloudConnectionTask<
     });
   }
 
-  protected void runtimeErrorOccurred(@NotNull String errorMessage) {
-    LOG.info(errorMessage);
+  @Override
+  protected SR getServerRuntime() {
+    throw new UnsupportedOperationException();
   }
 
-  protected abstract RemoteServer<SC> getServer();
-
-  protected abstract T run(SR serverRuntime) throws ServerRuntimeException;
+  public final RemoteServer<SC> getServer() {
+    return myServer;
+  }
 }

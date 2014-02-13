@@ -1,6 +1,4 @@
-package com.intellij.vcs.log.data;
-
-import com.intellij.vcs.log.VcsLogFilter;
+package com.intellij.vcs.log;
 
 /**
  * Filter that is able to work on graph.

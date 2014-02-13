@@ -84,8 +84,7 @@ public class SyncScrollSupport implements Disposable {
                       new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[0]));
   }
 
-  @SafeVarargs
-  private final void addSlavesScroller(Editor editor, Pair<FragmentSide, EditingSides>... contexts) {
+  private void addSlavesScroller(Editor editor, Pair<FragmentSide, EditingSides>... contexts) {
     ScrollListener scroller = new ScrollListener(contexts, editor);
     scroller.install();
     myScrollers.add(scroller);

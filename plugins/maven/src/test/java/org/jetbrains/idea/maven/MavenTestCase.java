@@ -504,17 +504,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
                  new SetWithToString<String>(new THashSet<String>(actual, FileUtil.PATH_HASHING_STRATEGY)));
   }
 
-  @SafeVarargs
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  @SafeVarargs
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, T... expected) {
     assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
-  @SafeVarargs
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
     assertEquals(s, expected.length, actual.size());
@@ -527,13 +524,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  @SafeVarargs
   protected static <T> void assertContain(List<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
 
-  @SafeVarargs
   protected static <T> void assertDoNotContain(List<T> actual, T... expected) {
     List<T> actualCopy = new ArrayList<T>(actual);
     actualCopy.removeAll(Arrays.asList(expected));

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BasicDomElementsInspection<T extends DomElement> extends DomElementsInspection<T> {
 
-  @SafeVarargs
   public BasicDomElementsInspection(@NotNull Class<? extends T> domClass, Class<? extends T>... additionalClasses) {
     super(domClass, additionalClasses);
   }

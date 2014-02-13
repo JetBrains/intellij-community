@@ -16,6 +16,8 @@ ecj-4.2.1.jar
 groovy-all-2.2.1.jar
 gson-2.2.4.jar
 guava-14.0.1.jar
+hamcrest-core-1.3.jar
+hamcrest-library-1.3.jar
 jaxen-1.1.3.jar
 jayatana-1.2.4.jar
 jcip-annotations.jar

@@ -32,8 +32,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
     private final SearchScope myScope;
     private final Class<? extends PsiModifierListOwner>[] myTypes;
 
-    @SafeVarargs
-    public Parameters(final PsiClass annotationClass, final SearchScope scope, @NotNull Class<? extends PsiModifierListOwner>... types) {
+    public Parameters(final PsiClass annotationClass, final SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
       myAnnotationClass = annotationClass;
       myScope = scope;
       myTypes = types;
@@ -47,19 +46,16 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
       return myScope;
     }
 
-    @NotNull
     public Class<? extends PsiModifierListOwner>[] getTypes() {
       return myTypes;
     }
   }
 
-  @SafeVarargs
-  private static Query<PsiModifierListOwner> createDelegateQuery(PsiClass annotationClass, SearchScope scope, @NotNull Class<? extends PsiModifierListOwner>... types) {
+  private static Query<PsiModifierListOwner> createDelegateQuery(PsiClass annotationClass, SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope, types));
   }
 
-  @SafeVarargs
-  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T>... types) {
+  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, Class<? extends T>... types) {
     return new InstanceofQuery<T>(createDelegateQuery(annotationClass, scope, types), types);
   }
 

@@ -196,7 +196,6 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
-  @SafeVarargs
   public static boolean assertPhase(Class<? extends CompletionPhase>... possibilities) {
     if (!isPhase(possibilities)) {
       LOG.error(ourPhase + "; set at " + ourPhaseTrace);
@@ -205,7 +204,6 @@ public class CompletionServiceImpl extends CompletionService{
     return true;
   }
 
-  @SafeVarargs
   public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
     CompletionPhase phase = getCompletionPhase();
     for (Class<? extends CompletionPhase> possibility : possibilities) {

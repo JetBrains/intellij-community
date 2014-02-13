@@ -246,6 +246,17 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
       else if (OPTION_INDENT_CLASS_BODY_DECL.equals(key)) {
         commonSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = !valueToBoolean(key, value);
       }
+      else if (OPTION_BLANK_LINES_BEFORE_FIRST_DECLARATION_IN_CLASS.equals(key)) {
+        int intValue = valueToInt(value);
+        commonSettings.BLANK_LINES_AFTER_CLASS_HEADER = intValue;
+        commonSettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = intValue;
+      }
+      else if (OPTION_EMPTY_LINES_TO_PRESERVE.equals(key)) {
+        int intValue = valueToInt(value);
+        commonSettings.KEEP_BLANK_LINES_IN_CODE = intValue;
+        commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = intValue;
+        commonSettings.KEEP_BLANK_LINES_BEFORE_RBRACE = intValue;
+      }
     }
     else if (object instanceof CommonCodeStyleSettings.IndentOptions) {
       CommonCodeStyleSettings.IndentOptions indentOptions = (CommonCodeStyleSettings.IndentOptions)object;
