@@ -32,6 +32,9 @@
 
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
                         serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
+                        serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
     
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultFileIndexFacade"/>
