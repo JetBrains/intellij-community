@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +36,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
       return propertiesFile.getContainingFile();
     }
   };
-  private String myBundleName;
+  private final String myBundleName;
 
   public ResourceBundleReference(final PsiElement element) {
     this(element, false);
@@ -43,7 +44,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
 
   public ResourceBundleReference(final PsiElement element, boolean soft) {
     super(element, soft);
-    myBundleName = getValue();
+    myBundleName = StringUtil.replaceChar(getValue(), '/', '.');
   }
 
   @Nullable public PsiElement resolve() {
@@ -67,12 +68,18 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
       newElementName = newElementName.substring(0, newElementName.lastIndexOf(PropertiesFileType.DOT_DEFAULT_EXTENSION));
     }
 
-    final int index = myBundleName.lastIndexOf('.');
+    final String currentValue = getValue();
+    final char packageDelimiter = getPackageDelimiter();
+    final int index = currentValue.lastIndexOf(packageDelimiter);
     if (index != -1) {
-      newElementName = myBundleName.substring(0, index) + "." + newElementName;
+      newElementName = currentValue.substring(0, index) + packageDelimiter + newElementName;
     }
 
     return super.handleElementRename(newElementName);
+  }
+
+  private char getPackageDelimiter() {
+    return StringUtil.indexOf(getValue(), '/') != -1 ? '/' : '.';
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
