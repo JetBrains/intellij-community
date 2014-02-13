@@ -266,7 +266,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
       return myPathMappingsComponent.getMappingSettings();
     }
     else {
-      return null;
+      return new PathMappingSettings();
     }
   }
 
