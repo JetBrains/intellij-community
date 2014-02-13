@@ -69,11 +69,23 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return "...";
   }
 
+  private static boolean areOnAdjacentLines(PsiElement e1, PsiElement e2) {
+    Document document = e1.getContainingFile().getViewProvider().getDocument();
+    return document != null &&
+           document.getLineNumber(e1.getTextRange().getEndOffset()) + 1 == document.getLineNumber(e2.getTextRange().getStartOffset());
+  }
+
   private static boolean isSimplePropertyAccessor(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
     if (body == null || body.getLBrace() == null || body.getRBrace() == null) return false;
     PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) return false;
+
+    if (!areOnAdjacentLines(body.getLBrace(), statements[0]) || !areOnAdjacentLines(statements[statements.length - 1], body.getRBrace())) {
+      //the user might intend to type at an empty line
+      return false;
+    }
+
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {

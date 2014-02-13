@@ -457,6 +457,7 @@ class Test {
     configure """class Foo {
  int field;
  int field2;
+ int field3;
  
  int getField()
  {
@@ -467,12 +468,18 @@ class Test {
    field = f;
  }
  
- void setField2(int f){field2=f;}
+ void setField2(int f){field2=f;} // normal method folding here
+
+  // normal method folding here
+ void setField3(int f){
+   
+   field2=f;
+ }
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 5
+    assert regions.size() == 6
     
     Closure checkAccessorFolding = { FoldRegion region1, FoldRegion region2, PsiMethod method ->
       assert region1.startOffset == method.parameterList.textRange.endOffset
@@ -489,6 +496,7 @@ class Test {
     checkAccessorFolding(regions[2], regions[3], fooClass.methods[1])
     
     assert regions[4].placeholderText == '{...}'
+    assert regions[5].placeholderText == '{...}'
   }
 
   private def changeFoldRegions(Closure op) {
