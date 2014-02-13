@@ -23,14 +23,14 @@ public class Runner {
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 3 && args.length < 6) {
+    if (args.length != 3 && args.length < 7) {
       printUsage();
       return;
     }
 
     String command = args[0];
     if ("create".equals(command)) {
-      if (args.length < 6) {
+      if (args.length < 7) {
         printUsage();
         return;
       }
@@ -39,6 +39,9 @@ public class Runner {
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
+      String logFolder = args[6];
+      initLogger(logFolder);
+
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
       List<String> optionalFiles = extractFiles(args, "optional");
@@ -53,7 +56,6 @@ public class Runner {
       String destFolder = args[1];
       String logFolder = args[2];
       initLogger(logFolder);
-      logger.info("--- Updater started ---");
       logger.info("destFolder: " + destFolder);
       install(destFolder);
     }
@@ -107,6 +109,8 @@ public class Runner {
       logger.addAppender(updateError);
       logger.addAppender(update);
       logger.setLevel(Level.ALL);
+
+      logger.info("--- Updater started ---");
     }
   }
 
