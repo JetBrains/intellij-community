@@ -13,51 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The only point of interaction with the Graph.
+ * <p/>
+ * Any access to the methods of this class must be performed from the EDT.
  */
 public interface GraphBlackBox {
 
   void paint(Graphics2D g, int visibleRow);
 
+  /**
+   * Performs some user action on the graph, which can be a click, hover, drag, changing view parameters, etc. <br/>
+   * Changes are applied to the graph immediately, and the method returns the result of such action. <br/>
+   * In some cases the action might take significant time (say, 1 second) - clients of this method take care of it themselves: by showing
+   * some modal progress or else.
+   */
   @Nullable
   GraphChangeEvent performAction(@NotNull GraphAction action);
 
+  /**
+   * Returns all commits in the graph without considering commits visibility.
+   * @see #getVisibleCommits()
+   */
   @NotNull
   List<Integer> getAllCommits();
 
+  /**
+   * Returns those commits of the graph which is current visible, according to filters currently set up on the graph.
+   * @see #getAllCommits()
+   * @see #setFilter(Condition)
+   * @see #setVisibleBranches(Collection)
+   */
   @NotNull
   List<Integer> getVisibleCommits();
 
   void setVisibleBranches(@Nullable Collection<Integer> heads);
 
-  void setFilter(Condition<Integer> visibilityPredicate);
+  void setFilter(@NotNull Condition<Integer> visibilityPredicate);
 
+  @NotNull
   GraphInfoProvider getInfoProvider();
-
-  interface GraphInfoProvider {
-    int getOneOfHeads(int commit); // this is fast
-    Set<Integer> getContainingBranches(int commitIndex); // this requires graph iteration => can take some time
-    RowInfo getRowInfo(int visibleRow);
-  }
-
-  /**
-   * Some information about row highlighting etc.
-   */
-  interface RowInfo {
-
-  }
 
   interface GraphAction {
   }
