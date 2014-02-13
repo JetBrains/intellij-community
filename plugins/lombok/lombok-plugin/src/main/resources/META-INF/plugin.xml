@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.0</version>
+  <version>0.8.1</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -148,6 +148,11 @@
   <!--<li>TODO: Add delombok action for @Delegate, @Cleanup, @Synchronized and other annotations</li>-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.8.1
+				<ol>
+				    <li>Issue #98: Fixed Lombok Experimental Accessor Prefix does not handle non-alphanumeric prefixes</li>
+				</ol>
+			</li>
 		<li>0.8.0
 				<ol>
 				    <li>Added refactoring action for Lombok @Log and friends, @Getter and @Setter methods</li>
