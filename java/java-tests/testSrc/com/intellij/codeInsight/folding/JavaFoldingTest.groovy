@@ -512,6 +512,20 @@ class Test {
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
+  public void "test don't inline very long one-line methods"() {
+    configure """class Foo {
+ int someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+
+ // don't create folding that would exceed the right margin 
+ int getSomeVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable() {
+   return someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+ }
+}"""
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 1
+    assert regions[0].placeholderText == '{...}'
+  }
+
   private def changeFoldRegions(Closure op) {
     myFixture.editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret(op)
   }
