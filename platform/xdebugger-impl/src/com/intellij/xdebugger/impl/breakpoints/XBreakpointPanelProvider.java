@@ -56,8 +56,9 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   @Override
   public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {
-    final MyXBreakpointListener listener1 = new MyXBreakpointListener(listener);
-    XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpointListener(listener1);
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    final MyXBreakpointListener listener1 = new MyXBreakpointListener(listener, breakpointManager);
+    breakpointManager.addBreakpointListener(listener1);
     myListeners.add(listener1);
     Disposer.register(disposable, new Disposable() {
       @Override
@@ -71,6 +72,8 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   protected void removeListener(BreakpointsListener listener) {
     for (MyXBreakpointListener breakpointListener : myListeners) {
       if (breakpointListener.myListener == listener) {
+        XBreakpointManager manager = breakpointListener.myBreakpointManager;
+        manager.removeBreakpointListener(breakpointListener);
         myListeners.remove(breakpointListener);
         break;
       }
@@ -139,9 +142,11 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   private static class MyXBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     public BreakpointsListener myListener;
+    public XBreakpointManager myBreakpointManager;
 
-    public MyXBreakpointListener(BreakpointsListener listener) {
+    public MyXBreakpointListener(BreakpointsListener listener, XBreakpointManager breakpointManager) {
       myListener = listener;
+      myBreakpointManager = breakpointManager;
     }
 
     @Override
