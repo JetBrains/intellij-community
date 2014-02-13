@@ -37,6 +37,12 @@ class AccessorsPrefix3 {
 	}
 }
 
+@lombok.experimental.Accessors(prefix={"_", "$"})
+class AccessorsPrefix4 {
+  @lombok.Setter private String _underscore;
+  @lombok.Setter private String $DollarSign;
+}
+
 class AccessorsFluentGenerics<T extends Number> {
 	@lombok.Setter @lombok.experimental.Accessors(fluent=true) private String name;
 }

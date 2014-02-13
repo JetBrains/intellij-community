@@ -91,6 +91,18 @@ class AccessorsPrefix3 {
 		return result;
 	}
 }
+class AccessorsPrefix4 {
+  private String _underscore;
+  private String $DollarSign;
+  @java.lang.SuppressWarnings("all")
+  public void setUnderscore(final String _underscore) {
+    this._underscore = _underscore;
+  }
+  @java.lang.SuppressWarnings("all")
+  public void setDollarSign(final String $DollarSign) {
+    this.$DollarSign = $DollarSign;
+  }
+}
 class AccessorsFluentGenerics<T extends Number> {
 	private String name;
 	@java.lang.SuppressWarnings("all")
