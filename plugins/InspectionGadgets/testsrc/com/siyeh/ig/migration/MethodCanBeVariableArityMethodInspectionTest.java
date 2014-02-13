@@ -8,6 +8,7 @@ public class MethodCanBeVariableArityMethodInspectionTest extends IGInspectionTe
     final MethodCanBeVariableArityMethodInspection tool = new MethodCanBeVariableArityMethodInspection();
     tool.ignoreByteAndShortArrayParameters = true;
     tool.ignoreOverridingMethods = true;
+    tool.onlyReportPublicMethods = true;
     doTest("com/siyeh/igtest/migration/method_can_be_variable_arity_method", tool);
   }
 }

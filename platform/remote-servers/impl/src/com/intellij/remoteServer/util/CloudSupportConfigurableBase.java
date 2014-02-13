@@ -87,7 +87,7 @@ public abstract class CloudSupportConfigurableBase<
   }
 
   protected void reloadExistingApplications() {
-    Collection<Deployment> deployments = new ConnectionTask<Collection<Deployment>>("Loading existing applications list", true, true) {
+    Collection<Deployment> deployments = new ConnectionTask<Collection<Deployment>>("Loading existing applications list") {
 
       @Override
       protected void run(final ServerConnection<DC> connection,
@@ -119,7 +119,7 @@ public abstract class CloudSupportConfigurableBase<
       protected Collection<Deployment> run(SR serverRuntimeInstance) throws ServerRuntimeException {
         return null;
       }
-    }.perform();
+    }.performSync();
 
     if (deployments == null) {
       return;
@@ -286,17 +286,12 @@ public abstract class CloudSupportConfigurableBase<
 
   protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
 
-    public ConnectionTask(String title, boolean modal, boolean cancellable) {
-      super(myModelProject, title, modal, cancellable);
+    public ConnectionTask(String title) {
+      super(myModelProject, title, CloudSupportConfigurableBase.this.getServer());
     }
 
-    public ConnectionTask(Module module, String title, boolean modal, boolean cancellable) {
-      super(module.getProject(), title, modal, cancellable);
-    }
-
-    @Override
-    protected RemoteServer<SC> getServer() {
-      return CloudSupportConfigurableBase.this.getServer();
+    public ConnectionTask(Module module, String title) {
+      super(module.getProject(), title, CloudSupportConfigurableBase.this.getServer());
     }
   }
 }

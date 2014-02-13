@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.project.impl;
-
-import com.intellij.openapi.project.ProjectManager;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.ui.mac;
 
 /**
- * @author peter
+ * Created by Denis Fokin
  */
-public class DefaultProject extends ProjectImpl {
-  private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-
-  protected DefaultProject(@NotNull ProjectManager manager, @NotNull String filePath, boolean optimiseTestLoadSpeed) {
-    super(manager, filePath, optimiseTestLoadSpeed, TEMPLATE_PROJECT_NAME);
-  }
-
-  @Override
-  public boolean isDefault() {
-    return true;
-  }
-}
+public abstract class MacMessagesEmulation extends MacMessages {}

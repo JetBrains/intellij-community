@@ -118,6 +118,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     return false;
   }
 
+  @Override
   public PsiMember getPotentiallyApplicableMember() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMember>() {
       @Nullable

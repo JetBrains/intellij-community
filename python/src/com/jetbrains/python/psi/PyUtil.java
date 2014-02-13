@@ -52,6 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -104,21 +105,6 @@ public class PyUtil {
 
   private static boolean isWhitespace(ASTNode node) {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
-  }
-
-
-  @NotNull
-  public static Set<PsiElement> getComments(PsiElement start) {
-    final Set<PsiElement> comments = new HashSet<PsiElement>();
-    PsiElement seeker = start.getPrevSibling();
-    if (seeker == null) seeker = start.getParent().getPrevSibling();
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
-      if (seeker instanceof PsiComment) {
-        comments.add(seeker);
-      }
-      seeker = seeker.getPrevSibling();
-    }
-    return comments;
   }
 
   @Nullable

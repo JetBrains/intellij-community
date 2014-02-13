@@ -132,12 +132,7 @@ public class CloudGitDeploymentChecker<
       @Override
       public void run() {
         CloudGitApplication application
-          = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", true, true) {
-
-          @Override
-          protected RemoteServer<SC> getServer() {
-            return myServer;
-          }
+          = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", myServer) {
 
           @Override
           protected CloudGitApplication run(SR serverRuntime) throws ServerRuntimeException {
@@ -145,7 +140,7 @@ public class CloudGitDeploymentChecker<
               = (CloudGitDeploymentRuntime)serverRuntime.createDeploymentRuntime(myDeploymentSource, settings, project);
             return deploymentRuntime.findApplication4Repository();
           }
-        }.perform();
+        }.performSync();
 
         if (application == null) {
           Messages.showErrorDialog(mySettingsEditor.getComponent(), "No application matching repository URL(s) found in account");
