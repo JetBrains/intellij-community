@@ -83,7 +83,6 @@ public final class MethodChainsSearchUtil {
     return false;
   }
 
-  @SafeVarargs
   public static <T> HashSet<T> unionToHashSet(final Collection<T> collection, final T... items) {
     final HashSet<T> result = new HashSet<T>();
     result.addAll(collection);

@@ -38,7 +38,6 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     this((Collection<? extends T>)items);
   }
 
-  @SafeVarargs
   public CollectionListModel(final T... items) {
     myItems = ContainerUtilRt.newArrayList(items);
   }

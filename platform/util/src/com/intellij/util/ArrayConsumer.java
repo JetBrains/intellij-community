@@ -20,7 +20,6 @@ package com.intellij.util;
  */
 public interface ArrayConsumer<T> extends Consumer<T[]>{
 
-  @SuppressWarnings("unchecked")
   @Override
   void consume(final T... ts);
 }

@@ -89,7 +89,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     });
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public Self oneOf(final T... values) {
     final Collection<T> list;

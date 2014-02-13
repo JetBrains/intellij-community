@@ -178,7 +178,6 @@ public class ChainCompletionContext {
     return myNotDeprecatedMethodsResolver.get(methodIncompleteSignature);
   }
 
-  @SafeVarargs
   private static <T> HashSet<T> unionToHashSet(final Collection<T>... collections) {
     final HashSet<T> res = new HashSet<T>();
     for (final Collection<T> set : collections) {

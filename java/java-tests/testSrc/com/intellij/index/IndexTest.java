@@ -191,7 +191,6 @@ public class IndexTest extends IdeaTestCase {
   }
   */
   
-  @SafeVarargs
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }

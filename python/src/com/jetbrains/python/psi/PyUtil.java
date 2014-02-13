@@ -1003,7 +1003,6 @@ public class PyUtil {
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
-  @SafeVarargs
   public static <T> boolean among(@NotNull T what, T... variants) {
     for (T s : variants) {
       if (what.equals(s)) return true;
