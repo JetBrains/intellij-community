@@ -33,12 +33,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.*;
-import java.util.Collection;
 
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
-abstract class FilterPopupComponent extends JPanel {
+abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel {
 
   /**
    * Special value that indicates that no filtering is on.
@@ -91,11 +90,10 @@ abstract class FilterPopupComponent extends JPanel {
   protected abstract ActionGroup createActionGroup();
 
   /**
-   * Return the filters (which would be concatenated with OR) currently selected via this component.</br>
-   * Or return null if no filters are selected via this component.
+   * Return the filter currently selected via this component or null if no filters are selected via this component.
    */
   @Nullable
-  protected abstract Collection<VcsLogFilter> getFilters();
+  protected abstract Filter getFilter();
 
   protected void setValue(@NotNull String newValue) {
     setValue(newValue, newValue);

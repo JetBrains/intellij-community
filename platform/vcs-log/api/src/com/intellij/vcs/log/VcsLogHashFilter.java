@@ -15,16 +15,10 @@
  */
 package com.intellij.vcs.log;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
 
-/**
- * Tells to filter by some branch name.
- */
-public interface VcsLogBranchFilter extends VcsLogGraphFilter {
+public interface VcsLogHashFilter {
 
-  @NotNull
-  Collection<String> getBranchNames();
+  Collection<Hash> getHashes();
 
 }

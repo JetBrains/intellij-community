@@ -312,7 +312,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public List<KeyValue<String, String>> getExtraJvmArgs() {
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      return HttpConfigurable.getJvmPropertiesList(false, null);
+      final List<KeyValue<String, String>> extraJvmArgs = ContainerUtil.newArrayList();
+      final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+      if (!StringUtil.isEmpty(httpConfigurable.PROXY_EXCEPTIONS)) {
+        List<String> hosts = StringUtil.split(httpConfigurable.PROXY_EXCEPTIONS, ",");
+        if (!hosts.isEmpty()) {
+          extraJvmArgs.add(KeyValue.create("http.nonProxyHosts", StringUtil.join(hosts, StringUtil.TRIMMER, "|")));
+        }
+      }
+      extraJvmArgs.addAll(HttpConfigurable.getJvmPropertiesList(false, null));
+      return extraJvmArgs;
     }
     return Collections.emptyList();
   }

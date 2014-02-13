@@ -23,7 +23,7 @@ import java.util.Date;
  * Tells to filter by date. <br/>
  * Only before or after dates can be given, or both can be given.
  */
-public interface VcsLogDateFilter {
+public interface VcsLogDateFilter extends VcsLogDetailsFilter {
 
   /**
    * If not null, only commits made after the returned date (inclusively) should be accepted.
