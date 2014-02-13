@@ -91,7 +91,6 @@ public class ChunkGraphTest extends GraphTestCase {
     }
   }
 
-  @SafeVarargs
   private static <T> Set<T> toSet(T... strings) {
     return new HashSet<T>(Arrays.asList(strings));
   }

@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package java.lang;
+package com.intellij.testFramework.fixtures;
 
-import java.lang.annotation.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 
-@Deprecated
-/**
- as soon as we migrate jdk7+, remove this
- see also {@link com.intellij.Patches.USE_REFLECTION_TO_ACCESS_JDK7}
+import java.awt.*;
 
- retention changed to source because it is not the real SafeVarargs, it's just a stub to be compilation-compatible with jdk7
-*/
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
-public @interface SafeVarargs {
+public class EditorScrollingFixture {
+  public static void setVisibleSize(Editor editor, Dimension size) {
+    ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
+  }
 }

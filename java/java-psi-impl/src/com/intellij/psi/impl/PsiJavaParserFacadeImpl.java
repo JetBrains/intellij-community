@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import java.util.Map;
  */
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   protected final PsiManager myManager;
-  private PsiJavaFile myDummyJavaFile;
 
   private static final String DUMMY_FILE_NAME = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
 
@@ -382,14 +381,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       throw new IncorrectOperationException("Incorrect primitive type \"" + text + "\".");
     }
     return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
-  }
-
-  public PsiJavaFile getDummyJavaFile() {
-    if (myDummyJavaFile == null) {
-      myDummyJavaFile = createDummyJavaFile("");
-    }
-
-    return myDummyJavaFile;
   }
 
   public static PsiPrimitiveType getPrimitiveType(final String text) {

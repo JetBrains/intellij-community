@@ -42,8 +42,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
 
   protected abstract ParentType[] getChildren(@NotNull final ParentType parentType);
 
-  @SafeVarargs
-  public final Self withParents(@NotNull final Class<? extends ParentType>... types) {
+  public Self withParents(@NotNull final Class<? extends ParentType>... types) {
     return with(new PatternCondition<T>("withParents") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -171,8 +170,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
    * @param strict
    * @return Ensures that first elements in hierarchy accepted by patterns appear in specified order
    */
-  @SafeVarargs
-  public final Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
+  public Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
     return with(new PatternCondition<T>("insideSequence") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         int i = 0;

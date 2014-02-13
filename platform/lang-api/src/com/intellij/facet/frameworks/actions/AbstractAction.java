@@ -27,10 +27,9 @@ import java.net.URL;
 public abstract class AbstractAction {
   private static final Logger LOG = Logger.getInstance(AbstractAction.class.getName());
 
-  private static final String SERVER_URL = Registry.get("frameworks.download.libraries.server.url").asString();
+  private static String SERVER_URL = Registry.get("frameworks.download.libraries.server.url").asString();
   private Pair<String, String>[] myParams;
 
-  @SafeVarargs
   protected AbstractAction(Pair<String, String>... params) {
     myParams = params;
   }

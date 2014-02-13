@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -135,6 +132,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     //hack for inserting references from java code
     if (element instanceof GrCodeReferenceElement || element instanceof PsiJavaCodeReferenceElement) {
       if (findChildByType(getKeywordType()) == null) {
+        getNode().getTreeParent().addLeaf(TokenType.WHITE_SPACE, " ", getNode());
         getNode().addLeaf(getKeywordType(), getKeywordType().toString(), null);
       }
       else if (findChildByClass(GrCodeReferenceElement.class) != null) {

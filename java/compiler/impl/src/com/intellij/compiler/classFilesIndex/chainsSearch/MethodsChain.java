@@ -156,7 +156,6 @@ public class MethodsChain {
     return false;
   }
 
-  @SafeVarargs
   private static Set<String> joinSets(final Set<String>... sets) {
     final Set<String> result = new HashSet<String>();
     for (final Set<String> set : sets) {

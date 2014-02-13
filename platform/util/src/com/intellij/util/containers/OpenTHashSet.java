@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -62,8 +61,7 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(ts, strategy);
   }
 
-  @SafeVarargs
-  public OpenTHashSet(final TObjectHashingStrategy<T> strategy, @NotNull T... ts) {
+  public OpenTHashSet(final TObjectHashingStrategy<T> strategy, final T... ts) {
     super(Arrays.asList(ts), strategy);
   }
 

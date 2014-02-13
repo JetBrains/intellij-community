@@ -102,7 +102,6 @@ public class GenericRepositoryUtil {
     return StringUtil.capitalizeWords(prettyName, true);
   }
 
-  @SafeVarargs
   public static <T> List<T> concat(List<? extends T> list, T... values) {
     return ContainerUtil.concat(true, list, values);
   }

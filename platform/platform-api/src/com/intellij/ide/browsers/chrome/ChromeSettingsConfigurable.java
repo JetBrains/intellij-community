@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,7 @@ public class ChromeSettingsConfigurable implements Configurable {
   @Override
   public boolean isModified() {
     if (myUseCustomProfileCheckBox.isSelected() != mySettings.isUseCustomProfile()
-        || !myCommandLineOptionsEditor.getText().equals(mySettings.getCommandLineOptions())) {
+        || !myCommandLineOptionsEditor.getText().equals(StringUtil.notNullize(mySettings.getCommandLineOptions()))) {
       return true;
     }
 
@@ -98,7 +99,7 @@ public class ChromeSettingsConfigurable implements Configurable {
       myUserDataDirField.setText(FileUtil.toSystemDependentName(path));
     }
     else {
-      myUserDataDirField.setText(myDefaultUserDirPath);
+      myUserDataDirField.setText(FileUtil.toSystemDependentName(myDefaultUserDirPath));
     }
   }
 
@@ -111,10 +112,10 @@ public class ChromeSettingsConfigurable implements Configurable {
   private static String getDefaultUserDataPath() {
     File dir = new File(PathManager.getConfigPath(), "chrome-user-data");
     try {
-      return dir.getCanonicalPath();
+      return FileUtil.toSystemIndependentName(dir.getCanonicalPath());
     }
     catch (IOException e) {
-      return dir.getAbsolutePath();
+      return FileUtil.toSystemIndependentName(dir.getAbsolutePath());
     }
   }
 

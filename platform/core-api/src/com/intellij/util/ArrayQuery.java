@@ -32,7 +32,6 @@ import java.util.Iterator;
 public class ArrayQuery<T> implements Query<T> {
   private final T[] myArray;
 
-  @SafeVarargs
   public ArrayQuery(@NotNull T... array) {
     myArray = array;
   }

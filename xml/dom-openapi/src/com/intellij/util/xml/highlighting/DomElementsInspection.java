@@ -49,7 +49,6 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
 
   private final Set<Class<? extends T>> myDomClasses;
 
-  @SafeVarargs
   public DomElementsInspection(Class<? extends T> domClass, @NotNull Class<? extends T>... additionalClasses) {
     myDomClasses = new THashSet<Class<? extends T>>(Arrays.asList(additionalClasses));
     myDomClasses.add(domClass);
