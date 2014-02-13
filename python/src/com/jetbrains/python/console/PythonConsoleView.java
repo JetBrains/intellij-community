@@ -186,7 +186,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     myLanguageConsoleView.print(text, outputType);
   }
 
-  public void print(String text, final ConsoleViewContentType outputType) {
+  public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
     detectIPython(text, outputType);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;

@@ -100,7 +100,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param contentType  given type
    */
   @Override
-  public void print(final String s, final ConsoleViewContentType contentType) {
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     myResultsViewer.getRoot().addLast(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(s, contentType);

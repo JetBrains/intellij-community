@@ -63,7 +63,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     myConsole.attachToProcess(processHandler);
   }
 
-  public void print(final String s, final ConsoleViewContentType contentType) {
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     printNew(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(s, contentType);

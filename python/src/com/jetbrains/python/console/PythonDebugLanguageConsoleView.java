@@ -141,7 +141,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
   @Override
-  public void print(String s, ConsoleViewContentType contentType) {
+  public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
     myPydevConsoleView.print(s, contentType);
     myTextConsole.print(s, contentType);
   }
