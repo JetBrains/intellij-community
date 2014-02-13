@@ -26,8 +26,6 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="lombok-api" />
-        <module name="lombok-test" />
-        <module name="lombok_pg-manual-test" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">

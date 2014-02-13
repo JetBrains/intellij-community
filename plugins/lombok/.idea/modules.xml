@@ -4,10 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/lombok-api/lombok-api.iml" filepath="$PROJECT_DIR$/lombok-api/lombok-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/lombok-intellij-plugin.iml" filepath="$PROJECT_DIR$/lombok-intellij-plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/test-manual/lombok-manual-test.iml" filepath="$PROJECT_DIR$/test-manual/lombok-manual-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" filepath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/test-manual/lombok/lombok-test.iml" filepath="$PROJECT_DIR$/test-manual/lombok/lombok-test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/test-manual/lombok_pg/lombok_pg-manual-test.iml" filepath="$PROJECT_DIR$/test-manual/lombok_pg/lombok_pg-manual-test.iml" />
     </modules>
   </component>
 </project>

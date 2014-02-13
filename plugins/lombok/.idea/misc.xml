@@ -29,6 +29,13 @@
         <option value="$PROJECT_DIR$/test-manual/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/test-manual/lombok/pom.xml" />
+        <option value="$PROJECT_DIR$/test-manual/lombok_pg/pom.xml" />
+        <option value="$PROJECT_DIR$/test-manual/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="ProjectKey">
     <option name="state" value="https://github.com/mplushnikov/lombok-intellij-plugin.git" />

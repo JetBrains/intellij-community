@@ -30,6 +30,7 @@ import java.util.Collection;
 public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCase {
 
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
+  private static final Collection<String> MODIFIERS_TO_COMPARE = Collections2.filter(Arrays.asList(PsiModifier.MODIFIERS), Predicates.not(Predicates.equalTo(PsiModifier.DEFAULT)));
 
   protected boolean shouldCompareAnnotations() {
     return false;
@@ -140,7 +141,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     assertNotNull(afterModifierList);
 
     if (shouldCompareModifiers()) {
-      for (String modifier : PsiModifier.MODIFIERS) {
+      for (String modifier : MODIFIERS_TO_COMPARE) {
         assertEquals(modifier + " Modifier is not equal; ", afterModifierList.hasModifierProperty(modifier), beforeModifierList.hasModifierProperty(modifier));
       }
     }
