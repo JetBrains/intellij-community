@@ -15,27 +15,36 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
  */
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference, BundleNameEvaluator {
-  private static final Function<PropertiesFile,PsiElement> PROPERTIES_FILE_PSI_ELEMENT_FUNCTION = new Function<PropertiesFile, PsiElement>() {
-    @Override
-    public PsiElement fun(PropertiesFile propertiesFile) {
-      return propertiesFile.getContainingFile();
-    }
-  };
+  private static final Function<PropertiesFile, PsiElement> PROPERTIES_FILE_PSI_ELEMENT_FUNCTION =
+    new Function<PropertiesFile, PsiElement>() {
+      @Override
+      public PsiElement fun(PropertiesFile propertiesFile) {
+        return propertiesFile.getContainingFile();
+      }
+    };
   private final String myBundleName;
 
   public ResourceBundleReference(final PsiElement element) {
@@ -47,12 +56,14 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     myBundleName = StringUtil.replaceChar(getValue(), '/', '.');
   }
 
-  @Nullable public PsiElement resolve() {
+  @Nullable
+  public PsiElement resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  @NotNull
+  public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
     List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(myElement.getResolveScope(), myBundleName, this);
     return PsiElementResolveResult.createResults(ContainerUtil.map(propertiesFiles, PROPERTIES_FILE_PSI_ELEMENT_FUNCTION));
@@ -103,8 +114,27 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
 
   @NotNull
   public Object[] getVariants() {
-    PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
-    return referenceManager.getPropertyFileBaseNames(myElement.getResolveScope(), this);
+    final ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getElement().getProject());
+    final PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
+
+    final Set<String> bundleNames = new HashSet<String>();
+    final List<LookupElement> variants = new SmartList<LookupElement>();
+    PropertiesFileProcessor processor = new PropertiesFileProcessor() {
+      @Override
+      public boolean process(String baseName, PropertiesFile propertiesFile) {
+        if (!bundleNames.add(baseName)) return true;
+
+        final LookupElementBuilder builder =
+          LookupElementBuilder.create(baseName)
+            .withIcon(AllIcons.Nodes.ResourceBundle);
+        boolean isInContent = projectFileIndex.isInContent(propertiesFile.getVirtualFile());
+        variants.add(isInContent ? PrioritizedLookupElement.withPriority(builder, Double.MAX_VALUE) : builder);
+        return true;
+      }
+    };
+
+    referenceManager.processPropertiesFiles(myElement.getResolveScope(), processor, this);
+    return variants.toArray(new LookupElement[variants.size()]);
   }
 
   public String evaluateBundleName(final PsiFile psiFile) {
