@@ -350,6 +350,34 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
     }
 
+    /**
+     * Check that underlying trust store contains certificate with specified alias.
+     *
+     * @param alias - certificate's alias to be checked
+     * @return - whether certificate is in storage
+     */
+    public boolean containsCertificate(@NotNull String alias) {
+      myReadLock.lock();
+      try {
+        return myKeyStore.containsAlias(alias);
+      }
+      catch (KeyStoreException e) {
+        LOG.error(e);
+        return false;
+      } finally {
+        myReadLock.unlock();
+      }
+    }
+
+    boolean removeAllCertificates() {
+      for (X509Certificate certificate : getCertificates()) {
+        if (!removeCertificate(certificate)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     @Override
     public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
       myReadLock.lock();
