@@ -29,8 +29,6 @@ public class Runner {
     }
 
     String command = args[0];
-    logger.info("args[0]: " + args[0]);
-
     if ("create".equals(command)) {
       if (args.length < 6) {
         printUsage();
