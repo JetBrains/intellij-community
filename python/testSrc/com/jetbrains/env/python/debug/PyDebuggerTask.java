@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.RemoteSdkTestable;
@@ -91,7 +92,9 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
 
 
-    deletePycFiles();
+    if (SystemInfo.isWindows) { //fix the problem with pydevd.py that can't be imported because of caches in multi-process debug test
+      deletePycFiles();
+    }
 
 
     final PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);
@@ -177,7 +180,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
   }
 
   private static void deletePycFiles() {
-    for (File f: PythonHelpersLocator.getHelpersRoot().listFiles(new FilenameFilter() {
+    File root = PythonHelpersLocator.getHelpersRoot();
+    for (File f : new File(root, "pydev").listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(".pyc") || name.equals("__pycache__");
