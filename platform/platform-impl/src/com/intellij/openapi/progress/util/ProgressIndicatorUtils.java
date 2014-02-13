@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -106,7 +104,7 @@ public class ProgressIndicatorUtils {
   }
 
   public static void scheduleWithWriteActionPriority(final ProgressIndicator indicator, final ReadTask task) {
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         runWithWriteActionPriority(indicator, task);
