@@ -23,7 +23,7 @@ import java.util.Collection;
 /**
  * Tells the log to filter by files and folders.
  */
-public interface VcsLogStructureFilter {
+public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
 
   /**
    * <p>Returns files from the given VCS root, which are affected by matching commits, and folders containing such files.</p>
