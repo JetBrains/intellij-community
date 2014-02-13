@@ -36,6 +36,10 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
   @Nullable
   PsiType getFunctionalInterfaceType();
 
+  /**
+   * @return if there is only one possible compile-time declaration with only one possible invocation type, 
+   *         regardless of the targeted function type return true, false otherwise
+   */
   boolean isExact();
 
   /**
@@ -49,6 +53,12 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
    *   The method reference has some other form and at least one potentially-applicable method is not declared static. 
    */
   boolean isPotentiallyCompatible(PsiType functionalInterfaceType);
+
+  /**
+   * @return potential applicable member for exact reference, otherwise null
+   */
+  @Nullable
+  PsiMember getPotentiallyApplicableMember();
 
   /**
    * @return true if reference is of form ClassType::new

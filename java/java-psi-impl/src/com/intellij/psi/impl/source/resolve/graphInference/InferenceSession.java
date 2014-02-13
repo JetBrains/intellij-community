@@ -466,19 +466,7 @@ public class InferenceSession {
               return null;
             }
             final JavaResolveResult[] results = processor.getResult();
-            for (JavaResolveResult result : results) {
-              final PsiType type = getTypeByMethod(context, argumentList, null, result, result.getElement());
-              if (type != null) {
-                final Set<PsiTypeParameter> parameters = myInferenceVariables.keySet();
-                final InferenceSession session = new InferenceSession(parameters.toArray(new PsiTypeParameter[parameters.size()]), mySiteSubstitutor, myManager, myContext);
-                session.copy(this);
-                session.registerConstraints(returnType, type);
-                if (session.repeatInferencePhases(true)) {
-                  return type;
-                }
-              }
-            }
-            return null;
+            return results.length == 1 ? getTypeByMethod(context, argumentList, null, results[0], results[0].getElement()) : null;
           }
           return getTypeByMethod(context, argumentList, pair, null, pair.first);
         }
@@ -494,12 +482,6 @@ public class InferenceSession {
       return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
     }
     return null;
-  }
-
-  private void copy(InferenceSession session) {
-    for (PsiTypeParameter parameter : session.myInferenceVariables.keySet()) {
-      myInferenceVariables.put(parameter, session.myInferenceVariables.get(parameter).copy());
-    }
   }
 
   private PsiType getTypeByMethod(PsiExpression context,
@@ -848,5 +830,228 @@ public class InferenceSession {
 
   public InferenceVariable getInferenceVariable(PsiTypeParameter parameter) {
     return myInferenceVariables.get(parameter);
+  }
+
+  /**
+   * 18.5.4 More Specific Method Inference 
+   */
+  public static boolean isMoreSpecific(PsiMethod m1,
+                                       PsiMethod m2,
+                                       PsiSubstitutor siteSubstitutor2,
+                                       PsiExpression[] args,
+                                       PsiElement context,
+                                       boolean varargs) {
+    final PsiTypeParameter[] typeParameters = m2.getTypeParameters();
+
+    final InferenceSession session = new InferenceSession(typeParameters, siteSubstitutor2, m2.getManager(), context);
+
+    final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
+    final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
+    LOG.assertTrue(parameters1.length == parameters2.length);
+
+    final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
+    for (int i = 0; i < paramsLength; i++) {
+      PsiType sType = siteSubstitutor2.substitute(parameters1[i].getType());
+      PsiType tType = siteSubstitutor2.substitute(parameters2[i].getType());
+      if (session.isProperType(sType) && session.isProperType(tType)) {
+        if (!TypeConversionUtil.isAssignable(tType, sType)) {
+          return false;
+        }
+        continue;
+      }
+      if (LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
+        if (!isFunctionalTypeMoreSpecific(sType, tType, session, args)) {
+          return false;
+        }
+      } else {
+        session.addConstraint(new StrictSubtypingConstraint(tType, sType));
+      }
+    }
+
+    if (varargs) {
+      PsiType sType = siteSubstitutor2.substitute(parameters1[paramsLength].getType());
+      PsiType tType = siteSubstitutor2.substitute(parameters2[paramsLength].getType());
+      session.addConstraint(new StrictSubtypingConstraint(tType, sType));
+    }
+
+    return session.repeatInferencePhases(true);
+  }
+
+  /**
+   * 15.12.2.5 Choosing the Most Specific Method
+   * "a functional interface type S is more specific than a functional interface type T for an expression exp" part
+   */
+  public static boolean isFunctionalTypeMoreSpecificOnExpression(PsiType sType,
+                                                                 PsiType tType,
+                                                                 PsiExpression arg) {
+    return isFunctionalTypeMoreSpecific(sType, tType, null, arg);
+  }
+
+  private static boolean isFunctionalTypeMoreSpecific(PsiType sType,
+                                                      PsiType tType,
+                                                      @Nullable InferenceSession session, 
+                                                      PsiExpression... args) {
+    final PsiClassType.ClassResolveResult sResult = PsiUtil.resolveGenericsClassInType(sType);
+    final PsiMethod sInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(sResult); //todo capture of Si
+    LOG.assertTrue(sInterfaceMethod != null);
+    final PsiSubstitutor sSubstitutor = LambdaUtil.getSubstitutor(sInterfaceMethod, sResult);
+
+    final PsiClassType.ClassResolveResult tResult = PsiUtil.resolveGenericsClassInType(tType);
+    final PsiMethod tInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(tResult);
+    LOG.assertTrue(tInterfaceMethod != null);
+    final PsiSubstitutor tSubstitutor = LambdaUtil.getSubstitutor(tInterfaceMethod, tResult);
+
+    for (PsiExpression arg : args) {
+      if (!argConstraints(arg, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  protected static boolean argConstraints(PsiExpression arg,
+                                          @Nullable InferenceSession session,
+                                          PsiMethod sInterfaceMethod,
+                                          PsiSubstitutor sSubstitutor, 
+                                          PsiMethod tInterfaceMethod, 
+                                          PsiSubstitutor tSubstitutor) {
+    if (arg instanceof PsiLambdaExpression && ((PsiLambdaExpression)arg).hasFormalParameterTypes()) {
+      final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());
+      final PsiType tReturnType = tSubstitutor.substitute(tInterfaceMethod.getReturnType());
+
+      if (tReturnType == PsiType.VOID) {
+        return true;
+      }
+
+      if (sReturnType == PsiType.VOID && session != null) {
+        return false;
+      }
+
+      if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
+          !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(sReturnType), TypeConversionUtil.erasure(tReturnType)) &&
+          !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(tReturnType), TypeConversionUtil.erasure(sReturnType))) {
+
+        //Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, 
+        //then these rules are applied recursively to R1 and R2, for each result expression in expi.
+        final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
+        if (!isFunctionalTypeMoreSpecific(sReturnType, tReturnType, session, returnExpressions.toArray(new PsiExpression[returnExpressions.size()]))) {
+          return false;
+        }
+      } else {
+        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
+        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+        if (sPrimitive ^ tPrimitive) {
+          for (PsiExpression returnExpression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg)) {
+            if (!PsiPolyExpressionUtil.isPolyExpression(returnExpression)) {
+              final PsiType returnExpressionType = returnExpression.getType();
+              if (sPrimitive) {
+                if (!(returnExpressionType instanceof PsiPrimitiveType)) {
+                  return false;
+                }
+              } else {
+                if (!(returnExpressionType instanceof PsiClassType)) {
+                  return false;
+                }
+              }
+            }
+          }
+          return true;
+        }
+        if (session != null) {
+          session.addConstraint(new StrictSubtypingConstraint(tReturnType, sReturnType));
+          return true;
+        } else {
+          return TypeConversionUtil.isAssignable(sReturnType, tReturnType); 
+        }
+      }
+    }
+
+    if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
+      final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
+      final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
+      LOG.assertTrue(sParameters.length == tParameters.length);
+      if (session != null) {
+        for (int i = 0; i < tParameters.length; i++) {
+          session.addConstraint(new TypeEqualityConstraint(tSubstitutor.substitute(tParameters[i].getType()),
+                                                           sSubstitutor.substitute(sParameters[i].getType())));
+        }
+      }
+      final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());
+      final PsiType tReturnType = tSubstitutor.substitute(tInterfaceMethod.getReturnType());
+      if (tReturnType == PsiType.VOID) {
+        return true;
+      }
+
+      if (sReturnType == PsiType.VOID && session != null) {
+        return false;
+      }
+
+      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
+      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+
+      if (sPrimitive ^ tPrimitive) {
+        final PsiMember member = ((PsiMethodReferenceExpression)arg).getPotentiallyApplicableMember();
+        LOG.assertTrue(member != null);
+        if (member instanceof PsiMethod) {
+          final PsiType methodReturnType = ((PsiMethod)member).getReturnType();
+          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType ||
+              tPrimitive && methodReturnType instanceof PsiClassType) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      if (session != null) {
+        session.addConstraint(new StrictSubtypingConstraint(tReturnType, sReturnType));
+        return true;
+      } else {
+        return TypeConversionUtil.isAssignable(sReturnType, tReturnType);
+      }
+    }
+
+    if (arg instanceof PsiParenthesizedExpression) {
+      return argConstraints(((PsiParenthesizedExpression)arg).getExpression(), session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor);
+    }
+
+    if (arg instanceof PsiConditionalExpression) {
+      final PsiExpression thenExpression = ((PsiConditionalExpression)arg).getThenExpression();
+      final PsiExpression elseExpression = ((PsiConditionalExpression)arg).getElseExpression();
+      return argConstraints(thenExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor) &&
+             argConstraints(elseExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor);
+    }
+    return false;
+  }
+
+  /**
+   *  if Si is a functional interface type and Ti is a parameterization of functional interface, I, and none of the following is true:
+
+   *  Si is a superinterface of I, or a parameterization of a superinterface of I.
+   *  Si is subinterface of I, or a parameterization of a subinterface of I.
+   *  Si is an intersection type and each element of the intersection is a superinterface of I, or a parameterization of a superinterface of I.
+   *  Si is an intersection type and some element of the intersection is a subinterface of I, or a parameterization of a subinterface of I.
+   */
+  private static boolean relates(PsiType sType, PsiType tType) {
+    final PsiType erasedType = TypeConversionUtil.erasure(tType);
+    LOG.assertTrue(erasedType != null);  
+    if (sType instanceof PsiIntersectionType) {
+      boolean superRelation = true;
+      boolean subRelation = false;
+      for (PsiType sConjunct : ((PsiIntersectionType)sType).getConjuncts()) {
+        final PsiType sConjunctErasure = TypeConversionUtil.erasure(sConjunct);
+        if (sConjunctErasure != null) {
+          superRelation &= TypeConversionUtil.isAssignable(sConjunctErasure, erasedType);
+          subRelation |= TypeConversionUtil.isAssignable(erasedType, sConjunctErasure);
+        }
+      }
+      return superRelation || subRelation;
+    }
+    if (sType instanceof PsiClassType) {
+      final PsiType sTypeErasure = TypeConversionUtil.erasure(sType);
+      if (sTypeErasure != null) {
+        return TypeConversionUtil.isAssignable(sTypeErasure, erasedType) || TypeConversionUtil.isAssignable(erasedType, sTypeErasure);
+      }
+    }
+    return false;
   }
 }
