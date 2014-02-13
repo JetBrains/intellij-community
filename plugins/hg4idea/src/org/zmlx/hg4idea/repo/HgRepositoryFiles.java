@@ -30,8 +30,8 @@ import java.util.Collection;
  */
 public class HgRepositoryFiles {
 
-  public static final String BRANCHHEADS = "cache/branchheads";  // can be branchheads or branchheads-served after approx 2.5,
-  // so check for starting branchheads
+  public static final String BRANCHHEADS = "cache/branch";//branchheads <2.5; branchheads-served >= 2.5 and <2.9; branch2-served >=2.9
+  // so check for starting branch
   public static final String BRANCHEADSDIR = "cache";
   public static final String MERGE = "merge";
   public static final String BRANCH = "branch";
