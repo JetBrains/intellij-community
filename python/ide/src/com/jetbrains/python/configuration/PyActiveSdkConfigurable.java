@@ -61,11 +61,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
-  private JPanel myPanel;
+  private JPanel myMainPanel;
   private final Project myProject;
   @Nullable private final Module myModule;
-  private MyListener myListener;
-  Sdk myAddedSdk = null;
+  private MySdkModelListener mySdkModelListener;
+  private Sdk myAddedSdk = null;
 
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
@@ -94,15 +94,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInterpreterList.setSdkCombo(mySdkCombo);
 
     myProjectSdksModel = myInterpreterList.getModel();
-    myListener = new MyListener(this);
-    myProjectSdksModel.addListener(myListener);
+    mySdkModelListener = new MySdkModelListener(this);
+    myProjectSdksModel.addListener(mySdkModelListener);
 
     mySdkCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        if (selectedSdk != null)
-          myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, selectedSdk));
+        myPackagesPanel.updatePackages(selectedSdk != null ? new PyPackageManagementService(myProject, selectedSdk) : null);
       }
     });
     myDetailsCallback = new NullableConsumer<Sdk>() {
@@ -154,7 +153,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private void layoutPanel() {
     final GridBagLayout layout = new GridBagLayout();
-    myPanel = new JPanel(layout);
+    myMainPanel = new JPanel(layout);
     final JLabel label = new JLabel("Project Interpreter:");
     final JLabel label1 = new JLabel("  ");
     mySdkCombo = new ComboBox() {
@@ -194,24 +193,24 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridx = 0;
     c.gridy = 0;
-    myPanel.add(label, c);
+    myMainPanel.add(label, c);
 
     c.gridx = 1;
     c.gridy = 0;
     c.weightx = 0.1;
-    myPanel.add(mySdkCombo, c);
+    myMainPanel.add(mySdkCombo, c);
 
     c.insets = new Insets(0,5,0,2);
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;
-    myPanel.add(myDetailsButton, c);
+    myMainPanel.add(myDetailsButton, c);
 
     c.insets = new Insets(2,2,2,2);
     c.gridx = 0;
     c.gridy = 1;
     c.gridwidth = 3;
-    myPanel.add(label1, c);
+    myMainPanel.add(label1, c);
 
     c.gridx = 0;
     c.gridy = 2;
@@ -219,7 +218,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridwidth = 3;
     c.gridheight = GridBagConstraints.RELATIVE;
     c.fill = GridBagConstraints.BOTH;
-    myPanel.add(myPackagesPanel, c);
+    myMainPanel.add(myPackagesPanel, c);
 
     c.gridheight = GridBagConstraints.REMAINDER;
     c.gridx = 0;
@@ -229,12 +228,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.SOUTH;
 
-    myPanel.add(notificationsComponent, c);
+    myMainPanel.add(notificationsComponent, c);
   }
 
   @Override
   public JComponent createComponent() {
-    return myPanel;
+    return myMainPanel;
   }
 
   @Override
@@ -390,14 +389,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void disposeUIResources() {
-    myProjectSdksModel.removeListener(myListener);
+    myProjectSdksModel.removeListener(mySdkModelListener);
     myInterpreterList.disposeModel();
   }
 
-  private static class MyListener implements SdkModel.Listener {
+  private static class MySdkModelListener implements SdkModel.Listener {
     private final PyActiveSdkConfigurable myConfigurable;
 
-    public MyListener(PyActiveSdkConfigurable configurable) {
+    public MySdkModelListener(PyActiveSdkConfigurable configurable) {
       myConfigurable = configurable;
     }
 
