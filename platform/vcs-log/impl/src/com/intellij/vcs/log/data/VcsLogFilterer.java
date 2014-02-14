@@ -6,12 +6,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graphmodel.GraphModel;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogBranchFilter;
+import com.intellij.vcs.log.VcsLogDetailsFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -27,13 +27,6 @@ public class VcsLogFilterer {
 
   private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 200;
 
-  private static final Function<Node,Boolean> ALL_NODES_VISIBLE = new Function<Node, Boolean>() {
-    @Override
-    public Boolean fun(Node node) {
-      return true;
-    }
-  };
-
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUI myUI;
 
@@ -44,8 +37,6 @@ public class VcsLogFilterer {
 
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     DataPack dataPack = myLogDataHolder.getDataPack();
-    final GraphModel graphModel = dataPack.getGraphModel();
-    List<VcsLogGraphFilter> graphFilters = filters.getGraphFilters();
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
 
     // it is important to apply graph filters first:
@@ -53,17 +44,7 @@ public class VcsLogFilterer {
     // (e.g. won't be able to find out if a commit belongs to the branch selected by user).
 
     // hide invisible nodes from the graph
-    if (!graphFilters.isEmpty()) {
-      applyGraphFilters(graphModel, graphFilters);
-    }
-    else {
-      myUI.getTable().executeWithoutRepaint(new Runnable() {
-        @Override
-        public void run() {
-          graphModel.setVisibleBranchesNodes(ALL_NODES_VISIBLE);
-        }
-      });
-    }
+    applyGraphFilters(filters.getBranchFilter());
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
@@ -122,21 +103,11 @@ public class VcsLogFilterer {
     return newLoadMoreStage;
   }
 
-  private void applyGraphFilters(final GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {
+  private void applyGraphFilters(@Nullable final VcsLogBranchFilter branchFilter) {
     myUI.getTable().executeWithoutRepaint(new Runnable() {
       @Override
       public void run() {
-        graphModel.setVisibleBranchesNodes(new Function<Node, Boolean>() {
-          @Override
-          public Boolean fun(final Node node) {
-            return !ContainerUtil.exists(onGraphFilters, new Condition<VcsLogGraphFilter>() {
-              @Override
-              public boolean value(VcsLogGraphFilter filter) {
-                return !filter.matches(node.getCommitIndex());
-              }
-            });
-          }
-        });
+        myLogDataHolder.getDataPack().getGraphFacade().setVisibleBranches(branchFilter != null ? branchFilter.getMatchingHeads() : null);
       }
     });
   }

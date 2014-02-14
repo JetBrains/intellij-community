@@ -34,6 +34,13 @@ import java.util.Set;
 public class GraphFacadeImpl implements GraphBlackBox {
 
   private static final Logger LOG = Logger.getInstance(GraphFacadeImpl.class);
+  private static final Function<Node,Boolean> ALL_NODES_VISIBLE = new Function<Node, Boolean>() {
+    @Override
+    public Boolean fun(Node node) {
+      return true;
+    }
+  };
+
   private final GraphModel myGraphModel;
   private final GraphPrintCellModel myPrintCellModel;
 
@@ -106,8 +113,13 @@ public class GraphFacadeImpl implements GraphBlackBox {
   }
 
   @Override
-  public void setVisibleBranches(@Nullable Collection<Integer> heads) {
-    throw new UnsupportedOperationException();
+  public void setVisibleBranches(@Nullable final Collection<Integer> heads) {
+    myGraphModel.setVisibleBranchesNodes(heads == null ? ALL_NODES_VISIBLE : new Function<Node, Boolean>() {
+      @Override
+      public Boolean fun(final Node node) {
+        return heads.contains(node.getCommitIndex());
+      }
+    });
   }
 
   @Override

@@ -48,9 +48,6 @@ public interface VcsLogFilterCollection {
   boolean isEmpty();
 
   @NotNull
-  List<VcsLogGraphFilter> getGraphFilters();
-
-  @NotNull
   List<VcsLogDetailsFilter> getDetailsFilters();
 
 }
