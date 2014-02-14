@@ -205,7 +205,7 @@ public class FindInProjectUtil {
     return Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
 
-  public static void findUsages(@NotNull final FindModel findModel,
+  public static void findUsages(@NotNull FindModel findModel,
                                 final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
                                 boolean showWarnings,
@@ -253,9 +253,10 @@ public class FindInProjectUtil {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown[0]) {
             warningShown[0] = true;
-            String message = FindBundle.message("find.excessive.total.size.prompt", UsageViewManagerImpl.presentableSize(totalFilesSize),
+            String message = FindBundle.message("find.excessive.total.size.prompt",
+                                                UsageViewManagerImpl.presentableSize(totalFilesSize),
                                                 ApplicationNamesInfo.getInstance().getProductName());
-            UsageLimitUtil.showAndCancelIfAborted(project, message);
+            UsageLimitUtil.showAndCancelIfAborted(project, message, processPresentation.getUsageViewPresentation());
           }
         }
       }
@@ -656,6 +657,8 @@ public class FindInProjectUtil {
       presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind));
       presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope));
       presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
+      presentation.setUsagesWord(FindBundle.message("occurrence"));
+      presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
@@ -667,7 +670,7 @@ public class FindInProjectUtil {
   public static FindUsagesProcessPresentation setupProcessPresentation(final Project project,
                                                                        final boolean showPanelIfOnlyOneUsage,
                                                                        @NotNull final UsageViewPresentation presentation) {
-    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
