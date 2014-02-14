@@ -315,13 +315,22 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
+  public void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener, @NotNull Disposable parentDisposable) {
+    addExtensionPointListener(listener, true, parentDisposable);
+  }
+
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
-                                                     @NotNull Disposable parentDisposable) {
-    addExtensionPointListener(listener);
+                                        final boolean invokeForLoadedExtensions,
+                                        @NotNull Disposable parentDisposable) {
+    if (invokeForLoadedExtensions) {
+      addExtensionPointListener(listener);
+    } else {
+      myEPListeners.add(listener);
+    }
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        removeExtensionPointListener(listener);
+        removeExtensionPointListener(listener, invokeForLoadedExtensions);
       }
     });
   }
@@ -343,8 +352,12 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
-  public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    if (myEPListeners.remove(listener)) {
+  public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    removeExtensionPointListener(listener, true);
+  }
+
+  private synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions) {
+    if (myEPListeners.remove(listener) && invokeForLoadedExtensions) {
       for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
         try {
           @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();

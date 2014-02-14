@@ -267,7 +267,7 @@ public class IndexTest extends IdeaTestCase {
     });
   }
 
-  public void _testSkipUnknownFileTypes() throws IOException {
+  public void testSkipUnknownFileTypes() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
 

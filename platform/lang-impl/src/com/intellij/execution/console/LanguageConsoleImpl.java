@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
- * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
+ * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final int SEPARATOR_THICKNESS = 1;
@@ -226,17 +226,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
-    myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
+
     //noinspection PointlessBooleanExpression,ConstantConditions
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
-    myConsoleEditor.getSettings().setAdditionalLinesCount(2);
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
     myHistoryViewer.setCaretEnabled(false);
-    myConsoleEditor.setHorizontalScrollbarVisible(true);
+
+    myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
+    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
+
     final VisibleAreaListener areaListener = new VisibleAreaListener() {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
@@ -298,7 +299,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(true);
   }
 
-  private static void setupEditorDefault(@NotNull EditorEx editor) {
+  private void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.setHorizontalScrollbarVisible(false);
@@ -306,7 +307,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editor.setBorder(null);
 
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setAdditionalLinesCount(myHistoryViewer == editor ? 0 : 2);
     editorSettings.setAdditionalColumnsCount(1);
     editorSettings.setRightMarginShown(false);
   }

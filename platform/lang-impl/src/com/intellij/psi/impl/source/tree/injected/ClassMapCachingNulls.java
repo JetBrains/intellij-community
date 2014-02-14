@@ -98,6 +98,10 @@ public class ClassMapCachingNulls<T> {
     return value;
   }
 
+  public Map<Class, T[]> getBackingMap() {
+    return myBackingMap;
+  }
+
   public void clearCache() {
     myMap.clear();
   }
