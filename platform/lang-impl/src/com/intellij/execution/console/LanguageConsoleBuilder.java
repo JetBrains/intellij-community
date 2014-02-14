@@ -70,6 +70,9 @@ public class LanguageConsoleBuilder {
     myConsole.initComponents();
 
     if (myGutterProvider != null) {
+      // todo consider to fix platform
+      myConsole.getConsoleEditor().getSettings().setAdditionalLinesCount(1);
+
       EditorEx editor = myConsole.getHistoryViewer();
 
       JPanel panel = new JPanel(new BorderLayout());
