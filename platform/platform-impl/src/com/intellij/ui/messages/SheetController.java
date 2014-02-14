@@ -122,7 +122,6 @@ public class SheetController {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
         g2d.setColor(Gray._225);
-        //g2d.setColor(Color.black);
         Rectangle2D dialog  = new Rectangle2D.Double(0,0,mySheetPanel.getBounds().width - 5, mySheetPanel.getBounds().height - 10);
         g2d.fill(dialog);
         paintShadow(g2d, dialog);
@@ -142,9 +141,18 @@ public class SheetController {
     };
 
 
+    myHeaderLabel = new JLabel(title);
+
+    myHeaderLabel.setFont(boldFont);
+
+    myHeaderLabel.repaint();
+    myHeaderLabel.setSize(myHeaderLabel.getPreferredSize());
+
+    sheetPanel.add(myHeaderLabel);
+
     myTextArea = new JTextArea(message);
 
-
+    myTextArea.setFont(regularFont);
     myTextArea.setLineWrap(true);
     myTextArea.setWrapStyleWord(true);
 
@@ -152,20 +160,22 @@ public class SheetController {
     myTextArea.setOpaque(false);
 
 
+
     sheetPanel.add(myTextArea);
 
     myTextArea.repaint();
     myTextArea.setSize(myTextArea.getPreferredSize());
 
-    SHEET_HEIGHT = myTextArea.getPreferredSize().height + 100;
+    SHEET_HEIGHT = myTextArea.getPreferredSize().height +  myHeaderLabel.getPreferredSize().height + 20 + 10 + 100;
 
     sheetPanel.setSize(SHEET_WIDTH, SHEET_HEIGHT);
 
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
-    ico.setLocation(20,20);
+    ico.setLocation(20, 20);
     sheetPanel.add(ico);
-    myTextArea.setLocation(120, 20);
+    myHeaderLabel.setLocation(120, 20);
+    myTextArea.setLocation(120, 20 + myHeaderLabel.getPreferredSize().height + 10);
     layoutWithAbsoluteLayout(title, message, buttons, sheetPanel);
 
     return sheetPanel;
