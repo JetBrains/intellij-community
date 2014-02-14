@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -55,10 +54,9 @@ import java.util.*;
 import java.util.List;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
-  private JPanel myPanel;
+  private JPanel myMainPanel;
   private JList mySdkList;
   private boolean mySdkListChanged = false;
-  private Sdk myAddedSdk;
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
 
@@ -71,14 +69,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private Set<SdkModificator> myModifiedModificators = new HashSet<SdkModificator>();
   private final Project myProject;
 
-  private boolean myNewProject = false;
   private boolean myShowOtherProjectVirtualenvs = true;
   private final Module myModule;
   private NullableConsumer<Sdk> myShowMoreCallback;
-
-  public void setNewProject(final boolean newProject) {
-    myNewProject = newProject;
-  }
 
   public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
     super(project);
@@ -110,6 +103,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     mySdkList = new JBList();
+    //noinspection unchecked
     mySdkList.setCellRenderer(new PySdkListCellRenderer("", myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -140,10 +134,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       .addExtraAction(new GenerateSkeletonsButton());
 
     decorator.setPreferredSize(new Dimension(600, 500));
-    myPanel = decorator.createPanel();
+    myMainPanel = decorator.createPanel();
     refreshSdkList();
     addListeners();
-    return myPanel;
+    return myMainPanel;
   }
 
   private void addListeners() {
@@ -193,12 +187,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
            !myModifiedModificators.isEmpty();
   }
 
-  @Nullable
-  private String getSelectedSdkName() {
-    final Sdk selectedSdk = (Sdk)mySdkList.getSelectedValue();
-    return selectedSdk == null ? null : selectedSdk.getName();
-  }
-
   protected void updateOkButton() {
     super.setOKActionEnabled(isModified());
   }
@@ -224,16 +212,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myShowMoreCallback.consume(getSelectedSdk());
   }
 
-  /**
-   * Returns the stable copy of the SDK currently selected in the SDK table.
-   *
-   * @return the selected SDK, or null if there's no selection
-   */
-  @Nullable
-  public Sdk getRealSelectedSdk() {
-    return ProjectJdkTable.getInstance().findJdk(getSelectedSdkName());
-  }
-
   @Nullable
   public Sdk getSelectedSdk() {
     return (Sdk)mySdkList.getSelectedValue();
@@ -246,6 +224,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
     }
     Collections.sort(pythonSdks, new PreferredSdkComparator());
+    //noinspection unchecked
     mySdkList.setModel(new CollectionListModel<Sdk>(pythonSdks));
 
     mySdkListChanged = false;
@@ -277,10 +256,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
-      myAddedSdk = sdk;
       boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
       if (isVirtualEnv && !newVirtualEnv) {
-        AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myPanel);
+        AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myMainPanel);
         dialog.show();
         if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
           return;
