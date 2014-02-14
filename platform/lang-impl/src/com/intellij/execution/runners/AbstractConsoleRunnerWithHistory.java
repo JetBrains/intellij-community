@@ -122,7 +122,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
       @Override
       public JComponent compute() {
         final EditorEx editor = getLanguageConsole().getConsoleEditor();
-        return editor != null ? editor.getContentComponent() : null;
+        return editor.getContentComponent();
       }
     });
     contentDescriptor.setAutoFocusContent(isAutoFocusContent());
@@ -161,7 +161,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
               max = num;
             }
           }
-          catch (Exception e) {
+          catch (Exception ignored) {
             //skip
           }
         }
@@ -221,7 +221,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     actionList.add(closeAction);
 
 // run action
-    actionList.add(createConsoleExecAction(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler));
+    actionList.add(createConsoleExecAction(myConsoleView, myProcessHandler, myConsoleExecuteActionHandler));
 
 // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
@@ -243,10 +243,10 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleView.getConsole();
   }
 
-  public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
+  public static AnAction createConsoleExecAction(final LanguageConsoleView console,
                                                  final ProcessHandler processHandler,
                                                  final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(languageConsole, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
+    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
                                     new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler));
   }
 

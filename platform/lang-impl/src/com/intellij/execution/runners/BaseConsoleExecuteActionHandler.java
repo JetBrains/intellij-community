@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -42,28 +42,28 @@ public abstract class BaseConsoleExecuteActionHandler {
     myAddCurrentToHistory = addCurrentToHistory;
   }
 
-  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
+  public void runExecuteAction(@NotNull LanguageConsoleView console) {
     // process input and add to history
-    Document document = languageConsole.getCurrentEditor().getDocument();
+    Document document = console.getConsole().getCurrentEditor().getDocument();
     String text = document.getText();
     TextRange range = new TextRange(0, document.getTextLength());
 
-    languageConsole.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    console.getConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
 
     if (myAddCurrentToHistory) {
-      languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
+      console.getConsole().addCurrentToHistory(range, false, myPreserveMarkup);
     }
 
-    languageConsole.setInputText("");
+    console.getConsole().setInputText("");
 
-    UndoManager manager = UndoManager.getInstance(languageConsole.getProject());
+    UndoManager manager = UndoManager.getInstance(console.getProject());
     ((UndoManagerImpl)manager).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
 
     myConsoleHistoryModel.addToHistory(text);
-    execute(text);
+    execute(text, console);
   }
 
-  protected abstract void execute(@NotNull String text);
+  protected abstract void execute(@NotNull String text, @NotNull LanguageConsoleView console);
 
   public void finishExecution() {
   }

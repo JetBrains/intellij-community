@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
   }
 
   @Override
-  protected void execute(@NotNull String text) {
+  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
     processLine(text);
   }
 

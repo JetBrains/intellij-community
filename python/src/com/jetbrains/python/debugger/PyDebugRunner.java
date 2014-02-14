@@ -133,7 +133,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-      new LanguageConsoleBuilder().console(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
+      new LanguageConsoleBuilder(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
     }
   }
 
