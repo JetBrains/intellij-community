@@ -113,6 +113,9 @@ public class UniqueLCS {
     return ret;
   }
 
+  // find max i: a[i] < val
+  // return i + 1
+  // assert a[i] != val
   private static int binarySearch(int[] sequence, int val, int length) {
     int left = -1;
     int right = length;
