@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="duplicates.profile" interface="com.intellij.dupLocator.DuplicatesProfile"/>
+    <extensionPoint name="duplicates.presentation" interface="com.intellij.dupLocator.DuplicatesPresentation"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
   </extensionPoints>
