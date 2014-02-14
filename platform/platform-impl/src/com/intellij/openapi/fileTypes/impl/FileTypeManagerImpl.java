@@ -355,6 +355,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return fileType;
   }
 
+  public static boolean isFileTypeDetectedFromContent(@NotNull VirtualFile file) {
+    return file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) != null;
+  }
+
   @Override
   public FileType findFileTypeByName(String fileTypeName) {
     FileType type = getStdFileType(fileTypeName);
