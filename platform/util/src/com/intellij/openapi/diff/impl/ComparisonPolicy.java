@@ -201,18 +201,13 @@ public abstract class ComparisonPolicy {
     }
 
     private Object getWrapper(String line) {
-      line = line.trim();
-      char[] chars = new char[line.length()];
-      line.getChars(0, line.length(), chars, 0);
-      char[] result = new char[chars.length];
-      int resultLength  = 0;
-      for (int i = 0; i < chars.length; i++) {
-        char aChar = chars[i];
-        if (Character.isWhitespace(aChar)) continue;
-        result[resultLength] = aChar;
-        resultLength++;
+      StringBuilder builder = new StringBuilder(line.length());
+      for (int i = 0; i < line.length(); i++) {
+        char aChar = line.charAt(i);
+        if (StringUtil.isWhiteSpace(aChar)) continue;
+        builder.append(aChar);
       }
-      return new String(result, 0, resultLength);
+      return builder.toString();
     }
 
     @Override
