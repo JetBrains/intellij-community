@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -136,7 +137,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private ClsElementImpl calculateChild() {
-    if (JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(myTypeText) != null) {
+    if (PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText) != null) {
       return null;
     }
     else if (isArray()) {
@@ -153,7 +154,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private PsiType calculateType() {
-    PsiType result = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(myTypeText);
+    PsiType result = PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText);
     if (result != null) return result;
 
     ClsElementImpl childElement = myChild.getValue();

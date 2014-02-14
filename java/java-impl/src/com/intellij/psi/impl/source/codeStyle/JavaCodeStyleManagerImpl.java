@@ -1005,7 +1005,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private boolean isIdentifier(String name) {
-    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST);
+    return PsiNameHelper.getInstance(myProject).isIdentifier(name, LanguageLevel.HIGHEST);
   }
 
   private CodeStyleSettings getSettings() {
