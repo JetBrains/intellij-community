@@ -38,21 +38,4 @@ public class InternalDependencyVersionId extends DependencyVersionId {
   public IdeDependency getIdeDependency() {
     return myIdeDependency;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof InternalDependencyVersionId)) return false;
-    if (!super.equals(o)) return false;
-    InternalDependencyVersionId id = (InternalDependencyVersionId)o;
-    if (myIdeDependency != null ? !myIdeDependency.equals(id.myIdeDependency) : id.myIdeDependency != null) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myIdeDependency != null ? myIdeDependency.hashCode() : 0);
-    return result;
-  }
 }
