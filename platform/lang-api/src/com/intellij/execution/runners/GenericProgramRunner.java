@@ -16,68 +16,26 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunProfileStarter;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
-public abstract class GenericProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
-
+public abstract class GenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
   @SuppressWarnings({"UnusedDeclaration", "deprecation"}) @Deprecated @NonNls
   public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
-  @Nullable
-  public Settings createConfigurationData(final ConfigurationInfoProvider settingsProvider) {
-    return null;
-  }
-
-  @Override
-  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException {
-  }
-
-  @Override
-  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
-  }
-
-  @Override
-  @Nullable
-  public SettingsEditor<Settings> getSettingsEditor(final Executor executor, final RunConfiguration configuration) {
-    return null;
-  }
-
-  @Override
-  public void execute(@NotNull final ExecutionEnvironment environment) throws ExecutionException {
-    execute(environment, null);
-  }
-
-  @Override
-  public void execute(@NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
-      throws ExecutionException {
-
-    final Project project = env.getProject();
-
-    final RunProfileState state = env.getState();
-    if (state == null) {
-      return;
-    }
-
-    RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
-
-    startRunProfile(env, callback, project, state);
-  }
-
   protected void startRunProfile(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
     throws ExecutionException {
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
