@@ -22,6 +22,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseConsoleExecuteActionHandler {
   private boolean myAddCurrentToHistory = true;
@@ -41,28 +42,57 @@ public abstract class BaseConsoleExecuteActionHandler {
     myAddCurrentToHistory = addCurrentToHistory;
   }
 
-  public void runExecuteAction(@NotNull LanguageConsoleView console) {
+  public void runExecuteAction(@NotNull LanguageConsoleView consoleView) {
+    runExecuteAction(consoleView, consoleView.getConsole());
+  }
+
+  private void runExecuteAction(@Nullable LanguageConsoleView consoleView, @NotNull LanguageConsoleImpl console) {
     // process input and add to history
-    Document document = console.getConsole().getCurrentEditor().getDocument();
+    Document document = console.getCurrentEditor().getDocument();
     String text = document.getText();
     TextRange range = new TextRange(0, document.getTextLength());
 
-    console.getConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
 
     if (myAddCurrentToHistory) {
-      console.getConsole().addCurrentToHistory(range, false, myPreserveMarkup);
+      console.addCurrentToHistory(range, false, myPreserveMarkup);
     }
 
-    console.getConsole().setInputText("");
+    console.setInputText("");
 
     UndoManager manager = UndoManager.getInstance(console.getProject());
     ((UndoManagerImpl)manager).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
 
     myConsoleHistoryModel.addToHistory(text);
-    execute(text, console);
+    if (consoleView == null) {
+      //noinspection deprecation
+      execute(text);
+    }
+    else {
+      execute(text, consoleView);
+    }
   }
 
-  protected abstract void execute(@NotNull String text, @NotNull LanguageConsoleView console);
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
+  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
+    runExecuteAction(null, languageConsole);
+  }
+
+  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
+    //noinspection deprecation
+    execute(text);
+  }
+
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
+  protected void execute(@NotNull String text) {
+    throw new AbstractMethodError();
+  }
 
   public void finishExecution() {
   }
