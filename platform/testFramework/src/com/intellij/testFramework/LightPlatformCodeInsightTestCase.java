@@ -121,7 +121,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
@@ -300,7 +299,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
@@ -312,7 +310,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-   * @throws Exception
    */
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
@@ -342,7 +339,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   /**
    * Same as checkResultByFile but text is provided directly.
-   * @param fileText
    */
   protected void checkResultByText(@NonNls @NotNull String fileText) {
     checkResultByText(null, fileText, false, null);
@@ -351,7 +347,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
      * Same as checkResultByFile but text is provided directly.
      * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-     * @param fileText
      * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
      */
   protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
@@ -361,7 +356,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
   protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
