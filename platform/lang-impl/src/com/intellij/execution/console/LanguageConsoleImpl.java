@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
- * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
+ * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final int SEPARATOR_THICKNESS = 1;

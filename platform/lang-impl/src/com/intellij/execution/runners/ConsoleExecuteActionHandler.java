@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.console.BaseConsoleExecuteActionHandler;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -67,8 +68,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
       outputStream.write(bytes);
       outputStream.flush();
     }
-    catch (IOException e) {
-      // ignore
+    catch (IOException ignored) {
     }
   }
 

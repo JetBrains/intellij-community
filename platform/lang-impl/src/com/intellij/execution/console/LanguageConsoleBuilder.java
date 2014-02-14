@@ -1,9 +1,5 @@
-package com.intellij.execution.runners;
+package com.intellij.execution.console;
 
-import com.intellij.execution.console.ConsoleHistoryController;
-import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.EditorGutterAction;
@@ -85,7 +81,7 @@ public class LanguageConsoleBuilder {
     return myConsoleView;
   }
 
-  static class ProcessBackedExecutionEnabledCondition implements Condition<LanguageConsoleImpl> {
+  public static class ProcessBackedExecutionEnabledCondition implements Condition<LanguageConsoleImpl> {
     private final ProcessHandler myProcessHandler;
 
     public ProcessBackedExecutionEnabledCondition(ProcessHandler myProcessHandler) {

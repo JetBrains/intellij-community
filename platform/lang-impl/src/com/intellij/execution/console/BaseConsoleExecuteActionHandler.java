@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.runners;
+package com.intellij.execution.console;
 
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
