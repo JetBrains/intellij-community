@@ -205,7 +205,6 @@ public class IndexingStamp {
 
   public static void flushCaches() {
     flushCache(null);
-    myTimestampsCache.clear();
   }
 
   public static void flushCache(@Nullable VirtualFile finishedFile) {
