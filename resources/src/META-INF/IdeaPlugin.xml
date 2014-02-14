@@ -22,13 +22,6 @@
   </application-components>
 
   <project-components>
-
-    <component>
-      <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
-      <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
