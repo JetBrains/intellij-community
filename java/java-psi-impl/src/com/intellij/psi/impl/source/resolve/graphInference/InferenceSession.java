@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -46,6 +47,7 @@ import java.util.*;
  */
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
+  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
 
   private final Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
@@ -347,14 +349,33 @@ public class InferenceSession {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
       resolveBounds(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
-      myConstraints.add(new TypeCompatibilityConstraint(inferenceVariable.getInstantiation(), returnType));
+      myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(inferenceVariable.getInstantiation(), myContext)));
     } 
     else {
       if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
         setErased();
       }
-      myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(
-        targetType, false), returnType));
+      if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
+        final PsiClass psiClass = resolveResult.getElement();
+        LOG.assertTrue(psiClass != null && returnType instanceof PsiClassType);
+        final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+        PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
+        for (int i = 0; i < typeParameters.length; i++) {
+          PsiTypeParameter typeParameter = typeParameters[i];
+          copy[i] = (PsiTypeParameter)typeParameter.copy();
+          initBounds(copy[i]);
+          subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
+        }
+        final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
+        myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
+        myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
+      } else {
+        myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(
+          targetType, false), returnType));
+      }
     }
   }
 
@@ -891,8 +912,9 @@ public class InferenceSession {
                                                       PsiType tType,
                                                       @Nullable InferenceSession session, 
                                                       PsiExpression... args) {
-    final PsiClassType.ClassResolveResult sResult = PsiUtil.resolveGenericsClassInType(sType);
-    final PsiMethod sInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(sResult); //todo capture of Si
+    final PsiType capturedSType = session != null && sType != null ? PsiUtil.captureToplevelWildcards(sType, session.myContext) : sType;
+    final PsiClassType.ClassResolveResult sResult = PsiUtil.resolveGenericsClassInType(capturedSType);
+    final PsiMethod sInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(sResult);
     LOG.assertTrue(sInterfaceMethod != null);
     final PsiSubstitutor sSubstitutor = LambdaUtil.getSubstitutor(sInterfaceMethod, sResult);
 
@@ -1053,5 +1075,13 @@ public class InferenceSession {
       }
     }
     return false;
+  }
+
+  public void collectCaptureDependencies(InferenceVariable inferenceVariable, Set<InferenceVariable> dependencies) {
+    myIncorporationPhase.collectCaptureDependencies(inferenceVariable, dependencies);
+  }
+
+  public boolean hasCapture(InferenceVariable inferenceVariable) {
+    return myIncorporationPhase.hasCaptureConstraints(Arrays.asList(inferenceVariable));
   }
 }

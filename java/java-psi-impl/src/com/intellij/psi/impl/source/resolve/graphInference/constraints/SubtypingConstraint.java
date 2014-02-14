@@ -20,9 +20,7 @@ import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 
 import java.util.List;
 
