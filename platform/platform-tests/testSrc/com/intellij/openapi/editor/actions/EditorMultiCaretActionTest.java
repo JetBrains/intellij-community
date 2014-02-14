@@ -59,19 +59,24 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
   @Nullable
   @Override
   public String getFileSuffix(String fileName) {
-    String testCaseName = fileName.replace("-before.txt", "");
-    return testCaseName.equals(fileName) ? null : testCaseName;
+    int pos = fileName.indexOf("-before.");
+    if (pos < 0) {
+      return null;
+    }
+    return pos < 0 ? null : fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
   }
 
   private String getBeforeFileName() {
-    return myFileSuffix + "-before.txt";
+    int pos = myFileSuffix.indexOf('(');
+    return myFileSuffix.substring(0, pos) + "-before." + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
   }
 
   private String getAfterFileName() {
-    return myFileSuffix + "-after.txt";
+    int pos = myFileSuffix.indexOf('(');
+    return myFileSuffix.substring(0, pos) + "-after." + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
   }
 
   private String getActionName() {
-    return myFileSuffix.split("-")[0];
+    return myFileSuffix.split("[-(]")[0];
   }
 }
