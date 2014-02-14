@@ -154,12 +154,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private void layoutPanel() {
     final GridBagLayout layout = new GridBagLayout();
     myMainPanel = new JPanel(layout);
-    final JLabel label = new JLabel("Project Interpreter:");
-    final JLabel label1 = new JLabel("  ");
+    final JLabel interpreterLabel = new JLabel("Project Interpreter:");
+    final JLabel emptyLabel = new JLabel("  ");
     mySdkCombo = new ComboBox() {
       @Override
-      public void setSelectedItem(Object item)
-      {
+      public void setSelectedItem(Object item) {
         if (SHOW_ALL.equals(item)) {
           PythonSdkDetailsDialog options = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
                                            new PythonSdkDetailsDialog(myModule, myDetailsCallback);
@@ -173,7 +172,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     mySdkCombo.setRenderer(new SdkListCellRenderer("<None>"));
 
-    PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
+    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
     notificationsComponent.setPreferredSize(new Dimension(500, 29));
 
@@ -193,7 +192,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridx = 0;
     c.gridy = 0;
-    myMainPanel.add(label, c);
+    myMainPanel.add(interpreterLabel, c);
 
     c.gridx = 1;
     c.gridy = 0;
@@ -210,7 +209,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridx = 0;
     c.gridy = 1;
     c.gridwidth = 3;
-    myMainPanel.add(label1, c);
+    myMainPanel.add(emptyLabel, c);
 
     c.gridx = 0;
     c.gridy = 2;
@@ -362,8 +361,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     boolean separator = true;
     boolean detectedSeparator = true;
     for (Sdk sdk : sdkList) {
-      if (!PythonSdkType.isVirtualEnv(sdk) && !PythonSdkType.isRemote(sdk) &&
-          !(sdk instanceof PyDetectedSdk) && separator) {
+      if (!PythonSdkType.isVirtualEnv(sdk) && !PythonSdkType.isRemote(sdk) && !(sdk instanceof PyDetectedSdk) && separator) {
         items.add(PySdkListCellRenderer.SEPARATOR);
         separator = false;
       }
@@ -384,6 +382,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    //noinspection unchecked
     mySdkCombo.setModel(new CollectionComboBoxModel(items, selection));
   }
 
