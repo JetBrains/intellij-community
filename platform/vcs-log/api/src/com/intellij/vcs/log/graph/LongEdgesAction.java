@@ -15,28 +15,23 @@
  */
 package com.intellij.vcs.log.graph;
 
-import java.util.Set;
+public class LongEdgesAction implements GraphAction {
 
-/**
- * Use this provider to get information from the Graph. <br/>
- * An instance of GraphInfoProvider is obtained via {@link GraphBlackBox#getInfoProvider()}.
- */
-public interface GraphInfoProvider {
+  private static LongEdgesAction SHOW = new LongEdgesAction(true);
+  private static LongEdgesAction HIDE = new LongEdgesAction(false);
 
-  int getOneOfHeads(int commit); // this is fast
+  private final boolean myShowLongEdges;
 
-  Set<Integer> getContainingBranches(int commitIndex); // this requires graph iteration => can take some time
+  public static LongEdgesAction valueOf(boolean showLongEdges) {
+    return showLongEdges ? SHOW : HIDE;
+  }
 
-  RowInfo getRowInfo(int visibleRow);
+  private LongEdgesAction(boolean show) {
+    myShowLongEdges = show;
+  }
 
-  // TODO probably this can be removed and identified from the outside
-  boolean areLongEdgesHidden();
-
-  /**
-   * Some information about row highlighting etc. TBD
-   */
-  interface RowInfo {
-    int getOneOfHeads();
+  public boolean shouldShowLongEdges() {
+    return myShowLongEdges;
   }
 
 }

@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
+import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphModel;
 import com.intellij.vcs.log.printmodel.GraphPrintCellModel;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,19 @@ public class GraphFacadeImpl implements GraphBlackBox {
   @Nullable
   @Override
   public GraphChangeEvent performAction(@NotNull GraphAction action) {
-    throw new UnsupportedOperationException();
+    if (action instanceof LinearBranchesExpansionAction) {
+      FragmentManager fragmentManager = myGraphModel.getFragmentManager();
+      if (((LinearBranchesExpansionAction)action).shouldExpand()) {
+        fragmentManager.showAll();
+      }
+      else {
+        fragmentManager.hideAll();
+      }
+    }
+    else if (action instanceof LongEdgesAction) {
+      myPrintCellModel.setLongEdgeVisibility(((LongEdgesAction)action).shouldShowLongEdges());
+    }
+    return null;
   }
 
   @NotNull
@@ -150,6 +163,10 @@ public class GraphFacadeImpl implements GraphBlackBox {
       return new RowInfoImpl(visibleRow);
     }
 
+    @Override
+    public boolean areLongEdgesHidden() {
+      return myPrintCellModel.areLongEdgesHidden();
+    }
   }
 
   private class RowInfoImpl implements GraphInfoProvider.RowInfo {

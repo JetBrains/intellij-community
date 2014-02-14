@@ -17,6 +17,8 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.graph.LinearBranchesExpansionAction;
+import com.intellij.vcs.log.graph.LongEdgesAction;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
@@ -146,7 +148,7 @@ public class VcsLogUI {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
+        myLogDataHolder.getDataPack().getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
         updateUI();
         jumpToRow(0);
       }
@@ -157,7 +159,7 @@ public class VcsLogUI {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
+        myLogDataHolder.getDataPack().getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
         updateUI();
         jumpToRow(0);
       }
@@ -165,12 +167,12 @@ public class VcsLogUI {
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
-    myLogDataHolder.getDataPack().getPrintCellModel().setLongEdgeVisibility(visibility);
+    myLogDataHolder.getDataPack().getGraphFacade().performAction(LongEdgesAction.valueOf(visibility));
     updateUI();
   }
 
   public boolean areLongEdgesHidden() {
-    return myLogDataHolder.getDataPack().getPrintCellModel().areLongEdgesHidden();
+    return myLogDataHolder.getDataPack().getGraphFacade().getInfoProvider().areLongEdgesHidden();
   }
 
   public void over(@Nullable GraphElement graphElement) {

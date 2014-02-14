@@ -15,28 +15,18 @@
  */
 package com.intellij.vcs.log.graph;
 
-import java.util.Set;
+public class LinearBranchesExpansionAction implements GraphAction {
 
-/**
- * Use this provider to get information from the Graph. <br/>
- * An instance of GraphInfoProvider is obtained via {@link GraphBlackBox#getInfoProvider()}.
- */
-public interface GraphInfoProvider {
+  public static LinearBranchesExpansionAction EXPAND = new LinearBranchesExpansionAction(true);
+  public static LinearBranchesExpansionAction COLLAPSE = new LinearBranchesExpansionAction(false);
 
-  int getOneOfHeads(int commit); // this is fast
+  private final boolean myExpand;
 
-  Set<Integer> getContainingBranches(int commitIndex); // this requires graph iteration => can take some time
-
-  RowInfo getRowInfo(int visibleRow);
-
-  // TODO probably this can be removed and identified from the outside
-  boolean areLongEdgesHidden();
-
-  /**
-   * Some information about row highlighting etc. TBD
-   */
-  interface RowInfo {
-    int getOneOfHeads();
+  private LinearBranchesExpansionAction(boolean expand) {
+    myExpand = expand;
   }
 
+  public boolean shouldExpand() {
+    return myExpand;
+  }
 }

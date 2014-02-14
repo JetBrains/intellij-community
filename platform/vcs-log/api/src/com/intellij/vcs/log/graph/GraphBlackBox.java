@@ -75,9 +75,6 @@ public interface GraphBlackBox {
   @NotNull
   GraphInfoProvider getInfoProvider();
 
-  interface GraphAction {
-  }
-
   class ClickGraphAction implements GraphAction {
     int visibleRow;
     Point relativePoint;
@@ -86,14 +83,6 @@ public interface GraphBlackBox {
   class HoverGraphAction implements GraphAction {
     int visibleRow;
     Point relativePoint;
-  }
-
-  class LinearBranchesExpansionAction implements GraphAction {
-    boolean expanded; // or collapsed
-  }
-
-  class LongEdgesAction implements GraphAction {
-    boolean show;
   }
 
   interface GraphChangeEvent {
