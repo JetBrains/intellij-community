@@ -54,6 +54,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -74,12 +75,12 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private String myOwnerMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
-  protected LineBreakpoint(Project project) {
-    super(project);
+  protected LineBreakpoint(Project project, XBreakpoint xBreakpoint) {
+    super(project, xBreakpoint);
   }
 
-  public LineBreakpoint(Project project, RangeHighlighter highlighter) {
-    super(project, highlighter);
+  public LineBreakpoint(Project project, RangeHighlighter highlighter, XBreakpoint xBreakpoint) {
+    super(project, highlighter, xBreakpoint);
   }
 
   @Override
@@ -95,7 +96,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   @Override
   protected Icon getSetIcon(boolean isMuted) {
-    if (REMOVE_AFTER_HIT) {
+    if (isRemoveAfterHit()) {
       return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
     }
     return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
@@ -108,7 +109,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    if (REMOVE_AFTER_HIT) {
+    if (isRemoveAfterHit()) {
       return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
     }
     return isMuted? AllIcons.Debugger.Db_muted_verified_breakpoint : AllIcons.Debugger.Db_verified_breakpoint;
@@ -349,9 +350,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
-    final RangeHighlighter highlighter = getHighlighter();
-    if(highlighter != null && highlighter.isValid() && isValid()) {
-      final int lineNumber = (highlighter.getDocument().getLineNumber(highlighter.getStartOffset()) + 1);
+    if(isValid()) {
+      final int lineNumber = getSourcePosition().getLine() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
@@ -471,24 +471,24 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return ContextUtil.getContextElement(getSourcePosition());
   }
 
-  public static LineBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex) {
+  public static LineBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, XBreakpoint xBreakpoint) {
     final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
     if (highlighter == null) {
       return null;
     }
 
-    LineBreakpoint breakpoint = new LineBreakpoint(project, highlighter);
+    LineBreakpoint breakpoint = new LineBreakpoint(project, highlighter, xBreakpoint);
     return (LineBreakpoint)breakpoint.init();
   }
 
-  @Override
-  public boolean canMoveTo(SourcePosition position) {
-    if (!super.canMoveTo(position)) {
-      return false;
-    }
-    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(position.getFile());
-    return canAddLineBreakpoint(myProject, document, position.getLine());
-  }
+  //@Override
+  //public boolean canMoveTo(SourcePosition position) {
+  //  if (!super.canMoveTo(position)) {
+  //    return false;
+  //  }
+  //  final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(position.getFile());
+  //  return canAddLineBreakpoint(myProject, document, position.getLine());
+  //}
 
   public static boolean canAddLineBreakpoint(Project project, final Document document, final int lineIndex) {
     if (lineIndex < 0 || lineIndex >= document.getLineCount()) {

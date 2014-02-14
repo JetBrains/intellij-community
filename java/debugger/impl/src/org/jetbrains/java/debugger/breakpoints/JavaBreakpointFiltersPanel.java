@@ -26,11 +26,11 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * @author egor
  */
-public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPanel<XLineBreakpoint<XBreakpointProperties>> {
+public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B extends XBreakpoint<T>> extends XBreakpointCustomPropertiesPanel<B> {
   private JPanel myConditionsPanel;
   private JPanel myInstanceFiltersPanel;
   private JCheckBox myInstanceFiltersCheckBox;
@@ -66,7 +66,7 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
 
   private PsiClass myBreakpointPsiClass;
 
-  public JavaBreakpointPropertiesPanel(Project project) {
+  public JavaBreakpointFiltersPanel(Project project) {
     myProject = project;
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
                                             new ActionListener() {
@@ -135,8 +135,8 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
   }
 
   @Override
-  public boolean isVisibleOnPopup(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
-    JavaBreakpointProperties properties = (JavaBreakpointProperties)breakpoint.getProperties();
+  public boolean isVisibleOnPopup(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
       return properties.COUNT_FILTER_ENABLED || properties.CLASS_FILTERS_ENABLED || properties.INSTANCE_FILTERS_ENABLED;
     }
@@ -144,8 +144,8 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
   }
 
   @Override
-  public void saveTo(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
-    JavaBreakpointProperties properties = (JavaBreakpointProperties)breakpoint.getProperties();
+  public void saveTo(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties == null) {
       return;
     }
@@ -179,8 +179,8 @@ public class JavaBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPa
   }
 
   @Override
-  public void loadFrom(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
-    JavaBreakpointProperties properties = (JavaBreakpointProperties)breakpoint.getProperties();
+  public void loadFrom(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
       if (properties.COUNT_FILTER > 0) {
         myPassCountField.setText(Integer.toString(properties.COUNT_FILTER));

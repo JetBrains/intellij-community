@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,15 +35,15 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   @Nullable
   private final SourcePosition myCustomPosition;
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull RangeHighlighter highlighter, boolean restoreBreakpoints) {
-    super(project, highlighter);
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull RangeHighlighter highlighter, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
+    super(project, highlighter, xBreakpoint);
     setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
     myCustomPosition = null;
   }
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
-    super(project);
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
+    super(project, xBreakpoint);
     myCustomPosition = pos;
     setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
@@ -68,7 +69,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints) {
+  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) {
       return null;
@@ -79,7 +80,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
       return null;
     }
 
-    final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints);
+    final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints, xBreakpoint);
     final RangeHighlighter h = breakpoint.getHighlighter();
     if (h != null) {
       h.dispose();

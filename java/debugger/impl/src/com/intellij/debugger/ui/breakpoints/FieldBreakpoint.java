@@ -36,9 +36,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -46,35 +44,33 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.AccessWatchpointEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.request.AccessWatchpointRequest;
 import com.sun.jdi.request.ModificationWatchpointRequest;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
 import javax.swing.*;
 import java.util.List;
 
-public class FieldBreakpoint extends BreakpointWithHighlighter {
+public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.FieldBreakpoint");
-  public boolean WATCH_MODIFICATION = true;
-  public boolean WATCH_ACCESS       = false;
   private boolean myIsStatic;
-  private String myFieldName;
 
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
-  protected FieldBreakpoint(Project project) {
-    super(project);
+  protected FieldBreakpoint(Project project, XBreakpoint breakpoint) {
+    super(project, breakpoint);
   }
 
-  private FieldBreakpoint(Project project, RangeHighlighter highlighter, @NotNull String fieldName) {
-    super(project, highlighter);
-    myFieldName = fieldName;
+  private FieldBreakpoint(Project project, RangeHighlighter highlighter, @NotNull String fieldName, XBreakpoint breakpoint) {
+    super(project, highlighter, breakpoint);
+    setFieldName(fieldName);
   }
 
   public boolean isStatic() {
@@ -82,9 +78,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getFieldName() {
-    return myFieldName;
+    return getProperties().myFieldName;
   }
-
 
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
@@ -128,7 +123,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
       @Override
       public PsiField compute() {
         final PsiClass psiClass = getPsiClassAt(sourcePosition);
-        return psiClass != null ? psiClass.findFieldByName(myFieldName, true) : null;
+        return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
       }
     });
     if (field != null) {
@@ -142,11 +137,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     super.reload(psiFile);
     PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, getSourcePosition());
     if(field != null) {
-      myFieldName = field.getName();
+      setFieldName(field.getName());
       myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
     }
     if (myIsStatic) {
-      INSTANCE_FILTERS_ENABLED = false;
+      setInstanceFiltersEnabled(false);
     }
   }
 
@@ -181,20 +176,21 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
                                             ReferenceType refType) {
     VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
     try {
-      Field field = refType.fieldByName(myFieldName);
+      Field field = refType.fieldByName(getFieldName());
       if (field == null) {
-        debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class", myFieldName, refType.name()));
+        debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
+                                                                                  getFieldName(), refType.name()));
         return;
       }
       RequestManagerImpl manager = debugProcess.getRequestsManager();
-      if (WATCH_MODIFICATION && vm.canWatchFieldModification()) {
+      if (isWATCH_MODIFICATION() && vm.canWatchFieldModification()) {
         ModificationWatchpointRequest request = manager.createModificationWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Modification request added");
         }
       }
-      if (WATCH_ACCESS && vm.canWatchFieldAccess()) {
+      if (isWATCH_ACCESS() && vm.canWatchFieldAccess()) {
         AccessWatchpointRequest request = manager.createAccessWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
         if (LOG.isDebugEnabled()) {
@@ -284,11 +280,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
       return DebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
-    return className != null && !className.isEmpty() ? className + "." + myFieldName : myFieldName;
+    return className != null && !className.isEmpty() ? className + "." + getFieldName() : getFieldName();
   }
 
-  public static FieldBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, String fieldName) {
-    FieldBreakpoint breakpoint = new FieldBreakpoint(project, createHighlighter(project, document, lineIndex), fieldName);
+  public static FieldBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, String fieldName, XBreakpoint xBreakpoint) {
+    FieldBreakpoint breakpoint = new FieldBreakpoint(project, createHighlighter(project, document, lineIndex), fieldName, xBreakpoint);
     return (FieldBreakpoint)breakpoint.init();
   }
 
@@ -308,7 +304,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return field == getPsiField();
   }
 
-  protected static FieldBreakpoint create(@NotNull Project project, @NotNull Field field, ObjectReference object) {
+  protected static FieldBreakpoint create(@NotNull Project project, @NotNull Field field, ObjectReference object, XBreakpoint xBreakpoint) {
     String fieldName = field.name();
     int line = 0;
     Document document = null;
@@ -335,7 +331,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
     if(document == null) return null;
 
-    FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName);
+    FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName, xBreakpoint);
     if (!fieldBreakpoint.isStatic()) {
       fieldBreakpoint.addInstanceFilter(object.uniqueID());
     }
@@ -369,25 +365,37 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return field;
   }
 
-  @Override
-  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
-    super.readExternal(breakpointNode);
-    //noinspection HardCodedStringLiteral
-    myFieldName = breakpointNode.getAttributeValue("field_name");
-    if(myFieldName == null) {
-      throw new InvalidDataException("No field name for field breakpoint");
-    }
-  }
-
-  @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
-    super.writeExternal(parentNode);
-    parentNode.setAttribute("field_name", getFieldName());
-  }
+  //@Override
+  //public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
+  //  super.readExternal(breakpointNode);
+  //  //noinspection HardCodedStringLiteral
+  //  setFieldName(breakpointNode.getAttributeValue("field_name"));
+  //  if(getFieldName() == null) {
+  //    throw new InvalidDataException("No field name for field breakpoint");
+  //  }
+  //}
+  //
+  //@Override
+  //@SuppressWarnings({"HardCodedStringLiteral"})
+  //public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
+  //  super.writeExternal(parentNode);
+  //  parentNode.setAttribute("field_name", getFieldName());
+  //}
 
   @Override
   public PsiElement getEvaluationElement() {
     return getPsiClass();
+  }
+
+  public boolean isWATCH_MODIFICATION() {
+    return getProperties().WATCH_MODIFICATION;
+  }
+
+  public boolean isWATCH_ACCESS() {
+    return getProperties().WATCH_ACCESS;
+  }
+
+  public void setFieldName(String fieldName) {
+    getProperties().myFieldName = fieldName;
   }
 }

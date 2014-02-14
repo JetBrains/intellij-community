@@ -32,6 +32,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -45,37 +46,33 @@ import com.sun.jdi.request.MethodExitRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.Set;
 
-public class WildcardMethodBreakpoint extends Breakpoint {
+public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
-
-  public boolean WATCH_ENTRY = true;
-  public boolean WATCH_EXIT  = true;
-  private String myClassPattern;
-  private String myMethodName;
 
   public static final String JDOM_LABEL = "wildcard_breakpoint";
 
-  public WildcardMethodBreakpoint(Project project) {
-    super(project);
+  public WildcardMethodBreakpoint(Project project, XBreakpoint breakpoint) {
+    super(project, breakpoint);
   }
 
   public Key<MethodBreakpoint> getCategory() {
     return MethodBreakpoint.CATEGORY;
   }
 
-  protected WildcardMethodBreakpoint(Project project, @NotNull String classPattern, @NotNull String methodName) {
-    super(project);
-    myClassPattern = classPattern;
-    myMethodName = methodName;
+  protected WildcardMethodBreakpoint(Project project, @NotNull String classPattern, @NotNull String methodName, XBreakpoint breakpoint) {
+    super(project, breakpoint);
+    setClassPattern(classPattern);
+    setMethodName(methodName);
   }
 
   public String getClassName() {
-    return myClassPattern;
+    return getClassPattern();
   }
 
   public @Nullable String getShortClassName() {
@@ -83,7 +80,7 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   }
 
   public String getMethodName() {
-    return myMethodName;
+    return getProperties().myMethodName;
   }
 
   public PsiClass getPsiClass() {
@@ -96,9 +93,9 @@ public class WildcardMethodBreakpoint extends Breakpoint {
     }
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
-      buffer.append(myClassPattern);
+      buffer.append(getClassPattern());
       buffer.append(".");
-      buffer.append(myMethodName);
+      buffer.append(getMethodName());
       buffer.append("()");
       return buffer.toString();
     }
@@ -108,7 +105,7 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   }
 
   public Icon getIcon() {
-    if (!ENABLED) {
+    if (!isEnabled()) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
       return master == null? AllIcons.Debugger.Db_disabled_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
     }
@@ -124,12 +121,12 @@ public class WildcardMethodBreakpoint extends Breakpoint {
 
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!isEnabled() || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
     try {
       RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-      if (WATCH_ENTRY) {
+      if (isWATCH_ENTRY()) {
         MethodEntryRequest entryRequest = (MethodEntryRequest)findRequest(debugProcess, MethodEntryRequest.class);
         if (entryRequest == null) {
           entryRequest = requestManager.createMethodEntryRequest(this);
@@ -137,10 +134,10 @@ public class WildcardMethodBreakpoint extends Breakpoint {
         else {
           entryRequest.disable();
         }
-        entryRequest.addClassFilter(myClassPattern);
+        entryRequest.addClassFilter(getClassPattern());
         debugProcess.getRequestsManager().enableRequest(entryRequest);
       }
-      if (WATCH_EXIT) {
+      if (isWATCH_EXIT()) {
         MethodExitRequest exitRequest = (MethodExitRequest)findRequest(debugProcess, MethodExitRequest.class);
         if (exitRequest == null) {
           exitRequest = requestManager.createMethodExitRequest(this);
@@ -148,7 +145,7 @@ public class WildcardMethodBreakpoint extends Breakpoint {
         else {
           exitRequest.disable();
         }
-        exitRequest.addClassFilter(myClassPattern);
+        exitRequest.addClassFilter(getClassPattern());
         debugProcess.getRequestsManager().enableRequest(exitRequest);
       }
     }
@@ -212,46 +209,74 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   }
 
   public boolean isValid() {
-    return myClassPattern != null && myMethodName != null;
+    return getClassPattern() != null && getMethodName() != null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
-    super.writeExternal(parentNode);
-    parentNode.setAttribute(JDOM_LABEL, "true");
-    if (myClassPattern != null) {
-      parentNode.setAttribute("class_name", myClassPattern);
-    }
-    if (myMethodName != null) {
-      parentNode.setAttribute("method_name", myMethodName);
-    }
-  }
+  //@SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
+  //  super.writeExternal(parentNode);
+  //  parentNode.setAttribute(JDOM_LABEL, "true");
+  //  if (getClassPattern() != null) {
+  //    parentNode.setAttribute("class_name", getClassPattern());
+  //  }
+  //  if (getMethodName() != null) {
+  //    parentNode.setAttribute("method_name", getMethodName());
+  //  }
+  //}
 
   public PsiElement getEvaluationElement() {
     return null;
   }
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    super.readExternal(parentNode);
-
-    //noinspection HardCodedStringLiteral
-    String className = parentNode.getAttributeValue("class_name");
-    myClassPattern = className;
-
-    //noinspection HardCodedStringLiteral
-    String methodName = parentNode.getAttributeValue("method_name");
-    myMethodName = methodName;
-
-    if(className == null || methodName == null) {
-      throw new InvalidDataException();
-    }
-  }
+  //public void readExternal(Element parentNode) throws InvalidDataException {
+  //  super.readExternal(parentNode);
+  //
+  //  //noinspection HardCodedStringLiteral
+  //  String className = parentNode.getAttributeValue("class_name");
+  //  setClassPattern(className);
+  //
+  //  //noinspection HardCodedStringLiteral
+  //  String methodName = parentNode.getAttributeValue("method_name");
+  //  setMethodName(methodName);
+  //
+  //  if(className == null || methodName == null) {
+  //    throw new InvalidDataException();
+  //  }
+  //}
 
   public boolean matchesEvent(final LocatableEvent event){
     final Method method = event.location().method();
-    return method != null && myMethodName.equals(method.name());
+    return method != null && getMethodName().equals(method.name());
   }
 
-  public static WildcardMethodBreakpoint create(Project project, final String classPattern, final String methodName) {
-    return new WildcardMethodBreakpoint(project, classPattern, methodName);
+  public static WildcardMethodBreakpoint create(Project project, final String classPattern, final String methodName, XBreakpoint xBreakpoint) {
+    return new WildcardMethodBreakpoint(project, classPattern, methodName, xBreakpoint);
+  }
+
+  public boolean isWATCH_ENTRY() {
+    return getProperties().WATCH_ENTRY;
+  }
+
+  public void setWATCH_ENTRY(boolean WATCH_ENTRY) {
+    getProperties().WATCH_ENTRY = WATCH_ENTRY;
+  }
+
+  public boolean isWATCH_EXIT() {
+    return getProperties().WATCH_EXIT;
+  }
+
+  public void setWATCH_EXIT(boolean WATCH_EXIT) {
+    getProperties().WATCH_EXIT = WATCH_EXIT;
+  }
+
+  public String getClassPattern() {
+    return getProperties().myClassPattern;
+  }
+
+  public void setClassPattern(String classPattern) {
+    getProperties().myClassPattern = classPattern;
+  }
+
+  public void setMethodName(String methodName) {
+    getProperties().myMethodName = methodName;
   }
 }

@@ -30,9 +30,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -40,15 +38,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.JavaBreakpointAdapter;
-import org.jetbrains.java.debugger.breakpoints.JavaBreakpointType;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -158,11 +151,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
 
-    if (requestor.COUNT_FILTER_ENABLED && requestor.COUNT_FILTER > 0) {
-      request.addCountFilter(requestor.COUNT_FILTER);
+    if (requestor.isCountFilterEnabled() && requestor.getCountFilter() > 0) {
+      request.addCountFilter(requestor.getCountFilter());
     }
 
-    if (requestor.CLASS_FILTERS_ENABLED && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
       ClassFilter[] classFilters = requestor.getClassFilters();
       if (DebuggerUtilsEx.getEnabledNumber(classFilters) == 1) {
         for (final ClassFilter filter : classFilters) {
@@ -408,17 +401,18 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           breakpoint.createRequest(myDebugProcess);
         }
 
-        AccessToken token = ReadAction.start();
-        try {
-          JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
-          for (XLineBreakpoint<XBreakpointProperties> breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
-            .getBreakpoints(JavaBreakpointType.class)) {
-            adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
-          }
-        }
-        finally {
-          token.finish();
-        }
+        //AccessToken token = ReadAction.start();
+        //try {
+        //  JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
+        //  for (XLineBreakpoint breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
+        //    .getBreakpoints(JavaLineBreakpointType.class)) {
+        //    //new JavaLineBreakpointRequestor(breakpoint).createRequest(myDebugProcess);
+        //    //adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
+        //  }
+        //}
+        //finally {
+        //  token.finish();
+        //}
       }
     });
   }

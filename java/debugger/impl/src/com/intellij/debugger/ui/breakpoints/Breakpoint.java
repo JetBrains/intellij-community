@@ -30,45 +30,58 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.Value;
-import com.sun.jdi.VoidValue;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
 import java.util.List;
 
-public abstract class Breakpoint extends FilteredRequestor implements ClassPrepareRequestor {
-  public boolean ENABLED = true;
-  public boolean LOG_ENABLED = false;
-  public boolean LOG_EXPRESSION_ENABLED = false;
-  public boolean REMOVE_AFTER_HIT = false;
-  private TextWithImports  myLogMessage; // an expression to be evaluated and printed
-  @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
+  final XBreakpoint<P> myXBreakpoint;
+  protected final Project myProject;
+
+  //private boolean ENABLED = true;
+  //private boolean LOG_ENABLED = false;
+  //private boolean LOG_EXPRESSION_ENABLED = false;
+  //private boolean REMOVE_AFTER_HIT = false;
+  //private TextWithImports  myLogMessage; // an expression to be evaluated and printed
+  //@NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
+  //private TextWithImportsImpl myLogMessage;
 
-  protected Breakpoint(@NotNull Project project) {
-    super(project);
-    myLogMessage = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
+  protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
+    //super(project);
+    myProject = project;
+    myXBreakpoint = xBreakpoint;
+    //myLogMessage = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     //noinspection AbstractMethodCallInConstructor
-    final BreakpointDefaults defaults = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpointDefaults(getCategory());
-    SUSPEND_POLICY = defaults.getSuspendPolicy();
-    CONDITION_ENABLED = defaults.isConditionEnabled();
+    //final BreakpointDefaults defaults = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpointDefaults(getCategory());
+    //SUSPEND_POLICY = defaults.getSuspendPolicy();
+    //CONDITION_ENABLED = defaults.isConditionEnabled();
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  protected P getProperties() {
+    return myXBreakpoint.getProperties();
   }
 
   public abstract PsiClass getPsiClass();
@@ -98,6 +111,16 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public void markVerified(boolean isVerified) {
     myCachedVerifiedState = isVerified;
+  }
+
+  public boolean isRemoveAfterHit() {
+    return myXBreakpoint instanceof XLineBreakpoint && ((XLineBreakpoint)myXBreakpoint).isTemporary();
+  }
+
+  public void setRemoveAfterHit(boolean value) {
+    if (myXBreakpoint instanceof XLineBreakpoint) {
+      ((XLineBreakpoint)myXBreakpoint).setTemporary(value);
+    }
   }
 
   @Nullable
@@ -210,15 +233,15 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
     final DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (LOG_ENABLED || LOG_EXPRESSION_ENABLED) {
+    if (myXBreakpoint.isLogMessage() || myXBreakpoint.getLogExpression() != null) {
       final StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
-        if (LOG_ENABLED) {
+        if (myXBreakpoint.isLogMessage()) {
           buf.append(getEventMessage(event));
           buf.append("\n");
         }
         final TextWithImports expressionToEvaluate = getLogMessage();
-        if (LOG_EXPRESSION_ENABLED && expressionToEvaluate != null && !"".equals(expressionToEvaluate.getText())) {
+        if (myXBreakpoint.getLogExpression() != null && !expressionToEvaluate.getText().isEmpty()) {
           if(!debugProcess.isAttached()) {
             return;
           }
@@ -252,9 +275,110 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         StringBuilderSpinAllocator.dispose(buf);
       }
     }
-    if (REMOVE_AFTER_HIT) {
+    if (isRemoveAfterHit()) {
       handleTemporaryBreakpointHit(debugProcess);
     }
+  }
+
+  /**
+   * @return true if the ID was added or false otherwise
+   */
+  private boolean hasObjectID(long id) {
+    for (InstanceFilter instanceFilter : getInstanceFilters()) {
+      if (instanceFilter.getId() == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    if(isCountFilterEnabled()) {
+      final DebugProcessImpl debugProcess = context.getDebugProcess();
+      debugProcess.getVirtualMachineProxy().suspend();
+      debugProcess.getRequestsManager().deleteRequest(this);
+      ((Breakpoint)this).createRequest(debugProcess);
+      debugProcess.getVirtualMachineProxy().resume();
+    }
+    if (isInstanceFiltersEnabled()) {
+      Value value = context.getThisObject();
+      if (value != null) {  // non-static
+        ObjectReference reference = (ObjectReference)value;
+        if(!hasObjectID(reference.uniqueID())) {
+          return false;
+        }
+      }
+    }
+
+    if (isClassFiltersEnabled()) {
+      String typeName = calculateEventClass(context, event);
+      if (!typeMatchesClassFilters(typeName)) return false;
+    }
+
+    if (isConditionEnabled() && !getCondition().getText().isEmpty()) {
+      try {
+        ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+          public ExpressionEvaluator compute() throws EvaluateException {
+            final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
+            // IMPORTANT: calculate context psi element basing on the location where the exception
+            // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
+            // for method, exception and field breakpoints these locations differ)
+            PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
+            if (contextPsiElement == null) {
+              contextPsiElement = getEvaluationElement(); // as a last resort
+            }
+            return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
+          }
+        });
+        final Value value = evaluator.evaluate(context);
+        if (!(value instanceof BooleanValue)) {
+          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+        }
+        if(!((BooleanValue)value).booleanValue()) {
+          return false;
+        }
+      }
+      catch (EvaluateException ex) {
+        if(ex.getCause() instanceof VMDisconnectedException) {
+          return false;
+        }
+        throw EvaluateExceptionUtil.createEvaluateException(
+          DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
+        );
+      }
+      return true;
+    }
+
+    return true;
+  }
+
+  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    return event.location().declaringType().name();
+  }
+
+  private boolean typeMatchesClassFilters(@Nullable String typeName) {
+    if (typeName == null) {
+      return true;
+    }
+    boolean matches = false, hasEnabled = false;
+    for (ClassFilter classFilter : getClassFilters()) {
+      if (classFilter.isEnabled()) {
+        hasEnabled = true;
+        if (classFilter.matches(typeName)) {
+          matches = true;
+          break;
+        }
+      }
+    }
+    if(hasEnabled && !matches) {
+      return false;
+    }
+    for (ClassFilter classFilter : getClassExclusionFilters()) {
+      if (classFilter.isEnabled() && classFilter.matches(typeName)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void handleTemporaryBreakpointHit(final DebugProcessImpl debugProcess) {
@@ -288,26 +412,172 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     RequestManagerImpl.deleteRequests(this);
   }
 
+  //@Override
+  //public void readExternal(Element parentNode) throws InvalidDataException {
+    //super.readExternal(parentNode);
+    //String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
+    //if (logMessage != null) {
+    //  setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage));
+    //}
+  //}
+
+  //@Override
+  //public void writeExternal(Element parentNode) throws WriteExternalException {
+    //super.writeExternal(parentNode);
+    //JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toExternalForm());
+  //}
+
+  //public void setLogMessage(TextWithImports logMessage) {
+  //  myLogMessage = logMessage;
+  //}
+
+  public abstract PsiElement getEvaluationElement();
+
+  protected TextWithImports getLogMessage() {
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myXBreakpoint.getLogExpression());
+  }
+
+  protected TextWithImports getCondition() {
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myXBreakpoint.getCondition());
+  }
+
+  public boolean isEnabled() {
+    return myXBreakpoint.isEnabled();
+  }
+
+  public void setEnabled(boolean enabled) {
+    myXBreakpoint.setEnabled(enabled);
+  }
+
+  public boolean isLogEnabled() {
+    return myXBreakpoint.isLogMessage();
+  }
+
+  public void setLogEnabled(boolean logEnabled) {
+    myXBreakpoint.setLogMessage(logEnabled);
+  }
+
+  public boolean isLogExpressionEnabled() {
+    return myXBreakpoint.getLogExpression() != null;
+  }
+
+  public void setLogExpressionEnabled(boolean LOG_EXPRESSION_ENABLED) {
+  }
+
   @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    super.readExternal(parentNode);
-    String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
-    if (logMessage != null) {
-      setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage));
+  public boolean isCountFilterEnabled() {
+    return myXBreakpoint.getProperties().COUNT_FILTER_ENABLED;
+  }
+  public void setCountFilterEnabled(boolean enabled) {
+    myXBreakpoint.getProperties().COUNT_FILTER_ENABLED = enabled;
+  }
+
+  @Override
+  public int getCountFilter() {
+    return myXBreakpoint.getProperties().COUNT_FILTER;
+  }
+
+  public void setCountFilter(int filter) {
+    myXBreakpoint.getProperties().COUNT_FILTER = filter;
+  }
+
+  @Override
+  public boolean isClassFiltersEnabled() {
+    return myXBreakpoint.getProperties().CLASS_FILTERS_ENABLED;
+  }
+
+  public void setClassFiltersEnabled(boolean enabled) {
+    myXBreakpoint.getProperties().CLASS_FILTERS_ENABLED = enabled;
+  }
+
+  @Override
+  public ClassFilter[] getClassFilters() {
+    return myXBreakpoint.getProperties().getClassFilters();
+  }
+
+  public void setClassFilters(ClassFilter[] filters) {
+    myXBreakpoint.getProperties().setClassFilters(filters);
+  }
+
+  @Override
+  public ClassFilter[] getClassExclusionFilters() {
+    return myXBreakpoint.getProperties().getClassExclusionFilters();
+  }
+
+  public void setClassExclusionFilters(ClassFilter[] filters) {
+    myXBreakpoint.getProperties().setClassExclusionFilters(filters);
+  }
+
+  @Override
+  public boolean isInstanceFiltersEnabled() {
+    return myXBreakpoint.getProperties().INSTANCE_FILTERS_ENABLED;
+  }
+
+  public void setInstanceFiltersEnabled(boolean enabled) {
+    myXBreakpoint.getProperties().INSTANCE_FILTERS_ENABLED = enabled;
+  }
+
+  @Override
+  public InstanceFilter[] getInstanceFilters() {
+    return myXBreakpoint.getProperties().getInstanceFilters();
+  }
+
+  public void setInstanceFilters(InstanceFilter[] filters) {
+    myXBreakpoint.getProperties().setInstanceFilters(filters);
+  }
+
+  public static String getSuspendPolicy(XBreakpoint breakpoint) {
+    switch (breakpoint.getSuspendPolicy()) {
+      case ALL:
+        return DebuggerSettings.SUSPEND_ALL;
+      case THREAD:
+        return DebuggerSettings.SUSPEND_THREAD;
+      case NONE:
+        return DebuggerSettings.SUSPEND_NONE;
+
+      default:
+        throw new IllegalArgumentException("unknown suspend policy");
     }
   }
 
-  @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    super.writeExternal(parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toExternalForm());
+  public static SuspendPolicy transformSuspendPolicy(String policy) {
+    if (DebuggerSettings.SUSPEND_ALL.equals(policy)) {
+      return SuspendPolicy.ALL;
+    } else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
+      return SuspendPolicy.THREAD;
+    } else if (DebuggerSettings.SUSPEND_NONE.equals(policy)) {
+      return SuspendPolicy.NONE;
+    } else {
+      throw new IllegalArgumentException("unknown suspend policy");
+    }
   }
 
-  public TextWithImports getLogMessage() {
-    return myLogMessage;
+  public boolean isSuspend() {
+    return myXBreakpoint.getSuspendPolicy() != SuspendPolicy.NONE;
+  }
+
+  @Override
+  public String getSuspendPolicy() {
+    return getSuspendPolicy(myXBreakpoint);
+  }
+
+  public void setSuspendPolicy(String policy) {
+    myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
   public void setLogMessage(TextWithImports logMessage) {
-    myLogMessage = logMessage;
+    myXBreakpoint.setLogExpression(logMessage.getText());
+  }
+
+  public boolean isConditionEnabled() {
+    return myXBreakpoint.getCondition() != null && !myXBreakpoint.getCondition().isEmpty();
+  }
+
+  public void setCondition(String condition) {
+    myXBreakpoint.setCondition(condition);
+  }
+
+  public void addInstanceFilter(long l) {
+    myXBreakpoint.getProperties().addInstanceFilter(l);
   }
 }
