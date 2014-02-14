@@ -63,7 +63,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void processLine(final String text) {
+  public void processLine(@NotNull final String text) {
     processLine(text, false);
   }
 

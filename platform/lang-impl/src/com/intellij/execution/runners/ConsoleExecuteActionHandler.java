@@ -61,7 +61,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
     processLine(text);
   }
 
-  public void processLine(String line) {
+  public void processLine(@NotNull String line) {
     sendText(line + "\n");
   }
 
