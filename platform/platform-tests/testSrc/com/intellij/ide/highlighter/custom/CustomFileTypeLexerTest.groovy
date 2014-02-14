@@ -52,25 +52,29 @@ class CustomFileTypeLexerTest extends TestCase {
     table.addKeyword1("then");
     table.addKeyword2("return");
     table.addKeyword1("length");
-    table.addKeyword1("sysvar ");
 
     return table;
 
   }
 
   public void testSpacesInsideKeywords() {
-    doTest createGenericTable(), 'if length(variable)then return 1', '''\
+    def table = createGenericTable()
+    table.addKeyword1("sysvar ");
+    doTest table, 'if length(if_variable)then return 1 sysvar  ', '''\
 KEYWORD_1 ('if')
 WHITESPACE (' ')
 KEYWORD_1 ('length')
 CHARACTER ('(')
-IDENTIFIER ('variable')
+IDENTIFIER ('if_variable')
 CHARACTER (')')
 KEYWORD_1 ('then')
 WHITESPACE (' ')
 KEYWORD_2 ('return')
 WHITESPACE (' ')
 NUMBER ('1')
+WHITESPACE (' ')
+KEYWORD_1 ('sysvar ')
+WHITESPACE (' ')
 '''
   }
 
