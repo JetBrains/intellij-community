@@ -17,10 +17,10 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.graph.ClickGraphAction;
 import com.intellij.vcs.log.graph.LinearBranchesExpansionAction;
 import com.intellij.vcs.log.graph.LongEdgesAction;
 import com.intellij.vcs.log.graph.elements.GraphElement;
-import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.impl.VcsLogImpl;
@@ -84,7 +84,6 @@ public class VcsLogUI {
       @Override
       public void run() {
         myMainFrame.getGraphTable().jumpToRow(rowIndex);
-        click(rowIndex);
       }
     });
   }
@@ -219,12 +218,7 @@ public class VcsLogUI {
 
   public void click(int rowIndex) {
     DataPack dataPack = myLogDataHolder.getDataPack();
-    dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
-    Node node = dataPack.getNode(rowIndex);
-    if (node != null) {
-      FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
-      dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
-    }
+    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
     updateUI();
   }
 

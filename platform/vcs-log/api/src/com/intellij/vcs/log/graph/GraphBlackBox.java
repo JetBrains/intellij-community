@@ -75,11 +75,6 @@ public interface GraphBlackBox {
   @NotNull
   GraphInfoProvider getInfoProvider();
 
-  class ClickGraphAction implements GraphAction {
-    int visibleRow;
-    Point relativePoint;
-  }
-
   class HoverGraphAction implements GraphAction {
     int visibleRow;
     Point relativePoint;

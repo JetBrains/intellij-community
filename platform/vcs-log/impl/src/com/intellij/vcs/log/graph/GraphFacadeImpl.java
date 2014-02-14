@@ -70,6 +70,14 @@ public class GraphFacadeImpl implements GraphBlackBox {
     else if (action instanceof LongEdgesAction) {
       myPrintCellModel.setLongEdgeVisibility(((LongEdgesAction)action).shouldShowLongEdges());
     }
+    else if (action instanceof ClickGraphAction) {
+      myPrintCellModel.getCommitSelectController().deselectAll();
+      Node node = myGraphModel.getGraph().getCommitNodeInRow(((ClickGraphAction)action).getRow());
+      if (node != null) {
+        FragmentManager fragmentController = myGraphModel.getFragmentManager();
+        myPrintCellModel.getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
+      }
+    }
     return null;
   }
 

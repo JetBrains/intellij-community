@@ -18,7 +18,6 @@ import com.intellij.vcs.log.graphmodel.impl.GraphModelImpl;
 import com.intellij.vcs.log.printmodel.GraphPrintCellModel;
 import com.intellij.vcs.log.printmodel.impl.GraphPrintCellModelImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -97,10 +96,4 @@ public class DataPack {
   public GraphPrintCellModel getPrintCellModel() {
     return myPrintCellModel;
   }
-
-  @Nullable
-  public Node getNode(int rowIndex) {
-    return getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-  }
-
 }
