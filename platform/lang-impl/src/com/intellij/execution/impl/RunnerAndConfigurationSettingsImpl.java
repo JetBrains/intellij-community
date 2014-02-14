@@ -85,7 +85,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private boolean myTemporary;
   private boolean myEditBeforeRun;
   private boolean mySingleton;
-  private boolean mySingletonSpecifiedExplicitly = false;
+  private boolean myWasSingletonSpecifiedExplicitly;
   private String myFolderName;
   //private String myID = null;
 
@@ -205,7 +205,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
-    mySingletonSpecifiedExplicitly = false;
+    myWasSingletonSpecifiedExplicitly = false;
     if (myIsTemplate) {
       mySingleton = factory.isConfigurationSingletonByDefault();
     }
@@ -215,7 +215,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         mySingleton = factory.isConfigurationSingletonByDefault();
       }
       else {
-        mySingletonSpecifiedExplicitly = true;
+        myWasSingletonSpecifiedExplicitly = true;
         mySingleton = Boolean.parseBoolean(singletonStr);
       }
     }
@@ -286,7 +286,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       //element.setAttribute(UNIQUE_ID, getUniqueID());
 
       if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
-      if (mySingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
+      if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
         element.setAttribute(SINGLETON, String.valueOf(mySingleton));
       }
       if (myTemporary) {
