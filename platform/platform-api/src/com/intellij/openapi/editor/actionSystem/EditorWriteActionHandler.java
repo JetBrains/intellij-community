@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
   private boolean inExecution;
@@ -36,7 +36,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public final void execute(final Editor editor, @NotNull final Caret caret, final DataContext dataContext) {
+  public final void execute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
@@ -73,6 +73,11 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     });
   }
 
+  /**
+   * This method exists for historical reasons. For most purposes one should use/override
+   * {@link #executeWriteAction(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * method.
+   */
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     if (inExecution) {
       return;
@@ -86,7 +91,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     }
   }
 
-  public void executeWriteAction(Editor editor, @NotNull Caret caret, DataContext dataContext) {
+  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (inExecution) {
       return;
     }
