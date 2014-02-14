@@ -49,6 +49,15 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
 
   @Override
   protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
+    //noinspection deprecation
+    execute(text);
+  }
+
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
+  protected void execute(@NotNull String text) {
     processLine(text);
   }
 
