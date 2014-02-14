@@ -33,7 +33,9 @@ public class JavaFileManagerImpl extends JavaFileManagerBase {
                              final StartupManager startupManager) {
     super(manager, projectRootManager, bus);
 
-    if (!((StartupManagerEx)startupManager).startupActivityPassed() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!((StartupManagerEx)startupManager).startupActivityPassed() && 
+        !ApplicationManager.getApplication().isUnitTestMode() && 
+        !manager.getProject().isDefault()) {
       Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl")
         .error("Access to psi files should be performed only after startup activity");
     }
