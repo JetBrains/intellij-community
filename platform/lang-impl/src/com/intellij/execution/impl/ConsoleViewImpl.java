@@ -528,7 +528,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void print(String s, final ConsoleViewContentType contentType) {
+  public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
     if (myInputMessageFilter == null) {
       printHyperlink(s, contentType, null);
       return;

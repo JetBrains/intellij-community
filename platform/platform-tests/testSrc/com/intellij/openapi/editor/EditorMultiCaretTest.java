@@ -20,8 +20,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 
-import java.awt.*;
-
 public class EditorMultiCaretTest extends AbstractEditorTest {
   public void setUp() throws Exception {
     super.setUp();
@@ -70,7 +68,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, new Dimension(1000, 1000));
+    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
 
     mouse().alt().pressAt(1, 6);
     checkResultByText("line\n" +
@@ -108,7 +106,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, new Dimension(1000, 1000));
+    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
 
     mouse().middle().pressAt(1, 17);
     checkResultByText("line\n" +
