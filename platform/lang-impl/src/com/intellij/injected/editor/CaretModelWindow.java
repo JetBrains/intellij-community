@@ -16,10 +16,7 @@
 
 package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -226,7 +223,17 @@ public class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void runForEachCaret(@NotNull Runnable runnable) {
-    myDelegate.runForEachCaret(runnable);
+  public void runForEachCaret(final @NotNull CaretAction action) {
+    myDelegate.runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        action.perform(createInjectedCaret(caret));
+      }
+    });
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    myDelegate.runBatchCaretOperation(runnable);
   }
 }

@@ -249,7 +249,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * selection will be set for the new caret.
    *
    * @param above if <code>true</code>, new caret will be created at the previous line, if <code>false</code> - on the next line
-   * @return newly created caret instance, or null if the caret cannot be created because it already exists at the new location
+   * @return newly created caret instance, or null if the caret cannot be created because it already exists at the new location or caret
+   * model doesn't support multiple carets.
    */
   @Nullable
   Caret clone(boolean above);

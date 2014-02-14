@@ -16,15 +16,22 @@
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for actions activated by keystrokes in the editor.
+ * Implementations should override {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.actionSystem.DataContext)} or
+ * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+ * (preferrably).
  *
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
 public abstract class EditorActionHandler {
   private final boolean myRunForEachCaret;
+  private boolean inExecution;
 
   protected EditorActionHandler() {
     this(false);
@@ -51,7 +58,38 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public abstract void execute(Editor editor, DataContext dataContext);
+  public void execute(Editor editor, DataContext dataContext) {
+    if (inExecution) {
+      return;
+    }
+    try {
+      inExecution = true;
+      execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
+    }
+    finally {
+      inExecution = false;
+    }
+  }
+
+  /**
+   * Executes the action for the given caret.
+   *
+   * @param editor      the editor in which the action is invoked.
+   * @param caret       the caret for which the action is performed at the moment
+   * @param dataContext the data context for the action.
+   */
+  public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    if (inExecution) {
+      return;
+    }
+    try {
+      inExecution = true;
+      execute(editor, dataContext);
+    }
+    finally {
+      inExecution = false;
+    }
+  }
 
   public boolean executeInCommand(Editor editor, DataContext dataContext) {
     return true;
@@ -61,17 +99,23 @@ public abstract class EditorActionHandler {
     return myRunForEachCaret;
   }
 
+  /**
+   * Executes the action for all carets
+   *
+   * @param editor      the editor in which the action is invoked.
+   * @param dataContext the data context for the action.
+   */
   public void executeForAllCarets(final Editor editor, final DataContext dataContext) {
-    if (editor.getCaretModel().supportsMultipleCarets() && runForAllCarets()) {
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+    if (runForAllCarets()) {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
-          execute(editor, dataContext);
+        public void perform(Caret caret) {
+          execute(editor, caret, dataContext);
         }
       });
     }
     else {
-      execute(editor, dataContext);
+      execute(editor, editor.getCaretModel().getPrimaryCaret(), dataContext);
     }
   }
 

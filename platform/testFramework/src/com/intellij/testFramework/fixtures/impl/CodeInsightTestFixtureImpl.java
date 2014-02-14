@@ -1755,8 +1755,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return; // nothing to check, so we skip caret/selection assertions
     }
     CaretModel caretModel = editor.getCaretModel();
-    List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
-    assertEquals("Unexpected number of carets", loader.caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
+    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    assertEquals("Unexpected number of carets", loader.caretState.carets.size(), allCarets.size());
     for (int i = 0; i < loader.caretState.carets.size(); i++) {
       EditorTestUtil.Caret expected = loader.caretState.carets.get(i);
       String caretDescription = loader.caretState.carets.size() == 1 ? "" : "(" + (i + 1) + "/" + loader.caretState.carets.size() + ") ";
@@ -1766,8 +1766,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, expected.offset);
         int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText, StringUtil.lineColToOffset(loader.newFileText, caretLine, 0), expected.offset, tabSize);
 
-        final int actualLine = caretModel.supportsMultipleCarets() ? allCarets.get(i).getLogicalPosition().line : caretModel.getLogicalPosition().line;
-        final int actualCol = caretModel.supportsMultipleCarets() ? allCarets.get(i).getLogicalPosition().column : caretModel.getLogicalPosition().column;
+        final int actualLine = allCarets.get(i).getLogicalPosition().line;
+        final int actualCol = allCarets.get(i).getLogicalPosition().column;
         boolean caretPositionEquals = caretLine == actualLine && caretCol == actualCol;
         assertTrue("Caret" + caretDescription + " position in " + expectedFile + " differs. Expected " + genCaretPositionPresentation(caretLine, caretCol)
                    + ". Actual " + genCaretPositionPresentation(actualLine, actualCol), caretPositionEquals);
@@ -1789,8 +1789,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           selectionEnd = ends[ends.length-1];
         }
         else {
-          selectionStart = caretModel.supportsMultipleCarets() ? allCarets.get(i).getSelectionStart() : editor.getSelectionModel().getSelectionStart();
-          selectionEnd = caretModel.supportsMultipleCarets() ? allCarets.get(i).getSelectionEnd() : editor.getSelectionModel().getSelectionEnd();
+          selectionStart = allCarets.get(i).getSelectionStart();
+          selectionEnd = allCarets.get(i).getSelectionEnd();
         }
 
         final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, selectionStart);

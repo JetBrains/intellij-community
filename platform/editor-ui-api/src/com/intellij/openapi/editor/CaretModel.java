@@ -29,13 +29,19 @@ import java.util.List;
  *
  * May support several carets existing simultaneously in a document. {@link #supportsMultipleCarets()} method can be used to find out
  * whether particular instance of CaretModel does it. If it does, query and update methods for caret position operate on a certain 'primary'
- * caret. There exists a way to perform the same operation(s) on each caret - see {@link #runForEachCaret(Runnable)} method. Within its
- * context, query and update methods operate on the current caret in that iteration.
- * How 'primary' caret is determined by the model is not dictated.
+ * caret. There exists a way to perform the same operation(s) on each caret - see
+ * {@link #runForEachCaret(com.intellij.openapi.editor.CaretAction)} method. Within its context, query and update methods operate on the
+ * current caret in that iteration. This behaviour can change in future though, so using caret and selection query and update methods in
+ * actions that need to operate on multiple carets is discouraged - methods on {@link com.intellij.openapi.editor.Caret} instances obtained
+ * via {@link #getAllCarets()} or {@link #runForEachCaret(CaretAction)} should be used instead.
+ * <p>
+ * How 'primary' caret is determined by the model is not defined (currently it's the most recently added caret, but that can change).
+ * <p>
  * At all times at least one caret will exist in a document.
  * <p>
- * Update methods, and {@link #runForEachCaret(Runnable)} method should only be run from EDT. Query methods can be run from any thread, when
- * called not from EDT, those methods are 'not aware' of 'runForEachCaret' scope - they will always return information about primary caret.
+ * Update methods, {@link #runBatchCaretOperation(Runnable)} and {@link #runForEachCaret(com.intellij.openapi.editor.CaretAction)} methods
+ * should only be run from EDT. Query methods can be run from any thread, when called not from EDT, those methods are 'not aware' of
+ * 'runForEachCaret' scope - they will always return information about primary caret.
  *
  * @see Editor#getCaretModel()
  */
@@ -161,42 +167,29 @@ public interface CaretModel {
   boolean supportsMultipleCarets();
 
   /**
-   * Returns current caret - the one, query and update methods in the model operate at the moment. This is either an iteration-current
-   * caret within the context of {@link #runForEachCaret(Runnable)} method, or the 'primary' caret without that context.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
+   * Returns current caret - the one, query and update methods in the model operate at the moment. In the current implementation this is
+   * either an iteration-current caret within the context of {@link #runForEachCaret(Runnable)} method, or the 'primary' caret without that
+   * context. Users {@link #runForEachCaret(Runnable)} method should use caret parameter passed to
+   * {@link com.intellij.openapi.editor.CaretAction#perform(Caret)} method instead of this method, as the definition of current caret (as
+   * well as caret instance operated on by model methods) can potentially change.
    */
   @NotNull
   Caret getCurrentCaret();
 
   /**
    * Returns the 'primary' caret.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
    */
   @NotNull
   Caret getPrimaryCaret();
 
   /**
    * Returns all carets currently existing in the document, ordered by their position in the document.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
    */
   @NotNull
   Collection<Caret> getAllCarets();
 
   /**
    * Returns a caret at the given position in the document, or <code>null</code>, if there's no caret there.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
    */
   @Nullable
   Caret getCaretAt(@NotNull VisualPosition pos);
@@ -204,12 +197,8 @@ public interface CaretModel {
   /**
    * Adds a new caret at the given position, and returns corresponding Caret instance. Locations outside of possible values for the given
    * document are trimmed automatically.
-   * Does nothing if a caret already exists at specified location or selection of existing caret includes the specified location,
-   * <code>null</code> is returned in this case.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
+   * Does nothing if multiple carets are not supporeted, a caret already exists at specified location or selection of existing caret
+   * includes the specified location, <code>null</code> is returned in this case.
    */
   @Nullable
   Caret addCaret(@NotNull VisualPosition pos);
@@ -217,19 +206,11 @@ public interface CaretModel {
   /**
    * Removes a given caret if it's recognized by the model and is not the only existing caret in the document, returning <code>true</code>.
    * <code>false</code> is returned if any of the above condition doesn't hold, and the removal cannot happen.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   *
-   * @see #supportsMultipleCarets()
    */
   boolean removeCaret(@NotNull Caret caret);
 
   /**
    * Removes all carets except the 'primary' one from the document.
-   * <p>
-   * If multiple carets are not supported, does nothing.
-   *
-   * @see #supportsMultipleCarets()
    */
   void removeSecondaryCarets();
 
@@ -248,10 +229,11 @@ public interface CaretModel {
    * determined in the beginning and is not affected by the potential carets addition or removal by the task being executed.
    * At the end, merging of carets and selections is performed, so that no two carets will occur at the same logical position and
    * no two selection will overlap after this method is finished.
-   * <p>
-   * If multiple carets are not supported, the given task is just executed once.
-   *
-   * @see #supportsMultipleCarets()
    */
-  void runForEachCaret(@NotNull Runnable runnable);
+  void runForEachCaret(@NotNull CaretAction action);
+
+  /**
+   * Executes the given task, performing caret merging afterwards. Caret merging will not happen until the operation is finished.
+   */
+  void runBatchCaretOperation(@NotNull Runnable runnable);
 }
