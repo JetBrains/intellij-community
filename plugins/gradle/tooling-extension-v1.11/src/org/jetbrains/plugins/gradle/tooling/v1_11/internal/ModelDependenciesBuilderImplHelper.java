@@ -84,7 +84,7 @@ public class ModelDependenciesBuilderImplHelper {
     return null;
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
                            IdeProjectDependency dependency,
                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
@@ -95,8 +95,8 @@ public class ModelDependenciesBuilderImplHelper {
     final String version = project.hasProperty(VERSION_PROPERTY) ? str(project.property(VERSION_PROPERTY)) : "";
     final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
-    DependencyVersionId versionId =
-      new DependencyVersionId(dependency, project.getName(), group, version, null);
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, project.getName(), null, group, version, null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -110,7 +110,7 @@ public class ModelDependenciesBuilderImplHelper {
     return String.valueOf(o == null ? "" : o);
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
                            IdeRepoFileDependency dependency,
                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
@@ -128,8 +128,14 @@ public class ModelDependenciesBuilderImplHelper {
     }
 
     String classifier = parseClassifier(dependencyId, dependency.getFile());
-    DependencyVersionId versionId =
-      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion(), classifier);
+    String dependencyFileName = null;
+    if (dependency.getFile() != null) {
+      dependencyFileName = dependency.getFile().getName();
+    }
+
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, dependencyId.getName(), dependencyFileName, dependencyId.getGroup(), dependencyId.getVersion(),
+                                      classifier);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -146,7 +152,7 @@ public class ModelDependenciesBuilderImplHelper {
     return i != -1 ? dependencyFileName.substring(i, dependencyFileName.length()) : null;
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
                            IdeLocalFileDependency dependency,
                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
 
@@ -155,7 +161,8 @@ public class ModelDependenciesBuilderImplHelper {
     if (scope == null) return;
 
     String path = dependency.getFile().getPath();
-    DependencyVersionId versionId = new DependencyVersionId(dependency, path, "", "", null);
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, path,  dependency.getFile().getName(), "", "", null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));

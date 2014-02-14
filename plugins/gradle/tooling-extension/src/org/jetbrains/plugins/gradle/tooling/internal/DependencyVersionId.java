@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.tooling.v1_9.internal;
-
-import org.gradle.plugins.ide.internal.IdeDependenciesExtractor;
+package org.jetbrains.plugins.gradle.tooling.internal;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/25/13
  */
 public class DependencyVersionId {
-  private final IdeDependenciesExtractor.IdeDependency myIdeDependency;
   private final String myName;
+  private final String myArtifactName;
   private final String myGroup;
   private final String myVersion;
   private final String myClassifier;
 
-  public DependencyVersionId(IdeDependenciesExtractor.IdeDependency dependency,
-                             String name,
+  public DependencyVersionId(String name,
+                             String artifactName,
                              String group,
                              String version,
                              String classifier) {
-    myIdeDependency = dependency;
     myName = name;
+    myArtifactName = artifactName;
     myGroup = group;
     myVersion = version;
     myClassifier = classifier;
@@ -42,6 +40,10 @@ public class DependencyVersionId {
 
   public String getName() {
     return myName;
+  }
+
+  public String getArtifactName() {
+    return myArtifactName;
   }
 
   public String getGroup() {
@@ -56,10 +58,6 @@ public class DependencyVersionId {
     return myClassifier;
   }
 
-  public IdeDependenciesExtractor.IdeDependency getIdeDependency() {
-    return myIdeDependency;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -69,6 +67,7 @@ public class DependencyVersionId {
 
     if (myGroup != null ? !myGroup.equals(id.myGroup) : id.myGroup != null) return false;
     if (myName != null ? !myName.equals(id.myName) : id.myName != null) return false;
+    if (myArtifactName != null ? !myArtifactName.equals(id.myArtifactName) : id.myArtifactName != null) return false;
     if (myVersion != null ? !myVersion.equals(id.myVersion) : id.myVersion != null) return false;
     if (myClassifier != null ? !myClassifier.equals(id.myClassifier) : id.myClassifier != null) return false;
 
@@ -78,6 +77,7 @@ public class DependencyVersionId {
   @Override
   public int hashCode() {
     int result = myName != null ? myName.hashCode() : 0;
+    result = 31 * result + (myArtifactName != null ? myArtifactName.hashCode() : 0);
     result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
     result = 31 * result + (myClassifier != null ? myClassifier.hashCode() : 0);
@@ -88,6 +88,7 @@ public class DependencyVersionId {
   public String toString() {
     return "DependencyVersionId{" +
            "name='" + myName + '\'' +
+           ", artifactName='" + myArtifactName + '\'' +
            ", group='" + myGroup + '\'' +
            ", version='" + myVersion + '\'' +
            ", classifier='" + myClassifier + '\'' +
