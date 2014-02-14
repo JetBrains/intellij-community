@@ -16,6 +16,9 @@
 
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -26,19 +29,13 @@ import com.intellij.util.messages.MessageBus;
  */
 public class JavaFileManagerImpl extends JavaFileManagerBase {
 
-
   public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, MessageBus bus,
                              final StartupManager startupManager) {
     super(manager, projectRootManager, bus);
 
-    startupManager.registerStartupActivity(
-      new Runnable() {
-        @Override
-        public void run() {
-          initialize();
-        }
-      }
-    );
-
+    if (!((StartupManagerEx)startupManager).startupActivityPassed() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl")
+        .error("Access to psi files should be performed only after startup activity");
+    }
   }
 }

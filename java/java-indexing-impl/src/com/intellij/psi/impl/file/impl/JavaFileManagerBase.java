@@ -49,7 +49,6 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   private final PsiManagerEx myManager;
   private final ProjectRootManager myProjectRootManager;
   private volatile Set<String> myNontrivialPackagePrefixes = null;
-  private boolean myInitialized = false;
   private boolean myDisposed = false;
   private final PackageIndex myPackageIndex;
   protected final MessageBusConnection myConnection;
@@ -74,11 +73,6 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
         myCachedObjectClassMap.clear();
       }
     });
-  }
-
-  @Override
-  public void initialize() {
-    myInitialized = true;
   }
 
   @Override
@@ -136,10 +130,6 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   @Override
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    if (!myInitialized) {
-      LOG.error("Access to psi files should be performed only after startup activity");
-      return null;
-    }
     LOG.assertTrue(!myDisposed);
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) { // optimization
