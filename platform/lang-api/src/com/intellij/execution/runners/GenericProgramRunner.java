@@ -44,10 +44,10 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
                                           @NotNull Executor executor,
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
-                                          @NotNull ExecutionEnvironment env) throws ExecutionException {
-        RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
+                                          @NotNull ExecutionEnvironment environment) throws ExecutionException {
+        RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, environment);
         if (descriptor != null) {
-          descriptor.setExecutionId(env.getExecutionId());
+          descriptor.setExecutionId(environment.getExecutionId());
         }
         if (callback != null) {
           callback.processStarted(descriptor);
@@ -60,6 +60,6 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
   @Nullable
   protected abstract RunContentDescriptor doExecute(@NotNull Project project, @NotNull RunProfileState state,
                                                     @Nullable RunContentDescriptor contentToReuse,
-                                                    @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException;
+                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
 }
