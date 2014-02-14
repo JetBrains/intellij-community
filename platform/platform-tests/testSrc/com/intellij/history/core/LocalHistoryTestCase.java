@@ -138,12 +138,10 @@ public abstract class LocalHistoryTestCase extends Assert {
     return v.getChanges();
   }
 
-  @SafeVarargs
   public static <T> T[] array(T... objects) {
     return objects;
   }
 
-  @SafeVarargs
   public static <T> List<T> list(T... objects) {
     return Arrays.asList(objects);
   }

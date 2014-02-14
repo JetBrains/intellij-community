@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -46,15 +47,15 @@ public class StartNewLineBeforeAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       editor.getSelectionModel().removeSelection();
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       final int line = caretPosition.line;
       int lineStartOffset = editor.getDocument().getLineStartOffset(line);
       editor.getCaretModel().moveToOffset(lineStartOffset);
-      getHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+      getHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, caret, dataContext);
       editor.getCaretModel().moveToOffset(editor.getDocument().getLineStartOffset(line));
-      getHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END).execute(editor, dataContext);
+      getHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END).execute(editor, caret, dataContext);
     }
 
     private static EditorActionHandler getHandler(@NotNull String actionId) {

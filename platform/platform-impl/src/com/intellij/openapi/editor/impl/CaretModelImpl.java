@@ -357,10 +357,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void runForEachCaret(@NotNull final Runnable runnable) {
+  public void runForEachCaret(@NotNull final CaretAction action) {
     myEditor.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
-      runnable.run();
+      action.perform(getPrimaryCaret());
       return;
     }
     if (myCurrentCaret != null) {
@@ -372,7 +372,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           Collection<Caret> sortedCarets = getAllCarets();
           for (Caret caret : sortedCarets) {
             myCurrentCaret = (CaretImpl)caret;
-            runnable.run();
+            action.perform(caret);
           }
         }
         finally {
@@ -380,6 +380,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       }
     });
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    doWithCaretMerging(runnable);
   }
 
   private void mergeOverlappingCaretsAndSelections() {

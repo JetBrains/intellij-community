@@ -27,7 +27,6 @@ import java.util.List;
  * @see DomManager#createModelMerger() 
  */
 public interface ModelMerger {
-  @SuppressWarnings("unchecked")
   <T> T mergeModels(Class<T> aClass, T... implementations);
 
   <T> T mergeModels(Class<T> aClass, Collection<? extends T> implementations);

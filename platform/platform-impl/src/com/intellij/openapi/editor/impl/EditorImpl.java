@@ -439,7 +439,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void caretRemoved(CaretEvent e) {
         ((CaretImpl)e.getCaret()).updateVisualPosition(); // repainting caret region
-        myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row backgroun
+        myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
       }
     });
@@ -3531,17 +3531,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 : 0;
 
     if (!myDocument.isInBulkUpdate()) {
-      if (myCaretModel.supportsMultipleCarets()) {
-        for (Caret caret : myCaretModel.getAllCarets()) {
-          if (caret.isUpToDate()) {
-            int caretX = visualPositionToXY(caret.getVisualPosition()).x;
-            draft.width = Math.max(caretX, draft.width);
-          }
-        }
-      }
-      else {
-        if (getCaretModel().isUpToDate()) {
-          int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
+      for (Caret caret : myCaretModel.getAllCarets()) {
+        if (caret.isUpToDate()) {
+          int caretX = visualPositionToXY(caret.getVisualPosition()).x;
           draft.width = Math.max(caretX, draft.width);
         }
       }

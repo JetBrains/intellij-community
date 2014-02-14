@@ -41,6 +41,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,10 +75,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Editor myEditor;
   protected static PsiFile myFile;
   protected static VirtualFile myVFile;
-
-  private static final String CARET_MARKER = "<caret>";
-  @NonNls private static final String SELECTION_START_MARKER = "<selection>";
-  @NonNls private static final String SELECTION_END_MARKER = "</selection>";
 
   @Override
   protected void runTest() throws Throwable {
@@ -124,7 +121,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
@@ -164,7 +160,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
     return new WriteCommandAction<Document>(null) {
       @Override
-      protected void run(Result<Document> result) throws Throwable {
+      protected void run(@NotNull Result<Document> result) throws Throwable {
         if (myVFile != null) {
           // avoid messing with invalid files, in case someone calls configureXXX() several times
           PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
@@ -179,25 +175,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         }
         final Document fakeDocument = new DocumentImpl(fileText);
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? fakeDocument.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0 ? fakeDocument.createRangeMarker(selStartIndex, selStartIndex) : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0 ? fakeDocument.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-        if (caretMarker != null) {
-          fakeDocument.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          fakeDocument.deleteString(selStartMarker.getStartOffset(),
-                                    selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          fakeDocument.deleteString(selEndMarker.getStartOffset(),
-                                    selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
+        EditorTestUtil.CaretsState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
         String newFileText = fakeDocument.getText();
         Document document;
@@ -207,28 +185,46 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        setupCaret(caretMarker, newFileText);
-        setupSelection(selStartMarker, selEndMarker);
+        setupCaretAndSelection(caretsState, newFileText);
         setupEditorForInjectedLanguage();
         result.setResult(document);
       }
     }.execute().getResultObject();
   }
 
-  private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
-    if (selStartMarker != null) {
-      myEditor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
+  private static void setupCaretAndSelection(EditorTestUtil.CaretsState caretsState, String fileText) {
+    List<EditorTestUtil.Caret> carets = caretsState.carets;
+    if (myEditor.getCaretModel().supportsMultipleCarets()) {
+      List<LogicalPosition> caretPositions = new ArrayList<LogicalPosition>();
+      List<Segment> selections = new ArrayList<Segment>();
+      for (EditorTestUtil.Caret caret : carets) {
+        LogicalPosition pos = null;
+        if (caret.offset != null) {
+          int caretLine = StringUtil.offsetToLineNumber(fileText, caret.offset);
+          int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
+                                                     myEditor.getDocument().getLineStartOffset(caretLine), caret.offset,
+                                                     CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+          pos = new LogicalPosition(caretLine, caretCol);
+        }
+        caretPositions.add(pos);
+        selections.add(caret.selection == null ? null : caret.selection);
+      }
+      myEditor.getCaretModel().setCarets(caretPositions, selections);
     }
-  }
-
-  private static void setupCaret(final RangeMarker caretMarker, String fileText) {
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(fileText, caretMarker.getStartOffset());
-      int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
-                                                 myEditor.getDocument().getLineStartOffset(caretLine), caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
-      LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
+    else {
+      assertEquals("Caret model doesn't support multiple carets", 1, carets.size());
+      EditorTestUtil.Caret caret = carets.get(0);
+      if (caret.offset != null) {
+        int caretLine = StringUtil.offsetToLineNumber(fileText, caret.offset);
+        int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
+                                                   myEditor.getDocument().getLineStartOffset(caretLine), caret.offset,
+                                                   CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+        LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
+        myEditor.getCaretModel().moveToLogicalPosition(pos);
+      }
+      if (caret.selection != null) {
+        myEditor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
+      }
     }
   }
 
@@ -303,7 +299,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
@@ -315,7 +310,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-   * @throws Exception
    */
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
@@ -345,7 +339,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   /**
    * Same as checkResultByFile but text is provided directly.
-   * @param fileText
    */
   protected void checkResultByText(@NonNls @NotNull String fileText) {
     checkResultByText(null, fileText, false, null);
@@ -354,7 +347,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
      * Same as checkResultByFile but text is provided directly.
      * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-     * @param fileText
      * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
      */
   protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
@@ -364,7 +356,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
   protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
@@ -375,34 +366,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       public void run() {
         final Document document = EditorFactory.getInstance().createDocument(fileText);
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0
-                                           ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                           : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0
-                                         ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                         : null;
-
         if (ignoreTrailingSpaces) {
           ((DocumentImpl)document).stripTrailingSpaces(getProject());
         }
 
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(),
-                                selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(),
-                                selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
+        EditorTestUtil.CaretsState carets = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         String newFileText = document.getText();
@@ -415,8 +383,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         }
         assertEquals(failMessage, newFileText, fileText);
 
-        checkCaretPosition(caretMarker, newFileText, message);
-        checkSelection(selStartMarker, selEndMarker, newFileText, message);
+        checkCaretAndSelectionPositions(carets, newFileText, message);
       }
     });
   }
@@ -426,53 +393,60 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return userMessage + " [" + engineMessage + "]";
   }
 
-  private static void checkSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker, String newFileText, String message) {
-    if (selStartMarker != null && selEndMarker != null) {
-      int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
-      int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
-
-      int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
-      int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
-
-      assertEquals(
-          getMessage("selectionStartLine", message),
-          selStartLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
-
-      assertEquals(
-          getMessage("selectionStartCol", message),
-          selStartCol + 1,
-          myEditor.getSelectionModel().getSelectionStart() -
-          StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-                                                                   1);
-
-      assertEquals(
-          getMessage("selectionEndLine", message),
-          selEndLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
-
-      assertEquals(
-          getMessage("selectionEndCol", message),
-          selEndCol + 1,
-          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
-          1);
-    }
-    else {
-      assertTrue(getMessage("must not have selection", message), !myEditor.getSelectionModel().hasSelection());
-    }
+  private static String getCaretDescription(int caretNumber, int totalCarets) {
+    return totalCarets == 1 ? "" : "(caret " + (caretNumber + 1) + "/" + totalCarets + ")";
   }
 
-  private static void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-      //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-      int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
-                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0),
-                                                 caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+  @SuppressWarnings("ConstantConditions")
+  private static void checkCaretAndSelectionPositions(EditorTestUtil.CaretsState caretState, String newFileText, String message) {
+    CaretModel caretModel = myEditor.getCaretModel();
+    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
+    for (int i = 0; i < caretState.carets.size(); i++) {
+      String caretDescription = getCaretDescription(i, caretState.carets.size());
+      Caret currentCaret = allCarets.get(i);
+      LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
+      EditorTestUtil.Caret expected = caretState.carets.get(i);
+      if (expected.offset != null) {
+        int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.offset);
+        int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
+                                                   StringUtil.lineColToOffset(newFileText, caretLine, 0),
+                                                   expected.offset,
+                                                   CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
-      assertEquals(getMessage("caretLine", message), caretLine, myEditor.getCaretModel().getLogicalPosition().line);
-      assertEquals(getMessage("caretColumn", message), caretCol, myEditor.getCaretModel().getLogicalPosition().column);
+        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine + 1, actualCaretPosition.line + 1);
+        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol + 1, actualCaretPosition.column + 1);
+      }
+      if (expected.selection != null) {
+        int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getStartOffset());
+        int selStartCol = expected.selection.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
+
+        int selEndLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getEndOffset());
+        int selEndCol = expected.selection.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
+
+        assertEquals(
+            getMessage("selectionStartLine" + caretDescription, message),
+            selStartLine + 1,
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionStart()) + 1);
+
+        assertEquals(
+            getMessage("selectionStartCol" + caretDescription, message),
+            selStartCol + 1,
+            currentCaret.getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
+
+        assertEquals(
+          getMessage("selectionEndLine" + caretDescription, message),
+            selEndLine + 1,
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionEnd()) + 1);
+
+        assertEquals(
+            getMessage("selectionEndCol" + caretDescription, message),
+            selEndCol + 1,
+            currentCaret.getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
+      }
+      else {
+        assertFalse(getMessage("must not have selection" + caretDescription, message), currentCaret.hasSelection());
+      }
     }
   }
 
@@ -624,7 +598,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       public void run() {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-        actionHandler.executeForAllCarets(getEditor(), DataManager.getInstance().getDataContext());
+        actionHandler.executeInCaretContext(getEditor(), null, DataManager.getInstance().getDataContext());
       }
     }, "", null);
   }

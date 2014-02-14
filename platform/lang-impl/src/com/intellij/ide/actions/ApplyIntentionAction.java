@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,12 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   public String getName() {
-    return myDescriptor.getAction().getText();
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myDescriptor.getAction().getText();
+      }
+    });
   }
 
   @Nullable

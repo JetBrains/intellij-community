@@ -95,7 +95,8 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       }
     }
     if (parentBlock instanceof GrLabelBlock) {
-      return myChildType == LABELED_STATEMENT
+      ASTNode first = parentBlock.getNode().getFirstChildNode();
+      return child == first
              ? Indent.getNoneIndent()
              : Indent.getLabelIndent();
 

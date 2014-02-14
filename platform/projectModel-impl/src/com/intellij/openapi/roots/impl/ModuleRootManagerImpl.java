@@ -345,7 +345,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void loadState(ModuleRootManagerState object) {
-    loadState(object, myLoaded);
+    loadState(object, myLoaded || isModuleAdded);
     myLoaded = true;
   }
 

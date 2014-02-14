@@ -46,6 +46,15 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
   }
 
   @Override
+  public boolean addAll(@NotNull Collection<? extends T> c) {
+    boolean result = false;
+    for (T t : c) {
+      result |= add(t);
+    }
+    return result;
+  }
+
+  @Override
   public boolean add(T o) {
     if (myHashSet.add(o)){
       super.add(o);

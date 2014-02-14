@@ -23,11 +23,11 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
@@ -59,7 +59,7 @@ final class BrowserSettingsPanel {
     new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
-        return FileUtilRt.toSystemDependentName(item.getPath());
+        return PathUtil.toSystemDependentName(item.getPath());
       }
 
       @Override

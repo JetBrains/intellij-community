@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.PsiElementUsageTarget;
-import com.intellij.usages.UsageContextPanel;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +45,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextCallHierarchyPanel(((UsageViewImpl)usageView).getProject());
+      return new UsageContextCallHierarchyPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
     }
 
     @Override
@@ -75,8 +72,8 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     }
   }
 
-  public UsageContextCallHierarchyPanel(@NotNull Project project) {
-    super(project);
+  public UsageContextCallHierarchyPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    super(project, presentation);
   }
 
   @Override
@@ -101,7 +98,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
     removeAll();
     if (element == null) {
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

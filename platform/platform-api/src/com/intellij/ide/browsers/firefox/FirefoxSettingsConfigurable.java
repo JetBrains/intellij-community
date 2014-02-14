@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,8 +88,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   @Nullable
   private String getConfiguredProfileIniPath() {
-    String path = myProfilesIniPathField.getText();
-    return myDefaultProfilesIniPath.equals(path) ? null : FileUtilRt.toSystemIndependentName(StringUtil.nullize(path));
+    String path = PathUtil.toSystemIndependentName(StringUtil.nullize(myProfilesIniPathField.getText()));
+    return myDefaultProfilesIniPath.equals(path) ? null : path;
   }
 
   @Nullable

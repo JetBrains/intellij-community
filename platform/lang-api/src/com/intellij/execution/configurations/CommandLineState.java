@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
  * @see GeneralCommandLine
  */
 public abstract class CommandLineState implements RunProfileState {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;
 
   private final ExecutionEnvironment myEnvironment;
@@ -83,10 +81,8 @@ public abstract class CommandLineState implements RunProfileState {
 
   @Nullable
   protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
-    final TextConsoleBuilder builder = getConsoleBuilder();
-
-    return builder != null ? builder.getConsole()
-                           : null;
+    TextConsoleBuilder builder = getConsoleBuilder();
+    return builder != null ? builder.getConsole() : null;
   }
 
   /**

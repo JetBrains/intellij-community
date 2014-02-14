@@ -106,14 +106,6 @@ public class PyUtil {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
 
-  /**
-   * @param function function to check
-   * @return true if function is init
-   */
-  public static boolean isInit(@NotNull final PyFunction function) {
-    return PyNames.INIT.equals(function.getName());
-  }
-
   @Nullable
   public static PsiElement getFirstNonCommentAfter(PsiElement start) {
     PsiElement seeker = start;
@@ -959,17 +951,6 @@ public class PyUtil {
     while (value instanceof PyParenthesizedExpression) {
       value = ((PyParenthesizedExpression)value).getContainedExpression();
     }
-    if (value instanceof PyReferenceExpression) {
-      PyReferenceExpression refExpr = (PyReferenceExpression)value;
-      PsiElement deref = refExpr.getReference().resolve();
-      if (deref instanceof PyTargetExpression) {
-        PyTargetExpression te = (PyTargetExpression)deref;
-        PyExpression assignedValue = te.findAssignedValue();
-        if (assignedValue instanceof PySequenceExpression) {
-          value = assignedValue;
-        }
-      }
-    }
     if (value instanceof PySequenceExpression) {
       final PyExpression[] elements = ((PySequenceExpression)value).getElements();
       List<String> result = new ArrayList<String>(elements.length);
@@ -1002,7 +983,6 @@ public class PyUtil {
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
-  @SafeVarargs
   public static <T> boolean among(@NotNull T what, T... variants) {
     for (T s : variants) {
       if (what.equals(s)) return true;
@@ -1414,6 +1394,10 @@ public class PyUtil {
     return false;
   }
 
+  public static boolean isInit(@NotNull final PyFunction function) {
+    return PyNames.INIT.equals(function.getName());
+  }
+
 
   private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
     final PyElement element = classMemberInfo.getMember();
@@ -1436,7 +1420,6 @@ public class PyUtil {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
   }
 
-
   /**
    * Filters only pyclass object (new class)
    */
@@ -1453,6 +1436,14 @@ public class PyUtil {
     @Override
     public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
       return myAllowObjects == isObject(input);
+    }
+
+    private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
+      final PyElement element = classMemberInfo.getMember();
+      if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
+        return true;
+      }
+      return false;
     }
   }
 }

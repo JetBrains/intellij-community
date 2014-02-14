@@ -693,7 +693,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     myExceptionCache = null;
   }
 
-  @SafeVarargs
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }

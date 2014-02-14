@@ -38,7 +38,6 @@ public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
   private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
-  @SafeVarargs
   @NotNull
   public static <T> T[] ar(@NotNull T... elements) {
     return elements;
@@ -54,7 +53,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newHashMap(map);
   }
 
-  @SafeVarargs
   @NotNull
   public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
@@ -85,9 +83,8 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashMap(map);
   }
 
-  @SafeVarargs
   @NotNull
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -128,7 +125,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedList();
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
     return ContainerUtilRt.newLinkedList(elements);
@@ -144,7 +140,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newArrayList();
   }
 
-  @SafeVarargs
   @NotNull
   public static <E> ArrayList<E> newArrayList(@NotNull E... array) {
     return ContainerUtilRt.newArrayList(array);
@@ -193,7 +188,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return new SmartList<T>(element);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> List<T> newSmartList(@NotNull T... elements) {
     return new SmartList<T>(elements);
@@ -209,7 +203,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newHashSet(initialCapacity);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
     return ContainerUtilRt.newHashSet(elements);
@@ -241,7 +234,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashSet(elements);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
     return ContainerUtilRt.newLinkedHashSet(elements);
@@ -257,13 +249,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashSet<T>(strategy);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> THashSet<T> newTroveSet(@NotNull T... elements) {
     return newTroveSet(Arrays.asList(elements));
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull T... elements) {
     return new THashSet<T>(Arrays.asList(elements), strategy);
@@ -308,7 +298,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
     return ContainerUtilRt.newTreeSet(elements);
@@ -375,13 +364,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
-  @SafeVarargs
   @NotNull
   public static <E> Set<E> immutableSet(@NotNull E ... elements) {
     return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
   }
 
-  @SafeVarargs
   @NotNull
   public static <E> ImmutableList<E> immutableList(@NotNull E ... array) {
     return new ImmutableListBackedByArray<E>(array);
@@ -809,7 +796,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return result.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : result.toNativeArray();
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
     return findAll(collection, condition);
@@ -1027,7 +1013,6 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
-  @SafeVarargs
   @NotNull
   public static <T, A extends T, C extends Collection<T>> C addAll(@NotNull C collection, @NotNull A... elements) {
     //noinspection ManualArrayToCollectionCopy
@@ -1040,7 +1025,6 @@ public class ContainerUtil extends ContainerUtilRt {
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
-  @SafeVarargs
   @NotNull
   public static <T, A extends T, C extends Collection<T>> C addAllNotNull(@NotNull C collection, @NotNull A... elements) {
     for (T element : elements) {
@@ -1051,7 +1035,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return collection;
   }
 
-  @SafeVarargs
   public static <T> boolean removeAll(@NotNull Collection<T> collection, @NotNull T... elements) {
     boolean modified = false;
     for (T element : elements) {
@@ -1110,9 +1093,8 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param appendTail specify whether additional values should be appended in front or after the list
    * @return read-only list consisting of the elements from specified list with some additional values
    */
-  @SafeVarargs
   @NotNull
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
+  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, T... values) {
     return appendTail ? concat(list, list(values)) : concat(list(values), list);
   }
 
@@ -1141,7 +1123,6 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
     return new Iterable<T>() {
@@ -1158,7 +1139,6 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> Iterator<T> concatIterators(@NotNull Iterator<T>... iterators) {
     return new SequenceIterator<T>(iterators);
@@ -1169,7 +1149,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return new SequenceIterator<T>(iterators);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
     return new Iterable<T>() {
@@ -1189,7 +1168,6 @@ public class ContainerUtil extends ContainerUtilRt {
   /**
    * @return read-only list consisting of the lists added together
    */
-  @SafeVarargs
   @NotNull
   public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
     int size = 0;
@@ -1550,7 +1528,6 @@ public class ContainerUtil extends ContainerUtilRt {
   /**
    * @return read-only list consisting of the elements with nulls filtered out
    */
-  @SafeVarargs
   @NotNull
   public static <T> List<T> packNullables(@NotNull T... elements) {
     List<T> list = new ArrayList<T>();
@@ -1586,7 +1563,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return result.toArray(emptyArray);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> Set<T> set(@NotNull T ... items) {
     return newHashSet(items);
@@ -1689,7 +1665,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return items.subList(0, items.size() - 1);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> List<T> list(@NotNull T... items) {
     return Arrays.asList(items);
@@ -1972,7 +1947,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newStack(initial);
   }
 
-  @SafeVarargs
   @NotNull
   public static <T> Stack<T> newStack(@NotNull T... initial) {
     return ContainerUtilRt.newStack(initial);
@@ -1996,12 +1970,12 @@ public class ContainerUtil extends ContainerUtilRt {
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
    */
   @NotNull
-  public static <T> List<T> createLockFreeCopyOnWriteList() {
+  public static <T> ConcurrentList<T> createLockFreeCopyOnWriteList() {
     return new LockFreeCopyOnWriteArrayList<T>();
   }
 
   @NotNull
-  public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
+  public static <T> ConcurrentList<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<T>(c);
   }
 

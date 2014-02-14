@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class DefaultProject extends ProjectImpl {
-  protected DefaultProject(@NotNull ProjectManagerImpl manager, @NotNull String filePath, boolean isOptimiseTestLoadSpeed, @NotNull String projectName) {
-    super(manager, filePath, isOptimiseTestLoadSpeed, projectName);
+  private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+
+  protected DefaultProject(@NotNull ProjectManager manager, @NotNull String filePath, boolean optimiseTestLoadSpeed) {
+    super(manager, filePath, optimiseTestLoadSpeed, TEMPLATE_PROJECT_NAME);
   }
 
   @Override

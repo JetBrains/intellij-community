@@ -21,6 +21,7 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -124,8 +125,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
           if (next != null && PsiImplUtil.isWhiteSpaceOrNls(next) &&
               prev != null && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
-            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
-            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
+            descriptors.add(new NamedFoldingDescriptor(psi, lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
+            descriptors.add(new NamedFoldingDescriptor(psi, prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
             return;
           }
         }
@@ -188,24 +189,6 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     }
     if (startOffset + 1 < nodeRange.getEndOffset()) {
       descriptors.add(new NamedFoldingDescriptor(node.getLastChildNode(), startOffset, nodeRange.getEndOffset(), group, end_quote));
-    }
-  }
-
-  private static class NamedFoldingDescriptor extends FoldingDescriptor {
-    private final String myPlaceholderText;
-
-    private NamedFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-      this(node, new TextRange(start, end), group, placeholderText);
-    }
-
-    private NamedFoldingDescriptor(@NotNull ASTNode node, @NotNull final TextRange range, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-      super(node, range, group);
-      myPlaceholderText = placeholderText;
-    }
-
-    @Override
-    public String getPlaceholderText() {
-      return myPlaceholderText;
     }
   }
 

@@ -127,9 +127,9 @@ public class TypedAction {
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
         @Override
         public void run() {
-          myEditor.getCaretModel().runForEachCaret(new Runnable() {
+          myEditor.getCaretModel().runForEachCaret(new CaretAction() {
             @Override
-            public void run() {
+            public void perform(Caret caret) {
               Document doc = myEditor.getDocument();
               doc.startGuardedBlockChecking();
               try {

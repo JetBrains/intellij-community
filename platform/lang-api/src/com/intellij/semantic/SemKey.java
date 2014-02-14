@@ -34,7 +34,6 @@ public class SemKey<T extends SemElement> {
   private final SemKey<? super T>[] mySupers;
   private final int myUniqueId;
 
-  @SafeVarargs
   private SemKey(String debugName, SemKey<? super T>... supers) {
     myDebugName = debugName;
     mySupers = supers;
@@ -60,7 +59,6 @@ public class SemKey<T extends SemElement> {
     return myDebugName;
   }
 
-  @SafeVarargs
   public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
     return new SemKey<T>(debugName, supers);
   }
@@ -69,8 +67,7 @@ public class SemKey<T extends SemElement> {
     return myUniqueId;
   }
 
-  @SafeVarargs
-  public final <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
+  public <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
     if (otherSupers.length == 0) {
       return new SemKey<K>(debugName, this);
     }

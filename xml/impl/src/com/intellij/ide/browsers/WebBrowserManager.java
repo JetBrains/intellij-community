@@ -285,6 +285,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
                                final BrowserSpecificSettings specificSettings) {
     final ConfigurableWebBrowser browser = new ConfigurableWebBrowser(id, family, name, path, active, specificSettings);
     browsers.add(browser);
+    modificationCount++;
     return browser;
   }
 

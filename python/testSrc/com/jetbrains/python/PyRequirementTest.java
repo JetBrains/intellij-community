@@ -100,7 +100,6 @@ public class PyRequirementTest extends PyTestCase {
                  PyRequirement.fromString("git+git://github.com/django/django.git@stable/1.5.x"));
   }
 
-  @SafeVarargs
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }

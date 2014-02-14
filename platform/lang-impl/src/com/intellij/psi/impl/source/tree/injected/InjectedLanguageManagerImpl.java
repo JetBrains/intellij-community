@@ -20,7 +20,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.injected.editor.*;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.EditorWindowImpl;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -50,6 +53,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +62,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -127,8 +130,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
     if (hostPsiFile == null) return;
 
-    final CopyOnWriteArrayList<DocumentWindow> injected =
-      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    final ConcurrentList<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {

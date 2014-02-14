@@ -44,7 +44,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
+    if (!LambdaUtil.isFunctionalType(myT)) {
       return false;
     }
 

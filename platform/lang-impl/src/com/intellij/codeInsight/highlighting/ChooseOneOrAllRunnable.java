@@ -41,7 +41,6 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
     myTitle = title;
   }
 
-  @SuppressWarnings("unchecked")
   protected abstract void selected(T... classes);
 
   @Override

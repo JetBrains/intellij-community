@@ -36,7 +36,7 @@ public class LanguageConsoleBuilder {
   }
 
   static class ProcessBackedExecutionEnabledCondition implements Condition<LanguageConsoleImpl> {
-    private ProcessHandler myProcessHandler;
+    private final ProcessHandler myProcessHandler;
 
     public ProcessBackedExecutionEnabledCondition(ProcessHandler myProcessHandler) {
       this.myProcessHandler = myProcessHandler;

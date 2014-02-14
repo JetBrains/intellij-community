@@ -18,7 +18,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
@@ -44,8 +43,7 @@ public class Conditions {
     };
   }
 
-  @SafeVarargs
-  public static <T> Condition<T> oneOf(@NotNull final T... options) {
+  public static <T> Condition<T> oneOf(final T... options) {
     return new Condition<T>() {
       @Override
       public boolean value(T t) {

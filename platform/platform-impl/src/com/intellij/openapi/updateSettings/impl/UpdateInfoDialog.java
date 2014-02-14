@@ -87,7 +87,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
     else {
       for (ButtonInfo info : buttons) {
-        if (!info.isDownload()) {
+        if (!info.isDownload() || myPatch == null) {
           actions.add(new ButtonAction(info));
         }
       }

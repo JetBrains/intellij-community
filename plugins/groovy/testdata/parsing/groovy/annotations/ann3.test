@@ -9,9 +9,9 @@ Groovy script
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('A')
-    PsiWhiteSpace(' ')
     Extends clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
@@ -21,9 +21,9 @@ Groovy script
             PsiElement(@)('@')
             Reference element
               PsiElement(identifier)('Nullable')
-            PsiWhiteSpace(' ')
             Annotation arguments
               <empty list>
+          PsiWhiteSpace(' ')
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         Type element

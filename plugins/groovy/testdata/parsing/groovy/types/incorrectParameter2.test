@@ -30,9 +30,9 @@ Groovy script
       PsiErrorElement:Identifier expected
         <empty list>
     PsiElement())(')')
-    PsiWhiteSpace(' ')
     Throw clause
       <empty list>
+    PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

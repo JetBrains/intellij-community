@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
@@ -389,7 +390,7 @@ final class BrowserLauncherImpl extends BrowserLauncher {
                                  @Nullable WebBrowser browser,
                                  @Nullable Project project,
                                  @NotNull String... additionalParameters) {
-    return doLaunch(url, browserPath == null && browser != null ? FileUtilRt.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
+    return doLaunch(url, browserPath == null && browser != null ? PathUtil.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
   }
 
   private static boolean doLaunch(@Nullable String url,

@@ -65,6 +65,7 @@ public class JBScrollPane extends JScrollPane {
     setCorner(LOWER_LEFT_CORNER, new Corner(LOWER_LEFT_CORNER));
   }
 
+  @Override
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();

@@ -202,6 +202,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         executingPrompt(console);
       }
       myConsoleCommunication.execInterpreter(code, new Function<InterpreterResponse, Object>() {
+        @Override
         public Object fun(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
@@ -335,7 +336,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private void indentEditor(final Editor editor, final int indentSize) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         EditorModificationUtil.insertStringAtCaret(editor, IndentHelperImpl.fillIndent(getProject(), PythonFileType.INSTANCE, indentSize));
       }
     }.execute();
@@ -344,7 +345,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private void cleanEditor(final Editor editor) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         editor.getDocument().setText("");
       }
     }.execute();

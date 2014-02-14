@@ -18,6 +18,7 @@ package com.intellij.index;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -191,7 +193,6 @@ public class IndexTest extends IdeaTestCase {
   }
   */
   
-  @SafeVarargs
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }
@@ -262,6 +263,44 @@ public class IndexTest extends IdeaTestCase {
         assertNotNull(facade.findClass("Foo", scope).getText());
         // if Foo exists now, mod count should be different
         assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
+      }
+    });
+  }
+
+  public void _testSkipUnknownFileTypes() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+
+    final VirtualFile vFile = createChildData(dir, "Foo.test");
+    VfsUtil.saveText(vFile, "Foo");
+    assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
+    assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    //todo should file type be changed silently without events?
+    //assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
+    
+    final PsiFile file = getPsiFile(document);
+    assertInstanceOf(file, PsiPlainTextFile.class);
+    assertEquals("Foo", file.getText());
+    
+    assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, " ");
+        assertEquals("Foo", file.getText());
+        assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+
+        FileDocumentManager.getInstance().saveDocument(document);
+        assertEquals("Foo", file.getText());
+        assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+        
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        assertEquals(" Foo", file.getText());
+        assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+        
       }
     });
   }
