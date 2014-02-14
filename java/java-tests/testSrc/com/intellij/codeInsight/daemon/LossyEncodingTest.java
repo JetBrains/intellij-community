@@ -154,19 +154,13 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDetectWrongEncoding() throws Exception {
-    String threeNotoriousRussianLetters = "\u0416\u041e\u041f";
-    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "Win1251" + ".txt");
+    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "Win1251.txt");
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     configureByExistingFile(virtualFile);
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
-    //Charset WINDOWS_1251 = Charset.forName("windows-1251");
-    //virtualFile.setCharset(WINDOWS_1251);
-    //FileDocumentManager.getInstance().saveAllDocuments();  // save in wrong encoding
-    //assertEquals(WINDOWS_1251, virtualFile.getCharset());
-    //assertEquals(threeNotoriousRussianLetters, new String(virtualFile.contentsToByteArray(), WINDOWS_1251));
 
     doHighlighting();
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
