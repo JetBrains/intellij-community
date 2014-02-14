@@ -73,7 +73,7 @@ public class UsageViewContext {
     return new MyUsageTarget(_getPresentableText());
   }
 
-  public void configure(final UsageViewPresentation presentation) {
+  public void configure(@NotNull UsageViewPresentation presentation) {
     String s = _getPresentableText();
     if (s.length() > 15) s = s.substring(0,15) + "...";
     final String usagesString = SSRBundle.message("occurrences.of", s);

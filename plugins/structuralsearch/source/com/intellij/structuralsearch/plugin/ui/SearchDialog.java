@@ -495,7 +495,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     presentation.setScopeText(config.getMatchOptions().getScope().getDisplayName());
     context.configure(presentation);
 
-    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(true);
 
