@@ -56,16 +56,20 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
 
 
   /**
-   * @param project   project this view runs
-   * @param presenter view's presenter
-   * @param title     window title
+   *
+   * @param project         project this view runs
+   * @param presenter       view's presenter
+   * @param title           window title
+   * @param supportAbstract supports "abstract" column?
    */
-  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final String title) {
+  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final String title,
+                                      final boolean supportAbstract) {
     super(project, true);
     myTopPanel = new JPanel(new BorderLayout());
     myCenterPanel = new JPanel(new BorderLayout());
     myPresenter = presenter;
-    myPyMemberSelectionPanel = new PyMemberSelectionPanel(title);
+    myPyMemberSelectionPanel = new PyMemberSelectionPanel(title, supportAbstract);
+    //TODO: Take this from presenter to prevent inconsistence: now it is possible to create view that supports abstract backed by presenter that does not. And vice versa.
   }
 
   @Override

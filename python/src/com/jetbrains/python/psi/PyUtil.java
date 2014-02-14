@@ -1087,6 +1087,11 @@ public class PyUtil {
       }
       return null;
     }
+
+    //TODO: Doc
+    public boolean isInstanceMethod() {
+      return ! (myIsClassMethod || myIsStaticMethod);
+    }
   }
 
   public static boolean isSuperCall(@NotNull PyCallExpression node) {
@@ -1438,7 +1443,7 @@ public class PyUtil {
       return myAllowObjects == isObject(input);
     }
 
-    private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
+    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
       final PyElement element = classMemberInfo.getMember();
       if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
         return true;

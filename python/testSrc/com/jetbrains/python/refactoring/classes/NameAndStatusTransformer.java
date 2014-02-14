@@ -13,12 +13,12 @@ public class NameAndStatusTransformer implements Function<PyMemberInfo<PyElement
   @NotNull
   private final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myMemberInfoModel;
 
-  public NameAndStatusTransformer(MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel) {
+  public NameAndStatusTransformer(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel) {
     myMemberInfoModel = memberInfoModel;
   }
 
   @Override
   public PyPresenterTestMemberEntry apply(final PyMemberInfo<PyElement> input) {
-    return new PyPresenterTestMemberEntry(input.getDisplayName(), myMemberInfoModel.isMemberEnabled(input), input.isStatic());
+    return new PyPresenterTestMemberEntry(input.getDisplayName(), myMemberInfoModel.isMemberEnabled(input), input.isStatic(), myMemberInfoModel.isAbstractEnabled(input));
   }
 }

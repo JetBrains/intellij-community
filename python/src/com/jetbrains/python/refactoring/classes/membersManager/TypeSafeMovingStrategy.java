@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * TODO: Doc
+ * Moves members checking types at runtime.
  *
  * @author Ilya.Kazakevich
  */
@@ -20,6 +20,13 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   @NotNull private final Collection<PyMemberInfo<T>> myMemberInfoCollection;
   @NotNull private final PyClass[] myTo;
 
+  /**
+   * Move members.
+   * @param from source
+   * @param manager manager to be used
+   * @param memberInfoCollection what to move
+   * @param to where
+   */
   @SuppressWarnings({"unchecked", "rawtypes"}) //We check types at runtime
   static void moveCheckingTypesAtRunTime(@NotNull final PyClass from,
                    @NotNull final MembersManager<?> manager,
@@ -40,21 +47,26 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   }
 
 
-  //TODO: Doc
+  /**
+   * While types are already checked at runtime, this method could move everything in type-safe manner.
+   */
   private void moveTyped() {
     final Collection<T> elementsCollection = MembersManager.fetchElements(myMemberInfoCollection);
     final Collection<? extends PyElement> references = myManager.getElementsToStoreReferences(elementsCollection);
+
+    // Store references to add required imports
     for (final PyElement element : references) {
       PyClassRefactoringUtil.rememberNamedReferences(element, PyNames.CANONICAL_SELF); //"self" is not reference we need to move
     }
 
+    // Move
     final Collection<PyElement> newElements = myManager.moveMembers(myFrom, myMemberInfoCollection, myTo);
 
-    //Store/Restore to add appropriate imports
+    // Restore references to add appropriate imports
     for (final PyElement element : newElements) {
       PyClassRefactoringUtil.restoreNamedReferences(element);
     }
 
-    PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); //To remove unneeded imports from source
+    PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports from source
   }
 }

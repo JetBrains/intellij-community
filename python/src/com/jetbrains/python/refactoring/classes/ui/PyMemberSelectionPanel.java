@@ -46,8 +46,8 @@ public class PyMemberSelectionPanel extends JPanel {
    *
    * @param title
    */
-  public PyMemberSelectionPanel(@NotNull String title) {
-    this(title, EMPTY_MEMBER_INFO, null);
+  public PyMemberSelectionPanel(@NotNull String title, boolean supportAbstract) {
+    this(title, EMPTY_MEMBER_INFO, null, supportAbstract);
   }
 
   /**
@@ -57,14 +57,18 @@ public class PyMemberSelectionPanel extends JPanel {
    * @param memberInfo list of members
    * @param model      model
    */
-  public PyMemberSelectionPanel(String title, List<PyMemberInfo<PyElement>> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
+  public PyMemberSelectionPanel(
+    String title,
+    List<PyMemberInfo<PyElement>> memberInfo,
+    final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
+    final boolean supportAbstract) {
     Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     setBorder(border);
     setLayout(new BorderLayout());
 
-    myTable = new PyMemberSelectionTable(memberInfo, model);
+    myTable = new PyMemberSelectionTable(memberInfo, model, supportAbstract);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
 

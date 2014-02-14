@@ -59,7 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * * TODO: Merge with {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#createMethod(String, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyFunction.Modifier, String...)}
+ * * TODO: Merge with {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#createMethod(String, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyFunction.Modifier, java.util.Collection, String...)}
  * @author oleg
  */
 public class PyExtractMethodUtil {

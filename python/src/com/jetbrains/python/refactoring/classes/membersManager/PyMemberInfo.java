@@ -26,30 +26,38 @@ import org.jetbrains.annotations.Nullable;
 public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   @NotNull
   private final MembersManager<T> myMembersManager;
+  private final boolean myCouldBeAbstract;
 
   /**
-   * @param member element itself
-   * @param isStatic is it static or not?
-   * @param displayName element display name
-   * @param overrides does it overrides something? TRUE if is overriden, FALSE if implemented, null if not implemented or overriden
-   *                  TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
+   * TODO: Doc new param
+   * @param member         element itself
+   * @param isStatic       is it static or not?
+   * @param displayName    element display name
+   * @param overrides      does it overrides something? TRUE if is overriden, FALSE if implemented, null if not implemented or overriden
+   *                       TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
    * @param membersManager manager that knows how to handle this member
    */
   PyMemberInfo(@NotNull final T member,
-                      final boolean isStatic,
-                      @NotNull final String displayName,
-                      @Nullable final Boolean overrides,
-                      @NotNull final MembersManager<T> membersManager) {
+               final boolean isStatic,
+               @NotNull final String displayName,
+               @Nullable final Boolean overrides,
+               @NotNull final MembersManager<T> membersManager,
+               final boolean couldBeAbstract) {
     super(member);
     this.isStatic = isStatic;
     this.displayName = displayName;
     this.overrides = overrides;
     myMembersManager = membersManager;
+    myCouldBeAbstract = couldBeAbstract;
   }
 
   @NotNull
   MembersManager<T> getMembersManager() {
     return myMembersManager;
+  }
+
+  public boolean isCouldBeAbstract() {
+    return myCouldBeAbstract;
   }
 
   @Override

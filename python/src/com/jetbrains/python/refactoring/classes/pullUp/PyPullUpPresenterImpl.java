@@ -109,7 +109,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
 
     @Override
     public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
-      return false;
+      return member.isCouldBeAbstract() && isMemberEnabled(member); // TODO: copy paste with other models, get rid of
     }
 
     @Override

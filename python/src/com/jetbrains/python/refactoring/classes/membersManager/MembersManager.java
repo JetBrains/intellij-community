@@ -71,7 +71,13 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   }
 
 
-  //TODO: Doc
+  /**
+   * Transforms elements, manager says it could move to appropriate {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}.
+   * Types are checked at runtime.
+   * @param pyClass class whose members we want to move
+   * @param manager manager that should check class and report list of memebers
+   * @return member infos
+   */
   //TODO: Move to  TypeSafeMovingStrategy
   @NotNull
   @SuppressWarnings({"unchecked", "rawtypes"}) //We check type at runtime
@@ -237,7 +243,12 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     }
   }
 
-  //TODO: Doc
+  /**
+   * Fetches elements from member info.
+   * @param memberInfos member info to fetch elements from
+   * @param <T> type of element
+   * @return list of elements
+   */
   @NotNull
   protected static <T extends PyElement> Collection<T> fetchElements(@NotNull final Collection<PyMemberInfo<T>> memberInfos) {
     return Collections2.transform(memberInfos, new PyMemberExtractor<T>());

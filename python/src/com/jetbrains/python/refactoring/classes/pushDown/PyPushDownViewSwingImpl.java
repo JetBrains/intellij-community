@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Created by Ilya.Kazakevich on 10.02.14.
+ * @author Ilya.Kazakevich
  */
 public class PyPushDownViewSwingImpl extends MembersBasedViewSwingImpl<PyPushDownPresenter, MembersViewInitializationInfo>
   implements PyPushDownView {
@@ -18,7 +18,7 @@ public class PyPushDownViewSwingImpl extends MembersBasedViewSwingImpl<PyPushDow
     @NotNull final PyClass classUnderRefactoring,
     @NotNull final Project project,
     @NotNull final PyPushDownPresenter presenter) {
-    super(project, presenter, RefactoringBundle.message("push.members.from.0.down.label", classUnderRefactoring.getName()));
+    super(project, presenter, RefactoringBundle.message("push.members.from.0.down.label", classUnderRefactoring.getName()), false);
 
     myCenterPanel.add(myPyMemberSelectionPanel, BorderLayout.CENTER);
     setTitle(PyPushDownHandler.REFACTORING_NAME);

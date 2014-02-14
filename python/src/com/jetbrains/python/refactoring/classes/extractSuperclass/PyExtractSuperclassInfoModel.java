@@ -16,7 +16,7 @@ class PyExtractSuperclassInfoModel extends AbstractUsesDependencyMemberInfoModel
 
   @Override
   public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
-    return false;
+    return member.isCouldBeAbstract() && isMemberEnabled(member);
   }
 
   @Override

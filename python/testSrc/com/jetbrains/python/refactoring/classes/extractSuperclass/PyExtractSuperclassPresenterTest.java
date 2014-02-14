@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
@@ -31,12 +32,32 @@ public class PyExtractSuperclassPresenterTest
 
   /**
    * Tests that static methods could be moved, but "extends object" is not in list
+   * Also checks that static method could NOT be made abstract in Py2K
    */
-  public void testStaticNoObject() {
+  public void testStaticNoObjectPy2() {
+    ensureStaticNoObject(false);
+  }
+
+  /**
+   * Tests that static methods could be moved, but "extends object" is not in list
+   * Also checks that static method COULD be made abstract in Py3K
+   */
+  public void testStaticNoObjectPy3() {
+    setLanguageLevel(LanguageLevel.PYTHON32);
+    ensureStaticNoObject(true);
+  }
+
+  /**
+   * Tests that static methods could be moved, but "extends object" is not in list.
+   * Also checks that static method could be made abstract in Py3K, but not in Py2K
+   *
+   * @param py3k if py 3?
+   */
+  private void ensureStaticNoObject( final boolean py3k) {
     final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("StaticOnly");
 
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher =
-      Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("static_method()", true, true));
+      Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("static_method()", true, true, py3k));
     compareMembers(members, matcher);
   }
 
@@ -103,11 +124,11 @@ public class PyExtractSuperclassPresenterTest
     final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("Child");
 
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
-      .containsInAnyOrder(new PyPresenterTestMemberEntry("CLASS_VAR", true, true),
-                          new PyPresenterTestMemberEntry("eggs(self)", true, false),
-                          new PyPresenterTestMemberEntry("__init__(self)", true, false),
-                          new PyPresenterTestMemberEntry("self.artur", true, false),
-                          new PyPresenterTestMemberEntry("extends date", true, false));
+      .containsInAnyOrder(new PyPresenterTestMemberEntry("CLASS_VAR", true, true, false),
+                          new PyPresenterTestMemberEntry("eggs(self)", true, false, true),
+                          new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
+                          new PyPresenterTestMemberEntry("self.artur", true, false, false),
+                          new PyPresenterTestMemberEntry("extends date", true, false, false));
     compareMembers(members, matcher);
   }
 
