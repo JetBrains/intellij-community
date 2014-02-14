@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -69,7 +70,7 @@ public class PyConfigurableInterpreterList {
     }
   }
 
-  public List<Sdk> getAllPythonSdks(final Project project) {
+  public List<Sdk> getAllPythonSdks(@Nullable final Project project) {
     List<Sdk> result = new ArrayList<Sdk>();
     for (Sdk sdk : getModel().getSdks()) {
       if (sdk.getSdkType() instanceof PythonSdkType) {
@@ -94,7 +95,7 @@ public class PyConfigurableInterpreterList {
         final LanguageLevel level2 = flavor2 != null ? flavor2.getLanguageLevel(o2) : LanguageLevel.getDefault();
 
         if (isVEnv1) {
-          if (associatedWithCurrent(o1, project)) return -1;
+          if (project != null && associatedWithCurrent(o1, project)) return -1;
           if (isVEnv2) {
             final int compare = Comparing.compare(level1, level2);
             if (compare != 0) return -compare;
@@ -137,5 +138,9 @@ public class PyConfigurableInterpreterList {
       }
     }
     return false;
+  }
+
+  public List<Sdk> getAllPythonSdks() {
+    return getAllPythonSdks(null);
   }
 }
