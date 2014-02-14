@@ -130,9 +130,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return myTemplate;
   }
 
-  public void dispose() {
+  void dispose() {
     final Project project = myTemplateEditor.getProject();
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTemplateEditor.getDocument());
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);

@@ -1694,6 +1694,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
+    VirtualFile file = content.getVirtualFile();
+    // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
+    // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
+    // todo this assumption isn't correct for vfs events happened between content loading and indexing itself
+    // proper fix will when events handling will be out of direct execution by EDT
+    myChangedFilesCollector.myFilesToUpdate.remove(file);
+    doIndexFileContent(project, content);
+  }
+
+  private void doIndexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
 
@@ -2273,9 +2283,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
             removeFileDataFromIndices(affected, file);
+            if (onlyRemoveOutdatedData && file instanceof VirtualFileSystemEntry) {
+              ((VirtualFileSystemEntry)file).setFileIndexed(false); // we should be able index this file via UnindexedFileFinder later
+            }
           }
           else {
-            indexFileContent(project, fileContent);
+            doIndexFileContent(project, fileContent);
           }
         }
         finally {
