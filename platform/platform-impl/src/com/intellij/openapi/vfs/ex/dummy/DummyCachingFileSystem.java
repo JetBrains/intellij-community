@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author gregsh
@@ -44,7 +44,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   private final BidirectionalMap<Project, String> myProject2Id = new BidirectionalMap<Project, String>();
 
-  private final Map<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
+  private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
     @Override
     protected T create(String key) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -122,7 +122,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @NotNull
   public Collection<T> getCachedFiles() {
-    return myCachedFiles.values();
+    return myCachedFiles.notNullValues();
   }
 
   public void onProjectClosed(Project project) {
@@ -174,7 +174,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     myCachedFiles.remove(file.getPath());
   }
 
-  protected void fileRenamed(VirtualFile file, Object requestor, String oldName, String newName) {
+  protected void fileRenamed(@NotNull VirtualFile file, Object requestor, String oldName, String newName) {
     //noinspection unchecked
     myCachedFiles.put(file.getPath(), (T)file);
     firePropertyChanged(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
