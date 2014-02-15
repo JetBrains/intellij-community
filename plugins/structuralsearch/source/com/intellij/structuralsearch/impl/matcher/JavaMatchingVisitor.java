@@ -398,15 +398,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     final PsiLambdaExpression expression2 = (PsiLambdaExpression)myMatchingVisitor.getElement();
-    myMatchingVisitor.setResult(true);
+    boolean result = true;
     final PsiParameterList parameterList1 = expression.getParameterList();
     if (parameterList1.getParametersCount() != 0) {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList()));
+      result = myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList());
     }
     final PsiElement body1 = getElementToMatch(expression.getBody());
     if (body1 != null) {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1, getElementToMatch(expression2.getBody())));
+      result = myMatchingVisitor.matchSequentially(body1, getElementToMatch(expression2.getBody()));
     }
+    myMatchingVisitor.setResult(result);
   }
 
   private static PsiElement getElementToMatch(PsiElement element) {
