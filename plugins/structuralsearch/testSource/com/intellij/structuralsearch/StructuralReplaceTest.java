@@ -1772,7 +1772,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String toReplace = "jspHelper.composeTag('tag, 'a)";
     String replacement = "jspHelper.composeTag($tag$, $a$, Boolean.getBoolean($a$))";
 
-    final PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText("A.jsp", jsp);
+    final PsiFile psiFile = PsiFileFactory.getInstance(getProject()).createFileFromText("A.jsp", jsp);
     options.getMatchOptions().setScope(new LocalSearchScope(psiFile));
     actualResult = replacer.testReplace(jsp,toReplace,replacement,options, true);
 

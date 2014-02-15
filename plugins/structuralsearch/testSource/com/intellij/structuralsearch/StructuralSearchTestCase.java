@@ -7,11 +7,11 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.LightIdeaTestCase;
 
 import java.util.List;
 
-abstract class StructuralSearchTestCase extends IdeaTestCase {
+abstract class StructuralSearchTestCase extends LightIdeaTestCase {
   protected MatchOptions options;
   protected Matcher testMatcher;
 
@@ -20,11 +20,11 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     super.setUp();
 
     StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
-    testMatcher = new Matcher(myProject);
+    testMatcher = new Matcher(getProject());
     options = new MatchOptions();
     options.setLooseMatching(true);
     options.setRecursiveSearch(true);
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   @Override
@@ -68,7 +68,7 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     options.setFileType(patternFileType);
     options.setDialect(patternLanugage);
 
-    MatcherImpl.validate(myProject, options);
+    MatcherImpl.validate(getProject(), options);
     return testMatcher.testFindMatches(in, pattern, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
   }
 

@@ -4,7 +4,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.LightIdeaTestCase;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +13,7 @@ import com.intellij.testFramework.IdeaTestCase;
  * Time: 10:10:48 PM
  * To change this template use File | Settings | File Templates.
  */
-abstract class StructuralReplaceTestCase extends IdeaTestCase {
+abstract class StructuralReplaceTestCase extends LightIdeaTestCase {
   protected Replacer replacer;
   protected ReplaceOptions options;
   protected String actualResult;
@@ -24,11 +24,11 @@ abstract class StructuralReplaceTestCase extends IdeaTestCase {
 
     StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
 
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
 
     options = new ReplaceOptions();
     options.setMatchOptions(new MatchOptions());
-    replacer = new Replacer(myProject, null);
+    replacer = new Replacer(getProject(), null);
   }
 
 }

@@ -110,17 +110,17 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
     options.addVariableConstraint(constraint);
 
     constraint.setMinCount(2);
-    MatcherImpl.validate(myProject, options);
+    MatcherImpl.validate(getProject(), options);
     assertEquals(1, testMatcher.testFindMatches(s, pattern, options, true, PhpFileType.INSTANCE, null, false).size());
 
     constraint.setMinCount(3);
-    MatcherImpl.validate(myProject, options);
+    MatcherImpl.validate(getProject(), options);
     assertEquals(0, testMatcher.testFindMatches(s, pattern, options, true, PhpFileType.INSTANCE, null, false).size());
 
     // todo: fix it. currently user get unexpected matching $param$ with parameter_list node.
     /*constraint.setMinCount(1);
     constraint.setMaxCount(1);
-    MatcherImpl.validate(myProject, options);
+    MatcherImpl.validate(getProject(), options);
     assertEquals(0, testMatcher.testFindMatches(s, pattern, options, true, PhpFileType.INSTANCE, null, false).size());*/
   }
 
