@@ -16,6 +16,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -116,10 +117,10 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     }
   }
 
-  private Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiField psiField) {
+  private Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiVariable psiVariable) {
     Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "types", PsiType.class);
     if (types.isEmpty()) {
-      final PsiType psiType = psiField.getType();
+      final PsiType psiType = psiVariable.getType();
       types = Collections.singletonList(psiType);
     }
     return types;
@@ -194,7 +195,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull PsiSubstitutor psiSubstitutor) {
+  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiVariable psiVariable, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = psiSubstitutor.substitute(psiMethod.getReturnType());
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
@@ -226,7 +227,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
       paramString.append(generatedParameterName).append(',');
     }
 
-    final boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+    final boolean isStatic = psiVariable.hasModifierProperty(PsiModifier.STATIC);
     if (paramString.length() > 0) {
       paramString.deleteCharAt(paramString.length() - 1);
     }
@@ -234,7 +235,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
         String.format("%s%s.%s.%s(%s);",
             PsiType.VOID.equals(returnType) ? "" : "return ",
             isStatic ? psiClass.getName() : "this",
-            psiField.getName(),
+            psiVariable.getName(),
             psiMethod.getName(),
             paramString.toString()),
         psiClass));
