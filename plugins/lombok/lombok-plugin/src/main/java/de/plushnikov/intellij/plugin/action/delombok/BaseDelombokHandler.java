@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AbstractFieldProcessor;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -92,9 +93,11 @@ public class BaseDelombokHandler {
     Collection<PsiAnnotation> psiAnnotations = classProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = classProcessor.process(psiClass);
+    ProjectSettings.setEnabledInProject(project, false);
     for (Object psiElement : psiElements) {
       psiClass.add(rebuildPsiElement(project, (PsiElement) psiElement));
     }
+    ProjectSettings.setEnabledInProject(project, true);
 
     deleteAnnotations(psiAnnotations);
   }
@@ -117,9 +120,12 @@ public class BaseDelombokHandler {
     Collection<PsiAnnotation> psiAnnotations = fieldProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = fieldProcessor.process(psiClass);
+
+    ProjectSettings.setEnabledInProject(project, false);
     for (Object psiElement : psiElements) {
       psiClass.add(rebuildPsiElement(project, (PsiMethod) psiElement));
     }
+    ProjectSettings.setEnabledInProject(project, true);
 
     deleteAnnotations(psiAnnotations);
   }
