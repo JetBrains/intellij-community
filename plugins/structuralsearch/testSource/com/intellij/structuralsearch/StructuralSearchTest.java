@@ -2895,6 +2895,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    System.out.println();" +
                     "  }" +
                     "  void f();" +
+                    "  void g();" +
                     "}" +
                     "interface ABC {" +
                     "  void m();" +
