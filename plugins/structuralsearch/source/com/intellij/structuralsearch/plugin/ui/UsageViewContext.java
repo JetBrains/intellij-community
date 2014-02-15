@@ -53,12 +53,8 @@ public class UsageViewContext {
   }
 
   public SearchCommand getCommand() {
-    if (myCommand == null) setCommand(createCommand());
+    if (myCommand == null) myCommand = createCommand();
     return myCommand;
-  }
-
-  private void setCommand(final SearchCommand command) {
-    myCommand = command;
   }
 
   protected SearchCommand createCommand() {
