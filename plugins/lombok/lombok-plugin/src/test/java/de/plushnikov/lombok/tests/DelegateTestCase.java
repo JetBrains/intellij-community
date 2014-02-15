@@ -8,10 +8,6 @@ import de.plushnikov.lombok.LombokParsingTestCase;
  */
 public class DelegateTestCase extends LombokParsingTestCase {
 
-  protected boolean shouldCompareCodeBlocks() {
-    return false;
-  }
-
   public void testDelegateOnGetter() throws Exception {
     //TODO known problem, try to fix later
     doTest();

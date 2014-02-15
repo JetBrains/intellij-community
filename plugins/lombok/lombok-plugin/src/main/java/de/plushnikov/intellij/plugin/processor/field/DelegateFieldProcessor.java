@@ -25,6 +25,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.Delegate;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     if (!methodsToDelegate.isEmpty()) {
       final PsiClass psiClass = psiField.getContainingClass();
       for (Pair<PsiMethod, PsiSubstitutor> pair : methodsToDelegate) {
-        target.add(generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
+        target.add(generateDelegateMethod(psiClass, psiField, psiAnnotation, pair.getFirst(), pair.getSecond()));
       }
       UserMapKeys.addGeneralUsageFor(psiField);
       UserMapKeys.addReadUsageFor(psiField);
@@ -209,7 +210,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
+  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
@@ -229,13 +230,30 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
     final PsiParameterList parameterList = psiMethod.getParameterList();
 
+    final StringBuilder paramString = new StringBuilder();
     int parameterIndex = 0;
     for (PsiParameter psiParameter : parameterList.getParameters()) {
       final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
       String psiParameterName = psiParameter.getName();
-      methodBuilder.withParameter(StringUtils.defaultIfEmpty(psiParameterName, "p" + parameterIndex), psiParameterType);
+      String generatedParameterName = StringUtils.defaultIfEmpty(psiParameterName, "p" + parameterIndex);
+      methodBuilder.withParameter(generatedParameterName, psiParameterType);
       parameterIndex++;
+
+      paramString.append(generatedParameterName).append(',');
     }
+
+    final boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+    if (paramString.length() > 0) {
+      paramString.deleteCharAt(paramString.length() - 1);
+    }
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(
+        String.format("%s%s.%s.%s(%s);",
+            PsiType.VOID.equals(returnType) ? "" : "return ",
+            isStatic ? psiClass.getName() : "this",
+            psiField.getName(),
+            psiMethod.getName(),
+            paramString.toString()),
+        psiClass));
 
     return methodBuilder;
   }

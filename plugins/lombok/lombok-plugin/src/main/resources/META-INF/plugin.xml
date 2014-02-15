@@ -118,6 +118,9 @@
       <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"
               text="@Wither" description="Action to replace lombok @Wither annotation with vanilla java methods">
       </action>
+      <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
+              text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
+      </action>
       <separator/>
       <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
               text="@Constructors"
