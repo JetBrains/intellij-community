@@ -138,13 +138,14 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(psiType);
 
-    final PsiSubstitutor classSubstitutor = resolveResult.getSubstitutor();
     final PsiClass psiClass = resolveResult.getElement();
-
-    collectAllMethods(allMethods, psiClass, classSubstitutor);
+    if (null != psiClass) {
+      collectAllMethods(allMethods, psiClass, resolveResult.getSubstitutor());
+    }
   }
 
-  private void collectAllMethods(Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods, PsiClass psiClass, PsiSubstitutor classSubstitutor) {
+  private void collectAllMethods(Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods, @NotNull PsiClass psiStartClass, @NotNull PsiSubstitutor classSubstitutor) {
+    PsiClass psiClass = psiStartClass;
     while (null != psiClass) {
       PsiMethod[] psiMethods = psiClass.getMethods();
       for (PsiMethod psiMethod : psiMethods) {
