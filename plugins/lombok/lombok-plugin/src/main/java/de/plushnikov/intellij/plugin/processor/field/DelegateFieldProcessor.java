@@ -71,9 +71,8 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     boolean result = true;
     for (PsiType type : excludes) {
       if (!(type instanceof PsiClassType)) {
-        builder.addError(String.format(
-            "'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
-            type.getCanonicalText()));
+        builder.addError("'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
+            type.getCanonicalText());
         result = false;
       }
     }

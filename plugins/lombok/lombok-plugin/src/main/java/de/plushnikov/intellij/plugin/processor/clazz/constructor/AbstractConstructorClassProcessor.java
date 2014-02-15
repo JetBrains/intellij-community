@@ -85,7 +85,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (paramTypes.isEmpty()) {
         builder.addError("Constructor without parameters is already defined");
       } else {
-        builder.addError(String.format("Constructor with %d parameters is already defined", paramTypes.size()));
+        builder.addError("Constructor with %d parameters is already defined", paramTypes.size());
       }
       result = false;
     }
@@ -95,9 +95,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
       if (containsMethod(definedMethods, staticConstructorName, paramTypes)) {
         if (paramTypes.isEmpty()) {
-          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName));
+          builder.addError("Method '%s' matched staticConstructorName is already defined", staticConstructorName);
         } else {
-          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()));
+          builder.addError("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size());
         }
         result = false;
       }

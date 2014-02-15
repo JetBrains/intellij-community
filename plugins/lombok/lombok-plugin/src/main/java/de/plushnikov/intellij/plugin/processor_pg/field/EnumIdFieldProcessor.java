@@ -46,7 +46,7 @@ public class EnumIdFieldProcessor extends AbstractFieldProcessor {
   private boolean validateEnum(PsiClass psiClass, ProblemBuilder builder) {
     boolean result = true;
     if (!psiClass.isEnum()) {
-      builder.addError(String.format("'@EnumId' can be used on enum fields only"));
+      builder.addError("'@EnumId' can be used on enum fields only");
       result = false;
     }
     return result;

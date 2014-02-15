@@ -19,8 +19,16 @@ public class ProblemNewBuilder implements ProblemBuilder {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
+  public void addWarning(String message, Object... params) {
+    addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  }
+
   public void addError(String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR);
+  }
+
+  public void addError(String message, Object... params) {
+    addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR);
   }
 
   public void addWarning(String message, LocalQuickFix... quickFixes) {

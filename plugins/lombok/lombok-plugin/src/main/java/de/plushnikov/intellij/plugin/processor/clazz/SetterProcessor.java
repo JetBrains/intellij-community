@@ -52,7 +52,7 @@ public class SetterProcessor extends AbstractClassProcessor {
   protected boolean validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(String.format("'@%s' is only supported on a class or field type", psiAnnotation.getQualifiedName()));
+      builder.addError("'@%s' is only supported on a class or field type", psiAnnotation.getQualifiedName());
       result = false;
     }
     return result;

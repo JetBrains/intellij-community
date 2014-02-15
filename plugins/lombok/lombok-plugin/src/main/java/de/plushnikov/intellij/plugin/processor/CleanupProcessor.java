@@ -79,7 +79,7 @@ public class CleanupProcessor extends AbstractProcessor {
         }
 
         if (!hasCleanupMethod) {
-          problemNewBuilder.addError(String.format("'@Cleanup': method '%s()' not found on target class", cleanupName));
+          problemNewBuilder.addError("'@Cleanup': method '%s()' not found on target class", cleanupName);
         }
       }
     } else {

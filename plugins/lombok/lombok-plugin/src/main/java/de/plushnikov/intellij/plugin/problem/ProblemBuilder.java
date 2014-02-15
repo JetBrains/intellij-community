@@ -9,7 +9,11 @@ import com.intellij.codeInspection.ProblemHighlightType;
 public interface ProblemBuilder {
   void addWarning(String message);
 
+  void addWarning(String message, Object... params);
+
   void addError(String message);
+
+  void addError(String message, Object... params);
 
   void addWarning(String message, LocalQuickFix... quickFixes);
 

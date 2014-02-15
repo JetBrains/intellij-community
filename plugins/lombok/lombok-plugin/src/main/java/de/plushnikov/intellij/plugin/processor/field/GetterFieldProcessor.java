@@ -100,7 +100,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {
           final String setterMethodName = LombokUtils.toGetterName(psiField.getName(), isBoolean);
 
-          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+          builder.addWarning("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName);
           result = false;
         }
       }

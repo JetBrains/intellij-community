@@ -72,7 +72,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
     final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(containingClass, innerClassSimpleName);
     if (innerClassByName != null) {
       if (shouldAddErrors) {
-        builder.addError(String.format("Not generated '%s' class: A class with same name already exists. This feature is not implemented and it's not planned.", innerClassSimpleName));
+        builder.addError("Not generated '%s' class: A class with same name already exists. This feature is not implemented and it's not planned.", innerClassSimpleName);
       }
       return false;
     }

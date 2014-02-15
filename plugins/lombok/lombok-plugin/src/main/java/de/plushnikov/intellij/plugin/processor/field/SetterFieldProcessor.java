@@ -94,7 +94,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1)) {
           final String setterMethodName = getSetterName(psiField, isBoolean);
 
-          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+          builder.addWarning("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName);
           result = false;
         }
       }

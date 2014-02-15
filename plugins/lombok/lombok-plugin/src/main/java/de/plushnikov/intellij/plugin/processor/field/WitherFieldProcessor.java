@@ -127,8 +127,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     if (hasRequiredArgsConstAnnotation && (isFinal || hasNonNullAnnotation)) {
       return true;
     } else {
-      builder.addWarning(format("Compilation will fail : no constructor with a parameter of type '%s' was found",
-          field.getType().getCanonicalText()));
+      builder.addWarning("Compilation will fail : no constructor with a parameter of type '%s' was found",
+          field.getType().getCanonicalText());
       return false;
     }
   }
@@ -138,10 +138,9 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     if (field.getName() != null && fieldContainingClass != null) {
       if (PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(fieldContainingClass), witherName(field.getName()), 1)
           || PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(fieldContainingClass), secondWitherName(field.getName()), 1)) {
-        builder.addWarning(
-            format("No '@%s' generated : a method named '%s' taking one parameter already exists",
-                annotation.getQualifiedName(),
-                witherName(field.getName())));
+        builder.addWarning("No '@%s' generated : a method named '%s' taking one parameter already exists",
+            annotation.getQualifiedName(),
+            witherName(field.getName()));
         return false;
       }
     }

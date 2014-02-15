@@ -54,7 +54,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
       result = false;
     }
     if (result && hasFieldByName(psiClass, loggerName)) {
-      builder.addError(String.format("Not generating field %s: A field with same name already exists", loggerName));
+      builder.addError("Not generating field %s: A field with same name already exists", loggerName);
       result = false;
     }
     return result;
