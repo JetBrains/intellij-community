@@ -21,7 +21,11 @@ public class InspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testBuilderonrighttype() throws Exception {
+  public void testBuilderRightType() throws Exception {
+    doTest();
+  }
+
+  public void testDelegateConcreteType() throws Exception {
     doTest();
   }
 }

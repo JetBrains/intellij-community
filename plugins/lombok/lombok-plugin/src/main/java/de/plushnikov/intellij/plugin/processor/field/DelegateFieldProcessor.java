@@ -67,16 +67,24 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  private boolean validateTypes(Collection<PsiType> excludes, ProblemBuilder builder) {
+  private boolean validateTypes(Collection<PsiType> psiTypes, ProblemBuilder builder) {
     boolean result = true;
-    for (PsiType type : excludes) {
-      if (!(type instanceof PsiClassType)) {
+    for (PsiType type : psiTypes) {
+      if (!checkConcreteClass(type)) {
         builder.addError("'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
             type.getCanonicalText());
         result = false;
       }
     }
     return result;
+  }
+
+  private boolean checkConcreteClass(@NotNull PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      PsiClass psiClass = ((PsiClassType) psiType).resolve();
+      return !(psiClass instanceof PsiTypeParameter);
+    }
+    return false;
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
