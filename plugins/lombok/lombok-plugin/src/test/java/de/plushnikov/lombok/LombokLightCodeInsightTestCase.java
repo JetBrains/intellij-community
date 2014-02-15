@@ -1,9 +1,14 @@
 package de.plushnikov.lombok;
 
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -24,6 +29,16 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
   @Override
   protected String getBasePath() {
     return "lombok-plugin/src/test/data";
+  }
+
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      public Sdk getSdk() {
+        return JavaSdk.getInstance().createJdk("java sdk", "lombok-plugin/src/test/mockJDK", false);
+      }
+    };
   }
 
   @Override

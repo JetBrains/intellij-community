@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import org.apache.log4j.Logger;
 
@@ -175,6 +177,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
           compareModifiers(beforeModifierList, afterModifierList);
           compareType(beforeMethod.getReturnType(), afterMethod.getReturnType(), afterMethod);
           compareParams(beforeMethod.getParameterList(), afterMethod.getParameterList());
+          compareThrows(beforeMethod.getThrowsList(), afterMethod.getThrowsList(), afterMethod);
 
           if (shouldCompareCodeBlocks()) {
             final PsiCodeBlock beforeMethodBody = beforeMethod.getBody();
@@ -198,6 +201,23 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
         }
       }
       assertTrue("Method names are not equal, Method: (" + afterMethod.getName() + ") not found in class : " + beforeClass.getName(), compared);
+    }
+  }
+
+  private void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {
+    PsiClassType[] beforeTypes = beforeThrows.getReferencedTypes();
+    PsiClassType[] afterTypes = afterThrows.getReferencedTypes();
+
+    assertEquals("Throws counts are different for Method :" + psiMethod.getName(), beforeTypes.length, afterTypes.length);
+    for (PsiClassType beforeType : beforeTypes) {
+      boolean found = false;
+      for (PsiClassType afterType : afterTypes) {
+        if (beforeType.equals(afterType)) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue("Expected throw: " + beforeType.getClassName() + " not found on " + psiMethod.getName(), found);
     }
   }
 

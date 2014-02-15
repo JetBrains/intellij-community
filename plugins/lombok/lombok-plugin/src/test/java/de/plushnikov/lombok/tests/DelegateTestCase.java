@@ -37,4 +37,8 @@ public class DelegateTestCase extends LombokParsingTestCase {
   public void testDelegateWithDeprecated() throws Exception {
     doTest();
   }
+
+  public void testDelegateWithException() throws Exception {
+    doTest();
+  }
 }

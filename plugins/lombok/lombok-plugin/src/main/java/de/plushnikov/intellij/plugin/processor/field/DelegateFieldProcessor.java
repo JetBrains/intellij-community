@@ -12,6 +12,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -219,6 +220,11 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
     for (PsiTypeParameter typeParameter : psiMethod.getTypeParameters()) {
       methodBuilder.withTypeParameter(new LightTypeParameter(typeParameter));
+    }
+
+    final PsiReferenceList throwsList = psiMethod.getThrowsList();
+    for (PsiClassType psiClassType : throwsList.getReferencedTypes()) {
+      methodBuilder.withException(psiClassType);
     }
 
     final PsiParameterList parameterList = psiMethod.getParameterList();
