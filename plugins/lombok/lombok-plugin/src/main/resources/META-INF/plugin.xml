@@ -148,7 +148,7 @@
   </actions>
 
   <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-  <!--<li>TODO: Add delombok action for @Delegate, @Cleanup, @Synchronized and other annotations</li>-->
+  <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
   <change-notes><![CDATA[
 		<ul>
 		<li>0.8.1
