@@ -122,7 +122,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myList.setCellRenderer(new MyListCellRenderer());
     myList.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           int newSelectionIndex = -1;
           for (Object o : myList.getSelectedValues()) {
@@ -150,6 +150,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
             int idx = aChar == '0' ? 9 : aChar - '1';
             if (idx < myAllContents.size()) {
               myList.setSelectedIndex(idx);
+              e.consume();
+              doOKAction();
             }
           }
         }
