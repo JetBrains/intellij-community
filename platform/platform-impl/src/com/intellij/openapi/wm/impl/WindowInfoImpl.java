@@ -42,6 +42,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   static final float DEFAULT_WEIGHT= 0.33f;
   static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
+  private final String TOOLWINDOW_WEIGHT_PROPERTY = "idea.toolwindow.defaultWeight";
+
+
   private boolean myActive;
   @NotNull
   private ToolWindowAnchor myAnchor;
@@ -96,7 +99,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myId = id;
     setType(ToolWindowType.DOCKED);
     myVisible = false;
-    myWeight = DEFAULT_WEIGHT;
+    myWeight = getToolWindowWeight();
     mySideWeight = DEFAULT_SIDE_WEIGHT;
     myOrder = -1;
     mySplitMode = false;
@@ -192,12 +195,36 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   /**
-   * @return internal weight of tool window. "weigth" means how much of internal desktop
+   * @return internal weight of tool window. "weight" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
   float getWeight(){
     return myWeight;
+  }
+
+  /**
+   * Pulls in the weight property listed in idea.properties. If it isn't a
+   * valid number that can be parsed into a float, the original, default
+   * weight is returned.
+   *
+   * @return The user-set weight value, or the default weight if the user-set
+   *         value is invalid.
+   */
+  private float getToolWindowWeight() {
+    final String toolWindowWeightProp = System.getProperty(TOOLWINDOW_WEIGHT_PROPERTY);
+
+    if (toolWindowWeightProp == null) {
+      return DEFAULT_WEIGHT;
+    }
+
+    try {
+      return Float.parseFloat(toolWindowWeightProp);
+    }
+    // if value is invalid, return the original default value
+    catch (NumberFormatException e) {
+      return DEFAULT_WEIGHT;
+    }
   }
 
   float getSideWeight() {
