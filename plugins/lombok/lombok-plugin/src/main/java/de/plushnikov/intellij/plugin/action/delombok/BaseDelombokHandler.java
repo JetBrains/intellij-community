@@ -19,12 +19,12 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -118,13 +118,9 @@ public class BaseDelombokHandler {
 
     final PsiTypeParameterList fromMethodTypeParameterList = fromMethod.getTypeParameterList();
     if (null != fromMethodTypeParameterList) {
-      PsiTypeParameter[] typeParameters = fromMethodTypeParameterList.getTypeParameters();
-      if (typeParameters.length > 0) {
-        PsiTypeParameterList parameterList = (PsiTypeParameterList) resultMethod.addAfter(
-            elementFactory.createTypeParameterList(), resultMethod.getModifierList());
-        for (PsiTypeParameter typeParameter : typeParameters) {
-          parameterList.add(elementFactory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
-        }
+      PsiTypeParameterList typeParameterList = PsiMethodUtil.createTypeParameterList(fromMethodTypeParameterList);
+      if (null != typeParameterList) {
+        resultMethod.addAfter(typeParameterList, resultMethod.getModifierList());
       }
     }
 

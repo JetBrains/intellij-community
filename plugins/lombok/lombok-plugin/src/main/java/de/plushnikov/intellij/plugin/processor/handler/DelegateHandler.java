@@ -36,8 +36,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Handler for Delegate annotation processing, for fields and for methods
+ */
 public class DelegateHandler {
-  //<T extends PsiVariable & PsiMember>
+
   public boolean validate(@NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     boolean result;
 
@@ -46,8 +49,6 @@ public class DelegateHandler {
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
     result &= validateTypes(excludes, builder);
-
-    //TODO Error: delegation of methods that doesn't exists on type
 
     return result;
   }

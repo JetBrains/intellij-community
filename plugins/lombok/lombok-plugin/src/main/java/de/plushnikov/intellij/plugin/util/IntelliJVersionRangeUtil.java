@@ -30,7 +30,6 @@ public class IntelliJVersionRangeUtil {
     IntelliJVersion result = IntelliJVersion.UNKNOWN;
 
     final int baselineVersion = buildNumber.getBaselineVersion();
-    final int build = buildNumber.getBuildNumber();
 
     if (baselineVersion < 93) {
       result = IntelliJVersion.INTELLIJ_8;

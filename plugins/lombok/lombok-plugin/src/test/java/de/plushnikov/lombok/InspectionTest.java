@@ -28,4 +28,8 @@ public class InspectionTest extends InspectionTestCase {
   public void testDelegateConcreteType() throws Exception {
     doTest();
   }
+
+  public void testDelegateOnMethodWithParameter() throws Exception {
+    doTest();
+  }
 }

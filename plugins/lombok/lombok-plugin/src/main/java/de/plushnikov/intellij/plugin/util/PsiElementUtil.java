@@ -76,53 +76,6 @@ public class PsiElementUtil {
     return true;
   }
 
-  /**
-   * @param method        the method to compare to.
-   * @param returnType    the return type, specify null if any type matches
-   * @param methodName    the name the method should have
-   * @param parameterList the list of the parameters of the method, specify
-   *                      null if any number and type of parameters match
-   * @return true, if the specified method matches the specified constraints,
-   *         false otherwise
-   */
-  public static boolean methodMatches(
-      @NotNull PsiMethod method,
-      @Nullable PsiType returnType,
-      @NonNls @Nullable String methodName,
-      @Nullable PsiParameterList parameterList) {
-    final String name = method.getName();
-    if (methodName != null && !methodName.equals(name)) {
-      return false;
-    }
-    if (parameterList != null) {
-      final PsiParameterList methodParameterList = method.getParameterList();
-      if (methodParameterList.getParametersCount() != parameterList.getParametersCount()) {
-        return false;
-      }
-      final PsiParameter[] methodParameters = methodParameterList.getParameters();
-      final PsiParameter[] otherParameters = parameterList.getParameters();
-      for (int i = 0; i < methodParameters.length; i++) {
-        final PsiType type = methodParameters[i].getType();
-        final PsiType parameterType = otherParameters[i].getType();
-        if (PsiType.NULL.equals(parameterType)) {
-          continue;
-        }
-        if (!typesAreEquivalent(type,
-            parameterType)) {
-          return false;
-        }
-      }
-    }
-    if (returnType != null) {
-      final PsiType methodReturnType = method.getReturnType();
-      if (!typesAreEquivalent(returnType,
-          methodReturnType)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public static boolean typesAreEquivalent(
       @Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null) {
