@@ -18,7 +18,6 @@ public class DelegateTestCase extends LombokParsingTestCase {
   }
 
   public void testDelegateOnMethods() throws Exception {
-    //TODO known problem, try to fix later
     doTest();
   }
 

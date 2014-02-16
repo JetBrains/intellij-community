@@ -17,6 +17,9 @@ public class DelegateRightType<T> {
 //    @Delegate
     private Integer[] delegatorArray;
 
+//    @Delegate
+    private Integer[] delegatorArray() {return delegatorArray;}
+
     @Delegate
     private Integer delegatorInteger = 0;
 
