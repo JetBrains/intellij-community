@@ -1112,7 +1112,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
-  int yPositionToLogicalLine(int y) {
+  public int yPositionToLogicalLine(int y) {
     int line = yPositionToVisibleLine(y);
     if (line <= 0) {
       return 0;
@@ -3474,7 +3474,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineHeight;
   }
 
-  int getDescent() {
+  public int getDescent() {
     if (myDescent != -1) {
       return myDescent;
     }
@@ -3484,7 +3484,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
+  public FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
     if (myPlainFontMetrics == null) {
       assertIsDispatchThread();
       myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));

@@ -2,8 +2,6 @@ package com.intellij.execution.console;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.EditorGutterAction;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -20,9 +18,7 @@ public class LanguageConsoleBuilder {
   private Condition<LanguageConsoleImpl> myExecutionEnabled = Conditions.alwaysTrue();
 
   @Nullable
-  private TextAnnotationGutterProvider myGutterProvider;
-  @Nullable
-  private EditorGutterAction myGutterAction;
+  private GutterContentProvider myGutterProvider;
 
   public LanguageConsoleBuilder(@NotNull LanguageConsoleView consoleView) {
     myConsole = consoleView.getConsole();
@@ -53,9 +49,8 @@ public class LanguageConsoleBuilder {
     return this;
   }
 
-  public LanguageConsoleBuilder historyAnnotation(@NotNull TextAnnotationGutterProvider provider) {
+  public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider provider) {
     myGutterProvider = provider;
-    myGutterAction = provider instanceof EditorGutterAction ? (EditorGutterAction)provider : null;
     return this;
   }
 
@@ -75,9 +70,11 @@ public class LanguageConsoleBuilder {
 
       EditorEx editor = myConsole.getHistoryViewer();
 
-      JPanel panel = new JPanel(new BorderLayout());
       JScrollPane scrollPane = editor.getScrollPane();
-      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(scrollPane.getViewport().getView(), BorderLayout.CENTER);
+      panel.add(new ConsoleGutterComponent(editor, myGutterProvider, myConsole), BorderLayout.LINE_END);
+      scrollPane.setViewportView(panel);
     }
 
     ensureConsoleViewCreated();
