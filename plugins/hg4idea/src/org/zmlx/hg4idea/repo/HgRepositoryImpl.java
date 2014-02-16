@@ -46,20 +46,24 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
 
   @SuppressWarnings("ConstantConditions")
-  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
+  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull HgVcs vcs,
                            @NotNull Disposable parentDisposable) {
-    super(project, rootDir, parentDisposable);
+    super(vcs.getProject(), rootDir, parentDisposable);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-    myReader = new HgRepositoryReader(project, VfsUtilCore.virtualToIoFile(myHgDir));
-    myConfig = HgConfig.getInstance(project, rootDir);
+    myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
+    myConfig = HgConfig.getInstance(getProject(), rootDir);
     update();
   }
 
   @NotNull
   public static HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
                                          @NotNull Disposable parentDisposable) {
-    HgRepositoryImpl repository = new HgRepositoryImpl(root, project, parentDisposable);
+    HgVcs vcs = HgVcs.getInstance(project);
+    if (vcs == null) {
+      throw new IllegalArgumentException("Vcs not found for project " + project);
+    }
+    HgRepositoryImpl repository = new HgRepositoryImpl(root, vcs, parentDisposable);
     repository.setupUpdater();
     return repository;
   }
