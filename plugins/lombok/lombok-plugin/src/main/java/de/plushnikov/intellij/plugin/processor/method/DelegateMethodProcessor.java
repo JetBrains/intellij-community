@@ -15,7 +15,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   private final DelegateHandler handler;
 
-  protected DelegateMethodProcessor() {
+  public DelegateMethodProcessor() {
     super(Delegate.class, PsiMethod.class);
     handler = new DelegateHandler();
   }

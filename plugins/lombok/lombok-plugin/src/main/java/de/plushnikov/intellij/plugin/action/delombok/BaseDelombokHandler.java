@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AbstractFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.method.AbstractMethodProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +39,7 @@ public class BaseDelombokHandler {
 
   private final Collection<AbstractClassProcessor> classProcessors;
   private final Collection<AbstractFieldProcessor> fieldProcessors;
+  private final Collection<AbstractMethodProcessor> methodProcessors;
 
   protected BaseDelombokHandler(AbstractClassProcessor classProcessor, AbstractFieldProcessor fieldProcessor) {
     this(classProcessor);
@@ -49,13 +51,23 @@ public class BaseDelombokHandler {
     fieldProcessors.add(fieldProcessor);
   }
 
+  protected BaseDelombokHandler(AbstractFieldProcessor fieldProcessor, AbstractMethodProcessor methodProcessor) {
+    this(fieldProcessor);
+    methodProcessors.add(methodProcessor);
+  }
+
   protected BaseDelombokHandler(AbstractClassProcessor... classProcessors) {
     this.classProcessors = new ArrayList<AbstractClassProcessor>(Arrays.asList(classProcessors));
     this.fieldProcessors = new ArrayList<AbstractFieldProcessor>();
+    this.methodProcessors = new ArrayList<AbstractMethodProcessor>();
   }
 
-  void addFieldProcessor(AbstractFieldProcessor... fieldProcessor) {
-    fieldProcessors.addAll(Arrays.asList(fieldProcessor));
+  void addFieldProcessor(AbstractFieldProcessor... abstractFieldProcessors) {
+    fieldProcessors.addAll(Arrays.asList(abstractFieldProcessors));
+  }
+
+  void addMethodProcessor(AbstractMethodProcessor... abstractMethodProcessors) {
+    methodProcessors.addAll(Arrays.asList(abstractMethodProcessors));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiJavaFile psiFile) {
@@ -82,6 +94,10 @@ public class BaseDelombokHandler {
     for (AbstractFieldProcessor fieldProcessor : fieldProcessors) {
       processFields(project, psiClass, fieldProcessor);
     }
+
+    for (AbstractMethodProcessor methodProcessor : methodProcessors) {
+      processMethods(project, psiClass, methodProcessor);
+    }
   }
 
   private void finish(Project project, PsiFile psiFile) {
@@ -89,7 +105,7 @@ public class BaseDelombokHandler {
     UndoUtil.markPsiFileForUndo(psiFile);
   }
 
-  protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass, AbstractProcessor classProcessor) {
+  protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor classProcessor) {
     Collection<PsiAnnotation> psiAnnotations = classProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = classProcessor.process(psiClass);
@@ -106,7 +122,7 @@ public class BaseDelombokHandler {
     deleteAnnotations(psiAnnotations);
   }
 
-  public Collection<PsiAnnotation> collectProccessableAnnotations(@NotNull PsiClass psiClass) {
+  public Collection<PsiAnnotation> collectProcessableAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
 
     for (AbstractClassProcessor classProcessor : classProcessors) {
@@ -117,13 +133,34 @@ public class BaseDelombokHandler {
       result.addAll(fieldProcessor.collectProcessedAnnotations(psiClass));
     }
 
+    for (AbstractMethodProcessor methodProcessor : methodProcessors) {
+      result.addAll(methodProcessor.collectProcessedAnnotations(psiClass));
+    }
+
     return result;
   }
 
-  private void processFields(@NotNull Project project, @NotNull PsiClass psiClass, AbstractProcessor fieldProcessor) {
+  private void processFields(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor fieldProcessor) {
     Collection<PsiAnnotation> psiAnnotations = fieldProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = fieldProcessor.process(psiClass);
+
+    ProjectSettings.setEnabledInProject(project, false);
+    try {
+      for (Object psiElement : psiElements) {
+        psiClass.add(rebuildPsiElement(project, (PsiMethod) psiElement));
+      }
+    } finally {
+      ProjectSettings.setEnabledInProject(project, true);
+    }
+
+    deleteAnnotations(psiAnnotations);
+  }
+
+  private void processMethods(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractMethodProcessor methodProcessor) {
+    Collection<PsiAnnotation> psiAnnotations = methodProcessor.collectProcessedAnnotations(psiClass);
+
+    List<? super PsiElement> psiElements = methodProcessor.process(psiClass);
 
     ProjectSettings.setEnabledInProject(project, false);
     try {

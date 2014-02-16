@@ -20,6 +20,7 @@ import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
 public class DelombokEverythingAction extends BaseDelombokAction {
 
@@ -36,6 +37,8 @@ public class DelombokEverythingAction extends BaseDelombokAction {
     );
 
     delombokHandler.addFieldProcessor(new GetterFieldProcessor(), new SetterFieldProcessor(), new WitherFieldProcessor(), new DelegateFieldProcessor());
+
+    delombokHandler.addMethodProcessor(new DelegateMethodProcessor());
 
     return delombokHandler;
   }

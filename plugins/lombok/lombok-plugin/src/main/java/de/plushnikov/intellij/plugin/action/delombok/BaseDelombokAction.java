@@ -174,7 +174,7 @@ public abstract class BaseDelombokAction extends AnAction {
 
   protected boolean isValidForClass(@NotNull PsiClass targetClass) {
     if (!targetClass.isInterface()) {
-      Collection<PsiAnnotation> psiAnnotations = myHandler.collectProccessableAnnotations(targetClass);
+      Collection<PsiAnnotation> psiAnnotations = myHandler.collectProcessableAnnotations(targetClass);
       return !psiAnnotations.isEmpty();
     }
     return false;
