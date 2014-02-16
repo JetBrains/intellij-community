@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
 public class TextEndWithSelectionAction extends TextComponentEditorAction {
@@ -37,9 +36,12 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    protected Handler() {
+      super(true);
+    }
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      editor.getCaretModel().removeSecondaryCarets();
       int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
       int offset = editor.getDocument().getTextLength();
       editor.getCaretModel().moveToOffset(offset);
