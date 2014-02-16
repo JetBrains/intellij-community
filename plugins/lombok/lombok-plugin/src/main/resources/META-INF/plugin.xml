@@ -154,6 +154,9 @@
 		<ul>
 		<li>0.8.1
 				<ol>
+				    <li>Issue (on Git) #23: Fixed @Delegate inspection reports error</li>
+				    <li>Issue (on Git) #27: Fixed @Delegate on a type parameter doesn't fail</li>
+				    <li>Issue #60: Fixed @Delegate on methods is not supported now</li>
 				    <li>Issue #98: Fixed Lombok Experimental Accessor Prefix does not handle non-alphanumeric prefixes</li>
 				</ol>
 			</li>
