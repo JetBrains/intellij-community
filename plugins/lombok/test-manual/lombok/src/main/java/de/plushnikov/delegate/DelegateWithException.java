@@ -2,9 +2,7 @@ package de.plushnikov.delegate;
 
 import lombok.Delegate;
 
-interface Callable<V> {
-    V call() throws Exception;
-}
+import java.util.concurrent.Callable;
 
 public class DelegateWithException implements Callable<Integer> {
 
