@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
@@ -57,11 +56,9 @@ public class HgRepositoryReader {
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
   private final boolean myStatusInBranchFile;
 
-  public HgRepositoryReader(@NotNull Project project, @NotNull File hgDir) {
+  public HgRepositoryReader(@NotNull HgVcs vcs, @NotNull File hgDir) {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
-    HgVcs vcs = HgVcs.getInstance(project);
-    assert vcs != null : "Vcs not found for project " + project;
     HgVersion version = vcs.getVersion();
     myStatusInBranchFile = version.hasBranch2Served();
     myCacheDir = new File(myHgDir, "cache");
@@ -71,7 +68,7 @@ public class HgRepositoryReader {
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
     myLocalTagsFile = new File(myHgDir, "localtags");
     myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
-    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(vcs.getProject(), VcsLogObjectsFactory.class);
   }
 
   /**
@@ -80,9 +77,10 @@ public class HgRepositoryReader {
   @NotNull
   private static File identifyBranchHeadFile(@NotNull HgVersion version, @NotNull File parentCacheFile) {
     //before 2.5 only branchheads exist; branchheads-served after mercurial 2.5; branch2-served after 2.9;
-    return version.hasBranch2Served()
-           ? new File(parentCacheFile, "branch2-served")
-           : version.hasBranchHeadsServed() ? new File(parentCacheFile, "branchheads-served") : new File(parentCacheFile, "branchheads");
+    String branchFileName = version.hasBranch2Served()
+                            ? "branch2-served"
+                            : version.hasBranchHeadsServed() ? "branchheads-served" : "branchheads";
+    return new File(parentCacheFile, branchFileName);
   }
 
   /**
