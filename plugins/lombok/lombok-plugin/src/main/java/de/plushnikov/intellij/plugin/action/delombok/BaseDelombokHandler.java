@@ -93,11 +93,15 @@ public class BaseDelombokHandler {
     Collection<PsiAnnotation> psiAnnotations = classProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = classProcessor.process(psiClass);
+
     ProjectSettings.setEnabledInProject(project, false);
-    for (Object psiElement : psiElements) {
-      psiClass.add(rebuildPsiElement(project, (PsiElement) psiElement));
+    try {
+      for (Object psiElement : psiElements) {
+        psiClass.add(rebuildPsiElement(project, (PsiElement) psiElement));
+      }
+    } finally {
+      ProjectSettings.setEnabledInProject(project, true);
     }
-    ProjectSettings.setEnabledInProject(project, true);
 
     deleteAnnotations(psiAnnotations);
   }
@@ -122,10 +126,13 @@ public class BaseDelombokHandler {
     List<? super PsiElement> psiElements = fieldProcessor.process(psiClass);
 
     ProjectSettings.setEnabledInProject(project, false);
-    for (Object psiElement : psiElements) {
-      psiClass.add(rebuildPsiElement(project, (PsiMethod) psiElement));
+    try {
+      for (Object psiElement : psiElements) {
+        psiClass.add(rebuildPsiElement(project, (PsiMethod) psiElement));
+      }
+    } finally {
+      ProjectSettings.setEnabledInProject(project, true);
     }
-    ProjectSettings.setEnabledInProject(project, true);
 
     deleteAnnotations(psiAnnotations);
   }
