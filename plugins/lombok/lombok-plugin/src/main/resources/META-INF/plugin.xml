@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.1</version>
+  <version>0.8.2</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -152,6 +152,11 @@
   <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.8.2
+				<ol>
+				    <li>...</li>
+				</ol>
+			</li>
 		<li>0.8.1
 				<ol>
 				    <li>Issue (on Git) #23: Fixed @Delegate inspection reports error</li>
