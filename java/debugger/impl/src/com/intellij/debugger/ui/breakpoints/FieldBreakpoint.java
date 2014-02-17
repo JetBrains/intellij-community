@@ -33,12 +33,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -56,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
 import javax.swing.*;
-import java.util.List;
 
 public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.FieldBreakpoint");
@@ -68,8 +64,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     super(project, breakpoint);
   }
 
-  private FieldBreakpoint(Project project, RangeHighlighter highlighter, @NotNull String fieldName, XBreakpoint breakpoint) {
-    super(project, highlighter, breakpoint);
+  private FieldBreakpoint(Project project, @NotNull String fieldName, XBreakpoint breakpoint) {
+    super(project, breakpoint);
     setFieldName(fieldName);
   }
 
@@ -183,14 +179,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
         return;
       }
       RequestManagerImpl manager = debugProcess.getRequestsManager();
-      if (isWATCH_MODIFICATION() && vm.canWatchFieldModification()) {
+      if (isWatchModification() && vm.canWatchFieldModification()) {
         ModificationWatchpointRequest request = manager.createModificationWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Modification request added");
         }
       }
-      if (isWATCH_ACCESS() && vm.canWatchFieldAccess()) {
+      if (isWatchAccess() && vm.canWatchFieldAccess()) {
         AccessWatchpointRequest request = manager.createAccessWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
         if (LOG.isDebugEnabled()) {
@@ -283,8 +279,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     return className != null && !className.isEmpty() ? className + "." + getFieldName() : getFieldName();
   }
 
-  public static FieldBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, String fieldName, XBreakpoint xBreakpoint) {
-    FieldBreakpoint breakpoint = new FieldBreakpoint(project, createHighlighter(project, document, lineIndex), fieldName, xBreakpoint);
+  public static FieldBreakpoint create(@NotNull Project project, String fieldName, XBreakpoint xBreakpoint) {
+    FieldBreakpoint breakpoint = new FieldBreakpoint(project, fieldName, xBreakpoint);
     return (FieldBreakpoint)breakpoint.init();
   }
 
@@ -304,39 +300,39 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     return field == getPsiField();
   }
 
-  protected static FieldBreakpoint create(@NotNull Project project, @NotNull Field field, ObjectReference object, XBreakpoint xBreakpoint) {
-    String fieldName = field.name();
-    int line = 0;
-    Document document = null;
-    try {
-      List locations = field.declaringType().allLineLocations();
-      if(!locations.isEmpty()) {
-        Location location = (Location)locations.get(0);
-        line = location.lineNumber();
-        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(location.sourcePath());
-        if(file != null) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if(psiFile != null) {
-            document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-          }
-        }
-      }
-    }
-    catch (AbsentInformationException e) {
-      LOG.debug(e);
-    }
-    catch (InternalError e) {
-      LOG.debug(e);
-    }
-
-    if(document == null) return null;
-
-    FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName, xBreakpoint);
-    if (!fieldBreakpoint.isStatic()) {
-      fieldBreakpoint.addInstanceFilter(object.uniqueID());
-    }
-    return (FieldBreakpoint)fieldBreakpoint.init();
-  }
+  //protected static FieldBreakpoint create(@NotNull Project project, @NotNull Field field, ObjectReference object, XBreakpoint xBreakpoint) {
+  //  String fieldName = field.name();
+  //  int line = 0;
+  //  Document document = null;
+  //  try {
+  //    List locations = field.declaringType().allLineLocations();
+  //    if(!locations.isEmpty()) {
+  //      Location location = (Location)locations.get(0);
+  //      line = location.lineNumber();
+  //      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(location.sourcePath());
+  //      if(file != null) {
+  //        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+  //        if(psiFile != null) {
+  //          document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+  //        }
+  //      }
+  //    }
+  //  }
+  //  catch (AbsentInformationException e) {
+  //    LOG.debug(e);
+  //  }
+  //  catch (InternalError e) {
+  //    LOG.debug(e);
+  //  }
+  //
+  //  if(document == null) return null;
+  //
+  //  FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName, xBreakpoint);
+  //  if (!fieldBreakpoint.isStatic()) {
+  //    fieldBreakpoint.addInstanceFilter(object.uniqueID());
+  //  }
+  //  return (FieldBreakpoint)fieldBreakpoint.init();
+  //}
 
   public static PsiField findField(Project project, Document document, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -387,15 +383,15 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     return getPsiClass();
   }
 
-  public boolean isWATCH_MODIFICATION() {
+  private boolean isWatchModification() {
     return getProperties().WATCH_MODIFICATION;
   }
 
-  public boolean isWATCH_ACCESS() {
+  private boolean isWatchAccess() {
     return getProperties().WATCH_ACCESS;
   }
 
-  public void setFieldName(String fieldName) {
+  private void setFieldName(String fieldName) {
     getProperties().myFieldName = fieldName;
   }
 }

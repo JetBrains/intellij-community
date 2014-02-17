@@ -41,7 +41,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private final BreakpointStepMethodFilter myFilter;
 
   StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
-    super(project, pos, false, null);
+    super(project, pos, false);
     myFilter = filter;
   }
 

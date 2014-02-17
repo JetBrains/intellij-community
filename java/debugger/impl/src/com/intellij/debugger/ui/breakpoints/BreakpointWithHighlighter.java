@@ -34,14 +34,9 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -58,7 +53,6 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.ReferenceType;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -215,7 +209,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return isPositionValid(myXBreakpoint.getSourcePosition());
   }
 
-  private static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
+  protected static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -294,7 +288,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   @Override
-  public final void reload() {
+  public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final XSourcePosition position = myXBreakpoint.getSourcePosition();
     try {

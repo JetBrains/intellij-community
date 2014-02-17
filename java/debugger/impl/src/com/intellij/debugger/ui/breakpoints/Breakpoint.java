@@ -233,7 +233,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
     final DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (myXBreakpoint.isLogMessage() || myXBreakpoint.getLogExpression() != null) {
+    if (isLogEnabled() || isLogExpressionEnabled()) {
       final StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
         if (myXBreakpoint.isLogMessage()) {
@@ -449,7 +449,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setEnabled(enabled);
   }
 
-  public boolean isLogEnabled() {
+  protected boolean isLogEnabled() {
     return myXBreakpoint.isLogMessage();
   }
 
@@ -457,11 +457,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setLogMessage(logEnabled);
   }
 
-  public boolean isLogExpressionEnabled() {
+  protected boolean isLogExpressionEnabled() {
     return myXBreakpoint.getLogExpression() != null;
   }
 
-  public void setLogExpressionEnabled(boolean LOG_EXPRESSION_ENABLED) {
+  protected void setLogExpressionEnabled(boolean LOG_EXPRESSION_ENABLED) {
   }
 
   @Override
@@ -504,7 +504,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint.getProperties().getClassExclusionFilters();
   }
 
-  public void setClassExclusionFilters(ClassFilter[] filters) {
+  protected void setClassExclusionFilters(ClassFilter[] filters) {
     myXBreakpoint.getProperties().setClassExclusionFilters(filters);
   }
 
@@ -526,7 +526,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.getProperties().setInstanceFilters(filters);
   }
 
-  public static String getSuspendPolicy(XBreakpoint breakpoint) {
+  private static String getSuspendPolicy(XBreakpoint breakpoint) {
     switch (breakpoint.getSuspendPolicy()) {
       case ALL:
         return DebuggerSettings.SUSPEND_ALL;
@@ -540,7 +540,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  public static SuspendPolicy transformSuspendPolicy(String policy) {
+  private static SuspendPolicy transformSuspendPolicy(String policy) {
     if (DebuggerSettings.SUSPEND_ALL.equals(policy)) {
       return SuspendPolicy.ALL;
     } else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
@@ -552,7 +552,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  public boolean isSuspend() {
+  protected boolean isSuspend() {
     return myXBreakpoint.getSuspendPolicy() != SuspendPolicy.NONE;
   }
 
@@ -565,11 +565,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
-  public void setLogMessage(TextWithImports logMessage) {
+  protected void setLogMessage(TextWithImports logMessage) {
     myXBreakpoint.setLogExpression(logMessage.getText());
   }
 
-  public boolean isConditionEnabled() {
+  protected boolean isConditionEnabled() {
     return myXBreakpoint.getCondition() != null && !myXBreakpoint.getCondition().isEmpty();
   }
 
@@ -577,7 +577,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setCondition(condition);
   }
 
-  public void addInstanceFilter(long l) {
+  protected void addInstanceFilter(long l) {
     myXBreakpoint.getProperties().addInstanceFilter(l);
   }
 }

@@ -26,9 +26,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -43,7 +41,6 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -126,7 +123,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
     try {
       RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-      if (isWATCH_ENTRY()) {
+      if (isWatchEntry()) {
         MethodEntryRequest entryRequest = (MethodEntryRequest)findRequest(debugProcess, MethodEntryRequest.class);
         if (entryRequest == null) {
           entryRequest = requestManager.createMethodEntryRequest(this);
@@ -137,7 +134,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
         entryRequest.addClassFilter(getClassPattern());
         debugProcess.getRequestsManager().enableRequest(entryRequest);
       }
-      if (isWATCH_EXIT()) {
+      if (isWatchExit()) {
         MethodExitRequest exitRequest = (MethodExitRequest)findRequest(debugProcess, MethodExitRequest.class);
         if (exitRequest == null) {
           exitRequest = requestManager.createMethodExitRequest(this);
@@ -252,31 +249,31 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return new WildcardMethodBreakpoint(project, classPattern, methodName, xBreakpoint);
   }
 
-  public boolean isWATCH_ENTRY() {
+  private boolean isWatchEntry() {
     return getProperties().WATCH_ENTRY;
   }
 
-  public void setWATCH_ENTRY(boolean WATCH_ENTRY) {
+  private void setWatchEntry(boolean WATCH_ENTRY) {
     getProperties().WATCH_ENTRY = WATCH_ENTRY;
   }
 
-  public boolean isWATCH_EXIT() {
+  private boolean isWatchExit() {
     return getProperties().WATCH_EXIT;
   }
 
-  public void setWATCH_EXIT(boolean WATCH_EXIT) {
+  private void setWatchExit(boolean WATCH_EXIT) {
     getProperties().WATCH_EXIT = WATCH_EXIT;
   }
 
-  public String getClassPattern() {
+  private String getClassPattern() {
     return getProperties().myClassPattern;
   }
 
-  public void setClassPattern(String classPattern) {
+  private void setClassPattern(String classPattern) {
     getProperties().myClassPattern = classPattern;
   }
 
-  public void setMethodName(String methodName) {
+  private void setMethodName(String methodName) {
     getProperties().myMethodName = methodName;
   }
 }

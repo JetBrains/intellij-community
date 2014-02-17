@@ -35,19 +35,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -148,7 +142,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-      if (isWATCH_ENTRY()) {
+      if (isWatchEntry()) {
         MethodEntryRequest entryRequest = (MethodEntryRequest)findRequest(debugProcess, MethodEntryRequest.class);
         if (entryRequest == null) {
           entryRequest = requestManager.createMethodEntryRequest(this);
@@ -161,7 +155,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         entryRequest.addClassFilter(classType);
         debugProcess.getRequestsManager().enableRequest(entryRequest);
       }
-      if (isWATCH_EXIT()) {
+      if (isWatchExit()) {
         MethodExitRequest exitRequest = (MethodExitRequest)findRequest(debugProcess, MethodExitRequest.class);
         if (exitRequest == null) {
           exitRequest = requestManager.createMethodExitRequest(this);
@@ -293,8 +287,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Nullable
-  public static MethodBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, XBreakpoint xBreakpoint) {
-    final MethodBreakpoint breakpoint = new MethodBreakpoint(project, createHighlighter(project, document, lineIndex));
+  public static MethodBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
+    final MethodBreakpoint breakpoint = new MethodBreakpoint(project, xBreakpoint);
     return (MethodBreakpoint)breakpoint.init();
   }
 
@@ -380,28 +374,28 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return false;
   }
 
-  public boolean isWATCH_ENTRY() {
+  private boolean isWatchEntry() {
     return getProperties().WATCH_ENTRY;
   }
 
-  public void setWATCH_ENTRY(boolean WATCH_ENTRY) {
+  private void setWatchEntry(boolean WATCH_ENTRY) {
     getProperties().WATCH_ENTRY = WATCH_ENTRY;
   }
 
-  public boolean isWATCH_EXIT() {
+  private boolean isWatchExit() {
     return getProperties().WATCH_EXIT;
   }
 
-  public void setWATCH_EXIT(boolean WATCH_EXIT) {
+  private void setWatchExit(boolean WATCH_EXIT) {
     getProperties().WATCH_EXIT = WATCH_EXIT;
   }
 
   @Nullable
-  public String getMethodName() {
+  private String getMethodName() {
     return getProperties().myMethodName;
   }
 
-  public void setMethodName(@Nullable String methodName) {
+  private void setMethodName(@Nullable String methodName) {
     getProperties().myMethodName = methodName;
   }
 

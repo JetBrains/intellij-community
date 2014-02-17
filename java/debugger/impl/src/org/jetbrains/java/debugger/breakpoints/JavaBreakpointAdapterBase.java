@@ -61,6 +61,6 @@ public abstract class JavaBreakpointAdapterBase extends XBreakpointAdapter<XLine
   }
 
   protected LineBreakpoint doCreateInstance(Project project, Document document, XLineBreakpoint<XBreakpointProperties> xBreakpoint) {
-    return LineBreakpoint.create(project, document, xBreakpoint.getLine(), xBreakpoint);
+    return LineBreakpoint.create(project, xBreakpoint);
   }
 }

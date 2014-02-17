@@ -30,7 +30,9 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,22 +45,20 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
-import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
 import gnu.trove.TIntHashSet;
@@ -66,6 +66,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 import javax.swing.*;
 import java.util.*;
@@ -81,7 +82,6 @@ public class BreakpointManager {
   @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
 
   private final Project myProject;
-  private XBreakpointManager myXBreakpointManager;
   private final Map<XBreakpoint, Breakpoint> myBreakpoints = new HashMap<XBreakpoint, Breakpoint>(); // breakpoints storage, access should be synchronized
   @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
@@ -141,8 +141,8 @@ public class BreakpointManager {
   }
 
   public void init() {
-    myXBreakpointManager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    myXBreakpointManager.addBreakpointListener(new XBreakpointListener() {
+    XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
+    manager.addBreakpointListener(new XBreakpointListener() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint xBreakpoint) {
         if (isJavaType(xBreakpoint)) {
@@ -167,6 +167,10 @@ public class BreakpointManager {
         }
       }
     });
+  }
+
+  private XBreakpointManager getXBreakpointManager() {
+    return XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
@@ -202,7 +206,7 @@ public class BreakpointManager {
 
   @Nullable
   public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
-    return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints, null);
+    return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
   }
 
   @Nullable
@@ -216,8 +220,8 @@ public class BreakpointManager {
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
     }
-
-    LineBreakpoint breakpoint = LineBreakpoint.create(myProject, document, lineIndex, null);
+    XLineBreakpoint xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex);
+    LineBreakpoint breakpoint = LineBreakpoint.create(myProject, xLineBreakpoint);
     if (breakpoint == null) {
       return null;
     }
@@ -226,15 +230,15 @@ public class BreakpointManager {
     return breakpoint;
   }
 
-  @Nullable
-  public FieldBreakpoint addFieldBreakpoint(Field field, ObjectReference object) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, field, object, null);
-    if (fieldBreakpoint != null) {
-      addBreakpoint(fieldBreakpoint);
-    }
-    return fieldBreakpoint;
-  }
+  //@Nullable
+  //public FieldBreakpoint addFieldBreakpoint(Field field, ObjectReference object) {
+  //  ApplicationManager.getApplication().assertIsDispatchThread();
+  //  final FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, field, object, null);
+  //  if (fieldBreakpoint != null) {
+  //    addBreakpoint(fieldBreakpoint);
+  //  }
+  //  return fieldBreakpoint;
+  //}
 
   @Nullable
   public FieldBreakpoint addFieldBreakpoint(@NotNull Document document, int offset) {
@@ -255,7 +259,8 @@ public class BreakpointManager {
   @Nullable
   public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, document, lineIndex, fieldName, null);
+    XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
+    FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, fieldName, xBreakpoint);
     if (fieldBreakpoint != null) {
       addBreakpoint(fieldBreakpoint);
     }
@@ -265,19 +270,28 @@ public class BreakpointManager {
   @NotNull
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull String exceptionClassName, String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName, null);
-    addBreakpoint(breakpoint);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("ExceptionBreakpoint Added");
+    JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+    AccessToken token = WriteAction.start();
+    try {
+      XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
+        .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
+      ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName, xBreakpoint);
+      addBreakpoint(breakpoint);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("ExceptionBreakpoint Added");
+      }
+      return breakpoint;
+    } finally {
+      token.finish();
     }
-    return breakpoint;
   }
 
   @Nullable
   public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, document, lineIndex, null);
+    XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
+    MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, xBreakpoint);
     if (breakpoint == null) {
       return null;
     }
@@ -286,6 +300,19 @@ public class BreakpointManager {
 
     addBreakpoint(breakpoint);
     return breakpoint;
+  }
+
+  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, int lineIndex) {
+    XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    AccessToken token = WriteAction.start();
+    try {
+      return XDebuggerManager.getInstance(myProject).getBreakpointManager()
+        .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
+                           ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex));
+    } finally {
+      token.finish();
+    }
   }
 
   @Nullable
@@ -489,8 +516,12 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return;
     }
-
-    myXBreakpointManager.removeBreakpoint(breakpoint.myXBreakpoint);
+    AccessToken token = WriteAction.start();
+    try {
+      getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
+    } finally {
+      token.finish();
+    }
   }
 
   private synchronized void onBreakpointRemoved(@Nullable final XBreakpoint xBreakpoint) {
@@ -629,7 +660,7 @@ public class BreakpointManager {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size());
 
-      for (XBreakpoint<?> xBreakpoint : myXBreakpointManager.getAllBreakpoints()) {
+      for (XBreakpoint<?> xBreakpoint : getXBreakpointManager().getAllBreakpoints()) {
         if (isJavaType(xBreakpoint)) {
           Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
           if (breakpoint == null) {
@@ -857,7 +888,7 @@ public class BreakpointManager {
 
   // copied from XDebugSessionImpl processDependencies
   public void processBreakpointHit(@NotNull final Breakpoint breakpoint) {
-    XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)myXBreakpointManager).getDependentBreakpointManager();
+    XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
     XBreakpoint xBreakpoint = findXBreakpoint(breakpoint);
     if (!dependentBreakpointManager.isMasterOrSlave(xBreakpoint)) {
       return;
@@ -901,7 +932,7 @@ public class BreakpointManager {
   
   @Nullable
   public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
-    XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)myXBreakpointManager).getDependentBreakpointManager();
+    XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
     XBreakpoint xBreakpoint = findXBreakpoint(dependentBreakpoint);
     return myBreakpoints.get(dependentBreakpointManager.getMasterBreakpoint(xBreakpoint));
   }

@@ -27,6 +27,7 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 import javax.swing.*;
 import java.util.List;
@@ -70,13 +71,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
   @Nullable
   @Override
   public JavaBreakpointProperties createProperties() {
-    return new JavaBreakpointProperties();
+    return new JavaLineBreakpointProperties();
   }
 
   @Nullable
   @Override
   public JavaBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
-    return new JavaBreakpointProperties();
+    return new JavaLineBreakpointProperties();
   }
 
   @Override

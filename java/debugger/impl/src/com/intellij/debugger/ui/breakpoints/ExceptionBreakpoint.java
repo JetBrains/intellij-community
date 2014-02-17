@@ -144,8 +144,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return;
     }
     // trying to create a request
-    ExceptionRequest request = debugProcess.getRequestsManager().createExceptionRequest(this, refType, isNOTIFY_CAUGHT(),
-                                                                                        isNOTIFY_UNCAUGHT());
+    ExceptionRequest request = debugProcess.getRequestsManager().createExceptionRequest(this, refType, isNotifyCaught(),
+                                                                                        isNotifyUncaught());
     debugProcess.getRequestsManager().enableRequest(request);
     if (LOG.isDebugEnabled()) {
       if (refType != null) {
@@ -242,23 +242,23 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   //  setPackageName(packageName != null? packageName : calcPackageName(packageName));
   //}
 
-  public boolean isNOTIFY_CAUGHT() {
+  private boolean isNotifyCaught() {
     return getProperties().NOTIFY_CAUGHT;
   }
 
-  public boolean isNOTIFY_UNCAUGHT() {
+  private boolean isNotifyUncaught() {
     return getProperties().NOTIFY_UNCAUGHT;
   }
 
-  public String getQualifiedName() {
+  private String getQualifiedName() {
     return getProperties().myQualifiedName;
   }
 
-  public void setQualifiedName(String qualifiedName) {
+  private void setQualifiedName(String qualifiedName) {
     getProperties().myQualifiedName = qualifiedName;
   }
 
-  public void setPackageName(String packageName) {
+  private void setPackageName(String packageName) {
     getProperties().myPackageName = packageName;
   }
 }

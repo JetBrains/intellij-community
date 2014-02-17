@@ -1477,7 +1477,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();
       myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
-      myRunToCursorBreakpoint.setLogEnabled(false);
       myRunToCursorBreakpoint.createRequest(context.getDebugProcess());
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
       super.contextAction();

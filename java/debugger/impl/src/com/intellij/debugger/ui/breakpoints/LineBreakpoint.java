@@ -79,10 +79,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, xBreakpoint);
   }
 
-  public LineBreakpoint(Project project, RangeHighlighter highlighter, XBreakpoint xBreakpoint) {
-    super(project, highlighter, xBreakpoint);
-  }
-
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
@@ -471,13 +467,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return ContextUtil.getContextElement(getSourcePosition());
   }
 
-  public static LineBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, XBreakpoint xBreakpoint) {
-    final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
-    if (highlighter == null) {
-      return null;
-    }
-
-    LineBreakpoint breakpoint = new LineBreakpoint(project, highlighter, xBreakpoint);
+  public static LineBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
+    LineBreakpoint breakpoint = new LineBreakpoint(project, xBreakpoint);
     return (LineBreakpoint)breakpoint.init();
   }
 

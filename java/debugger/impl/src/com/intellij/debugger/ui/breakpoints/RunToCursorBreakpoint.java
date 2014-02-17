@@ -18,11 +18,11 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,18 +32,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends LineBreakpoint {
   private final boolean myRestoreBreakpoints;
-  @Nullable
   private final SourcePosition myCustomPosition;
+  private String mySuspendPolicy;
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull RangeHighlighter highlighter, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
-    super(project, highlighter, xBreakpoint);
-    setVisible(false);
-    myRestoreBreakpoints = restoreBreakpoints;
-    myCustomPosition = null;
-  }
-
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
-    super(project, xBreakpoint);
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+    super(project, null);
     myCustomPosition = pos;
     setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
@@ -51,7 +44,51 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
 
   @Override
   public SourcePosition getSourcePosition() {
-    return myCustomPosition != null ? myCustomPosition : super.getSourcePosition();
+    return myCustomPosition;
+  }
+
+  @Override
+  public void reload() {
+  }
+
+  @Override
+  public String getSuspendPolicy() {
+    return mySuspendPolicy;
+  }
+
+  public void setSuspendPolicy(String policy) {
+    mySuspendPolicy = policy;
+  }
+
+  protected boolean isLogEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean isLogExpressionEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
+  }
+
+  public boolean isCountFilterEnabled() {
+    return false;
+  }
+
+  public boolean isClassFiltersEnabled() {
+    return false;
+  }
+
+  public boolean isInstanceFiltersEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean isConditionEnabled() {
+    return false;
   }
 
   public boolean isRestoreBreakpoints() {
@@ -64,28 +101,25 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Override
+  public boolean isValid() {
+    return true;
+  }
+
+  @Override
   protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
 
   @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints, XBreakpoint xBreakpoint) {
+  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) {
       return null;
     }
 
-    final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
-    if (highlighter == null) {
-      return null;
-    }
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    SourcePosition pos = SourcePosition.createFromLine(psiFile, lineIndex);
 
-    final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints, xBreakpoint);
-    final RangeHighlighter h = breakpoint.getHighlighter();
-    if (h != null) {
-      h.dispose();
-    }
-
-    return (RunToCursorBreakpoint)breakpoint.init();
+    return new RunToCursorBreakpoint(project, pos, restoreBreakpoints);
   }
 }
