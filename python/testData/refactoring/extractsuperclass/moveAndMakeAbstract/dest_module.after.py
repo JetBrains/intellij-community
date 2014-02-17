@@ -7,4 +7,7 @@ class NewParent(object):
 
     @abstractmethod
     def foo_method(self):
+        """
+        Foo
+        """
         pass
