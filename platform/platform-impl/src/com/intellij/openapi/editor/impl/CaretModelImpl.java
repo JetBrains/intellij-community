@@ -384,6 +384,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    myEditor.assertIsDispatchThread();
     doWithCaretMerging(runnable);
   }
 
@@ -402,8 +403,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       CaretImpl currCaret = it.next();
       if (prevCaret != null && (currCaret.getVisualPosition().equals(prevCaret.getVisualPosition())
-                                || Math.max(currCaret.getSelectionStart(), prevCaret.getSelectionStart())
-                                   < Math.min(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd()))) {
+                                || regionsIntersect(currCaret.getSelectionStart(), currCaret.getSelectionEnd(),
+                                                    prevCaret.getSelectionStart(), prevCaret.getSelectionEnd()))) {
         int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
         int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
         CaretImpl toRetain, toRemove;
@@ -426,6 +427,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       }
     }
+  }
+
+  private static boolean regionsIntersect(int firstStart, int firstEnd, int secondStart, int secondEnd) {
+    return firstStart < secondStart && firstEnd > secondStart
+      || firstStart > secondStart && firstStart < secondEnd
+      || firstStart == secondStart && secondEnd > secondStart && firstEnd > firstStart;
   }
 
   void doWithCaretMerging(Runnable runnable) {
