@@ -38,6 +38,10 @@ public class ResourceUtil {
   }
 
   public static URL getResource(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+    return getResource(loaderClass.getClassLoader(), basePath, fileName);
+  }
+
+  public static URL getResource(@NotNull ClassLoader loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     if (basePath.endsWith("/")) basePath = basePath.substring(0, basePath.length() - 1);
 
     final List<String> bundles = calculateBundleNames(basePath, Locale.getDefault());

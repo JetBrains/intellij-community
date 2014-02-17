@@ -16,17 +16,22 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -46,7 +51,20 @@ public class TipUIUtil {
   private TipUIUtil() {
   }
 
-  public static void openTipInBrowser(String tipPath, JEditorPane browser, Class providerClass) {
+  @NotNull
+  public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
+    PluginDescriptor descriptor = tip.getPluginDescriptor();
+    return descriptor instanceof IdeaPluginDescriptor &&
+           !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString()) ?
+           ((IdeaPluginDescriptor)descriptor).getName() : "";
+  }
+
+  public static void openTipInBrowser(String tipFileName, JEditorPane browser, Class providerClass) {
+    openTipInBrowser(TipAndTrickBean.findByFileName(tipFileName), browser);
+  }
+
+  public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
+    if (tip == null) return;
     /* TODO: detect that file is not present
     if (!file.exists()) {
       browser.read(new StringReader("Tips for '" + feature.getDisplayName() + "' not found.  Make sure you installed IntelliJ IDEA correctly."), null);
@@ -54,18 +72,18 @@ public class TipUIUtil {
     }
     */
     try {
-      if (tipPath == null) return;
-      if (providerClass == null) providerClass = TipUIUtil.class;
-      URL url = ResourceUtil.getResource(providerClass, "/tips/", tipPath);
+      ClassLoader tipLoader = ObjectUtils.notNull(tip.getPluginDescriptor().getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+
+      URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.getFileName());
 
       if (url == null) {
-        setCantReadText(browser, tipPath);
+        setCantReadText(browser, tip);
         return;
       }
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
-      updateImages(text, providerClass);
+      updateImages(text, tipLoader);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
@@ -75,11 +93,11 @@ public class TipUIUtil {
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
-      setCantReadText(browser, tipPath);
+      setCantReadText(browser, tip);
     }
   }
 
-  private static void setCantReadText(JEditorPane browser, String missingFile) {
+  private static void setCantReadText(JEditorPane browser, TipAndTrickBean missingFile) {
     try {
       browser.read(new StringReader(
         IdeBundle.message("error.unable.to.read.tip.of.the.day", missingFile, ApplicationNamesInfo.getInstance().getFullProductName())), null);
@@ -88,7 +106,7 @@ public class TipUIUtil {
     }
   }
 
-  private static void updateImages(StringBuffer text, Class providerClass) {
+  private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
     final boolean dark = UIUtil.isUnderDarcula();
     final boolean retina = UIUtil.isRetina();
 //    if (!dark && !retina) {
@@ -109,7 +127,7 @@ public class TipUIUtil {
         String path = img.substring(srcIndex + 5, endIndex);
         if (!path.endsWith("_dark") && !path.endsWith("@2x")) {
           path += suffix + ".png";
-          URL url = ResourceUtil.getResource(providerClass, "/tips/", path);
+          URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
             if (retina) {
