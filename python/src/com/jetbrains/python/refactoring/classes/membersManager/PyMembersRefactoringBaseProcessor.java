@@ -7,6 +7,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -80,5 +81,6 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
       destinations.add(((PyUsageInfo)usage).getTo());
     }
     MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));
+    PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports
   }
 }

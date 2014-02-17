@@ -5,9 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.refactoring.RefactoringBundle;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +45,13 @@ class SuperClassesManager extends MembersManager<PyClass> {
     }
 
     for (final PyExpression expression : from.getSuperClassExpressions()) {
+      // Remove all superclass expressions that point to class from memberinfo
+      if (!(expression instanceof PyQualifiedExpression)) {
+        continue;
+      }
+      final PyReferenceExpression reference = (PyReferenceExpression)expression;
       for (final PyClass element : elements) {
-        if (expression.getText().equals(element.getName())) {
+        if (reference.getReference().isReferenceTo(element)) {
           expression.delete();
         }
       }

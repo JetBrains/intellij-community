@@ -54,6 +54,11 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     multiFileTestHelper("TheParentOfItAll", false);
   }
 
+  // Checks that moving methods between files moves superclass expressions regardless import style (q.name or name)
+  public void testMoveExtendsCheckReference() throws Throwable {
+    multiFileTestHelper("TheParentOfItAll", false);
+  }
+
   // Extracts method as abstract
   public void testMoveAndMakeAbstract() throws Throwable {
     multiFileTestHelper(".foo_method", true);
@@ -103,6 +108,17 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   public void testWithImport() throws Exception {
     doSimpleTest("A", "Suppa", null, false, ".foo");
+  }
+
+  // PY-12175
+  public void testImportNotBroken() throws Exception {
+    myFixture.copyFileToProject("/refactoring/extractsuperclass/shared.py", "shared.py");
+    doSimpleTest("Source", "DestClass", null, true, "SharedClass");
+  }
+
+  // PY-12175 but between several files
+  public void testImportNotBrokenManyFiles() throws Exception {
+    multiFileTestHelper("SharedClass", false);
   }
 
   public void testMoveFields() throws Exception {

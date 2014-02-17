@@ -60,7 +60,6 @@ public final class PyExtractSuperclassHelper {
                                 @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
-
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
     selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
@@ -88,9 +87,12 @@ public final class PyExtractSuperclassHelper {
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
     newClass = placeNewClass(project, newClass, clazz, targetFile);
-
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
+    if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
+      PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
+    }
     PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+
   }
 
   private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {

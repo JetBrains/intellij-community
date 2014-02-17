@@ -66,7 +66,5 @@ class TypeSafeMovingStrategy<T extends PyElement> {
     for (final PyElement element : newElements) {
       PyClassRefactoringUtil.restoreNamedReferences(element);
     }
-
-    PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports from source
   }
 }
