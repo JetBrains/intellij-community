@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.compiler.classFilesIndex.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -22,12 +7,14 @@ import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHo
 import com.intellij.compiler.classFilesIndex.chainsSearch.*;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextUtil;
+import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
@@ -53,8 +40,8 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD
-        && ClassFilesIndexFeaturesHolder.getInstance(parameters.getPosition().getProject())
+    if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD &&
+        ClassFilesIndexFeaturesHolder.getInstance(parameters.getPosition().getProject())
           .enableFeatureIfNeed(ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION)) {
       super.fillCompletionVariants(parameters, result);
     }
@@ -72,7 +59,6 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         final ChainCompletionContext completionContext = extractContext(parameters);
         if (completionContext == null) return;
 
-        final String targetClassQName = completionContext.getTargetQName();
         final Set<String> contextTypesKeysSet = completionContext.getContextTypes();
         final Set<String> contextRelevantTypes = new HashSet<String>(contextTypesKeysSet.size() + 1);
         for (final String type : contextTypesKeysSet) {
@@ -80,9 +66,9 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
             contextRelevantTypes.add(type);
           }
         }
-        contextRelevantTypes.remove(targetClassQName);
-
-        final List<LookupElement> foundElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext);
+        final TargetType target = completionContext.getTarget();
+        contextRelevantTypes.remove(target.getClassQName());
+        final List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(target, contextRelevantTypes, completionContext);
         if (!IS_UNIT_TEST_MODE) {
           result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
             @Override
@@ -90,9 +76,9 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
               final LookupElement lookupElement = completionResult.getLookupElement();
               final PsiElement lookupElementPsi = lookupElement.getPsiElement();
               if (lookupElementPsi != null) {
-                for (final LookupElement element : foundElements) {
+                for (final LookupElement element : elementsFoundByMethodsChainsSearch) {
                   if (lookupElementPsi.isEquivalentTo(element.getPsiElement())) {
-                    foundElements.remove(element);
+                    elementsFoundByMethodsChainsSearch.remove(element);
                     break;
                   }
                 }
@@ -103,45 +89,50 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         } else {
           result.stopHere();
         }
-        result.addAllElements(foundElements);
+        result.addAllElements(elementsFoundByMethodsChainsSearch);
       }
     });
   }
 
-  private static List<LookupElement> searchForLookups(final String targetClassQName,
+  private static List<LookupElement> searchForLookups(final TargetType target,
                                                       final Set<String> contextRelevantTypes,
                                                       final ChainCompletionContext completionContext) {
-    final MethodsUsageIndexReader methodsUsageIndexReader = MethodsUsageIndexReader.getInstance(completionContext.getProject());
+    final Project project = completionContext.getProject();
+    final MethodsUsageIndexReader methodsUsageIndexReader = MethodsUsageIndexReader.getInstance(project);
     final List<MethodsChain> searchResult =
-      searchChains(targetClassQName, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
+      searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
-      final PsiClass aClass = JavaPsiFacade.getInstance(completionContext.getProject())
-        .findClass(targetClassQName, GlobalSearchScope.allScope(completionContext.getProject()));
-      if (aClass != null) {
-        DirectClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+      if (!target.isArray()) {
+        final List<MethodsChain> inheritorFilteredSearchResult = new SmartList<MethodsChain>();
+        final Processor<TargetType> consumer = new Processor<TargetType>() {
+          @Override
+          public boolean process(final TargetType targetType) {
+            for (final MethodsChain chain : searchChains(targetType, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE,
+                                                         completionContext, methodsUsageIndexReader)) {
+              boolean insert = true;
+              for (final MethodsChain baseChain : searchResult) {
+                final MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());
+                if (r != MethodsChain.CompareResult.NOT_EQUAL) {
+                  insert = false;
+                  break;
+                }
+              }
+              if (insert) {
+                inheritorFilteredSearchResult.add(chain);
+              }
+            }
+            searchResult.addAll(inheritorFilteredSearchResult);
+            return searchResult.size() < MAX_SEARCH_RESULT_SIZE;
+          }
+        };
+        DirectClassInheritorsSearch.search(((PsiClassType)target.getPsiType()).resolve()).forEach(new Processor<PsiClass>() {
           @Override
           public boolean process(final PsiClass psiClass) {
             final String inheritorQName = psiClass.getQualifiedName();
-            if (!StringUtil.isEmpty(inheritorQName)) {
-              final List<MethodsChain> inheritorFilteredSearchResult = new SmartList<MethodsChain>();
-              //noinspection ConstantConditions
-              for (final MethodsChain chain : searchChains(inheritorQName, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE,
-                                                           completionContext, methodsUsageIndexReader)) {
-                boolean insert = true;
-                for (final MethodsChain baseChain : searchResult) {
-                  final MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());
-                  if (r != MethodsChain.CompareResult.NOT_EQUAL) {
-                    insert = false;
-                    break;
-                  }
-                }
-                if (insert) {
-                  inheritorFilteredSearchResult.add(chain);
-                }
-              }
-              searchResult.addAll(inheritorFilteredSearchResult);
+            if (inheritorQName == null) {
+              return true;
             }
-            return true;
+            return consumer.process(new TargetType(inheritorQName, false, new PsiImmediateClassType(psiClass, PsiSubstitutor.EMPTY)));
           }
         });
       }
@@ -221,12 +212,12 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     return filteredResult;
   }
 
-  private static List<MethodsChain> searchChains(final String targetQName,
+  private static List<MethodsChain> searchChains(final TargetType target,
                                                  final Set<String> contextVarsQNames,
                                                  final int maxResultSize,
                                                  final int maxChainSize,
                                                  final ChainCompletionContext context,
                                                  final MethodsUsageIndexReader methodsUsageIndexReader) {
-    return ChainsSearcher.search(methodsUsageIndexReader, targetQName, contextVarsQNames, maxResultSize, maxChainSize, context);
+    return ChainsSearcher.search(maxChainSize, target, contextVarsQNames, maxResultSize, context, methodsUsageIndexReader);
   }
 }

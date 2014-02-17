@@ -251,8 +251,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private LookupElement[] runCompletion() {
     myFixture.configureByFiles(getTestCompletionFilePath());
     final LookupElement[] lookupElements =
-      myFixture.complete(MethodsChainsCompletionContributor.COMPLETION_TYPE,
-                         MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
+      myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
   }
 

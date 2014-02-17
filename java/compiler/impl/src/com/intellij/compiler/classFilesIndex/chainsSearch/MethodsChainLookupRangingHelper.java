@@ -60,8 +60,7 @@ public class MethodsChainLookupRangingHelper {
 
   @SuppressWarnings("ConstantConditions")
   @Nullable
-  private static WeightableChainLookupElement chainToWeightableLookupElement(final MethodsChain chain,
-                                                                             final ChainCompletionContext context) {
+  private static LookupElement chainToWeightableLookupElement(final MethodsChain chain, final ChainCompletionContext context) {
     final int chainSize = chain.size();
     assert chainSize != 0;
     final int lastMethodWeight = chain.getChainWeight();
@@ -76,7 +75,7 @@ public class MethodsChainLookupRangingHelper {
 
     for (final PsiMethod[] psiMethods : chain.getPath()) {
       final PsiMethod method =
-        MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, Collections.singleton(context.getTargetQName()));
+        MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, Collections.singleton(context.getTarget().getClassQName()));
       if (method == null) {
         return null;
       }
@@ -141,52 +140,49 @@ public class MethodsChainLookupRangingHelper {
     for (int i = 0; i < parameters.length; i++) {
       final PsiParameter parameter = parameters[i];
       final String typeQName = parameter.getType().getCanonicalText();
-      if (typeQName != null) {
-        if (JAVA_LANG_STRING.equals(typeQName)) {
-          final PsiVariable relevantStringVar = context.findRelevantStringInContext(parameter.getName());
-          if (relevantStringVar == null) {
-            notMatchedStringVars++;
-          }
-          else {
-            parametersMap.put(i, new VariableSubLookupElement(relevantStringVar));
-          }
+      if (JAVA_LANG_STRING.equals(typeQName)) {
+        final PsiVariable relevantStringVar = context.findRelevantStringInContext(parameter.getName());
+        if (relevantStringVar == null) {
+          notMatchedStringVars++;
         }
-        else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(typeQName)) {
-          final Collection<PsiVariable> contextVariables = context.getVariables(typeQName);
-          final PsiVariable contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
-          if (contextVariable != null) {
-            if (contextVariables.size() == 1) parametersMap.put(i, new VariableSubLookupElement(contextVariable));
-            matchedParametersInContext++;
-            continue;
-          }
-          final Collection<ContextRelevantVariableGetter> relevantVariablesGetters = context.getRelevantVariablesGetters(typeQName);
-          final ContextRelevantVariableGetter contextVariableGetter = ContainerUtil.getFirstItem(relevantVariablesGetters, null);
-          if (contextVariableGetter != null) {
-            if (relevantVariablesGetters.size() == 1) parametersMap.put(i, contextVariableGetter.createSubLookupElement());
-            matchedParametersInContext++;
-            continue;
-          }
-          final Collection<PsiMethod> containingClassMethods = context.getContainingClassMethods(typeQName);
-          final PsiMethod contextRelevantGetter = ContainerUtil.getFirstItem(containingClassMethods, null);
-          if (contextRelevantGetter != null) {
-            if (containingClassMethods.size() == 1) parametersMap.put(i, new GetterLookupSubLookupElement(method.getName()));
-            matchedParametersInContext++;
-            continue;
-          }
-          //todo
-          final ContextRelevantStaticMethod contextRelevantStaticMethod =
-            ContainerUtil.getFirstItem(context.getRelevantStaticMethods(typeQName, weight), null);
-          if (contextRelevantStaticMethod != null) {
-            //
-            // In most cases it is not really relevant
-            //
-            //parametersMap.put(i, contextRelevantStaticMethod.createLookupElement());
-            matchedParametersInContext++;
-            continue;
-          }
-          if (!nullableNotNullManager.isNullable(parameter, true)) {
-            unreachableParametersCount++;
-          }
+        else {
+          parametersMap.put(i, new VariableSubLookupElement(relevantStringVar));
+        }
+      }
+      else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(typeQName)) {
+        final Collection<PsiVariable> contextVariables = context.getVariables(typeQName);
+        final PsiVariable contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+        if (contextVariable != null) {
+          if (contextVariables.size() == 1) parametersMap.put(i, new VariableSubLookupElement(contextVariable));
+          matchedParametersInContext++;
+          continue;
+        }
+        final Collection<ContextRelevantVariableGetter> relevantVariablesGetters = context.getRelevantVariablesGetters(typeQName);
+        final ContextRelevantVariableGetter contextVariableGetter = ContainerUtil.getFirstItem(relevantVariablesGetters, null);
+        if (contextVariableGetter != null) {
+          if (relevantVariablesGetters.size() == 1) parametersMap.put(i, contextVariableGetter.createSubLookupElement());
+          matchedParametersInContext++;
+          continue;
+        }
+        final Collection<PsiMethod> containingClassMethods = context.getContainingClassMethods(typeQName);
+        final PsiMethod contextRelevantGetter = ContainerUtil.getFirstItem(containingClassMethods, null);
+        if (contextRelevantGetter != null) {
+          if (containingClassMethods.size() == 1) parametersMap.put(i, new GetterLookupSubLookupElement(method.getName()));
+          matchedParametersInContext++;
+          continue;
+        }
+        final ContextRelevantStaticMethod contextRelevantStaticMethod =
+          ContainerUtil.getFirstItem(context.getRelevantStaticMethods(typeQName, weight), null);
+        if (contextRelevantStaticMethod != null) {
+          //
+          // In most cases it is not really relevant
+          //
+          //parametersMap.put(i, contextRelevantStaticMethod.createLookupElement());
+          matchedParametersInContext++;
+          continue;
+        }
+        if (!nullableNotNullManager.isNullable(parameter, true)) {
+          unreachableParametersCount++;
         }
       }
     }

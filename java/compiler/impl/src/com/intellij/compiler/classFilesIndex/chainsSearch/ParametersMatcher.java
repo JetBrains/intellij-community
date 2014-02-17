@@ -59,7 +59,7 @@ public final class ParametersMatcher {
       else {
         unMatched++;
       }
-      if (context.getTargetQName().equals(canonicalText) || additionalExcludedNames.contains(canonicalText)) {
+      if (context.getTarget().getClassQName().equals(canonicalText) || additionalExcludedNames.contains(canonicalText)) {
         hasTarget = true;
       }
     }
