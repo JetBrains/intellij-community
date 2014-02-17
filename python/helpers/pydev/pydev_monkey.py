@@ -4,7 +4,7 @@ import sys
 import pydev_log
 import traceback
 
-helpers = os.path.dirname(__file__)
+helpers = os.path.dirname(__file__).replace('\\', '/')
 
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
