@@ -677,28 +677,57 @@ public class InferenceSession {
 
   private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                                        PsiSubstitutor substitutor) {
-    final List<List<InferenceVariable>> independentVars = InferenceVariablesOrder.resolveOrder(inferenceVariables, this);
-    for (List<InferenceVariable> vars : independentVars) {
-      substitutor = resolveSubset(vars, substitutor, true);
-      if (substitutor == null) {
+    final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
+    while (!allVars.isEmpty()) {
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
+      if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
+        final PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, true);
+        if (firstSubstitutor != null) {
+          substitutor = firstSubstitutor;
+          allVars.removeAll(vars);
+          continue;
+        }
+      }
+
+      for (InferenceVariable var : vars) {
+        final PsiTypeParameter copy = (PsiTypeParameter)var.getParameter().copy();
+        final PsiType lub = getLowerBound(var, substitutor);
+        final PsiType glb = getUpperBound(var, substitutor);
+        final InferenceVariable zVariable = new InferenceVariable(copy);
+        zVariable.addBound(glb, InferenceBound.UPPER);
+        if (lub != PsiType.NULL) {
+          if (!TypeConversionUtil.isAssignable(glb, lub)) {
+            return null;
+          }
+          copy.putUserData(LOWER_BOUND, lub);
+          zVariable.addBound(lub, InferenceBound.LOWER);
+        }
+        myInferenceVariables.put(copy, zVariable);
+      }
+      myIncorporationPhase.forgetCaptures(vars);
+      if (!myIncorporationPhase.incorporate()) {
         return null;
       }
     }
     return substitutor;
   }
-  
+
+  private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
+    return composeBound(var, InferenceBound.LOWER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+      @Override
+      public PsiType fun(Pair<PsiType, PsiType> pair) {
+        return GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager);
+      }
+    }, substitutor);
+  }
+
   @Nullable
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor, boolean checkResult) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
       final PsiTypeParameter typeParameter = var.getParameter();
       final PsiType eqBound = getEqualsBound(var, substitutor);
-      final PsiType lub = eqBound != PsiType.NULL && (myErased || eqBound != null) ? eqBound : composeBound(var, InferenceBound.LOWER, new Function<Pair<PsiType, PsiType>, PsiType>() {
-        @Override
-        public PsiType fun(Pair<PsiType, PsiType> pair) {
-          return GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager);
-        }
-      }, substitutor);
+      final PsiType lub = eqBound != PsiType.NULL && (myErased || eqBound != null) ? eqBound : getLowerBound(var, substitutor);
       if (lub != PsiType.NULL) {
         substitutor = substitutor.put(typeParameter, lub);
       } 
@@ -707,16 +736,20 @@ public class InferenceSession {
         substitutor = substitutor.put(typeParameter, runtimeException);
       } 
       else {
-        substitutor = substitutor.put(typeParameter, composeBound(var, InferenceBound.UPPER, new Function<Pair<PsiType, PsiType>, PsiType>() {
-          @Override
-          public PsiType fun(Pair<PsiType, PsiType> pair) {
-            return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
-          }
-        }, substitutor));
+        substitutor = substitutor.put(typeParameter, getUpperBound(var, substitutor));
       }
     }
 
-    return checkResult ? myIncorporationPhase.checkIncorporated(substitutor) : substitutor;
+    return checkResult ? myIncorporationPhase.checkIncorporated(substitutor, vars) : substitutor;
+  }
+
+  private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
+    return composeBound(var, InferenceBound.UPPER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+      @Override
+      public PsiType fun(Pair<PsiType, PsiType> pair) {
+        return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
+      }
+    }, substitutor);
   }
 
   public PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {

@@ -83,7 +83,11 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
               if (myT.equals(conjunct)) return true;
             }
           }
-          //todo ((PsiTypeParameter)C).getLowerBound()
+          final PsiType lowerBound = CClass.getUserData(InferenceSession.LOWER_BOUND);
+          if (lowerBound != null) {
+            constraints.add(new StrictSubtypingConstraint(lowerBound, myS));
+            return true;
+          }
           return false;
         }
 

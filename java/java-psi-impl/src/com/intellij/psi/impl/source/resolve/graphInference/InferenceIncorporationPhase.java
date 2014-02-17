@@ -400,8 +400,8 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  public PsiSubstitutor checkIncorporated(PsiSubstitutor substitutor) {
-    for (InferenceVariable variable : mySession.getInferenceVariables()) { //todo equals bounds?
+  public PsiSubstitutor checkIncorporated(PsiSubstitutor substitutor, Collection<InferenceVariable> variables) {
+    for (InferenceVariable variable : variables) { //todo equals bounds?
       for (PsiType lowerBound : variable.getBounds(InferenceBound.LOWER)) {
         lowerBound = substitutor.substitute(lowerBound);
         if (mySession.isProperType(lowerBound)) {
