@@ -57,7 +57,6 @@
     <tipAndTrick file="WildcardsInNavigationPopups.html"/>
     <tipAndTrick file="MoveInnerToUpper.html"/>
     <tipAndTrick file="IntroduceVariableIncompleteCode.html"/>
-    <!--<tipAndTrick file="CreateTargetTag.html"/>-->
     <tipAndTrick file="GoToSymbol.html" feature-id="navigation.popup.symbol"/>
     <tipAndTrick file="RecentChanges.html" feature-id="ui.recentchanges"/>
     <tipAndTrick file="ImageFileCompletion.html"/>
@@ -135,5 +134,22 @@
     <tipAndTrick file="WideScreen.html"/>
     <tipAndTrick file="Terminal.html"/>
     <tipAndTrick file="ConfiguringTerminal.html"/>
+
+    <tipAndTrick file="HorizontalScrolling.html" feature-id="ui.horizontal.scrolling"/>
+    <tipAndTrick file="SearchEverywhere.html" feature-id="SearchEverywhere"/>
+    <tipAndTrick file="CtrlDotInLookups.html" feature-id="editing.completion.finishByCtrlDot"/>
+    <tipAndTrick file="CancelByControlArrows.html" feature-id="editing.completion.cancelByControlArrows"/>
+    <tipAndTrick file="CamelHumpsInCodeCompletion.html" feature-id="editing.completion.camelHumps"/>
+
+    <tipAndTrick file="SecondSmartCompletionArrayMember.html" feature-id="editing.completion.second.smarttype.array.member"/>
+    <tipAndTrick file="SecondSmartCompletionAsList.html" feature-id="editing.completion.second.smarttype.aslist"/>
+    <tipAndTrick file="SecondSmartCompletionChain.html" feature-id="editing.completion.second.smarttype.chain"/>
+    <tipAndTrick file="FinishBySmartEnter.html" feature-id="editing.completion.finishBySmartEnter"/>
+    <tipAndTrick file="FinishByExclamation.html" feature-id="editing.completion.finishByExclamation"/>
+    <tipAndTrick file="CompletionImportStatic.html" feature-id="editing.completion.global.member.name"/>
+    <tipAndTrick file="FinishByControlEnter.html" feature-id="editing.completion.finishByControlEnter"/>
+    <tipAndTrick file="SecondBasicClassNameCompletion.html" feature-id="editing.completion.second.basic"/>
+    <tipAndTrick file="SecondSmartCompletionToar.html" feature-id="editing.completion.second.smarttype.toar"/>
+    <tipAndTrick file="ChangeSorting.html" feature-id="editing.completion.changeSorting"/>
   </extensions>
 </idea-plugin>

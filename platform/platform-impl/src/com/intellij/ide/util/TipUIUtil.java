@@ -27,6 +27,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +61,12 @@ public class TipUIUtil {
   }
 
   public static void openTipInBrowser(String tipFileName, JEditorPane browser, Class providerClass) {
-    openTipInBrowser(TipAndTrickBean.findByFileName(tipFileName), browser);
+    TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
+    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+      tip = new TipAndTrickBean();
+      tip.myFileName = tipFileName;
+    }
+    openTipInBrowser(tip, browser);
   }
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
@@ -72,7 +78,9 @@ public class TipUIUtil {
     }
     */
     try {
-      ClassLoader tipLoader = ObjectUtils.notNull(tip.getPluginDescriptor().getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+      PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+      ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
+                              ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
 
       URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.getFileName());
 
