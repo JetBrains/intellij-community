@@ -130,14 +130,8 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
 
   @Override
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    final String pHash = partialHash.toLowerCase();
-    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getGraphFacade()), new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        Hash hash = myDataHolder.getHash(integer);
-        return hash.toString().toLowerCase().startsWith(pHash);
-      }
-    });
+    Hash hash = myDataHolder.findHashByString(partialHash);
+    return hash != null ? getRowOfCommit(hash) : -1;
   }
 
 }

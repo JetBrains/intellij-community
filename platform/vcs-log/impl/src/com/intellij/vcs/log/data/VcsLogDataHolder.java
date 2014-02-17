@@ -586,6 +586,23 @@ public class VcsLogDataHolder implements Disposable {
     return myContainingBranchesGetter;
   }
 
+  @Nullable
+  public Hash findHashByString(@NotNull String string) {
+    final String pHash = string.toLowerCase();
+    try {
+      return myHashMap.findHash(new Condition<Hash>() {
+        @Override
+        public boolean value(@NotNull Hash hash) {
+          return hash.toString().toLowerCase().startsWith(pHash);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;
