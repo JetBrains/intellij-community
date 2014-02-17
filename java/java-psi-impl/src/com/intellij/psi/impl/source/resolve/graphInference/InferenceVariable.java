@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiCapturedWildcardType;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 
@@ -45,22 +43,15 @@ public class InferenceVariable {
   public void setInstantiation(PsiType instantiation) {
     myInstantiation = instantiation;
   }
-  
-  public void ignoreInstantiation() {
-    myInstantiation = PsiType.NULL;
-  }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
-    if (inferenceBound == InferenceBound.EQ && classType instanceof PsiClassType && ((PsiClassType)classType).resolve() == myParameter) {
-      return false;
-    }
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
     final int idx = list.indexOf(classType);
-    if (idx < 0 || inferenceBound == InferenceBound.EQ && classType instanceof PsiCapturedWildcardType && list.get(idx) != classType) {
+    if (idx < 0) {
       list.add(classType);
       return true;
     }
@@ -115,5 +106,9 @@ public class InferenceVariable {
 
   public void setThrownBound() {
     myThrownBound = true;
+  }
+
+  public void replaceBounds(InferenceBound boundType, LinkedHashSet<PsiType> bounds) {
+    
   }
 }

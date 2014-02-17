@@ -93,7 +93,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDiamondInference() { doTest();}
   public void testFunctionalInterfaceCheck() { doTest();}
   public void testUnderscores() { doTest(true);}
-  public void _testReturnTypeAmbiguity() { doTest();} //todo waiting for capture
+  public void testReturnTypeAmbiguity() { doTest();}
   public void testWildcardsAndFormalLambdaParams() {doTest();}
   public void testFinalInitializer() {doTest();}
   public void testBreakContinueInside() {doTest();}

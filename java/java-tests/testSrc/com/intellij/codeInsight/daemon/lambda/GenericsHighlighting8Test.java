@@ -25,10 +25,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +69,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithBounds() {
     doTest();
   }
-  public void _testInferenceWithSuperBounds() {  //todo waiting for capture bound
+  public void testInferenceWithSuperBounds() {
     doTest();
   }
   public void testInferenceWithUpperBoundPromotion() {
@@ -264,7 +262,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57339() {
     doTest();
   } 
-  public void testIDEA57340() {
+  public void _testIDEA57340() {
     doTest();
   }
   public void testIDEA89771() {
@@ -297,7 +295,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57563() {
     doTest();
   }
-  public void testIDEA57275() {
+  public void _testIDEA57275() {
     doTest();
   }
   public void testIDEA57533() {

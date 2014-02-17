@@ -265,7 +265,7 @@ public class InferenceIncorporationPhase {
     boolean result = false;
     for (PsiType upperBound : upperBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
-      if (inferenceVar != null) {
+      if (inferenceVar != null && inferenceVariable != inferenceVar) {
 
         for (PsiType lowerBound : lowerBounds) {
           result |= inferenceVar.addBound(lowerBound, inferenceBound);
@@ -398,5 +398,22 @@ public class InferenceIncorporationPhase {
         dependencies.add(var);
       }
     }
+  }
+
+  public PsiSubstitutor checkIncorporated(PsiSubstitutor substitutor) {
+    for (InferenceVariable variable : mySession.getInferenceVariables()) { //todo equals bounds?
+      for (PsiType lowerBound : variable.getBounds(InferenceBound.LOWER)) {
+        lowerBound = substitutor.substitute(lowerBound);
+        if (mySession.isProperType(lowerBound)) {
+          for (PsiType upperBound : variable.getBounds(InferenceBound.UPPER)) {
+            upperBound = substitutor.substitute(upperBound);
+            if (mySession.isProperType(upperBound) && !TypeConversionUtil.isAssignable(upperBound, lowerBound)) {
+              return null;
+            }
+          }
+        }
+      }
+    }
+    return substitutor;
   }
 }

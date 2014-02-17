@@ -17,16 +17,15 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
-import com.intellij.psi.impl.source.resolve.graphInference.LiftParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -108,11 +107,16 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           if (pair == null) {
             if (method != null) {
-              InferenceSession callSession = new InferenceSession(typeParams, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(), myExpression.getManager(), myExpression);
+              //typeParams are already included
+              final Collection<PsiTypeParameter> params = session.getTypeParams();
+              InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(), myExpression.getManager(), myExpression);
               final PsiExpression[] args = argumentList.getExpressions();
               final PsiParameter[] parameters = method.getParameterList().getParameters();
               callSession.initExpressionConstraints(parameters, args, myExpression, method);
-              substitutor = callSession.infer(parameters, args, myExpression, true, LiftParameterTypeInferencePolicy.INSTANCE);
+              callSession.registerConstraints(returnType, myT);
+              if (callSession.repeatInferencePhases(true)) {
+                session.liftBounds(callSession.getInferenceVariables());
+              }
             }
           } else {
             substitutor = pair.second;

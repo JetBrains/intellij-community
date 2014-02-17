@@ -206,16 +206,20 @@ public class MethodCandidateInfo extends CandidateInfo{
       return inferTypeArguments(policy, arguments, true);
     }
     else {
-      PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
-      PsiMethod method = getElement();
-      if (method != null) {
-        PsiTypeParameter[] typeParams = method.getTypeParameters();
-        for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
-          incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
-        }
-      }
-      return incompleteSubstitutor;
+      return typeArgumentsSubstitutor();
     }
+  }
+
+  public PsiSubstitutor typeArgumentsSubstitutor() {
+    PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
+    PsiMethod method = getElement();
+    if (method != null) {
+      PsiTypeParameter[] typeParams = method.getTypeParameters();
+      for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
+        incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
+      }
+    }
+    return incompleteSubstitutor;
   }
 
   @NotNull
