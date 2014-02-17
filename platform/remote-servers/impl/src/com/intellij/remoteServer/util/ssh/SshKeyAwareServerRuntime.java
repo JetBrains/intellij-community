@@ -19,12 +19,14 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.util.CloudServerRuntimeInstance;
 import com.intellij.remoteServer.util.ServerRuntimeException;
 
+import java.io.File;
+
 /**
  * @author michael.golubev
  */
 public interface SshKeyAwareServerRuntime {
 
-  void addSshKey(String sshKey) throws ServerRuntimeException;
+  void addSshKey(File sshKey) throws ServerRuntimeException;
 
   CloudServerRuntimeInstance asCloudServerRuntime();
 

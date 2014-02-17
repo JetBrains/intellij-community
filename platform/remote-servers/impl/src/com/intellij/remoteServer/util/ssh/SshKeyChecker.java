@@ -31,17 +31,12 @@ import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 
 /**
  * @author michael.golubev
  */
 public class SshKeyChecker {
-
-  private final boolean myTextNotFile;
-
-  public SshKeyChecker(boolean textNotFile) {
-    myTextNotFile = textNotFile;
-  }
 
   private static boolean isSshKeyErrorMessage(String errorMessage) {
     return errorMessage.contains("Could not read from remote repository") || errorMessage.contains("The remote end hung up unexpectedly");
@@ -101,7 +96,7 @@ public class SshKeyChecker {
     }
 
     @Override
-    protected void uploadKey(final String sskKey) {
+    protected void uploadKey(final File sskKey) {
       new CloudConnectionTask(myProject, "Uploading SSH key", myConnectionTask.getServer()) {
 
         @Override
@@ -165,7 +160,7 @@ public class SshKeyChecker {
     }
 
     @Override
-    protected void uploadKey(final String sskKey) {
+    protected void uploadKey(final File sskKey) {
       new CloudRuntimeTask(getProject(), "Uploading SSH key") {
 
         @Override
@@ -215,19 +210,16 @@ public class SshKeyChecker {
     }
   }
 
-  private abstract class HandlerBase {
+  private static abstract class HandlerBase {
 
     protected void chooseKey() {
-      new PublicSshKeyDialog(getProject(), myTextNotFile) {
-
-        @Override
-        protected void uploadSshKey(String sskKey) {
-          uploadKey(sskKey);
-        }
-      }.show();
+      PublicSshKeyDialog dialog = new PublicSshKeyDialog(getProject());
+      if (dialog.showAndGet()) {
+        uploadKey(dialog.getSshKey());
+      }
     }
 
-    protected abstract void uploadKey(String sskKey);
+    protected abstract void uploadKey(File sskKeyFile);
 
     protected abstract Project getProject();
   }

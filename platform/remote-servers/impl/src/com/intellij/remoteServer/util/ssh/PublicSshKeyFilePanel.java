@@ -25,7 +25,7 @@ import javax.swing.*;
 /**
  * @author michael.golubev
  */
-public class PublicSshKeyFilePanel implements PublicSshKeyPanel {
+public class PublicSshKeyFilePanel {
 
   private TextFieldWithBrowseButton myPublicSshKeyFileField;
   private HyperlinkLabel myPublicSshKeyTooltipHyperlink;
@@ -36,7 +36,6 @@ public class PublicSshKeyFilePanel implements PublicSshKeyPanel {
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
   }
 
-  @Override
   public String getSshKey() {
     return myPublicSshKeyFileField.getText();
   }
@@ -47,7 +46,6 @@ public class PublicSshKeyFilePanel implements PublicSshKeyPanel {
         "Specify the location of your public SSH key file (.pub). You won’t be able to use the cloud unless you register you public key there. However, if you’ve already done that, you don’t have to specify the key now.");
   }
 
-  @Override
   public JComponent getMainPanel() {
     return myMainPanel;
   }
