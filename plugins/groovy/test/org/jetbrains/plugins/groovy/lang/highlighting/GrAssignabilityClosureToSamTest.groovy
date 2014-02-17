@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ interface A<T> {
 A<String> a1 = {print 1}
 A<String> a2 = {String s -> print 1}
 A<String> <warning>a3</warning> = {int s -> print 1}
-A <warning>a4</warning> = {int s -> print 1}
+A a4 = {int s -> print 1}
+A a7 = {int s, String y -> print 1}
 A a5 = { print 1}
 A a6 = {x -> print 1}
 ''')

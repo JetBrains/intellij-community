@@ -460,7 +460,7 @@ public class CompleteReferenceExpression {
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap(place);
       final PsiType thisType = GrReferenceResolveUtil.getQualifierType(place);
-      mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, true, place, place.getParent());
+      mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, place, place.getParent());
     }
 
     private static boolean shouldSkipPackages(@NotNull GrReferenceExpression place) {
