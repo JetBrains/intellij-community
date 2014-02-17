@@ -37,6 +37,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<VirtualFile>();
       processIncludes(file, new Processor<FileIncludeInfo>() {
         @Override
         public boolean process(FileIncludeInfo info) {
@@ -86,7 +87,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludingHolder = new IncludeCacheHolder("compile time contexts", "runtime contexts") {
     @Override
     protected VirtualFile[] computeFiles(PsiFile context, boolean compileTimeOnly) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<VirtualFile>();
       processIncludingFiles(context, new Processor<Pair<VirtualFile, FileIncludeInfo>>() {
         @Override
         public boolean process(Pair<VirtualFile, FileIncludeInfo> virtualFileFileIncludeInfoPair) {

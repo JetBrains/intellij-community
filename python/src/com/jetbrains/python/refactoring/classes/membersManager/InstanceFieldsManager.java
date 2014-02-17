@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ class InstanceFieldsManager extends FieldsManager {
                                  @NotNull final PyClass... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
-    List<PyElement> result = new ArrayList<PyElement>();
+    final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       result.addAll(copyInstanceFields(statements, destClass));
     }
@@ -52,10 +53,24 @@ class InstanceFieldsManager extends FieldsManager {
     //We need __init__ method, and if there is no any -- we need to create it
     PyFunction toInitMethod = to.findMethodByName(PyNames.INIT, false);
     if (toInitMethod == null) {
-      toInitMethod = PyClassRefactoringUtil.createMethod(PyNames.INIT, to, null);
+      toInitMethod = createInitMethod(to);
     }
     final PyStatementList statementList = toInitMethod.getStatementList();
     return PyClassRefactoringUtil.copyFieldDeclarationToStatement(members, statementList);
+  }
+
+  /**
+   * Creates init method and adds it to certain class.
+   * @param to Class where method should be added
+   * @return newly created method
+   */
+  //TODO: Move to utils?
+  @NotNull
+  private static PyFunction createInitMethod(@NotNull final PyClass to) {
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(PyNames.INIT);
+    functionBuilder.parameter(PyNames.CANONICAL_SELF); //TODO: Take param from codestyle?
+    final PyFunction function = functionBuilder.buildFunction(to.getProject(), LanguageLevel.forElement(to));
+    return PyClassRefactoringUtil.addMethods(to, function).get(0);
   }
 
   @Override

@@ -20,13 +20,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +40,31 @@ public class PyFunctionBuilder {
   private final List<String> myDecorators = new ArrayList<String>();
   private String myAnnotation = null;
 
+  //TODO: Doc
+  @NotNull
+  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
+    final String name = source.getName();
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "");
+    for (final PyParameter parameter : source.getParameterList().getParameters()) {
+      final String parameterName = parameter.getName();
+      if (parameterName != null) {
+        functionBuilder.parameter(parameterName);
+      }
+    }
+    final PyDecoratorList decoratorList = source.getDecoratorList();
+    if (decoratorList != null) {
+      for (final PyDecorator decorator : decoratorList.getDecorators()) {
+        final String decoratorName = decorator.getName();
+        if (decoratorName != null) {
+          if (ArrayUtil.contains(decoratorName, decoratorsToCopyIfExist)) {
+            functionBuilder.decorate(decoratorName);
+          }
+        }
+      }
+    }
+    return functionBuilder;
+  }
+
   public PyFunctionBuilder(String name) {
     myName = name;
   }
@@ -49,7 +72,7 @@ public class PyFunctionBuilder {
   public PyFunctionBuilder parameter(String baseName) {
     String name = baseName;
     int uniqueIndex = 0;
-    while(myParameters.contains(name)) {
+    while (myParameters.contains(name)) {
       uniqueIndex++;
       name = baseName + uniqueIndex;
     }
@@ -68,11 +91,11 @@ public class PyFunctionBuilder {
   }
 
   public PyFunction addFunction(PsiElement target, final LanguageLevel languageLevel) {
-    return (PyFunction) target.add(buildFunction(target.getProject(), languageLevel));
+    return (PyFunction)target.add(buildFunction(target.getProject(), languageLevel));
   }
 
   public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor, final LanguageLevel languageLevel) {
-    return (PyFunction) target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
+    return (PyFunction)target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
   }
 
   public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {

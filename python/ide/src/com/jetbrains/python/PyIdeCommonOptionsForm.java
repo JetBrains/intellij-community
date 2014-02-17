@@ -224,7 +224,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
-    myPythonSdks = myInterpreterList.getAllPythonSdks();
+    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     Sdk selection = preserveSelection ? (Sdk)myInterpreterComboBox.getSelectedItem() : null;
     if (!myPythonSdks.contains(selection)) {
       selection = null;
@@ -266,7 +266,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
       return myPathMappingsComponent.getMappingSettings();
     }
     else {
-      return null;
+      return new PathMappingSettings();
     }
   }
 

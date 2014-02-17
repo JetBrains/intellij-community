@@ -25,9 +25,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveCaretDownWithSelectionAction extends EditorAction {
   public MoveCaretDownWithSelectionAction() {
@@ -40,9 +42,9 @@ public class MoveCaretDownWithSelectionAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
-        editor.getCaretModel().getCurrentCaret().clone(false);
+        caret.clone(false);
       }
       else {
         editor.getCaretModel().moveCaretRelatively(0, 1, true, editor.isColumnMode(), true);

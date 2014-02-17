@@ -6,6 +6,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.List;
 public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringProcessor implements UsageViewDescriptor {
 
   @NotNull
-  protected final Collection<PyMemberInfo> myMembersToMove;
+  protected final Collection<PyMemberInfo<PyElement>> myMembersToMove;
   @NotNull
   protected final PyClass myFrom;
   @NotNull
@@ -34,12 +35,12 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
    */
   protected PyMembersRefactoringBaseProcessor(
     @NotNull final Project project,
-    @NotNull final Collection<PyMemberInfo> membersToMove,
+    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
     @NotNull final PyClass from,
     @NotNull final PyClass... to) {
     super(project);
     myFrom = from;
-    myMembersToMove = new ArrayList<PyMemberInfo>(membersToMove);
+    myMembersToMove = new ArrayList<PyMemberInfo<PyElement>>(membersToMove);
     myTo = to.clone();
   }
 

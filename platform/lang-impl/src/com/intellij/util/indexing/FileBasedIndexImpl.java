@@ -1549,37 +1549,43 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
     if (currentDocStamp != previousDocStamp) {
       final CharSequence contentText = content.getText();
-      if (!isTooLarge(vFile, contentText.length()) &&
-          getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
-          getInputFilter(requestedIndexId).acceptInput(vFile)) {
-        // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
-        WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
-        FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
-        final FileContentImpl newFc;
-        if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
-          newFc = previousContent;
-        }
-        else {
-          newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
-          document.putUserData(ourFileContentKey, new WeakReference<FileContentImpl>(newFc));
-        }
+      FileTypeManagerImpl.cacheFileType(vFile, getFileType(vFile));
+      try {
+        if (!isTooLarge(vFile, contentText.length()) &&
+            getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
+            getInputFilter(requestedIndexId).acceptInput(vFile)) {
+          // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
+          WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
+          FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
+          final FileContentImpl newFc;
+          if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
+            newFc = previousContent;
+          }
+          else {
+            newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
+            document.putUserData(ourFileContentKey, new WeakReference<FileContentImpl>(newFc));
+          }
 
-        initFileContent(newFc, project, dominantContentFile);
+          initFileContent(newFc, project, dominantContentFile);
 
-        if (content instanceof AuthenticContent) {
-          newFc.putUserData(PlatformIdTableBuilding.EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
-        }
+          if (content instanceof AuthenticContent) {
+            newFc.putUserData(PlatformIdTableBuilding.EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
+          }
 
-        final int inputId = Math.abs(getFileId(vFile));
-        try {
-          getIndex(requestedIndexId).update(inputId, newFc).compute();
-        } catch (ProcessCanceledException pce) {
-          myLastIndexedDocStamps.getAndSet(document, requestedIndexId, previousDocStamp);
-          throw pce;
+          final int inputId = Math.abs(getFileId(vFile));
+          try {
+            getIndex(requestedIndexId).update(inputId, newFc).compute();
+          } catch (ProcessCanceledException pce) {
+            myLastIndexedDocStamps.getAndSet(document, requestedIndexId, previousDocStamp);
+            throw pce;
+          }
+          finally {
+            cleanFileContent(newFc, dominantContentFile);
+          }
         }
-        finally {
-          cleanFileContent(newFc, dominantContentFile);
-        }
+      }
+      finally {
+        FileTypeManagerImpl.cacheFileType(vFile, null);
       }
     }
     return true;
@@ -1694,10 +1700,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
+    VirtualFile file = content.getVirtualFile();
+    // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
+    // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
+    // todo this assumption isn't correct for vfs events happened between content loading and indexing itself
+    // proper fix will when events handling will be out of direct execution by EDT
+    myChangedFilesCollector.myFilesToUpdate.remove(file);
+    doIndexFileContent(project, content);
+  }
+
+  private void doIndexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
 
-    FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+    FileTypeManagerImpl.cacheFileType(file, getFileType(file));
 
     try {
       PsiFile psiFile = null;
@@ -1750,11 +1766,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private static FileType getFileType(VirtualFile file) {
+    FileType fileType = file.getFileType();
+    if (fileType == FileTypes.PLAIN_TEXT && FileTypeManagerImpl.isFileTypeDetectedFromContent(file)) {
+      fileType = FileTypes.UNKNOWN;
+    }
+    return fileType;
+  }
+
   private List<ID<?, ?>> getAffectedIndexCandidates(VirtualFile file) {
     if (file.isDirectory()) {
       return isProjectOrWorkspaceFile(file, null) ?  Collections.<ID<?,?>>emptyList() : myIndicesForDirectories;
     }
-    FileType fileType = file.getFileType();
+    FileType fileType = getFileType(file);
     if(isProjectOrWorkspaceFile(file, fileType)) return Collections.emptyList();
     List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
     if (ids == null) ids = myIndicesWithoutFileTypeInfo;
@@ -1982,26 +2006,32 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           // can be client that used indices between before and after events, in such case indices are up to date due to force update
           // with old content)
           if (!fileIsDirectory && !isTooLarge(file)) {
-            final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
-            //noinspection ForLoopReplaceableByForEach
-            boolean scheduleForUpdate = false;
-            boolean resetStamp = false;
+            FileTypeManagerImpl.cacheFileType(file, getFileType(file));
+            try {
+              final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+              //noinspection ForLoopReplaceableByForEach
+              boolean scheduleForUpdate = false;
+              boolean resetStamp = false;
 
-            //noinspection ForLoopReplaceableByForEach
-            for (int i = 0, size = candidates.size(); i < size; ++i) {
-              final ID<?, ?> indexId = candidates.get(i);
-              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
-                  IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
-                  resetStamp = true;
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0, size = candidates.size(); i < size; ++i) {
+                final ID<?, ?> indexId = candidates.get(i);
+                if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+                  if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+                    IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
+                    resetStamp = true;
+                  }
+                  scheduleForUpdate = true;
                 }
-                scheduleForUpdate = true;
+              }
+
+              if (scheduleForUpdate) {
+                if (resetStamp) IndexingStamp.flushCache(file);
+                scheduleForUpdate(file);
               }
             }
-
-            if (scheduleForUpdate) {
-              if (resetStamp) IndexingStamp.flushCache(file);
-              scheduleForUpdate(file);
+            finally {
+              FileTypeManagerImpl.cacheFileType(file, null);
             }
           }
 
@@ -2273,9 +2303,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
             removeFileDataFromIndices(affected, file);
+            if (onlyRemoveOutdatedData && file instanceof VirtualFileSystemEntry) {
+              ((VirtualFileSystemEntry)file).setFileIndexed(false); // we should be able index this file via UnindexedFileFinder later
+            }
           }
           else {
-            indexFileContent(project, fileContent);
+            doIndexFileContent(project, fileContent);
           }
         }
         finally {
@@ -2340,7 +2373,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       if (file instanceof VirtualFileWithId) {
         try {
-          FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+          FileTypeManagerImpl.cacheFileType(file, getFileType(file));
 
           boolean oldStuff = true;
           if (file.isDirectory() || !isTooLarge(file)) {
@@ -2423,16 +2456,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private boolean isTooLarge(@NotNull VirtualFile file) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
-      final FileType type = file.getFileType();
-      return !myNoLimitCheckTypes.contains(type);
+      return !myNoLimitCheckTypes.contains(getFileType(file));
     }
     return false;
   }
 
   private boolean isTooLarge(@NotNull VirtualFile file, long contentSize) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
-      final FileType type = file.getFileType();
-      return !myNoLimitCheckTypes.contains(type);
+      return !myNoLimitCheckTypes.contains(getFileType(file));
     }
     return false;
   }

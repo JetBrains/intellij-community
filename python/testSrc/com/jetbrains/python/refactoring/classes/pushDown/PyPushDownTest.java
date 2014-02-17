@@ -40,7 +40,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     final String[] modules = {"child_module", "parent_module"};
     configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
     final PyClass parentClass = findClass("Parent");
-    final PyMemberInfo methodToMove = MembersManager.findMember(parentClass, findMember("Parent", ".should_be_pushed"));
+    final PyMemberInfo<PyElement> methodToMove = MembersManager.findMember(parentClass, findMember("Parent", ".should_be_pushed"));
 
     moveViaProcessor(myFixture.getProject(), new PyPushDownProcessor(myFixture.getProject(), Collections.singletonList(methodToMove), parentClass));
     checkMultiFile(modules);
@@ -77,7 +77,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
       String baseName = "/refactoring/pushdown/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
-      final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
       for (String memberName : memberNames) {
         final PyElement member = findMember(className, memberName);
         members.add(MembersManager.findMember(clazz, member));

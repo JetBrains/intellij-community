@@ -2,6 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.compiler.options.ExternalBuildOptionListener;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -81,6 +82,7 @@ public class CompilerTestUtil {
     new WriteAction() {
       protected void run(final Result result) {
         CompilerWorkspaceConfiguration.getInstance(project).USE_OUT_OF_PROCESS_BUILD = true;
+        project.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(true);
         ApplicationManagerEx.getApplicationEx().doNotSave(false);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.addJdk(table.getInternalJdk());
@@ -92,6 +94,7 @@ public class CompilerTestUtil {
     new WriteAction() {
       protected void run(final Result result) {
         CompilerWorkspaceConfiguration.getInstance(project).USE_OUT_OF_PROCESS_BUILD = false;
+        project.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(false);
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.removeJdk(table.getInternalJdk());

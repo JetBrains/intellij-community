@@ -38,20 +38,18 @@ public final class ContextUtil {
     if (variableType == null || containingElement == null) {
       return null;
     }
-    if (variableType instanceof PsiClassType) {
-      final PsiClass aClass = ((PsiClassType)variableType).resolve();
-      if (aClass != null) {
-        if (aClass.hasTypeParameters()) {
-          return null;
-        }
-      }
-      else {
-        return null;
-      }
-    }
 
-    final String targetQName = variableType.getCanonicalText();
-    if (targetQName == null || targetQName.endsWith("[]")) {
+    final TargetType target;
+    if (variableType instanceof PsiClassType) {
+      target = TargetType.create((PsiClassType)variableType);
+    }
+    else if (variableType instanceof PsiArrayType) {
+      target = TargetType.create((PsiArrayType)variableType);
+    }
+    else {
+      return null;
+    }
+    if (target == null) {
       return null;
     }
 
@@ -121,7 +119,7 @@ public final class ContextUtil {
       }
     }
 
-    return create(method, targetQName, contextVars, contextMethods, containingClassQNames, containingElement.getProject(),
+    return create(method, target, contextVars, contextMethods, containingClassQNames, containingElement.getProject(),
                   containingElement.getResolveScope(), excludedQNames);
   }
 
@@ -177,7 +175,7 @@ public final class ContextUtil {
 
   @Nullable
   private static ChainCompletionContext create(final PsiMethod contextMethod,
-                                               final String targetQName,
+                                               final TargetType target,
                                                final List<PsiVariable> contextVars,
                                                final List<PsiMethod> contextMethods,
                                                final Set<String> containingClassQNames,
@@ -190,12 +188,10 @@ public final class ContextUtil {
     final Map<String, PsiVariable> stringVars = new HashMap<String, PsiVariable>();
 
     for (final PsiMethod method : contextMethods) {
-      PsiType returnType = method.getReturnType();
+      final PsiType returnType = method.getReturnType();
       if (returnType != null) {
         final String returnTypeQName = returnType.getCanonicalText();
-        if (returnTypeQName != null) {
-          containingClassGetters.putValue(returnTypeQName, method);
-        }
+        containingClassGetters.putValue(returnTypeQName, method);
       }
     }
 
@@ -214,13 +210,14 @@ public final class ContextUtil {
         final PsiClass aClass = ((PsiClassType)type).resolve();
         if (aClass != null) {
           final String classQName = type.getCanonicalText();
-          if (!targetQName.equals(classQName)) {
+          if (!target.getClassQName().equals(classQName)) {
             classQNames.add(classQName);
             classQNames.addAll(resolveSupersNamesRecursively(aClass));
             for (final PsiMethod method : aClass.getAllMethods()) {
               if (method.getParameterList().getParametersCount() == 0 && method.getName().startsWith("get")) {
-                final String getterReturnTypeQName = method.getReturnType().getCanonicalText();
-                if (getterReturnTypeQName != null) {
+                final PsiType returnType = method.getReturnType();
+                if (returnType != null) {
+                  final String getterReturnTypeQName = returnType.getCanonicalText();
                   contextVarsGetters.putValue(getterReturnTypeQName, new ContextRelevantVariableGetter(var, method));
                 }
               }
@@ -230,15 +227,13 @@ public final class ContextUtil {
       }
       else {
         final String classQName = type.getCanonicalText();
-        if (classQName != null) {
-          classQNames.add(classQName);
-        }
+        classQNames.add(classQName);
       }
       for (final String qName : classQNames) {
         classQNameToVariable.putValue(qName, var);
       }
     }
-    return new ChainCompletionContext(contextMethod, targetQName, containingClassQNames, classQNameToVariable, containingClassGetters,
+    return new ChainCompletionContext(contextMethod, target, containingClassQNames, classQNameToVariable, containingClassGetters,
                                       contextVarsGetters, stringVars, excludedQNames, project, resolveScope);
   }
 

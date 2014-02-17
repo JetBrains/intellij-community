@@ -121,7 +121,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
@@ -300,7 +299,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
@@ -312,7 +310,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-   * @throws Exception
    */
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
@@ -342,7 +339,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   /**
    * Same as checkResultByFile but text is provided directly.
-   * @param fileText
    */
   protected void checkResultByText(@NonNls @NotNull String fileText) {
     checkResultByText(null, fileText, false, null);
@@ -351,7 +347,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
      * Same as checkResultByFile but text is provided directly.
      * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-     * @param fileText
      * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
      */
   protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
@@ -361,7 +356,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
   protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
@@ -400,24 +394,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   private static String getCaretDescription(int caretNumber, int totalCarets) {
-    return totalCarets == 1 ? "" : "(caret " + caretNumber + "/" + totalCarets + ")";
+    return totalCarets == 1 ? "" : "(caret " + (caretNumber + 1) + "/" + totalCarets + ")";
   }
 
   @SuppressWarnings("ConstantConditions")
   private static void checkCaretAndSelectionPositions(EditorTestUtil.CaretsState caretState, String newFileText, String message) {
     CaretModel caretModel = myEditor.getCaretModel();
-    List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
-    assertEquals("Unexpected number of carets", caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
+    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
     for (int i = 0; i < caretState.carets.size(); i++) {
       String caretDescription = getCaretDescription(i, caretState.carets.size());
-      Caret currentCaret = caretModel.supportsMultipleCarets() ? allCarets.get(i) : null;
-      LogicalPosition actualCaretPosition;
-      if (caretModel.supportsMultipleCarets()) {
-        actualCaretPosition = currentCaret.getLogicalPosition();
-      }
-      else {
-        actualCaretPosition = caretModel.getLogicalPosition();
-      }
+      Caret currentCaret = allCarets.get(i);
+      LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
       EditorTestUtil.Caret expected = caretState.carets.get(i);
       if (expected.offset != null) {
         int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.offset);
@@ -426,8 +414,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                                    expected.offset,
                                                    CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
-        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine, actualCaretPosition.line);
-        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol, actualCaretPosition.column);
+        assertEquals(getMessage("caretLine" + caretDescription, message), caretLine + 1, actualCaretPosition.line + 1);
+        assertEquals(getMessage("caretColumn" + caretDescription, message), caretCol + 1, actualCaretPosition.column + 1);
       }
       if (expected.selection != null) {
         int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getStartOffset());
@@ -439,28 +427,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         assertEquals(
             getMessage("selectionStartLine" + caretDescription, message),
             selStartLine + 1,
-            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) + 1);
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionStart()) + 1);
 
         assertEquals(
             getMessage("selectionStartCol" + caretDescription, message),
             selStartCol + 1,
-            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) -
-            StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-                                                                     1);
+            currentCaret.getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
 
         assertEquals(
-            getMessage("selectionEndLine" + caretDescription, message),
+          getMessage("selectionEndLine" + caretDescription, message),
             selEndLine + 1,
-            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) + 1);
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionEnd()) + 1);
 
         assertEquals(
             getMessage("selectionEndCol" + caretDescription, message),
             selEndCol + 1,
-            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
-            1);
+            currentCaret.getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
       }
       else {
-        assertFalse(getMessage("must not have selection" + caretDescription, message), caretModel.supportsMultipleCarets() ? currentCaret.hasSelection() : myEditor.getSelectionModel().hasSelection());
+        assertFalse(getMessage("must not have selection" + caretDescription, message), currentCaret.hasSelection());
       }
     }
   }
@@ -613,7 +598,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       public void run() {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-        actionHandler.executeForAllCarets(getEditor(), DataManager.getInstance().getDataContext());
+        actionHandler.executeInCaretContext(getEditor(), null, DataManager.getInstance().getDataContext());
       }
     }, "", null);
   }

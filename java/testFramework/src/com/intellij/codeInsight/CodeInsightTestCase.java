@@ -42,10 +42,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -155,6 +152,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
+      vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
       VfsUtil.saveText(vFile, text);
 
       final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
@@ -539,18 +537,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 
         CaretModel caretModel = myEditor.getCaretModel();
-        List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
-        assertEquals("Unexpected number of carets", caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
+        List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+        assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
         for (int i = 0; i < caretState.carets.size(); i++) {
-          String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + i + "/" + caretState.carets.size() + " ";
-          Caret currentCaret = caretModel.supportsMultipleCarets() ? allCarets.get(i) : null;
-          LogicalPosition actualCaretPosition;
-          if (caretModel.supportsMultipleCarets()) {
-            actualCaretPosition = currentCaret.getLogicalPosition();
-          }
-          else {
-            actualCaretPosition = caretModel.getLogicalPosition();
-          }
+          String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
+          Caret currentCaret = allCarets.get(i);
+          LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
           EditorTestUtil.Caret expected = caretState.carets.get(i);
           if (expected.offset != null) {
             int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.offset);
@@ -559,8 +551,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
             assertEquals(caretDescription + "caretLine", caretLine + 1, actualCaretPosition.line + 1);
             assertEquals(caretDescription + "caretColumn", caretCol + 1, actualCaretPosition.column + 1);
           }
-          int actualSelectionStart = caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart();
-          int actualSelectionEnd = caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd();
+          int actualSelectionStart = currentCaret.getSelectionStart();
+          int actualSelectionEnd = currentCaret.getSelectionEnd();
           if (expected.selection != null) {
             int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getStartOffset());
             int selStartCol = expected.selection.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
@@ -582,7 +574,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
           }
           else {
             assertFalse(caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
-                        caretModel.supportsMultipleCarets() ? currentCaret.hasSelection() : myEditor.getSelectionModel().hasSelection());
+                        currentCaret.hasSelection());
           }
         }
       }

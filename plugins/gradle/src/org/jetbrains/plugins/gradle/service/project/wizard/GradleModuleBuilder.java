@@ -121,7 +121,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
   @Nullable
   @Override
-  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     if (!myWizardContext.isCreatingNewProject()) return null;
     final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
     return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);

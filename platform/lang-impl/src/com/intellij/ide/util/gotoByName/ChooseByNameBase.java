@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1698,7 +1698,7 @@ public abstract class ChooseByNameBase {
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                     if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && !userAskedToAbort.getAndSet(true)) {
                       final UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
-                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit));
+                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit, StringUtil.pluralize(presentation.getUsagesWord())), presentation);
                       if (ret == UsageLimitUtil.Result.ABORT) {
                         overFlow[0] = true;
                         return true;

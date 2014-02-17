@@ -67,12 +67,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
 
-  private Project myProject;
+  private final Project myProject;
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput = false;
-  private PyHighlighter myPyHighlighter;
-  private EditorColorsScheme myScheme;
+  private final PyHighlighter myPyHighlighter;
+  private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
   private final LanguageConsoleViewImpl myLanguageConsoleView;
@@ -103,6 +103,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
+  @Override
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
     myLanguageConsoleView.updateUI();
@@ -120,6 +121,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   @Override
   public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         long time = System.currentTimeMillis();
         while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
@@ -140,7 +142,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
           try {
             Thread.sleep(300);
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignored) {
           }
         }
         if (!indicator.isCanceled()) {
@@ -164,7 +166,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
         String text = getPythonLanguageConsole().getConsoleEditor().getDocument().getText();
 
         getPythonLanguageConsole().setTextToEditor(code);
-        myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
+        myExecuteActionHandler.runExecuteAction(myLanguageConsoleView);
 
         if (!StringUtil.isEmpty(text)) {
           getPythonLanguageConsole().setTextToEditor(text);
@@ -186,7 +188,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     myLanguageConsoleView.print(text, outputType);
   }
 
-  public void print(String text, final ConsoleViewContentType outputType) {
+  @Override
+  public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
     detectIPython(text, outputType);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;

@@ -204,9 +204,11 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public String toString() {
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
-    } else if (myRunProfile != null) {
-        return myRunProfile.getName();
-    } else if (myContentToReuse != null) {
+    }
+    else if (myRunProfile != null) {
+      return myRunProfile.getName();
+    }
+    else if (myContentToReuse != null) {
       return myContentToReuse.getDisplayName();
     }
     return super.toString();

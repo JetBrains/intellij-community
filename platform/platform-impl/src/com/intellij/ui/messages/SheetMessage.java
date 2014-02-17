@@ -86,7 +86,7 @@ public class SheetMessage  implements ActionListener {
 
     myWindow.setSize(myWindow.getWidth(), windowHeight);
     setPositionRelativeToParent();
-    if (myWindow.getHeight() > SheetController.SHEET_HEIGHT) {
+    if (myWindow.getHeight() > myController.SHEET_HEIGHT) {
       myAnimator.stop();
       myWindow.setContentPane(
         myController.getPanel(myWindow)

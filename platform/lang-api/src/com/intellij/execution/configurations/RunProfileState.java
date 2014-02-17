@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see CommandLineState
  * @see RunConfiguration#getState(com.intellij.execution.Executor, com.intellij.execution.runners.ExecutionEnvironment)
+ * @see com.intellij.execution.configuration.EmptyRunProfileState
  */
+@SuppressWarnings("JavadocReference")
 public interface RunProfileState {
   /**
    * Starts the process.

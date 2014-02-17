@@ -23,8 +23,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
+  private boolean inExecution;
+
   protected EditorWriteActionHandler() {
   }
 
@@ -33,7 +36,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public final void execute(final Editor editor, final DataContext dataContext) {
+  public final void execute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
@@ -58,7 +61,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
         doc.startGuardedBlockChecking();
         try {
-          executeWriteAction(editor, dataContext);
+          executeWriteAction(editor, caret, dataContext);
         }
         catch (ReadOnlyFragmentModificationException e) {
           EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
@@ -70,5 +73,34 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     });
   }
 
-  public abstract void executeWriteAction(Editor editor, DataContext dataContext);
+  /**
+   * This method exists for historical reasons. For most purposes one should use/override
+   * {@link #executeWriteAction(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * method.
+   */
+  public void executeWriteAction(Editor editor, DataContext dataContext) {
+    if (inExecution) {
+      return;
+    }
+    try {
+      inExecution = true;
+      executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
+    }
+    finally {
+      inExecution = false;
+    }
+  }
+
+  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    if (inExecution) {
+      return;
+    }
+    try {
+      inExecution = true;
+      executeWriteAction(editor, dataContext);
+    }
+    finally {
+      inExecution = false;
+    }
+  }
 }

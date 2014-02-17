@@ -15,20 +15,24 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 
-import java.awt.*;
-
 public class EditorMultiCaretTest extends AbstractEditorTest {
+  private boolean myStoredVirtualSpaceSetting;
+
   public void setUp() throws Exception {
     super.setUp();
     EditorTestUtil.enableMultipleCarets();
+    myStoredVirtualSpaceSetting = EditorSettingsExternalizable.getInstance().isVirtualSpace();
+    EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
   }
 
   public void tearDown() throws Exception {
+    EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
     EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
@@ -70,7 +74,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, new Dimension(1000, 1000));
+    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
 
     mouse().alt().pressAt(1, 6);
     checkResultByText("line\n" +
@@ -108,7 +112,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, new Dimension(1000, 1000));
+    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
 
     mouse().middle().pressAt(1, 17);
     checkResultByText("line\n" +

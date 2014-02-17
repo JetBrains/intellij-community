@@ -228,21 +228,13 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  static HighlightInfo checkPublicClassInRightFile(PsiKeyword keyword, PsiModifierList psiModifierList) {
-    // most test case classes are located in wrong files
+  static HighlightInfo checkPublicClassInRightFile(PsiClass aClass) {
+        // most test case classes are located in wrong files
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
 
-    if (new PsiMatcherImpl(keyword)
-      .dot(PsiMatchers.hasText(PsiModifier.PUBLIC))
-      .parent(PsiMatchers.hasClass(PsiModifierList.class))
-      .parent(PsiMatchers.hasClass(PsiClass.class))
-      .parent(PsiMatchers.hasClass(PsiJavaFile.class))
-      .getElement() == null) {
-      return null;
-    }
-
-    PsiClass aClass = (PsiClass)keyword.getParent().getParent();
-    PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
+    PsiFile containingFile = aClass.getContainingFile();
+    if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
+    PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
     HighlightInfo errorResult = null;
     if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
@@ -251,6 +243,7 @@ public class HighlightClassUtil {
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
         range(aClass, range.getStartOffset(), range.getEndOffset()).
         descriptionAndTooltip(message).create();
+      PsiModifierList psiModifierList = aClass.getModifierList();
       QuickFixAction.registerQuickFixAction(errorResult,
                                             QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false));
       PsiClass[] classes = file.getClasses();

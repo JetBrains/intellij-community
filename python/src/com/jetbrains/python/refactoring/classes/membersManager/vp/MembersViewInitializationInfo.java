@@ -17,17 +17,17 @@ import java.util.Collections;
 public class MembersViewInitializationInfo {
 
   @NotNull
-  private final MemberInfoModel<PyElement, PyMemberInfo> myMemberInfoModel;
+  private final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myMemberInfoModel;
   @NotNull
-  private final Collection<PyMemberInfo> myMemberInfos;
+  private final Collection<PyMemberInfo<PyElement>> myMemberInfos;
 
   /**
    * @param memberInfoModel model to be used in members panel
    * @param memberInfos     members to displau
    */
-  public MembersViewInitializationInfo(@NotNull final MemberInfoModel<PyElement, PyMemberInfo> memberInfoModel,
-                                       @NotNull final Collection<PyMemberInfo> memberInfos) {
-    myMemberInfos = new ArrayList<PyMemberInfo>(memberInfos);
+  public MembersViewInitializationInfo(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel,
+                                       @NotNull final Collection<PyMemberInfo<PyElement>> memberInfos) {
+    myMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(memberInfos);
     myMemberInfoModel = memberInfoModel;
   }
 
@@ -35,7 +35,7 @@ public class MembersViewInitializationInfo {
    * @return model to be used in members panel
    */
   @NotNull
-  public MemberInfoModel<PyElement, PyMemberInfo> getMemberInfoModel() {
+  public MemberInfoModel<PyElement, PyMemberInfo<PyElement>> getMemberInfoModel() {
     return myMemberInfoModel;
   }
 
@@ -43,7 +43,7 @@ public class MembersViewInitializationInfo {
    * @return members to display
    */
   @NotNull
-  public Collection<PyMemberInfo> getMemberInfos() {
+  public Collection<PyMemberInfo<PyElement>> getMemberInfos() {
     return Collections.unmodifiableCollection(myMemberInfos);
   }
 }

@@ -43,8 +43,8 @@ public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImp
 
   @Override
   public void launch() {
-    UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo> model =
-      new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo>(myClassUnderRefactoring);
+    UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> model =
+      new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>>(myClassUnderRefactoring);
     myView
       .configure(new MembersViewInitializationInfo(model, PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring))));
     myView.initAndShow();

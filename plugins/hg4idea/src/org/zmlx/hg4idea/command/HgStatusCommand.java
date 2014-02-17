@@ -188,6 +188,14 @@ public class HgStatusCommand {
     if (result == null) {
       return changes;
     }
+    List<String> errors = result.getErrorLines();
+    if (errors != null && !errors.isEmpty()) {
+      if (result.getExitValue() != 0) {
+        LOG.error("Mercurial error: Could not execute hg status command ", errors.toString());
+        return changes;
+      }
+      LOG.warn(errors.toString());
+    }
     for (String line : result.getOutputLines()) {
       if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
         LOG.warn("Unexpected line in status '" + line + '\'');

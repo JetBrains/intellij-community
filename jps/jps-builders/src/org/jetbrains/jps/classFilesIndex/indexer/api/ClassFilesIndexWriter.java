@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.classFilesIndex.indexer.api;
 
+import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.asm4.ClassReader;
@@ -30,6 +32,8 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public class ClassFilesIndexWriter<K, V> {
+  private static final Logger LOG = Logger.getInstance(ClassFilesIndexWriter.class);
+
   private final ClassFileIndexer<K, V> myIndexer;
   private final boolean myEmpty;
   protected final ClassFilesIndexStorage<K, V> myIndex;
@@ -43,6 +47,7 @@ public class ClassFilesIndexWriter<K, V> {
     }
     ClassFilesIndexStorage<K, V> index = null;
     IOException exception = null;
+    LOG.debug("start open... " + indexer.getIndexCanonicalName());
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         index = new ClassFilesIndexStorage<K, V>(storageDir, myIndexer.getKeyDescriptor(), myIndexer.getDataExternalizer());
@@ -53,6 +58,7 @@ public class ClassFilesIndexWriter<K, V> {
         PersistentHashMap.deleteFilesStartingWith(ClassFilesIndexStorage.getIndexFile(storageDir));
       }
     }
+    LOG.debug("opened " + indexer.getIndexCanonicalName());
     if (index == null) {
       throw new RuntimeException(exception);
     }

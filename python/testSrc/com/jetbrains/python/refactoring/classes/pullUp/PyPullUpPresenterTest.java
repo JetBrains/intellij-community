@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.collect.Collections2;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.PyPresenterTestMemberEntry;
@@ -68,34 +69,49 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   public void testNoMoveParentToItSelf() throws Exception {
     final Collection<PyPresenterTestMemberEntry> memberNamesAndStatus = launchAndGetMembers("Foo", "Bar");
 
-    compareMembers(memberNamesAndStatus, Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("__init__(self)", true, false),
-                                                                     new PyPresenterTestMemberEntry("self.foo", true, false),
-                                                                     new PyPresenterTestMemberEntry("extends Bar", false, false)));
-
+    compareMembers(memberNamesAndStatus, Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
+                                                                     new PyPresenterTestMemberEntry("self.foo", true, false, false),
+                                                                     new PyPresenterTestMemberEntry("extends Bar", false, false, false)));
   }
 
   /**
-   * Checks that some members are not allowed, while others are
+   * Checks that some members are not allowed (and may nto be abstract), while others are for Py2
    */
-  public void testMembers() throws Exception {
+  public void testMembersPy2() throws Exception {
+    ensureCorrectMembersForHugeChild(false);
+  }
+
+  /**
+   * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
+   */
+  public void testMembersPy3() throws Exception {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    ensureCorrectMembersForHugeChild(true);
+  }
+
+
+  /**
+   * Checks members for class HugeChild
+   *
+   * @param py3K if python 3
+   */
+  private void ensureCorrectMembersForHugeChild(final boolean py3K) {
     final Collection<PyPresenterTestMemberEntry> memberNamesAndStatus = launchAndGetMembers("HugeChild", "SubParent1");
 
     //Pair will return correct type
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
-      .containsInAnyOrder(new PyPresenterTestMemberEntry("extends date", true, false),
-                          new PyPresenterTestMemberEntry("CLASS_FIELD", true, true),
-                          new PyPresenterTestMemberEntry("__init__(self)", true, false),
-                          new PyPresenterTestMemberEntry("extends SubParent1", false, false),
-                          new PyPresenterTestMemberEntry("foo(self)", false, false),
-                          new PyPresenterTestMemberEntry("bar(self)", true, false),
-                          new PyPresenterTestMemberEntry("static_1(cls)", true, true),
-                          new PyPresenterTestMemberEntry("static_2()", true, true),
-                          new PyPresenterTestMemberEntry("self.instance_field_1", true, false),
-                          new PyPresenterTestMemberEntry("self.instance_field_2", true, false),
-                          new PyPresenterTestMemberEntry("bad_method()", true, false));
+      .containsInAnyOrder(new PyPresenterTestMemberEntry("extends date", true, false, false),
+                          new PyPresenterTestMemberEntry("CLASS_FIELD", true, true, false),
+                          new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
+                          new PyPresenterTestMemberEntry("extends SubParent1", false, false, false),
+                          new PyPresenterTestMemberEntry("foo(self)", false, false, false),
+                          new PyPresenterTestMemberEntry("bar(self)", true, false, true),
+                          new PyPresenterTestMemberEntry("static_1(cls)", true, true, py3K),
+                          new PyPresenterTestMemberEntry("static_2()", true, true, py3K),
+                          new PyPresenterTestMemberEntry("self.instance_field_1", true, false, false),
+                          new PyPresenterTestMemberEntry("self.instance_field_2", true, false, false),
+                          new PyPresenterTestMemberEntry("bad_method()", true, false, true));
     compareMembers(memberNamesAndStatus, matcher);
-
-
   }
 
   /**
@@ -146,6 +162,4 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
     final PyMemberInfoStorage storage = new PyMemberInfoStorage(childClass);
     return new PyPullUpPresenterImpl(myView, storage, childClass);
   }
-
-
 }

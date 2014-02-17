@@ -198,10 +198,6 @@ public class CoreJavaFileManager implements JavaFileManager {
     return Collections.emptyList();
   }
 
-  @Override
-  public void initialize() {
-  }
-
   public void addToClasspath(VirtualFile root) {
     myClasspath.add(root);
   }

@@ -243,7 +243,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
       ConsoleExecuteActionHandler handler = new ConsoleExecuteActionHandler(getProcessHandler(), false) {
         @Override
-        public void processLine(String line) {
+        public void processLine(@NotNull String line) {
           super.processLine(myShellRunner.transformUserInput(line));
         }
 

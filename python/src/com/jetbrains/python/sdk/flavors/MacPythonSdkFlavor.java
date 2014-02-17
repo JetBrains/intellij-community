@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
@@ -57,7 +58,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
             if (binDir != null && binDir.isDirectory()) {
               for (String name : POSSIBLE_BINARY_NAMES) {
                 final VirtualFile child = binDir.findChild(name);
-                if (child != null) {
+                if (child != null && !child.is(VFileProperty.SYMLINK)) {
                   candidates.add(child.getPath());
                   break;
                 }

@@ -829,6 +829,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setPlatformPrefix(String prefix) {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+    ourPlatformPrefixInitialized = true;
   }
 
   @Retention(RetentionPolicy.RUNTIME)

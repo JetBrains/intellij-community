@@ -44,7 +44,7 @@ public class ModelDependenciesBuilderImplHelper {
 
 
   public static void attachGradleSdkSources(IdeaSingleEntryLibraryDependencyImpl libraryDependency,
-                                             IdeDependenciesExtractor.IdeLocalFileDependency localFileDependency) {
+                                            IdeDependenciesExtractor.IdeLocalFileDependency localFileDependency) {
     final String libName = localFileDependency.getFile().getName();
     if (localFileDependency.getFile() == null || !libName.startsWith("gradle-")) return;
 
@@ -81,9 +81,9 @@ public class ModelDependenciesBuilderImplHelper {
     return null;
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
-                            IdeDependenciesExtractor.IdeProjectDependency dependency,
-                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
+                           IdeDependenciesExtractor.IdeProjectDependency dependency,
+                           Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
     final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
@@ -92,8 +92,8 @@ public class ModelDependenciesBuilderImplHelper {
     final String version = project.hasProperty(VERSION_PROPERTY) ? str(project.property(VERSION_PROPERTY)) : "";
     final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
-    DependencyVersionId versionId =
-      new DependencyVersionId(dependency, project.getName(), group, version, null);
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, project.getName(), null, group, version, null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -107,9 +107,9 @@ public class ModelDependenciesBuilderImplHelper {
     return String.valueOf(o == null ? "" : o);
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
-                            IdeDependenciesExtractor.IdeRepoFileDependency dependency,
-                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
+                           IdeDependenciesExtractor.IdeRepoFileDependency dependency,
+                           Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
     final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
@@ -125,8 +125,14 @@ public class ModelDependenciesBuilderImplHelper {
     }
 
     String classifier = parseClassifier(dependencyId, dependency.getFile());
-    DependencyVersionId versionId =
-      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion(), classifier);
+    String dependencyFileName = null;
+    if (dependency.getFile() != null) {
+      dependencyFileName = dependency.getFile().getName();
+    }
+
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, dependencyId.getName(), dependencyFileName, dependencyId.getGroup(), dependencyId.getVersion(),
+                              classifier);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -143,17 +149,17 @@ public class ModelDependenciesBuilderImplHelper {
     return i != -1 ? dependencyFileName.substring(i, dependencyFileName.length()) : null;
   }
 
-  public static void merge(Map<DependencyVersionId, Scopes> map,
-                            IdeDependenciesExtractor.IdeLocalFileDependency dependency,
-                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
+  public static void merge(Map<InternalDependencyVersionId, Scopes> map,
+                           IdeDependenciesExtractor.IdeLocalFileDependency dependency,
+                           Map<String, Map<String, Collection<Configuration>>> userScopes) {
 
     final String configurationName = dependency.getDeclaredConfiguration().getName();
     final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
 
     String path = dependency.getFile().getPath();
-    DependencyVersionId versionId =
-      new DependencyVersionId(dependency, path, "", "", null);
+    InternalDependencyVersionId versionId =
+      new InternalDependencyVersionId(dependency, path,  dependency.getFile().getName(), "", "", null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -172,7 +178,7 @@ public class ModelDependenciesBuilderImplHelper {
    * @return deduced scope
    */
   public static GradleDependencyScope deduceScope(String configurationName,
-                                                   Map<String, Map<String, Collection<Configuration>>> userScopes) {
+                                                  Map<String, Map<String, Collection<Configuration>>> userScopes) {
     GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
     for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
       Collection<Configuration> plusConfigurations = entry.getValue().get("plus");

@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 
 public interface ConsoleView extends ExecutionConsole {
-  void print(String s, ConsoleViewContentType contentType);
+  void print(@NotNull String s, @NotNull ConsoleViewContentType contentType);
 
   void clear();
 

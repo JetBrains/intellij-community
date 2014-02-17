@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.classFilesIndex.indexer.api;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -27,6 +29,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;

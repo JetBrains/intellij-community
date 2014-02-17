@@ -78,5 +78,4 @@ public class MethodsUsageIndexReader extends ClassFilesIndexReaderBase<String, T
     });
     return values;
   }
-
 }

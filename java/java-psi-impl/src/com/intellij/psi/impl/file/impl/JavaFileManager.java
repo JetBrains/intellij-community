@@ -38,5 +38,4 @@ public interface JavaFileManager {
 
   Collection<String> getNonTrivialPackagePrefixes();
 
-  void initialize();
 }

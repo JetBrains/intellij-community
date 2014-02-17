@@ -32,7 +32,7 @@ class PyExtractSuperclassViewSwingImpl
   PyExtractSuperclassViewSwingImpl(@NotNull final PyClass classUnderRefactoring,
                                    @NotNull final Project project,
                                    @NotNull final PyExtractSuperclassPresenter presenter) {
-    super(project, presenter, RefactoringBundle.message("extract.superclass.from"));
+    super(project, presenter, RefactoringBundle.message("extract.superclass.from"), true);
     setTitle(PyExtractSuperclassHandler.REFACTORING_NAME);
 
 
@@ -92,7 +92,6 @@ class PyExtractSuperclassViewSwingImpl
     super.configure(configInfo);
     myFileChooserDescriptor.setRoots(configInfo.getRoots());
     myTargetDirField.setText(configInfo.getDefaultFilePath());
-
   }
 
   @NotNull

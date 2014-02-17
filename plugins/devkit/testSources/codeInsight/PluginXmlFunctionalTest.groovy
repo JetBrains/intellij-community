@@ -23,6 +23,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -209,8 +210,11 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class Language { " +
                        "  protected Language(String id) {}" +
                        "}")
+    VirtualFile myLanguageVirtualFile = myFixture.copyFileToProject("MyLanguage.java");
+    myFixture.allowTreeAccessForFile(myLanguageVirtualFile)
+
     myFixture.testHighlighting("languageAttribute.xml",
-                               "MyLanguageAttributeEPBean.java", "MyLanguage.java")
+                               "MyLanguageAttributeEPBean.java")
   }
 
   public void testPluginModule() throws Throwable {

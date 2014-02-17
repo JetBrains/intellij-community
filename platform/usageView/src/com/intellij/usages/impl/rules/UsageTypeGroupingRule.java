@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
     return null;
   }
 
-  private class UsageTypeGroup implements UsageGroup {
+  private static class UsageTypeGroup implements UsageGroup {
     private final UsageType myUsageType;
 
     private UsageTypeGroup(@NotNull UsageType usageType) {
@@ -99,8 +99,8 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
-      return myUsageType.toString();
+    public String getText(@Nullable UsageView view) {
+      return view == null ? myUsageType.toString() : myUsageType.toString(view.getPresentation());
     }
 
     @Override
@@ -129,12 +129,11 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
       if (this == o) return true;
       if (!(o instanceof UsageTypeGroup)) return false;
       final UsageTypeGroup usageTypeGroup = (UsageTypeGroup)o;
-      if (myUsageType != null ? !myUsageType.equals(usageTypeGroup.myUsageType) : usageTypeGroup.myUsageType != null) return false;
-      return true;
+      return myUsageType.equals(usageTypeGroup.myUsageType);
     }
 
     public int hashCode() {
-      return myUsageType != null ? myUsageType.hashCode() : 0;
+      return myUsageType.hashCode();
     }
   }
 }

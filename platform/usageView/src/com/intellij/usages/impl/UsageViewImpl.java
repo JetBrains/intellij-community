@@ -856,7 +856,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
                 if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   UsageViewManagerImpl
-                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(), UsageViewImpl.this);
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {

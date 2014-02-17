@@ -10,7 +10,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-core-3.0.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-core-3.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

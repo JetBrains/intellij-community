@@ -20,9 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RawText;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -70,16 +68,16 @@ public class CopyHandler extends EditorActionHandler {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           selectionModel.selectLineAtCaret();
         }
       });
       if (!selectionModel.hasSelection(true)) return;
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
         }
       });

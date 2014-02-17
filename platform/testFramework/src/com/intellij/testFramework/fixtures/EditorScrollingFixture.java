@@ -17,11 +17,13 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 
 import java.awt.*;
 
 public class EditorScrollingFixture {
-  public static void setVisibleSize(Editor editor, Dimension size) {
+  public static void setVisibleSize(Editor editor, int widthInChars, int heightInChars) {
+    Dimension size = new Dimension(widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), heightInChars * editor.getLineHeight());
     ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
   }
 }

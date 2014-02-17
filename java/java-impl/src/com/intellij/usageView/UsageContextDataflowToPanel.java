@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.slicer.*;
-import com.intellij.usages.PsiElementUsageTarget;
-import com.intellij.usages.UsageContextPanel;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +39,14 @@ import java.awt.*;
 import java.util.List;
 
 public class UsageContextDataflowToPanel extends UsageContextPanelBase {
+  @NotNull private final UsageViewPresentation myPresentation;
   private JComponent myPanel;
 
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject());
+      return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
     }
 
     @Override
@@ -70,8 +68,9 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     }
   }
 
-  public UsageContextDataflowToPanel(@NotNull Project project) {
-    super(project);
+  public UsageContextDataflowToPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    super(project, presentation);
+    myPresentation = presentation;
   }
 
   @Override
@@ -84,7 +83,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
     if (infos == null) {
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

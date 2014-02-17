@@ -58,7 +58,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
-  private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
   private final Project myProject;
@@ -70,7 +69,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
                            MessageBus bus) {
     myProject = project;
     myFileManager = javaFileManager;
-    myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
@@ -223,7 +221,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiNameHelper getNameHelper() {
-    return myNameHelper;
+    return PsiNameHelper.getInstance(myProject);
   }
 
   @NotNull

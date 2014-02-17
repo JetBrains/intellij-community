@@ -138,7 +138,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public boolean hasSelection(boolean anyCaret) {
-    if (!anyCaret || !myEditor.getCaretModel().supportsMultipleCarets()) {
+    if (!anyCaret) {
       return myEditor.getCaretModel().getCurrentCaret().hasSelection();
     }
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
@@ -197,7 +197,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void removeSelection(boolean allCarets) {
-    if (!allCarets || !myEditor.getCaretModel().supportsMultipleCarets()) {
+    if (!allCarets) {
       myEditor.getCaretModel().getCurrentCaret().removeSelection();
     }
     else {

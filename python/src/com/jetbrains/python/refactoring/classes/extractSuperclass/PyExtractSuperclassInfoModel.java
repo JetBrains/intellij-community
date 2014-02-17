@@ -9,23 +9,23 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Ilya.Kazakevich
  */
-class PyExtractSuperclassInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo> {
+class PyExtractSuperclassInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
   PyExtractSuperclassInfoModel(@NotNull final PyClass clazz) {
     super(clazz, null, false);
   }
 
   @Override
-  public boolean isAbstractEnabled(final PyMemberInfo member) {
-    return false;
+  public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
+    return member.isCouldBeAbstract() && isMemberEnabled(member);
   }
 
   @Override
-  public int checkForProblems(@NotNull final PyMemberInfo member) {
+  public int checkForProblems(@NotNull final PyMemberInfo<PyElement> member) {
     return member.isChecked() ? OK : super.checkForProblems(member);
   }
 
   @Override
-  protected int doCheck(@NotNull final PyMemberInfo memberInfo, final int problem) {
+  protected int doCheck(@NotNull final PyMemberInfo<PyElement> memberInfo, final int problem) {
     return problem;
   }
 }

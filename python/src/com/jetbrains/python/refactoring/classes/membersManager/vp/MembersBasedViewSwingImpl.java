@@ -8,6 +8,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import org.jetbrains.annotations.NotNull;
@@ -55,16 +56,20 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
 
 
   /**
-   * @param project   project this view runs
-   * @param presenter view's presenter
-   * @param title     window title
+   *
+   * @param project         project this view runs
+   * @param presenter       view's presenter
+   * @param title           window title
+   * @param supportAbstract supports "abstract" column?
    */
-  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final String title) {
+  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final String title,
+                                      final boolean supportAbstract) {
     super(project, true);
     myTopPanel = new JPanel(new BorderLayout());
     myCenterPanel = new JPanel(new BorderLayout());
     myPresenter = presenter;
-    myPyMemberSelectionPanel = new PyMemberSelectionPanel(title);
+    myPyMemberSelectionPanel = new PyMemberSelectionPanel(title, supportAbstract);
+    //TODO: Take this from presenter to prevent inconsistence: now it is possible to create view that supports abstract backed by presenter that does not. And vice versa.
   }
 
   @Override
@@ -108,7 +113,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
 
   @NotNull
   @Override
-  public Collection<PyMemberInfo> getSelectedMemberInfos() {
+  public Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos() {
     return myPyMemberSelectionPanel.getSelectedMemberInfos();
   }
 

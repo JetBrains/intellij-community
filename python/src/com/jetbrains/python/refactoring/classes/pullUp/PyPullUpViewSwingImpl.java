@@ -46,7 +46,7 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
    * @param clazz     class to refactor
    */
   PyPullUpViewSwingImpl(@NotNull final Project project, @NotNull final PyPullUpPresenter presenter, @NotNull final PyClass clazz) {
-    super(project, presenter, RefactoringBundle.message("members.to.be.pulled.up"));
+    super(project, presenter, RefactoringBundle.message("members.to.be.pulled.up"), true);
     setTitle(PyPullUpHandler.REFACTORING_NAME);
 
     myParentsComboBoxModel = new DefaultComboBoxModel();

@@ -37,6 +37,12 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
     if (remote1Weight != remote2Weight) {
       return remote2Weight - remote1Weight;
     }
+    int detectedWeight1 = o1 instanceof PyDetectedSdk ? 0 : 1;
+    int detectedWeight2 = o2 instanceof PyDetectedSdk ? 0 : 1;
+    if (detectedWeight1 != detectedWeight2) {
+      return detectedWeight2 - detectedWeight1;
+    }
+
     int venv1weight = PythonSdkType.isVirtualEnv(o1) ? 0 : 1;
     int venv2weight = PythonSdkType.isVirtualEnv(o2) ? 0 : 1;
     if (venv1weight != venv2weight) {
@@ -47,6 +53,7 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
     if (flavor1weight != flavor2weight) {
       return flavor2weight - flavor1weight;
     }
+
     return -Comparing.compare(o1.getVersionString(), o2.getVersionString());
   }
 }

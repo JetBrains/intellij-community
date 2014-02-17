@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.NewDirectoryProjectAction;
+import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 
@@ -48,6 +49,9 @@ public class PythonNewDirectoryProjectAction extends NewDirectoryProjectAction {
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
     mySdk = dlg.getSdk();
+    if (mySdk instanceof PyDetectedSdk) {
+      mySdk = SdkConfigurationUtil.createAndAddSDK(mySdk.getName(), PythonSdkType.getInstance());
+    }
     myInstallFramework = dlg.installFramework();
     Project newProject = generateProject(project, dlg);
     if (newProject != null) {

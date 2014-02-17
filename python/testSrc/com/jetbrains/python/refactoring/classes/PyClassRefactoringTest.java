@@ -56,7 +56,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @see #findMember(String, String)
    */
   @NotNull
-  protected PyMemberInfo findMemberInfo(@NotNull final String clazzName, @NotNull final String memberName) {
+  protected PyMemberInfo<PyElement> findMemberInfo(@NotNull final String clazzName, @NotNull final String memberName) {
     final PyClass clazz = findClass(clazzName);
     return MembersManager.findMember(clazz, findMember(clazzName, memberName));
   }
