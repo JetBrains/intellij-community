@@ -376,20 +376,22 @@ public class InferenceSession {
       if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
         final PsiClass psiClass = resolveResult.getElement();
-        LOG.assertTrue(psiClass != null && returnType instanceof PsiClassType);
-        final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-        PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
-        for (int i = 0; i < typeParameters.length; i++) {
-          PsiTypeParameter typeParameter = typeParameters[i];
-          copy[i] = (PsiTypeParameter)typeParameter.copy();
-          initBounds(copy[i]);
-          subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
+        if (psiClass != null) {
+          LOG.assertTrue(returnType instanceof PsiClassType);
+          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+          PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
+          for (int i = 0; i < typeParameters.length; i++) {
+            PsiTypeParameter typeParameter = typeParameters[i];
+            copy[i] = (PsiTypeParameter)typeParameter.copy();
+            initBounds(copy[i]);
+            subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
+          }
+          final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
+          myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
+          myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
-        final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
-        myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
-        myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
       } else {
         myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(
           targetType, false), returnType));
