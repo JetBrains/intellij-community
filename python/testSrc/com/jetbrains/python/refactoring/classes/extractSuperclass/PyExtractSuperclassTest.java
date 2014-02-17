@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
@@ -45,12 +46,24 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Checks that moving methods between files moves imports as well
   public void testImportMultiFile() throws Throwable {
-    multiFileTestHelper(".do_useful_stuff");
+    multiFileTestHelper(".do_useful_stuff", false);
   }
 
   // Checks that moving methods between files moves superclass expressions as well
   public void testMoveExtends() throws Throwable {
-    multiFileTestHelper("TheParentOfItAll");
+    multiFileTestHelper("TheParentOfItAll", false);
+  }
+
+  // Extracts method as abstract
+  public void testMoveAndMakeAbstract() throws Throwable {
+    multiFileTestHelper(".foo_method", true);
+  }
+
+  // Extracts method as abstract and ensures that newly created class imports ABC in Py3
+  public void testMoveAndMakeAbstractImportExistsPy3() throws Throwable {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    configureMultiFile("abc");
+    multiFileTestHelper(".foo_method", true);
   }
 
   /**
@@ -59,12 +72,13 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
    *
    * @param memberToMove name of the member to move
    */
-  private void multiFileTestHelper(@NotNull final String memberToMove) {
+  private void multiFileTestHelper(@NotNull final String memberToMove, final boolean toAbstract) {
     final String[] modules = {"dest_module", "source_module"};
     configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
     myFixture.configureByFile("source_module.py");
     final String sourceClass = "MyClass";
-    final PyMemberInfo member = findMemberInfo(sourceClass, memberToMove);
+    final PyMemberInfo<PyElement> member = findMemberInfo(sourceClass, memberToMove);
+    member.setToAbstract(toAbstract);
     final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
@@ -100,7 +114,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
-      final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
       for (String memberName : membersName) {
         final PyElement member = findMember(className, memberName);
         members.add(MembersManager.findMember(clazz, member));
@@ -130,7 +144,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
@@ -173,7 +187,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();

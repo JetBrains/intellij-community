@@ -30,7 +30,7 @@ import java.util.ArrayList;
 /**
  * @author Dennis.Ushakov
  */
-public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, PyClass, PyMemberInfo> {
+public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, PyClass, PyMemberInfo<PyElement>> {
 
   public PyMemberInfoStorage(PyClass aClass) {
     this(aClass, new MemberInfoBase.EmptyFilter<PyElement>());
@@ -61,7 +61,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
   }
 
   @Override
-  protected void extractClassMembers(PyClass aClass, ArrayList<PyMemberInfo> temp) {
+  protected void extractClassMembers(PyClass aClass, ArrayList<PyMemberInfo<PyElement>> temp) {
     temp.addAll(MembersManager.getAllMembersCouldBeMoved(aClass));
   }
 

@@ -33,16 +33,16 @@ public enum ClassFilesIndexFeature {
   @NotNull
   private final String myKey;
   @NotNull
-  private final Collection<? extends MethodsUsageIndexConfigure> myRequiredIndicesConfigures;
+  private final Collection<? extends ClassFilesIndexConfigure> myRequiredIndicesConfigures;
 
   ClassFilesIndexFeature(@NotNull final String key,
-                         @NotNull final Collection<? extends MethodsUsageIndexConfigure> requiredIndicesConfigures) {
+                         @NotNull final Collection<? extends ClassFilesIndexConfigure> requiredIndicesConfigures) {
     myKey = key;
     myRequiredIndicesConfigures = requiredIndicesConfigures;
   }
 
-  ClassFilesIndexFeature(@NotNull final String key, @NotNull final MethodsUsageIndexConfigure requiredConfigure) {
-    this(key, Collections.<MethodsUsageIndexConfigure>singleton(requiredConfigure));
+  ClassFilesIndexFeature(@NotNull final String key, @NotNull final ClassFilesIndexConfigure requiredConfigure) {
+    this(key, Collections.<ClassFilesIndexConfigure>singleton(requiredConfigure));
   }
 
   public RegistryValue getRegistryValue() {
@@ -70,7 +70,7 @@ public enum ClassFilesIndexFeature {
   }
 
   @NotNull
-  public Collection<? extends MethodsUsageIndexConfigure> getRequiredIndicesConfigures() {
+  public Collection<? extends ClassFilesIndexConfigure> getRequiredIndicesConfigures() {
     return myRequiredIndicesConfigures;
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -387,10 +388,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeForAllCarets(editor, dataContext);
+        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -413,10 +414,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeForAllCarets(editor, dataContext);
+        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -446,10 +447,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeForAllCarets(editor, dataContext);
+        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;

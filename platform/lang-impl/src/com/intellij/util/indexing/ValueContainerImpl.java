@@ -506,7 +506,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     private long[] myBitMask;
     private int myBitsSet;
     private int myLastUsedSlot;
-    private BitSet myShadowSet;
 
     public IdBitSet(TIntHashSet set) {
       this(calcMax(set));
@@ -536,12 +535,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
     public IdBitSet(int max) {
       myBitMask = new long[(calcCapacity(max) >> SHIFT) + 1];
-      //myShadowSet = new BitSet(max);
     }
 
     public void set(int bitIndex) {
-      if (myShadowSet != null) myShadowSet.set(bitIndex);
-
       boolean set = get(bitIndex);
       if (!set) {
         ++myBitsSet;
@@ -567,7 +563,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     boolean remove(int bitIndex) {
       if (!get(bitIndex)) return false;
       --myBitsSet;
-      if (myShadowSet != null) myShadowSet.clear(bitIndex);
       int wordIndex = bitIndex >> SHIFT;
       myBitMask[wordIndex] &= ~(1L << (bitIndex & MASK));
       if (wordIndex == myLastUsedSlot) {
@@ -583,9 +578,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         result = (myBitMask[wordIndex] & (1L << (bitIndex & MASK))) != 0;
       }
 
-      if (myShadowSet != null && myShadowSet.get(bitIndex) != result) {
-        get(bitIndex);
-      }
       return result;
     }
 
@@ -598,7 +590,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           myBitMask = longs;
         }
         clone.myBitMask = myBitMask.clone();
-        if (myShadowSet != null) clone.myShadowSet = (BitSet)clone.myShadowSet.clone();
         return clone;
       } catch (CloneNotSupportedException ex) {
         LOG.error(ex);
@@ -616,11 +607,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
       while (true) {
         if (word != 0) {
-          int i = (wordIndex * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
-          if (myShadowSet != null && i != myShadowSet.nextSetBit(bitIndex)) {
-            myShadowSet.nextSetBit(bitIndex);
-          }
-          return i;
+          return (wordIndex * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
         }
         if (++wordIndex == myBitMask.length) {
           return -1;

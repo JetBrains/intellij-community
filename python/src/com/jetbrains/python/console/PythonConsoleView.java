@@ -166,7 +166,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
         String text = getPythonLanguageConsole().getConsoleEditor().getDocument().getText();
 
         getPythonLanguageConsole().setTextToEditor(code);
-        myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
+        myExecuteActionHandler.runExecuteAction(myLanguageConsoleView);
 
         if (!StringUtil.isEmpty(text)) {
           getPythonLanguageConsole().setTextToEditor(text);

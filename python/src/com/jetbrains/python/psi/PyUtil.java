@@ -52,7 +52,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -1088,6 +1087,11 @@ public class PyUtil {
       }
       return null;
     }
+
+    //TODO: Doc
+    public boolean isInstanceMethod() {
+      return ! (myIsClassMethod || myIsStaticMethod);
+    }
   }
 
   public static boolean isSuperCall(@NotNull PyCallExpression node) {
@@ -1399,6 +1403,16 @@ public class PyUtil {
     return PyNames.INIT.equals(function.getName());
   }
 
+
+  private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
+    final PyElement element = classMemberInfo.getMember();
+    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
+      return true;
+    }
+    return false;
+
+  }
+
   /**
    * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
@@ -1407,14 +1421,14 @@ public class PyUtil {
    * @return sorted collection
    */
   @NotNull
-  public static Collection<PyMemberInfo> filterOutObject(@NotNull final Collection<PyMemberInfo> pyMemberInfos) {
+  public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
   }
 
   /**
    * Filters only pyclass object (new class)
    */
-  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo> {
+  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final boolean myAllowObjects;
 
     /**
@@ -1425,11 +1439,11 @@ public class PyUtil {
     }
 
     @Override
-    public boolean applyNotNull(@NotNull final PyMemberInfo input) {
+    public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
       return myAllowObjects == isObject(input);
     }
 
-    private static boolean isObject(@NotNull final PyMemberInfo classMemberInfo) {
+    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
       final PyElement element = classMemberInfo.getMember();
       if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
         return true;

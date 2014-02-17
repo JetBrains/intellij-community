@@ -101,6 +101,7 @@ public abstract class JavaPsiFacade {
    * Returns the name helper for the project, which can be used to validate
    * and parse Java identifiers.
    *
+   * @deprecated use {@link com.intellij.psi.PsiNameHelper#getInstance(com.intellij.openapi.project.Project)}
    * @return the name helper instance.
    */
   @NotNull

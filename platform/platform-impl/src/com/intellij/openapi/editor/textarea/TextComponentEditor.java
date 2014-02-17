@@ -98,7 +98,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
 
   @Override
   @NotNull
-  public SelectionModel getSelectionModel() {
+  public TextComponentSelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 

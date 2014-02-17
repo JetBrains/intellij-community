@@ -54,7 +54,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack, final boolean createIfExists,
                                final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
@@ -72,8 +72,19 @@ public class SdkConfigurationUtil {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
         for (SdkType sdkType : sdkTypes) {
-          if (sdkType.isValidSdkHome(selectedFiles.get(0).getPath())) {
-            onSdkCreatedCallBack.consume(setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null));
+          final String path = selectedFiles.get(0).getPath();
+          if (sdkType.isValidSdkHome(path)) {
+            Sdk newSdk = null;
+            if (!createIfExists) {
+              for (Sdk sdk : existingSdks) {
+                if (path.equals(sdk.getHomePath())) {
+                  newSdk = sdk;
+                }
+              }
+            }
+            if (newSdk == null)
+              newSdk = setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null);
+            onSdkCreatedCallBack.consume(newSdk);
             return;
           }
         }
@@ -85,6 +96,14 @@ public class SdkConfigurationUtil {
         onSdkCreatedCallBack.consume(null);
       }
     });
+
+  }
+
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final SdkType... sdkTypes) {
+    createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
   }
 
   private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
@@ -140,7 +159,7 @@ public class SdkConfigurationUtil {
     final ProjectJdkImpl sdk;
     try {
       String sdkPath = sdkType.sdkPath(homeDir);
-      
+
       final String sdkName = customSdkSuggestedName == null
                              ? createUniqueSdkName(sdkType, sdkPath, sdksList)
                              : createUniqueSdkName(customSdkSuggestedName, sdksList);
@@ -313,8 +332,9 @@ public class SdkConfigurationUtil {
   @Nullable
   private static Sdk findByPath(SdkType sdkType, Sdk[] sdks, String sdkHome) {
     for (Sdk sdk : sdks) {
-      if (sdk.getSdkType() == sdkType &&
-          FileUtil.pathsEqual(FileUtil.toSystemIndependentName(sdk.getHomePath()), FileUtil.toSystemIndependentName(sdkHome))) {
+      final String path = sdk.getHomePath();
+      if (sdk.getSdkType() == sdkType && path != null &&
+          FileUtil.pathsEqual(FileUtil.toSystemIndependentName(path), FileUtil.toSystemIndependentName(sdkHome))) {
         return sdk;
       }
     }

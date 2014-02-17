@@ -36,6 +36,8 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Batkovich
@@ -46,6 +48,8 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
   private static final String PROGRESS_MESSAGE = "Indexing class-files...";
   public static final String PROPERTY_NAME = "intellij.compiler.output.index";
 
+  private final AtomicLong myMs = new AtomicLong(0);
+  private final AtomicInteger myFilesCount = new AtomicInteger(0);
   private final Collection<ClassFilesIndexWriter> myIndexWriters = new ArrayList<ClassFilesIndexWriter>();
 
   @Override
@@ -89,11 +93,13 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
     if (!isEnabled()) {
       return;
     }
+    final long ms = System.currentTimeMillis();
     for (final ClassFilesIndexWriter index : myIndexWriters) {
       index.close(context);
     }
     myIndexWriters.clear();
-    LOG.info("class files indexing finished");
+    myMs.addAndGet(System.currentTimeMillis() - ms);
+    LOG.info("class files indexing finished for " + myFilesCount.get() + " files in " + myMs.get() + "ms");
   }
 
   @Nullable
@@ -103,9 +109,12 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
                                      final ClassReader reader,
                                      final ClassWriter writer,
                                      final InstrumentationClassFinder finder) {
+    final long ms = System.currentTimeMillis();
     for (final ClassFilesIndexWriter index : myIndexWriters) {
       index.update(compiled.getOutputFile().getPath(), reader);
     }
+    myMs.addAndGet(System.currentTimeMillis() - ms);
+    myFilesCount.incrementAndGet();
     return null;
   }
 

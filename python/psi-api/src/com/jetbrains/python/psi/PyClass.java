@@ -218,6 +218,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
 
+  //TODO: Add "addMetaClass" or move methods out of here
   /**
    * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
    */

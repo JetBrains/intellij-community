@@ -229,11 +229,11 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkPublicClassInRightFile(PsiClass aClass) {
-    // most test case classes are located in wrong files
+        // most test case classes are located in wrong files
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
 
     PsiFile containingFile = aClass.getContainingFile();
-    if (!aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
+    if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
     PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
     HighlightInfo errorResult = null;

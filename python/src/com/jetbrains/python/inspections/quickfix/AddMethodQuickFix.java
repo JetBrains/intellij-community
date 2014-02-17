@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
- * TODO: Refactor and move to {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#createMethod(String, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyFunction.Modifier, String...)}
  * Adds a method foo to class X if X.foo() is unresolved.
  * User: dcheryasov
  * Date: Apr 5, 2009 6:51:26 PM

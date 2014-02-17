@@ -55,9 +55,6 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
     }
   }
 
-  /**
-   * All inheritors MUST have constructor with only one parameter - Project
-   */
   @SuppressWarnings("ConstantConditions")
   protected ClassFilesIndexReaderBase(final KeyDescriptor<K> keyDescriptor,
                                       final DataExternalizer<V> valueExternalizer,
@@ -149,5 +146,4 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
       return true;
     }
   }
-
 }

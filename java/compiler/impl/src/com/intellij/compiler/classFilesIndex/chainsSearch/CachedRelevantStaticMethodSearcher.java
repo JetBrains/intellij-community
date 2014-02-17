@@ -52,7 +52,7 @@ public class CachedRelevantStaticMethodSearcher {
                                                                     final ChainCompletionContext completionContext) {
     if (resultQualifiedClassName == null ||
         ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(resultQualifiedClassName) ||
-        completionContext.getTargetQName().equals(resultQualifiedClassName)) {
+        completionContext.getTarget().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
     final TreeSet<UsageIndexValue> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
@@ -68,7 +68,7 @@ public class CachedRelevantStaticMethodSearcher {
         else {
           final PsiMethod[] methods = completionContext.resolveNotDeprecated(methodInvocation);
           method = MethodChainsSearchUtil
-            .getMethodWithMinNotPrimitiveParameters(methods, Collections.singleton(completionContext.getTargetQName()));
+            .getMethodWithMinNotPrimitiveParameters(methods, Collections.singleton(completionContext.getTarget().getClassQName()));
           myCachedResolveResults.put(methodInvocation, method);
           if (method == null) {
             return Collections.emptyList();

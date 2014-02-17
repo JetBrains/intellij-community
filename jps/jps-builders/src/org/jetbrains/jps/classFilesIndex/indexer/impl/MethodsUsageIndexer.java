@@ -15,18 +15,15 @@
  */
 package org.jetbrains.jps.classFilesIndex.indexer.impl;
 
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.*;
 import org.jetbrains.jps.classFilesIndex.AsmUtil;
 import org.jetbrains.jps.classFilesIndex.TObjectIntHashMapExternalizer;
 import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexer;
-import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFilesIndicesBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,12 +41,14 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
   @NotNull
   @Override
   public Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map(final ClassReader inputData) {
-    final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map = new HashMap<String, TObjectIntHashMap<MethodIncompleteSignature>>();
+    final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map =
+      new HashMap<String, TObjectIntHashMap<MethodIncompleteSignature>>();
     final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM4) {
       @Override
       public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
         final Type returnType = Type.getReturnType(desc);
-        if (MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(name) || AsmUtil.isPrimitiveOrArray(returnType.getDescriptor())) {
+        if (MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(name) ||
+            AsmUtil.isPrimitiveOrArrayOfPrimitives(returnType.getDescriptor())) {
           return;
         }
         final boolean isStatic = opcode == Opcodes.INVOKESTATIC;
@@ -68,7 +67,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
                                        final String[] exceptions) {
         return methodVisitor;
       }
-    }, ClassReader.EXPAND_FRAMES);
+    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     return map;
   }
 

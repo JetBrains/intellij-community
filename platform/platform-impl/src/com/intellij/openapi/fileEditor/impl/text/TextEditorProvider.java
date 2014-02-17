@@ -220,25 +220,15 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
-    if (caretModel.supportsMultipleCarets()) {
-      Collection<Caret> allCarets = caretModel.getAllCarets();
-      state.CARETS = new TextEditorState.CaretState[allCarets.size()];
-      int i = 0;
-      for (Caret caret : allCarets) {
-        state.CARETS[i] = new TextEditorState.CaretState();
-        state.CARETS[i].LINE = caret.getLogicalPosition().line;
-        state.CARETS[i].COLUMN = caret.getLogicalPosition().column;
-        state.CARETS[i].SELECTION_START = caret.getSelectionStart();
-        state.CARETS[i++].SELECTION_END = caret.getSelectionEnd();
-      }
-    }
-    else {
-      state.CARETS = new TextEditorState.CaretState[1];
-      state.CARETS[0] = new TextEditorState.CaretState();
-      state.CARETS[0].LINE = editor.getCaretModel().getLogicalPosition().line;
-      state.CARETS[0].COLUMN = editor.getCaretModel().getLogicalPosition().column;
-      state.CARETS[0].SELECTION_START = editor.getSelectionModel().getSelectionStart();
-      state.CARETS[0].SELECTION_END = editor.getSelectionModel().getSelectionEnd();
+    Collection<Caret> allCarets = caretModel.getAllCarets();
+    state.CARETS = new TextEditorState.CaretState[allCarets.size()];
+    int i = 0;
+    for (Caret caret : allCarets) {
+      state.CARETS[i] = new TextEditorState.CaretState();
+      state.CARETS[i].LINE = caret.getLogicalPosition().line;
+      state.CARETS[i].COLUMN = caret.getLogicalPosition().column;
+      state.CARETS[i].SELECTION_START = caret.getSelectionStart();
+      state.CARETS[i++].SELECTION_END = caret.getSelectionEnd();
     }
 
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since

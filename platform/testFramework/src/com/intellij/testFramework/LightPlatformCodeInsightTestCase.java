@@ -400,18 +400,12 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @SuppressWarnings("ConstantConditions")
   private static void checkCaretAndSelectionPositions(EditorTestUtil.CaretsState caretState, String newFileText, String message) {
     CaretModel caretModel = myEditor.getCaretModel();
-    List<Caret> allCarets = caretModel.supportsMultipleCarets() ? new ArrayList<Caret>(caretModel.getAllCarets()) : null;
-    assertEquals("Unexpected number of carets", caretState.carets.size(), caretModel.supportsMultipleCarets() ? allCarets.size() : 1);
+    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
     for (int i = 0; i < caretState.carets.size(); i++) {
       String caretDescription = getCaretDescription(i, caretState.carets.size());
-      Caret currentCaret = caretModel.supportsMultipleCarets() ? allCarets.get(i) : null;
-      LogicalPosition actualCaretPosition;
-      if (caretModel.supportsMultipleCarets()) {
-        actualCaretPosition = currentCaret.getLogicalPosition();
-      }
-      else {
-        actualCaretPosition = caretModel.getLogicalPosition();
-      }
+      Caret currentCaret = allCarets.get(i);
+      LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
       EditorTestUtil.Caret expected = caretState.carets.get(i);
       if (expected.offset != null) {
         int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.offset);
@@ -433,28 +427,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         assertEquals(
             getMessage("selectionStartLine" + caretDescription, message),
             selStartLine + 1,
-            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) + 1);
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionStart()) + 1);
 
         assertEquals(
             getMessage("selectionStartCol" + caretDescription, message),
             selStartCol + 1,
-            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionStart() : myEditor.getSelectionModel().getSelectionStart()) -
-            StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-                                                                     1);
+            currentCaret.getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
 
         assertEquals(
-            getMessage("selectionEndLine" + caretDescription, message),
+          getMessage("selectionEndLine" + caretDescription, message),
             selEndLine + 1,
-            StringUtil.offsetToLineNumber(newFileText, caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) + 1);
+            StringUtil.offsetToLineNumber(newFileText, currentCaret.getSelectionEnd()) + 1);
 
         assertEquals(
             getMessage("selectionEndCol" + caretDescription, message),
             selEndCol + 1,
-            (caretModel.supportsMultipleCarets() ? currentCaret.getSelectionEnd() : myEditor.getSelectionModel().getSelectionEnd()) - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
-            1);
+            currentCaret.getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
       }
       else {
-        assertFalse(getMessage("must not have selection" + caretDescription, message), caretModel.supportsMultipleCarets() ? currentCaret.hasSelection() : myEditor.getSelectionModel().hasSelection());
+        assertFalse(getMessage("must not have selection" + caretDescription, message), currentCaret.hasSelection());
       }
     }
   }
@@ -607,7 +598,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       public void run() {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-        actionHandler.executeForAllCarets(getEditor(), DataManager.getInstance().getDataContext());
+        actionHandler.executeInCaretContext(getEditor(), null, DataManager.getInstance().getDataContext());
       }
     }, "", null);
   }

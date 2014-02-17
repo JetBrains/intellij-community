@@ -46,10 +46,12 @@ public class AsmUtil {
   private static final Set<String> ASM_PRIMITIVE_TYPES = ContainerUtil
     .newHashSet("C", "D", "F", "I", "J", "S", "Z", "B", "V", "Ljava/lang/Object;", "Ljava/lang/String;", "Ljava/lang/Class;");
 
-  public static boolean isPrimitiveOrArray(final String asmType) {
-    if (asmType.startsWith("[")) {
-      return true;
+  public static boolean isPrimitiveOrArrayOfPrimitives(final String asmType) {
+    for (int i = 0; i < asmType.length(); i++) {
+      if (asmType.charAt(i) != '[') {
+        return ASM_PRIMITIVE_TYPES.contains(asmType.substring(i));
+      }
     }
-    return ASM_PRIMITIVE_TYPES.contains(asmType);
+    throw new AssertionError("Illegal string: " + asmType);
   }
 }

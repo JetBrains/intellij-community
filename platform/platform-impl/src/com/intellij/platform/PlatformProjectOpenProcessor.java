@@ -189,7 +189,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
-    final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : null;
+    final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
 
     openFileFromCommandLine(project, virtualFile, line);
     if (!projectManager.openProject(project)) {
@@ -204,7 +204,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       return project;
     }
 
-    if (callback != null && runConfigurators) {
+    if (callback != null) {
       callback.projectOpened(project, module);
     }
 
