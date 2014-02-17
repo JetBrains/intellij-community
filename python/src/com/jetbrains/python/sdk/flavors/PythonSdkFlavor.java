@@ -72,6 +72,10 @@ public abstract class PythonSdkFlavor {
   }
 
   public static List<PythonSdkFlavor> getApplicableFlavors() {
+    return getApplicableFlavors(true);
+  }
+
+  public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
 
     if (SystemInfo.isWindows) {
@@ -84,7 +88,8 @@ public abstract class PythonSdkFlavor {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
 
-    result.addAll(getPlatformIndependentFlavors());
+    if (addPlatformIndependent)
+      result.addAll(getPlatformIndependentFlavors());
 
     return result;
   }

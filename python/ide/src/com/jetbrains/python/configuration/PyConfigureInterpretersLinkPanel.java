@@ -16,6 +16,7 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBLabel;
@@ -41,7 +42,7 @@ public class PyConfigureInterpretersLinkPanel extends JPanel {
         if (clickCount == 1) {
           final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext(parentPanel));
           if (optionsEditor != null) {
-            PythonSdkConfigurable configurable = optionsEditor.findConfigurable(PythonSdkConfigurable.class);
+            SearchableConfigurable configurable = optionsEditor.findConfigurableById(PyActiveSdkModuleConfigurable.class.getName());
             if (configurable != null) {
               optionsEditor.clearSearchAndSelect(configurable);
             }

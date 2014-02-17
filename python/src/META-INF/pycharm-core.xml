@@ -31,7 +31,6 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <!--<applicationConfigurable instance="com.jetbrains.python.configuration.PythonSdkConfigurable"/>-->
     <projectConfigurable instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
