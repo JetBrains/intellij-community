@@ -267,7 +267,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
       }, ModalityState.any());
     }
-    if (item != null) {
+    else if (item != null) {
       myProjectSdksModel.addSdk(item);
       myProjectSdksModel.apply(null, true);
       mySdkCombo.setSelectedItem(item);
