@@ -19,8 +19,7 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Graphics2D;
-import java.awt.Point;
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,6 +30,9 @@ import java.util.List;
  */
 public interface GraphBlackBox {
 
+  /**
+   * Paints the given row in the given Graphics.
+   */
   void paint(Graphics2D g, int visibleRow);
 
   /**
@@ -68,17 +70,28 @@ public interface GraphBlackBox {
    */
   int getVisibleCommitCount();
 
+  /**
+   * Set branches which should be visible in the log, all others will be hidden.
+   * Pass {@code null} to show all branches, i.e. reset this branch filter.
+   *
+   * @param heads branches represented by commit indices of commits they point to; or {@code null} if all branches should be shown.
+   * @see #setFilter(Condition)
+   */
   void setVisibleBranches(@Nullable Collection<Integer> heads);
 
+  /**
+   * Set filter to the commits displayed by the log.
+   *
+   * @param visibilityPredicate check if the given commit should be shown or not.
+   * @see #setVisibleBranches(Collection)
+   */
   void setFilter(@NotNull Condition<Integer> visibilityPredicate);
 
+  /**
+   * Returns the provider of some information about the graph.
+   */
   @NotNull
   GraphInfoProvider getInfoProvider();
-
-  class HoverGraphAction implements GraphAction {
-    int visibleRow;
-    Point relativePoint;
-  }
 
   interface GraphChangeEvent {
   }
