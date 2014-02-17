@@ -6,7 +6,7 @@ ABCMeta()
 abstractmethod()
 
 
-class NewParent(object, metaclass=ABCMeta):
+class NewParent(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def foo_method(cls):
