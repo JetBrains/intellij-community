@@ -188,10 +188,7 @@ public class GraphFacadeImpl implements GraphBlackBox {
     public int getOneOfHeads() {
       Node node = myGraphModel.getGraph().getCommitNodeInRow(myVisibleRow);
       assert node != null : "node is null for row " + myVisibleRow;
-      while (!node.getUpEdges().isEmpty()) {
-        node = node.getUpEdges().get(0).getUpNode();
-      }
-      return node.getCommitIndex();
+      return node.getBranch().getOneOfHeads();
     }
   }
 
