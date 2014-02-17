@@ -41,21 +41,21 @@ class MyTest1 {
     static void call2(I2 s) {   }
 
     static void test1() {
-        I1 s1 = <error descr="Non-static method cannot be referenced from a static context">MyTest1 ::m1</error>;
-        call1(<error descr="Non-static method cannot be referenced from a static context">MyTest1::m1</error>);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 s1 = MyTest1 ::m1;</error>
+        call1<error descr="'call1(MyTest1.I1)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m1)</error>;
         I1 s2 = MyTest1  :: m2;
         call1(MyTest1::m2);
         I1 s3 = MyTest1::m3;
         call1(MyTest1::m3);
-        I1 s4 = <error descr="Non-static method cannot be referenced from a static context">MyTest1::m4</error>;
-        call1(<error descr="Non-static method cannot be referenced from a static context">MyTest1::m4</error>);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 s4 = MyTest1::m4;</error>
+        call1<error descr="'call1(MyTest1.I1)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m4)</error>;
     }
 
     static void test2() {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s1 = MyTest1 :: m1;</error>
-        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m1)</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s2 = MyTest1 :: m2;</error>
-        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m2)</error>;
+        I2 s1 = MyTest1 :: m1;
+        call2(MyTest1::m1);
+        I2 s2 = MyTest1 :: m2;
+        call2(MyTest1::m2);
 
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s3 = MyTest1 :: m3;</error>
         call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m3)</error>;
@@ -90,21 +90,21 @@ class MyTest2 {
     static void call2(I2 s) {   }
 
     static void test1() {
-        I1 s1 = <error descr="Non-static method cannot be referenced from a static context">MyTest2 ::m1</error>;
-        call1(<error descr="Non-static method cannot be referenced from a static context">MyTest2::m1</error>);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I1'">I1 s1 = MyTest2 ::m1;</error>
+        call1<error descr="'call1(MyTest2.I1)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m1)</error>;
         I1 s2 = MyTest2  :: m2;
         call1(MyTest2::m2);
         I1 s3 = MyTest2::m3;
         call1(MyTest2::m3);
-        I1 s4 = <error descr="Non-static method cannot be referenced from a static context">MyTest2::m4</error>;
-        call1(<error descr="Non-static method cannot be referenced from a static context">MyTest2::m4</error>);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I1'">I1 s4 = MyTest2::m4;</error>
+        call1<error descr="'call1(MyTest2.I1)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
     }
 
     static void test2() {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s1 = MyTest2 :: m1;</error>
-        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m1)</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s2 = MyTest2 :: m2;</error>
-        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m2)</error>;
+        I2 s1 = MyTest2 :: m1;
+        call2(MyTest2::m1);
+        I2 s2 = MyTest2 :: m2;
+        call2(MyTest2::m2);
 
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s3 = MyTest2 :: m3;</error>
         call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m3)</error>;
@@ -115,10 +115,10 @@ class MyTest2 {
     static void call3(I1 s) {}
     static void call3(I2 s) {}
     static {
-          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m1)</error>;
-          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m2)</error>;
-          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m3)</error>;
-          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m4)</error>;
+          call3(MyTest2::m1);
+          call3<error descr="Ambiguous method call: both 'MyTest2.call3(I1)' and 'MyTest2.call3(I2)' match">(MyTest2::m2)</error>;
+          call3(MyTest2::m3);
+          call3<error descr="'call3(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
     }
 }
 

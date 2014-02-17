@@ -80,7 +80,8 @@ class GithubUserRaw implements DataConstructor {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   public GithubUserDetailed createUserDetailed() {
-    return new GithubUserDetailed(login, htmlUrl, gravatarId, name, email, ownedPrivateRepos, type, plan.create());
+    GithubUserDetailed.UserPlan plan = this.plan == null ? null : this.plan.create();
+    return new GithubUserDetailed(login, htmlUrl, gravatarId, name, email, ownedPrivateRepos, type, plan);
   }
 
   @SuppressWarnings("unchecked")

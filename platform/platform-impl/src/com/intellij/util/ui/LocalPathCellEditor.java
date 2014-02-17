@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +39,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
 
   private FileChooserDescriptor myFileChooserDescriptor;
+  private boolean myNormalizePath;
 
   protected CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
@@ -53,14 +56,23 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
     this(null, null);
   }
 
-  public LocalPathCellEditor fileChooserDescriptor(@NotNull FileChooserDescriptor fileChooserDescriptor) {
-    myFileChooserDescriptor = fileChooserDescriptor;
+  public LocalPathCellEditor fileChooserDescriptor(@NotNull FileChooserDescriptor value) {
+    myFileChooserDescriptor = value;
+    return this;
+  }
+
+  /**
+   * If true, path will be nullified and converted to system dependent
+   */
+  public LocalPathCellEditor normalizePath(boolean value) {
+    myNormalizePath = value;
     return this;
   }
 
   @Override
   public Object getCellEditorValue() {
-    return myComponent.getChildComponent().getText();
+    String value = myComponent.getChildComponent().getText();
+    return myNormalizePath ? PathUtil.toSystemDependentName(StringUtil.nullize(value)) : value;
   }
 
   @Override
@@ -92,7 +104,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
 
   public FileChooserDescriptor getFileChooserDescriptor() {
     if (myFileChooserDescriptor == null) {
-      myFileChooserDescriptor = new FileChooserDescriptor(false, true, false, true, false, false);
+      myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       if (myTitle != null) {
         myFileChooserDescriptor.setTitle(myTitle);
       }

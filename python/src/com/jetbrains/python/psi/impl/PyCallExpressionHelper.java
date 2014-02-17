@@ -43,6 +43,7 @@ public class PyCallExpressionHelper {
   }
 
   /**
+   * TODO: Copy/Paste with {@link com.jetbrains.python.psi.PyArgumentList#addArgument(com.jetbrains.python.psi.PyExpression)}
    * Adds an argument to the end of argument list.
    * @param us the arg list
    * @param expression what to add
@@ -507,7 +508,9 @@ public class PyCallExpressionHelper {
                 }
               }
             }
-            else if (((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
+            else if ((call.getContainingFile() instanceof PyFile) &&
+                     ((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() &&
+                     (containingClass != null)) {
               return new Maybe<PyType>(getSuperClassUnionType(containingClass));
             }
           }

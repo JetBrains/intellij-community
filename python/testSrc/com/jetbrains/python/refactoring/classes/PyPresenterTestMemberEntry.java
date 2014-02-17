@@ -12,24 +12,28 @@ public class PyPresenterTestMemberEntry {
   private final String myName;
   private final boolean myEnabled;
   private final boolean myStaticEntry;
+  private final boolean myMayBeAbstract;
 
   /**
    * @param name name of the member
    * @param enabled is member enabled or not
    * @param staticEntry is member static entry
+   * @param mayBeAbstract if element has "abstract" checkbox or not
    */
-  public PyPresenterTestMemberEntry(@NotNull final String name, final boolean enabled, final boolean staticEntry) {
+  public PyPresenterTestMemberEntry(@NotNull final String name, final boolean enabled, final boolean staticEntry, final boolean mayBeAbstract) {
     myName = name;
     myEnabled = enabled;
     myStaticEntry = staticEntry;
+    myMayBeAbstract = mayBeAbstract;
   }
 
   @Override
   public String toString() {
-    return "Entry{" +
+    return "PyPresenterTestMemberEntry{" +
            "myName='" + myName + '\'' +
            ", myEnabled=" + myEnabled +
            ", myStaticEntry=" + myStaticEntry +
+           ", myMayBeAbstract=" + myMayBeAbstract +
            '}';
   }
 
@@ -41,6 +45,7 @@ public class PyPresenterTestMemberEntry {
     final PyPresenterTestMemberEntry entry = (PyPresenterTestMemberEntry)o;
 
     if (myEnabled != entry.myEnabled) return false;
+    if (myMayBeAbstract != entry.myMayBeAbstract) return false;
     if (myStaticEntry != entry.myStaticEntry) return false;
     if (!myName.equals(entry.myName)) return false;
 
@@ -52,6 +57,7 @@ public class PyPresenterTestMemberEntry {
     int result = myName.hashCode();
     result = 31 * result + (myEnabled ? 1 : 0);
     result = 31 * result + (myStaticEntry ? 1 : 0);
+    result = 31 * result + (myMayBeAbstract ? 1 : 0);
     return result;
   }
 }

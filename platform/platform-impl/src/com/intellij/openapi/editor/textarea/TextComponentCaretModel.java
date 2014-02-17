@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
@@ -29,6 +26,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,10 +35,12 @@ import java.util.List;
 public class TextComponentCaretModel implements CaretModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
+  private final Caret myCaret;
 
   public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
     myTextComponent = textComponent;
     myEditor = editor;
+    myCaret = new TextComponentCaret(editor);
   }
 
   @Override
@@ -143,36 +143,36 @@ public class TextComponentCaretModel implements CaretModel {
   @NotNull
   @Override
   public Caret getCurrentCaret() {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return myCaret;
   }
 
   @NotNull
   @Override
   public Caret getPrimaryCaret() {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return myCaret;
   }
 
   @NotNull
   @Override
   public Collection<Caret> getAllCarets() {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return Collections.singleton(myCaret);
   }
 
   @Nullable
   @Override
   public Caret getCaretAt(@NotNull VisualPosition pos) {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return myCaret.getVisualPosition().equals(pos) ? myCaret : null;
   }
 
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return null;
   }
 
   @Override
   public boolean removeCaret(@NotNull Caret caret) {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return false;
   }
 
   @Override
@@ -185,7 +185,12 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void runForEachCaret(@NotNull Runnable runnable) {
+  public void runForEachCaret(@NotNull CaretAction action) {
+    action.perform(myCaret);
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
     runnable.run();
   }
 }

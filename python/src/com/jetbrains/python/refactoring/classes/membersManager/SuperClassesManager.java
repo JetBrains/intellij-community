@@ -1,19 +1,17 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Sets;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Plugin that moves superclasses from one class to another
@@ -25,7 +23,6 @@ class SuperClassesManager extends MembersManager<PyClass> {
     super(PyClass.class);
   }
 
-  private static final NameExtractor NAME_EXTRACTOR = new NameExtractor();
 
   @NotNull
   @Override
@@ -34,32 +31,27 @@ class SuperClassesManager extends MembersManager<PyClass> {
   }
 
   @Override
-  protected void moveMembers(@NotNull final PyClass from, @NotNull final PyClass to, @NotNull final Collection<PyClass> members) {
-    final Set<String> superClassesToMove =
-      Sets.newHashSet(Collections2.filter(Collections2.transform(members, NAME_EXTRACTOR), NotNullPredicate.INSTANCE));
-
-    for (final PyElement member : members) {
-      superClassesToMove.add(member.getName());
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from, @NotNull final Collection<PyMemberInfo<PyClass>> members, @NotNull final PyClass... to) {
+    final Collection<PyClass> elements = fetchElements(members);
+    for (final PyClass destClass : to) {
+      PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));
     }
 
-    PyClassRefactoringUtil.moveSuperclasses(from, superClassesToMove, to);
-    PyClassRefactoringUtil.insertImport(to, new ArrayList<PsiNamedElement>(members));
+    for (final PyExpression expression : from.getSuperClassExpressions()) {
+      for (final PyClass element : elements) {
+        if (expression.getText().equals(element.getName())) {
+          expression.delete();
+        }
+      }
+    }
+    return Collections.emptyList(); //Hack: we know that "superclass expression" can't have reference
   }
 
   @NotNull
   @Override
-  public PyMemberInfo apply(@NotNull final PyClass input) {
+  public PyMemberInfo<PyClass> apply(@NotNull final PyClass input) {
     final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
     //TODO: Check for "overrides"
-    return new PyMemberInfo(input, false, name, false, this);
-  }
-
-  private static class NameExtractor implements Function<PyElement, String> {
-    @SuppressWarnings("NullableProblems") //We sure collection has no null
-    @Nullable
-    @Override
-    public String apply(@NotNull final PyElement input) {
-      return input.getName();
-    }
+    return new PyMemberInfo<PyClass>(input, false, name, false, this, false);
   }
 }

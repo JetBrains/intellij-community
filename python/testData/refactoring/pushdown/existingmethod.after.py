@@ -1,5 +1,7 @@
 class Foo:
+    pass
 
-class Boo():
+
+class Boo(Foo):
     def foo(self):
         print "rrrrr"

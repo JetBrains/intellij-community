@@ -3,6 +3,8 @@
 
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
+  <module value="com.intellij.modules.python"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
@@ -115,7 +117,7 @@
 
     <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
-    <testSrcLocator implementation="com.jetbrains.django.testRunner.DjangoTestTestIdUrlProvider"/>
+    
     <testSrcLocator implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider"/>
 
     <runConfigurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
@@ -132,8 +134,6 @@
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
-    <duplicates.profile implementation="com.jetbrains.python.duplocator.PyDuplicatesProfile"/>
-    <duplicates.presentation implementation="com.jetbrains.python.duplocator.PyDuplicatesProfile"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>

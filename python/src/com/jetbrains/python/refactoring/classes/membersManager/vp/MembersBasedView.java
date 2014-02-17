@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.classes.membersManager.vp;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,7 @@ public interface MembersBasedView<C extends MembersViewInitializationInfo> {
    * @return collection of member infos user selected
    */
   @NotNull
-  Collection<PyMemberInfo> getSelectedMemberInfos();
+  Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos();
 
   /**
    * Runs refactoring based on {@link com.intellij.refactoring.BaseRefactoringProcessor}.

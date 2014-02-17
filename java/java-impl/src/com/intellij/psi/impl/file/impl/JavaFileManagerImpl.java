@@ -16,42 +16,28 @@
 
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.AppTopics;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.roots.*;
+import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class JavaFileManagerImpl extends JavaFileManagerBase {
 
-
   public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, MessageBus bus,
                              final StartupManager startupManager) {
     super(manager, projectRootManager, bus);
 
-    myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-      @Override
-      public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
-        clearNonRepositoryMaps();
-      }
-    });
-    
-
-
-    startupManager.registerStartupActivity(
-      new Runnable() {
-        @Override
-        public void run() {
-          initialize();
-        }
-      }
-    );
-
+    if (!((StartupManagerEx)startupManager).startupActivityPassed() && 
+        !ApplicationManager.getApplication().isUnitTestMode() && 
+        !manager.getProject().isDefault()) {
+      Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl")
+        .error("Access to psi files should be performed only after startup activity");
+    }
   }
 }

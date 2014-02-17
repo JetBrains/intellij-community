@@ -310,7 +310,7 @@ public class XPathEvalAction extends XPathAction {
 
         presentation.setOpenInNewTab(XPathAppComponent.getInstance().getConfig().OPEN_NEW_TAB);
 
-        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
             @Override
             public ProgressIndicator create() {

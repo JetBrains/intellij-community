@@ -31,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -61,7 +62,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;
 
-  public AbstractMemberSelectionTable(Collection<M> memberInfos, MemberInfoModel<T, M> memberInfoModel, String abstractColumnHeader) {
+  public AbstractMemberSelectionTable(Collection<M> memberInfos, @Nullable MemberInfoModel<T, M> memberInfoModel, @Nullable String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
     myTableModel = new MyTableModel<T, M>(this);
@@ -173,6 +174,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     scrollSelectionInView();
   }
 
+  @Nullable
   protected abstract Object getAbstractColumnValue(M memberInfo);
 
   protected abstract boolean isAbstractColumnEditable(int rowIndex);

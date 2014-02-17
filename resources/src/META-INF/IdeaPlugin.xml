@@ -23,24 +23,6 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.psi.JavaPsiFacade</interface-class>
-      <implementation-class>com.intellij.psi.impl.JavaPsiFacadeImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
-      <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.psi.impl.file.impl.JavaFileManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.file.impl.JavaFileManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
 
@@ -229,10 +211,12 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper"/>
     </extensionPoint>
 
-    <extensionPoint name="psi.clsCustomNavigationPolicy"
-                    interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
-    <extensionPoint name="psi.clsDecompiledFileProvider"
-                    interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
+    <extensionPoint name="psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
+    <!-- deprecated API -->
+    <!--suppress DeprecatedClassUsageInspection -->
+    <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <extensionPoint name="psi.clsDecompiledFileProvider" interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
@@ -371,6 +355,12 @@
 
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
+                    serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <projectService serviceInterface="com.intellij.psi.PsiNameHelper"
+                    serviceImplementation="com.intellij.psi.impl.PsiNameHelperImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.resolve.JavaResolveCache"
@@ -478,6 +468,7 @@
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
+    <moduleType id="WEB_MODULE" implementationClass="com.intellij.openapi.module.WebModuleType"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
@@ -1016,6 +1007,9 @@
 
     <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <applicationService serviceInterface="com.intellij.psi.impl.compiled.ClassFileDecompiler$PlatformDecompiler"
+                        serviceImplementation="com.intellij.psi.impl.compiled.DeprecatedClassFileDecompiler"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
              order="before samePsiMember"/>
@@ -1247,7 +1241,7 @@
     <lang.implementationTextSelectioner language="JAVA"
                                         implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
-    <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
+    <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension" order="after defaultNavbar"/>
     <typeDeclarationProvider implementation="com.intellij.codeInsight.navigation.actions.JavaTypeDeclarationProvider"/>
     <gotoTargetRendererProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetRendererProvider"/>
 
@@ -1309,7 +1303,6 @@
 
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
 
-
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex"/>
@@ -1321,9 +1314,6 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
 
     <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
-
-    <clsStubBuilderFactory implementation="com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory" order="last"/>
-
 
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
 

@@ -25,6 +25,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -45,9 +47,9 @@ public class CopyAction extends EditorAction {
         if (Registry.is(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;
         }
-        editor.getCaretModel().runForEachCaret(new Runnable() {
+        editor.getCaretModel().runForEachCaret(new CaretAction() {
           @Override
-          public void run() {
+          public void perform(Caret caret) {
             editor.getSelectionModel().selectLineAtCaret();
             EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
           }

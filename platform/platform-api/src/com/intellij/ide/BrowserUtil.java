@@ -68,13 +68,14 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull File file) {
-    browse(VfsUtil.toUri(file));
+    BrowserLauncher.getInstance().browse(file);
   }
 
   public static void browse(@NotNull URL url) {
     browse(url.toExternalForm());
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
    * @deprecated Use {@link #browse(String)}
@@ -84,11 +85,11 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull @NonNls String url) {
-    BrowserLauncher.getInstance().openOrBrowse(url, true);
+    BrowserLauncher.getInstance().browse(url, null);
   }
 
   public static void open(@NotNull @NonNls String url) {
-    BrowserLauncher.getInstance().openOrBrowse(url, false);
+    BrowserLauncher.getInstance().open(url);
   }
 
   /**

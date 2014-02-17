@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -92,6 +91,22 @@ public class LambdaUtil {
     return initialSubst;
   }
 
+  public static boolean isFunctionalType(PsiType type) {
+    if (type instanceof PsiIntersectionType) {
+      for (PsiType type1 : ((PsiIntersectionType)type).getConjuncts()) {
+        if (isFunctionalType(type1)) return true;
+      }
+    }
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(type));
+    final PsiClass aClass = resolveResult.getElement();
+    if (aClass != null) {
+      if (aClass instanceof PsiTypeParameter) return false;
+      final List<MethodSignature> signatures = findFunctionCandidates(aClass);
+      return signatures != null && signatures.size() == 1;
+    }
+    return false;
+  }
+  
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     return context instanceof PsiTypeCastExpression ||
            context instanceof PsiAssignmentExpression ||

@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -42,7 +43,7 @@ public class SvnKitHistoryClient extends BaseSvnClient implements HistoryClient 
       }
     }
     catch (SVNException e) {
-      throw new VcsException(e);
+      throw new SvnBindException(e);
     }
   }
 }

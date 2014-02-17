@@ -26,7 +26,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -180,11 +183,32 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findSibling(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
+      child = child.getTreeNext();
+    }
+  }
+
+  @Nullable
   public static ASTNode findSiblingBackward(ASTNode start, IElementType elementType) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
       if (child.getElementType() == elementType) return child;
+      child = child.getTreePrev();
+    }
+  }
+
+
+  @Nullable
+  public static ASTNode findSiblingBackward(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
       child = child.getTreePrev();
     }
   }

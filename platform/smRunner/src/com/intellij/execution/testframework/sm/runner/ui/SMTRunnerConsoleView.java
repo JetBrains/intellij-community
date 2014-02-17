@@ -55,6 +55,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     mySplitterProperty = splitterProperty;
   }
 
+  @Override
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
     myResultsViewer = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
@@ -72,6 +73,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
     // Console
     myResultsViewer.addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+      @Override
       public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {
@@ -81,6 +83,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
         // print selected content
         SMRunnerUtil.runInEventDispatchThread(new Runnable() {
+          @Override
           public void run() {
             getPrinter().updateOnTestSelected(selectedTestProxy);
           }
@@ -100,8 +103,9 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param contentType  given type
    */
   @Override
-  public void print(final String s, final ConsoleViewContentType contentType) {
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     myResultsViewer.getRoot().addLast(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print(s, contentType);
       }

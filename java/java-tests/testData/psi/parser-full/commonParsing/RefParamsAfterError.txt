@@ -63,7 +63,7 @@ PsiJavaFile:RefParamsAfterError.java
           PsiJavaToken:LT('<')
           PsiErrorElement:Identifier expected
             <empty list>
-          PsiErrorElement:'>' or ',' expected.
+          PsiErrorElement:'>' or ',' expected
             <empty list>
     PsiErrorElement:Identifier expected
       <empty list>

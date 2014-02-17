@@ -49,6 +49,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   public static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
   private static final Rectangle EMPTY_RECTANGLE = new Rectangle();
+  private boolean myRowBoundsCalled = false;
 
   private final UsageViewPresentation myPresentation;
   private final UsageView myView;
@@ -79,7 +80,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
       Rectangle visibleRect = tree == null ? EMPTY_RECTANGLE : ((JViewport)tree.getParent()).getViewRect();
       if (!visibleRect.isEmpty()) {
-        RowLocation visible = isRowVisible(row, visibleRect);
+        //Protection against SOE on some OSes and JDKs IDEA-120631
+        RowLocation visible = myRowBoundsCalled ? RowLocation.INSIDE_VISIBLE_RECT : isRowVisible(row, visibleRect);
+        myRowBoundsCalled = false;
         if (visible != RowLocation.INSIDE_VISIBLE_RECT) {
           // for the node outside visible rect just set its preferred size to the whole visible rect
           // and do not compute (expensive) presentation
@@ -241,7 +244,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       pref = cachedPreferredSize;
     }
     pref.width = Math.max(visibleRect.width, pref.width);
+    myRowBoundsCalled = true;
     final Rectangle bounds = getTree().getRowBounds(row);
+    myRowBoundsCalled = false;
     int y = bounds == null ? 0 : bounds.y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);
     boolean inside = vis.contains(y);

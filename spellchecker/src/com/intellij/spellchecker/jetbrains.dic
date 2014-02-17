@@ -131,6 +131,7 @@ evex
 exif
 expr
 facebook
+facelet
 favicon
 filename
 fileset
@@ -361,6 +362,7 @@ plugin
 plugins
 pointcut
 pointcuts
+portlet
 polyadic
 popup
 popups

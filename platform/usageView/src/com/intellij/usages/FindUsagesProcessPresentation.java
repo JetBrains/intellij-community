@@ -33,6 +33,7 @@ import java.util.List;
 public class FindUsagesProcessPresentation {
   @NonNls
   public static final String NAME_WITH_MNEMONIC_KEY = "NameWithMnemonic";
+  private final UsageViewPresentation myUsageViewPresentation;
 
   private List<Action> myNotFoundActions;
   private boolean myShowPanelIfOnlyOneUsage;
@@ -41,7 +42,8 @@ public class FindUsagesProcessPresentation {
   private Collection<PsiFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
 
-  public FindUsagesProcessPresentation() {
+  public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
+    myUsageViewPresentation = presentation;
   }
 
   public void addNotFoundAction(@NotNull Action action) {
@@ -91,8 +93,14 @@ public class FindUsagesProcessPresentation {
     return myShowFindOptionsPrompt;
   }
 
+  @NotNull
+  public UsageViewPresentation getUsageViewPresentation() {
+    return myUsageViewPresentation;
+  }
+
   public void setShowFindOptionsPrompt(boolean showFindOptionsPrompt) {
     myShowFindOptionsPrompt = showFindOptionsPrompt;
   }
 }
+
 

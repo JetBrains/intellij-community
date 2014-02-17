@@ -70,17 +70,20 @@ public class StartBrowserPanel {
     return myRoot;
   }
 
-  @NotNull
+  @Nullable
   public String getUrl() {
-    String url = myUrlField.getText();
-    if (!url.isEmpty() && !URLUtil.containsScheme(url)) {
-      return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, url);
+    String url = StringUtil.nullize(myUrlField.getText(), true);
+    if (url != null) {
+      url = url.trim();
+      if (!URLUtil.containsScheme(url)) {
+        return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, url);
+      }
     }
     return url;
   }
 
   public void setUrl(@Nullable String url) {
-    myUrlField.setText(StringUtil.notNullize(url));
+    myUrlField.setText(url);
   }
 
   public void clearBorder() {
@@ -104,7 +107,7 @@ public class StartBrowserPanel {
   }
 
   private void createUIComponents() {
-    myBrowserSelector = new BrowserSelector(true);
+    myBrowserSelector = new BrowserSelector();
     myBrowserComboBox = myBrowserSelector.getMainComponent();
     if (UIUtil.isUnderAquaLookAndFeel()) {
       myBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
@@ -122,6 +125,16 @@ public class StartBrowserPanel {
       token.finish();
     }
     return psiFile != null && !(psiFile instanceof PsiBinaryFile) ? WebBrowserServiceImpl.getUrlForContext(psiFile) : null;
+  }
+
+  @NotNull
+  public StartBrowserSettings createSettings() {
+    StartBrowserSettings browserSettings = new StartBrowserSettings();
+    browserSettings.setSelected(isSelected());
+    browserSettings.setBrowser(myBrowserSelector.getSelected());
+    browserSettings.setStartJavaScriptDebugger(myStartJavaScriptDebuggerCheckBox.isSelected());
+    browserSettings.setUrl(getUrl());
+    return browserSettings;
   }
 
   public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, @NotNull final Project project) {

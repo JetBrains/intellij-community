@@ -87,12 +87,14 @@ public class GroovyExtractChooser {
       return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<GrStatement>(), stringPart, project, null);
     }
 
-    GrVariable variable = GrIntroduceHandlerBase.findVariable(file, start, end);
-    if (variable != null) {
-      GrExpression initializer = variable.getInitializerGroovy();
-      if (initializer != null) {
-        TextRange range = initializer.getTextRange();
-        return buildInfo(project, file, range.getStartOffset(), range.getEndOffset(), forceStatements, selectionModel, variable);
+    if (!forceStatements) {
+      GrVariable variable = GrIntroduceHandlerBase.findVariable(file, start, end);
+      if (variable != null) {
+        GrExpression initializer = variable.getInitializerGroovy();
+        if (initializer != null) {
+          TextRange range = initializer.getTextRange();
+          return buildInfo(project, file, range.getStartOffset(), range.getEndOffset(), forceStatements, selectionModel, variable);
+        }
       }
     }
 

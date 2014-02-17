@@ -108,8 +108,8 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
     super.doOKAction();
     if (mySuggestOptimizeImports) {
       PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
+      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
     }
-    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
   }
 
   public boolean isOptimizeImports() {

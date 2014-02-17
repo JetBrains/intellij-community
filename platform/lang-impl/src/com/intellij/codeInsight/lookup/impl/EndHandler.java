@@ -18,6 +18,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.ui.ListScrollingUtil;
@@ -30,10 +31,10 @@ public class EndHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext){
+  public void execute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isFocused()) {
-      myOriginalHandler.executeForAllCarets(editor, dataContext);
+      myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
       return;
     }
 

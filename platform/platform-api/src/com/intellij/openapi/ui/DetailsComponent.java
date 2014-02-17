@@ -54,13 +54,12 @@ public class DetailsComponent {
 
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
+      @Override
       protected void paintComponent(final Graphics g) {
         if (NullableComponent.Check.isNull(myContent) || !myDetailsEnabled) return;
 
         GraphicsConfig c = new GraphicsConfig(g);
         c.setAntialiasing(true);
-
-        int arc = 8;
 
         Insets insets = getInsets();
         if (insets == null) {
@@ -78,6 +77,7 @@ public class DetailsComponent {
         final int rightY = banner.y + banner.height;
 
         header.moveTo(leftX, rightY);
+        int arc = 8;
         header.lineTo(leftX, leftY + arc);
         header.quadTo(leftX, leftY, leftX + arc, leftY);
         header.lineTo(rightX - arc, leftY);
@@ -111,7 +111,7 @@ public class DetailsComponent {
 
     myBanner.add(myBannerLabel, BorderLayout.CENTER);
 
-    myEmptyContentLabel = new JLabel("", JLabel.CENTER);
+    myEmptyContentLabel = new JLabel("", SwingConstants.CENTER);
 
     revalidateDetailsMode();
   }
@@ -200,12 +200,7 @@ public class DetailsComponent {
   }
 
   private void updateBanner() {
-    if (NullableComponent.Check.isNull(myContent)) {
-      myBannerLabel.setText(null);
-    }
-    else {
-      myBannerLabel.setText(myBannerText);
-    }
+    myBannerLabel.setText(NullableComponent.Check.isNull(myContent) || myBannerText == null ? ArrayUtil.EMPTY_STRING_ARRAY : myBannerText);
 
     myBannerLabel.revalidate();
     myBannerLabel.repaint();
@@ -250,17 +245,16 @@ public class DetailsComponent {
   }
 
 
-  public static interface Facade {
-
+  public interface Facade {
     DetailsComponent getDetailsComponent();
-
   }
 
   private class MyWrapper extends Wrapper implements NullableComponent {
     public MyWrapper(final JComponent c) {
-      super(c == null || NullableComponent.Check.isNull(c) ? DetailsComponent.this.myEmptyContentLabel : c);
+      super(c == null || NullableComponent.Check.isNull(c) ? myEmptyContentLabel : c);
     }
 
+    @Override
     public boolean isNull() {
       return getTargetComponent() == myEmptyContentLabel;
     }

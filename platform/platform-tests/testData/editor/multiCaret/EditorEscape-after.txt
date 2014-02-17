@@ -1,0 +1,2 @@
+some text
+some other t<caret>ext

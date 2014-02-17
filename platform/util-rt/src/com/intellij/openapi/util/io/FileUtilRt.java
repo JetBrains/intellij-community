@@ -85,18 +85,18 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
-    return toSystemDependentName(aFileName, File.separatorChar);
+  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
+    return toSystemDependentName(fileName, File.separatorChar);
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName, final char separatorChar) {
-    return aFileName.replace('/', separatorChar).replace('\\', separatorChar);
+  public static String toSystemDependentName(@NonNls @NotNull String fileName, final char separatorChar) {
+    return fileName.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
   @NotNull
-  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('\\', '/');
+  public static String toSystemIndependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('\\', '/');
   }
 
   @Nullable

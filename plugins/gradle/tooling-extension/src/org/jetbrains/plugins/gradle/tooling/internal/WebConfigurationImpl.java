@@ -20,7 +20,6 @@ import org.jetbrains.plugins.gradle.model.WebConfiguration;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,74 +38,5 @@ public class WebConfigurationImpl implements WebConfiguration {
   @Override
   public List<? extends WarModel> getWarModels() {
     return myWarModels;
-  }
-
-  public static class WarModelImpl implements WarModel {
-    @NotNull
-    private final String warName;
-    private final String myWebAppDirName;
-    private final File myWebAppDir;
-    private File myWebXml;
-    private Map<String, Set<String>> myWebRoots;
-    private Set<File> myClasspath;
-    private String myManifestContent;
-
-    public WarModelImpl(@NotNull String name, String webAppDirName, File webAppDir) {
-      warName = name;
-      myWebAppDirName = webAppDirName;
-      myWebAppDir = webAppDir;
-    }
-
-    @NotNull
-    @Override
-    public String getWarName() {
-      return warName;
-    }
-
-    @Override
-    public String getWebAppDirName() {
-      return myWebAppDirName;
-    }
-
-    @Override
-    public File getWebAppDir() {
-      return myWebAppDir;
-    }
-
-    public void setWebXml(File webXml) {
-      myWebXml = webXml;
-    }
-
-    @Override
-    public File getWebXml() {
-      return myWebXml;
-    }
-
-    @Override
-    public Map<String, Set<String>> getWebRoots() {
-      return myWebRoots;
-    }
-
-    public void setWebRoots(Map<String, Set<String>> webRoots) {
-      myWebRoots = webRoots;
-    }
-
-    public void setClasspath(Set<File> classpath) {
-      myClasspath = classpath;
-    }
-
-    @Override
-    public Set<File> getClasspath() {
-      return myClasspath;
-    }
-
-    public void setManifestContent(String manifestContent) {
-      myManifestContent = manifestContent;
-    }
-
-    @Override
-    public String getManifestContent() {
-      return myManifestContent;
-    }
   }
 }

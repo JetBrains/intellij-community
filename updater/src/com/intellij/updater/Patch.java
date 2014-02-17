@@ -183,7 +183,7 @@ public class Patch {
     forEach(actionsToProcess, "Backing up files...", ui, true,
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
-                Runner.logger.info("Backing up files dir: " + toDir.getCanonicalFile() + " to backupDir " + backupDir.getCanonicalFile());
+                Runner.logger.info("Backing up files dir: " + toDir.getPath());
                 each.backup(toDir, backupDir);
               }
             });
@@ -196,7 +196,7 @@ public class Patch {
               new ActionsProcessor() {
                 public void forEach(PatchAction each) throws IOException {
                   appliedActions.add(each);
-                  Runner.logger.info("applying patch file" + patchFile.getName() + " to dir " + toDir.getCanonicalFile());
+                  Runner.logger.info("applying patch file" + patchFile.getName() + " to dir " + toDir.getPath());
                   each.apply(patchFile, toDir);
                 }
               });

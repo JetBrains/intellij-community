@@ -203,11 +203,11 @@ public class ShortFragmentTest {
     public void edgeNodesDown() {
         runTest(
                 "a0|-a3 a1\n" +
-                        "a1|-a2 a3\n" +
-                        "a2|-a3\n" +
-                        "a3|-",
+                "a1|-a2 a3\n" +
+                "a2|-a3\n" +
+                "a3|-",
                 0,
-                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                "a0:0|-a1:1 a2:2|-a3:3",
                 true
         );
     }
@@ -220,7 +220,7 @@ public class ShortFragmentTest {
                 "a2|-a3\n" +
                 "a3|-",
                 3,
-                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                "a0:0|-a1:1 a2:2|-a3:3",
                 false
         );
     }
@@ -258,11 +258,11 @@ public class ShortFragmentTest {
     public void unhiddenEndTestDown() {
         runTest(
                 "a0|-a3 a1\n" +
-                        "a1|-a2 a3\n" +
-                        "a2|-a3\n" +
-                        "a3|-",
+                "a1|-a2 a3\n" +
+                "a2|-a3\n" +
+                "a3|-",
                 0,
-                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                "a0:0|-a1:1 a2:2|-a3:3",
                 "0 3",
                 true
         );
@@ -277,7 +277,7 @@ public class ShortFragmentTest {
                 "a2|-a3\n" +
                 "a3|-",
                 3,
-                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                "a0:0|-a1:1 a2:2|-a3:3",
                 "0 3",
                 false
         );

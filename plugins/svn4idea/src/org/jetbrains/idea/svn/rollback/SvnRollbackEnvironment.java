@@ -24,13 +24,13 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.revert.RevertClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,12 +94,12 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     };
 
     final List<CopiedAsideInfo> fromToModified = new ArrayList<CopiedAsideInfo>();
-    final MultiMap<File, SVNPropertyData> properties = new MultiMap<File, SVNPropertyData>();
+    final Map<File, SVNProperties> properties = ContainerUtil.newHashMap();
     moveRenamesToTmp(exceptions, fromToModified, properties, collector);
     // adds (deletes)
     // deletes (adds)
     // modifications
-    final Reverter reverter = new Reverter(mySvnVcs.getFactory().createRevertClient(), revertHandler, exceptions);
+    final Reverter reverter = new Reverter(mySvnVcs, revertHandler, exceptions);
     reverter.revert(checker.getForAdds(), true);
     reverter.revert(checker.getForDeletes(), true);
     final List<File> edits = checker.getForEdits();
@@ -117,18 +117,20 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private void moveRenamesToTmp(List<VcsException> exceptions,
                                 List<CopiedAsideInfo> fromToModified,
-                                final MultiMap<File, SVNPropertyData> properties,
+                                final Map<File, SVNProperties> properties,
                                 final UnversionedAndNotTouchedFilesGroupCollector collector) {
     final Map<File, ThroughRenameInfo> fromTo = collector.getFromTo();
     try {
       final File tmp = FileUtil.createTempDirectory("forRename", "");
-      final SVNWCClient client = mySvnVcs.createWCClient();
       final ISVNPropertyHandler handler = new ISVNPropertyHandler() {
         @Override
         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
           final ThroughRenameInfo info = collector.findToFile(new FilePathImpl(path, path.isDirectory()), null);
           if (info != null) {
-            properties.putValue(info.getTo(), property);
+            if (!properties.containsKey(info.getTo())) {
+              properties.put(info.getTo(), new SVNProperties());
+            }
+            properties.get(info.getTo()).put(property.getName(), property.getValue());
           }
         }
 
@@ -148,7 +150,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         final File source = entry.getKey();
         final ThroughRenameInfo info = entry.getValue();
         if (info.isVersioned()) {
-          client.doGetProperty(source, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY, handler, null);
+          mySvnVcs.getFactory(source).createPropertyClient().list(SvnTarget.fromFile(source), SVNRevision.WORKING, SVNDepth.EMPTY, handler);
         }
         if (source.isDirectory()) {
           if (! FileUtil.filesEqual(info.getTo(), info.getFirstTo())) {
@@ -166,14 +168,14 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     catch (IOException e) {
       exceptions.add(new VcsException(e));
     }
-    catch (SVNException e) {
-      exceptions.add(new VcsException(e));
+    catch(VcsException e) {
+      exceptions.add(e);
     }
   }
 
   private void moveGroup(final List<VcsException> exceptions,
                          List<CopiedAsideInfo> fromTo,
-                         MultiMap<File, SVNPropertyData> properties) {
+                         Map<File, SVNProperties> properties) {
     Collections.sort(fromTo, new Comparator<CopiedAsideInfo>() {
       @Override
       public int compare(CopiedAsideInfo o1, CopiedAsideInfo o2) {
@@ -232,36 +234,25 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     applyProperties(properties, exceptions);
   }
 
-  private void applyProperties(MultiMap<File, SVNPropertyData> propertiesMap, final List<VcsException> exceptions) {
-    final SVNWCClient client = mySvnVcs.createWCClient();
-    for (Map.Entry<File, Collection<SVNPropertyData>> entry : propertiesMap.entrySet()) {
-      final File file = entry.getKey();
-      final Collection<SVNPropertyData> propertyDatas = entry.getValue();
-        try {
-          client.doSetProperty(file, new ISVNPropertyValueProvider() {
-            @Override
-            public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
-              final SVNProperties result = new SVNProperties();
-              for (SVNPropertyData data : propertyDatas) {
-                result.put(data.getName(), data.getValue());
-              }
-              return result;
-            }
-          }, true, SVNDepth.EMPTY, null, null);
-        }
-        catch (SVNException e) {
-          exceptions.add(new VcsException(e));
-        }
+  private void applyProperties(Map<File, SVNProperties> propertiesMap, final List<VcsException> exceptions) {
+    for (Map.Entry<File, SVNProperties> entry : propertiesMap.entrySet()) {
+      File file = entry.getKey();
+      try {
+        mySvnVcs.getFactory(file).createPropertyClient().setProperties(file, entry.getValue());
+      }
+      catch (VcsException e) {
+        exceptions.add(e);
+      }
     }
   }
 
   private static class Reverter {
-    private final RevertClient myClient;
+    @NotNull private final SvnVcs myVcs;
     private ISVNEventHandler myHandler;
     private final List<VcsException> myExceptions;
 
-    private Reverter(RevertClient client, ISVNEventHandler handler, List<VcsException> exceptions) {
-      myClient = client;
+    private Reverter(@NotNull SvnVcs vcs, ISVNEventHandler handler, List<VcsException> exceptions) {
+      myVcs = vcs;
       myHandler = handler;
       myExceptions = exceptions;
     }
@@ -269,7 +260,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     public void revert(final File[] files, final boolean recursive) {
       if (files.length == 0) return;
       try {
-        myClient.revert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, myHandler);
+        // Files passed here are split into groups by root and working copy format - thus we could determine factory based on first file
+        myVcs.getFactory(files[0]).createRevertClient().revert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, myHandler);
       }
       catch (VcsException e) {
         processRevertError(e);

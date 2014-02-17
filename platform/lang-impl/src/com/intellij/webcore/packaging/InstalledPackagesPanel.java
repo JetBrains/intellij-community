@@ -16,6 +16,9 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.*;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,29 +213,39 @@ public class InstalledPackagesPanel extends JPanel {
           public void run() {
             final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
               @Override
-              public void operationStarted(String packageName) {
-                myPackagesTable.setPaintBusy(true);
-                myCurrentlyInstalling.add(packageName);
+              public void operationStarted(final String packageName) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    myPackagesTable.setPaintBusy(true);
+                    myCurrentlyInstalling.add(packageName);
+                  }
+                });
               }
 
               @Override
-              public void operationFinished(String packageName, @Nullable String errorDescription) {
-                myPackagesTable.clearSelection();
-                updatePackages(selPackageManagementService);
-                myPackagesTable.setPaintBusy(false);
-                myCurrentlyInstalling.remove(packageName);
-                if (errorDescription == null) {
-                  myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
-                }
-                else {
-                  myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
-                                               "Upgrade Packages Failed",
-                                               "Upgrade packages failed.\n" + errorDescription);
-                }
+              public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    myPackagesTable.clearSelection();
+                    updatePackages(selPackageManagementService);
+                    myPackagesTable.setPaintBusy(false);
+                    myCurrentlyInstalling.remove(packageName);
+                    if (errorDescription == null) {
+                      myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
+                    }
+                    else {
+                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
+                                                   "Upgrade Packages Failed",
+                                                   "Upgrade packages failed.\n" + errorDescription);
+                    }
 
-                if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
-                  upgradePostponedPackages();
-                }
+                    if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
+                      upgradePostponedPackages();
+                    }
+                  }
+                });
               }
             };
             PackageManagementServiceEx serviceEx = getServiceEx();
@@ -317,27 +330,37 @@ public class InstalledPackagesPanel extends JPanel {
       PackageManagementService.Listener listener = new PackageManagementService.Listener() {
         @Override
         public void operationStarted(String packageName) {
-          myPackagesTable.setPaintBusy(true);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myPackagesTable.setPaintBusy(true);
+            }
+          });
         }
 
         @Override
-        public void operationFinished(String packageName, @Nullable String errorDescription) {
-          myPackagesTable.clearSelection();
-          updatePackages(selPackageManagementService);
-          myPackagesTable.setPaintBusy(false);
-          if (errorDescription == null) {
-            if (packageName != null) {
-              myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+        public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myPackagesTable.clearSelection();
+              updatePackages(selPackageManagementService);
+              myPackagesTable.setPaintBusy(false);
+              if (errorDescription == null) {
+                if (packageName != null) {
+                  myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+                }
+                else {
+                  myNotificationArea.showSuccess("Packages successfully uninstalled");
+                }
+              }
+              else {
+                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
+                                             "Uninstall Packages Failed",
+                                             "Uninstall packages failed.\n" + errorDescription);
+              }
             }
-            else {
-              myNotificationArea.showSuccess("Packages successfully uninstalled");
-            }
-          }
-          else {
-            myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
-                                         "Uninstall Packages Failed",
-                                         "Uninstall packages failed.\n" + errorDescription);
-          }
+          });
         }
       };
       myPackageManagementService.uninstallPackages(packages, listener);
@@ -367,8 +390,18 @@ public class InstalledPackagesPanel extends JPanel {
     }
   }
 
-  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
+  private void onUpdateStarted() {
     myPackagesTable.setPaintBusy(true);
+    myPackagesTable.getEmptyText().setText("Loading...");
+  }
+
+  private void onUpdateFinished() {
+    myPackagesTable.setPaintBusy(false);
+    myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+  }
+
+  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
+    onUpdateStarted();
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
@@ -390,7 +423,7 @@ public class InstalledPackagesPanel extends JPanel {
               refreshLatestVersions();
             }
           }
-          application.invokeLater(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
               if (packageManagementService == myPackageManagementService) {
@@ -402,14 +435,14 @@ public class InstalledPackagesPanel extends JPanel {
                     .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
                 }
                 if (!cache.isEmpty()) {
-                  myPackagesTable.setPaintBusy(false);
+                  onUpdateFinished();
                 }
                 if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
                   setLatestVersionsForInstalledPackages();
                 }
               }
             }
-          }, ModalityState.any());
+          });
         }
       }
     });
@@ -426,7 +459,7 @@ public class InstalledPackagesPanel extends JPanel {
     }
     int packageCount = myPackagesTableModel.getRowCount();
     if (packageCount == 0) {
-      myPackagesTable.setPaintBusy(false);
+      onUpdateFinished();
     }
     final AtomicInteger inProgressPackageCount = new AtomicInteger(packageCount);
     for (int i = 0; i < packageCount; ++i) {
@@ -436,12 +469,12 @@ public class InstalledPackagesPanel extends JPanel {
 
         private void decrement() {
           if (inProgressPackageCount.decrementAndGet() == 0) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
               public void run() {
-                myPackagesTable.setPaintBusy(false);
+                onUpdateFinished();
               }
-            }, ModalityState.any());
+            });
           }
         }
 

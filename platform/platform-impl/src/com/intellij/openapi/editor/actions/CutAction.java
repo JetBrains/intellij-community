@@ -24,11 +24,13 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.registry.Registry;
 
 public class CutAction extends EditorAction {
@@ -43,17 +45,17 @@ public class CutAction extends EditorAction {
         if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;
         }
-        editor.getCaretModel().runForEachCaret(new Runnable() {
+        editor.getCaretModel().runForEachCaret(new CaretAction() {
           @Override
-          public void run() {
+          public void perform(Caret caret) {
             editor.getSelectionModel().selectLineAtCaret();
           }
         });
       }
       editor.getSelectionModel().copySelectionToClipboard();
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           EditorModificationUtil.deleteSelectedText(editor);
         }
       });

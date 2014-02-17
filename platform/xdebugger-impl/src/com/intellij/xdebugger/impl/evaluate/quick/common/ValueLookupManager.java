@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
@@ -63,6 +64,10 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
     Editor editor = e.getEditor();
     if (editor.getProject() != null && editor.getProject() != myProject) {
+      return;
+    }
+
+    if (e.getArea() != EditorMouseEventArea.EDITING_AREA) {
       return;
     }
 

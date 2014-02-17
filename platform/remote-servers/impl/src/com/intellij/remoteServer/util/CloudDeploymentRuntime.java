@@ -24,7 +24,6 @@ import com.intellij.remoteServer.agent.util.CloudApplication;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;
 import com.intellij.remoteServer.agent.util.CloudLoggingHandler;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
@@ -39,24 +38,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
 
+  private final CloudMultiSourceServerRuntimeInstance myServerRuntime;
+  private final DeploymentTask myTask;
+
   private final CloudGitAgentDeployment myDeployment;
   private final String myApplicationName;
-  private final CloudConfigurationBase myConfiguration;
-  private final AgentTaskExecutor myAgentTaskExecutor;
   private final String myPresentableName;
-  private final ServerTaskExecutor myTaskExecutor;
   private final CloudLoggingHandler myLoggingHandler;
   @Nullable private final DeploymentLogManager myLogManager;
-  private final Project myProject;
 
   public CloudDeploymentRuntime(CloudMultiSourceServerRuntimeInstance serverRuntime,
                                 DeploymentSource source,
                                 DeploymentTask<? extends CloudDeploymentNameConfiguration> task,
                                 @Nullable DeploymentLogManager logManager) throws ServerRuntimeException {
-    myConfiguration = serverRuntime.getConfiguration();
-
-    myTaskExecutor = serverRuntime.getTaskExecutor();
-    myAgentTaskExecutor = serverRuntime.getAgentTaskExecutor();
+    myServerRuntime = serverRuntime;
+    myTask = task;
 
     myLogManager = logManager;
     myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl() : new CloudLoggingHandlerImpl(logManager);
@@ -67,8 +63,19 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
     myPresentableName = source.getPresentableName();
 
     myDeployment = serverRuntime.getAgent().createDeployment(myApplicationName, myLoggingHandler);
+  }
 
-    myProject = task.getProject();
+  protected CloudMultiSourceServerRuntimeInstance getServerRuntime() {
+    return myServerRuntime;
+  }
+
+  protected DeploymentTask getTask() {
+    return myTask;
+  }
+
+  @Nullable
+  protected DeploymentLogManager getLogManager() {
+    return myLogManager;
   }
 
   public void deploy(ServerRuntimeInstance.DeploymentOperationCallback callback) {
@@ -91,7 +98,7 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
 
   @Override
   public void undeploy(final @NotNull UndeploymentTaskCallback callback) {
-    myTaskExecutor.submit(new ThrowableRunnable<Exception>() {
+    myServerRuntime.getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
 
       @Override
       public void run() throws Exception {
@@ -116,7 +123,7 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
   }
 
   public Project getProject() {
-    return myProject;
+    return myTask.getProject();
   }
 
   public String getApplicationName() {
@@ -124,7 +131,7 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
   }
 
   public AgentTaskExecutor getAgentTaskExecutor() {
-    return myAgentTaskExecutor;
+    return myServerRuntime.getAgentTaskExecutor();
   }
 
   public CloudLoggingHandler getLoggingHandler() {
@@ -143,7 +150,7 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
           if (password == null) {
             return;
           }
-          if (password.equals(myConfiguration.getPassword())) {
+          if (password.equals(myServerRuntime.getConfiguration().getPassword())) {
             confirmed.set(true);
             return;
           }

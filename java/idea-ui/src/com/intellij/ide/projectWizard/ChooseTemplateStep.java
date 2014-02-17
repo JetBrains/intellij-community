@@ -58,7 +58,7 @@ public class ChooseTemplateStep extends ModuleWizardStep {
 
   @Override
   public boolean isStepVisible() {
-    return !myProjectTypeStep.getAvailableTemplates().isEmpty();
+    return myWizardContext.isCreatingNewProject() && !myProjectTypeStep.getAvailableTemplates().isEmpty();
   }
 
   @Override

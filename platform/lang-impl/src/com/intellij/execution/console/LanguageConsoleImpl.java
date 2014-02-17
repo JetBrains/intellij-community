@@ -46,13 +46,11 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -65,10 +63,9 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +80,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
- * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
+ * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final int SEPARATOR_THICKNESS = 1;
@@ -104,7 +101,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private Editor myCurrentEditor;
 
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
-  private final MergingUpdateQueue myUpdateQueue;
+  private final SingleAlarm myUpdateQueue;
   private Runnable myUiUpdateRunnable;
 
   private boolean myShowSeparatorLine = true;
@@ -141,8 +138,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
-    myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
-    Disposer.register(this, myUpdateQueue);
+    myUpdateQueue = new SingleAlarm(new Runnable() {
+      @Override
+      public void run() {
+        if (isConsoleEditorEnabled()) {
+          myPanel.revalidate();
+          myPanel.repaint();
+        }
+        if (myUiUpdateRunnable != null) {
+          myUiUpdateRunnable.run();
+        }
+      }
+    }, 300, this);
 
     // action shortcuts are not yet registered
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -192,10 +199,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
-    if (isConsoleEditorEnabled() == consoleEditorEnabled) return;
-    final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
+    if (isConsoleEditorEnabled() == consoleEditorEnabled) {
+      return;
+    }
+
     if (consoleEditorEnabled) {
-      fileManager.closeFile(myVirtualFile);
+      FileEditorManager.getInstance(getProject()).closeFile(myVirtualFile);
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent());
       myPanel.add(myConsoleEditor.getComponent());
@@ -217,17 +226,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
-    myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
+
     //noinspection PointlessBooleanExpression,ConstantConditions
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
-    myConsoleEditor.getSettings().setAdditionalLinesCount(2);
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
     myHistoryViewer.setCaretEnabled(false);
-    myConsoleEditor.setHorizontalScrollbarVisible(true);
+
+    myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
+    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
+
     final VisibleAreaListener areaListener = new VisibleAreaListener() {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
@@ -289,7 +299,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(true);
   }
 
-  private static void setupEditorDefault(@NotNull EditorEx editor) {
+  private void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.setHorizontalScrollbarVisible(false);
@@ -297,7 +307,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editor.setBorder(null);
 
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setAdditionalLinesCount(myHistoryViewer == editor ? 0 : 2);
     editorSettings.setAdditionalColumnsCount(1);
     editorSettings.setRightMarginShown(false);
   }
@@ -311,6 +321,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myUpdateQueue.flush();
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public LightVirtualFile getHistoryFile() {
     return myHistoryFile;
@@ -384,7 +395,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setTitle(@NotNull String title) {
-    this.myTitle = title;
+    myTitle = title;
   }
 
   public void printToHistory(@NotNull CharSequence text, @NotNull TextAttributes attributes) {
@@ -542,21 +553,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myPanel;
   }
 
-  public void queueUiUpdate(final boolean forceScrollToEnd) {
+  public void queueUiUpdate(boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
-    myUpdateQueue.queue(new Update("UpdateUi") {
-      @Override
-      public void run() {
-        if (Disposer.isDisposed(LanguageConsoleImpl.this)) return;
-        if (isConsoleEditorEnabled()) {
-          myPanel.revalidate();
-          myPanel.repaint();
-        }
-        if (myUiUpdateRunnable != null) {
-          ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
-        }
-      }
-    });
+    myUpdateQueue.request();
   }
 
   @Override
@@ -588,10 +587,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (!Comparing.equal(file, myVirtualFile) || myConsoleEditor == null) return;
+        if (myConsoleEditor == null || !Comparing.equal(file, myVirtualFile)) {
+          return;
+        }
+
         Editor selectedTextEditor = source.getSelectedTextEditor();
         for (FileEditor fileEditor : source.getAllEditors(file)) {
-          if (!(fileEditor instanceof TextEditor)) continue;
+          if (!(fileEditor instanceof TextEditor)) {
+            continue;
+          }
+
           final EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
           editor.addFocusListener(myFocusListener);
           if (selectedTextEditor == editor) { // already focused

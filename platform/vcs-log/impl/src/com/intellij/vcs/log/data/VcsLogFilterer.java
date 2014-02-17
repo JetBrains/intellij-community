@@ -9,8 +9,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.GraphModel;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -20,7 +19,6 @@ import com.intellij.vcs.log.ui.tables.NoGraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public class VcsLogFilterer {
@@ -44,11 +42,11 @@ public class VcsLogFilterer {
     myUI = ui;
   }
 
-  public void applyFiltersAndUpdateUi(@NotNull Collection<VcsLogFilter> filters) {
+  public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     DataPack dataPack = myLogDataHolder.getDataPack();
     final GraphModel graphModel = dataPack.getGraphModel();
-    List<VcsLogGraphFilter> graphFilters = ContainerUtil.findAll(filters, VcsLogGraphFilter.class);
-    List<VcsLogDetailsFilter> detailsFilters = ContainerUtil.findAll(filters, VcsLogDetailsFilter.class);
+    List<VcsLogGraphFilter> graphFilters = filters.getGraphFilters();
+    List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
 
     // it is important to apply graph filters first:
     // if we apply other filters first, we loose the graph and won't be able to apple graph filters in that case
@@ -94,7 +92,7 @@ public class VcsLogFilterer {
     });
   }
 
-  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
+  public void requestVcs(@NotNull VcsLogFilterCollection filters, final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int maxCount = loadMoreStage == LoadMoreStage.INITIAL ? LOAD_MORE_COMMITS_FIRST_STEP_LIMIT : -1;
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {

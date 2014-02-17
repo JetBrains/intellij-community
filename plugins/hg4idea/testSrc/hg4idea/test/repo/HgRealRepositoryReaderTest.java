@@ -19,6 +19,8 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -41,7 +43,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     File hgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(hgDir.exists());
     createBranchesAndTags();
-    myRepositoryReader = new HgRepositoryReader(myProject, hgDir);
+    myRepositoryReader = new HgRepositoryReader(myVcs, hgDir);
   }
 
   public void testMergeState() {
@@ -60,6 +62,16 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   public void testBranches() {
     VcsTestUtil.assertEqualCollections(myRepositoryReader.readBranches().keySet(),
                                               Arrays.asList("default", "branchA", "branchB"));
+  }
+
+  public void testOpenedBranches() {
+    cd(myRepository);
+    HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    hg("up branchA");
+    hg("commit -m 'close branch' --close-branch");
+    hgRepository.update();
+    VcsTestUtil.assertEqualCollections(hgRepository.getOpenedBranches(),
+                                       Arrays.asList("default", "branchB"));
   }
 
   public void testTags() {

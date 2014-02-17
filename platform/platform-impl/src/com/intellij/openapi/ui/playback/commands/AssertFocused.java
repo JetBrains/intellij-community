@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 
@@ -26,7 +25,7 @@ import java.util.*;
 
 public class AssertFocused extends AbstractCommand {
 
-  public static String PREFIX = CMD_PREFIX + "assert focused";
+  public static final String PREFIX = CMD_PREFIX + "assert focused";
 
   public AssertFocused(String text, int line) {
     super(text, line);

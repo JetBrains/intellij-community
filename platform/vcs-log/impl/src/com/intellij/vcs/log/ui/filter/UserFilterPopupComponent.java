@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
@@ -35,10 +36,8 @@ import com.intellij.util.Function;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogDetailsFilter;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,7 @@ import java.util.List;
 /**
  * Show a popup to select a user or enter the user name.
  */
-class UserFilterPopupComponent extends FilterPopupComponent {
+class UserFilterPopupComponent extends FilterPopupComponent<VcsLogUserFilter> {
 
   private static final String ME = "me";
   private static final char[] USERS_SEPARATORS = { ',', '|', '\n' };
@@ -96,17 +95,12 @@ class UserFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected Collection<VcsLogFilter> getFilters() {
+  protected VcsLogUserFilter getFilter() {
     if (mySelectedUsers == null) {
       return null;
     }
     myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<String>(mySelectedUsers));
-    return ContainerUtil.map(mySelectedUsers, new Function<String, VcsLogFilter>() {
-      @Override
-      public VcsLogFilter fun(String name) {
-        return name == ME ? new Me(myDataHolder.getCurrentUser()) : new ByName(name);
-      }
-    });
+    return new VcsLogUserFilterImpl(mySelectedUsers, myDataHolder.getCurrentUser());
   }
 
   private void apply(Collection<String> users, String text, String tooltip) {
@@ -269,53 +263,38 @@ class UserFilterPopupComponent extends FilterPopupComponent {
     }
   }
 
-  /**
-   * Filters by the given name or part of it.
-   */
-  public static class ByName implements VcsLogUserFilter, VcsLogDetailsFilter {
+  private static class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
-    @NotNull private final String myUser;
+    @NotNull private final Collection<String> myUsers;
+    @NotNull private final Map<VirtualFile, VcsUser> myData;
 
-    public ByName(@NotNull String user) {
-      myUser = user;
-    }
-
-    @Override
-    public boolean matches(@NotNull VcsFullCommitDetails detail) {
-      return detail.getAuthor().getName().toLowerCase().contains(myUser.toLowerCase()) ||
-             detail.getAuthor().getEmail().toLowerCase().contains(myUser.toLowerCase());
+    public VcsLogUserFilterImpl(@NotNull Collection<String> users, @NotNull Map<VirtualFile, VcsUser> meData) {
+      myUsers = users;
+      myData = meData;
     }
 
     @NotNull
     @Override
-    public String getUserName(@NotNull VirtualFile root) {
-      return myUser;
-    }
-  }
-
-  /**
-   * Looks for commits matching the current user,
-   * i.e. looks for the value stored in the VCS config and compares the configured name with the one returned in commit details.
-   */
-  public static class Me implements VcsLogUserFilter, VcsLogDetailsFilter {
-
-    @NotNull private final Map<VirtualFile, VcsUser> myMeData;
-
-    public Me(@NotNull Map<VirtualFile, VcsUser> meData) {
-      myMeData = meData;
+    public Collection<String> getUserNames(@NotNull final VirtualFile root) {
+      return ContainerUtil.map(myUsers, new Function<String, String>() {
+        @Override
+        public String fun(String user) {
+          return ME.equals(user) ? myData.get(root).getName() : user;
+        }
+      });
     }
 
     @Override
-    public boolean matches(@NotNull VcsFullCommitDetails details) {
-      VcsUser meInThisRoot = myMeData.get(details.getRoot());
-      return meInThisRoot != null && meInThisRoot.equals(details.getAuthor());
+    public boolean matches(@NotNull final VcsFullCommitDetails commit) {
+      return ContainerUtil.exists(getUserNames(commit.getRoot()), new Condition<String>() {
+        @Override
+        public boolean value(String user) {
+          String lowerUser = user.toLowerCase();
+          return commit.getAuthor().getName().toLowerCase().contains(lowerUser) ||
+                 commit.getAuthor().getEmail().toLowerCase().contains(lowerUser);
+        }
+      });
     }
 
-    @NotNull
-    @Override
-    public String getUserName(@NotNull VirtualFile root) {
-      return myMeData.get(root).getName();
-    }
   }
-
 }

@@ -25,6 +25,7 @@ public abstract class UpdaterTestCase {
 
   @Before
   public void setUp() throws Exception {
+    Runner.initLogger(System.getProperty("java.io.tmpdir"));
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
 

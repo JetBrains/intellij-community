@@ -42,11 +42,11 @@ class HugeChild(SubParent1, date): #SubParent1 is disabled
         pass
 
     @classmethod
-    def static_1(cls):
+    def static_1(cls): # Could be abstract in Py3K
         pass
 
     @staticmethod
-    def static_2():
+    def static_2():  # Could be abstract in Py3K
         pass
 
 

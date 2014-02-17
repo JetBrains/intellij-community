@@ -287,7 +287,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
       if (ref != null) {
         PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass) psiClass = (PsiClass)refElement;
+        if (refElement instanceof PsiClass) {
+          psiClass = (PsiClass)refElement;
+        } else {
+          final PsiElement refQualifier = ref.getQualifier();
+          if (refQualifier instanceof PsiJavaCodeReferenceElement) {
+            refElement = ((PsiJavaCodeReferenceElement)refQualifier).resolve();
+            if (refElement instanceof PsiClass) {
+              psiClass = (PsiClass)refElement;
+            }
+          }
+        }
       }
     }
     else if (element instanceof PsiReferenceExpression) {

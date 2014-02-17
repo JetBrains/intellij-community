@@ -1,4 +1,3 @@
-import os
 from refactoring.extractsuperclass import Suppa
 
 

@@ -313,6 +313,9 @@ public class GradleScriptType extends GroovyScriptType {
     GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
+      String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+      if(!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
+
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (entry instanceof JdkOrderEntry) {
           GlobalSearchScope scopeForSdk = LibraryScopeCache.getInstance(module.getProject()).getScopeForSdk((JdkOrderEntry)entry);

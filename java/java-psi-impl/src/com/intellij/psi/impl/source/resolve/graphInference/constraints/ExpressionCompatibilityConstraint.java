@@ -112,7 +112,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               final PsiExpression[] args = argumentList.getExpressions();
               final PsiParameter[] parameters = method.getParameterList().getParameters();
               callSession.initExpressionConstraints(parameters, args, myExpression, method);
-              substitutor = callSession.infer(parameters, args, myExpression, LiftParameterTypeInferencePolicy.INSTANCE);
+              substitutor = callSession.infer(parameters, args, myExpression, true, LiftParameterTypeInferencePolicy.INSTANCE);
             }
           } else {
             substitutor = pair.second;

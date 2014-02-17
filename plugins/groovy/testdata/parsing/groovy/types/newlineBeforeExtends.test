@@ -9,11 +9,11 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('Super')
-    PsiWhiteSpace(' ')
     Extends clause
       <empty list>
     Implements clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiElement(})('}')
@@ -37,9 +37,9 @@ Groovy script
       PsiWhiteSpace(' ')
       Reference element
         PsiElement(identifier)('Super')
-    PsiWhiteSpace(' ')
     Implements clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiElement(})('}')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,15 @@
  */
 package com.intellij.ui.mac;
 
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
-import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -169,7 +166,7 @@ public class MacMessagesImpl extends MacMessages {
       //
 
       if (!alternateExist) {
-          enableEscapeToCloseTheMessage(alert);
+        enableEscapeToCloseTheMessage(alert);
       }
 
       String doNotAsk = toStringViaUTF8(doNotAskText);
@@ -210,7 +207,7 @@ public class MacMessagesImpl extends MacMessages {
     int buttonsNumber = invoke(invoke(alert, "buttons"), "count").intValue();
     if (buttonsNumber < 2) return;
     invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:",
-                         buttonsNumber - 1), "setKeyEquivalent:",  nsString("\033"));
+                  buttonsNumber - 1), "setKeyEquivalent:",  nsString("\033"));
   }
 
   private MacMessagesImpl() {}
@@ -245,14 +242,14 @@ public class MacMessagesImpl extends MacMessages {
 
       if (SystemInfo.isJavaVersionAtLeast("1.7")) {
 
-        ID awtWindow = Foundation.getObjcClass("AWTWindow");
+        ID awtWindow = getObjcClass("AWTWindow");
 
-        Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowDidBecomeMain:");
-        ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
-                                                                              windowDidBecomeMainCallback, "v@::@");
+        Pointer windowWillEnterFullScreenMethod = createSelector("windowDidBecomeMain:");
+        ID originalWindowWillEnterFullScreen = class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+                                                                   windowDidBecomeMainCallback, "v@::@");
 
-        Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowDidBecomeMain:"),
-                                 originalWindowWillEnterFullScreen, "v@::@");
+        addMethodByID(awtWindow, createSelector("oldWindowDidBecomeMain:"),
+                      originalWindowWillEnterFullScreen, "v@::@");
 
       }
     }
@@ -431,7 +428,7 @@ public class MacMessagesImpl extends MacMessages {
 
     private ID getParamsAsID() {
       if (window == null) {
-        throw new RuntimeException("Window should be in th list.");
+        throw new MacMessageException("Window should be in the list.");
       }
       params.put(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow, window);
 

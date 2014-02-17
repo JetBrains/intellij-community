@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogDateFilter;
+import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

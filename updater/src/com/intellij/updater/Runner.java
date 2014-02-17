@@ -23,19 +23,14 @@ public class Runner {
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
-    initLogger();
-    logger.info("--- Updater started ---");
-
-    if (args.length != 2 && args.length < 6) {
+    if (args.length != 3 && args.length < 7) {
       printUsage();
       return;
     }
 
     String command = args[0];
-    logger.info("args[0]: " + args[0]);
-
     if ("create".equals(command)) {
-      if (args.length < 6) {
+      if (args.length < 7) {
         printUsage();
         return;
       }
@@ -44,18 +39,23 @@ public class Runner {
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
+      String logFolder = args[6];
+      initLogger(logFolder);
+
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
       List<String> optionalFiles = extractFiles(args, "optional");
       create(oldVersionDesc, newVersionDesc, oldFolder, newFolder, patchFile, ignoredFiles, criticalFiles, optionalFiles);
     }
     else if ("install".equals(command)) {
-      if (args.length != 2) {
+      if (args.length != 3) {
         printUsage();
         return;
       }
 
       String destFolder = args[1];
+      String logFolder = args[2];
+      initLogger(logFolder);
       logger.info("destFolder: " + destFolder);
       install(destFolder);
     }
@@ -65,21 +65,40 @@ public class Runner {
     }
   }
 
-  public static void initLogger() {
+  private static boolean validateLogDir(String logFolder){
+    File fileLogDir = new File(logFolder);
+    /* check if the dir for log file
+      1)exists 2)has write perm. and 5)has 1MB+ free space */
+    if (!fileLogDir.exists() || !fileLogDir.canWrite() || fileLogDir.getUsableSpace() < 1000000){
+      return false;
+    }
+    return true;
+  }
+
+  private static String getLogDir(String logFolder){
+    if (!validateLogDir(logFolder)){
+      logFolder = System.getProperty("java.io.tmpdir");
+      if (!validateLogDir(logFolder)){
+        logFolder = System.getProperty("user.home");
+      }
+    }
+    System.out.println("Log dir: " + logFolder);
+    return logFolder;
+  }
+
+  public static void initLogger(String logFolder) {
     if (logger == null) {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      System.out.println("java.io.tmpdir: " + tmpDir);
-      //    String uHome = System.getProperty("user.home");
+      logFolder = getLogDir(logFolder);
       FileAppender update = new FileAppender();
 
-      update.setFile(new File(tmpDir, "idea_updater.log").getAbsolutePath());
+      update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
       update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(tmpDir, "idea_updater_error.log").getAbsolutePath());
+      updateError.setFile(new File(logFolder, "idea_updater_error.log").getAbsolutePath());
       updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
@@ -90,21 +109,13 @@ public class Runner {
       logger.addAppender(updateError);
       logger.addAppender(update);
       logger.setLevel(Level.ALL);
+
+      logger.info("--- Updater started ---");
     }
   }
 
-  public static void printStackTrace(Exception e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
-  }
-
   public static void printStackTrace(Throwable e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
+    logger.error(e.getMessage(), e);
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {

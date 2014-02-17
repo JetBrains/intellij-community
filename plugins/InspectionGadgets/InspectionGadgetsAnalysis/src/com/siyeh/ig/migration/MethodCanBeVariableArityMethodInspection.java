@@ -39,6 +39,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreOverridingMethods = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean onlyReportPublicMethods = false;
+
   @Nls
   @NotNull
   @Override
@@ -58,6 +61,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
                       "ignoreByteAndShortArrayParameters");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("only.report.public.methods.option"), "onlyReportPublicMethods");
     return panel;
   }
 
@@ -79,6 +83,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       super.visitMethod(method);
+      if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() == 0) {
         return;

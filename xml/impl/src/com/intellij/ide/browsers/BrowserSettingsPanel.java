@@ -27,6 +27,7 @@ import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
@@ -58,7 +59,7 @@ final class BrowserSettingsPanel {
     new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
-        return item.getPath();
+        return PathUtil.toSystemDependentName(item.getPath());
       }
 
       @Override
@@ -69,7 +70,7 @@ final class BrowserSettingsPanel {
       @Nullable
       @Override
       public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
+        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR).normalizePath(true);
       }
     };
 
@@ -112,6 +113,7 @@ final class BrowserSettingsPanel {
     @Override
     public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
       item.setFamily(value);
+      item.setSpecificSettings(value.createBrowserSpecificSettings());
     }
 
     @Nullable
@@ -137,7 +139,7 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox defaultBrowserComboBox;
+  private ComboBox  defaultBrowserComboBox;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
@@ -308,7 +310,7 @@ final class BrowserSettingsPanel {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     DefaultBrowser defaultBrowser = getDefaultBrowser();
-    if (browserManager.getDefaultBrowser() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    if (browserManager.getDefaultBrowserMode() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
@@ -343,7 +345,7 @@ final class BrowserSettingsPanel {
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
+    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowserMode();
     defaultBrowserComboBox.setSelectedItem(defaultBrowser);
 
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());

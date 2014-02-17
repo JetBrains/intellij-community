@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -214,5 +215,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       actualRanges[i] = new int[] {selectionStarts[i], selectionEnds[i]};
     }
     assertEquals("Wrong selected ranges", Arrays.deepToString(ranges), Arrays.deepToString(actualRanges));
+  }
+
+  public EditorMouseFixture mouse() {
+    return new EditorMouseFixture((EditorImpl)myEditor);
   }
 }

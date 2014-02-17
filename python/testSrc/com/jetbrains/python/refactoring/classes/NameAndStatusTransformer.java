@@ -9,16 +9,16 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author Ilya.Kazakevich
 */
-public class NameAndStatusTransformer implements Function<PyMemberInfo, PyPresenterTestMemberEntry> {
+public class NameAndStatusTransformer implements Function<PyMemberInfo<PyElement>, PyPresenterTestMemberEntry> {
   @NotNull
-  private final MemberInfoModel<PyElement, PyMemberInfo> myMemberInfoModel;
+  private final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myMemberInfoModel;
 
-  public NameAndStatusTransformer(MemberInfoModel<PyElement, PyMemberInfo> memberInfoModel) {
+  public NameAndStatusTransformer(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel) {
     myMemberInfoModel = memberInfoModel;
   }
 
   @Override
-  public PyPresenterTestMemberEntry apply(final PyMemberInfo input) {
-    return new PyPresenterTestMemberEntry(input.getDisplayName(), myMemberInfoModel.isMemberEnabled(input), input.isStatic());
+  public PyPresenterTestMemberEntry apply(final PyMemberInfo<PyElement> input) {
+    return new PyPresenterTestMemberEntry(input.getDisplayName(), myMemberInfoModel.isMemberEnabled(input), input.isStatic(), myMemberInfoModel.isAbstractEnabled(input));
   }
 }

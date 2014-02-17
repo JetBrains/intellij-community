@@ -30,7 +30,7 @@ import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.internal.*;
-import org.jetbrains.plugins.gradle.tooling.v1_11.internal.DependencyVersionId;
+import org.jetbrains.plugins.gradle.tooling.v1_11.internal.InternalDependencyVersionId;
 
 import java.util.*;
 
@@ -40,7 +40,7 @@ import static org.jetbrains.plugins.gradle.tooling.v1_11.internal.ModelDependenc
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-@TargetVersions("1.11+")
+@TargetVersions("1.11")
 public class ModelDependenciesBuilderImpl implements ModelBuilderService {
 
   @Override
@@ -53,7 +53,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
   public Object buildAll(final String modelName, final Project project) {
     final List<IdeaDependency> dependencies = new ArrayList<IdeaDependency>();
 
-    final Map<DependencyVersionId, Scopes> scopesMap = new LinkedHashMap<DependencyVersionId, Scopes>();
+    final Map<InternalDependencyVersionId, Scopes> scopesMap = new LinkedHashMap<InternalDependencyVersionId, Scopes>();
     final IdeDependenciesExtractor dependenciesExtractor = new IdeDependenciesExtractor();
 
     boolean offline = false;
@@ -99,8 +99,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
       }
     }
 
-    for (Map.Entry<DependencyVersionId, Scopes> entry : scopesMap.entrySet()) {
-      DependencyVersionId versionId = entry.getKey();
+    for (Map.Entry<InternalDependencyVersionId, Scopes> entry : scopesMap.entrySet()) {
+      InternalDependencyVersionId versionId = entry.getKey();
       for (GradleDependencyScope scope : entry.getValue().getScopes()) {
         if (versionId.getIdeDependency() instanceof IdeRepoFileDependency) {
           IdeRepoFileDependency repoFileDependency =

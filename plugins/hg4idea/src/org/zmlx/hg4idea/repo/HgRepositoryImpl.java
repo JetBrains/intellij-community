@@ -27,9 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,26 +46,31 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull private final HgRepositoryReader myReader;
   @NotNull private final VirtualFile myHgDir;
   @NotNull private volatile HgRepoInfo myInfo;
+  @NotNull private Set<String> myOpenedBranches = Collections.emptySet();
 
   @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
 
 
   @SuppressWarnings("ConstantConditions")
-  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
+  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull HgVcs vcs,
                            @NotNull Disposable parentDisposable) {
-    super(project, rootDir, parentDisposable);
+    super(vcs.getProject(), rootDir, parentDisposable);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-    myReader = new HgRepositoryReader(project, VfsUtilCore.virtualToIoFile(myHgDir));
-    myConfig = HgConfig.getInstance(project, rootDir);
+    myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
+    myConfig = HgConfig.getInstance(getProject(), rootDir);
     update();
   }
 
   @NotNull
   public static HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
                                          @NotNull Disposable parentDisposable) {
-    HgRepositoryImpl repository = new HgRepositoryImpl(root, project, parentDisposable);
+    HgVcs vcs = HgVcs.getInstance(project);
+    if (vcs == null) {
+      throw new IllegalArgumentException("Vcs not found for project " + project);
+    }
+    HgRepositoryImpl repository = new HgRepositoryImpl(root, vcs, parentDisposable);
     repository.setupUpdater();
     return repository;
   }
@@ -101,6 +109,12 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull
   public Map<String, Set<Hash>> getBranches() {
     return myInfo.getBranches();
+  }
+
+  @Override
+  @NotNull
+  public Set<String> getOpenedBranches() {
+    return myOpenedBranches;
   }
 
   @NotNull
@@ -145,8 +159,15 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     // Then blinking and do not work properly;
     if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
+      myOpenedBranches = updateOpenedBranches();
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
+  }
+
+  @NotNull
+  private Set<String> updateOpenedBranches() {
+    HgCommandResult branchCommandResult = new HgTagBranchCommand(getProject(), getRoot()).collectBranches();
+    return HgTagBranchCommand.collectNames(branchCommandResult);
   }
 
   @NotNull

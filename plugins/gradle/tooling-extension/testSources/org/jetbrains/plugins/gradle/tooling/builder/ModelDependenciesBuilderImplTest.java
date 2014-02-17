@@ -30,8 +30,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static junit.framework.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -78,7 +77,7 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
   public void testGradleIdeaPluginPlusScopesDependenciesModel() throws Exception {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
-    final int modulesSize = 5;
+    final int modulesSize = 6;
     assertEquals(modulesSize, ideaModules.size());
 
     for (IdeaModule ideaModule : ideaModules) {
@@ -122,6 +121,18 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
         IdeaSingleEntryLibraryDependency someTestDep = libraryDependencies.get(1);
         assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), someTestDep.getScope().getScope().toLowerCase());
         assertEquals("someTestDep.jar", someTestDep.getFile().getName());
+      }
+      else if (ideaModule.getName().equals("withIdeRepoFileDependency")) {
+        assertEquals(2, dependencies.size());
+        assertTrue(dependencies.getAt(0) instanceof IdeaSingleEntryLibraryDependency);
+        IdeaSingleEntryLibraryDependency libraryDependency = (IdeaSingleEntryLibraryDependency)dependencies.getAt(0);
+
+        assertNotNull(libraryDependency.getGradleModuleVersion());
+        assertEquals("junit", libraryDependency.getGradleModuleVersion().getName());
+        assertEquals("junit", libraryDependency.getGradleModuleVersion().getGroup());
+        assertEquals("4.11", libraryDependency.getGradleModuleVersion().getVersion());
+        assertEquals("TEST", libraryDependency.getScope().getScope());
+        assertFalse(libraryDependency.getExported());
       }
       else {
         fail();

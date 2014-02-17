@@ -2,7 +2,7 @@ from datetime import date
 class Child(object, date):
     CLASS_VAR = "spam"
 
-    def eggs(self):
+    def eggs(self):  # May be abstract
         pass
 
     def __init__(self):
@@ -11,5 +11,5 @@ class Child(object, date):
 
 class StaticOnly(object):
     @staticmethod
-    def static_method():
+    def static_method(): # May be abstract in case of Py3
         pass

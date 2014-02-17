@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,6 +248,7 @@ public class HighlightNamesUtil {
     return result;
   }
 
+  @NotNull
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
@@ -257,12 +258,14 @@ public class HighlightNamesUtil {
     return new TextRange(start, end);
   }
 
+  @NotNull
   public static TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     int start = stripAnnotationsFromModifierList(field.getModifierList());
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end);
   }
 
+  @NotNull
   public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiEnumConstantInitializer) {
       return ((PsiEnumConstantInitializer)aClass).getEnumConstant().getNameIdentifier().getTextRange();

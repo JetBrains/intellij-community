@@ -39,9 +39,6 @@ project(":api") {
 
 project(":withIdeaModelCustomisations") {
   dependencies {
-    //compile 'org.slf4j:slf4j-api:1.7.5'
-    //testCompile 'junit:junit:4.11'
-
     compile files("lib/someDep.jar")
     testCompile files("lib/someTestDep.jar")
   }
@@ -51,5 +48,14 @@ project(":withIdeaModelCustomisations") {
       scopes.COMPILE.plus += scopes.TEST.plus
       scopes.TEST.plus = []
     }
+  }
+}
+
+project(":withIdeRepoFileDependency") {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    testCompile 'junit:junit:4.11'
   }
 }

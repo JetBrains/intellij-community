@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public class InheritanceUtil {
     return true;
   }
 
+  @Contract("null, _ -> fail")
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
@@ -69,10 +71,12 @@ public class InheritanceUtil {
     return false;
   }
 
+  @Contract("null, _ -> fail")
   public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull final String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
 
+  @Contract("null, _, _ -> fail")
   public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull final String baseClassName) {
     if (psiClass == null) {
       return false;

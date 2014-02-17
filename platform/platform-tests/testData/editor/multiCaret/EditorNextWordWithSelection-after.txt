@@ -1,0 +1,5 @@
+soMe <selection><caret>te</selection>xt
+other line<selection>
+<caret></selection>yet another<selection> <caret></selection>line
+<selection>another line <caret></selection>again
+an<selection>d <caret></selection>again

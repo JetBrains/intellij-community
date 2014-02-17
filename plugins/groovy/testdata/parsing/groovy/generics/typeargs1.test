@@ -25,11 +25,11 @@ Groovy script
                   PsiElement(identifier)('S')
               PsiElement(>)('>')
       PsiElement(>)('>')
-    PsiWhiteSpace(' ')
     Extends clause
       <empty list>
     Implements clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiElement(})('}')

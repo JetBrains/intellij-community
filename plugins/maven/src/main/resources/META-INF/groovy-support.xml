@@ -1,13 +1,18 @@
 <idea-plugin url="http://www.jetbrains.com/idea">
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_0_Importer"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_1_plus_Importer"/>
+    <importer implementation="org.jetbrains.idea.maven.plugins.groovy.Groovy_1_0_Importer"/>
+    <importer implementation="org.jetbrains.idea.maven.plugins.groovy.Groovy_1_1_plus_Importer"/>
+    <importer implementation="org.jetbrains.idea.maven.plugins.groovy.GroovyGmavenImporter"/>
 
     <pluginDescriptor mavenId="org.codehaus.groovy.maven:gmaven-plugin">
       <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.codehaus.gmaven:gmaven-plugin">
+      <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.gmaven:groovy-maven-plugin">
       <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>
   </extensions>

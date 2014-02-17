@@ -30,6 +30,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RunProfileStarter {
   @Nullable
   public abstract RunContentDescriptor execute(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfileState state,
-                                               @Nullable RunContentDescriptor contentToReuse, @NotNull ExecutionEnvironment env) throws ExecutionException;
+                                               @Nullable RunContentDescriptor contentToReuse, @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
 }

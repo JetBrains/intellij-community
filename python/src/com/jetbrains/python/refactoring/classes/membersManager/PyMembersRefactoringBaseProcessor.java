@@ -1,9 +1,12 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -11,24 +14,34 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Processor for member-based refactorings. It moves members from one place to another using {@link com.jetbrains.python.refactoring.classes.membersManager.MembersManager}.
+ * Inheritors only need to implement {@link com.intellij.usageView.UsageViewDescriptor} methods (while this interface is also implemented by this class)
+ *
  * @author Ilya.Kazakevich
  */
 public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringProcessor implements UsageViewDescriptor {
 
   @NotNull
-  protected final Collection<PyMemberInfo> myMembersToMove;
-  @NotNull
-  protected final PyClass myTo;
+  protected final Collection<PyMemberInfo<PyElement>> myMembersToMove;
   @NotNull
   protected final PyClass myFrom;
+  @NotNull
+  private final PyClass[] myTo;
 
-  protected PyMembersRefactoringBaseProcessor(@NotNull final PyClass from,
-                                              @NotNull final PyClass to,
-                                              @NotNull final Collection<PyMemberInfo> membersToMove) {
-    super(from.getProject());
+  /**
+   * @param membersToMove what to move
+   * @param from          source
+   * @param to            where to move
+   */
+  protected PyMembersRefactoringBaseProcessor(
+    @NotNull final Project project,
+    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
+    @NotNull final PyClass from,
+    @NotNull final PyClass... to) {
+    super(project);
     myFrom = from;
-    myTo = to;
-    myMembersToMove = new ArrayList<PyMemberInfo>(membersToMove);
+    myMembersToMove = new ArrayList<PyMemberInfo<PyElement>>(membersToMove);
+    myTo = to.clone();
   }
 
   @NotNull
@@ -39,24 +52,33 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
 
   @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
-    final List<PyUsageInfo> result = new ArrayList<PyUsageInfo>(myMembersToMove.size());
-    for (final PyMemberInfo pyMemberInfo : myMembersToMove) {
-      result.add(new PyUsageInfo(pyMemberInfo));
+  public PsiElement[] getElements() {
+    return myTo.clone();
+  }
+
+  /**
+   * @return destinations (so user would be able to choose if she wants to move member to certain place or not)
+   */
+  @NotNull
+  @Override
+  protected final PyUsageInfo[] findUsages() {
+    final List<PyUsageInfo> result = new ArrayList<PyUsageInfo>(myTo.length);
+    for (final PyClass pyDestinationClass : myTo) {
+      result.add(new PyUsageInfo(pyDestinationClass));
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(new PyUsageInfo[result.size()]);
   }
 
   @Override
-  protected void performRefactoring(final UsageInfo[] usages) {
-    final Collection<PyMemberInfo> membersToMoveFromUsage = new ArrayList<PyMemberInfo>(usages.length);
+  protected final void performRefactoring(final UsageInfo[] usages) {
+    final Collection<PyClass> destinations = new ArrayList<PyClass>(usages.length);
     for (final UsageInfo usage : usages) {
       if (!(usage instanceof PyUsageInfo)) {
         throw new IllegalArgumentException("Only PyUsageInfo is accepted here");
       }
-      //TODO: Doc
-      membersToMoveFromUsage.add(((PyUsageInfo)usage).getPyMemberInfo());
+      //We collect destination info to pass it to members manager
+      destinations.add(((PyUsageInfo)usage).getTo());
     }
-    MembersManager.moveAllMembers(myFrom, myTo, membersToMoveFromUsage);
+    MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));
   }
 }

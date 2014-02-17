@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
 /**
@@ -61,7 +58,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean OPEN_IN_BROWSER_GIST = true;
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
-    @NotNull public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
     public int CONNECTION_TIMEOUT = 5000;
   }
 
@@ -143,17 +139,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
-  }
-
-  @NotNull
-  public Collection<String> getTrustedHosts() {
-    return myState.TRUSTED_HOSTS;
-  }
-
-  public void addTrustedHost(String host) {
-    if (!myState.TRUSTED_HOSTS.contains(host)) {
-      myState.TRUSTED_HOSTS.add(host);
-    }
   }
 
   @NotNull

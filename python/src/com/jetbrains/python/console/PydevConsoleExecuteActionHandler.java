@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -64,7 +63,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void processLine(final String text) {
+  public void processLine(@NotNull final String text) {
     processLine(text, false);
   }
 
@@ -202,6 +201,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         executingPrompt(console);
       }
       myConsoleCommunication.execInterpreter(code, new Function<InterpreterResponse, Object>() {
+        @Override
         public Object fun(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
@@ -335,7 +335,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private void indentEditor(final Editor editor, final int indentSize) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         EditorModificationUtil.insertStringAtCaret(editor, IndentHelperImpl.fillIndent(getProject(), PythonFileType.INSTANCE, indentSize));
       }
     }.execute();
@@ -344,7 +344,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private void cleanEditor(final Editor editor) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         editor.getDocument().setText("");
       }
     }.execute();
@@ -367,27 +367,26 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
+  public void runExecuteAction(@NotNull LanguageConsoleView console) {
     if (isEnabled()) {
       if (!canExecuteNow()) {
-        HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
+        HintManager.getInstance().showErrorHint(console.getConsole().getConsoleEditor(), getPrevCommandRunningMessage());
       }
       else {
-        doRunExecuteAction(languageConsole);
+        doRunExecuteAction(console);
       }
     }
     else {
-      HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
+      HintManager.getInstance().showErrorHint(console.getConsole().getConsoleEditor(), getConsoleIsNotEnabledMessage());
     }
   }
 
-  private void doRunExecuteAction(LanguageConsoleImpl languageConsole) {
-    if (shouldCopyToHistory(languageConsole)) {
-      copyToHistoryAndExecute(languageConsole);
+  private void doRunExecuteAction(LanguageConsoleView console) {
+    if (shouldCopyToHistory(console.getConsole())) {
+      copyToHistoryAndExecute(console);
     }
     else {
-      final Document document = languageConsole.getConsoleEditor().getDocument();
-      processLine(document.getText());
+      processLine(console.getConsole().getConsoleEditor().getDocument().getText());
     }
   }
 
@@ -395,8 +394,8 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     return !PyConsoleUtil.isPagingPrompt(console.getPrompt());
   }
 
-  private void copyToHistoryAndExecute(LanguageConsoleImpl languageConsole) {
-    super.runExecuteAction(languageConsole);
+  private void copyToHistoryAndExecute(LanguageConsoleView console) {
+    super.runExecuteAction(console);
   }
 
   public boolean canExecuteNow() {

@@ -23,27 +23,29 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
-  @NotNull private final List<FilterPopupComponent> myFilterPopupComponents;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final VcsLogUI myUi;
   @NotNull private final DefaultActionGroup myActionGroup;
+
+  @NotNull private final BranchFilterPopupComponent myBranchFilterComponent;
+  @NotNull private final UserFilterPopupComponent myUserFilterComponent;
+  @NotNull private final DateFilterPopupComponent myDateFilterComponent;
+  @NotNull private final StructureFilterPopupComponent myStructureFilterComponent;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUI ui) {
     myUi = ui;
@@ -57,23 +59,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     });
 
-    FilterPopupComponent branchFilter = new BranchFilterPopupComponent(this, ui);
-    FilterPopupComponent userFilter = new UserFilterPopupComponent(this, ui.getLogDataHolder(), ui.getUiProperties());
-    FilterPopupComponent dateFilter = new DateFilterPopupComponent(this);
-    FilterPopupComponent structureFilter = new StructureFilterPopupComponent(this, ui.getLogDataHolder().getRoots());
-
-    myFilterPopupComponents = ContainerUtil.newArrayList();
-    myFilterPopupComponents.add(branchFilter);
-    myFilterPopupComponents.add(userFilter);
-    myFilterPopupComponents.add(dateFilter);
-    myFilterPopupComponents.add(structureFilter);
+    myBranchFilterComponent = new BranchFilterPopupComponent(this, ui);
+    myUserFilterComponent = new UserFilterPopupComponent(this, ui.getLogDataHolder(), ui.getUiProperties());
+    myDateFilterComponent  = new DateFilterPopupComponent(this);
+    myStructureFilterComponent = new StructureFilterPopupComponent(this, ui.getLogDataHolder().getRoots());
 
     myActionGroup = new DefaultActionGroup();
     myActionGroup.add(new TextFilterComponent(myTextFilter));
-    myActionGroup.add(new FilterActionComponent(branchFilter));
-    myActionGroup.add(new FilterActionComponent(userFilter));
-    myActionGroup.add(new FilterActionComponent(dateFilter));
-    myActionGroup.add(new FilterActionComponent(structureFilter));
+    myActionGroup.add(new FilterActionComponent(myBranchFilterComponent));
+    myActionGroup.add(new FilterActionComponent(myUserFilterComponent));
+    myActionGroup.add(new FilterActionComponent(myDateFilterComponent));
+    myActionGroup.add(new FilterActionComponent(myStructureFilterComponent));
   }
 
   @Override
@@ -83,24 +79,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull
   @Override
-  public Collection<VcsLogFilter> getFilters() {
-    List<VcsLogFilter> filters = getPopupFilters();
-    if (!myTextFilter.getText().isEmpty()) {
-      filters.add(new VcsLogTextFilterImpl(myTextFilter.getText()));
-    }
-    return filters;
-  }
-
-  @NotNull
-  private List<VcsLogFilter> getPopupFilters() {
-    List<VcsLogFilter> filters = new ArrayList<VcsLogFilter>();
-    for (FilterPopupComponent popupComponent : myFilterPopupComponents) {
-      Collection<VcsLogFilter> popupFilters = popupComponent.getFilters();
-      if (popupFilters != null) {
-        filters.addAll(popupFilters);
-      }
-    }
-    return filters;
+  public VcsLogFilterCollection getFilters() {
+    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText()) : null;
+    return new VcsLogFilterCollectionImpl(myBranchFilterComponent.getFilter(), myUserFilterComponent.getFilter(),
+                                          myDateFilterComponent.getFilter(), textFilter, myStructureFilterComponent.getFilter());
   }
 
   void applyFilters() {

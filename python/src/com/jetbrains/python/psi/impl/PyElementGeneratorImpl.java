@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Queues;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -23,9 +25,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -37,12 +42,15 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.Formatter;
 
 /**
  * @author yole
  */
 public class PyElementGeneratorImpl extends PyElementGenerator {
+  private static final CommasOnly COMMAS_ONLY = new CommasOnly();
   private final Project myProject;
 
   public PyElementGeneratorImpl(Project project) {
@@ -173,6 +181,30 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return dot.copyElement();
   }
 
+  @Override
+  @NotNull
+  public PsiElement insertItemIntoListRemoveRedundantCommas(
+    @NotNull final PyElement list,
+    @Nullable final PyExpression afterThis,
+    @NotNull final PyExpression toInsert) {
+    // TODO: #insertItemIntoList is probably buggy. In such case, fix it and get rid of this method
+    final PsiElement result = insertItemIntoList(list, afterThis, toInsert);
+    final LeafPsiElement[] leafs = PsiTreeUtil.getChildrenOfType(list, LeafPsiElement.class);
+    if (leafs != null) {
+      final Deque<LeafPsiElement> commas = Queues.newArrayDeque(Collections2.filter(Arrays.asList(leafs), COMMAS_ONLY));
+      if (! commas.isEmpty()) {
+        final LeafPsiElement lastComma = commas.getLast();
+        if (PsiTreeUtil.getNextSiblingOfType(lastComma, PyExpression.class) == null) { //Comma has no expression after it
+          lastComma.delete();
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // TODO: Adds comma to empty list: adding "foo" to () will create (foo,). That is why "insertItemIntoListRemoveRedundantCommas" was created.
+  // We probably need to fix this method and delete insertItemIntoListRemoveRedundantCommas
   public PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException {
     ASTNode add = toInsert.getNode().copyElement();
@@ -225,6 +257,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createExpressionFromText(LanguageLevel.getDefault(), text);
   }
 
+  @NotNull
   public PyExpression createExpressionFromText(final LanguageLevel languageLevel, final String text) {
     final PsiFile dummyFile = createDummyFile(languageLevel, text);
     final PsiElement element = dummyFile.getFirstChild();
@@ -363,5 +396,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   public PyExpressionStatement createDocstring(String content) {
     return createFromText(LanguageLevel.getDefault(),
                           PyExpressionStatement.class, content + "\n");
+  }
+
+  private static class CommasOnly extends NotNullPredicate<LeafPsiElement> {
+    @Override
+    protected boolean applyNotNull(@NotNull final LeafPsiElement input) {
+      return input.getNode().getElementType().equals(PyTokenTypes.COMMA);
+    }
   }
 }
