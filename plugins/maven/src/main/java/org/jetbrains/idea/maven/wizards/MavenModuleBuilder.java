@@ -218,7 +218,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Nullable
   @Override
-  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     MavenArchetypesStep step = new MavenArchetypesStep(this, null);
     Disposer.register(parentDisposable, step);
     return step;

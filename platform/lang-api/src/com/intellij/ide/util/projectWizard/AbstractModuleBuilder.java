@@ -43,7 +43,7 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
    * Custom UI to be shown on the first wizard page
    */
   @Nullable
-  public ModuleWizardStep getCustomOptionsStep(Disposable parentDisposable) {
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     return null;
   }
 
