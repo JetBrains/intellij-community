@@ -16,15 +16,12 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeature;
 import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder;
-import com.intellij.compiler.classFilesIndex.chainsSearch.ChainCompletionStringUtil;
-import com.intellij.compiler.classFilesIndex.chainsSearch.ChainsSearcher;
-import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChain;
-import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChainLookupRangingHelper;
+import com.intellij.compiler.classFilesIndex.chainsSearch.*;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,9 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +42,10 @@ import static com.intellij.patterns.PsiJavaPatterns.or;
  * @author Dmitry Batkovich
  */
 public class MethodsChainsCompletionContributor extends CompletionContributor {
-  public static final int INVOCATIONS_THRESHOLD = 3;
+  private final static boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+
+  public static final int INVOCATIONS_THRESHOLD = 2;
+  public static final CompletionType COMPLETION_TYPE = IS_UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
 
   private final static int MAX_SEARCH_RESULT_SIZE = 5;
   private final static int MAX_CHAIN_SIZE = 4;
@@ -59,9 +57,6 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         && ClassFilesIndexFeaturesHolder.getInstance(parameters.getPosition().getProject())
           .enableFeatureIfNeed(ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION)) {
       super.fillCompletionVariants(parameters, result);
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        result.stopHere();
-      }
     }
   }
 
@@ -69,7 +64,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   public MethodsChainsCompletionContributor() {
     final ElementPattern<PsiElement> pattern =
       or(CompletionContributorPatternUtil.patternForMethodParameter(), CompletionContributorPatternUtil.patternForVariableAssignment());
-    extend(CompletionType.BASIC, pattern, new CompletionProvider<CompletionParameters>() {
+    extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     final ProcessingContext context,
@@ -88,6 +83,26 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         contextRelevantTypes.remove(targetClassQName);
 
         final List<LookupElement> foundElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext);
+        if (!IS_UNIT_TEST_MODE) {
+          result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+            @Override
+            public void consume(final CompletionResult completionResult) {
+              final LookupElement lookupElement = completionResult.getLookupElement();
+              final PsiElement lookupElementPsi = lookupElement.getPsiElement();
+              if (lookupElementPsi != null) {
+                for (final LookupElement element : foundElements) {
+                  if (lookupElementPsi.isEquivalentTo(element.getPsiElement())) {
+                    foundElements.remove(element);
+                    break;
+                  }
+                }
+              }
+              result.passResult(completionResult);
+            }
+          });
+        } else {
+          result.stopHere();
+        }
         result.addAllElements(foundElements);
       }
     });
