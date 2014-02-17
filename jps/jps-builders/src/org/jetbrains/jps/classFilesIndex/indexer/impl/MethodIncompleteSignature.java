@@ -17,6 +17,7 @@ package org.jetbrains.jps.classFilesIndex.indexer.impl;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.classFilesIndex.AsmUtil;
 
@@ -77,6 +78,16 @@ public class MethodIncompleteSignature {
 
   public boolean isStatic() {
     return myStatic;
+  }
+
+  @Override
+  public String toString() {
+    return "MethodIncompleteSignature{" +
+           "myOwner='" + myOwner + '\'' +
+           ", myReturnType='" + myReturnType + '\'' +
+           ", myName='" + myName + '\'' +
+           ", myStatic=" + myStatic +
+           '}';
   }
 
   public final static Comparator<MethodIncompleteSignature> COMPARATOR = new Comparator<MethodIncompleteSignature>() {

@@ -22,7 +22,6 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected ValidationResult doValidate(File toFile) throws IOException {
-    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE);
     if (result != null) return result;
     

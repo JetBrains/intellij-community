@@ -16,19 +16,19 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.util.*;
 
@@ -42,21 +42,36 @@ public final class ChainsSearcher {
   private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
   private static final double NEXT_METHOD_IN_CHAIN_RATIO = 1.5;
 
-  public static List<MethodsChain> search(final MethodsUsageIndexReader indexReader,
-                                          final String targetQName,
+  public static List<MethodsChain> search(final int pathMaximalLength,
+                                          final TargetType targetType,
                                           final Set<String> contextQNames,
                                           final int maxResultSize,
-                                          final int pathMaximalLength,
-                                          final ChainCompletionContext context) {
-    final SearchInitializer initializer = createInitializer(targetQName, indexReader, context.getExcludedQNames(), context);
-    return search(indexReader, initializer, contextQNames, pathMaximalLength, maxResultSize, targetQName, context);
+                                          final ChainCompletionContext context,
+                                          final MethodsUsageIndexReader methodsUsageIndexReader) {
+    final SearchInitializer initializer =
+      createInitializer(targetType,
+                        context.getExcludedQNames(),
+                        methodsUsageIndexReader,
+                        context);
+    if (initializer == null) {
+      return Collections.emptyList();
+    }
+    return search(methodsUsageIndexReader,
+                  initializer,
+                  contextQNames,
+                  pathMaximalLength,
+                  maxResultSize,
+                  targetType.getClassQName(),
+                  context);
   }
 
-  private static SearchInitializer createInitializer(final String targetQName,
-                                                     final MethodsUsageIndexReader indexReader,
+  @Nullable
+  private static SearchInitializer createInitializer(final TargetType target,
                                                      final Set<String> excludedParamsTypesQNames,
+                                                     final MethodsUsageIndexReader methodsUsageIndexReader,
                                                      final ChainCompletionContext context) {
-    return new SearchInitializer(indexReader.getMethods(targetQName), targetQName, excludedParamsTypesQNames, context);
+    final TreeSet<UsageIndexValue> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
+    return new SearchInitializer(methods, target.getClassQName(), excludedParamsTypesQNames, context);
   }
 
   @NotNull
@@ -80,22 +95,20 @@ public final class ChainsSearcher {
                                                                                                      @Override
                                                                                                      public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
                                                                                                        final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
-                                                                                                       final MethodIncompleteSignature
-                                                                                                         underlying =
-                                                                                                         methodIncompleteSignatureWeightAware
-                                                                                                           .getUnderlying();
+                                                                                                       final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
                                                                                                        return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
                                                                                                          new Pair<MethodIncompleteSignature, MethodsChain>(
-                                                                                                           underlying, new MethodsChain(
-                                                                                                           context.resolveNotDeprecated(
-                                                                                                             underlying),
-                                                                                                           methodIncompleteSignatureWeightAware
-                                                                                                             .getWeight(),
-                                                                                                           underlying.getOwner())),
-                                                                                                         methodIncompleteSignatureWeightAware
-                                                                                                           .getWeight());
+                                                                                                           underlying,
+                                                                                                           new MethodsChain(context.resolveNotDeprecated(underlying),
+                                                                                                                            methodIncompleteSignatureWeightAware.getWeight(),
+                                                                                                                            underlying.getOwner()
+                                                                                                           )
+                                                                                                         ),
+                                                                                                         methodIncompleteSignatureWeightAware.getWeight()
+                                                                                                       );
                                                                                                      }
-                                                                                                   }));
+                                                                                                   }
+      ));
 
     int maxWeight = 0;
     for (final MethodsChain methodsChain : knownDistance.values()) {
@@ -118,7 +131,8 @@ public final class ChainsSearcher {
         result.add(currentVertex.getUnderlying().getSecond());
         continue;
       }
-      final SortedSet<UsageIndexValue> nextMethods = indexReader.getMethods(currentVertexUnderlying.getFirst().getOwner());
+      final String currentReturnType = currentVertexUnderlying.getFirst().getOwner();
+      final SortedSet<UsageIndexValue> nextMethods = indexReader.getMethods(currentReturnType);
       final MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>>(maxResultSize);
       for (final UsageIndexValue indexValue : nextMethods) {
@@ -133,8 +147,10 @@ public final class ChainsSearcher {
                 final MethodIncompleteSignature methodInvocation = indexValue.getMethodIncompleteSignature();
                 final PsiMethod[] psiMethods = context.resolveNotDeprecated(methodInvocation);
                 if (psiMethods.length != 0 && MethodChainsSearchUtil.checkParametersForTypesQNames(psiMethods, allExcludedNames)) {
-                  final MethodsChain newBestMethodsChain = currentVertexMethodsChain.addEdge(psiMethods, indexValue.getMethodIncompleteSignature().getOwner(), vertexDistance);
-                  currentSignatures.add(new WeightAware<MethodIncompleteSignature>(indexValue.getMethodIncompleteSignature(), vertexDistance));
+                  final MethodsChain newBestMethodsChain =
+                    currentVertexMethodsChain.addEdge(psiMethods, indexValue.getMethodIncompleteSignature().getOwner(), vertexDistance);
+                  currentSignatures
+                    .add(new WeightAware<MethodIncompleteSignature>(indexValue.getMethodIncompleteSignature(), vertexDistance));
                   knownDistance.put(vertex, newBestMethodsChain);
                 }
               }

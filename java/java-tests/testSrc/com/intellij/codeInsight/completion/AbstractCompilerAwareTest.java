@@ -19,15 +19,16 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -48,21 +49,16 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   }
 
   protected final void compileAndIndexData(final String... fileNames) {
-    final VirtualFile[] filesToCompile =
-      ContainerUtil.map2Array(ContainerUtil.list(fileNames), new VirtualFile[fileNames.length], new Function<String, VirtualFile>() {
-        @Override
-        public VirtualFile fun(final String fileName) {
-          try {
-            return myFixture.addFileToProject(fileName, FileUtil.loadFile(new File(getTestDataPath() + getName() + "/" + fileName)))
-              .getVirtualFile();
-          }
-          catch (final IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
+    try {
+      for (String fileName : fileNames) {
+        myFixture.addFileToProject(fileName, FileUtil.loadFile(new File(getTestDataPath() + getName() + "/" + fileName))).getVirtualFile();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     for (final CompilerMessage compilerMessage : myCompilerTester.rebuild()) {
-      assertNotSame(CompilerMessageCategory.ERROR, compilerMessage.getCategory());
+      assertNotSame(compilerMessage.getMessage(), CompilerMessageCategory.ERROR, compilerMessage.getCategory());
     }
   }
 }
