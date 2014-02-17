@@ -14,6 +14,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +120,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @Override
   public int getRowOfCommit(@NotNull final Hash hash) {
     final int commitIndex = myDataHolder.putHash(hash);
-    return ContainerUtil.indexOf(myDataPack.getGraphFacade().getVisibleCommits(), new Condition<Integer>() {
+    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getGraphFacade()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
         return integer == commitIndex;
@@ -130,7 +131,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @Override
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final String pHash = partialHash.toLowerCase();
-    return ContainerUtil.indexOf(myDataPack.getGraphFacade().getVisibleCommits(), new Condition<Integer>() {
+    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getGraphFacade()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
         Hash hash = myDataHolder.getHash(integer);

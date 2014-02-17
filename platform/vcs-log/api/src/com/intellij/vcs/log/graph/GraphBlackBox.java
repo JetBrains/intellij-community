@@ -46,19 +46,10 @@ public interface GraphBlackBox {
 
   /**
    * Returns all commits in the graph without considering commits visibility.
-   * @see #getVisibleCommits()
+   * To get visible commits use {@link #getVisibleCommitCount} & {@link #getCommitAtRow}.
    */
   @NotNull
   List<Integer> getAllCommits();
-
-  /**
-   * Returns those commits of the graph which is current visible, according to filters currently set up on the graph.
-   * @see #getAllCommits()
-   * @see #setFilter(Condition)
-   * @see #setVisibleBranches(Collection)
-   */
-  @NotNull
-  List<Integer> getVisibleCommits();
 
   /**
    * A shorthand to getVisibleCommits().get(visibleRow), but may be faster.

@@ -12,6 +12,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -116,7 +117,7 @@ public class VcsLogFilterer {
   private List<VcsFullCommitDetails> filterByDetails(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    List<Integer> visibleCommits = myLogDataHolder.getDataPack().getGraphFacade().getVisibleCommits();
+    List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(myLogDataHolder.getDataPack().getGraphFacade());
     for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
       int commitIndex = visibleCommits.get(i);
       final VcsFullCommitDetails details = getDetailsFromCache(commitIndex);

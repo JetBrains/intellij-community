@@ -87,18 +87,6 @@ public class GraphFacadeImpl implements GraphBlackBox {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  @Override
-  public List<Integer> getVisibleCommits() {
-    List<NodeRow> nodeRows = myGraphModel.getGraph().getNodeRows();
-    return ContainerUtil.map(nodeRows, new Function<NodeRow, Integer>() {
-      @Override
-      public Integer fun(NodeRow nodeRow) {
-        return getCommit(nodeRow);
-      }
-    });
-  }
-
   @Override
   public int getCommitAtRow(int visibleRow) {
     NodeRow row = myGraphModel.getGraph().getNodeRows().get(visibleRow);
