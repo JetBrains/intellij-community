@@ -1056,11 +1056,9 @@ public class PluginManagerCore {
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     final HashMap<String, String> disabledPluginNames = new HashMap<String, String>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
-        final List<String> modules = descriptor.getModules();
-        if (modules != null) {
-          ourAvailableModules.addAll(modules);
-        }
+      final List<String> modules = descriptor.getModules();
+      if (modules != null) {
+        ourAvailableModules.addAll(modules);
       }
 
       if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {

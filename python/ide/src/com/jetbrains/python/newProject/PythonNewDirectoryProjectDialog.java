@@ -31,6 +31,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PythonSdkChooserCombo;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
@@ -38,7 +39,6 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.RemoteProjectSettings;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
@@ -53,7 +53,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,9 +68,8 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
     super(project);
     myProject = project;
 
-    final List<Sdk> sdks = PythonSdkType.getAllSdks();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(myProject).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
-    Collections.sort(sdks, PreferredSdkComparator.INSTANCE);
     final Sdk preferred = sdks.isEmpty() ? null : sdks.iterator().next();
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, new Condition<Sdk>() {
       @Override

@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -27,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
+public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
   private final String myNullText;
   private final Map<Sdk, SdkModificator> mySdkModifiers;
+  public static final String SEPARATOR = "separator";
 
   public PySdkListCellRenderer() {
     myNullText = "";
@@ -42,8 +44,9 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
   }
 
   @Override
-  public void customize(JList list, Sdk sdk, int index, boolean selected, boolean hasFocus) {
-    if (sdk != null) {
+  public void customize(JList list, Object item, int index, boolean selected, boolean hasFocus) {
+    if (item instanceof Sdk) {
+      Sdk sdk = (Sdk)item;
       final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.getHomePath());
       final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType)sdk.getSdkType()).getIcon();
 
@@ -54,7 +57,6 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
       else {
         name = sdk.getName();
       }
-
       if (PythonSdkType.isInvalid(sdk)) {
         setText("[invalid] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
@@ -63,17 +65,22 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
         setText("[incomplete] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
       }
+      else if (sdk instanceof PyDetectedSdk){
+        setText(name);
+        setIcon(IconLoader.getTransparentIcon(icon));
+      }
       else {
         setText(name);
         setIcon(icon);
       }
     }
-    else {
+    else if (SEPARATOR.equals(item))
+      setSeparator();
+    else if (item == null)
       setText(myNullText);
-    }
   }
 
-  private LayeredIcon wrapIconWithWarningDecorator(Icon icon) {
+  private static LayeredIcon wrapIconWithWarningDecorator(Icon icon) {
     final LayeredIcon layered = new LayeredIcon(2);
     layered.setIcon(icon, 0);
     // TODO: Create a separate invalid SDK overlay icon (DSGN-497)

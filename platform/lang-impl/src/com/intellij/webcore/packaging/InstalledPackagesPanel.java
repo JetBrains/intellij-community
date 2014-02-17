@@ -2,6 +2,7 @@ package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,13 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,20 +30,16 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
-  protected final JButton myInstallButton;
-  private final JButton myUninstallButton;
-  private final JButton myUpgradeButton;
+  private final AnActionButton myUpgradeButton;
+  protected final AnActionButton myInstallButton;
+  private final AnActionButton myUninstallButton;
 
   protected final JBTable myPackagesTable;
   private DefaultTableModel myPackagesTableModel;
@@ -53,19 +51,9 @@ public class InstalledPackagesPanel extends JPanel {
   private final Set<InstalledPackage> myWaitingToUpgrade = ContainerUtil.newHashSet();
 
   public InstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
-    super(new GridBagLayout());
+    super(new BorderLayout());
     myProject = project;
     myNotificationArea = area;
-    myInstallButton = new JButton("Install");
-    myUninstallButton = new JButton("Uninstall");
-    myUpgradeButton = new JButton("Upgrade");
-    myInstallButton.setMnemonic('I');
-    myUninstallButton.setMnemonic('U');
-    myUpgradeButton.setMnemonic('p');
-
-    myInstallButton.setEnabled(false);
-    myUninstallButton.setEnabled(false);
-    myUpgradeButton.setEnabled(false);
 
     myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest"}, 0) {
       @Override
@@ -82,40 +70,46 @@ public class InstalledPackagesPanel extends JPanel {
     };
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
 
-    Insets anInsets = new Insets(2, 2, 2, 2);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPackagesTable,
-                                                                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setPreferredSize(new Dimension(500, 500));
-    add(scrollPane, new GridBagConstraints(0, 0, 1, 3, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           anInsets, 0, 0));
+    myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        upgradeAction();
+      }
+    };
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myPackagesTable).disableUpDownActions()
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          if (myPackageManagementService != null) {
+            ManagePackagesDialog dialog = createManagePackagesDialog();
+            dialog.show();
+          }
+        }
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          uninstallAction();
+        }
+      })
+      .addExtraAction(myUpgradeButton);
 
-    addUninstallAction();
-    addUpgradeAction();
+    decorator.setPreferredSize(new Dimension(500, 500));
+    add(decorator.createPanel());
+    myInstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.ADD);
+    myUninstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.REMOVE);
+    myInstallButton.setEnabled(false);
+    myUninstallButton.setEnabled(false);
+    myUpgradeButton.setEnabled(false);
 
-    add(myInstallButton,
-        new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               anInsets, 0, 0));
-    add(myUninstallButton,
-        new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               anInsets, 0, 0));
-    add(myUpgradeButton,
-        new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
+    myInstallButton.getTemplatePresentation().setText("Install");
+    myUninstallButton.getTemplatePresentation().setText("Uninstall");
+
 
     myPackagesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent event) {
         updateUninstallUpgrade();
-      }
-    });
-
-    myInstallButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myPackageManagementService != null) {
-          ManagePackagesDialog dialog = createManagePackagesDialog();
-          dialog.show();
-        }
       }
     });
 
@@ -164,38 +158,33 @@ public class InstalledPackagesPanel extends JPanel {
     myPathChangedListeners.add(consumer);
   }
 
-  private void addUpgradeAction() {
-    myUpgradeButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final int[] rows = myPackagesTable.getSelectedRows();
-        if (myPackageManagementService != null) {
-          final Set<String> upgradedPackages = new HashSet<String>();
-          final Set<String> packagesShouldBePostponed = getPackagesToPostpone();
-          for (int row : rows) {
-            final Object packageObj = myPackagesTableModel.getValueAt(row, 0);
-            if (packageObj instanceof InstalledPackage) {
-              InstalledPackage pkg = (InstalledPackage)packageObj;
-              final String packageName = pkg.getName();
-              final String currentVersion = pkg.getVersion();
-              final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
+  private void upgradeAction() {
+    final int[] rows = myPackagesTable.getSelectedRows();
+    if (myPackageManagementService != null) {
+      final Set<String> upgradedPackages = new HashSet<String>();
+      final Set<String> packagesShouldBePostponed = getPackagesToPostpone();
+      for (int row : rows) {
+        final Object packageObj = myPackagesTableModel.getValueAt(row, 0);
+        if (packageObj instanceof InstalledPackage) {
+          InstalledPackage pkg = (InstalledPackage)packageObj;
+          final String packageName = pkg.getName();
+          final String currentVersion = pkg.getVersion();
+          final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
 
-              if (packagesShouldBePostponed.contains(packageName)) {
-                myWaitingToUpgrade.add((InstalledPackage)packageObj);
-              }
-              else if (PackageVersionComparator.VERSION_COMPARATOR.compare(currentVersion, availableVersion) < 0) {
-                upgradePackage(pkg, availableVersion);
-                upgradedPackages.add(packageName);
-              }
-            }
+          if (packagesShouldBePostponed.contains(packageName)) {
+            myWaitingToUpgrade.add((InstalledPackage)packageObj);
           }
-
-          if (myCurrentlyInstalling.isEmpty() && upgradedPackages.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
-            upgradePostponedPackages();
+          else if (PackageVersionComparator.VERSION_COMPARATOR.compare(currentVersion, availableVersion) < 0) {
+            upgradePackage(pkg, availableVersion);
+            upgradedPackages.add(packageName);
           }
         }
       }
-    });
+
+      if (myCurrentlyInstalling.isEmpty() && upgradedPackages.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
+        upgradePostponedPackages();
+      }
+    }
   }
 
   private void upgradePostponedPackages() {
@@ -295,7 +284,7 @@ public class InstalledPackagesPanel extends JPanel {
       public void run() {
         final int[] selected = myPackagesTable.getSelectedRows();
         boolean upgradeAvailable = false;
-        boolean canUninstall = true;
+        boolean canUninstall = selected.length != 0;
         boolean canUpgrade = true;
         if (myPackageManagementService != null && selected.length != 0) {
           for (int i = 0; i != selected.length; ++i) {
@@ -334,53 +323,48 @@ public class InstalledPackagesPanel extends JPanel {
     return true;
   }
 
-  private void addUninstallAction() {
-    myUninstallButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        final List<InstalledPackage> packages = getSelectedPackages();
-        final PackageManagementService selPackageManagementService = myPackageManagementService;
-        if (selPackageManagementService != null) {
-          PackageManagementService.Listener listener = new PackageManagementService.Listener() {
+  private void uninstallAction() {
+    final List<InstalledPackage> packages = getSelectedPackages();
+    final PackageManagementService selPackageManagementService = myPackageManagementService;
+    if (selPackageManagementService != null) {
+      PackageManagementService.Listener listener = new PackageManagementService.Listener() {
+        @Override
+        public void operationStarted(String packageName) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
-            public void operationStarted(String packageName) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  myPackagesTable.setPaintBusy(true);
-                }
-              });
+            public void run() {
+              myPackagesTable.setPaintBusy(true);
             }
-
-            @Override
-            public void operationFinished(final String packageName, @Nullable final String errorDescription) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  myPackagesTable.clearSelection();
-                  updatePackages(selPackageManagementService);
-                  myPackagesTable.setPaintBusy(false);
-                  if (errorDescription == null) {
-                    if (packageName != null) {
-                      myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
-                    }
-                    else {
-                      myNotificationArea.showSuccess("Packages successfully uninstalled");
-                    }
-                  }
-                  else {
-                    myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
-                                                 "Uninstall Packages Failed",
-                                                 "Uninstall packages failed.\n" + errorDescription);
-                  }
-                }
-              });
-            }
-          };
-          myPackageManagementService.uninstallPackages(packages, listener);
+          });
         }
-      }
-    });
+
+        @Override
+        public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myPackagesTable.clearSelection();
+              updatePackages(selPackageManagementService);
+              myPackagesTable.setPaintBusy(false);
+              if (errorDescription == null) {
+                if (packageName != null) {
+                  myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+                }
+                else {
+                  myNotificationArea.showSuccess("Packages successfully uninstalled");
+                }
+              }
+              else {
+                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
+                                             "Uninstall Packages Failed",
+                                             "Uninstall packages failed.\n" + errorDescription);
+              }
+            }
+          });
+        }
+      };
+      myPackageManagementService.uninstallPackages(packages, listener);
+    }
   }
 
   @NotNull

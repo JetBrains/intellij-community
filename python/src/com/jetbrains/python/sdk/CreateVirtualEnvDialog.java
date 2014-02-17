@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.Application;
@@ -67,18 +69,16 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private JTextField myName;
   private JBCheckBox mySitePackagesCheckBox;
   private JBCheckBox myMakeAvailableToAllProjectsCheckbox;
-  private JBCheckBox mySetAsProjectInterpreterCheckbox;
   @Nullable private Project myProject;
   private String myInitialPath;
 
   public interface VirtualEnvCallback {
-    void virtualEnvCreated(Sdk sdk, boolean associateWithProject, boolean setAsProjectInterpreter);
+    void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
-  private static void setupVirtualEnvSdk(List<Sdk> allSdks,
+  private void setupVirtualEnvSdk(List<Sdk> allSdks,
                                          final String path,
                                          boolean associateWithProject,
-                                         final boolean makeActive,
                                          VirtualEnvCallback callback) {
     final VirtualFile sdkHome =
       ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
@@ -92,46 +92,45 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
         SdkConfigurationUtil.createUniqueSdkName(PythonSdkType.getInstance(), sdkHome.getPath(), allSdks);
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
       sdk.setHomePath(sdkHome.getPath());
-      callback.virtualEnvCreated(sdk, associateWithProject, makeActive);
+      callback.virtualEnvCreated(sdk, associateWithProject);
+      PythonSdkType.setupSdkPaths(sdk, myProject, null);
     }
   }
 
   public CreateVirtualEnvDialog(Project project,
-                                boolean isNewProject,
                                 final List<Sdk> allSdks,
                                 @Nullable Sdk suggestedBaseSdk) {
     super(project);
-    setupDialog(project, isNewProject, allSdks, suggestedBaseSdk);
+    setupDialog(project, allSdks, suggestedBaseSdk);
   }
 
   public CreateVirtualEnvDialog(Component owner,
-                                boolean isNewProject,
                                 final List<Sdk> allSdks,
                                 @Nullable Sdk suggestedBaseSdk) {
     super(owner);
-    setupDialog(null, isNewProject, allSdks, suggestedBaseSdk);
+    setupDialog(null, allSdks, suggestedBaseSdk);
   }
 
-  private void setupDialog(Project project, boolean isNewProject, List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
+  private void setupDialog(Project project, List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
     myProject = project;
     init();
     setTitle("Create Virtual Environment");
     if (suggestedBaseSdk == null && allSdks.size() > 0) {
+      Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+        @Override
+        public boolean apply(Sdk s) {
+          return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkDataHolder.isRemoteSdk(s.getHomePath());
+        }
+      });
       List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
       Collections.sort(sortedSdks, new PreferredSdkComparator());
       suggestedBaseSdk = sortedSdks.get(0);
     }
     updateSdkList(allSdks, suggestedBaseSdk);
 
-    myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
-      mySetAsProjectInterpreterCheckbox.setSelected(false);
-      mySetAsProjectInterpreterCheckbox.setVisible(false);
-    }
-    else if (isNewProject) {
-      mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
     }
 
     setOKActionEnabled(false);
@@ -238,17 +237,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    List<Sdk> baseSdks = new ArrayList<Sdk>();
-    for (Sdk s : allSdks) {
-      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder.isRemoteSdk(s.getHomePath())) {
-        baseSdks.add(s);
-      }
-      else if (s.equals(initialSelection)){
-        initialSelection = null;
-      }
-    }
-
-    mySdkCombo.setModel(new CollectionComboBoxModel(baseSdks, initialSelection));
+    mySdkCombo.setModel(new CollectionComboBoxModel(allSdks, initialSelection));
   }
 
   @Override
@@ -288,10 +277,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     return !myMakeAvailableToAllProjectsCheckbox.isSelected();
   }
 
-  public boolean setAsProjectInterpreter() {
-    return mySetAsProjectInterpreterCheckbox.isSelected();
-  }
-
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myName;
@@ -326,7 +311,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), setAsProjectInterpreter(), callback);
+              setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), callback);
             }
           }, ModalityState.any());
         }

@@ -15,18 +15,24 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
+  private boolean myStoredVirtualSpaceSetting;
+
   public void setUp() throws Exception {
     super.setUp();
     EditorTestUtil.enableMultipleCarets();
+    myStoredVirtualSpaceSetting = EditorSettingsExternalizable.getInstance().isVirtualSpace();
+    EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
   }
 
   public void tearDown() throws Exception {
+    EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
     EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
