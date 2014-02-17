@@ -15,7 +15,7 @@
  */
 package com.intellij.remoteServer.util.ssh;
 
-import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.util.CloudServerRuntimeInstance;
 import com.intellij.remoteServer.util.ServerRuntimeException;
 
@@ -28,5 +28,5 @@ public interface SshKeyAwareServerRuntime {
 
   CloudServerRuntimeInstance asCloudServerRuntime();
 
-  ServerConfiguration getConfiguration();
+  RemoteServer getServer();
 }
