@@ -88,7 +88,11 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  public void _testCapturedReturnTypes() throws Exception {//todo waiting for capture incorporation
+  public void _testCapturedReturnTypes() throws Exception {
+    doTest();
+  }
+
+  public void testClsCapturedReturnTypes() throws Exception {
     doTest();
   }
 

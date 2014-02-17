@@ -384,7 +384,7 @@ public class InferenceSession {
           PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            copy[i] = (PsiTypeParameter)typeParameter.copy();
+            copy[i] = elementFactory.createTypeParameterFromText(typeParameter.getName(), null);
             initBounds(copy[i]);
             subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
           }
@@ -691,8 +691,10 @@ public class InferenceSession {
         }
       }
 
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
       for (InferenceVariable var : vars) {
-        final PsiTypeParameter copy = (PsiTypeParameter)var.getParameter().copy();
+        final PsiTypeParameter parameter = var.getParameter();
+        final PsiTypeParameter copy = elementFactory.createTypeParameterFromText(parameter.getName(), null);
         final PsiType lub = getLowerBound(var, substitutor);
         final PsiType glb = getUpperBound(var, substitutor);
         final InferenceVariable zVariable = new InferenceVariable(copy);
