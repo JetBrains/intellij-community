@@ -93,6 +93,10 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doSimpleTest("Foo", "Suppa", null, true, ".foo");
   }
 
+  public void testInstanceNotDeclaredInInit() throws Exception {
+    doSimpleTest("Child", "Parent", null, true, "#eggs");
+  }
+
   public void testWithSuper() throws Exception {
     doSimpleTest("Foo", "Suppa", null, true, ".foo");
   }

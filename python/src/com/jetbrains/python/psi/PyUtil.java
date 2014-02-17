@@ -700,6 +700,38 @@ public class PyUtil {
     return PyElementGenerator.getInstance(element.getProject()).createNameIdentifier(name, LanguageLevel.forElement(element));
   }
 
+  /**
+   * Finds element declaration by resolving its references top the top but not further than file (to prevent unstubing)
+   * @param element element to resolve
+   * @return its declaration
+   */
+  @NotNull
+  public static PsiElement resolveToTheTop(@NotNull final PsiElement elementToResolve) {
+    PsiElement currentElement = elementToResolve;
+    while (true) {
+      final PsiReference reference = currentElement.getReference();
+      if (reference == null) {
+        break;
+      }
+      final PsiElement resolve = reference.resolve();
+      if ((resolve == null) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
+        break;
+      }
+      currentElement = resolve;
+    }
+    return currentElement;
+  }
+
+  /**
+   * Gets class init method
+   * @param pyClass class where to find init
+   * @return class init method if any
+   */
+  @Nullable
+  public static PyFunction getInitMethod(@NotNull final PyClass pyClass) {
+    return pyClass.findMethodByName(PyNames.INIT, false);
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
