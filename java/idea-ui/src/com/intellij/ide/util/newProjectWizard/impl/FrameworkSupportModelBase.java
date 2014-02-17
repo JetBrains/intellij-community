@@ -180,23 +180,28 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
-    final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
     final FrameworkSupportInModuleProvider provider = node.getUserObject();
     //todo[nik]
+    boolean checked = node.isChecked();
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();
-      if (node.isChecked()) {
-        multicaster.frameworkSelected(oldProvider);
-      }
-      else {
-        multicaster.frameworkUnselected(oldProvider);
-      }
+      selectFramework(oldProvider, checked);
     }
     for (FrameworkSupportInModuleProvider.FrameworkDependency dependency : provider.getDependenciesFrameworkIds()) {
       if (!dependency.isOptional()) {
         String id = dependency.getFrameworkId();
         setFrameworkComponentEnabled(id, true);
       }
+    }
+  }
+
+  public void selectFramework(FrameworkSupportProvider provider, boolean checked) {
+    final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
+    if (checked) {
+      multicaster.frameworkSelected(provider);
+    }
+    else {
+      multicaster.frameworkUnselected(provider);
     }
   }
 

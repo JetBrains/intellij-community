@@ -17,9 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -38,6 +36,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * User: Maxim.Mossienko
@@ -282,6 +283,35 @@ public class EditorTestUtil {
     }
 
     return result;
+  }
+
+  public static void verifyCaretAndSelectionState(Editor editor, CaretsState caretState) {
+    CaretModel caretModel = editor.getCaretModel();
+    List<com.intellij.openapi.editor.Caret> allCarets = new ArrayList<com.intellij.openapi.editor.Caret>(caretModel.getAllCarets());
+    assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
+    for (int i = 0; i < caretState.carets.size(); i++) {
+      String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
+      com.intellij.openapi.editor.Caret currentCaret = allCarets.get(i);
+      LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
+      LogicalPosition actualSelectionStart = editor.offsetToLogicalPosition(currentCaret.getSelectionStart());
+      LogicalPosition actualSelectionEnd = editor.offsetToLogicalPosition(currentCaret.getSelectionEnd());
+      EditorTestUtil.Caret expected = caretState.carets.get(i);
+      if (expected.offset != null) {
+        LogicalPosition expectedCaretPosition = editor.offsetToLogicalPosition(expected.offset);
+        assertEquals(caretDescription + "unexpected caret position", expectedCaretPosition, actualCaretPosition);
+      }
+      if (expected.selection != null) {
+        LogicalPosition expectedSelectionStart = editor.offsetToLogicalPosition(expected.selection.getStartOffset());
+        LogicalPosition expectedSelectionEnd = editor.offsetToLogicalPosition(expected.selection.getEndOffset());
+
+        assertEquals(caretDescription + "unexpected selection start", expectedSelectionStart, actualSelectionStart);
+        assertEquals(caretDescription + "unexpected selection end", expectedSelectionEnd, actualSelectionEnd);
+      }
+      else {
+        assertFalse(caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
+                    currentCaret.hasSelection());
+      }
+    }
   }
 
   public static void enableMultipleCarets() {

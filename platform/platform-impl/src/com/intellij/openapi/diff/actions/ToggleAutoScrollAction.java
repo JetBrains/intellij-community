@@ -17,8 +17,11 @@ package com.intellij.openapi.diff.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 
@@ -29,15 +32,16 @@ public class ToggleAutoScrollAction extends ToggleActionButton implements DumbAw
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
-    return diffPanel == null || diffPanel.isAutoScrollEnabled();
+    DiffViewer viewer = PlatformDataKeys.DIFF_VIEWER.getData(e.getDataContext());
+    if (viewer instanceof DiffPanelEx) return ((DiffPanelEx)viewer).isAutoScrollEnabled();
+    if (viewer instanceof MergePanel2) return ((MergePanel2)viewer).isAutoScrollEnabled();
+    return true;
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
-    if (diffPanel != null) {
-      diffPanel.setAutoScrollEnabled(state);
-    }
+    DiffViewer viewer = PlatformDataKeys.DIFF_VIEWER.getData(e.getDataContext());
+    if (viewer instanceof DiffPanelEx) ((DiffPanelEx)viewer).setAutoScrollEnabled(state);
+    if (viewer instanceof MergePanel2) ((MergePanel2)viewer).setAutoScrollEnabled(state);
   }
 }

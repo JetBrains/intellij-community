@@ -17,12 +17,8 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
@@ -47,64 +41,29 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final WizardContext myWizardContext;
   protected final ProjectSdksModel myModel;
   private final ModuleBuilder myModuleBuilder;
+  private final JPanel myJdkPanel;
 
-  public SdkSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
+                           @NotNull Condition<SdkTypeId> sdkFilter) {
+
+    this(settingsStep.getContext(), moduleBuilder, sdkFilter);
+    settingsStep.addSettingsField(getSdkFieldLabel(settingsStep.getContext().getProject()), myJdkPanel);
+  }
+
+  public SdkSettingsStep(WizardContext context,
+                         @NotNull ModuleBuilder moduleBuilder,
+                         @NotNull Condition<SdkTypeId> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
-    myWizardContext = settingsStep.getContext();
+    myWizardContext = context;
     myModel = new ProjectSdksModel();
     Project project = myWizardContext.getProject();
     myModel.reset(project);
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
-
-    final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
-    ModuleType moduleType = moduleBuilder.getModuleType();
-    final String selectedJdkProperty = "jdk.selected." + (moduleType == null ? "" : moduleType.getId());
-    myJdkComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Sdk jdk = myJdkComboBox.getSelectedJdk();
-        if (jdk != null) {
-          component.setValue(selectedJdkProperty, jdk.getName());
-        }
-      }
-    });
-
-    if (project != null) {
-      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        // use project SDK
-        return;
-      }
-    }
-    else  {
-      // set default project SDK
-      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
-      if (sdk != null && sdkFilter.value(sdk.getSdkType())) {
-        myJdkComboBox.setSelectedJdk(sdk);
-      }
-    }
-
-    String value = component.getValue(selectedJdkProperty);
-    if (value != null) {
-      Sdk jdk = ProjectJdkTable.getInstance().findJdk(value);
-      if (jdk != null) {
-        myJdkComboBox.setSelectedJdk(jdk);
-      }
-    }
-
-    JButton button = new JButton("Ne\u001Bw...");
-    myJdkComboBox.setSetupButton(button, project, myModel,
-                                 project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
-                                 null,
-                                 false);
-    JPanel jdkPanel = new JPanel(new BorderLayout(4, 0));
-    jdkPanel.add(myJdkComboBox);
-    jdkPanel.add(button, BorderLayout.EAST);
-    settingsStep.addSettingsField(getSdkFieldLabel(project), jdkPanel);
-
+    myJdkComboBox = JdkComboBox.createSdkComboBox(moduleBuilder, sdkFilter, project, myModel);
+    myJdkPanel = new JPanel(new BorderLayout(4, 0));
+    myJdkPanel.add(myJdkComboBox);
+    myJdkPanel.add(myJdkComboBox.getSetUpButton(), BorderLayout.EAST);
   }
 
   @NotNull
@@ -112,9 +71,13 @@ public class SdkSettingsStep extends ModuleWizardStep {
     return (project == null ? "Project" : "Module") + " \u001BSDK:";
   }
 
+  public JdkComboBox getJdkComboBox() {
+    return myJdkComboBox;
+  }
+
   @Override
   public JComponent getComponent() {
-    return null;
+    return myJdkPanel;
   }
 
   @Override

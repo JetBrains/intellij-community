@@ -328,7 +328,7 @@ public class InjectedLanguageUtil {
     // modification of cachedInjectedDocuments must be under PsiLock only
     ConcurrentList<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.<DocumentWindow>createLockFreeCopyOnWriteList());
+      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.<DocumentWindow>createConcurrentList());
     }
     return injected;
   }

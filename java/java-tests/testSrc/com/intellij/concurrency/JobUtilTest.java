@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -73,7 +75,7 @@ public class JobUtilTest extends PlatformTestCase {
     return COUNT.incrementAndGet();
   }
 
-  public void testJobUtilFinishes() throws Exception {
+  public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishes() throws Exception {
     COUNT.set(0);
     int N = 100000;
     List<String> list = Collections.nCopies(N, null);
@@ -259,7 +261,7 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilRecursiveCancel() throws Exception {
     final List<String> list = Collections.nCopies(100, "");
     final List<Integer> ilist = Collections.nCopies(100, 0);
-    for (int i=0; i<1/*0*/; i++) {
+    for (int i=0; i<10; i++) {
       COUNT.set(0);
       long start = System.currentTimeMillis();
       boolean success = false;
@@ -277,7 +279,7 @@ public class JobUtilTest extends PlatformTestCase {
                 return true;
               }
             });
-            System.out.println("nestedSuccess = " + nestedSuccess);
+            //System.out.println("nestedSuccess = " + nestedSuccess);
             return true;
           }
         });
@@ -292,6 +294,37 @@ public class JobUtilTest extends PlatformTestCase {
       System.out.println("Elapsed: "+(finish-start)+"ms");
       //assertEquals(list.size()*list.size(), COUNT.get());
       assertFalse(success);
+    }
+  }
+
+  public void testSaturation() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(1);
+    for (int i=0; i<100; i++) {
+      JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            latch.await();
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+    JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
+      @Override
+      public void run() {
+        latch.countDown();
+      }
+    });
+
+    try {
+      boolean scheduled = latch.await(3, TimeUnit.SECONDS);
+      assertFalse(scheduled); // pool saturated, no thread can be scheduled
+    }
+    finally {
+      latch.countDown();
     }
   }
 }

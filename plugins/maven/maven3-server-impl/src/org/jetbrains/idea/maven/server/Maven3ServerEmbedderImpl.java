@@ -34,6 +34,7 @@ import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
+import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
@@ -91,6 +92,9 @@ import java.util.concurrent.atomic.AtomicReference;
  maven-core:
  org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactFactory <-> org.apache.maven.artifact.factory.DefaultArtifactFactory
  org.jetbrains.idea.maven.server.embedder.CustomPluginDescriptorCache <-> org.apache.maven.plugin.DefaultPluginDescriptorCache
+
+ maven-model-builder:
+ org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2 <-> org.apache.maven.model.interpolation.StringSearchModelInterpolator
 */
 public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   @NotNull private final DefaultPlexusContainer myContainer;
@@ -354,9 +358,19 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
           // copied from DefaultMavenProjectBuilder.buildWithDependencies
           ProjectBuilder builder = getComponent(ProjectBuilder.class);
 
-          // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
-          List<ProjectBuildingResult> results =
-            builder.build(Collections.singletonList(new File(file.getPath())), false, request.getProjectBuildingRequest());
+          CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
+
+          String savedLocalRepository = modelInterpolator.getLocalRepository();
+          modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
+          List<ProjectBuildingResult> results;
+
+          try {
+            // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
+            results = builder.build(Collections.singletonList(new File(file.getPath())), false, request.getProjectBuildingRequest());
+          }
+          finally {
+            modelInterpolator.setLocalRepository(savedLocalRepository);
+          }
 
           ProjectBuildingResult buildingResult = results.get(0);
 

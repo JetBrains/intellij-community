@@ -17,6 +17,11 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorScrollingFixture;
@@ -141,5 +146,79 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "very l<selection><caret>ong line</selection>\n" +
                       "long l<selection><caret>ine</selection>\n" +
                       "line");
+  }
+
+  public void testTyping() throws Exception {
+    init("some<caret> text<caret>\n" +
+         "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+         "<selection>ano<caret>ther</selection> line",
+         TestFileType.TEXT);
+    type('A');
+    checkResultByText("someA<caret> textA<caret>\n" +
+                      "some A<caret> A<caret>\n" +
+                      "A<caret> line");
+  }
+
+  public void testCopyPaste() throws Exception {
+    init("<selection><caret>one</selection> two \n" +
+         "<selection><caret>three</selection> four ",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one twoone<caret> \n" +
+                      "three fourthree<caret> ");
+  }
+
+  public void testCutAndPaste() throws Exception {
+    init("<selection>one<caret></selection> two \n" +
+         "<selection>three<caret></selection> four ",
+         TestFileType.TEXT);
+    executeAction("EditorCut");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText(" twoone<caret> \n" +
+                      " fourthree<caret> ");
+  }
+
+  public void testPasteSingleItem() throws Exception {
+    init("<selection>one<caret></selection> two \n" +
+         "three four ",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorCloneCaretBelow");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one twoone<caret> \n" +
+                      "three fourone<caret> ");
+  }
+
+  public void testCutAndPasteMultiline() throws Exception {
+    init("one <selection>two \n" +
+         "three<caret></selection> four \n" +
+         "five <selection>six \n" +
+         "seven<caret></selection> eight",
+         TestFileType.TEXT);
+    executeAction("EditorCut");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one  fourtwo \n" +
+                      "three<caret> \n" +
+                      "five  eightsix \n" +
+                      "seven<caret>");
+  }
+
+  public void testStateStoreAndLoad() throws Exception {
+    init("some<caret> text<caret>\n" +
+         "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+         "<selection>ano<caret>ther</selection> line",
+         TestFileType.TEXT);
+    EditorHistoryManager.getInstance(ourProject).projectOpened();
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(ourProject);
+    fileEditorManager.closeFile(myVFile);
+    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(getProject(), myVFile, 0), false);
+    checkResultByText("some<caret> text<caret>\n" +
+                      "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+                      "<selection>ano<caret>ther</selection> line");
   }
 }
