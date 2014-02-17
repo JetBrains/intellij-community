@@ -22,19 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class TextComponentCaret extends UserDataHolderBase implements Caret {
   private final Editor myEditor;
-  private final CaretModel myCaretModel;
-  private final SelectionModel mySelectionModel;
 
   public TextComponentCaret(Editor editor) {
     myEditor = editor;
-    myCaretModel = editor.getCaretModel();
-    mySelectionModel = editor.getSelectionModel();
   }
 
   @NotNull
   @Override
   public CaretModel getCaretModel() {
-    return myCaretModel;
+    return myEditor.getCaretModel();
   }
 
   @Override
@@ -44,133 +40,133 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
-    myCaretModel.moveCaretRelatively(columnShift, lineShift, withSelection, false, scrollToCaret);
+    getCaretModel().moveCaretRelatively(columnShift, lineShift, withSelection, false, scrollToCaret);
   }
 
   @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    myCaretModel.moveToLogicalPosition(pos);
+    getCaretModel().moveToLogicalPosition(pos);
   }
 
   @Override
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
-    myCaretModel.moveToVisualPosition(pos);
+    getCaretModel().moveToVisualPosition(pos);
   }
 
   @Override
   public void moveToOffset(int offset) {
-    myCaretModel.moveToOffset(offset);
+    getCaretModel().moveToOffset(offset);
   }
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    myCaretModel.moveToOffset(offset, locateBeforeSoftWrap);
+    getCaretModel().moveToOffset(offset, locateBeforeSoftWrap);
   }
 
   @Override
   public boolean isUpToDate() {
-    return myCaretModel.isUpToDate();
+    return getCaretModel().isUpToDate();
   }
 
   @NotNull
   @Override
   public LogicalPosition getLogicalPosition() {
-    return myCaretModel.getLogicalPosition();
+    return getCaretModel().getLogicalPosition();
   }
 
   @NotNull
   @Override
   public VisualPosition getVisualPosition() {
-    return myCaretModel.getVisualPosition();
+    return getCaretModel().getVisualPosition();
   }
 
   @Override
   public int getOffset() {
-    return myCaretModel.getOffset();
+    return getCaretModel().getOffset();
   }
 
   @Override
   public int getVisualLineStart() {
-    return myCaretModel.getVisualLineStart();
+    return getCaretModel().getVisualLineStart();
   }
 
   @Override
   public int getVisualLineEnd() {
-    return myCaretModel.getVisualLineEnd();
+    return getCaretModel().getVisualLineEnd();
   }
 
   @Override
   public int getSelectionStart() {
-    return mySelectionModel.getSelectionStart();
+    return getSelectionModel().getSelectionStart();
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionStartPosition() {
-    return myEditor.offsetToVisualPosition(mySelectionModel.getSelectionStart());
+    return myEditor.offsetToVisualPosition(getSelectionModel().getSelectionStart());
   }
 
   @Override
   public int getSelectionEnd() {
-    return mySelectionModel.getSelectionEnd();
+    return getSelectionModel().getSelectionEnd();
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionEndPosition() {
-    return myEditor.offsetToVisualPosition(mySelectionModel.getSelectionEnd());
+    return myEditor.offsetToVisualPosition(getSelectionModel().getSelectionEnd());
   }
 
   @Nullable
   @Override
   public String getSelectedText() {
-    return mySelectionModel.getSelectedText();
+    return getSelectionModel().getSelectedText();
   }
 
   @Override
   public int getLeadSelectionOffset() {
-    return mySelectionModel.getLeadSelectionOffset();
+    return getSelectionModel().getLeadSelectionOffset();
   }
 
   @NotNull
   @Override
   public VisualPosition getLeadSelectionPosition() {
-    return myEditor.offsetToVisualPosition(mySelectionModel.getLeadSelectionOffset());
+    return myEditor.offsetToVisualPosition(getSelectionModel().getLeadSelectionOffset());
   }
 
   @Override
   public boolean hasSelection() {
-    return mySelectionModel.hasSelection();
+    return getSelectionModel().hasSelection();
   }
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    mySelectionModel.setSelection(startOffset, endOffset);
+    getSelectionModel().setSelection(startOffset, endOffset);
   }
 
   @Override
   public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    mySelectionModel.setSelection(startOffset, endPosition, endOffset);
+    getSelectionModel().setSelection(startOffset, endPosition, endOffset);
   }
 
   @Override
   public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    mySelectionModel.setSelection(startPosition, startOffset, endPosition, endOffset);
+    getSelectionModel().setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
   @Override
   public void removeSelection() {
-    mySelectionModel.removeSelection();
+    getSelectionModel().removeSelection();
   }
 
   @Override
   public void selectLineAtCaret() {
-    mySelectionModel.selectLineAtCaret();
+    getSelectionModel().selectLineAtCaret();
   }
 
   @Override
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
-    mySelectionModel.selectWordAtCaret(honorCamelWordsSettings);
+    getSelectionModel().selectWordAtCaret(honorCamelWordsSettings);
   }
 
   @Nullable
@@ -181,5 +177,9 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void dispose() {
+  }
+
+  private SelectionModel getSelectionModel() {
+    return myEditor.getSelectionModel();
   }
 }
