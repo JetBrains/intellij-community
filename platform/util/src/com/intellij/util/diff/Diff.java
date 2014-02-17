@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 /**
  * @author dyoma
@@ -49,15 +51,41 @@ public class Diff {
     final int startShift = getStartShift(objects1, objects2);
     final int endCut = getEndCut(objects1, objects2, startShift);
 
+    ChangeBuilder builder = new ChangeBuilder(startShift);
+    int trimmedLength1 = objects1.length - startShift - endCut;
+    int trimmedLength2 = objects2.length - startShift - endCut;
+    if (trimmedLength1 == 0 || trimmedLength2 == 0) {
+      if (trimmedLength1 != 0 || trimmedLength2 != 0) {
+        builder.addChange(trimmedLength1, trimmedLength2);
+      }
+      return builder.getFirstChange();
+    }
+
     Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
-    Reindexer reindexer = new Reindexer();
+    Reindexer reindexer = new Reindexer(); // discard unique elements, that have no chance to be matched
     int[][] discarded = reindexer.discardUnique(ints1, ints2);
-    IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-    intLCS.execute();
-    ChangeBuilder builder = new ChangeBuilder(startShift);
-    reindexer.reindex(intLCS.getPaths(), builder);
+
+    if (discarded[0].length == 0 && discarded[1].length == 0) {
+      // assert trimmedLength > 0
+      builder.addChange(ints1.length, ints2.length);
+      return builder.getFirstChange();
+    }
+
+    BitSet[] changes;
+    if (Registry.is("diff.patience.alg")) {
+      PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
+      patienceIntLCS.execute();
+      changes = patienceIntLCS.getChanges();
+    }
+    else {
+      IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
+      intLCS.execute();
+      changes = intLCS.getChanges();
+    }
+
+    reindexer.reindex(changes, builder);
     return builder.getFirstChange();
   }
 
