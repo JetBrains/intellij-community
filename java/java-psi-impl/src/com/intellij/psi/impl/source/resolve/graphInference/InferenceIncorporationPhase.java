@@ -130,7 +130,7 @@ public class InferenceIncorporationPhase {
       LOG.assertTrue(gClass != null);
       final PsiTypeParameter[] parameters = capture.first;
       PsiType[] typeArgs = right.getParameters();
-      LOG.assertTrue(parameters.length == typeArgs.length);//todo
+      if (parameters.length != typeArgs.length) continue;
       for (int i = 0; i < typeArgs.length; i++) {
         PsiType aType = typeArgs[i];
         if (aType instanceof PsiCapturedWildcardType) {
