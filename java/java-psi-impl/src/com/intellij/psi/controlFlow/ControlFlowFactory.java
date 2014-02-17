@@ -161,7 +161,7 @@ public class ControlFlowFactory {
     Reference<ConcurrentList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
     ConcurrentList<ControlFlowContext> cached = com.intellij.reference.SoftReference.dereference(cachedRef);
     if (cached == null) {
-      cached = ContainerUtil.createLockFreeCopyOnWriteList();
+      cached = ContainerUtil.createConcurrentList();
       cachedFlows.put(element, new SoftReference<ConcurrentList<ControlFlowContext>>(cached));
     }
     return cached;
