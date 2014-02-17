@@ -111,4 +111,9 @@ public class InferenceVariable {
   public void replaceBounds(InferenceBound boundType, LinkedHashSet<PsiType> bounds) {
     
   }
+
+  @Override
+  public String toString() {
+    return myParameter.toString();
+  }
 }
