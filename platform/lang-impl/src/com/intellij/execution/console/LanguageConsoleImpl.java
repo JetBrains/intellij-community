@@ -185,8 +185,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myForceScrollToEnd.getAndSet(false)) {
-          final JScrollBar scrollBar = myHistoryViewer.getScrollPane().getVerticalScrollBar();
-          scrollBar.setValue(scrollBar.getMaximum());
+          scrollHistoryToEnd();
         }
       }
 
@@ -299,7 +298,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(true);
   }
 
-  private void setupEditorDefault(@NotNull EditorEx editor) {
+  protected void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.setHorizontalScrollbarVisible(false);
@@ -410,30 +409,26 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void addTextToHistory(@Nullable CharSequence text, @Nullable TextAttributes attributes) {
-    if (StringUtil.isEmpty(text)) {
+    if (StringUtil.isEmpty(text) || attributes == null) {
       return;
     }
 
     Document history = myHistoryViewer.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     int offset = appendToHistoryDocument(history, text);
-    if (attributes == null) return;
     markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
+  public String addCurrentToHistory(@NotNull TextRange textRange, boolean erase, boolean preserveMarkup) {
     return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
   }
 
-  public String addToHistory(final TextRange textRange, final EditorEx editor, final boolean preserveMarkup) {
+  public String addToHistory(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean preserveMarkup) {
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
   }
 
   @NotNull
-  protected String addToHistoryInner(@NotNull final TextRange textRange,
-                                     @NotNull final EditorEx editor,
-                                     final boolean erase,
-                                     final boolean preserveMarkup) {
+  protected String addToHistoryInner(@NotNull final TextRange textRange, @NotNull final EditorEx editor, boolean erase, final boolean preserveMarkup) {
     String result = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -470,7 +465,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull final EditorEx consoleEditor, boolean preserveMarkup) {
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     doAddPromptToHistory();
