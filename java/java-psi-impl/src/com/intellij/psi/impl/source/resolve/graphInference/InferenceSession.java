@@ -392,8 +392,7 @@ public class InferenceSession {
           myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
-        myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(
-          targetType, false), returnType));
+        myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : targetType, returnType));
       }
     }
   }

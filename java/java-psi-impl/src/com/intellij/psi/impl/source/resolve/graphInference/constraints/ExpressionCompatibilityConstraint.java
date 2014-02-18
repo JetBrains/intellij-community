@@ -124,7 +124,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)
                                              : substitutor.substitute(returnType);
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), capturedReturnType));
+          constraints.add(new TypeCompatibilityConstraint(myT, capturedReturnType));
         }
       }
       return true;
