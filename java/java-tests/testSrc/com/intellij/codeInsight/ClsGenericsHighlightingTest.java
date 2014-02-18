@@ -20,7 +20,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -79,30 +78,25 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
   }
 
   private void addLibrary(@NotNull final String... libraryPath) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ModuleRootModificationUtil.updateModel(myModule, new Consumer<ModifiableRootModel>() {
       @Override
-      public void run() {
-        ModuleRootModificationUtil.updateModel(myModule, new Consumer<ModifiableRootModel>() {
-          @Override
-          public void consume(ModifiableRootModel model) {
-            LibraryTable libraryTable = model.getModuleLibraryTable();
-            Library library = libraryTable.createLibrary("test");
+      public void consume(ModifiableRootModel model) {
+        LibraryTable libraryTable = model.getModuleLibraryTable();
+        Library library = libraryTable.createLibrary("test");
 
-            Library.ModifiableModel libraryModel = library.getModifiableModel();
-            for (String annotationsDir : libraryPath) {
-              String path = myFixture.getTestDataPath() + "/libs/" + annotationsDir;
-              VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
-              assertNotNull(libJarLocal);
-              VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
-              assertNotNull(jarRoot);
-              libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
-            }
-            libraryModel.commit();
+        Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (String annotationsDir : libraryPath) {
+          String path = myFixture.getTestDataPath() + "/libs/" + annotationsDir;
+          VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+          assertNotNull(libJarLocal);
+          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
+          assertNotNull(jarRoot);
+          libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
 
-            String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
-            model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-          }
-        });
+        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
+        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
     });
   }
