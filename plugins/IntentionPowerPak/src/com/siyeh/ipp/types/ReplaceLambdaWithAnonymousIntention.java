@@ -52,9 +52,8 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
     final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
-    PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+    final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
-    functionalInterfaceType = GenericsUtil.eliminateWildcards(functionalInterfaceType);
     final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     LOG.assertTrue(method != null);
 

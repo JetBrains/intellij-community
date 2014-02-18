@@ -101,7 +101,7 @@ public class LambdaHighlightingUtil {
         if (checkInterfaceFunctional(type) == null) return null;
       }
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(functionalInterfaceType));
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
