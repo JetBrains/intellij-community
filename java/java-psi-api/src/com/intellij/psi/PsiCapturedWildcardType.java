@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -24,27 +25,44 @@ import org.jetbrains.annotations.NotNull;
 public class PsiCapturedWildcardType extends PsiType {
   @NotNull private final PsiWildcardType myExistential;
   @NotNull private final PsiElement myContext;
+  @Nullable private final PsiTypeParameter myParameter;
 
-  public boolean equals(final Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (!(o instanceof PsiCapturedWildcardType)) return false;
     final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    return myContext.equals(captured.myContext) &&
-           myExistential.equals(captured.myExistential);
+    if (!myContext.equals(captured.myContext) || 
+        !myExistential.equals(captured.myExistential)) return false;
+
+    if (myContext instanceof PsiReferenceExpression) {
+      if (myParameter != null ? !myParameter.equals(captured.myParameter) : captured.myParameter != null) return false;
+    }
+
+    return true;
   }
 
+  @Override
   public int hashCode() {
     return myExistential.hashCode() + 31 * myContext.hashCode();
   }
 
-  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
+  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential, @NotNull PsiElement context, @Nullable PsiTypeParameter parameter) {
     super(PsiAnnotation.EMPTY_ARRAY);//todo
     myExistential = existential;
     myContext = context;
+    myParameter = parameter;
   }
 
   @NotNull
   public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
-    return new PsiCapturedWildcardType(existential, context);
+    return create(existential, context, null);
+  }
+
+  @NotNull
+  public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential,
+                                               @NotNull PsiElement context,
+                                               PsiTypeParameter parameter) {
+    return new PsiCapturedWildcardType(existential, context, parameter);
   }
 
   @NotNull

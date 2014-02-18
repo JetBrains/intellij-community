@@ -687,7 +687,7 @@ public final class PsiUtil extends PsiUtilCore {
           final PsiType substituted = substitutor.substitute(typeParameter);
           if (substituted instanceof PsiWildcardType) {
             if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-            substitutionMap.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted, context));
+            substitutionMap.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted, context, typeParameter));
           }
         }
 

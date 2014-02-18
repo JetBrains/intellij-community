@@ -403,7 +403,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
     if (captureContext != null) {
       substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard()
-                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
+                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext, typeParameter);
     }
     return substituted;
   }
