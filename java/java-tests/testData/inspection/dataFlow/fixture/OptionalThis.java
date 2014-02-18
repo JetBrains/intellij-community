@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestInspection {
+class TestInspection {
 
   private static class StringWrapper {
     private String inner = null;

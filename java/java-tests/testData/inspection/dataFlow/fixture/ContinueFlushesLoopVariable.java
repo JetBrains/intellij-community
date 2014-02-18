@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class Main {
+class Main {
   public static String escapeAndUnescapeSymbols(String s, StringBuilder builder) {
     boolean escaped = false;
     for (int i = 0; i < s.length(); i++) {

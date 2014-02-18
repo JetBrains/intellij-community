@@ -7,4 +7,4 @@ enum SomeEnumeration {
 }
 
 
-public class IllegalArgumentException extends Exception {}
+class IllegalArgumentException extends Exception {}

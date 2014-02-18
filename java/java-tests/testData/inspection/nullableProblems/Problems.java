@@ -9,7 +9,7 @@ class B {
     }
 }
          
-public class Y extends B {
+class Y extends B {
     <warning descr="Cannot annotate with both @Nullable and @NotNull">@NotNull</warning> <warning descr="Cannot annotate with both @Nullable and @NotNull">@Nullable</warning> String s;
     public void f(String <warning descr="Not annotated parameter overrides @NotNull parameter">p</warning>){}
        

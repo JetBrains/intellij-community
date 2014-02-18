@@ -1,5 +1,5 @@
 import java.util.*;
-public class DiamondTest {
+class DiamondTest {
 
     public <U> void foo(ArrayList<U> p) {}
 

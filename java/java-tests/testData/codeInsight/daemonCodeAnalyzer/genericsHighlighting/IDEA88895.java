@@ -1,6 +1,6 @@
 import java.util.Iterator;
 
-public class WildcardGenericAndPrivateField {
+class WildcardGenericAndPrivateField {
 
     private Object field;
 

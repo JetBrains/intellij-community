@@ -1,4 +1,4 @@
-public class Sample {
+class Sample {
   static <T> T foo(T t) { return null; }
 
   static {

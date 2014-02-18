@@ -1,4 +1,4 @@
-public class Tmp {
+class Tmp {
   Integer toInt(Number num) {
     return null;
   }

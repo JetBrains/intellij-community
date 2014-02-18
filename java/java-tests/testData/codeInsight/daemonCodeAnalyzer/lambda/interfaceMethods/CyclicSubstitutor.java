@@ -1,4 +1,4 @@
-public interface Iso<T, R> {
+interface Iso<T, R> {
     T deply(R r);
 
     default Iso<R, T> inverse() {

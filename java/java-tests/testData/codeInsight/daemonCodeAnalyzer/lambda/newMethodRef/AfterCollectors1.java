@@ -8,7 +8,7 @@ interface Function<T, R> {
    R apply(T t);
 }
 
-public final class Collectors {
+final class Collectors {
     public static <T>
     Collector<List<T>> toList() {
         return null;

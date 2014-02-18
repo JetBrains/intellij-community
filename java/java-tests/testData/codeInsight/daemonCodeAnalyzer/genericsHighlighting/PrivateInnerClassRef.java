@@ -1,6 +1,6 @@
 import java.util.Comparator;
 
-public abstract class A implements <error descr="'A.B' has private access in 'A'">Comparator<A.B></error> {
+abstract class A implements <error descr="'A.B' has private access in 'A'">Comparator<A.B></error> {
 
   private static class B {
   }

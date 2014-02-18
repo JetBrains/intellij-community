@@ -3,7 +3,7 @@ import java.io.OutputStream;
 import java.lang.Throwable;
 import java.net.Socket;
 
-public class Foo {
+class Foo {
   void unchecked() {
     boolean b = true;
     try {

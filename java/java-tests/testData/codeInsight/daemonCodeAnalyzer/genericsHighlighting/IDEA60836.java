@@ -1,5 +1,5 @@
 import java.util.*;
-public class IdeaGenericsTest {
+class IdeaGenericsTest {
     interface Animal<T extends Animal<T>> {
         List<T> getFriends();
     }

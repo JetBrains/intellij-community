@@ -1,4 +1,4 @@
-public class DataFlowBug {
+class DataFlowBug {
 
   public void add2() {
     try {

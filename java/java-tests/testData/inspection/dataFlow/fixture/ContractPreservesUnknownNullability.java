@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public class Foo {
+class Foo {
 
   @Contract("null->null")
   String foo(String s){

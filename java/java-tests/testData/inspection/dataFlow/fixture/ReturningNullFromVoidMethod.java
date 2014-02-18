@@ -1,4 +1,4 @@
-public class BrokenAlignment {
+class BrokenAlignment {
 
   Void test() {
     return null;

@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public abstract class Test {
+abstract class Test {
 
     abstract <T> T test(Class<T> cls);
 

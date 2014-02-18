@@ -1,5 +1,4 @@
-
-public class BrokenAlignment {
+class BrokenAlignment {
   private static void foo(long value) {
     if (value == (byte)value) {
       System.out.println("1");

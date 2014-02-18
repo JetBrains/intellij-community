@@ -1,4 +1,4 @@
-public class IsNotNullCheck {
+class IsNotNullCheck {
    void bar() {
      final Value v = call();
      if (Value.isNotNull(v)) {

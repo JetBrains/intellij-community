@@ -1,4 +1,4 @@
-public class VarArgTest {
+class VarArgTest {
 
   public void a(Test first, Test... rest){
   }

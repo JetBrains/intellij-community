@@ -1,4 +1,4 @@
-public class GoodCodeIsRed {
+class GoodCodeIsRed {
 
     public void test() {
         FileIF file = new FileImpl();

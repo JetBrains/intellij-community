@@ -2,7 +2,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class Bar3 {
+class Bar3 {
 
   @NotNull
   Object getObj() {

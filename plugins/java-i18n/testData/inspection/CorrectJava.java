@@ -1,4 +1,4 @@
-public class GenericTest {
+class GenericTest {
     /**
     @see  com.intellij.openapi
     */

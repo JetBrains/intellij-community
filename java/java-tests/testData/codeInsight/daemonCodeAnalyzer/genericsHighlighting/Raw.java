@@ -159,7 +159,7 @@ class Test1<X> {
 
 
 ///////////////  signatures in non-parameterized class are not erased
-public class C3  {
+class C3  {
     public int get(Class<?> c) {
         return 0;
     }

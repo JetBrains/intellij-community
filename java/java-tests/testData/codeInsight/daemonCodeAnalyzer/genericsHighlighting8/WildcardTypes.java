@@ -130,7 +130,7 @@ class BoundedWildcard {
 //end of IDEADEV-5816
 
 interface I33 {}
-public class Q<T extends I33> {
+class Q<T extends I33> {
     T t;
     <V extends I33> List<V> foo(Q<V> v) {
       v.hashCode();

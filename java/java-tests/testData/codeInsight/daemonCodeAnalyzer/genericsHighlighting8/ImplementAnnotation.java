@@ -1,6 +1,6 @@
 import java.lang.annotation.Annotation;
 
-public @interface Foo {
+@interface Foo {
     String id();
 }
 

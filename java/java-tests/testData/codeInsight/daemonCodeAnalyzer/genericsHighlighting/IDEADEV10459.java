@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** @noinspection UnusedDeclaration*/
-public class GenericsTest98 {
+class GenericsTest98 {
     public static void main(String[] args) throws Exception{
         List<Movable<? extends Serializable>> list = new ArrayList<Movable<? extends Serializable>> ();
         Factory factory = Factory.newInstance();

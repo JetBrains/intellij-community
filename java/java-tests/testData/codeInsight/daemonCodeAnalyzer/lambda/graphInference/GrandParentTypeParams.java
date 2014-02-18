@@ -1,11 +1,10 @@
-
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.*;
 
-public class X1 {
+class X1 {
   void test(Stream<Integer> stream) {
     Function<List<Integer>, List<Integer>> unmodifiableList = Collections::unmodifiableList;
     stream.collect(collectingAndThen(toList(), unmodifiableList)).remove(0);

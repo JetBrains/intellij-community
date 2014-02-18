@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class  Auto {
+class  Auto {
     public Auto(ArrayList w, Runnable <caret>i) {
         this(w, null,null);
     }

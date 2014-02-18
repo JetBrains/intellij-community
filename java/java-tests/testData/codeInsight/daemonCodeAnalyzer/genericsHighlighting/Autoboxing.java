@@ -1,4 +1,4 @@
-public class Autoboxing {
+class Autoboxing {
     public boolean compare(short s, Integer i) {
          return i == s; //OK, i is unboxed
     }

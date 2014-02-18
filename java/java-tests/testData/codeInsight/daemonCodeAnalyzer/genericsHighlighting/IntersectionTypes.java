@@ -167,7 +167,7 @@ class Axx {
 }
 ///////////////
 interface L {}
-public class MaximalType  {
+class MaximalType  {
     public static <T> T getParentOfType(Class<? extends T>... classes) {
        classes.hashCode();
        return null;
