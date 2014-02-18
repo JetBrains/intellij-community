@@ -112,4 +112,12 @@ public class UnnecessaryParenthesesInspection
     Object info  = new Object[]{"abc"};
     String s = (String)((Object[])info)[0];
   }
+
+  void zz() {
+    int a = 10;
+    int b = 20;
+
+    final int i = a * ((b + 2) / 3); // no warn
+    final int j = a * ((b + 2) % 3); // no warn
+  }
 }
