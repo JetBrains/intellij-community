@@ -112,7 +112,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  public void _testErasedByReturnConstraint() throws Exception { //todo waiting for erasure constraints
+  public void testErasedByReturnConstraint() throws Exception {
     doTest();
   }
 
