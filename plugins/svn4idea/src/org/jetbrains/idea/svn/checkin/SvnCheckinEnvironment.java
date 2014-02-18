@@ -366,24 +366,15 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   private SVNStatus getStatus(@NotNull File file) {
     SVNStatus result = null;
-    WorkingCopyFormat format = mySvnVcs.getWorkingCopyFormat(file);
 
     try {
-      result = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? getStatusCommandLine(file) : getStatusSvnKit(file);
+      result = mySvnVcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
     catch (SVNException e) {
-      // do nothing
+      LOG.info(e);
     }
 
     return result;
-  }
-
-  private SVNStatus getStatusSvnKit(File file) throws SVNException {
-    return mySvnVcs.createStatusClient().doStatus(file, false);
-  }
-
-  private SVNStatus getStatusCommandLine(File file) throws SVNException {
-    return new SvnCommandLineStatusClient(mySvnVcs).doStatus(file, false);
   }
 
   private static List<File> collectPaths(@NotNull List<Change> changes) {
