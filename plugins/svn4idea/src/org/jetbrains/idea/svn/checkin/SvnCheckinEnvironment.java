@@ -113,6 +113,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       doCommit(committables, committer, comment, force, exception, feedback);
     }
 
+    // TODO: Check if such processing of deleted files also necessary for command line. And if yes - use one handler instance for both
+    // TODO: SVNKit and command line code flows.
     for(VirtualFile f : handler.getDeletedFiles()) {
       f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
     }
@@ -127,7 +129,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     //noinspection unchecked
     final MultiMap<Pair<SVNURL,WorkingCopyFormat>,File> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
     for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : map.entrySet()) {
-      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond(), entry.getKey().getFirst());
+      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond());
     }
   }
 
@@ -135,18 +137,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                SVNCommitClient committer,
                                String comment,
                                boolean force,
-                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format, SVNURL url) {
+                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format) {
     if (committables.isEmpty()) {
       return;
     }
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
-        SvnConfiguration.getInstance(mySvnVcs.getProject()).isCommandLine() &&
-        (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
+    // TODO: Create CommitClient and refactor to use common ClientFactory model.
+    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
+        !WorkingCopyFormat.ONE_DOT_SIX.equals(format) && mySvnVcs.getSvnConfiguration().isCommandLine()) {
       doWithCommandLine(committables, comment, exception, feedback);
-      return;
     }
-
-    doWithSvnkit(committables, committer, comment, force, exception, feedback);
+    else {
+      doWithSvnkit(committables, committer, comment, force, exception, feedback);
+    }
   }
 
   private void doWithSvnkit(Collection<File> committables,
