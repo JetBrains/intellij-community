@@ -739,6 +739,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCastToIntersectionType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
