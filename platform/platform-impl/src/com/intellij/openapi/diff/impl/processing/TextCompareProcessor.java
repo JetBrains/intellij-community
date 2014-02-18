@@ -23,8 +23,10 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.LineBlockDivider;
 import com.intellij.openapi.diff.impl.highlighting.Util;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -50,7 +52,9 @@ public class TextCompareProcessor {
     this(comparisonPolicy, DiffPolicy.LINES_WO_FORMATTING);
   }
 
-  public ArrayList<LineFragment> process(String text1, String text2) throws FilesTooBigForDiffException {
+  public ArrayList<LineFragment> process(@Nullable String text1, @Nullable String text2) throws FilesTooBigForDiffException {
+    text1 = StringUtil.notNullize(text1);
+    text2 = StringUtil.notNullize(text2);
     if (text1.isEmpty() || text2.isEmpty()) {
       return new DummyDiffFragmentsProcessor().process(text1, text2);
     }
