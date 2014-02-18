@@ -465,6 +465,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     if (myEditor == null) {
       myEditor = createEditor();
+      registerConsoleEditorActions();
       myEditor.getScrollPane().setBorder(null);
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
       requestFlushImmediately();
@@ -859,9 +860,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
         editor.setHighlighter(createHighlighter());
 
-        if (!myIsViewer) {
-          registerConsoleEditorActions(editor);
-        }
         return editor;
       }
     });
@@ -899,11 +897,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return new MyHighlighter();
   }
 
-  private static void registerConsoleEditorActions(Editor editor) {
-    new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, editor.getContentComponent());
-    registerActionHandler(editor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
-    registerActionHandler(editor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
-    registerActionHandler(editor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+  private void registerConsoleEditorActions() {
+    new HyperlinkNavigationAction().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
+
+    if (!myIsViewer) {
+      new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+    }
   }
 
   private static void registerActionHandler(final Editor editor, final String actionId, final AnAction action) {
@@ -1848,6 +1850,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  private class HyperlinkNavigationAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Runnable runnable = myHyperlinks.getLinkNavigationRunnable(myEditor.getCaretModel().getLogicalPosition());
+      assert runnable != null;
+      runnable.run();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myHyperlinks.getLinkNavigationRunnable(myEditor.getCaretModel().getLogicalPosition()) != null);
+    }
   }
 }
 
