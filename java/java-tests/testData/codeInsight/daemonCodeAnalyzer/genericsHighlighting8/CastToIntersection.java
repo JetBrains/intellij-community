@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class FooBar1 {
+class FooBar1 {
     {
         Object x = null;
         Object y = (CharSequence & Serializable) x;

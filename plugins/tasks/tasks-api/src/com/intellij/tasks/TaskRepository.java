@@ -51,7 +51,7 @@ public abstract class TaskRepository {
    * <p>
    * If server supports this feature it MUST return tasks already filtered according
    * to {@code query} parameter from {@link #getIssues}} method, otherwise they will
-   * be filtered internally in {@link TaskManager#getIssues}
+   * be filtered internally in {@link TaskManager#getIssues}.
    */
   public static final int NATIVE_SEARCH = 0x0010;
 

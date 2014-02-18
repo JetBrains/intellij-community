@@ -1,7 +1,7 @@
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class Tmp {
+class Tmp {
   static void doo(Runnable action){}
   static void doo(Callable<?> action){}
 

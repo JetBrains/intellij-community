@@ -3,7 +3,7 @@ import java.io.*;
 import java.net.*;
 import java.awt.event.*;
 
-public class a  {
+class a  {
   /**
    * javadoc should not be highlighted
    */ 
@@ -177,7 +177,7 @@ class a20Exotic {
     int n2 = k==0 ? (k2=9) : (k2=0);
 }
 
-public class cX {
+class cX {
     final int i;
     cX() {
         this(1);
@@ -208,7 +208,7 @@ class correct {
     }
 }
 
-public class X {
+class X {
     final int i;
     X() {
         try {

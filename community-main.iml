@@ -96,6 +96,7 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="community-tests" scope="TEST" />
+    <orderEntry type="module" module-name="jira" />
   </component>
 </module>
 

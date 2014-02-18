@@ -1,4 +1,4 @@
-public class Tmp
+class Tmp
 {
     void foo(){}
 

@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class Main {
+class Main {
     static interface A
     {
         interface B  { }

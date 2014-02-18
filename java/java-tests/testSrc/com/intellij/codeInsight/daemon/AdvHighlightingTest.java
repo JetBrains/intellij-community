@@ -318,4 +318,10 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testPackageObscuring() throws Exception {
     doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
   }
+  public void testPublicClassInRightFile() throws Exception {
+    doTest(BASE_PATH + "/publicClassInRightFile/x/X.java", BASE_PATH + "/publicClassInRightFile", false, false);
+  }
+  public void testPublicClassInRightFile2() throws Exception {
+    doTest(BASE_PATH + "/publicClassInRightFile/x/Y.java", BASE_PATH + "/publicClassInRightFile", false, false);
+  }
 }

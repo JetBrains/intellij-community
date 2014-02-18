@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -14,7 +29,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "import java.util.*;" +
            "import java.awt.*;" +
            "import java.awt.List;" +
-           "public class Bar2 extends Component {" +
+           "class Bar2 extends Component {" +
            "  void foo() {" +
            "    new Hashtable();" +
            "    System.out.println(List.ABORT);" +
@@ -25,14 +40,14 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   public void testStaticImport() {
     doTest("/*Unused import 'import java.util.Map.*;'*/import java.util.Map.*;/**/" +
            "import static java.util.Map.*;" +
-           "public class X { " +
+           "class X { " +
            "  void m(Entry e) {}" +
            "}");
   }
 
   public void testStaticImport2() {
     doTest("import static java.lang.Math.*;" +
-           "public class X {" +
+           "class X {" +
            "    static {" +
            "        System.out.println(\"\"+PI);" +
            "    }" +
@@ -43,7 +58,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
     doTest("import java.util.List;" +
            "import java.util.ArrayList;" +
            "import static java.lang.Integer.SIZE;" +
-           "public class X {" +
+           "class X {" +
            "    private final List<Integer> list = new ArrayList<Integer>(SIZE);" +
            "    public void add(int i) {" +
            "        list.add(i);" +
@@ -56,7 +71,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
     doTest("package one;" +
            "import static one.X.*; " +
            "import one.X.*;" +
-           "public class Y { " +
+           " class Y { " +
            "    void m() {" +
            "        method(); " +
            "        Inner inner = new X().new Inner();" +

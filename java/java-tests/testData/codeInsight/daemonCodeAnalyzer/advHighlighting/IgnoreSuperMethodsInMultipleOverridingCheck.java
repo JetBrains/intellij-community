@@ -10,7 +10,7 @@ abstract class CompileErrorTest implements ICompileErrorTest {
   }
 }
 
-public class CompileErrorTestExtended extends CompileErrorTest {
+class CompileErrorTestExtended extends CompileErrorTest {
   public void foo() throws Exception {
     try {
       super.foo();

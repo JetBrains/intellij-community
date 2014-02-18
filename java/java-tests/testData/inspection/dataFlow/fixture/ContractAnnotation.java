@@ -5,7 +5,7 @@ import java.lang.*;
 import java.lang.AssertionError;
 import java.lang.IllegalArgumentException;
 
-public class AssertIsNotNull {
+class AssertIsNotNull {
   void bar(String s, String s1) {
     if (<warning descr="Condition 's == null && trimIfNotNull(s) != null' is always 'false'">s == null && <warning descr="Condition 'trimIfNotNull(s) != null' is always 'false' when reached">trimIfNotNull(s) != null</warning></warning>) {
       throw new AssertionError();

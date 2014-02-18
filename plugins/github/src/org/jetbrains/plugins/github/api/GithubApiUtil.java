@@ -520,8 +520,15 @@ public class GithubApiUtil {
       List<GithubRepo> repos = new ArrayList<GithubRepo>();
 
       repos.addAll(getUserRepos(auth));
-      repos.addAll(getMembershipRepos(auth));
-      repos.addAll(getWatchedRepos(auth));
+
+      // We already can return something useful from getUserRepos, so let's ignore errors.
+      // One of this may not exist in GitHub enterprise
+      try {
+        repos.addAll(getMembershipRepos(auth));
+      } catch (GithubStatusCodeException ignore) {}
+      try {
+        repos.addAll(getWatchedRepos(auth));
+      } catch (GithubStatusCodeException ignore) {}
 
       return repos;
     }

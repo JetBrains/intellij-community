@@ -9,7 +9,7 @@ import java.util.Comparator;
  * Time: 8:08:44 PM
  * To change this template use File | Settings | File Templates.
  */
-public class VarianceTesting {
+class VarianceTesting {
     void method(List<? extends VarianceTesting> l) {
 //        l.add(new VarianceTesting());
         l.add(null);

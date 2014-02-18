@@ -1,7 +1,7 @@
 import java.util.List;
 import java.util.Set;
 
-public class Sample {
+class Sample {
   interface L<T> {
     List<T> foo();
   }

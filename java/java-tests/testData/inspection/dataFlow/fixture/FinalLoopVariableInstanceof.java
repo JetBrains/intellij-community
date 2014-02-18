@@ -1,4 +1,4 @@
-public class Test {
+class Test {
 
   public static void main(Object[] args) throws Exception {
     boolean elvisLives = false;

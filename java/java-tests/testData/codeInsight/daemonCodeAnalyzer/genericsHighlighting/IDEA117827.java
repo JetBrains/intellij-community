@@ -1,8 +1,7 @@
-
 import java.util.Collection;
 import java.util.List;
 
-public class Testsss {
+class Testsss {
 
   public <TA, CA extends Iterable<TA>> void that(Iterable<TA> target) {}
 

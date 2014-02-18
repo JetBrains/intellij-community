@@ -1,4 +1,4 @@
-public interface I<K> {
+interface I<K> {
 }
 
 abstract class SpringHighlightingTestCase<T extends I>{

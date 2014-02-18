@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
-public class DDD {
+class DDD {
   @Nullable
   String field;
   int test() {

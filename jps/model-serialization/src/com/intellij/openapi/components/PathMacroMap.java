@@ -47,7 +47,7 @@ public abstract class PathMacroMap {
           String newText = (recursively || (filter != null && filter.recursePathMacros(t)))
                        ? substituteRecursively(oldText, caseSensitive)
                        : substitute(oldText, caseSensitive);
-          if (oldText != newText) {
+          if (oldText != newText) { // if the string was changed
             t.setText(newText);
           }
         }
@@ -63,7 +63,7 @@ public abstract class PathMacroMap {
         String newValue = (recursively || (filter != null && filter.recursePathMacros(attribute)))
                        ? substituteRecursively(oldValue, caseSensitive)
                        : substitute(oldValue, caseSensitive);
-        if (oldValue != newValue) {
+        if (oldValue != newValue) { // if the string was changed
           attribute.setValue(newValue);
         }
       }

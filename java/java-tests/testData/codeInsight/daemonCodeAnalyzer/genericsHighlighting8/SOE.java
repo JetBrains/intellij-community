@@ -1,4 +1,4 @@
-public class SOE {
+class SOE {
 }
 abstract class VersionEntity<V extends Version<V, R>, R extends Ref<V, R>>
     implements Version<V, R>{}

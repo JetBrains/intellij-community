@@ -1,4 +1,4 @@
-public class Test  {
+class Test  {
 
   {
     addListener(this::editPropertyChanged);

@@ -1,7 +1,7 @@
 import java.util.Comparator;
 import java.util.Set;
 
-public class CastError {
+class CastError {
     public void foo(Comparator<? super byte[]> comparator) throws Exception {
         MyComparator comparator1 = (MyComparator) comparator;
     }

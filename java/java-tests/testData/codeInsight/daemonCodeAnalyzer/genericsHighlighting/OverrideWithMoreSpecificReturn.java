@@ -11,5 +11,5 @@ class ExampleSuperClass {
 }
 
 
-public class  ExampleSubClass extends ExampleSuperClass implements ExampleInterface {
+class  ExampleSubClass extends ExampleSuperClass implements ExampleInterface {
 }

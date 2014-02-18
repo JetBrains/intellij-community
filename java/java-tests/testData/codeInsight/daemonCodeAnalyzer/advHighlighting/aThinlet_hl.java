@@ -35,7 +35,7 @@ import java.util.*;
 /**
  *
  */
-public class Thinlet extends Container //java
+class Thinlet extends Container //java
 	implements Runnable, Serializable { //java
 //midp public class Thinlet extends Canvas implements CommandListener {
 

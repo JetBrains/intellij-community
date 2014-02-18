@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
-public class Bar {
+class Bar {
 
     void navigateTo() {
         Computable c = new Computable() {

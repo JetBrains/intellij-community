@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Sample {
+class Sample {
   interface Fun<A extends List <String>, B> {
     B f(A a);
   }

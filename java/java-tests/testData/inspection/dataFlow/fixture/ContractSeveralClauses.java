@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-public class Foo {
+class Foo {
 
     String foo(Object escaper, String s) {
         return escapeStr(s, escaper);

@@ -1,4 +1,4 @@
-public class DupSlice {
+class DupSlice {
     int <caret>field; 
 
     void multiply(int fp) {

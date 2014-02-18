@@ -54,9 +54,7 @@ import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.BuilderBasedTemplate;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
@@ -150,6 +148,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         append(value.getName());
       }
     });
+    new ListSpeedSearch(myProjectTypeList) {
+      @Override
+      protected String getElementText(Object element) {
+        return ((TemplatesGroup)element).getName();
+      }
+    };
 
     myModulesProvider = modulesProvider;
     Project project = context.getProject();

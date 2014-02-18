@@ -1,4 +1,4 @@
-public class AssertTrue {
+class AssertTrue {
    void bar() {
      final boolean b = call();
      if (Assertions.assertTrue(b)) {

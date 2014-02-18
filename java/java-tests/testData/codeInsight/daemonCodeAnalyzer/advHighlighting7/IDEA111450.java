@@ -1,7 +1,7 @@
 import java.lang.Character;
 import java.util.List;
 
-public class Test {
+class Test {
   public static void test() {
     Character c1 = '1';
     Character c2 = '2';

@@ -1,4 +1,4 @@
-public class Autoboxing {
+class Autoboxing {
     void method(int i) {
         System.out.println("i = " + i);
     }
@@ -19,7 +19,7 @@ public class Autoboxing {
         m2(new Integer(10));
     }
 }
-public class Autoboxing1 {
+class Autoboxing1 {
     void method(String s, int i) {
         System.out.println("i = " + i);
     }

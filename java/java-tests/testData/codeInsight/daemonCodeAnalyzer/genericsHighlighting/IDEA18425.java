@@ -1,4 +1,4 @@
-public abstract class BiFunction<A,B> {
+abstract class BiFunction<A,B> {
     public abstract B apply(A a);
     public abstract A unapply(B b);
     public BiFunction<B,A> flip() {

@@ -1,4 +1,4 @@
-public class OverrideSlice {
+class OverrideSlice {
     interface I {
         int f(int i);
     }

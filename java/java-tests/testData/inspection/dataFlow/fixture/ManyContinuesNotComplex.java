@@ -1,4 +1,4 @@
-public class Foo {
+class Foo {
 
   void foo(String[] lines) {
     for (String line : lines) {

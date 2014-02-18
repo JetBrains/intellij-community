@@ -1,5 +1,5 @@
 import java.util.*;
-public class TestInfer
+class TestInfer
 {
     static <V, T extends V> List<V> singleton(T item)
     {

@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class Sample {
+class Sample {
 
   static List<String> getList(Function<Object, String> function, ArrayList<? super String> objects) {
     return transform(objects, new ArrayList<String>(), function);

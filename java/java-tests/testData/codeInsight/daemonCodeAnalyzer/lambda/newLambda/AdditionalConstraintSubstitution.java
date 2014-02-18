@@ -4,7 +4,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-public class Bug
+class Bug
 {
 
   void foo(Stream<Bug> words){

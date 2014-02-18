@@ -1,4 +1,4 @@
-public class WW {
+class WW {
     void f(String <flown11111>ddd) {
         if (hashCode() == 0)
             ddd = <flown11112>"dd";

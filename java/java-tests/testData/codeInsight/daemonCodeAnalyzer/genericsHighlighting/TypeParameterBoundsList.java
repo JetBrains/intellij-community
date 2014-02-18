@@ -20,7 +20,7 @@ class Stuff<X extends Stuff & Runnable> {
 }
 
 ////////////////
-public class TypeParameters {
+class TypeParameters {
     class X {}
     static <T extends X> void f(Class<T> t){}
 

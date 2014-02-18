@@ -2,7 +2,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Foo {
+class Foo {
 
   public void main(@NotNull Object nn) {
     foo(nn).hashCode();
