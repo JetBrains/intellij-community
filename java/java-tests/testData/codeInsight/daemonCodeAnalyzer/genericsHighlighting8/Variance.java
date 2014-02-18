@@ -87,7 +87,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     Emum.valueOf<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'CaptureTest.Emum' cannot be applied to '(java.lang.Class<capture<? extends CaptureTest.Emum<CaptureTest>>>, java.lang.String)'">(clazz, "CCC")</error>;
+     <error descr="Inferred type 'capture<? extends CaptureTest.Emum<CaptureTest>>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<capture<? extends CaptureTest.Emum<CaptureTest>>>'">Emum.valueOf(clazz, "CCC")</error>;
    }
 }
 
@@ -152,7 +152,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<T>, java.util.List<T>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f<error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
     }
 }
 
@@ -162,7 +162,7 @@ class S3 {
     }
 
     void bar(Map<? extends S3, ? extends S3> k) {
-        f<error descr="'f(java.util.Map<T,T>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
+        f<error descr="'f(java.util.Map<capture<? extends S3>,capture<? extends S3>>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
     }
 }
 
@@ -182,7 +182,7 @@ class TypeBug {
 
         multiList.add(intHolder);
         multiList.add(doubleHolder);
-        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<T>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
+        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<java.lang.Object>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
 
         // this line causes a ClassCastException when checked.
         Integer value = intHolder.value;

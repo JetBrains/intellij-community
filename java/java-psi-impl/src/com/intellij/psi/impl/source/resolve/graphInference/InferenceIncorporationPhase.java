@@ -288,13 +288,9 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
-      if (mySession.isProperType(upperBound)) {
-        continue;
-      }
+      if (upperBound == null) continue;
       for (PsiType eqBound : eqBounds) {
-        if (mySession.isProperType(eqBound)) {
-          continue;
-        }
+        if (eqBound == null) continue;
         addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
@@ -306,14 +302,8 @@ public class InferenceIncorporationPhase {
   private void eqEq(List<PsiType> eqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound= eqBounds.get(i);
-      if (mySession.isProperType(sBound)) {
-        continue;
-      }
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
-        if (mySession.isProperType(tBound)) {
-          continue;
-        }
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
       }
     }

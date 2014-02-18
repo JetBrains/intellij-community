@@ -117,7 +117,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void _testIncludeContainingClassParamsInResolveSetForConstructorRefs() throws Exception {
+  public void testIncludeContainingClassParamsInResolveSetForConstructorRefs() throws Exception {
     doTest();
   }
 

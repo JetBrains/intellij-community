@@ -21,7 +21,7 @@ class NoInferenceResult {
         m((String s1) -> s1.length());
         m((String s1) -> s1);
 
-        m1(<error descr="Target type of a lambda conversion must be an interface">() -> { }</error>);
+        m1<error descr="'m1(T)' in 'NoInferenceResult' cannot be applied to '(<lambda expression>)'">(() -> { })</error>;
 
         Foo<String> foo = new Foo<String>();
         foo.map(v -> null);

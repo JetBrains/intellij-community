@@ -75,7 +75,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithUpperBoundPromotion() {
     doTest();
   }
-  public void _testVariance() { //todo waiting for capture bound
+  public void testVariance() {
     doTest();
   }
   public void testForeachTypes() {
@@ -244,7 +244,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA66311_16() {
     doTest();
   }
-  public void _testIDEA76283() {//todo bounds
+  public void testIDEA76283() {
     doTest();
   }
   public void testIDEA74899() {
@@ -262,7 +262,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57339() {
     doTest();
   } 
-  public void _testIDEA57340() {
+  public void testIDEA57340() {
     doTest();
   }
   public void testIDEA89771() {
@@ -295,7 +295,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57563() {
     doTest();
   }
-  public void _testIDEA57275() {
+  public void testIDEA57275() {
     doTest();
   }
   public void testIDEA57533() {

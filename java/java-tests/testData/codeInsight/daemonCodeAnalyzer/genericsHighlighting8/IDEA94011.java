@@ -10,7 +10,7 @@ class Test {
 
     public void test(Set<MyConsumer> set) {
         @SuppressWarnings("unchecked")
-        <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Object,Test.MyConsumer>', required: 'java.util.Map<Test.Parent,Test.MyConsumer<Test.Parent>>'">Map<Parent, MyConsumer<Parent>> map = create(set);</error>
+        Map<Parent, MyConsumer<Parent>> map = create<error descr="'create(java.util.Set<T>)' in 'Test' cannot be applied to '(java.util.Set<Test.MyConsumer>)'">(set)</error>;
 
     }
 

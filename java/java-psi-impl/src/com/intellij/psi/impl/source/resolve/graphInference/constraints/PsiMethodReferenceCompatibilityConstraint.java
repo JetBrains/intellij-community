@@ -152,8 +152,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       session.initBounds(method.getTypeParameters());
       session.initBounds(containingClass.getTypeParameters());
 
-      if (typeParameters.length == 0 && ((PsiMethod)resolve).getTypeParameters().length > 0) {
-
+      if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
@@ -176,7 +175,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs()) {
+      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs() && 
+          PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType, ContainerUtil.newHashSet(containingClass.getTypeParameters()))) { //todo specification bug?
         specialCase(session, constraints, substitutor, targetParameters);
       }
       constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(referencedMethodReturnType)));

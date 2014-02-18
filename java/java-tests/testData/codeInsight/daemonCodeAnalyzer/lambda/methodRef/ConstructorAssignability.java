@@ -13,7 +13,7 @@ class Foo<R> {
 
     public void foo() {
         reduce(Moo::new);
-        reduce(<error descr="Cyclic inference">AMoo::new</error>);
+        <error descr="Inferred type 'Foo<R>.AMoo' for type parameter 'S' is not within its bound; should implement 'Foo.ASink<java.lang.Object,Foo<R>.AMoo>'">reduce(AMoo::new)</error>;
         reduce(AAMoo::new);
         reduce(AAAMoo::new);
     }

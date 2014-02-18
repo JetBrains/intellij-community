@@ -488,9 +488,6 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                         session.addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, varargs), interfaceParamType));
                       }
                     }
-                    else {
-                      return substitutor;
-                    }
 
                     if (!session.repeatInferencePhases(false)) {
                       if (method.isVarArgs() && !varargs) {
