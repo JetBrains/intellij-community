@@ -18,16 +18,17 @@ package org.jetbrains.idea.svn.checkin;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractFilterChildren;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -37,18 +38,22 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -89,50 +94,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final SVNCommitClient committer = mySvnVcs.createCommitClient();
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    final Collection<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
+    IdeaCommitHandler handler = new IdeaCommitHandler(progress, true);
     if (progress != null) {
-      committer.setEventHandler(new ISVNEventHandler() {
-        public void handleEvent(final SVNEvent event, double p) {
-          final String path = SvnUtil.getPathForProgress(event);
-          if (path == null) {
-            return;
-          }
-          if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-            progress.setText2(SvnBundle.message("progress.text2.adding", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
-            VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-              @Nullable public VirtualFile compute() {
-                return VirtualFileManager.getInstance().findFileByUrl(filePath);
-              }
-            });
-            if (vf != null) {
-              deletedFiles.add(vf);
-            }
-            progress.setText2(SvnBundle.message("progress.text2.deleting", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-            progress.setText2(SvnBundle.message("progress.text2.sending", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-            progress.setText2(SvnBundle.message("progress.text2.replacing", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-            progress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
-          }
-          // do not need COMMIT_COMPLETED: same info is get another way
-        }
-
-        public void checkCancelled() throws SVNCancelException {
-          try {
-            progress.checkCanceled();
-          }
-          catch(ProcessCanceledException ex) {
-            throw new SVNCancelException();
-          }
-        }
-      });
+      committer.setEventHandler(handler);
     }
 
     if (progress != null) {
@@ -149,7 +113,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       doCommit(committables, committer, comment, force, exception, feedback);
     }
 
-    for(VirtualFile f : deletedFiles) {
+    for(VirtualFile f : handler.getDeletedFiles()) {
       f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
     }
     return exception;
