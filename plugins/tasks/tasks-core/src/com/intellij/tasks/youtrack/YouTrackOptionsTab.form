@@ -61,17 +61,15 @@
               <toolTipText value="Actual name of &quot;Resolved&quot; state used in &quot;Close Task&quot; dialog "/>
             </properties>
           </component>
-          <component id="7b950" class="javax.swing.JTextPane" binding="myNoteText">
+          <component id="cdcfa" class="com.intellij.ui.components.JBLabel" binding="myNoteText">
             <constraints>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="50"/>
               </grid>
             </constraints>
             <properties>
-              <contentType value="text/html"/>
-              <editable value="false"/>
               <opaque value="false"/>
-              <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#10;      &#10;    &lt;/p&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
+              <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;    &#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
             </properties>
           </component>
         </children>
