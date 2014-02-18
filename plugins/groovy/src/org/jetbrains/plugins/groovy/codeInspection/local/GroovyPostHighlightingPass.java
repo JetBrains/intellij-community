@@ -20,7 +20,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -54,6 +53,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -141,13 +141,13 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
         if (deadCodeEnabled &&
             element instanceof GrNamedElement && element instanceof PsiModifierListOwner &&
-            !PostHighlightingPass.isImplicitUsage(((PsiModifierListOwner)element).getProject(), (PsiModifierListOwner)element, progress) &&
+            !PostHighlightingPass.isImplicitUsage(element.getProject(), (PsiModifierListOwner)element, progress) &&
             !GroovySuppressableInspectionTool.isElementToolSuppressedIn(element, GroovyUnusedDeclarationInspection.SHORT_NAME)) {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
           if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
             String name = ((GrNamedElement)element).getName();
             if (element instanceof GrTypeDefinition && !PostHighlightingPass.isClassUsed(myProject,
-                                                                                         ((GrTypeDefinition)element).getContainingFile(), (GrTypeDefinition)element, progress, usageHelper
+                                                                                         element.getContainingFile(), (GrTypeDefinition)element, progress, usageHelper
             )) {
               HighlightInfo highlightInfo = PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL);
               QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element), unusedDefKey);
@@ -333,12 +333,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
         final long oldStamp = editor.getDocument().getModificationStamp();
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-          }
-        });
+        DocumentUtil.writeInRunUndoTransparentAction(runnable);
         if (oldStamp != editor.getDocument().getModificationStamp()) {
           String afterText = file.getText();
           if (Comparing.strEqual(beforeText, afterText)) {

@@ -27,7 +27,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -50,7 +49,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -61,6 +59,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
@@ -432,7 +431,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
   }
 
-  String addCurrentToHistory(@NotNull TextRange textRange, boolean preserveMarkup) {
+  final String addCurrentToHistory(@NotNull TextRange textRange, boolean preserveMarkup) {
     return addToHistoryInner(textRange, myConsoleEditor, false, preserveMarkup);
   }
 
@@ -442,19 +441,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @NotNull
   protected String addToHistoryInner(@NotNull final TextRange textRange, @NotNull final EditorEx editor, boolean erase, final boolean preserveMarkup) {
-    String result = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return addTextRangeToHistory(textRange, editor, preserveMarkup);
-      }
-    });
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
     if (erase) {
-      new WriteCommandAction.Simple(myProject, myFile) {
+      DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
         @Override
-        protected void run() throws Throwable {
+        public void run() {
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
-      }.execute();
+      });
     }
     // always scroll to end on user input
     scrollHistoryToEnd();
