@@ -419,8 +419,21 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link LanguageConsoleBuilder},
+   * {@link LanguageConsoleBuilder#registerExecuteAction)} or
+   * {@link ConsoleExecuteAction#prepareRunExecuteAction)}
+   *
+   * to remove in IDEA 15
+   */
   public String addCurrentToHistory(@NotNull TextRange textRange, boolean erase, boolean preserveMarkup) {
     return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
+  }
+
+  String addCurrentToHistory(@NotNull TextRange textRange, boolean preserveMarkup) {
+    return addToHistoryInner(textRange, myConsoleEditor, false, preserveMarkup);
   }
 
   public String addToHistory(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean preserveMarkup) {

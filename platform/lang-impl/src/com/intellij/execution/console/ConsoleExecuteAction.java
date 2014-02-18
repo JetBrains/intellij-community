@@ -135,7 +135,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
 
     if (addCurrentToHistory) {
-      console.addCurrentToHistory(range, false, preserveMarkup);
+      console.addCurrentToHistory(range, preserveMarkup);
     }
 
     if (clear) {
