@@ -24,12 +24,10 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +96,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   static abstract class ConsoleExecuteActionHandler {
     private final ConsoleHistoryModel myConsoleHistoryModel;
 
-    private boolean myAddCurrentToHistory = true;
+    private boolean myAddToHistory = true;
     private final boolean myPreserveMarkup;
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
@@ -111,11 +109,11 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     public void setAddCurrentToHistory(boolean addCurrentToHistory) {
-      myAddCurrentToHistory = addCurrentToHistory;
+      myAddToHistory = addCurrentToHistory;
     }
 
     final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      String text = prepareRunExecuteAction(console, myPreserveMarkup, myAddCurrentToHistory, true);
+      String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
 
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
 
@@ -124,23 +122,5 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     abstract void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView);
-  }
-
-  public static String prepareRunExecuteAction(@NotNull LanguageConsoleImpl console, boolean preserveMarkup, boolean addCurrentToHistory, boolean clear) {
-    // process input and add to history
-    Document document = console.getCurrentEditor().getDocument();
-    String text = document.getText();
-    TextRange range = new TextRange(0, document.getTextLength());
-
-    console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-
-    if (addCurrentToHistory) {
-      console.addCurrentToHistory(range, preserveMarkup);
-    }
-
-    if (clear) {
-      console.setInputText("");
-    }
-    return text;
   }
 }

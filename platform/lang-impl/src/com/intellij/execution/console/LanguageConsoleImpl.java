@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -431,12 +432,27 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
   }
 
-  final String addCurrentToHistory(@NotNull TextRange textRange, boolean preserveMarkup) {
-    return addToHistoryInner(textRange, myConsoleEditor, false, preserveMarkup);
-  }
-
   public String addToHistory(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean preserveMarkup) {
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
+  }
+
+  @NotNull
+  public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
+    Editor editor = getCurrentEditor();
+    Document document = editor.getDocument();
+    String text = document.getText();
+    TextRange range = new TextRange(0, document.getTextLength());
+    if (!clearInput) {
+      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    }
+
+    if (addToHistory) {
+      addToHistoryInner(range, myConsoleEditor, clearInput, preserveMarkup);
+    }
+    else if (clearInput) {
+      setInputText("");
+    }
+    return text;
   }
 
   @NotNull
@@ -475,19 +491,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @NotNull
   protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx consoleEditor, boolean preserveMarkup) {
+    doAddPromptToHistory();
+
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    doAddPromptToHistory();
     final int localStartOffset = textRange.getStartOffset();
     String text;
     EditorHighlighter highlighter;
     if (consoleEditor instanceof EditorWindow) {
-      EditorWindow editorWindow = (EditorWindow)consoleEditor;
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      PsiFile file = editorWindow.getInjectedFile();
-      final VirtualFile virtualFile = file.getVirtualFile();
-      assert virtualFile != null;
-      highlighter = HighlighterFactory.createHighlighter(virtualFile, scheme, getProject());
+      PsiFile file = ((EditorWindow)consoleEditor).getInjectedFile();
+      highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
       String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
       highlighter.setText(fullText);
       text = textRange.substring(fullText);
@@ -503,7 +516,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final int localEndOffset = textRange.getEndOffset();
     while (!iterator.atEnd()) {
       final int itStart = iterator.getStart();
-      if (itStart > localEndOffset) break;
+      if (itStart > localEndOffset) {
+        break;
+      }
       final int itEnd = iterator.getEnd();
       if (itEnd >= localStartOffset) {
         final int start = Math.max(itStart, localStartOffset) - localStartOffset + offset;
@@ -537,19 +552,26 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
     for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
-      if (!rangeHighlighter.isValid()) continue;
+      if (!rangeHighlighter.isValid()) {
+        continue;
+      }
       Object tooltip = rangeHighlighter.getErrorStripeTooltip();
       HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
       if (highlightInfo != null) {
-        if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) continue;
-        if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) continue;
+        if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
+          continue;
+        }
+        if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) {
+          continue;
+        }
       }
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
       final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
-      if (start > end) continue;
-      final RangeHighlighter h = to.addRangeHighlighter(
-        start + offset, end + offset, rangeHighlighter.getLayer(), rangeHighlighter.getTextAttributes(), rangeHighlighter.getTargetArea());
+      if (start > end) {
+        continue;
+      }
+      final RangeHighlighter h = to.addRangeHighlighter(start + offset, end + offset, rangeHighlighter.getLayer(), rangeHighlighter.getTextAttributes(), rangeHighlighter.getTargetArea());
       ((RangeHighlighterEx)h).setAfterEndOfLine(((RangeHighlighterEx)rangeHighlighter).isAfterEndOfLine());
     }
   }
@@ -571,8 +593,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editorFactory.releaseEditor(myHistoryViewer);
 
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    final boolean isOpen = editorManager.isFileOpen(myVirtualFile);
-    if (isOpen) {
+    if (editorManager.isFileOpen(myVirtualFile)) {
       editorManager.closeFile(myVirtualFile);
     }
   }
@@ -583,14 +604,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
     }
     else if (getProject().isInitialized()) {
-      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-      final Object o = ((FileEditorManagerImpl)editorManager).getData(key.getName(), myConsoleEditor, myVirtualFile);
-      sink.put(key, o);
+      sink.put(key, FileEditorManagerEx.getInstanceEx(getProject()).getData(key.getName(), myConsoleEditor, myVirtualFile));
     }
   }
 
   private void installEditorFactoryListener() {
-    final FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
+    FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (myConsoleEditor == null || !Comparing.equal(file, myVirtualFile)) {
@@ -621,9 +640,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (!Comparing.equal(file, myVirtualFile)) return;
+        if (!Comparing.equal(file, myVirtualFile)) {
+          return;
+        }
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
-          if (myCurrentEditor != null && myCurrentEditor.isDisposed()) myCurrentEditor = null;
+          if (myCurrentEditor != null && myCurrentEditor.isDisposed()) {
+            myCurrentEditor = null;
+          }
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
@@ -636,7 +659,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public Editor getCurrentEditor() {
-    return myCurrentEditor == null? myConsoleEditor : myCurrentEditor;
+    return ObjectUtils.chooseNotNull(myCurrentEditor, myConsoleEditor);
   }
 
   public Language getLanguage() {
@@ -651,7 +674,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setInputText(@NotNull final String query) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
         myConsoleEditor.getDocument().setText(query);
