@@ -17,6 +17,11 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorScrollingFixture;
@@ -46,19 +51,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     checkResultByText("some <selection>t<caret>ext</selection>\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,8); // alt-shift-click in existing selection
+    mouse().alt().shift().clickAt(0, 8); // alt-shift-click in existing selection
     checkResultByText("some <selection>t<caret>ext</selection>\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,6); // alt-shift-click at existing caret with selection
+    mouse().alt().shift().clickAt(0, 6); // alt-shift-click at existing caret with selection
     checkResultByText("some text\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(1,1); // alt-shift-click at the sole caret
+    mouse().alt().shift().clickAt(1, 1); // alt-shift-click at the sole caret
     checkResultByText("some text\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,30); // alt-shift-click in virtual space
+    mouse().alt().shift().clickAt(0, 30); // alt-shift-click in virtual space
     checkResultByText("some text<caret>\n" +
                       "a<caret>nother line");
 
@@ -141,5 +146,67 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "very l<selection><caret>ong line</selection>\n" +
                       "long l<selection><caret>ine</selection>\n" +
                       "line");
+  }
+
+  public void testTyping() throws Exception {
+    init("some<caret> text<caret>\n" +
+         "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+         "<selection>ano<caret>ther</selection> line",
+         TestFileType.TEXT
+    );
+    type('A');
+    checkResultByText("someA<caret> textA<caret>\n" +
+                      "some A<caret> A<caret>\n" +
+                      "A<caret> line");
+  }
+
+  public void testCopyPaste() throws Exception {
+    init("<selection><caret>one</selection> two \n" +
+         "<selection><caret>three</selection> four ",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one twoone<caret> \n" +
+                      "three fourthree<caret> ");
+  }
+
+  public void testCutAndPaste() throws Exception {
+    init("<selection>one<caret></selection> two \n" +
+         "<selection>three<caret></selection> four ",
+         TestFileType.TEXT
+    );
+    executeAction("EditorCut");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText(" twoone<caret> \n" +
+                      " fourthree<caret> ");
+  }
+
+  public void testPasteSingleItem() throws Exception {
+    init("<selection>one<caret></selection> two \n" +
+         "three four ",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorCloneCaretBelow");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one twoone<caret> \n" +
+                      "three fourone<caret> ");
+  }
+
+  public void testCutAndPasteMultiline() throws Exception {
+    init("one <selection>two \n" +
+         "three<caret></selection> four \n" +
+         "five <selection>six \n" +
+         "seven<caret></selection> eight",
+         TestFileType.TEXT);
+    executeAction("EditorCut");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one  fourtwo \n" +
+                      "three<caret> \n" +
+                      "five  eightsix \n" +
+                      "seven<caret>");
   }
 }

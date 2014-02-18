@@ -20,7 +20,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
@@ -30,20 +29,14 @@ import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.remoteServer.util.*;
 import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 
 /**
  * @author michael.golubev
  */
 public class SshKeyChecker {
-
-  private final boolean myTextNotFile;
-
-  public SshKeyChecker(boolean textNotFile) {
-    myTextNotFile = textNotFile;
-  }
 
   private static boolean isSshKeyErrorMessage(String errorMessage) {
     return errorMessage.contains("Could not read from remote repository") || errorMessage.contains("The remote end hung up unexpectedly");
@@ -68,17 +61,6 @@ public class SshKeyChecker {
     if (isSshKeyErrorMessage(errorMessage) && logManager != null) {
       new DeploymentHandler(serverRuntime, logManager.getMainLoggingHandler(), deploymentTask).handle();
     }
-  }
-
-  @Nullable
-  private static ServerConnection findServerConnection(SshKeyAwareServerRuntime serverRuntime) {
-    ServerConfiguration configuration = serverRuntime.getConfiguration();
-    for (ServerConnection connection : ServerConnectionManager.getInstance().getConnections()) {
-      if (connection.getServer().getConfiguration() == configuration) {
-        return connection;
-      }
-    }
-    return null;
   }
 
   private class ServerHandler extends HandlerBase {
@@ -114,7 +96,7 @@ public class SshKeyChecker {
     }
 
     @Override
-    protected void uploadKey(final String sskKey) {
+    protected void uploadKey(final File sskKey) {
       new CloudConnectionTask(myProject, "Uploading SSH key", myConnectionTask.getServer()) {
 
         @Override
@@ -178,7 +160,7 @@ public class SshKeyChecker {
     }
 
     @Override
-    protected void uploadKey(final String sskKey) {
+    protected void uploadKey(final File sskKey) {
       new CloudRuntimeTask(getProject(), "Uploading SSH key") {
 
         @Override
@@ -212,10 +194,7 @@ public class SshKeyChecker {
     }
 
     private void redeploy() {
-      final ServerConnection connection = findServerConnection(myServerRuntime);
-      if (connection == null) {
-        return;
-      }
+      final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServerRuntime.getServer());
 
       final RemoteServersView view = RemoteServersView.getInstance(myDeploymentTask.getProject());
       view.showServerConnection(connection);
@@ -231,19 +210,16 @@ public class SshKeyChecker {
     }
   }
 
-  private abstract class HandlerBase {
+  private static abstract class HandlerBase {
 
     protected void chooseKey() {
-      new PublicSshKeyDialog(getProject(), myTextNotFile) {
-
-        @Override
-        protected void uploadSshKey(String sskKey) {
-          uploadKey(sskKey);
-        }
-      }.show();
+      PublicSshKeyDialog dialog = new PublicSshKeyDialog(getProject());
+      if (dialog.showAndGet()) {
+        uploadKey(dialog.getSshKey());
+      }
     }
 
-    protected abstract void uploadKey(String sskKey);
+    protected abstract void uploadKey(File sskKeyFile);
 
     protected abstract Project getProject();
   }

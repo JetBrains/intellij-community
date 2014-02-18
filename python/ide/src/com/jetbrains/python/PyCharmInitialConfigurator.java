@@ -55,10 +55,15 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V3", "true");
       UISettings.getInstance().SHOW_MEMORY_INDICATOR = false;
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class");
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class");
+            }
+          });
         }
       });
     }

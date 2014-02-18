@@ -15,18 +15,17 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -35,20 +34,16 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.List;
 
 public class TipPanel extends JPanel {
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  private final JCheckBox myCheckBox;
-  private final JEditorPane browser;
-  private final ArrayList<String> myTipPaths = new ArrayList<String>();
-  private final HashMap<String, Class< ? extends ProductivityFeaturesProvider>> myPathsToProviderMap = new HashMap<String, Class<? extends ProductivityFeaturesProvider>>();
-  @NonNls
-  private static final String ELEMENT_TIP = "tip";
-  @NonNls
-  private static final String ATTRIBUTE_FILE = "file";
+
+  private final JEditorPane myBrowserPanel;
+  private final JLabel myPoweredByLabel;
+  private final List<TipAndTrickBean> myTips = ContainerUtil.newArrayList();
 
   public TipPanel() {
     setLayout(new BorderLayout());
@@ -63,45 +58,42 @@ public class TipPanel extends JPanel {
     jpanel.add(jlabel1, BorderLayout.CENTER);
     jpanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
     add(jpanel, BorderLayout.NORTH);
-    browser = new JEditorPane();
-    browser.setEditable(false);
-    browser.setEditorKit(new HTMLEditorKit());
-    browser.setBackground(UIUtil.getTextFieldBackground());
-    browser.addHyperlinkListener(
+    myBrowserPanel = new JEditorPane();
+    myBrowserPanel.setEditable(false);
+    myBrowserPanel.setEditorKit(new HTMLEditorKit());
+    myBrowserPanel.setBackground(UIUtil.getTextFieldBackground());
+    myBrowserPanel.addHyperlinkListener(
       new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            //TODO: Open url in browser
+            BrowserUtil.browse(e.getURL());
           }
         }
       }
     );
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(browser);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowserPanel);
     add(scrollPane, BorderLayout.CENTER);
-    myCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
-    myCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+
+    JPanel southPanel = new JPanel(new BorderLayout());
+    JCheckBox showOnStartCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
+    showOnStartCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     final GeneralSettings settings = GeneralSettings.getInstance();
-    myCheckBox.setSelected(settings.showTipsOnStartup());
-    myCheckBox.addItemListener(new ItemListener() {
+    showOnStartCheckBox.setSelected(settings.showTipsOnStartup());
+    showOnStartCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         settings.setShowTipsOnStartup(e.getStateChange() == ItemEvent.SELECTED);
       }
     });
-    add(myCheckBox, BorderLayout.SOUTH);
-    try {
-      readTips("/tips/tips.xml");
-      readTips("/tips/IdeSpecificTips.xml");
-    }
-    catch (Exception exception) {//
-    }
+    southPanel.add(showOnStartCheckBox, BorderLayout.WEST);
 
-    for (ProductivityFeaturesProvider provider : ProductivityFeaturesProvider.EP_NAME.getExtensions()) {
-      final FeatureDescriptor[] descriptors = provider.getFeatureDescriptors();
-      for (int j = 0; descriptors != null && j < descriptors.length; j++) {
-        FeatureDescriptor descriptor = descriptors[j];
-        myPathsToProviderMap.put(descriptor.getTipFileName(), descriptor.getProvider());
-      }
-    }
+    myPoweredByLabel = new JBLabel();
+    myPoweredByLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+    myPoweredByLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
+
+    southPanel.add(myPoweredByLabel, BorderLayout.EAST);
+    add(southPanel, BorderLayout.SOUTH);
+
+    Collections.addAll(myTips, Extensions.getExtensions(TipAndTrickBean.EP_NAME));
   }
 
   public Dimension getPreferredSize() {
@@ -109,57 +101,49 @@ public class TipPanel extends JPanel {
   }
 
   public void prevTip() {
-    if (myTipPaths.size() == 0) {
-      browser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
+    if (myTips.size() == 0) {
+      myBrowserPanel.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     final GeneralSettings settings = GeneralSettings.getInstance();
     int lastTip = settings.getLastTip();
 
-    final String path;
+    final TipAndTrickBean tip;
     lastTip--;
     if (lastTip <= 0) {
-      path = myTipPaths.get(myTipPaths.size() - 1);
-      lastTip = myTipPaths.size();
+      tip = myTips.get(myTips.size() - 1);
+      lastTip = myTips.size();
     }
     else {
-      path = myTipPaths.get(lastTip - 1);
+      tip = myTips.get(lastTip - 1);
     }
 
-    setTip(path, lastTip, browser, settings);
+    setTip(tip, lastTip, myBrowserPanel, settings);
   }
 
-  private void setTip (String path, int lastTip, JEditorPane browser, GeneralSettings settings) {
-    TipUIUtil.openTipInBrowser(path, browser, myPathsToProviderMap.get(path));
+  private void setTip (TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
+    TipUIUtil.openTipInBrowser(tip, browser);
+    myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
     settings.setLastTip(lastTip);
   }
 
   public void nextTip() {
-    if (myTipPaths.size() == 0) {
-      browser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
+    if (myTips.size() == 0) {
+      myBrowserPanel.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();
     int lastTip = settings.getLastTip();
-    String path;
+    TipAndTrickBean tip;
     lastTip++;
-    if (lastTip - 1 >= myTipPaths.size()) {
-      path = myTipPaths.get(0);
+    if (lastTip - 1 >= myTips.size()) {
+      tip = myTips.get(0);
       lastTip = 1;
     }
     else {
-      path = myTipPaths.get(lastTip - 1);
+      tip = myTips.get(lastTip - 1);
     }
 
-    setTip(path, lastTip, browser, settings);
-  }
-
-  private void readTips(String tipsURL) throws Exception {
-    final Document document = JDOMUtil.loadDocument(getClass().getResource(tipsURL).openStream());
-
-    for (Object o : document.getRootElement().getChildren(ELEMENT_TIP)) {
-      Element tip = (Element)o;
-      myTipPaths.add(tip.getAttributeValue(ATTRIBUTE_FILE));
-    }
+    setTip(tip, lastTip, myBrowserPanel, settings);
   }
 }

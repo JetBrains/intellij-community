@@ -735,6 +735,14 @@ public class GrClosureSignatureUtil {
       innerArgs.add(new InnerArg(TypeConversionUtil.erasure(closureArgument.getType()), closureArgument));
     }
 
+    return mapParametersToArguments(signature, innerArgs, hasNamedArgs, partial, context);
+  }
+
+  private static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+                                                                @NotNull List<InnerArg> innerArgs,
+                                                                boolean hasNamedArgs,
+                                                                boolean partial,
+                                                                @NotNull PsiElement context) {
     final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[innerArgs.size()]), new Function<InnerArg, PsiType>() {
         @Override
         public PsiType fun(InnerArg o) {

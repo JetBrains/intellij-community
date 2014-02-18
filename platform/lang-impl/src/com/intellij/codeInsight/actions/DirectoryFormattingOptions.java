@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.util.ssh;
+package com.intellij.codeInsight.actions;
 
-import javax.swing.*;
+public interface DirectoryFormattingOptions extends ReformatFilesOptions {
 
-/**
- * @author michael.golubev
- */
-public interface PublicSshKeyPanel {
+  boolean isIncludeSubdirectories();
 
-  String getSshKey();
-
-  JComponent getMainPanel();
 }

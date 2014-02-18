@@ -60,8 +60,7 @@ public abstract class BaseConsoleExecuteActionHandler {
 
     console.setInputText("");
 
-    UndoManager manager = UndoManager.getInstance(console.getProject());
-    ((UndoManagerImpl)manager).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
+    ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
 
     myConsoleHistoryModel.addToHistory(text);
     if (consoleView == null) {

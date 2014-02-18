@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,19 @@ public abstract class JobLauncher {
                                                                                 @NotNull Processor<T> thingProcessor);
 
 
+  /**
+   * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
+   * This will cause deadlock since this thread pool is an easily exhaustible resource.
+   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
+   */
   @NotNull
   public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
 
+  /**
+   * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
+   * This will cause deadlock since this thread pool is an easily exhaustible resource.
+   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
+   */
   @NotNull
   public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
     return submitToJobThread(priority, action, null);

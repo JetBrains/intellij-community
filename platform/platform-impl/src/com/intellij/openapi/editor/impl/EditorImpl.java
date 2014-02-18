@@ -3645,7 +3645,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    *         lines (considering that single logical document line may be represented on multiple visual lines because of
    *         soft wraps appliance) minus number of folded lines
    */
-  int getVisibleLineCount() {
+  public int getVisibleLineCount() {
     return getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber();
   }
 

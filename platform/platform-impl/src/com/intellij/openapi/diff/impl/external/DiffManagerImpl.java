@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
@@ -78,7 +79,10 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   };
   private ComparisonPolicy myComparisonPolicy;
+  private HighlightMode myHighlightMode;
+
   @NonNls public static final String COMPARISON_POLICY_ATTR_NAME = "COMPARISON_POLICY";
+  @NonNls public static final String HIGHLIGHT_MODE_ATTR_NAME = "HIGHLIGHT_MODE";
 
   public DiffManagerImpl() {
     myProperties = new ExternalizablePropertyContainer();
@@ -153,12 +157,13 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return (DiffManagerImpl)DiffManager.getInstance();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     myProperties.readExternal(element);
     readPolicy(element);
+    readMode(element);
   }
 
-  private void readPolicy(final Element element) {
+  private void readPolicy(@NotNull final Element element) {
     final String policyName = element.getAttributeValue(COMPARISON_POLICY_ATTR_NAME);
     if (policyName != null) {
       ComparisonPolicy[] policies = ComparisonPolicy.getAllInstances();
@@ -171,10 +176,24 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  private void readMode(@NotNull final Element element) {
+    final String modeName = element.getAttributeValue(HIGHLIGHT_MODE_ATTR_NAME);
+    if (modeName != null) {
+      try {
+        myHighlightMode = HighlightMode.valueOf(modeName);
+      }
+      catch (IllegalArgumentException ignore) {
+      }
+    }
+  }
+
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
     if (myComparisonPolicy != null) {
       element.setAttribute(COMPARISON_POLICY_ATTR_NAME, myComparisonPolicy.getName());
+    }
+    if (myHighlightMode != null) {
+      element.setAttribute(HIGHLIGHT_MODE_ATTR_NAME, myHighlightMode.name());
     }
   }
 
@@ -205,5 +224,14 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   @Nullable
   public ComparisonPolicy getComparisonPolicy() {
     return myComparisonPolicy;
+  }
+
+  public void setHighlightMode(HighlightMode highlightMode) {
+    myHighlightMode = highlightMode;
+  }
+
+  @Nullable
+  public HighlightMode getHighlightMode() {
+    return myHighlightMode;
   }
 }

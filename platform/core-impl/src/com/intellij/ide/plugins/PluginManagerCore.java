@@ -64,7 +64,7 @@ public class PluginManagerCore {
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
   static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
-  static final List<String> ourAvailableModules = new ArrayList<String>();
+  static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new HashMap<String, IdeaPluginDescriptorImpl>();
   static final PluginClassCache ourPluginClasses = new PluginClassCache();
   @NonNls static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   static final String DISABLE = "disable";
@@ -236,7 +236,8 @@ public class PluginManagerCore {
       if (processed.contains(dependentPluginId)) continue;
 
       // TODO[yole] should this condition be a parameter?
-      if (isModuleDependency(dependentPluginId) && (ourAvailableModules.isEmpty() || ourAvailableModules.contains(dependentPluginId.getIdString()))) {
+      if (isModuleDependency(dependentPluginId) && (ourModulesToContainingPlugins.isEmpty() || ourModulesToContainingPlugins.containsKey(
+        dependentPluginId.getIdString()))) {
         continue;
       }
       if (!optionalDependencies.contains(dependentPluginId)) {
@@ -483,9 +484,8 @@ public class PluginManagerCore {
   }
 
   private static void addModulesAsDependents(Map<PluginId, ? super IdeaPluginDescriptorImpl> map) {
-    for (String module : ourAvailableModules) {
-      // fake plugin descriptors to satisfy dependencies
-      map.put(PluginId.getId(module), new IdeaPluginDescriptorImpl());
+    for (Map.Entry<String, IdeaPluginDescriptorImpl> entry : ourModulesToContainingPlugins.entrySet()) {
+      map.put(PluginId.getId(entry.getKey()), entry.getValue());
     }
   }
 
@@ -967,7 +967,7 @@ public class PluginManagerCore {
     }
     final List<String> pluginIds = pluginId == null ? null : StringUtil.split(pluginId, ",");
 
-    final boolean checkModuleDependencies = !ourAvailableModules.isEmpty() && !ourAvailableModules.contains("com.intellij.modules.all");
+    final boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey("com.intellij.modules.all");
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
       return true;
     }
@@ -1058,7 +1058,11 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       final List<String> modules = descriptor.getModules();
       if (modules != null) {
-        ourAvailableModules.addAll(modules);
+        for (String module : modules) {
+          if (!ourModulesToContainingPlugins.containsKey(module)) {
+            ourModulesToContainingPlugins.put(module, descriptor);
+          }
+        }
       }
 
       if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {
@@ -1087,6 +1091,7 @@ public class PluginManagerCore {
     }
 
     mergeOptionalConfigs(idToDescriptorMap);
+    addModulesAsDependents(idToDescriptorMap);
 
     // sort descriptors according to plugin dependencies
     Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));

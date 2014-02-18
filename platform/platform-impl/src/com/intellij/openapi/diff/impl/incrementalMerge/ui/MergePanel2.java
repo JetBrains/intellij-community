@@ -16,16 +16,15 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
+import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -151,6 +150,8 @@ public class MergePanel2 implements DiffViewer {
         toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
         toolbar.addSeparator();
         toolbar.addAction(new ApplyNonConflicts(myPanel));
+        toolbar.addSeparator();
+        toolbar.addAction(new ToggleAutoScrollAction());
         Project project = myData.getProject();
         if (project != null) {
           toolbar.addSeparator();
@@ -260,6 +261,14 @@ public class MergePanel2 implements DiffViewer {
   @NotNull
   EditingSides getSecondEditingSide() {
     return new MyEditingSides(FragmentSide.SIDE2);
+  }
+
+  public void setAutoScrollEnabled(boolean enabled) {
+    myScrollSupport.setEnabled(enabled);
+  }
+
+  public boolean isAutoScrollEnabled() {
+    return myScrollSupport.isEnabled();
   }
 
   public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {

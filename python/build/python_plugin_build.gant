@@ -149,6 +149,10 @@ target(name: "compile", description: "Compile module python") {
     fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
   }
 
+  ant.replace(file: "${classesDir}/META-INF/plugin.xml") {
+    replacefilter(token: "@@BUILD_NUMBER@@", value: "${buildNumber}")
+  }
+
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
                     match: "since-build=\"\\d+\\.\\d+\"",
                     replace: "since-build=\"${ideaBuildNumber}\"")

@@ -51,6 +51,10 @@ public class TextCompareProcessor {
   }
 
   public ArrayList<LineFragment> process(String text1, String text2) throws FilesTooBigForDiffException {
+    if (text1.isEmpty() || text2.isEmpty()) {
+      return new DummyDiffFragmentsProcessor().process(text1, text2);
+    }
+
     DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(text1, text2);
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);

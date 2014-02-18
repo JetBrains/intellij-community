@@ -64,6 +64,10 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTest("Child", "#CLASS_VAR", "Parent");
   }
 
+  public void testInstanceNotDeclaredInInit() {
+    doHelperTest("Child", "#foo", "Parent");
+  }
+
   public void testMoveClassAttributesNoPass() {
     doHelperTest("Child2", "#CLASS_VAR", "Parent2");
   }

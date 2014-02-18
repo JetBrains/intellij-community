@@ -14,6 +14,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="CreateTargetTag.html" />
+
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
     <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 

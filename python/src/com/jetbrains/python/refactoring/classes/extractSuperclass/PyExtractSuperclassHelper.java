@@ -60,18 +60,26 @@ public final class PyExtractSuperclassHelper {
                                 @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
-
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
     selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
-    // 'object' superclass is always pulled up, even if not selected explicitly
-    if (MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT) == null) {
-      final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
-      if (object != null) {
-        selectedMemberInfos.add(object);
+
+    // PY-12171
+    final PyMemberInfo<PyElement> objectMember = MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT);
+    if (LanguageLevel.forElement(clazz).isPy3K()) {
+      // Remove object from list if Py3
+      if (objectMember != null) {
+        selectedMemberInfos.remove(objectMember);
+      }
+    } else {
+      // Always add object if < Py3
+      if (objectMember == null) {
+        final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
+        if (object != null) {
+          selectedMemberInfos.add(object);
+        }
       }
     }
-
 
     final Project project = clazz.getProject();
 
@@ -79,12 +87,15 @@ public final class PyExtractSuperclassHelper {
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
     newClass = placeNewClass(project, newClass, clazz, targetFile);
-
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
+    if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
+      PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
+    }
     PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+
   }
 
-  private static PyClass placeNewClass(Project project, PyClass newClass, @NotNull PyClass clazz, String targetFile) {
+  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source

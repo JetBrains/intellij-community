@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -524,27 +524,27 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       @Override
       public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              VirtualFile file = pointer.getFile();
-              if (file != null && !file.isValid()) {
-                throw new IncorrectOperationException("I've caught it. I am that good");
-              }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            VirtualFile file = pointer.getFile();
+            if (file != null && !file.isValid()) {
+              throw new IncorrectOperationException("I've caught it. I am that good");
             }
-          });
+          }
+        });
       }
     }, new Consumer<Future>() {
-                                                                  @Override
-                                                                  public void consume(Future future) {
-                                                                    try {
-                                                                      future.get();
-                                                                    }
-                                                                    catch (Exception e) {
-                                                                      throw new RuntimeException(e);
-                                                                    }
-                                                                  }
-                                                                });
+      @Override
+      public void consume(Future future) {
+        try {
+          future.get();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
     }
   }
 

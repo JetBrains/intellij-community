@@ -18,22 +18,22 @@ package com.intellij.remoteServer.util.ssh;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author michael.golubev
  */
-public abstract class PublicSshKeyDialog extends DialogWrapper {
+public class PublicSshKeyDialog extends DialogWrapper {
 
-  private PublicSshKeyPanel myPanel;
+  private PublicSshKeyFilePanel myPanel;
 
-  public PublicSshKeyDialog(@Nullable Project project, boolean textNotFile) {
+  public PublicSshKeyDialog(@Nullable Project project) {
     super(project);
     setTitle("Upload Public SSH Key");
-    myPanel = textNotFile ? new PublicSshKeyTextPanel() : new PublicSshKeyFilePanel();
+    myPanel = new PublicSshKeyFilePanel();
     init();
   }
 
@@ -43,21 +43,13 @@ public abstract class PublicSshKeyDialog extends DialogWrapper {
     return myPanel.getMainPanel();
   }
 
-  private String getSshKey() {
-    return myPanel.getSshKey();
+  public File getSshKey() {
+    return new File(myPanel.getSshKey());
   }
 
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    return StringUtil.isEmpty(getSshKey()) ? new ValidationInfo("Specify public SSH key") : null;
+    return getSshKey().isFile() ? null : new ValidationInfo("Public SSH key file does not exist");
   }
-
-  @Override
-  protected void doOKAction() {
-    super.doOKAction();
-    uploadSshKey(myPanel.getSshKey());
-  }
-
-  protected abstract void uploadSshKey(String sskKey);
 }

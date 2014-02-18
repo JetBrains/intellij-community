@@ -232,23 +232,33 @@ public class Util {
   }
 
   public static DiffFragment concatenate(DiffFragment[] line, int from, int to) {
-    StringBuffer buffer1 = new StringBuffer();
-    StringBuffer buffer2 = new StringBuffer();
+    String[] data1 = new String[to - from];
+    String[] data2 = new String[to - from];
+
+    int len1 = 0;
+    int len2 = 0;
     boolean isEqual = true;
-    for (int j = from; j < to; j++) {
-      DiffFragment fragment = line[j];
-      isEqual &= fragment.isEqual();
-      String text1 = fragment.getText1();
-      String text2 = fragment.getText2();
-      if (text1 != null) buffer1.append(text1);
-      if (text2 != null) buffer2.append(text2);
+    for (int i = 0; i < to - from; i++) {
+      isEqual &= line[i + from].isEqual();
+      data1[i] = line[i + from].getText1();
+      data2[i] = line[i + from].getText2();
+      len1 += data1[i] == null ? 0 : data1[i].length();
+      len2 += data2[i] == null ? 0 : data2[i].length();
     }
+
+    StringBuilder buffer1 = new StringBuilder(len1);
+    StringBuilder buffer2 = new StringBuilder(len2);
+    for (int i = 0; i < to - from; i++) {
+      if (data1[i] != null) buffer1.append(data1[i]);
+      if (data2[i] != null) buffer2.append(data2[i]);
+    }
+
     String text1 = notEmptyContent(buffer1);
     String text2 = notEmptyContent(buffer2);
     return isEqual ? DiffFragment.unchanged(text1, text2) : new DiffFragment(text1, text2);
   }
 
-  private static String notEmptyContent(StringBuffer buffer) {
+  private static String notEmptyContent(StringBuilder buffer) {
     return buffer.length() > 0 ? buffer.toString() : null;
   }
 

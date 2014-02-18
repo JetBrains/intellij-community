@@ -24,23 +24,34 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyFunctionBuilder {
+  private static final String COMMENTS_BOUNDARY = "\"\"\"";
+  private static final Pattern INDENT_REMOVE_PATTERN = Pattern.compile("^\\s+", Pattern.MULTILINE);
   private final String myName;
   private final List<String> myParameters = new ArrayList<String>();
   private final List<String> myStatements = new ArrayList<String>();
   private final List<String> myDecorators = new ArrayList<String>();
   private String myAnnotation = null;
+  private String[] myDocStringLines = null;
 
-  //TODO: Doc
+  /**
+   * Creates builder copying signature and doc from another one.
+   * @param source what to copy
+   * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
+   * @return builder configured by this function
+   */
   @NotNull
   public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
     final String name = source.getName();
@@ -62,7 +73,24 @@ public class PyFunctionBuilder {
         }
       }
     }
+    final String docString = source.getDocStringValue();
+    if (docString != null) {
+      functionBuilder.docString(docString);
+    }
     return functionBuilder;
+  }
+
+  /**
+   * Adds docstring to function. Provide doc with out of comment blocks.
+   * @param docString doc
+   */
+  public void docString(@NotNull final String docString) {
+    myDocStringLines = StringUtil.splitByLines(removeIndent(docString));
+  }
+
+  @NotNull
+  private String removeIndent(@NotNull final String string) {
+    return INDENT_REMOVE_PATTERN.matcher(string).replaceAll("");
   }
 
   public PyFunctionBuilder(String name) {
@@ -118,6 +146,16 @@ public class PyFunctionBuilder {
     }
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
+
+    if (myDocStringLines != null) {
+      final List<String> comments = new ArrayList<String>(myDocStringLines.length + 2);
+      comments.add(COMMENTS_BOUNDARY);
+      comments.addAll(Arrays.asList(myDocStringLines));
+      comments.add(COMMENTS_BOUNDARY);
+      statements = new ArrayList<String>(statements);
+      statements.addAll(0, comments);
+    }
+
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
     String indent = StringUtil.repeatSymbol(' ', indentSize);
@@ -129,5 +167,12 @@ public class PyFunctionBuilder {
 
   public void decorate(String decoratorName) {
     myDecorators.add("@" + decoratorName);
+  }
+
+  @NotNull
+  private static String getIndent(@NotNull final Project project) {
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    final int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
+    return StringUtil.repeatSymbol(' ', indentSize);
   }
 }

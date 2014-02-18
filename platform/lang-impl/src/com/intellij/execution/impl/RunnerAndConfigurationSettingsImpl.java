@@ -65,7 +65,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @NonNls
   private static final String EDIT_BEFORE_RUN = "editBeforeRun";
   @NonNls
-  private static final String SINGLETON = "singleton";
+  public static final String SINGLETON = "singleton";
 
 
   /** for compatibility */

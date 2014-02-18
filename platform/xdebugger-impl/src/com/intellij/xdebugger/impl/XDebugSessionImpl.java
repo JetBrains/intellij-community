@@ -114,6 +114,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
 
   private volatile boolean breakpointsInitialized;
+  private boolean autoInitBreakpoints = true;
 
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager) {
@@ -154,6 +155,11 @@ public class XDebugSessionImpl implements XDebugSession {
     else {
       LOG.assertTrue(mySessionTab != null, "Debug tool window not initialized yet!");
     }
+  }
+
+  @Override
+  public void setAutoInitBreakpoints(boolean value) {
+    autoInitBreakpoints = value;
   }
 
   @Override
@@ -230,7 +236,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess = process;
     mySessionData = sessionData;
 
-    if (myDebugProcess.checkCanInitBreakpoints()) {
+    if (autoInitBreakpoints && myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
 

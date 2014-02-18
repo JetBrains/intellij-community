@@ -132,17 +132,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     if (element instanceof PySubscriptionExpression) {
       element = ((PySubscriptionExpression)element).getRootOperand();
     }
-    while (true) {
-      PsiReference reference = element.getReference();
-      if (reference == null) {
-        break;
-      }
-      PsiElement resolve = reference.resolve();
-      if (resolve == null || resolve.equals(element) || !PyUtil.inSameFile(resolve, element)) {
-        break;
-      }
-      element = resolve;
-    }
+    element = PyUtil.resolveToTheTop(element);
     return element;
   }
 

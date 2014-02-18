@@ -116,6 +116,15 @@ public class PyExtractSuperclassPresenterTest
     return errorMessageCapture;
   }
 
+  /**
+   * Old classes could be refactored as well
+   */
+  public void testOldClass() {
+    final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("OldClass");
+    final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
+      .containsInAnyOrder(new PyPresenterTestMemberEntry("foo(self)", true, false, true));
+    compareMembers(members, matcher);
+  }
 
   /**
    * Checks that class fields could be moved while "extends object" is not in list

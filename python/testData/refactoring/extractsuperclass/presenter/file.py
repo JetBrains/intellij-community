@@ -13,3 +13,8 @@ class StaticOnly(object):
     @staticmethod
     def static_method(): # May be abstract in case of Py3
         pass
+
+
+class OldClass():
+    def foo(self):
+        pass

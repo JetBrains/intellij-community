@@ -397,7 +397,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
     if (!myCustomSteps.containsKey(card)) {
-      ModuleWizardStep step = builder.getCustomOptionsStep(this);
+      ModuleWizardStep step = builder.getCustomOptionsStep(myContext, this);
       if (step == null) return false;
       step.updateStep();
       myCustomSteps.put(card, step);

@@ -1970,13 +1970,18 @@ public class ContainerUtil extends ContainerUtilRt {
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
    */
   @NotNull
-  public static <T> ConcurrentList<T> createLockFreeCopyOnWriteList() {
-    return new LockFreeCopyOnWriteArrayList<T>();
+  public static <T> List<T> createLockFreeCopyOnWriteList() {
+    return createConcurrentList();
   }
 
   @NotNull
-  public static <T> ConcurrentList<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
+  public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<T>(c);
+  }
+
+  @NotNull
+  public static <T> ConcurrentList<T> createConcurrentList() {
+    return new LockFreeCopyOnWriteArrayList<T>();
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

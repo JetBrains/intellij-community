@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -35,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -129,6 +132,12 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     if (!(parent instanceof GrMethodCall)) {
       return null;
     }
+
+    PsiType fromSam = inferParameterTypeFromSAM((GrMethodCall)parent, closure, index);
+    if (fromSam != null) {
+      return fromSam;
+    }
+
     String methodName = findMethodName((GrMethodCall)parent);
 
     GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
@@ -253,6 +262,41 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.ObjectOutputStream", closure);
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiType inferParameterTypeFromSAM(@NotNull GrMethodCall methodCall, @NotNull GrClosableBlock closure, int index) {
+    if (!ClosureToSamConverter.isSamConversionAllowed(methodCall)) return null;
+
+    GroovyResolveResult resolveResult = methodCall.advancedResolve();
+    PsiElement resolved = resolveResult.getElement();
+
+    if (!(resolved instanceof PsiMethod)) return null;
+
+
+
+    Map<GrExpression,Pair<PsiParameter,PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(resolveResult, methodCall, false, true,
+                                                                                                       methodCall.getNamedArguments(),
+                                                                                                       methodCall.getExpressionArguments(),
+                                                                                                       methodCall.getClosureArguments());
+    if (map == null) return null;
+
+    Pair<PsiParameter, PsiType> samParameter = map.get(closure);
+    assert samParameter != null;
+
+    PsiType samTypeSubstituted = samParameter.getSecond();
+    if (!(samTypeSubstituted instanceof PsiClassType)) return null;
+
+    MethodSignature samSignature = ClosureToSamConverter.findSAMSignature(samTypeSubstituted);
+    if (samSignature == null) return null;
+
+    PsiType[] parameterTypes = samSignature.getParameterTypes();
+
+    if (index >= parameterTypes.length) {
+      return null;
+    }
+
+    return parameterTypes[index];
   }
 
 

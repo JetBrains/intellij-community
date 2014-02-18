@@ -137,4 +137,21 @@ class Thing {
 ''', 'java.lang.Integer')
   }
 
+
+  void testSamInference4() {
+    doTest('''
+interface Action<T> {
+    void execute(T t)
+}
+
+public <T> void exec(T t, Action<T> f) {
+}
+
+
+def foo() {
+    exec('foo') {print i<caret>t.toUpperCase() ;print 2 }
+}
+
+''', 'java.lang.String')
+  }
 }

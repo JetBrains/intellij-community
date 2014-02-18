@@ -185,8 +185,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myForceScrollToEnd.getAndSet(false)) {
-          final JScrollBar scrollBar = myHistoryViewer.getScrollPane().getVerticalScrollBar();
-          scrollBar.setValue(scrollBar.getMaximum());
+          scrollHistoryToEnd();
         }
       }
 
@@ -299,7 +298,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(true);
   }
 
-  private void setupEditorDefault(@NotNull EditorEx editor) {
+  protected void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.setHorizontalScrollbarVisible(false);
@@ -410,30 +409,26 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void addTextToHistory(@Nullable CharSequence text, @Nullable TextAttributes attributes) {
-    if (StringUtil.isEmpty(text)) {
+    if (StringUtil.isEmpty(text) || attributes == null) {
       return;
     }
 
     Document history = myHistoryViewer.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     int offset = appendToHistoryDocument(history, text);
-    if (attributes == null) return;
     markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
+  public String addCurrentToHistory(@NotNull TextRange textRange, boolean erase, boolean preserveMarkup) {
     return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
   }
 
-  public String addToHistory(final TextRange textRange, final EditorEx editor, final boolean preserveMarkup) {
+  public String addToHistory(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean preserveMarkup) {
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
   }
 
   @NotNull
-  protected String addToHistoryInner(@NotNull final TextRange textRange,
-                                     @NotNull final EditorEx editor,
-                                     final boolean erase,
-                                     final boolean preserveMarkup) {
+  protected String addToHistoryInner(@NotNull final TextRange textRange, @NotNull final EditorEx editor, boolean erase, final boolean preserveMarkup) {
     String result = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -462,13 +457,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private void scrollHistoryToEnd() {
     final int lineCount = myHistoryViewer.getDocument().getLineCount();
-    if (lineCount == 0) return;
+    if (lineCount == 0) {
+      return;
+    }
     myHistoryViewer.getCaretModel().moveToOffset(myHistoryViewer.getDocument().getLineStartOffset(lineCount - 1), false);
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
   @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull final EditorEx consoleEditor, boolean preserveMarkup) {
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     doAddPromptToHistory();
@@ -667,17 +664,21 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     @Override
     public void layoutContainer(@NotNull final Container parent) {
       final int componentCount = parent.getComponentCount();
-      if (componentCount == 0) return;
+      if (componentCount == 0) {
+        return;
+      }
+
       final EditorEx history = myHistoryViewer;
       final EditorEx editor = componentCount == 2 ? myConsoleEditor : null;
-
       if (editor == null) {
         parent.getComponent(0).setBounds(parent.getBounds());
         return;
       }
 
       final Dimension panelSize = parent.getSize();
-      if (panelSize.getHeight() <= 0) return;
+      if (panelSize.getHeight() <= 0) {
+        return;
+      }
       final Dimension historySize = history.getContentSize();
       final Dimension editorSize = editor.getContentSize();
       final Dimension newEditorSize = new Dimension();
@@ -690,7 +691,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
 
       // deal with height
-      if (historySize.width == 0) historySize.height = 0;
+      if (historySize.width == 0) {
+        historySize.height = 0;
+      }
       final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0) : 0;
       final int minEditorSize = editor.isViewer() ? 0 : editor.getLineHeight();
       final int editorPreferred = editor.isViewer() ? 0 : Math.max(minEditorSize, editorSize.height);

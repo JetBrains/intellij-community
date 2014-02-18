@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Collection;
@@ -44,12 +46,19 @@ public class ClosureToSamConverter extends GrTypeConverter {
 
   @Override
   public Boolean isConvertible(@NotNull PsiType ltype, @NotNull PsiType rtype, @NotNull final GroovyPsiElement context) {
-    if (rtype instanceof GrClosureType && ltype instanceof PsiClassType && GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY2_2)) {
+    if (rtype instanceof GrClosureType &&
+        ltype instanceof PsiClassType &&
+        isSamConversionAllowed(context) &&
+        !TypesUtil.isClassType(ltype, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
       MethodSignature signature = findSAMSignature(ltype);
       if (signature != null) {
         final PsiType[] samParameterTypes = signature.getParameterTypes();
 
         GrSignature closureSignature = ((GrClosureType)rtype).getSignature();
+
+        boolean raw = ((PsiClassType)ltype).isRaw();
+        if (raw) return true;
+
         if (GrClosureSignatureUtil.isSignatureApplicable(closureSignature, samParameterTypes, context)) {
           return true;
         }
@@ -57,6 +66,10 @@ public class ClosureToSamConverter extends GrTypeConverter {
     }
 
     return null;
+  }
+
+  public static boolean isSamConversionAllowed(PsiElement context) {
+    return GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY2_2);
   }
 
   @Nullable
@@ -98,6 +111,8 @@ public class ClosureToSamConverter extends GrTypeConverter {
   @Nullable
   public static MethodSignature findSAMSignature(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
+      if (TypesUtil.isClassType(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) return null;
+
       PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
       PsiClass aClass = result.getElement();
 
