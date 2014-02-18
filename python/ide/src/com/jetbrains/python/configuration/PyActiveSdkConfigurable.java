@@ -129,7 +129,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                           PythonSdkDetailsStep
                                             .show(myProject, myProjectSdksModel.getSdks(),
                                                   myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                                                  new PythonSdkDetailsDialog(myModule, myDetailsCallback),
+                                                  new PythonSdkDetailsDialog(myModule, myDetailsCallback), myMainPanel,
                                                   RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
                                                   new NullableConsumer<Sdk>() {
                                                     @Override

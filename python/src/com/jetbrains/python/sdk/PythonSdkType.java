@@ -281,7 +281,7 @@ public class PythonSdkType extends SdkType {
   public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
+      .show(project, sdkModel.getSdks(), null, parentComponent, RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {

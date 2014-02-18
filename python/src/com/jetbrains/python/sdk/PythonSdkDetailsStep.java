@@ -34,6 +34,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,11 +54,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
-                          DialogWrapper component, final RelativePoint popupPoint,
+                          DialogWrapper moreDialog,
+                          JComponent ownerComponent, final RelativePoint popupPoint,
                           final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
-    myMore = component;
-    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, popupPoint.getComponent(), existingSdks, showMore, callback);
+    myMore = moreDialog;
+    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, ownerComponent, existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.show(popupPoint);
   }
