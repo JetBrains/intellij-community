@@ -1147,13 +1147,16 @@ public class InferenceSession {
 
   public void liftBounds(Collection<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
-      final InferenceVariable inferenceVariable = getInferenceVariable(variable.getParameter());
+      final PsiTypeParameter parameter = variable.getParameter();
+      final InferenceVariable inferenceVariable = getInferenceVariable(parameter);
       if (inferenceVariable != null) {
         for (InferenceBound boundType : InferenceBound.values()) {
           for (PsiType bound : variable.getBounds(boundType)) {
             inferenceVariable.addBound(bound, boundType);
           }
         }
+      } else {
+        myInferenceVariables.put(parameter, variable);
       }
     }
   }
