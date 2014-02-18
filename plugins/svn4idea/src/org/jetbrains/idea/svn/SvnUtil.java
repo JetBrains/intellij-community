@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -103,6 +104,16 @@ public class SvnUtil {
     final SVNInfo info = vcs.getInfo(parent);
 
     return info != null;
+  }
+
+  public static List<File> toFiles(Iterable<String> paths) {
+    List<File> result = ContainerUtil.newArrayList();
+
+    for (String path : paths) {
+      result.add(new File(path));
+    }
+
+    return result;
   }
 
   public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
