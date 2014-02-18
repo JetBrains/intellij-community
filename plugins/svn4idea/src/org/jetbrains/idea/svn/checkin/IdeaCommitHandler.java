@@ -48,14 +48,16 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
   @Nullable private final ProgressIndicator myProgress;
   @NotNull private final List<VirtualFile> myDeletedFiles = ContainerUtil.newArrayList();
   private final boolean myCheckCancel;
+  private final boolean myTrackDeletedFiles;
 
   public IdeaCommitHandler(@Nullable ProgressIndicator progress) {
-    this(progress, false);
+    this(progress, false, false);
   }
 
-  public IdeaCommitHandler(@Nullable ProgressIndicator progress, boolean checkCancel) {
+  public IdeaCommitHandler(@Nullable ProgressIndicator progress, boolean checkCancel, boolean trackDeletedFiles) {
     myProgress = progress;
     myCheckCancel = checkCancel;
+    myTrackDeletedFiles = trackDeletedFiles;
   }
 
   @NotNull
@@ -83,7 +85,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
     if (path != null) {
       CommitEventType eventType = convert(event.getAction());
 
-      if (CommitEventType.deleting.equals(eventType)) {
+      if (CommitEventType.deleting.equals(eventType) && myTrackDeletedFiles) {
         trackDeletedFile(event);
       }
       updateProgress(eventType, path);
