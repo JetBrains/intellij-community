@@ -26,11 +26,12 @@ public class DummyDiffFragmentsProcessor {
   public ArrayList<LineFragment> process(String text1, String text2) {
     ArrayList<LineFragment> lineFragments = new ArrayList<LineFragment>();
 
-    TextDiffTypeEnum type;
     if (text1.isEmpty() && text2.isEmpty()) {
-      type = TextDiffTypeEnum.NONE;
+      return lineFragments;
     }
-    else if (text1.isEmpty()) {
+
+    TextDiffTypeEnum type;
+    if (text1.isEmpty()) {
       type = TextDiffTypeEnum.INSERT;
     }
     else if (text2.isEmpty()) {
