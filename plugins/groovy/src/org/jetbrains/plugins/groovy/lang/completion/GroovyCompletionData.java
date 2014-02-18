@@ -132,17 +132,16 @@ public class GroovyCompletionData {
 
       registerControlCompletion(position, result);
 
-      if (parent instanceof GrExpression) {
+      if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
         addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
         result.addElement(keyword(PsiKeyword.NEW, TailType.HUMBLE_SPACE_BEFORE_WORD));
-        result.addElement(keyword("as", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
       if (isAfterForParameter(position)) {
         result.addElement(keyword("in", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
       if (isInfixOperatorPosition(position)) {
-        addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
+        addKeywords(result, true, "as", "in", PsiKeyword.INSTANCEOF);
       }
       if (suggestPrimitiveTypes(position)) {
         final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) && !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) && !isInExpression(position);

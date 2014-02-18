@@ -9,7 +9,6 @@ class A {
 }
 -----
 abstract
-as
 assert
 boolean
 byte
