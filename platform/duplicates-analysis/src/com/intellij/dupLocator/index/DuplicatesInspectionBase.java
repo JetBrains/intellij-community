@@ -47,7 +47,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     profile.createVisitor(new FragmentsCollector() {
       @Override
       public void add(int hash, final int cost, @Nullable final PsiFragment frag) {
-        if (!DuplicatesIndex.isIndexedFragment(frag, profile, state)) {
+        if (!DuplicatesIndex.isIndexedFragment(frag, cost, profile, state)) {
           return;
         }
 
@@ -104,7 +104,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             }
             return true;
           }
-        }, GlobalSearchScope.allScope(psiFile.getProject()));
+        }, GlobalSearchScope.projectScope(psiFile.getProject()));
       }
     }, true).visitNode(psiFile);
 

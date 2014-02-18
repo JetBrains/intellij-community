@@ -162,7 +162,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
     @Override
     public void add(int hash, int cost, @Nullable PsiFragment frag) {
-      if (!isIndexedFragment(frag, myProfile, myDuplocatorState)) {
+      if (!isIndexedFragment(frag, cost, myProfile, myDuplocatorState)) {
         return;
       }
 
@@ -176,11 +176,11 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     }
   }
 
-  static boolean isIndexedFragment(@Nullable PsiFragment frag, DuplicatesProfile profile, DuplocatorState duplocatorState) {
+  static boolean isIndexedFragment(@Nullable PsiFragment frag, int cost, DuplicatesProfile profile, DuplocatorState duplocatorState) {
     if(frag == null) return false;
     PsiFile file = frag.getFile();
     if(file == null) return false;
-    return profile.shouldPutInIndex(frag, duplocatorState);
+    return profile.shouldPutInIndex(frag, cost, duplocatorState);
   }
 
   @TestOnly

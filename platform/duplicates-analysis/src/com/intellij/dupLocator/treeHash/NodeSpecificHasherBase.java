@@ -31,6 +31,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
       return DuplocatorUtil.isIgnoredNode(element) || isToSkipAsLiteral(element);
     }
   };
+  protected final boolean myForIndexing;
 
   private boolean isToSkipAsLiteral(PsiElement element) {
     return isLiteral(element) &&
@@ -40,9 +41,17 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
   public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile) {
-    myTreeHasher = new TreeHasherBase(callback, duplicatesProfile, -1);
+    this(settings, callback, duplicatesProfile, false);
+  }
+
+  public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
+                                @NotNull FragmentsCollector callback,
+                                @NotNull DuplicatesProfileBase duplicatesProfile,
+                                boolean forIndexing) {
+    myTreeHasher = new TreeHasherBase(callback, duplicatesProfile, -1, forIndexing);
     mySettings = settings;
     myDuplicatesProfile = duplicatesProfile;
+    myForIndexing = forIndexing;
   }
 
   @NotNull
@@ -123,7 +132,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
   @Override
   public void visitNode(@NotNull PsiElement node) {
     final Language language = node.getLanguage();
-    if (mySettings.SELECTED_PROFILES.contains(language.getDisplayName()) &&
+    if ((myForIndexing || mySettings.SELECTED_PROFILES.contains(language.getDisplayName())) &&
         myDuplicatesProfile.isMyLanguage(language)) {
 
       myTreeHasher.hash(node, this);

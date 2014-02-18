@@ -62,9 +62,8 @@ public abstract class DuplicatesProfile {
   private static final int FACTOR = 2;
   private static final int MAX_COST = 7000;
 
-  public boolean shouldPutInIndex(PsiFragment fragment, DuplocatorState state) {
+  public boolean shouldPutInIndex(PsiFragment fragment, int cost, DuplocatorState state) {
     final int lowerBound = state.getLowerBound();
-    int cost = fragment.getCost();
     if (cost < FACTOR*lowerBound || cost > MAX_COST) {
       return false;
     }

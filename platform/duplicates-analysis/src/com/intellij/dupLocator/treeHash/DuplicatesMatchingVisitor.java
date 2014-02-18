@@ -34,7 +34,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     myNodeSpecificHasher = nodeSpecificHasher;
     myNodeFilter = nodeFilter;
     myDiscardCost = discardCost;
-    myTreeHasher = new TreeHasherBase(null, myNodeSpecificHasher.getDuplicatesProfile(), discardCost) {
+    myTreeHasher = new TreeHasherBase(null, myNodeSpecificHasher.getDuplicatesProfile(), discardCost, false) {
       @Override
       protected TreeHashResult hash(@NotNull PsiElement root, PsiFragment upper, @NotNull NodeSpecificHasher hasher) {
         TreeHashResult result = myPsiElement2HashAndCost.get(root);

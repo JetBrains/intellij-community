@@ -24,14 +24,16 @@ class TreeHasherBase extends AbstractTreeHasher {
   private final FragmentsCollector myCallback;
   private final int myDiscardCost;
   private final DuplicatesProfile myProfile;
+  protected final boolean myForIndexing;
 
   TreeHasherBase(@Nullable FragmentsCollector callback,
                  @NotNull DuplicatesProfile profile,
-                 int discardCost) {
+                 int discardCost, boolean forIndexing) {
     super(callback);
     myCallback = callback;
     myDiscardCost = discardCost;
     myProfile = profile;
+    myForIndexing = forIndexing;
   }
 
   @Override
@@ -76,6 +78,10 @@ class TreeHasherBase extends AbstractTreeHasher {
     final NodeSpecificHasherBase ssrNodeSpecificHasher = (NodeSpecificHasherBase)hasher;
 
     if (shouldBeAnonymized(root, ssrNodeSpecificHasher)) {
+      return computeElementHash(root, upper, hasher);
+    }
+
+    if (myForIndexing) {
       return computeElementHash(root, upper, hasher);
     }
 
@@ -135,6 +141,16 @@ class TreeHasherBase extends AbstractTreeHasher {
     }
 
     return new TreeHashResult(h, c, fragment);
+  }
+
+  @Override
+  protected TreeHashResult hashCodeBlock(List<? extends PsiElement> statements,
+                                         PsiFragment upper,
+                                         NodeSpecificHasher hasher,
+                                         boolean forceHash) {
+    if (!myForIndexing) return super.hashCodeBlock(statements, upper, hasher, forceHash);
+
+    return TreeHashingUtils.hashCodeBlockForIndexing(this, myCallBack, statements, upper, hasher);
   }
 
   private TreeHashResult computeHash(PsiElement element,
