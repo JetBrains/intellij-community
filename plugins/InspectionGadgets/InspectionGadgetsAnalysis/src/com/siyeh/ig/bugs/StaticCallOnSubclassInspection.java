@@ -61,8 +61,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "static.method.via.subclass.rationalize.quickfix");
+      return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
     }
     @Override
     @NotNull
@@ -73,15 +72,12 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression =
-        (PsiReferenceExpression)name.getParent();
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       if (expression == null) {
         return;
       }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression.getParent();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final String methodName = expression.getReferenceName();
       if (call == null) {
         return;
@@ -95,11 +91,9 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final String containingClassName =
-        containingClass.getQualifiedName();
+      final String containingClassName = containingClass.getQualifiedName();
       final String argText = argumentList.getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' +
-                                                           methodName + argText);
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + call.getTypeArgumentList().getText() + methodName + argText);
     }
   }
 

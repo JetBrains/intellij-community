@@ -15,17 +15,17 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
   extends BaseInspection {
@@ -65,9 +65,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                                      HardcodedMethodConstants.NEXT)) {
         return;
       }
-      final Set<PsiClassType> exceptions =
-        ExceptionUtils.calculateExceptionsThrown(method);
-      for (final PsiType exception : exceptions) {
+      for (final PsiType exception : ExceptionUtil.getThrownExceptions(method)) {
         if (exception.equalsToText(
           "java.util.NoSuchElementException")) {
           return;
@@ -103,8 +101,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
       if (method == null) {
         return;
       }
-      final Set<PsiClassType> exceptions =
-        ExceptionUtils.calculateExceptionsThrown(method);
+      final List<PsiClassType> exceptions = ExceptionUtil.getThrownExceptions(method);
       for (final PsiType exception : exceptions) {
         if (exception.equalsToText(
           "java.util.NoSuchElementException")) {
