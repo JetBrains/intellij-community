@@ -2,6 +2,7 @@ package com.intellij.execution.console;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +60,11 @@ public class LanguageConsoleBuilder {
   /**
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
-  public static void registerExecuteAction(@NotNull LanguageConsoleImpl console, @NotNull final Consumer<String> executeActionHandler, @NotNull String historyType) {
+  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsoleImpl console,
+                                                                               @NotNull final Consumer<String> executeActionHandler,
+                                                                               @NotNull String historyType,
+                                                                               @Nullable String historyPersistenceId,
+                                                                               @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
@@ -66,10 +72,12 @@ public class LanguageConsoleBuilder {
       }
     };
 
-    ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler);
+    ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
 
-    new ConsoleHistoryController(historyType, null, console, handler.getConsoleHistoryModel()).install();
+    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console, handler.getConsoleHistoryModel());
+    historyController.install();
+    return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
   }
 
   public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider provider) {

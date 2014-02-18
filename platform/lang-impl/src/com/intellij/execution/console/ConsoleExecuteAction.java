@@ -41,12 +41,13 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   private final ConsoleExecuteActionHandler myExecuteActionHandler;
   private final Condition<LanguageConsoleImpl> myEnabledCondition;
 
+  @SuppressWarnings("UnusedDeclaration")
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.<LanguageConsoleImpl>alwaysTrue());
   }
 
-  ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, final @NotNull ConsoleExecuteActionHandler executeActionHandler) {
-    this(console, null, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, null);
+  ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
+    this(console, null, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
@@ -114,25 +115,32 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      // process input and add to history
-      Document document = console.getCurrentEditor().getDocument();
-      String text = document.getText();
-      TextRange range = new TextRange(0, document.getTextLength());
+      String text = prepareRunExecuteAction(console, myPreserveMarkup, myAddCurrentToHistory, true);
 
-      console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-
-      if (myAddCurrentToHistory) {
-        console.addCurrentToHistory(range, false, myPreserveMarkup);
-      }
-
-      console.setInputText("");
-
-      ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
+      ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
 
       myConsoleHistoryModel.addToHistory(text);
       doExecute(text, console, consoleView);
     }
 
     abstract void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView);
+  }
+
+  public static String prepareRunExecuteAction(@NotNull LanguageConsoleImpl console, boolean preserveMarkup, boolean addCurrentToHistory, boolean clear) {
+    // process input and add to history
+    Document document = console.getCurrentEditor().getDocument();
+    String text = document.getText();
+    TextRange range = new TextRange(0, document.getTextLength());
+
+    console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+
+    if (addCurrentToHistory) {
+      console.addCurrentToHistory(range, false, preserveMarkup);
+    }
+
+    if (clear) {
+      console.setInputText("");
+    }
+    return text;
   }
 }
