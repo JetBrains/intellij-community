@@ -414,9 +414,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
 
     Document history = myHistoryViewer.getDocument();
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     int offset = appendToHistoryDocument(history, text);
-    markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
+    DocumentMarkupModel.forDocument(history, myProject, true).addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes,
+                                                                                  HighlighterTargetArea.EXACT_RANGE);
   }
 
   @SuppressWarnings("UnusedDeclaration")
