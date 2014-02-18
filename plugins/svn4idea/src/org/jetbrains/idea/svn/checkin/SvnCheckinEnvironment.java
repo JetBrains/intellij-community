@@ -94,7 +94,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final SVNCommitClient committer = mySvnVcs.createCommitClient();
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    IdeaCommitHandler handler = new IdeaCommitHandler(progress, true);
+    IdeaCommitHandler handler = new IdeaCommitHandler(progress, true, true);
     if (progress != null) {
       committer.setEventHandler(handler);
     }
