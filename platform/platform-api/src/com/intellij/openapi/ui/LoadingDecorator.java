@@ -113,7 +113,6 @@ public class LoadingDecorator {
   }
 
   public void stopLoading() {
-    System.out.println(Thread.currentThread());
     myStartRequest = false;
     myStartAlarm.cancelAllRequests();
 
