@@ -3,12 +3,13 @@ package com.jetbrains.python.refactoring.classes.membersManager.vp;
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.membersManager.AlreadyContainsMemberDialog;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import org.jetbrains.annotations.NotNull;
@@ -73,9 +74,9 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   }
 
   @Override
-  public boolean showConflictsDialog(@NotNull final MultiMap<PsiElement, String> conflicts) {
+  public boolean showConflictsDialog(@NotNull final MultiMap<PyClass, PyMemberInfo<?>> conflicts) {
     Preconditions.checkArgument(!conflicts.isEmpty(), "Can't show dialog for empty conflicts");
-    final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+    final ConflictsDialog conflictsDialog = new AlreadyContainsMemberDialog(myProject, conflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();
   }

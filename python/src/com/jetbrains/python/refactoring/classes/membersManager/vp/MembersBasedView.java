@@ -1,8 +1,8 @@
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public interface MembersBasedView<C extends MembersViewInitializationInfo> {
    * @param conflicts conflicts.
    * @return true if user's choice is "continue". False if "cancel"
    */
-  boolean showConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts);
+  boolean showConflictsDialog(@NotNull MultiMap<PyClass, PyMemberInfo<?>> conflicts);
 
   /**
    * Displays error message

@@ -44,8 +44,17 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
   @NotNull
   private static PyClass[] getChildren(@NotNull final PyClass from) {
-    Collection<PyClass> all = PyClassInheritorsSearch.search(from, false).findAll();
+    final Collection<PyClass> all = getInheritors(from);
     return all.toArray(new PyClass[all.size()]);
+  }
+
+  /**
+   * @param from class to check for inheritors
+   * @return inheritors of class
+   */
+  @NotNull
+  static Collection<PyClass> getInheritors(@NotNull final PyClass from) {
+    return PyClassInheritorsSearch.search(from, false).findAll();
   }
 
 

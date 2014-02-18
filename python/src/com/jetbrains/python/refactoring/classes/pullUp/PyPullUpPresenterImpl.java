@@ -17,11 +17,9 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
@@ -93,12 +91,10 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   }
 
 
-  @Override
   @NotNull
-  public MultiMap<PsiElement, String> getConflicts() {
-    final Collection<PyMemberInfo<PyElement>> infos = myView.getSelectedMemberInfos();
-    final PyClass superClass = myView.getSelectedParent();
-    return PyPullUpConflictsUtil.checkConflicts(infos, superClass);
+  @Override
+  protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
+    return Collections.singletonList(myView.getSelectedParent());
   }
 
   private class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
@@ -136,10 +132,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
           return false; //Class is already parent of superclass
         }
       }
-      if (!PyPullUpConflictsUtil.checkConflicts(Collections.singletonList(member), myView.getSelectedParent()).isEmpty()) {
-        return false; //Member has conflict
-      }
-      return (!myStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) && member.getMember() != currentSuperClass;
+      return true;
     }
   }
 }

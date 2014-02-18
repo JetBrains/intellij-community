@@ -254,6 +254,15 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     return Collections2.transform(memberInfos, new PyMemberExtractor<T>());
   }
 
+  /**
+   * Checks if moving certain member to certain class may lead to conflict (actually that means
+   * that class already has this member)
+   * @param member member to check
+   * @param aClass class where this member wanna be moved
+   * @return true if conflict exists.
+   */
+  public abstract boolean hasConflict(@NotNull T member, @NotNull PyClass aClass);
+
   private static class PyMemberExtractor<T extends PyElement> implements Function<PyMemberInfo<T>, T> {
     @SuppressWarnings("NullableProblems") //IDEA-120100
     @Override

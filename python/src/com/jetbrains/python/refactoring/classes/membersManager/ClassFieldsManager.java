@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,11 +23,16 @@ class ClassFieldsManager extends FieldsManager {
     super(true);
   }
 
+  @Nullable
+  @Override
+  public boolean hasConflict(@NotNull final PyTargetExpression member, @NotNull final PyClass aClass) {
+    return NamePredicate.hasElementWithSameName(member, aClass.getClassAttributes());
+  }
 
   @Override
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
-                                 @NotNull final Collection<PyAssignmentStatement> statements,
-                                 @NotNull final PyClass... to) {
+                                                  @NotNull final Collection<PyAssignmentStatement> statements,
+                                                  @NotNull final PyClass... to) {
     //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
     final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {

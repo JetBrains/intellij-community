@@ -10,10 +10,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Plugin that moves superclasses from one class to another
@@ -28,6 +25,12 @@ class SuperClassesManager extends MembersManager<PyClass> {
     super(PyClass.class);
   }
 
+
+  @Override
+  public boolean hasConflict(@NotNull final PyClass member, @NotNull final PyClass aClass) {
+    final List<PyExpression> expressionList = getExpressionsBySuperClass(aClass, Collections.singleton(member));
+    return !expressionList.isEmpty();
+  }
 
   @NotNull
   @Override
@@ -44,19 +47,37 @@ class SuperClassesManager extends MembersManager<PyClass> {
       PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));
     }
 
+    final List<PyExpression> expressionsToDelete = getExpressionsBySuperClass(from, elements);
+    for (final PyExpression expressionToDelete : expressionsToDelete) {
+      expressionToDelete.delete();
+    }
+
+    return Collections.emptyList(); //Hack: we know that "superclass expression" can't have reference
+  }
+
+  /**
+   * Returns superclass expressions that are resolved to one or more classes from collection
+   * @param from class to get superclass expressions from
+   * @param classes classes to check superclasses against
+   * @return collection of expressions that are resolved to one or more class from classes param
+   */
+  @NotNull
+  private static List<PyExpression> getExpressionsBySuperClass(@NotNull final PyClass from, @NotNull final Collection<PyClass> classes) {
+    final List<PyExpression> expressionsToDelete = new ArrayList<PyExpression>(classes.size());
+
     for (final PyExpression expression : from.getSuperClassExpressions()) {
       // Remove all superclass expressions that point to class from memberinfo
       if (!(expression instanceof PyQualifiedExpression)) {
         continue;
       }
       final PyReferenceExpression reference = (PyReferenceExpression)expression;
-      for (final PyClass element : elements) {
+      for (final PyClass element : classes) {
         if (reference.getReference().isReferenceTo(element)) {
-          expression.delete();
+          expressionsToDelete.add(expression);
         }
       }
     }
-    return Collections.emptyList(); //Hack: we know that "superclass expression" can't have reference
+    return expressionsToDelete;
   }
 
   @NotNull

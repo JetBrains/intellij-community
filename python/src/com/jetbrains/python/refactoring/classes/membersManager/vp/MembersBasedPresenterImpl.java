@@ -1,10 +1,11 @@
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,8 +41,7 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
   //TODO: Mark Async ?
   @Override
   public void okClicked() {
-
-    final MultiMap<PsiElement, String> conflicts = getConflicts();
+    final MultiMap<PyClass, PyMemberInfo<?>> conflicts = getConflicts();
     if (conflicts.isEmpty() || myView.showConflictsDialog(conflicts)) {
       try {
         validateView();
@@ -75,9 +75,27 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
   abstract void doRefactor();
 
   /**
+   * Checks if one of destination classes already has members that should be moved, so conflict would take place.
    * @return map of conflicts (if any)
+   * @see #getDestClassesToCheckConflicts()
    */
   @NotNull
-  protected abstract MultiMap<PsiElement, String> getConflicts();
+  protected final MultiMap<PyClass, PyMemberInfo<?>> getConflicts() {
+    final MultiMap<PyClass, PyMemberInfo<?>> result = new MultiMap<PyClass, PyMemberInfo<?>>();
+    for (final PyClass destinationClass : getDestClassesToCheckConflicts()) {
+      for (final PyMemberInfo<PyElement> pyMemberInfo : myView.getSelectedMemberInfos()) {
+        if (pyMemberInfo.hasConflict(destinationClass)) {
+          result.putValue(destinationClass, pyMemberInfo);
+        }
+      }
+    }
+    return result;
+  }
 
+  /**
+   * @see #getConflicts()
+  * @return classes where this refactoring will move members. To be used to check for conflicts (if one of target classes already has members)
+   */
+  @NotNull
+  protected abstract Iterable<? extends PyClass> getDestClassesToCheckConflicts();
 }

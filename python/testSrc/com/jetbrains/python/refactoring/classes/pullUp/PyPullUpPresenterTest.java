@@ -1,11 +1,16 @@
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.collect.Collections2;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.NameTransformer;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.PyPresenterTestMemberEntry;
 import com.jetbrains.python.refactoring.classes.PyRefactoringPresenterTestCase;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -47,6 +52,35 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    */
   public void testNoParents() throws Exception {
     ensureNoMembers("NoParentsAllowed");
+  }
+
+  /**
+   * Ensures that presenter displays conflicts if destination class already has that members
+   */
+  public void testConflicts() throws Exception {
+    final PyPullUpPresenterImpl sut = configureByClass("ChildWithConflicts");
+    final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
+
+    final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = new Capture<MultiMap<PyClass, PyMemberInfo<?>>>();
+    EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture))).andReturn(false).anyTimes();
+    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(infos).anyTimes();
+    final PyClass parent = getClassByName("ParentWithConflicts");
+    EasyMock.expect(myView.getSelectedParent()).andReturn(parent).anyTimes();
+    myMocksControl.replay();
+    sut.okClicked();
+
+    final MultiMap<PyClass, PyMemberInfo<?>> conflictMap = conflictCapture.getValue();
+    Assert.assertTrue("No conflicts found, while it should", conflictMap.containsKey(parent));
+    final Collection<String> conflictedMemberNames = Collections2.transform(conflictMap.get(parent), NameTransformer.INSTANCE);
+    Assert.assertThat("Failed to find right conflicts", conflictedMemberNames, Matchers.containsInAnyOrder(
+      "extends Bar",
+      "CLASS_FIELD",
+      "self.instance_field",
+      "my_func(self)",
+      "__init__(self)"
+    ));
+
+
   }
 
   /**
@@ -104,7 +138,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
                           new PyPresenterTestMemberEntry("CLASS_FIELD", true, true, false),
                           new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
                           new PyPresenterTestMemberEntry("extends SubParent1", false, false, false),
-                          new PyPresenterTestMemberEntry("foo(self)", false, false, false),
+                          new PyPresenterTestMemberEntry("foo(self)", true, false, true),
                           new PyPresenterTestMemberEntry("bar(self)", true, false, true),
                           new PyPresenterTestMemberEntry("static_1(cls)", true, true, py3K),
                           new PyPresenterTestMemberEntry("static_2()", true, true, py3K),

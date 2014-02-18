@@ -37,6 +37,11 @@ class MethodsManager extends MembersManager<PyFunction> {
     super(PyFunction.class);
   }
 
+  @Override
+  public boolean hasConflict(@NotNull final PyFunction member, @NotNull final PyClass aClass) {
+    return NamePredicate.hasElementWithSameName(member, Arrays.asList(aClass.getMethods()));
+  }
+
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
@@ -69,7 +74,7 @@ class MethodsManager extends MembersManager<PyFunction> {
         final PyFunctionBuilder functionBuilder = PyFunctionBuilder.copySignature(function, DECORATORS_MAY_BE_COPIED_TO_ABSTRACT);
         functionBuilder.decorate(PyNames.ABSTRACTMETHOD);
         final LanguageLevel level = LanguageLevel.forElement(destClass);
-        PyClassRefactoringUtil.addMethods(destClass, functionBuilder.buildFunction(destClass.getProject(), level));
+        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction(destClass.getProject(), level));
         classesToAddMetaAbc.add(destClass);
       }
     }
