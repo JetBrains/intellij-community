@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +48,28 @@ public class LanguageConsoleBuilder {
   public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ensureConsoleViewCreated();
 
-    ConsoleExecuteAction action = new ConsoleExecuteAction(myConsoleView, executeActionHandler, ConsoleExecuteAction.CONSOLE_EXECUTE_ACTION_ID, myExecutionEnabled);
+    ConsoleExecuteAction action = new ConsoleExecuteAction(myConsoleView, executeActionHandler, myExecutionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
 
     new ConsoleHistoryController(historyType, null, myConsole, executeActionHandler.getConsoleHistoryModel()).install();
     return this;
+  }
+
+  /**
+   * todo This API doesn't look good, but it is much better than force client to know low-level details
+   */
+  public static void registerExecuteAction(@NotNull LanguageConsoleImpl console, @NotNull final Consumer<String> executeActionHandler, @NotNull String historyType) {
+    ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
+      @Override
+      void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+        executeActionHandler.consume(text);
+      }
+    };
+
+    ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler);
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
+
+    new ConsoleHistoryController(historyType, null, console, handler.getConsoleHistoryModel()).install();
   }
 
   public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider provider) {
