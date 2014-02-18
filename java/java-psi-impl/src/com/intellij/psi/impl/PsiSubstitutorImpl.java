@@ -389,6 +389,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+      final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
+      if (erasure != null) {
+        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+        for (PsiType boundType : boundTypes) {
+          if (TypeConversionUtil.isAssignable(boundType, erasure) || TypeConversionUtil.isAssignable(erasure, boundType)) {
+            return boundType;
+          }
+        }
+      }
     }
 
     if (captureContext != null) {
