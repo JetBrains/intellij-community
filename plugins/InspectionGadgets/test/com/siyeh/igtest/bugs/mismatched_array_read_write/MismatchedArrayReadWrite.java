@@ -117,3 +117,65 @@ class Test{
     return null;
   }
 }
+class Bug {
+  // Example 1
+  public void test1() {
+    final java.util.List<long[]> results = new java.util.ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      results.add(new long[3]);
+    }
+
+    for (int i = 0; i < results.size(); i++) {
+      final long[] longs = results.get(i); // <-- Contents of array 'longs' are written to, but never read
+      for (int j = 0; j < 3; j++) {
+        longs[j] = i * j;
+      }
+    }
+
+    for (long[] result : results) {
+      for (long l : result) {
+        System.out.println(l);
+      }
+    }
+  }
+
+  // Example 2
+  private int[] _ints = {0};
+
+  public void print() {
+    for (int i : _ints) {
+      System.out.println(i);
+    }
+  }
+
+  public void test2() {
+    final Bug bug = new Bug();
+    final int[] ints = bug._ints; // <-- Contents of array 'ints' are written to, but never read
+    ints[0] = 1;
+    bug.print();
+  }
+}
+class Toster
+{
+  private static final int MAX = 1;
+
+  public static void main(String[] args)
+  {
+    new Toster().run();
+  }
+
+  private int[][] values = new int[][] { {new java.util.Random().nextInt()}, {new java.util.Random().nextInt()} };
+
+  private void run()
+  {
+    for (int j = new java.util.Random().nextInt(values.length); j < new java.util.Random().nextInt(values.length); j++)
+    {
+      int[] array = values[j]; //IDEA says here: contents of array 'array' are written to, but never used
+
+      for (int i = 0; i < MAX; i++)
+      {
+        array[i] = new java.util.Random().nextInt();
+      }
+    }
+  }
+}

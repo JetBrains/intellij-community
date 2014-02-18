@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,8 +138,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (VariableAccessUtils.arrayContentsAreAssigned(variable, context)) {
         return true;
       }
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && !isDefaultArrayInitializer(initializer)) {
+      if (!isDefaultArrayInitializer(variable.getInitializer())) {
         return true;
       }
       return variableIsWritten(variable, context);
@@ -149,11 +149,39 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (VariableAccessUtils.arrayContentsAreAccessed(variable, context)) {
         return true;
       }
+      if (isPossiblyReferenceThatIsReadLater(variable.getInitializer())) {
+        return true;
+      }
       return variableIsRead(variable, context);
     }
 
-    private static boolean isDefaultArrayInitializer(
-      PsiExpression initializer) {
+    private static boolean isPossiblyReferenceThatIsReadLater(PsiExpression initializer) {
+      if (initializer == null || initializer instanceof PsiNewExpression || initializer instanceof PsiArrayInitializerExpression) {
+        return false;
+      }
+      if (initializer instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+          return true;
+        }
+        if (CloneUtils.isClone(method)) {
+          return false;
+        }
+        @NonNls final String name = method.getName();
+        if (!"copyOf".equals(name) && !"copyOfRange".equals(name)) {
+          return true;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        return aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName());
+      }
+      return true;
+    }
+
+    private static boolean isDefaultArrayInitializer(PsiExpression initializer) {
+      if (initializer == null) {
+        return true;
+      }
       if (initializer instanceof PsiNewExpression) {
         final PsiNewExpression newExpression =
           (PsiNewExpression)initializer;
