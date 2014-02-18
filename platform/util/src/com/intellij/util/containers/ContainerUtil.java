@@ -1971,12 +1971,17 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T> List<T> createLockFreeCopyOnWriteList() {
-    return new LockFreeCopyOnWriteArrayList<T>();
+    return createConcurrentList();
   }
 
   @NotNull
   public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<T>(c);
+  }
+
+  @NotNull
+  public static <T> ConcurrentList<T> createConcurrentList() {
+    return new LockFreeCopyOnWriteArrayList<T>();
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

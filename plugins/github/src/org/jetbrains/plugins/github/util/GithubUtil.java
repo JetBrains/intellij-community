@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.Convertor;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
@@ -43,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
@@ -82,12 +83,6 @@ public class GithubUtil {
       task.consume(auth);
       return auth;
     }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runAndGetValidAuth(project, indicator, task);
-      }
-      throw e;
-    }
   }
 
   @NotNull
@@ -104,12 +99,6 @@ public class GithubUtil {
     catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       return task.convert(auth);
-    }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runWithValidAuth(project, indicator, task);
-      }
-      throw e;
     }
   }
 
@@ -132,27 +121,6 @@ public class GithubUtil {
       auth = getValidBasicAuthDataForHost(project, indicator, host);
       return task.convert(auth);
     }
-    catch (IOException e) {
-      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runWithValidBasicAuthForHost(project, indicator, host, task);
-      }
-      throw e;
-    }
-  }
-
-  private static boolean checkSSLCertificate(IOException e, final String host, ProgressIndicator indicator) {
-    final GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-    if (GithubSslSupport.isCertificateException(e)) {
-      final AtomicReference<Boolean> result = new AtomicReference<Boolean>();
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          result.set(sslSupport.askIfShouldProceed(host));
-        }
-      }, indicator.getModalityState());
-      return result.get();
-    }
-    return false;
   }
 
   /**
@@ -160,16 +128,16 @@ public class GithubUtil {
    */
   @NotNull
   public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator)
-    throws GithubAuthenticationCanceledException {
+    throws GithubOperationCanceledException {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        dialog.show();
+        DialogManager.show(dialog);
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
+      throw new GithubOperationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }
@@ -179,18 +147,18 @@ public class GithubUtil {
    */
   @NotNull
   public static GithubAuthData getValidBasicAuthDataForHost(@Nullable Project project,
-                                                            @NotNull ProgressIndicator indicator, @NotNull String host)
-    throws GithubAuthenticationCanceledException {
+                                                            @NotNull ProgressIndicator indicator,
+                                                            @NotNull String host) throws GithubOperationCanceledException {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     dialog.lockHost(host);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        dialog.show();
+        DialogManager.show(dialog);
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
+      throw new GithubOperationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }
@@ -233,17 +201,7 @@ public class GithubUtil {
         throw new GithubAuthenticationException("Anonymous connection not allowed");
     }
 
-    try {
-      return testConnection(auth);
-    }
-    catch (IOException e) {
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (GithubSslSupport.getInstance().askIfShouldProceed(auth.getHost())) {
-          return testConnection(auth);
-        }
-      }
-      throw e;
-    }
+    return testConnection(auth);
   }
 
   @NotNull

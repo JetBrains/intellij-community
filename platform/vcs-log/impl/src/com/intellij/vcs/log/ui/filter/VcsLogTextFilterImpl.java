@@ -17,7 +17,7 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogTextFilter;
-import com.intellij.vcs.log.data.VcsLogDetailsFilter;
+import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 
 public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilter {

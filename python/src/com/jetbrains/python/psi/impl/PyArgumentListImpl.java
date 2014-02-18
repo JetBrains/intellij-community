@@ -15,13 +15,15 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Queues;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -30,9 +32,13 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.*;
 
 public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList {
+
+  // Filters all expressions but keyword arguments
+  private static final NoKeyArguments NO_KEY_ARGUMENTS = new NoKeyArguments();
+
   public PyArgumentListImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -61,45 +67,62 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     return null;
   }
 
-  public void addArgument(PyExpression arg) {
-    // it should find the comma after the argument to add after, and add after
-    // that. otherwise it won't deal with comments nicely
+  @Override
+  public void addArgument(@NotNull final PyExpression arg) {
+    final PyElementGenerator generator = new PyElementGeneratorImpl(getProject());
+
+    // Adds param to appropriate place
+    final Deque<PyKeywordArgument> keywordArguments = getKeyWordArguments();
+    final Deque<PyExpression> parameters = getParameters();
+
+    if (keywordArguments.isEmpty() && parameters.isEmpty()) {
+      generator.insertItemIntoListRemoveRedundantCommas(this, null, arg);
+      return;
+    }
+
+
     if (arg instanceof PyKeywordArgument) {
-      PyKeywordArgument keywordArgument = (PyKeywordArgument)arg;
-      PyKeywordArgument lastKeyArg = null;
-      PyExpression firstNonKeyArg = null;
-      for (PsiElement element : getChildren()) {
-        if (element instanceof PyKeywordArgument) {
-          lastKeyArg = (PyKeywordArgument)element;
-        }
-        else if (element instanceof PyExpression && firstNonKeyArg == null) {
-          firstNonKeyArg = (PyExpression)element;
-        }
-      }
-      if (lastKeyArg != null) {
-        // add after last key arg
-        addArgumentNode(keywordArgument, lastKeyArg.getNode().getTreeNext(), true);
-
-      }
-      else if (firstNonKeyArg != null) {
-        // add before first non key arg
-        addArgumentNode(keywordArgument, firstNonKeyArg.getNode(), true);
-
+      if (parameters.isEmpty()) {
+        generator.insertItemIntoListRemoveRedundantCommas(this, keywordArguments.getLast(), arg);
       }
       else {
-        // add as only argument
-        addArgumentLastWithoutComma(arg);
+        if (keywordArguments.isEmpty()) {
+          generator.insertItemIntoListRemoveRedundantCommas(this, parameters.getLast(), arg);
+        }
+        else {
+          generator.insertItemIntoListRemoveRedundantCommas(this, keywordArguments.getLast(), arg);
+        }
       }
     }
     else {
-      final PyExpression[] args = getArguments();
-      if (args.length > 0) {
-        addArgumentAfter(arg, args [args.length-1]);
+      if (parameters.isEmpty()) {
+        generator.insertItemIntoListRemoveRedundantCommas(this, null, arg);
       }
       else {
-        addArgumentLastWithoutComma(arg);
+        generator.insertItemIntoListRemoveRedundantCommas(this, parameters.getLast(), arg);
       }
     }
+  }
+
+
+  /**
+   * @return parameters (as opposite to keyword arguments)
+   */
+  @NotNull
+  private Deque<PyExpression> getParameters() {
+    final PyExpression[] childrenOfType = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
+    if (childrenOfType == null) {
+      return new ArrayDeque<PyExpression>(0);
+    }
+    return Queues.newArrayDeque(Collections2.filter(Arrays.asList(childrenOfType), NO_KEY_ARGUMENTS));
+  }
+
+  /**
+   * @return keyword arguments (as opposite to parameters)
+   */
+  @NotNull
+  private Deque<PyKeywordArgument> getKeyWordArguments() {
+    return Queues.newArrayDeque(PsiTreeUtil.findChildrenOfType(this, PyKeywordArgument.class));
   }
 
   public void addArgumentFirst(PyExpression arg) {
@@ -113,13 +136,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       catch (IncorrectOperationException e1) {
         throw new IllegalStateException(e1);
       }
-
     }
     else {
       ASTNode before = PyUtil.getNextNonWhitespace(pars[0]);
       ASTNode anchorBefore;
       if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens())) {
-        ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
+        ASTNode comma = createComma();
         node.addChild(comma, before);
         node.addChild(ASTFactory.whitespace(" "), before);
         anchorBefore = comma;
@@ -135,6 +157,14 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         node.addChild(argNode, anchorBefore);
       }
     }
+  }
+
+  /**
+   * @return newly created comma
+   */
+  @NotNull
+  private ASTNode createComma() {
+    return PyElementGenerator.getInstance(getProject()).createComma();
   }
 
   private static boolean elementPrecedesElementsOfType(ASTNode before, TokenSet expressions) {
@@ -278,5 +308,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       }
     }
     return ret;
+  }
+
+  private static class NoKeyArguments extends NotNullPredicate<PyExpression> {
+    @Override
+    protected boolean applyNotNull(@NotNull final PyExpression input) {
+      return (PsiTreeUtil.getParentOfType(input, PyKeywordArgument.class) == null) && !(input instanceof PyKeywordArgument);
+    }
   }
 }

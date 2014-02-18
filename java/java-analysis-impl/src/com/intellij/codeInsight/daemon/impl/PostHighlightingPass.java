@@ -90,7 +90,6 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
 
   private Collection<HighlightInfo> myHighlights;
   private boolean myHasRedundantImports;
-  private final JavaCodeStyleManager myStyleManager;
   private int myCurrentEntryIndex;
   private boolean myHasMissortedImports;
   private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
@@ -115,7 +114,6 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     myStartOffset = 0;
     myEndOffset = file.getTextLength();
 
-    myStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myCurrentEntryIndex = -1;
   }
 
@@ -780,7 +778,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       return registerRedundantImport(importStatement, unusedImportKey);
     }
 
-    int entryIndex = myStyleManager.findEntryIndex(importStatement);
+    int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
     if (entryIndex < myCurrentEntryIndex) {
       myHasMissortedImports = true;
     }

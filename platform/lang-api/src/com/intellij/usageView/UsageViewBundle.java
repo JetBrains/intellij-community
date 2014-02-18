@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class UsageViewBundle {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
   }
 
-  private static ResourceBundle getBundle() {
+  public static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);

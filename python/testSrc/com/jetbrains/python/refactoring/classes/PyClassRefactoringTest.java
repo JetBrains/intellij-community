@@ -26,19 +26,41 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dennis.Ushakov
  */
 public abstract class PyClassRefactoringTest extends PyTestCase {
+  @NotNull
+  private final String myRefactoringName;
+
+  /**
+   * @param refactoringName name of the refactoring. It will be used as folder name for tests
+   */
+  protected PyClassRefactoringTest(@NotNull final String refactoringName) {
+    myRefactoringName = refactoringName;
+  }
+
+  /**
+   * Finds memberInfo by class name and member name.
+   *
+   * @param clazzName  name of class
+   * @param memberName name of member (See {@link #findMember(String, String)} for naming protocol)
+   * @return member info
+   * @see #findMember(String, String)
+   */
+  @NotNull
+  protected PyMemberInfo<PyElement> findMemberInfo(@NotNull final String clazzName, @NotNull final String memberName) {
+    final PyClass clazz = findClass(clazzName);
+    return MembersManager.findMember(clazz, findMember(clazzName, memberName));
+  }
+
   /**
    * @param className  class where member should be found
    * @param memberName member that starts with dot (<code>.</code>) is treated as method.
@@ -47,7 +69,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @return member or null if not found
    */
   @NotNull
-  protected PyElement findMember(@NotNull String className, @NotNull String memberName) {
+  protected PyElement findMember(@NotNull final String className, @NotNull String memberName) {
     final PyElement result;
     //TODO: Get rid of this chain of copy pastes
     if (memberName.contains(".")) {
@@ -97,5 +119,44 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
         });
       }
     }, null, null);
+  }
+
+  /**
+   * Adds several files to project from folder {@link #myRefactoringName} with extension <pre>py</pre>.
+   * Call it <strong>before</strong> refactoring.
+   * After refactoring use {@link #checkMultiFile(String...)} to make sure refactoring is ok.
+   *
+   * @param fileNamesNoExtensions file (module) names to add with out of extensions
+   * @see #checkMultiFile(String...)
+   */
+  protected void configureMultiFile(@NotNull final String... fileNamesNoExtensions) {
+    final String baseName = getMultiFileBaseName() + "/";
+
+    for (final String fileNameNoExtension : fileNamesNoExtensions) {
+      final String fileNameBefore = String.format("%s.py", fileNameNoExtension);
+      myFixture.copyFileToProject(baseName + fileNameBefore, fileNameBefore);
+    }
+  }
+
+  /**
+   * Checks files <strong>after</strong> refactoring. See {@link #configureMultiFile(String...)} for more info.
+   *
+   * @param fileNamesNoExtensions file names to check with out of extension
+   * @see #configureMultiFile(String...)
+   */
+  protected void checkMultiFile(@NotNull final String... fileNamesNoExtensions) {
+    for (final String fileNameNoExtension : fileNamesNoExtensions) {
+      final String fileNameAfter = String.format("%s.after.py", fileNameNoExtension);
+      final String fileNameBefore = String.format("%s.py", fileNameNoExtension);
+      myFixture.checkResultByFile(fileNameBefore, "/" + getMultiFileBaseName() + "/" + fileNameAfter, true);
+    }
+  }
+
+  /**
+   * @return folder name with {@link #myRefactoringName} and test name added
+   */
+  @NotNull
+  protected String getMultiFileBaseName() {
+    return "refactoring/" + myRefactoringName + "/" + getTestName(true);
   }
 }

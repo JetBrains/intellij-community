@@ -83,7 +83,7 @@ public class PyUserSkeletonsUtil {
     }
     if (!ourNoSkeletonsErrorReported && ourUserSkeletonsDirectory == null) {
       ourNoSkeletonsErrorReported = true;
-      LOG.error("python-skeletons directory not found in paths: " + getPossibleUserSkeletonsPaths());
+      LOG.warn("python-skeletons directory not found in paths: " + getPossibleUserSkeletonsPaths());
     }
     return ourUserSkeletonsDirectory;
   }

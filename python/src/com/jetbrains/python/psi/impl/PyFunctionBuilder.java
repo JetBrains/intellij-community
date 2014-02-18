@@ -20,27 +20,78 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.psi.*;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyFunctionBuilder {
+  private static final String COMMENTS_BOUNDARY = "\"\"\"";
+  private static final Pattern INDENT_REMOVE_PATTERN = Pattern.compile("^\\s+", Pattern.MULTILINE);
   private final String myName;
   private final List<String> myParameters = new ArrayList<String>();
   private final List<String> myStatements = new ArrayList<String>();
   private final List<String> myDecorators = new ArrayList<String>();
   private String myAnnotation = null;
+  private String[] myDocStringLines = null;
+
+  /**
+   * Creates builder copying signature and doc from another one.
+   * @param source what to copy
+   * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
+   * @return builder configured by this function
+   */
+  @NotNull
+  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
+    final String name = source.getName();
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "");
+    for (final PyParameter parameter : source.getParameterList().getParameters()) {
+      final String parameterName = parameter.getName();
+      if (parameterName != null) {
+        functionBuilder.parameter(parameterName);
+      }
+    }
+    final PyDecoratorList decoratorList = source.getDecoratorList();
+    if (decoratorList != null) {
+      for (final PyDecorator decorator : decoratorList.getDecorators()) {
+        final String decoratorName = decorator.getName();
+        if (decoratorName != null) {
+          if (ArrayUtil.contains(decoratorName, decoratorsToCopyIfExist)) {
+            functionBuilder.decorate(decoratorName);
+          }
+        }
+      }
+    }
+    final String docString = source.getDocStringValue();
+    if (docString != null) {
+      functionBuilder.docString(docString);
+    }
+    return functionBuilder;
+  }
+
+  /**
+   * Adds docstring to function. Provide doc with out of comment blocks.
+   * @param docString doc
+   */
+  public void docString(@NotNull final String docString) {
+    myDocStringLines = StringUtil.splitByLines(removeIndent(docString));
+  }
+
+  @NotNull
+  private String removeIndent(@NotNull final String string) {
+    return INDENT_REMOVE_PATTERN.matcher(string).replaceAll("");
+  }
 
   public PyFunctionBuilder(String name) {
     myName = name;
@@ -49,7 +100,7 @@ public class PyFunctionBuilder {
   public PyFunctionBuilder parameter(String baseName) {
     String name = baseName;
     int uniqueIndex = 0;
-    while(myParameters.contains(name)) {
+    while (myParameters.contains(name)) {
       uniqueIndex++;
       name = baseName + uniqueIndex;
     }
@@ -68,11 +119,11 @@ public class PyFunctionBuilder {
   }
 
   public PyFunction addFunction(PsiElement target, final LanguageLevel languageLevel) {
-    return (PyFunction) target.add(buildFunction(target.getProject(), languageLevel));
+    return (PyFunction)target.add(buildFunction(target.getProject(), languageLevel));
   }
 
   public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor, final LanguageLevel languageLevel) {
-    return (PyFunction) target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
+    return (PyFunction)target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
   }
 
   public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {
@@ -95,6 +146,16 @@ public class PyFunctionBuilder {
     }
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
+
+    if (myDocStringLines != null) {
+      final List<String> comments = new ArrayList<String>(myDocStringLines.length + 2);
+      comments.add(COMMENTS_BOUNDARY);
+      comments.addAll(Arrays.asList(myDocStringLines));
+      comments.add(COMMENTS_BOUNDARY);
+      statements = new ArrayList<String>(statements);
+      statements.addAll(0, comments);
+    }
+
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
     String indent = StringUtil.repeatSymbol(' ', indentSize);
@@ -106,5 +167,12 @@ public class PyFunctionBuilder {
 
   public void decorate(String decoratorName) {
     myDecorators.add("@" + decoratorName);
+  }
+
+  @NotNull
+  private static String getIndent(@NotNull final Project project) {
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    final int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
+    return StringUtil.repeatSymbol(' ', indentSize);
   }
 }

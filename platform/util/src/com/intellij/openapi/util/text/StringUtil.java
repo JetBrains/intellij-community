@@ -434,8 +434,10 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  @NonNls private static final String[] ourPrepositions = {"at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into", "by"};
-
+  @NonNls private static final String[] ourPrepositions = {
+    "a", "an", "and", "as", "at", "but", "by", "down", "for", "from", "if", "in", "into", "not", "of", "on", "onto", "or", "out", "over",
+    "per", "nor", "the", "to", "up", "upon", "via", "with"
+  };
 
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
     return isPreposition(s, firstChar, lastChar, ourPrepositions);

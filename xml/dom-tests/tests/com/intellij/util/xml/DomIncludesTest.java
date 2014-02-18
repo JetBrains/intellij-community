@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -122,23 +121,23 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
     final AtomicReference<Exception> ex = new AtomicReference<Exception>();
 
     for (int j = 0; j < threadCount; j++) {
-      JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
           try {
-          for (int k = 0; k < iterationCount; k++) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
+            for (int k = 0; k < iterationCount; k++) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
                   final List<Boy> boys = rootElement.getBoys();
                   Thread.yield();
                   final List<Child> children = rootElement.getChildren();
                   Thread.yield();
                   assertEquals(boys, rootElement.getBoys());
                   assertEquals(children, rootElement.getChildren());
-              }
-            });
-            Thread.yield();
-          }
+                }
+              });
+              Thread.yield();
+            }
           }
           catch (Exception e) {
             ex.set(e);

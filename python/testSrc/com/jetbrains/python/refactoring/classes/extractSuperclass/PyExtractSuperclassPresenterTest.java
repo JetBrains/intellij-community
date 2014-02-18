@@ -1,6 +1,8 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.PyPresenterTestMemberEntry;
 import com.jetbrains.python.refactoring.classes.PyRefactoringPresenterTestCase;
@@ -30,12 +32,32 @@ public class PyExtractSuperclassPresenterTest
 
   /**
    * Tests that static methods could be moved, but "extends object" is not in list
+   * Also checks that static method could NOT be made abstract in Py2K
    */
-  public void testStaticNoObject() {
+  public void testStaticNoObjectPy2() {
+    ensureStaticNoObject(false);
+  }
+
+  /**
+   * Tests that static methods could be moved, but "extends object" is not in list
+   * Also checks that static method COULD be made abstract in Py3K
+   */
+  public void testStaticNoObjectPy3() {
+    setLanguageLevel(LanguageLevel.PYTHON32);
+    ensureStaticNoObject(true);
+  }
+
+  /**
+   * Tests that static methods could be moved, but "extends object" is not in list.
+   * Also checks that static method could be made abstract in Py3K, but not in Py2K
+   *
+   * @param py3k if py 3?
+   */
+  private void ensureStaticNoObject( final boolean py3k) {
     final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("StaticOnly");
 
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher =
-      Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("static_method()", true, true));
+      Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("static_method()", true, true, py3k));
     compareMembers(members, matcher);
   }
 
@@ -43,7 +65,7 @@ public class PyExtractSuperclassPresenterTest
    * Tests that if no members selected, presenter shows error
    */
   public void testNoSelectedMembersLeadsToError() {
-    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.<PyMemberInfo>emptyList()).anyTimes();
+    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.<PyMemberInfo<PyElement>>emptyList()).anyTimes();
 
     final Capture<String> errorMessageCapture = configureViewToCaptureError();
 
@@ -64,9 +86,9 @@ public class PyExtractSuperclassPresenterTest
   public void testInvalidSuperClassNameLeadsToError() {
     final String className = "Child";
     final PyClass aClass = getClassByName(className);
-    final List<PyMemberInfo> classMemberInfos = new PyMemberInfoStorage(aClass).getClassMemberInfos(aClass);
+    final List<PyMemberInfo<PyElement>> classMemberInfos = new PyMemberInfoStorage(aClass).getClassMemberInfos(aClass);
     assert !classMemberInfos.isEmpty() : "No member infos for " + className;
-    final PyMemberInfo pyMemberInfo = classMemberInfos.get(0);
+    final PyMemberInfo<PyElement> pyMemberInfo = classMemberInfos.get(0);
     EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.singletonList(pyMemberInfo)).anyTimes();
     EasyMock.expect(myView.getSuperClassName()).andReturn("INVALID CLASS NAME").anyTimes();
     final Capture<String> errorMessageCapture = configureViewToCaptureError();
@@ -94,6 +116,15 @@ public class PyExtractSuperclassPresenterTest
     return errorMessageCapture;
   }
 
+  /**
+   * Old classes could be refactored as well
+   */
+  public void testOldClass() {
+    final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("OldClass");
+    final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
+      .containsInAnyOrder(new PyPresenterTestMemberEntry("foo(self)", true, false, true));
+    compareMembers(members, matcher);
+  }
 
   /**
    * Checks that class fields could be moved while "extends object" is not in list
@@ -102,11 +133,11 @@ public class PyExtractSuperclassPresenterTest
     final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("Child");
 
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
-      .containsInAnyOrder(new PyPresenterTestMemberEntry("CLASS_VAR", true, true),
-                          new PyPresenterTestMemberEntry("eggs(self)", true, false),
-                          new PyPresenterTestMemberEntry("__init__(self)", true, false),
-                          new PyPresenterTestMemberEntry("self.artur", true, false),
-                          new PyPresenterTestMemberEntry("extends date", true, false));
+      .containsInAnyOrder(new PyPresenterTestMemberEntry("CLASS_VAR", true, true, false),
+                          new PyPresenterTestMemberEntry("eggs(self)", true, false, true),
+                          new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
+                          new PyPresenterTestMemberEntry("self.artur", true, false, false),
+                          new PyPresenterTestMemberEntry("extends date", true, false, false));
     compareMembers(members, matcher);
   }
 

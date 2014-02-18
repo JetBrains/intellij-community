@@ -969,15 +969,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       int size = getDistanceToTarget(pointless, targetPoint);
       if (size < pointerLength - 1) return false;
 
-      TextRange balloonRange;
-      TextRange pointerRange;
+      UnfairTextRange balloonRange;
+      UnfairTextRange pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new TextRange(bounds.x + arc, bounds.x + bounds.width - arc * 2);
-        pointerRange = new TextRange(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
+        balloonRange = new UnfairTextRange(bounds.x + arc, bounds.x + bounds.width - arc * 2);
+        pointerRange = new UnfairTextRange(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       }
       else {
-        balloonRange = new TextRange(bounds.y + arc, bounds.y + bounds.height - arc * 2);
-        pointerRange = new TextRange(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
+        balloonRange = new UnfairTextRange(bounds.y + arc, bounds.y + bounds.height - arc * 2);
+        pointerRange = new UnfairTextRange(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
 
       return balloonRange.contains(pointerRange);

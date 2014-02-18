@@ -41,8 +41,6 @@ public class UsageInfo {
     PsiFile file = element.getContainingFile();
     PsiElement topElement = file == null ? element : file;
     LOG.assertTrue(topElement.isValid(), element);
-    Project project = topElement.getProject();
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
 
     TextRange elementRange = element.getTextRange();
     if (elementRange == null) {
@@ -61,8 +59,10 @@ public class UsageInfo {
       throw new IllegalArgumentException("element " + element + "; diff " + (endOffset-startOffset));
     }
 
+    Project project = topElement.getProject();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
     if (startOffset != element.getTextOffset() - elementRange.getStartOffset() || endOffset != elementRange.getLength()) {
-      mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
       TextRange rangeToStore;
       if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
         rangeToStore = elementRange;
@@ -73,7 +73,6 @@ public class UsageInfo {
       myPsiFileRange = smartPointerManager.createSmartPsiFileRangePointer(file, rangeToStore);
     }
     else {
-      mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);
       myPsiFileRange = null;
     }
     this.isNonCodeUsage = isNonCodeUsage;
@@ -259,5 +258,18 @@ public class UsageInfo {
 
   public boolean isDynamicUsage() {
     return myDynamicUsage;
+  }
+
+  // creates new smart pointers
+  @Nullable("null means could not copy because info is no longer valid")
+  public UsageInfo copy() {
+    PsiElement element = mySmartPointer.getElement();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
+    PsiFile containingFile = myPsiFileRange == null ? null : myPsiFileRange.getContainingFile();
+    Segment segment = containingFile == null ? null : myPsiFileRange.getRange();
+    TextRange range = segment == null ? null : TextRange.create(segment);
+    SmartPsiFileRange psiFileRange = range == null ? null : smartPointerManager.createSmartPsiFileRangePointer(containingFile, range);
+    SmartPsiElementPointer<PsiElement> pointer = element == null || !isValid() ? null : smartPointerManager.createSmartPsiElementPointer(element);
+    return pointer == null ? null : new UsageInfo(pointer, psiFileRange, isDynamicUsage(), isNonCodeUsage());
   }
 }

@@ -15,13 +15,12 @@
  */
 package com.jetbrains.python.refactoring.classes.pushDown;
 
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
-import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +30,22 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class PyPushDownTest extends PyClassRefactoringTest {
+
+  public PyPushDownTest() {
+    super("pushdown");
+  }
+
+  // Tests that pushing down methods moves imports as well (PY-10963)
+  public void testMultiFileImports() {
+    final String[] modules = {"child_module", "parent_module"};
+    configureMultiFile(ArrayUtil.mergeArrays(modules, "shared_module"));
+    final PyClass parentClass = findClass("Parent");
+    final PyMemberInfo<PyElement> methodToMove = MembersManager.findMember(parentClass, findMember("Parent", ".should_be_pushed"));
+
+    moveViaProcessor(myFixture.getProject(), new PyPushDownProcessor(myFixture.getProject(), Collections.singletonList(methodToMove), parentClass));
+    checkMultiFile(modules);
+  }
+
   public void testSimple() throws Exception {
     doProcessorTest("Foo", null, ".foo");
   }
@@ -52,24 +67,27 @@ public class PyPushDownTest extends PyClassRefactoringTest {
   }
 
   public void testExistingmethod() throws Exception {
-    doProcessorTest("Foo", "method <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.", ".foo");
+    doProcessorTest("Foo",
+                    "method <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.",
+                    ".foo");
   }
 
   private void doProcessorTest(final String className, final String expectedError, final String... memberNames) throws Exception {
     try {
-    String baseName = "/refactoring/pushdown/" + getTestName(true);
-    myFixture.configureByFile(baseName + ".before.py");
-    final PyClass clazz = findClass(className);
-    final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
-    for (String memberName : memberNames) {
-      final PyElement member = findMember(className, memberName);
-      members.add(MembersManager.findMember(clazz, member));
-    }
+      String baseName = "/refactoring/pushdown/" + getTestName(true);
+      myFixture.configureByFile(baseName + ".before.py");
+      final PyClass clazz = findClass(className);
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
+      for (String memberName : memberNames) {
+        final PyElement member = findMember(className, memberName);
+        members.add(MembersManager.findMember(clazz, member));
+      }
 
-    final PyPushDownProcessor processor = new PyPushDownProcessor(members, clazz);
+      final PyPushDownProcessor processor = new PyPushDownProcessor(myFixture.getProject(), members, clazz);
       moveViaProcessor(myFixture.getProject(), processor);
       myFixture.checkResultByFile(baseName + ".after.py");
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       if (expectedError == null) throw e;
       assertTrue(e.getMessage(), e.getMessage().contains(expectedError));
     }

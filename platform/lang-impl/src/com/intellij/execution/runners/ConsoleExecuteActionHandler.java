@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.console.BaseConsoleExecuteActionHandler;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +48,20 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
   }
 
   @Override
+  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
+    //noinspection deprecation
+    execute(text);
+  }
+
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   protected void execute(@NotNull String text) {
     processLine(text);
   }
 
-  public void processLine(String line) {
+  public void processLine(@NotNull String line) {
     sendText(line + "\n");
   }
 
@@ -66,8 +77,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
       outputStream.write(bytes);
       outputStream.flush();
     }
-    catch (IOException e) {
-      // ignore
+    catch (IOException ignored) {
     }
   }
 

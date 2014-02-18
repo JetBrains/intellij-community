@@ -482,30 +482,23 @@ public class VcsLogDataHolder implements Disposable {
     return myUserRegistry.getUsers();
   }
 
-  public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success,
+  public void getFilteredDetailsFromTheVcs(@NotNull final VcsLogFilterCollection filterCollection, 
+                                           @NotNull final Consumer<List<VcsFullCommitDetails>> success,
                                            final int maxCount) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
-        List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
-        List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
-        List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
-        List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
-
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
         final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VirtualFile root = entry.getKey();
 
-          List<VcsLogStructureFilter> rootMatchingStructureFilters = filterStructureFiltersByRoot(root, structureFilters);
-          if (rootMatchingStructureFilters.isEmpty() && !structureFilters.isEmpty()) {
-            // there were structure filters but none matches the root
+          if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()) {
+            // there is a structure filter, but it doesn't match this root
             continue;
           }
 
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(
-            root, branchFilters, userFilters, dateFilters, textFilters, rootMatchingStructureFilters, maxCount);
+          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(root, filterCollection, maxCount);
           logs.add(getCommitsFromDetails(details));
           for (VcsFullCommitDetails detail : details) {
             allDetails.put(detail.getHash(), detail);

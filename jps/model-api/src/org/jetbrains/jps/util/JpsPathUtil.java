@@ -17,7 +17,9 @@ package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Set;
@@ -45,12 +47,16 @@ public class JpsPathUtil {
     return new File(urlToOsPath(url));
   }
 
-  public static String urlToOsPath(String url) {
+  @NotNull
+  public static String urlToOsPath(@NotNull String url) {
     return FileUtilRt.toSystemDependentName(urlToPath(url));
   }
 
-  public static String urlToPath(String url) {
-    if (url == null) return null;
+  @Contract("null -> null; !null -> !null")
+  public static String urlToPath(@Nullable String url) {
+    if (url == null) {
+      return null;
+    }
     if (url.startsWith("file://")) {
       return url.substring("file://".length());
     }

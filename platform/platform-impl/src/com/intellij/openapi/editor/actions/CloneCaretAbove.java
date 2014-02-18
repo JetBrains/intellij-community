@@ -16,10 +16,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class CloneCaretAbove extends EditorAction {
   public CloneCaretAbove() {
@@ -32,11 +33,8 @@ public class CloneCaretAbove extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      CaretModel caretModel = editor.getCaretModel();
-      if (caretModel.supportsMultipleCarets()) {
-        caretModel.getCurrentCaret().clone(true);
-      }
+    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      caret.clone(true);
     }
 
     @Override

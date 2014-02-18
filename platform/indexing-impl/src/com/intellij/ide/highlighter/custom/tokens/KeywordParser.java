@@ -96,7 +96,7 @@ public class KeywordParser {
     }
 
     char ch = myBuffer.charAt(offset);
-    return ch != '-' && !Character.isLetterOrDigit(ch);
+    return ch != '-' && ch != '_' && !Character.isLetterOrDigit(ch);
   }
 
   private static IElementType getToken(int keywordSetIndex) {

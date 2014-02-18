@@ -27,7 +27,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor), this);
+      connection = new ServerConnectionImpl(server, server.getType().createConnector(server, executor), this);
       myConnections.put(server, connection);
       myEventDispatcher.fireConnectionCreated(connection);
     }

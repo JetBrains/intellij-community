@@ -59,7 +59,6 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     myProject.registerService(JavaFileManager.class, myFileManager);
 
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
-    registerProjectComponent(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
 

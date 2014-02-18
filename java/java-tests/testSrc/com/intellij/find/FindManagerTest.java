@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -49,6 +48,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -185,11 +185,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(expectedResults, usages.size());
   }
 
-  private List<UsageInfo> findUsages(final FindModel findModel) {
+  private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
-    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector, new FindUsagesProcessPresentation());
+    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
   }
 

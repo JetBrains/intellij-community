@@ -357,10 +357,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void runForEachCaret(@NotNull final Runnable runnable) {
+  public void runForEachCaret(@NotNull final CaretAction action) {
     myEditor.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
-      runnable.run();
+      action.perform(getPrimaryCaret());
       return;
     }
     if (myCurrentCaret != null) {
@@ -372,7 +372,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           Collection<Caret> sortedCarets = getAllCarets();
           for (Caret caret : sortedCarets) {
             myCurrentCaret = (CaretImpl)caret;
-            runnable.run();
+            action.perform(caret);
           }
         }
         finally {
@@ -380,6 +380,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       }
     });
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    myEditor.assertIsDispatchThread();
+    doWithCaretMerging(runnable);
   }
 
   private void mergeOverlappingCaretsAndSelections() {
@@ -397,8 +403,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       CaretImpl currCaret = it.next();
       if (prevCaret != null && (currCaret.getVisualPosition().equals(prevCaret.getVisualPosition())
-                                || Math.max(currCaret.getSelectionStart(), prevCaret.getSelectionStart())
-                                   < Math.min(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd()))) {
+                                || regionsIntersect(currCaret.getSelectionStart(), currCaret.getSelectionEnd(),
+                                                    prevCaret.getSelectionStart(), prevCaret.getSelectionEnd()))) {
         int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
         int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
         CaretImpl toRetain, toRemove;
@@ -421,6 +427,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       }
     }
+  }
+
+  private static boolean regionsIntersect(int firstStart, int firstEnd, int secondStart, int secondEnd) {
+    return firstStart < secondStart && firstEnd > secondStart
+      || firstStart > secondStart && firstStart < secondEnd
+      || firstStart == secondStart && secondEnd > secondStart && firstEnd > firstStart;
   }
 
   void doWithCaretMerging(Runnable runnable) {

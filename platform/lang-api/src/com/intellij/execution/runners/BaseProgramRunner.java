@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +55,7 @@ public abstract class BaseProgramRunner<Settings extends RunnerSettings> impleme
   }
 
   @Override
-  public void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback)
-    throws ExecutionException {
-
+  public void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
     RunProfileState state = environment.getState();
     if (state == null) {
       return;
@@ -71,4 +70,15 @@ public abstract class BaseProgramRunner<Settings extends RunnerSettings> impleme
                                           @Nullable Callback callback,
                                           @NotNull Project project,
                                           @NotNull RunProfileState state) throws ExecutionException;
+
+  @Nullable
+  protected static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
+    if (descriptor != null) {
+      descriptor.setExecutionId(environment.getExecutionId());
+    }
+    if (callback != null) {
+      callback.processStarted(descriptor);
+    }
+    return descriptor;
+  }
 }

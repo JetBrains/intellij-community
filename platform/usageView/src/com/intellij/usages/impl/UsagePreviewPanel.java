@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,15 +46,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
 
-  public UsagePreviewPanel(@NotNull Project project) {
-    super(project);
+  public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    super(project, presentation);
   }
 
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject());
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
     }
 
     @Override
@@ -189,7 +190,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     if (infos == null) {
       releaseEditor();
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

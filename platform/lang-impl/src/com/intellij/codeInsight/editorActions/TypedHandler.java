@@ -138,7 +138,10 @@ public class TypedHandler extends TypedActionHandlerBase {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     PsiFile file;
 
-    if (project == null || editor.isColumnMode() || (file = PsiUtilBase.getPsiFileInEditor(editor, project)) == null) {
+    if (project == null
+        || editor.isColumnMode()
+        || editor.getCaretModel().getAllCarets().size() > 1
+        || (file = PsiUtilBase.getPsiFileInEditor(editor, project)) == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, charTyped, dataContext);
       }

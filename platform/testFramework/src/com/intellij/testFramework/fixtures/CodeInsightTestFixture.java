@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,6 @@ import java.util.List;
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NonNls String CARET_MARKER = "<caret>";
-  @NonNls String SELECTION_START_MARKER = "<selection>";
-  @NonNls String SELECTION_END_MARKER = "</selection>";
-  @NonNls String BLOCK_START_MARKER = "<block>";
-  @NonNls String BLOCK_END_MARKER = "</block>";
 
   @NonNls String ERROR_MARKER = "error";
   @NonNls String WARNING_MARKER = "warning";

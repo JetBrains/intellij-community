@@ -1,10 +1,13 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,7 +23,7 @@ import java.util.List;
 public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringProcessor implements UsageViewDescriptor {
 
   @NotNull
-  protected final Collection<PyMemberInfo> myMembersToMove;
+  protected final Collection<PyMemberInfo<PyElement>> myMembersToMove;
   @NotNull
   protected final PyClass myFrom;
   @NotNull
@@ -32,12 +35,13 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
    * @param to            where to move
    */
   protected PyMembersRefactoringBaseProcessor(
-    @NotNull final Collection<PyMemberInfo> membersToMove,
+    @NotNull final Project project,
+    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
     @NotNull final PyClass from,
     @NotNull final PyClass... to) {
-    super(from.getProject());
+    super(project);
     myFrom = from;
-    myMembersToMove = new ArrayList<PyMemberInfo>(membersToMove);
+    myMembersToMove = new ArrayList<PyMemberInfo<PyElement>>(membersToMove);
     myTo = to.clone();
   }
 
@@ -77,5 +81,6 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
       destinations.add(((PyUsageInfo)usage).getTo());
     }
     MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));
+    PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports
   }
 }

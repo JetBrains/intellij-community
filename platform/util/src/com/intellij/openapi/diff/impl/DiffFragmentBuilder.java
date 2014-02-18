@@ -156,7 +156,9 @@ public class DiffFragmentBuilder {
   }
 
   private static String concatenate(String[] strings, int start, int end) {
-    StringBuffer buffer = new StringBuffer();
+    int len = 0;
+    for (int i = start - 1; i < end; i++) len += strings[i] == null ? 0 : strings[i].length();
+    StringBuilder buffer = new StringBuilder(len);
     for (int i = start - 1; i < end; i++) buffer.append(strings[i]);
     return buffer.toString();
   }

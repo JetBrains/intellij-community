@@ -22,14 +22,12 @@ public interface Node extends GraphElement {
 
   /**
    * @return if type == COMMIT_NODE - this commit.
-   *         if type == EDGE_NODE - common Parent
    *         if type == END_COMMIT_NODE - parent of This Commit
    */
   int getCommitIndex();
 
   enum NodeType {
     COMMIT_NODE,
-    EDGE_NODE,
     END_COMMIT_NODE
   }
 

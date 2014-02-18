@@ -185,9 +185,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public void setAdditionalColumnsCount(int additinalColumnsCount) {
-    if (myAdditionalColumnsCount == additinalColumnsCount) return;
-    myAdditionalColumnsCount = additinalColumnsCount;
+  public void setAdditionalColumnsCount(int additionalColumnsCount) {
+    if (myAdditionalColumnsCount == additionalColumnsCount) return;
+    myAdditionalColumnsCount = additionalColumnsCount;
     fireEditorRefresh();
   }
 

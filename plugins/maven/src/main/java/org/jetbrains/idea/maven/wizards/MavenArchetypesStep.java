@@ -306,7 +306,8 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
   @Override
   public void updateDataModel() {
-
+    MavenArchetype selectedArchetype = getSelectedArchetype();
+    myBuilder.setArchetype(selectedArchetype);
   }
 
   private static class MyRenderer extends ColoredTreeCellRenderer {

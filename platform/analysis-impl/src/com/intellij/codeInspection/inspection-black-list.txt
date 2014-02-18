@@ -76,7 +76,7 @@ com.siyeh.ig.bugs.ReturnNullInspection
 com.siyeh.ig.classlayout.EmptyClassInspection
 com.siyeh.ig.classlayout.InnerClassOnInterfaceInspection
 com.siyeh.ig.classlayout.ListenerMayUseAdapterInspection
-com.siyeh.ig.classlayout.MissingOverrideAnnotationInspection
+com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection
 com.siyeh.ig.classlayout.UtilityClassInspection
 com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection
 com.siyeh.ig.classmetrics.AnonymousClassComplexityInspection
@@ -163,7 +163,6 @@ com.siyeh.ig.methodmetrics.ThreeNegationsPerMethodInspection
 com.siyeh.ig.methodmetrics.ThrownExceptionsPerMethodInspection
 com.siyeh.ig.migration.ForCanBeForeachInspection
 com.siyeh.ig.migration.IfCanBeSwitchInspection
-com.siyeh.ig.migration.MethodCanBeVariableArityMethodInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
 com.siyeh.ig.naming.AnnotationNamingConventionInspection

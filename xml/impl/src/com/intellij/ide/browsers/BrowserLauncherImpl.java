@@ -36,11 +36,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
@@ -103,6 +105,16 @@ final class BrowserLauncherImpl extends BrowserLauncher {
   }
 
   @Override
+  public void open(@NotNull String url) {
+    openOrBrowse(url, false);
+  }
+
+  @Override
+  public void browse(@NotNull File file) {
+    browse(VfsUtil.toUri(file));
+  }
+
+  @Override
   public void browse(@NotNull URI uri) {
     LOG.debug("Launch browser: [" + uri + "]");
 
@@ -126,11 +138,10 @@ final class BrowserLauncherImpl extends BrowserLauncher {
       }
     }
 
-    browse(uri.toString(), settings.getBrowserPath(), null, null);
+    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null);
   }
 
-  @Override
-  public void openOrBrowse(@NotNull String url, boolean browse) {
+  private void openOrBrowse(@NotNull String url, boolean browse) {
     url = url.trim();
 
     if (url.startsWith("jar:")) {
@@ -157,7 +168,7 @@ final class BrowserLauncherImpl extends BrowserLauncher {
         }
       }
 
-      BrowserUtil.browse(file);
+      browse(file);
       return;
     }
 
@@ -198,7 +209,7 @@ final class BrowserLauncherImpl extends BrowserLauncher {
 
       String previousTimestamp = null;
       if (timestampFile.exists()) {
-        previousTimestamp = FileUtil.loadFile(timestampFile);
+        previousTimestamp = FileUtilRt.loadFile(timestampFile);
       }
 
       if (!currentTimestamp.equals(previousTimestamp)) {
@@ -362,7 +373,7 @@ final class BrowserLauncherImpl extends BrowserLauncher {
   @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
-      BrowserUtil.browse(url);
+      openOrBrowse(url, true);
     }
     else {
       for (UrlOpener urlOpener : UrlOpener.EP_NAME.getExtensions()) {
@@ -374,19 +385,12 @@ final class BrowserLauncherImpl extends BrowserLauncher {
   }
 
   @Override
-  public boolean browse(@Nullable String url,
-                        @NotNull WebBrowser browser,
-                        @Nullable Project project,
-                        @NotNull String... additionalParameters) {
-    return doLaunch(url, browser.getPath(), browser, project, additionalParameters);
-  }
-
-  @Override
-  public boolean browse(@Nullable String url,
-                        @Nullable String browserPath,
-                        @Nullable WebBrowser browser,
-                        @Nullable Project project) {
-    return doLaunch(url, browserPath, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);
+  public boolean browseUsingPath(@Nullable String url,
+                                 @Nullable String browserPath,
+                                 @Nullable WebBrowser browser,
+                                 @Nullable Project project,
+                                 @NotNull String... additionalParameters) {
+    return doLaunch(url, browserPath == null && browser != null ? PathUtil.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
   }
 
   private static boolean doLaunch(@Nullable String url,

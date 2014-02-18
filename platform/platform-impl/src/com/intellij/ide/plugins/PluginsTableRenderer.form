@@ -5,8 +5,8 @@
       <xy x="20" y="20" width="500" height="148"/>
     </constraints>
     <properties/>
-    <border type="empty">
-      <size top="4" left="3" bottom="4" right="3"/>
+    <border type="none">
+      <size top="2" left="3" bottom="2" right="3"/>
     </border>
     <children>
       <grid id="89d6b" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

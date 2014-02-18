@@ -67,6 +67,21 @@ public abstract class PyElementGenerator {
 
   public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text);
 
+  /**
+   * Adds elements to list inserting required commas.
+   * Method is like {@link #insertItemIntoList(PyElement, PyExpression, PyExpression)} but does not add unneeded commas.
+   *
+   * @param list where to add
+   * @param afterThis after which element it should be added (null for add to the head)
+   * @param toInsert what to insert
+   * @return newly inserted element
+   */
+  @NotNull
+  public abstract PsiElement insertItemIntoListRemoveRedundantCommas(
+    @NotNull PyElement list,
+    @Nullable PyExpression afterThis,
+    @NotNull PyExpression toInsert);
+
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;
 

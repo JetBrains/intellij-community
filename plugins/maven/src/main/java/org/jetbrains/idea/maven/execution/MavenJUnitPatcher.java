@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
+import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +61,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
 
     Element systemPropertyVariables = config.getChild("systemPropertyVariables");
-    if (systemPropertyVariables != null) {
+    if (systemPropertyVariables != null && isEnabled("systemPropertyVariables")) {
       for (Element element : systemPropertyVariables.getChildren()) {
         String propertyName = element.getName();
 
@@ -71,7 +72,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
 
     Element environmentVariables = config.getChild("environmentVariables");
-    if (environmentVariables != null) {
+    if (environmentVariables != null && isEnabled("environmentVariables")) {
       for (Element element : environmentVariables.getChildren()) {
         String variableName = element.getName();
 
@@ -82,11 +83,15 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
 
     Element argLine = config.getChild("argLine");
-    if (argLine != null) {
+    if (argLine != null && isEnabled("argLine")) {
       String value = argLine.getTextTrim();
       if (StringUtil.isNotEmpty(value)) {
-        javaParameters.getVMParametersList().add(value);
+        javaParameters.getVMParametersList().addParametersString(value);
       }
     }
+  }
+
+  private static boolean isEnabled(String s) {
+    return !Boolean.valueOf(System.getProperty("idea.maven.surefire.disable." + s));
   }
 }

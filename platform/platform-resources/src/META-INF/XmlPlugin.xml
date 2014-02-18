@@ -71,7 +71,6 @@
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter"/>
-    <extensionPoint qualifiedName="org.jetbrains.openInBrowserAction" interface="com.intellij.ide.browsers.actions.OpenInBrowserActionProducer"/>
 
     <extensionPoint name="html.scriptContentProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -103,6 +102,8 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="TagNameCompletion.html"/>
+
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
     <lang.syntaxHighlighterFactory key="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>

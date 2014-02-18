@@ -32,6 +32,7 @@ public class PythonIcons {
 
     }
     public static final Icon Dotnet = load("/icons/com/jetbrains/python/dotnet.png"); // 16x16
+    public static final Icon InterpreterGear = load("/icons/com/jetbrains/python/interpreterGear.png"); // 16x16
     public static final Icon Jython = load("/icons/com/jetbrains/python/jython.png"); // 16x16
     
     public static class Nodes {
@@ -48,6 +49,7 @@ public class PythonIcons {
     public static final Icon Python_24 = load("/icons/com/jetbrains/python/python_24.png"); // 24x24
     public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.png"); // 16x16
     public static final Icon PythonTests = load("/icons/com/jetbrains/python/pythonTests.png"); // 16x16
+    public static final Icon Skeleton = load("/icons/com/jetbrains/python/skeleton.png"); // 16x16
     public static final Icon Virtualenv = load("/icons/com/jetbrains/python/virtualenv.png"); // 16x16
 
   }

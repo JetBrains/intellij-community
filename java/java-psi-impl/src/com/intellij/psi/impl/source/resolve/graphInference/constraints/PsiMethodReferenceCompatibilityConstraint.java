@@ -44,7 +44,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
+    if (!LambdaUtil.isFunctionalType(myT)) {
       return false;
     }
 
@@ -59,7 +59,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiParameter[] targetParameters = interfaceMethod.getParameterList().getParameters();
     final PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
     PsiType returnType = substitutor.substitute(interfaceMethodReturnType);
-    if (myExpression.getTypeParameters().length == 0) {
+    if (myExpression.getTypeParameters().length == 0 && returnType != null) {
       returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, myExpression);
     }
     final PsiType[] typeParameters = myExpression.getTypeParameters();
@@ -149,14 +149,16 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
+      session.initBounds(method.getTypeParameters());
+      session.initBounds(containingClass.getTypeParameters());
+
       if (typeParameters.length == 0 && ((PsiMethod)resolve).getTypeParameters().length > 0) {
 
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
                                                          ContainerUtil.newHashSet(method.getTypeParameters()))) {
-          LOG.assertTrue(interfaceMethodReturnType != null);
-          constraints.add(new TypeCompatibilityConstraint(referencedMethodReturnType, interfaceMethodReturnType));
+          constraints.add(new TypeCompatibilityConstraint(referencedMethodReturnType, returnType));
           return true;
         }
       }
@@ -165,14 +167,19 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         return false;
       }
  
-      session.initBounds(method.getTypeParameters());
-      session.initBounds(containingClass.getTypeParameters());
+      int idx = 0;
+      PsiSubstitutor psiSubstitutor = PsiSubstitutor.EMPTY;
+      for (PsiTypeParameter param : method.getTypeParameters()) {
+        if (idx < typeParameters.length) {
+          psiSubstitutor = psiSubstitutor.put(param, typeParameters[idx++]);
+        }
+      }
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (targetParameters.length == parameters.length + 1) {
+      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs()) {
         specialCase(session, constraints, substitutor, targetParameters);
       }
-      constraints.add(new TypeCompatibilityConstraint(returnType, referencedMethodReturnType));
+      constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(referencedMethodReturnType)));
     }
     
     return true;

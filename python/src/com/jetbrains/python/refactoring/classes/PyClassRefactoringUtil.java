@@ -21,32 +21,27 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -74,15 +69,17 @@ public final class PyClassRefactoringUtil {
     final List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
     for (final PyAssignmentStatement expression : assignmentStatement) {
       final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
-      declations.add(newDeclaration);
       declations.add((PyAssignmentStatement)PyUtil.addElementToStatementList(newDeclaration, superClassStatement, true));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
     return declations;
   }
 
+  @NotNull
   public static List<PyFunction> copyMethods(Collection<PyFunction> methods, PyClass superClass) {
-    if (methods.size() == 0) return null;
+    if (methods.isEmpty()) {
+      return Collections.emptyList();
+    }
     for (PsiElement e : methods) {
       rememberNamedReferences(e);
     }
@@ -160,7 +157,13 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  public static void restoreNamedReferences(@NotNull PsiElement element) {
+  /**
+   * Restores references saved by {@link #rememberNamedReferences(com.intellij.psi.PsiElement, String...)}.
+   *
+   * @param element newly created element to restore references
+   * @see #rememberNamedReferences(com.intellij.psi.PsiElement, String...)
+   */
+  public static void restoreNamedReferences(@NotNull final PsiElement element) {
     restoreNamedReferences(element, null);
   }
 
@@ -270,7 +273,16 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  public static void rememberNamedReferences(@NotNull final PsiElement element) {
+  /**
+   * Searches for references inside some element (like {@link com.jetbrains.python.psi.PyAssignmentStatement}, {@link com.jetbrains.python.psi.PyFunction} etc
+   * and stored them.
+   * After that you can add element to some new parent. Newly created element then should be processed via {@link #restoreNamedReferences(com.intellij.psi.PsiElement)}
+   * and all references would be restored.
+   *
+   * @param element     element to store references for
+   * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
+   */
+  public static void rememberNamedReferences(@NotNull final PsiElement element, @NotNull final String... namesToSkip) {
     element.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -282,7 +294,9 @@ public final class PyClassRefactoringUtil {
         if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
           return;
         }
-        rememberReference(node, element);
+        if (!ArrayUtil.contains(node.getText(), namesToSkip)) { //Do not remember name if it should be skipped
+          rememberReference(node, element);
+        }
       }
     });
   }
@@ -396,43 +410,6 @@ public final class PyClassRefactoringUtil {
   }
 
   /**
-   * Creates class method
-   *
-   * @param methodName     name if new method (be sure to check {@link com.jetbrains.python.PyNames} for special methods)
-   * @param pyClass        class to add method
-   * @param modifier       if method static or class or simple instance method (null)>
-   * @param parameterNames method parameters
-   * @return newly created method
-   */
-  @NotNull
-  public static PyFunction createMethod(@NotNull final String methodName,
-                                        @NotNull final PyClass pyClass,
-                                        @Nullable final PyFunction.Modifier modifier,
-                                        @NotNull final String... parameterNames) {
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
-
-
-    //TODO: Take names from codestyle?
-    if (modifier == null) {
-      builder.parameter(PyNames.CANONICAL_SELF);
-    }
-    else if (modifier == CLASSMETHOD) {
-      builder.parameter(PyNames.CANONICAL_CLS);
-      builder.decorate(PyNames.CLASSMETHOD);
-    }
-    else if (modifier == STATICMETHOD) {
-      builder.decorate(PyNames.STATICMETHOD);
-    }
-
-    for (final String parameterName : parameterNames) {
-      builder.parameter(parameterName);
-    }
-
-    final PyFunction function = builder.buildFunction(pyClass.getProject(), LanguageLevel.getDefault());
-    return addMethods(pyClass, function).get(0);
-  }
-
-  /**
    * Adds super classes to certain class.
    *
    * @param project      project where refactoring takes place
@@ -453,26 +430,86 @@ public final class PyClassRefactoringUtil {
       }
     }
 
-    final PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
-    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    addSuperClassExpressions(project, clazz, superClassNames, null);
+  }
 
-    if (superClassExpressionList != null) {
-      for (final String superClassName : superClassNames) {
-        superClassExpressionList.addArgument(generator.createExpressionFromText(superClassName));
+
+  /**
+   * Adds expressions to superclass list
+   *
+   * @param project          project
+   * @param clazz            class to add expressions to superclass list
+   * @param paramExpressions param expressions. Like "object" or "MySuperClass". Will not add any param exp. if null.
+   * @param keywordArguments keyword args like "metaclass=ABCMeta". key-value pairs.  Will not add any keyword arg. if null.
+   */
+  public static void addSuperClassExpressions(@NotNull final Project project,
+                                              @NotNull final PyClass clazz,
+                                              @Nullable final Collection<String> paramExpressions,
+                                              @Nullable final Collection<Pair<String, String>> keywordArguments) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    final LanguageLevel languageLevel = LanguageLevel.forElement(clazz);
+
+    PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
+    boolean addExpression = false;
+    if (superClassExpressionList == null) {
+      superClassExpressionList = generator.createFromText(languageLevel, PyClass.class, "class foo():pass").getSuperClassExpressionList();
+      assert superClassExpressionList != null : "expression not created";
+      addExpression = true;
+    }
+
+
+    generator.createFromText(LanguageLevel.PYTHON34, PyClass.class, "class foo(object, metaclass=Foo): pass").getSuperClassExpressionList();
+    if (paramExpressions != null) {
+      for (final String paramExpression : paramExpressions) {
+        superClassExpressionList.addArgument(generator.createParameter(paramExpression));
       }
     }
-    //If class has no expression list, then we need to add it manually.
-    //TODO: Investigate how to do that on PSI level, with out of stupid string concatenation
-    else {
-      final String superClassText = String.format("(%s)", StringUtil.join(superClassNames, ","));
-      final ASTNode node = clazz.getNameNode();
-      if (node != null) {
-        clazz.addAfter(generator.createExpressionFromText(superClassText),
-                       node.getPsi());
-      }
-      else {
-        LOG.error("Class has no name node nor superclass list " + clazz);
+
+    if (keywordArguments != null) {
+      for (final Pair<String, String> keywordArgument : keywordArguments) {
+        superClassExpressionList.addArgument(generator.createKeywordArgument(languageLevel, keywordArgument.first, keywordArgument.second));
       }
     }
+
+    // If class has no expression list, then we need to add it manually.
+    if (addExpression) {
+      final ASTNode classNameNode = clazz.getNameNode(); // For nameless classes we simply add expression list directly to them
+      final PsiElement elementToAddAfter = (classNameNode == null) ? clazz.getFirstChild() : classNameNode.getPsi();
+      clazz.addAfter(superClassExpressionList, elementToAddAfter);
+    }
+  }
+
+  /**
+   * Optimizes imports resorting them and removing unneeded
+   *
+   * @param file file to optimize imports
+   */
+  public static void optimizeImports(@NotNull final PsiFile file) {
+    new PyImportOptimizer().processFile(file).run();
+  }
+
+  /**
+   * Adds class attributeName (field) if it does not exist. like __metaclass__ = ABCMeta. Or CLASS_FIELD = 42.
+   *
+   * @param aClass        where to add
+   * @param attributeName attribute's name. Like __metaclass__ or CLASS_FIELD
+   * @param value         it's value. Like ABCMeta or 42.
+   * @return newly inserted attribute
+   */
+  @Nullable
+  public static PsiElement addClassAttributeIfNotExist(
+    @NotNull final PyClass aClass,
+    @NotNull final String attributeName,
+    @NotNull final String value) {
+    if (aClass.findClassAttribute(attributeName, false) != null) {
+      return null; //Do not add any if exist already
+    }
+    final PyElementGenerator generator = PyElementGenerator.getInstance(aClass.getProject());
+    final String text = String.format("%s = %s", attributeName, value);
+    final LanguageLevel level = LanguageLevel.forElement(aClass);
+
+    final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
+    //TODO: Add metaclass to the top. Add others between last attributeName and first method
+    return PyUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
   }
 }

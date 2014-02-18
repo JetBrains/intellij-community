@@ -63,6 +63,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
   protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
@@ -71,8 +72,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   private static boolean isEnabled(final VcsContext context) {
     VirtualFile[] selectedFiles = context.getSelectedFiles();
-    if (selectedFiles == null) return false;
-    if (selectedFiles.length != 1) return false;
+    if (selectedFiles.length != 1) {
+      return false;
+    }
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory()) return false;
     Project project = context.getProject();
@@ -98,6 +100,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     return !selectedFile.getFileType().isBinary();
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
@@ -124,6 +127,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     return annotations != null && !annotations.isEmpty();
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean selected) {
     final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
@@ -153,7 +157,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   private static void doAnnotate(final Editor editor, final Project project) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    if (project == null) return;
+    if (project == null || file == null) {
+      return;
+    }
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
     final AbstractVcs vcs = plVcsManager.getVcsFor(file);
 
@@ -172,6 +178,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                                                      VcsBundle.message("retrieving.annotations"),
                                                                      true,
                                                                      BackgroundFromStartOption.getInstance()) {
+      @Override
       public void run(final @NotNull ProgressIndicator indicator) {
         try {
           fileAnnotationRef.set(annotationProvider.annotate(file));

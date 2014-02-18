@@ -375,7 +375,7 @@ public class FileUtil extends FileUtilRt {
       final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
       executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       new Thread(deleteFilesTask, "File deletion thread").start();
     }
     return deleteFilesTask;

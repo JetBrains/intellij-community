@@ -1,5 +1,6 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin. -->
+  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
@@ -24,14 +25,12 @@
   </project-components>
 
   <module value="com.intellij.modules.xml"/>
-  <module value="com.intellij.modules.python"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <!--<applicationConfigurable instance="com.jetbrains.python.configuration.PythonSdkConfigurable"/>-->
     <projectConfigurable instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>

@@ -16,13 +16,19 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -57,6 +63,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   private final Condition<SdkTypeId> myFilter;
   @Nullable
   private final Condition<SdkTypeId> myCreationFilter;
+  private JButton mySetUpButton;
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
@@ -103,6 +110,57 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     });
   }
 
+  public static JdkComboBox createSdkComboBox(ModuleBuilder moduleBuilder,
+                                              Condition<SdkTypeId> sdkFilter,
+                                              Project project,
+                                              ProjectSdksModel model) {
+    final JdkComboBox comboBox = new JdkComboBox(model, sdkFilter);
+
+    final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
+    ModuleType moduleType = moduleBuilder.getModuleType();
+    final String selectedJdkProperty = "jdk.selected." + (moduleType == null ? "" : moduleType.getId());
+    comboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Sdk jdk = comboBox.getSelectedJdk();
+        if (jdk != null) {
+          component.setValue(selectedJdkProperty, jdk.getName());
+        }
+      }
+    });
+
+    if (project != null) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
+        // use project SDK
+        return null;
+      }
+    }
+    else  {
+      // set default project SDK
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
+      if (sdk != null && sdkFilter.value(sdk.getSdkType())) {
+        comboBox.setSelectedJdk(sdk);
+      }
+    }
+
+    String value = component.getValue(selectedJdkProperty);
+    if (value != null) {
+      Sdk jdk = ProjectJdkTable.getInstance().findJdk(value);
+      if (jdk != null) {
+        comboBox.setSelectedJdk(jdk);
+      }
+    }
+
+    JButton button = new JButton("Ne\u001Bw...");
+    comboBox.setSetupButton(button, project, model,
+                                 project == null ? new NoneJdkComboBoxItem() : new ProjectJdkComboBoxItem(),
+                                 null,
+                                 false);
+    return comboBox;
+  }
+
   @Override
   public Dimension getPreferredSize() {
     final Rectangle rec = ScreenUtil.getScreenRectangle(0, 0);
@@ -140,7 +198,9 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<Sdk> additionalSetup,
                                 final String actionGroupTitle) {
-    setUpButton.addActionListener(new ActionListener() {
+
+    mySetUpButton = setUpButton;
+    mySetUpButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup();
@@ -197,6 +257,10 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
     });
+  }
+
+  public JButton getSetUpButton() {
+    return mySetUpButton;
   }
 
   @Override

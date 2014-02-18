@@ -50,15 +50,20 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @SuppressWarnings("deprecation")
   @Override
   public StubElement buildStubTree(@NotNull FileContent fileContent) {
-    try {
-      VirtualFile file = fileContent.getFile();
-      byte[] content = fileContent.getContent();
+    VirtualFile file = fileContent.getFile();
+    byte[] content = fileContent.getContent();
 
+    try {
       ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
       if (decompiler instanceof Full) {
         return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
       }
+    }
+    catch (ClsFormatException e) {
+      LOG.debug(e);
+    }
 
+    try {
       Project project = fileContent.getProject();
       for (ClsStubBuilderFactory factory : Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME)) {
         if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {
@@ -66,7 +71,12 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
           if (stub != null) return stub;
         }
       }
+    }
+    catch (ClsFormatException e) {
+      LOG.debug(e);
+    }
 
+    try {
       PsiFileStub<?> stub = ClsFileImpl.buildFileStub(file, content);
       if (stub == null && !fileContent.getFileName().contains("$")) {
         LOG.info("No stub built for file " + fileContent);
@@ -74,9 +84,10 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       return stub;
     }
     catch (ClsFormatException e) {
-      LOG.info(e);
-      return null;
+      LOG.debug(e);
     }
+
+    return null;
   }
 
   private static final Comparator<Object> CLASS_NAME_COMPARATOR = new Comparator<Object>() {

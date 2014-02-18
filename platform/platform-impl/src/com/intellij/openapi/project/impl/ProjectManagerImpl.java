@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -263,10 +262,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
-
     final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(ProjectBundle.message("loading.components.for", project.isDefault() ? "Default" : project.getName()));
+      indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
       indicator.setIndeterminate(true);
     }
 
@@ -296,7 +294,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                     @NotNull String filePath,
                                     boolean isDefault,
                                     boolean isOptimiseTestLoadSpeed) {
-    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed, ObjectUtils.assertNotNull(projectName))
+    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed)
                      : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
   }
 
@@ -352,7 +350,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createProject("Default project", "Default project", true, ApplicationManager.getApplication().isUnitTestMode());
+        myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
         initProject(myDefaultProject, null);
         myDefaultProjectRootElement = null;
       }

@@ -119,6 +119,12 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.ALIGN_MULTILINE_CHAINED_METHODS = false;
     javaSettings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION = false;
+    javaSettings.BLANK_LINES_AFTER_CLASS_HEADER = -1;
+    javaSettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = -1;
+    javaSettings.BLANK_LINES_AROUND_CLASS = -1;
+    javaSettings.KEEP_BLANK_LINES_IN_CODE = -1;
+    javaSettings.KEEP_BLANK_LINES_BEFORE_RBRACE = -1;
+    javaSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = -1;
     indentOptions.USE_TAB_CHARACTER = false;
     indentOptions.SMART_TABS = false;
     indentOptions.TAB_SIZE = 3;
@@ -217,6 +223,12 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertTrue(javaSettings.ALIGN_MULTILINE_CHAINED_METHODS);
       assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.TERNARY_OPERATION_WRAP);
       assertTrue(javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION);
+      assertEquals(2, javaSettings.BLANK_LINES_AFTER_CLASS_HEADER);
+      assertEquals(2, javaSettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER);
+      assertEquals(3, javaSettings.BLANK_LINES_AROUND_CLASS);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_CODE);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
     finally {
       inputStream.close();

@@ -75,7 +75,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       if (rootVDir instanceof NewVirtualFile) {
         ((NewVirtualFile)rootVDir).markDirty();
       }
-      rootVDir.refresh(false, false);
+      rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);

@@ -136,7 +136,29 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     graph.put("f", "t");
     graph.put("t", "");
     doTest(graph, "sabct", "sadeft", "sabdeft", "sabcdeft");
+  }
 
+  public void testBigHeap() {
+    final Map<String, String> graph = new HashMap<String, String>();
+    graph.put("s", "lo");
+    graph.put("a", "tb");
+    graph.put("b", "t");
+    graph.put("c", "ad");
+    graph.put("d", "e");
+    graph.put("e", "b");
+    graph.put("f", "cg");
+    graph.put("g", "h");
+    graph.put("h", "d");
+    graph.put("i", "fj");
+    graph.put("j", "k");
+    graph.put("k", "g");
+    graph.put("l", "im");
+    graph.put("m", "n");
+    graph.put("n", "j");
+    graph.put("o", "p");
+    graph.put("p", "m");
+    graph.put("t", "");
+    doTest(graph, "slifcat", "slifcabt", "slifcdebt", "slifghdebt", "slijkghdebt", "slmnjkghdebt", "sopmnjkghdebt");
   }
 
   private static void doTest(Map<String, String> graph, String... expectedPaths) {

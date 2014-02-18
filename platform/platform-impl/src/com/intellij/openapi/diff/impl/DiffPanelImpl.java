@@ -176,9 +176,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
     final ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+    final HighlightMode highlightMode = getHighlightMode();
+    final HighlightMode defaultHighlightMode = DiffManagerImpl.getInstanceEx().getHighlightMode();
 
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
+    }
+    if (defaultHighlightMode != null && highlightMode != defaultHighlightMode) {
+      setHighlightMode(defaultHighlightMode);
     }
     myVisibleAreaListener = new VisibleAreaListener() {
       @Override
@@ -463,6 +468,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getComparisonPolicy();
   }
 
+  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
+    setComparisonPolicy(comparisonPolicy, true);
+  }
+
   private void setComparisonPolicy(ComparisonPolicy policy, boolean notifyManager) {
     myData.setComparisonPolicy(policy);
     rediff();
@@ -472,26 +481,30 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @NotNull
+  public HighlightMode getHighlightMode() {
+    return myData.getHighlightMode();
+  }
+
+  public void setHighlightMode(@NotNull HighlightMode mode) {
+    setHighlightMode(mode, true);
+  }
+
+  public void setHighlightMode(@NotNull HighlightMode mode, boolean notifyManager) {
+    myData.setHighlightMode(mode);
+    rediff();
+
+    if (notifyManager) {
+      DiffManagerImpl.getInstanceEx().setHighlightMode(mode);
+    }
+  }
+
   public void setAutoScrollEnabled(boolean enabled) {
     myScrollSupport.setEnabled(enabled);
   }
 
   public boolean isAutoScrollEnabled() {
     return myScrollSupport.isEnabled();
-  }
-
-  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
-    setComparisonPolicy(comparisonPolicy, true);
-  }
-
-  public void setHighlightMode(@NotNull HighlightMode highlightMode) {
-    myData.setHighlightMode(highlightMode);
-    rediff();
-  }
-
-  @NotNull
-  public HighlightMode getHighlightMode() {
-    return myData.getHighlightMode();
   }
 
   public Rediffers getDiffUpdater() {

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -57,10 +56,9 @@ public class MissingMethodBodyFixer implements Fixer {
       }
       return;
     }
-    int endOffset = method.getTextRange().getEndOffset();
-    if (StringUtil.endsWithChar(method.getText(), ';')) {
-      doc.deleteString(endOffset - 1, endOffset);
-      endOffset--;
+    int endOffset = method.getThrowsList().getTextRange().getEndOffset();
+    if (endOffset < doc.getTextLength() && doc.getCharsSequence().charAt(endOffset) == ';') {
+      doc.deleteString(endOffset, endOffset + 1);
     }
     doc.insertString(endOffset, "{\n}");
   }

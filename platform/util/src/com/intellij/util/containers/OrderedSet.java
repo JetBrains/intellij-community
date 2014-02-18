@@ -15,13 +15,11 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.RandomAccess;
-import java.util.Set;
+import java.util.*;
 
 // have to extend ArrayList because otherwise the spliterator() methods declared in Set and List are in conflict
 public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess {
@@ -41,8 +39,44 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
   }
 
   @Override
+  public boolean removeAll(@NotNull Collection<?> c) {
+    boolean removed = false;
+    for (Object o : c) {
+      removed |= remove(o);
+    }
+    return removed;
+  }
+
+  @Override
+  public boolean retainAll(@NotNull Collection<?> c) {
+    boolean removed = false;
+    for (int i = size() - 1; i >= 0; i--) {
+      Object o = get(i);
+      if (!c.contains(o)) {
+        removed |= remove(o);
+      }
+    }
+    return removed;
+  }
+
+  @NotNull
+  @Override
+  public List<T> subList(int fromIndex, int toIndex) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
   public boolean contains(Object o) {
     return myHashSet.contains(o);
+  }
+
+  @Override
+  public boolean addAll(@NotNull Collection<? extends T> c) {
+    boolean result = false;
+    for (T t : c) {
+      result |= add(t);
+    }
+    return result;
   }
 
   @Override

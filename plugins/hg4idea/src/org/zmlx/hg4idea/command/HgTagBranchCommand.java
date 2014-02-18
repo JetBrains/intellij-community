@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -22,6 +23,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,7 +69,7 @@ public class HgTagBranchCommand {
     return new HgCommandExecutor(project).executeInCurrentThread(repo, "bookmarks", null);
   }
 
-  public static List<HgTagBranch> parseResult(HgCommandResult result) {
+  public static List<HgTagBranch> parseResult(@NotNull HgCommandResult result) {
     List<HgTagBranch> branches = new LinkedList<HgTagBranch>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);
@@ -81,4 +83,15 @@ public class HgTagBranchCommand {
     return branches;
   }
 
+  @NotNull
+  public static Set<String> collectNames(@NotNull HgCommandResult result) {
+    Set<String> branches = new HashSet<String>();
+    for (final String line : result.getOutputLines()) {
+      Matcher matcher = BRANCH_LINE.matcher(line);
+      if (matcher.matches()) {
+        branches.add(matcher.group(NAME_INDEX).trim());
+      }
+    }
+    return branches;
+  }
 }

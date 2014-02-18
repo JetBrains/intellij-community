@@ -47,6 +47,12 @@ public interface HgRepository extends Repository {
   @NotNull
   Map<String, Set<Hash>> getBranches();
 
+  /**
+   * @return names of opened heavy branches
+   */
+  @NotNull
+  Set<String> getOpenedBranches();
+
   @NotNull
   Collection<HgNameWithHashInfo> getBookmarks();
 

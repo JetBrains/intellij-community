@@ -57,8 +57,22 @@ final class MethodIncompleteSignatureResolver {
     for (final PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) == signature.isStatic()) {
         final PsiType returnType = method.getReturnType();
-        if (returnType != null && returnType.equalsToText(signature.getReturnType())) {
-          filtered.add(method);
+        if (returnType != null) {
+          if (returnType instanceof PsiClassType) {
+            final PsiClass resolved = ((PsiClassType)returnType).resolve();
+            if (resolved == null) {
+              continue;
+            }
+            final String qualifiedName = resolved.getQualifiedName();
+            if (qualifiedName == null) {
+              continue;
+            }
+            if (qualifiedName.equals(signature.getReturnType())) {
+              filtered.add(method);
+            }
+          } else if (returnType.equalsToText(signature.getReturnType())) {
+            filtered.add(method);
+          }
         }
       }
     }

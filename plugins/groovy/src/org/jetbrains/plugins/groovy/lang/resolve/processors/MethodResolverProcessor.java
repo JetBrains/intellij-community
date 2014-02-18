@@ -88,7 +88,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     myAllVariants = allVariants;
     myByShape = byShape;
 
-    mySubstitutorComputer = new SubstitutorComputer(myThisType, myArgumentTypes, typeArguments, myAllVariants, myPlace, myPlace.getParent());
+    mySubstitutorComputer = new SubstitutorComputer(myThisType, myArgumentTypes, typeArguments, myPlace, myPlace.getParent());
     myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 

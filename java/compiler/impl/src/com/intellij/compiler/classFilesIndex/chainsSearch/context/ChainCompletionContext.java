@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.compiler.classFilesIndex.chainsSearch.CachedRelevantStaticMe
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -44,7 +41,7 @@ public class ChainCompletionContext {
     }
   };
   private final PsiMethod myContextMethod;
-  private final String myTargetQName;
+  private final TargetType myTarget;
   private final Set<String> myContainingClassQNames;
   private final MultiMap<String, PsiVariable> myContextVars;
   private final MultiMap<String, PsiMethod> myContainingClassGetters;
@@ -72,7 +69,7 @@ public class ChainCompletionContext {
   }
 
   ChainCompletionContext(final PsiMethod contextMethod,
-                         final String targetQName,
+                         final TargetType target,
                          final Set<String> containingClassQNames,
                          final MultiMap<String, PsiVariable> contextVars,
                          final MultiMap<String, PsiMethod> containingClassGetters,
@@ -82,7 +79,7 @@ public class ChainCompletionContext {
                          final Project project,
                          final GlobalSearchScope resolveScope) {
     myContextMethod = contextMethod;
-    myTargetQName = targetQName;
+    myTarget = target;
     myContainingClassQNames = containingClassQNames;
     myContextVars = contextVars;
     myContainingClassGetters = containingClassGetters;
@@ -104,8 +101,8 @@ public class ChainCompletionContext {
     return myContextMethodName.getValue();
   }
 
-  public String getTargetQName() {
-    return myTargetQName;
+  public TargetType getTarget() {
+    return myTarget;
   }
 
   @Nullable

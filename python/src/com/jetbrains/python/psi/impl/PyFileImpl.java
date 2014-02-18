@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
@@ -32,10 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
@@ -61,8 +59,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
-  private SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
-  private final Object myENCLock = new Object();
+  private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
   private final PsiModificationTracker myModificationTracker;
 
   private class ExportedNameCache {
@@ -436,17 +433,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   private ExportedNameCache getExportedNameCache() {
     ExportedNameCache cache;
-    synchronized (myENCLock) {
-      cache = SoftReference.dereference(myExportedNameCache);
-      final long modificationStamp = getModificationStamp();
-      if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
-        myExportedNameCache.clear();
-        cache = null;
-      }
-      if (cache == null) {
-        cache = new ExportedNameCache(modificationStamp);
-        myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
-      }
+    cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+    final long modificationStamp = getModificationStamp();
+    if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
+      myExportedNameCache.clear();
+      cache = null;
+    }
+    if (cache == null) {
+      cache = new ExportedNameCache(modificationStamp);
+      myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
     }
     return cache;
   }
@@ -742,9 +737,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
-    synchronized (myENCLock) {
-      myExportedNameCache.clear();
-    }
+    myExportedNameCache.clear();
   }
 
   @Override

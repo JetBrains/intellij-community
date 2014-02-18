@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.refactoring.classes.pushDown;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersRefactoringBaseProcessor;
@@ -33,9 +35,11 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
   private static final String HEADER = RefactoringBundle.message("push.down.members.elements.header");
 
-  public PyPushDownProcessor(@NotNull Collection<PyMemberInfo> membersToMove,
-                             @NotNull PyClass from) {
-    super(membersToMove, from, getChildren(from));
+  public PyPushDownProcessor(
+    @NotNull final Project project,
+    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
+    @NotNull final PyClass from) {
+    super(project, membersToMove, from, getChildren(from));
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -117,6 +118,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     return false;
   }
 
+  @Override
   public PsiMember getPotentiallyApplicableMember() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMember>() {
       @Nullable
@@ -175,9 +177,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               }
             }
           } else if (qualifier instanceof PsiReferenceExpression) {
-            final PsiReferenceParameterList parameterList = ((PsiReferenceExpression)qualifier).getParameterList();
-            if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
-              return null;
+            final PsiReferenceExpression expression = (PsiReferenceExpression)qualifier;
+            if (qualifierResolveResult.isReferenceTypeQualified()) {
+              final PsiReferenceParameterList parameterList = expression.getParameterList();
+              if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
+                return null;
+              }
             }
           }
         }
@@ -434,6 +439,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                     if (interfaceMethod == null) return substitutor;
                     final PsiSubstitutor qualifierResultSubstitutor = qualifierResolveResult.getSubstitutor();
                     final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), reference);
+
+                    //lift parameters from outer call
+                    final Pair<PsiMethod,PsiSubstitutor> methodSubstitutorPair = MethodCandidateInfo.getCurrentMethod(reference.getParent());
+                    if (methodSubstitutorPair != null) {
+                      session.initBounds(methodSubstitutorPair.first.getTypeParameters());
+                    }
+
                     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
                     final PsiParameter[] parameters = method.getParameterList().getParameters();
                     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);

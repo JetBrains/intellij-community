@@ -24,11 +24,12 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 public class PageDownWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
@@ -37,13 +38,13 @@ public class PageDownWithSelectionAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
         int lines = editor.getScrollingModel().getVisibleArea().height / editor.getLineHeight();
-        Caret caret = editor.getCaretModel().getCurrentCaret();
+        Caret currentCaret = caret;
         for (int i = 0; i < lines; i++) {
-          caret = caret.clone(false);
-          if (caret == null) {
+          currentCaret = currentCaret.clone(false);
+          if (currentCaret == null) {
             break;
           }
         }

@@ -7,7 +7,6 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
       <html.disable class="java.lang.Boolean" value="false"/>
     </clientProperties>
     <border type="none"/>
@@ -107,7 +106,7 @@
               </component>
             </children>
           </grid>
-          <grid id="6d9fb" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="6d9fb" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <card name="Token"/>
@@ -137,6 +136,14 @@
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
+              <component id="1b2df" class="javax.swing.JButton" binding="myCreateTokenButton">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Create API Token"/>
+                </properties>
+              </component>
             </children>
           </grid>
         </children>
@@ -164,7 +171,6 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
           <html.disable class="java.lang.Boolean" value="false"/>
         </clientProperties>
         <border type="etched" title="Other Settings:"/>

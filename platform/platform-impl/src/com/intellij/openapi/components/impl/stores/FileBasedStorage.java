@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
@@ -271,7 +272,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Nullable
   private Document processReadException(@Nullable final Exception e) {
     boolean contentTruncated = e == null;
-    myBlockSavingTheContent = isProjectOrModuleFile() && !contentTruncated;
+    myBlockSavingTheContent = isProjectOrModuleOrWorkspaceFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (e != null) {
         LOG.info(e);
@@ -285,12 +286,12 @@ public class FileBasedStorage extends XmlElementStorage {
     return null;
   }
 
-  private boolean isProjectOrModuleFile() {
-    return StorageUtil.isProjectOrModuleFile(myFileSpec);
+  private boolean isProjectOrModuleOrWorkspaceFile() {
+    return StorageUtil.isProjectOrModuleFile(myFileSpec) || myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
   }
 
   private String getInvalidContentMessage(boolean contentTruncated) {
-    return isProjectOrModuleFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
+    return isProjectOrModuleOrWorkspaceFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
   }
 
   private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {

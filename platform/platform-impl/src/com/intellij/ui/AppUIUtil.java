@@ -166,6 +166,7 @@ public class AppUIUtil {
     });
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
    * to remove in IDEA 14

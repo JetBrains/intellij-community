@@ -6,8 +6,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
@@ -49,7 +47,6 @@ public abstract class CloudSupportConfigurableBase<
   SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>>
   extends FrameworkSupportConfigurable {
 
-  private final String myNotificationDisplayId;
   private final Project myModelProject;
   private RemoteServer<SC> myNewServer;
   private ST myCloudType;
@@ -58,10 +55,9 @@ public abstract class CloudSupportConfigurableBase<
 
   private boolean myInitialized = false;
 
-  public CloudSupportConfigurableBase(FrameworkSupportModel frameworkSupportModel, ST cloudType, String notificationDisplayId) {
+  public CloudSupportConfigurableBase(FrameworkSupportModel frameworkSupportModel, ST cloudType) {
     myModelProject = frameworkSupportModel.getProject();
     myCloudType = cloudType;
-    myNotificationDisplayId = notificationDisplayId;
   }
 
   @Override
@@ -87,7 +83,7 @@ public abstract class CloudSupportConfigurableBase<
   }
 
   protected void reloadExistingApplications() {
-    Collection<Deployment> deployments = new ConnectionTask<Collection<Deployment>>("Loading existing applications list", true, true) {
+    Collection<Deployment> deployments = new ConnectionTask<Collection<Deployment>>("Loading existing applications list") {
 
       @Override
       protected void run(final ServerConnection<DC> connection,
@@ -119,7 +115,7 @@ public abstract class CloudSupportConfigurableBase<
       protected Collection<Deployment> run(SR serverRuntimeInstance) throws ServerRuntimeException {
         return null;
       }
-    }.perform();
+    }.performSync();
 
     if (deployments == null) {
       return;
@@ -157,13 +153,11 @@ public abstract class CloudSupportConfigurableBase<
   }
 
   protected void showMessage(String message, MessageType messageType) {
-    NotificationGroup notificationGroup = NotificationGroup.balloonGroup(myNotificationDisplayId);
-    Notification notification = notificationGroup.createNotification(message, messageType);
-    notification.notify(null);
+    getNotifier().showMessage(message, messageType);
   }
 
-  protected void showErrorMessage(String errorMessage) {
-    showMessage(errorMessage, MessageType.ERROR);
+  protected Project getProject() {
+    return myModelProject;
   }
 
   private String generateServerName() {
@@ -202,7 +196,7 @@ public abstract class CloudSupportConfigurableBase<
         myNewServer.setName(myServerConfigurable.getDisplayName());
       }
       catch (ConfigurationException e) {
-        showErrorMessage(e.getMessage());
+        showMessage(e.getMessage(), MessageType.ERROR);
         return null;
       }
     }
@@ -262,6 +256,8 @@ public abstract class CloudSupportConfigurableBase<
 
   protected abstract void updateApplicationUI();
 
+  protected abstract CloudNotifier getNotifier();
+
   protected class ServerItem {
 
     private final RemoteServer<SC> myServer;
@@ -286,17 +282,12 @@ public abstract class CloudSupportConfigurableBase<
 
   protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
 
-    public ConnectionTask(String title, boolean modal, boolean cancellable) {
-      super(myModelProject, title, modal, cancellable);
+    public ConnectionTask(String title) {
+      super(myModelProject, title, CloudSupportConfigurableBase.this.getServer());
     }
 
-    public ConnectionTask(Module module, String title, boolean modal, boolean cancellable) {
-      super(module.getProject(), title, modal, cancellable);
-    }
-
-    @Override
-    protected RemoteServer<SC> getServer() {
-      return CloudSupportConfigurableBase.this.getServer();
+    public ConnectionTask(Module module, String title) {
+      super(module.getProject(), title, CloudSupportConfigurableBase.this.getServer());
     }
   }
 }

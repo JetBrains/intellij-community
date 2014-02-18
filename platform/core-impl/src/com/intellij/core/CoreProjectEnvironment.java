@@ -26,12 +26,15 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
@@ -67,6 +70,10 @@ public class CoreProjectEnvironment {
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
+    myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
+    registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
+                                                                                  SmartPointerManager.getInstance(myProject), myMessageBus,
+                                                                                  new MockDocumentCommitProcessor()));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 

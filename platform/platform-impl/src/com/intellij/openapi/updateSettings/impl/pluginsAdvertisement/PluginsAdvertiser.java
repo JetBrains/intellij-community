@@ -23,10 +23,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
@@ -240,26 +237,23 @@ public class PluginsAdvertiser implements StartupActivity {
       public void run() {
         final Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Search for non-bundled plugins in plugin repository...") {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
           private List<IdeaPluginDescriptor> myAllPlugins;
 
           private Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
           private List<String> myBundledPlugin;
 
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
+          public void run() {
             try {
-              myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+              myAllPlugins = RepositoryHelper.loadPluginsFromRepository(null);
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);
                 EditorNotifications.getInstance(project).updateAllNotifications();
               }
-              int idx = 0;
               final Map<String, Plugin> ids = new HashMap<String, Plugin>();
               for (UnknownFeature feature : unknownFeatures) {
-                indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
                 ProgressManager.checkCanceled();
                 final List<Plugin> pluginId = retrieve(feature);
                 if (pluginId != null) {
@@ -267,7 +261,6 @@ public class PluginsAdvertiser implements StartupActivity {
                     ids.put(plugin.myPluginId, plugin);
                   }
                 }
-                indicator.setFraction(((double)idx++) / unknownFeatures.size());
               }
 
               final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
@@ -290,14 +283,21 @@ public class PluginsAdvertiser implements StartupActivity {
                   myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
                 }
               }
+
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  onSuccess();
+                }
+              }, ModalityState.NON_MODAL);
+
             }
             catch (Exception e) {
               LOG.info(e);
             }
           }
 
-          @Override
-          public void onSuccess() {
+          private void onSuccess() {
             String message = null;
             if (!myPlugins.isEmpty() || !myDisabledPlugins.isEmpty()) {
               message = "Features covered by non-bundled plugins are detected.<br>";

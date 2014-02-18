@@ -13,6 +13,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -75,7 +76,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
   public void launch() {
     final String defaultFilePath = FileUtil.toSystemDependentName(myClassUnderRefactoring.getContainingFile().getVirtualFile().getPath());
     final VirtualFile[] roots = ProjectRootManager.getInstance(myClassUnderRefactoring.getProject()).getContentRoots();
-    final Collection<PyMemberInfo> pyMemberInfos =
+    final Collection<PyMemberInfo<PyElement>> pyMemberInfos =
       PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring));
     myView.configure(
       new PyExtractSuperclassInitializationInfo(new PyExtractSuperclassInfoModel(myClassUnderRefactoring), pyMemberInfos, defaultFilePath,

@@ -23,15 +23,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -50,24 +51,35 @@ public final class PyExtractSuperclassHelper {
   /**
    * Accepts only those members whose element is PyClass object (new classes)
    */
-  private static final Predicate<PyMemberInfo> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
+  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
 
   private PyExtractSuperclassHelper() {
   }
 
   static void extractSuperclass(final PyClass clazz,
-                                final Collection<PyMemberInfo> selectedMemberInfos,
+                                @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
+    //We will need to change it probably while param may be read-only
+    //noinspection AssignmentToMethodParameter
+    selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
 
-    // 'object' superclass is always pulled up, even if not selected explicitly
-    if (MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT) == null) {
-      final PyMemberInfo object = MembersManager.findMember(clazz, ALLOW_OBJECT);
-      if (object != null) {
-        selectedMemberInfos.add(object);
+    // PY-12171
+    final PyMemberInfo<PyElement> objectMember = MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT);
+    if (LanguageLevel.forElement(clazz).isPy3K()) {
+      // Remove object from list if Py3
+      if (objectMember != null) {
+        selectedMemberInfos.remove(objectMember);
+      }
+    } else {
+      // Always add object if < Py3
+      if (objectMember == null) {
+        final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
+        if (object != null) {
+          selectedMemberInfos.add(object);
+        }
       }
     }
-
 
     final Project project = clazz.getProject();
 
@@ -75,12 +87,15 @@ public final class PyExtractSuperclassHelper {
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
     newClass = placeNewClass(project, newClass, clazz, targetFile);
-
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
+    if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
+      PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
+    }
     PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+
   }
 
-  private static PyClass placeNewClass(Project project, PyClass newClass, @NotNull PyClass clazz, String targetFile) {
+  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source

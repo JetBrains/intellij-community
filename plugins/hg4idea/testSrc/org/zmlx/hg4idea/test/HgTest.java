@@ -74,7 +74,6 @@ public abstract class HgTest extends AbstractVcsTestCase {
       final File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
       myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
-    HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
 
     myMainRepo = initRepositories();
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());

@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewInitializationInfo;
@@ -104,7 +105,7 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
   @NotNull
   protected Collection<PyPresenterTestMemberEntry> getMembers() {
     Assert.assertTrue("No members captured", myViewConfigCapture.hasCaptured());
-    final Collection<PyMemberInfo> members = myViewConfigCapture.getValue().getMemberInfos();
+    final Collection<PyMemberInfo<PyElement>> members = myViewConfigCapture.getValue().getMemberInfos();
     Assert.assertFalse("No members selected", members.isEmpty());
     return Collections2.transform(members, new NameAndStatusTransformer(myViewConfigCapture.getValue().getMemberInfoModel()));
   }

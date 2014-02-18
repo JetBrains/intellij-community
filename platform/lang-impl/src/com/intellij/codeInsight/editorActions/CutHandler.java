@@ -67,9 +67,9 @@ public class CutHandler extends EditorWriteActionHandler {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           selectionModel.selectLineAtCaret();
         }
       });
@@ -80,9 +80,9 @@ public class CutHandler extends EditorWriteActionHandler {
     int end = selectionModel.getSelectionEnd();
     final List<TextRange> selections = new ArrayList<TextRange>();
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           selections.add(new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
         }
       });
@@ -94,9 +94,9 @@ public class CutHandler extends EditorWriteActionHandler {
 
       Collections.reverse(selections);
       final Iterator<TextRange> it = selections.iterator();
-      editor.getCaretModel().runForEachCaret(new Runnable() {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
-        public void run() {
+        public void perform(Caret caret) {
           TextRange range = it.next();
           editor.getCaretModel().moveToOffset(range.getStartOffset());
           selectionModel.removeSelection();

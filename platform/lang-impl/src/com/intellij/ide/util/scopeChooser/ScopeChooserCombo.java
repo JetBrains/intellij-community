@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -31,6 +32,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -110,7 +112,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     addActionListener(createScopeChooserListener());
 
     final JComboBox combo = getComboBox();
-    combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer(combo.getRenderer()));
+    combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
 
     rebuildModel();
 
@@ -174,7 +176,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     model.addElement(new ScopeSeparator("VCS Scopes"));
     final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
     for (NamedScope changeListScope : changeLists) {
-      final GlobalSearchScope scope = GlobalSearchScopes.filterScope(myProject, changeListScope);
+      final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
       model.addElement(new ScopeDescriptor(scope));
     }
 
@@ -183,7 +185,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     for (NamedScopesHolder holder : holders) {
       final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
       for (NamedScope scope : scopes) {
-        final GlobalSearchScope searchScope = GlobalSearchScopes.filterScope(myProject, scope);
+        final GlobalSearchScope searchScope = GlobalSearchScopesCore.filterScope(myProject, scope);
         customScopes.add(new ScopeDescriptor(searchScope));
       }
     }
@@ -240,8 +242,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     if (!PlatformUtils.isCidr() && ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) { // TODO: fix these scopes in AppCode
-      result.add(GlobalSearchScopes.projectProductionScope(project));
-      result.add(GlobalSearchScopes.projectTestScope(project));
+      result.add(GlobalSearchScopesCore.projectProductionScope(project));
+      result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
 
     result.add(GlobalSearchScopes.openFilesScope(project));
@@ -273,17 +275,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       if (selectedTextEditor != null) {
         final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
         if (psiFile != null) {
-          if (selectedTextEditor.getSelectionModel().hasSelection()) {
-            final PsiElement startElement = psiFile.findElementAt(selectedTextEditor.getSelectionModel().getSelectionStart());
+          SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+          if (selectionModel.hasSelection()) {
+            int start = selectionModel.getSelectionStart();
+            final PsiElement startElement = psiFile.findElementAt(start);
             if (startElement != null) {
-              final PsiElement endElement = psiFile.findElementAt(selectedTextEditor.getSelectionModel().getSelectionEnd());
+              int end = selectionModel.getSelectionEnd();
+              final PsiElement endElement = psiFile.findElementAt(end);
               if (endElement != null) {
                 final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
                 if (parent != null) {
                   final List<PsiElement> elements = new ArrayList<PsiElement>();
                   final PsiElement[] children = parent.getChildren();
+                  TextRange selection = new TextRange(start, end);
                   for (PsiElement child : children) {
-                    if (!(child instanceof PsiWhiteSpace) && child.getContainingFile() != null) {
+                    if (!(child instanceof PsiWhiteSpace) && child.getContainingFile() != null && selection.contains(child.getTextOffset())) {
                       elements.add(child);
                     }
                   }
@@ -445,10 +451,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
-    public ScopeDescriptionWithDelimiterRenderer(final ListCellRenderer original) {
-      super();
-    }
-
     @Override
     public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
       setText(value.getDisplay());

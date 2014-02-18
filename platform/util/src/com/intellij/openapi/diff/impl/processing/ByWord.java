@@ -199,8 +199,8 @@ public class ByWord implements DiffPolicy{
         int lastIndex = myFragments.size() - 1;
         DiffFragment prevFragment = myFragments.get(lastIndex);
         if (prevFragment.isEqual()) {
-          prevFragment.appendText1(fragment.getText1());
-          prevFragment.appendText2(fragment.getText2());
+          prevFragment.appendText1(text1);
+          prevFragment.appendText2(text2);
           return;
         }
       }

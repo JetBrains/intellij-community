@@ -26,8 +26,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -115,7 +113,7 @@ public class BraceHighlightingHandler {
     }
     final int offset = editor.getCaretModel().getOffset();
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
@@ -123,8 +121,11 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              injected = psiFile == null || psiFile instanceof PsiCompiledElement || psiFile instanceof PsiBinaryFile || isReallyDisposed(editor, project)
-                     ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+              injected = psiFile == null ||
+                         psiFile instanceof PsiCompiledElement ||
+                         psiFile instanceof PsiBinaryFile ||
+                         isReallyDisposed(editor, project)
+                         ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
             catch (RuntimeException e) {
               // Reset processing flag in case of unexpected exception.

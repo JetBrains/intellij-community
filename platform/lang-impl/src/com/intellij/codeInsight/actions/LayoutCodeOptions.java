@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInsight.actions;
 
-public interface LayoutCodeOptions extends ReformatFilesOptions {
+public interface LayoutCodeOptions extends DirectoryFormattingOptions {
 
   boolean isProcessWholeFile();
 
   boolean isProcessDirectory();
-
-  boolean isIncludeSubdirectories();
 
 }

@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ import java.util.*;
  * It generally is faster than COWAL in case of low write-contention.
  * (Note that it is not advisable to use COWAL in high write-contention code anyway, consider using {@link ConcurrentHashMap}) instead)
  */
-class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
+class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
   @SuppressWarnings("FieldMayBeFinal")
   private volatile Object[] array;
 
@@ -45,6 +46,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
   }
 
   @NotNull
+  @TestOnly
   Object[] getArray() {
     return array;
   }
@@ -500,7 +502,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    * @param fromIndex index of first element to be removed
    * @param toIndex   index after last element to be removed
    * @throws IndexOutOfBoundsException if fromIndex or toIndex out of range
-   *                                   ({@code{fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
+   *                                   ({@code {fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
    */
   private void removeRange(int fromIndex, int toIndex) {
     Object[] elements;
@@ -532,6 +534,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    * @param e element to be added to this list, if absent
    * @return <tt>true</tt> if the element was added
    */
+  @Override
   public boolean addIfAbsent(E e) {
     Object[] elements;
     Object[] newElements;
@@ -679,6 +682,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    * @throws NullPointerException if the specified collection is null
    * @see #addIfAbsent(Object)
    */
+  @Override
   public int addAllAbsent(@NotNull Collection<? extends E> c) {
     Object[] cs = c.toArray();
     if (cs.length == 0) {
@@ -826,7 +830,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    * be the same if they have the same length and corresponding
    * elements at the same position in the sequence are <em>equal</em>.
    * Two elements {@code e1} and {@code e2} are considered
-   * <em>equal</em> if {@code (e1==null ? e2==null : e1.equals(e2))}.
+   * <em>equal</em> if {@code (e1 == null ? e2 == null : e1.equals(e2))}.
    *
    * @param o the object to be compared for equality with this list
    * @return {@code true} if the specified object is equal to this list
