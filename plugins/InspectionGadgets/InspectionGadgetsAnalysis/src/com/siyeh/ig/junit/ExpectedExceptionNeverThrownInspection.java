@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +26,7 @@ import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
@@ -84,7 +86,7 @@ public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
         InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_ERROR)) {
         return;
       }
-      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
+      final List<PsiClassType> exceptionsThrown = ExceptionUtil.getThrownExceptions(body);
       if (exceptionsThrown.contains(classType)) {
         return;
       }
