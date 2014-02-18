@@ -1,4 +1,4 @@
-public class Bar {
+class Bar {
   int foo;
 
   @Override

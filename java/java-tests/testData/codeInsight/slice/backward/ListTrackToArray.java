@@ -3,7 +3,7 @@ package x;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListTack {
+class ListTack {
     void f(String <caret>s) {
     }
     void g(List<String> <flown111>l) {

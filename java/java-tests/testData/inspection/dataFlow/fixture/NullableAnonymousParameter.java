@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
-public class Bar {
+class Bar {
 
     void navigateTo(final@Nullable Object p) {
       if (p == null) {

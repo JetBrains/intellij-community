@@ -9,7 +9,7 @@ abstract class AbstractNumberConverter<N extends Number> implements IConverter<N
 class DoubleConverter extends AbstractNumberConverter<Double> {
 }
 
-public class Test {
+class Test {
   public static <C> IConverter<C> getConverter(Class<C> type) {
     return (IConverter<C>)new DoubleConverter() {
     };

@@ -1,7 +1,7 @@
 import java.util.Collections;
 import java.util.Set;
 
-public class Test<Y> {
+class Test<Y> {
 
     public static <K> Test<K> doTest(K k){
         return null;

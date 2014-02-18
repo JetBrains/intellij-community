@@ -13,7 +13,7 @@ class D {
     static <T> String foo(List<T[]> x) { return null; }
 }
 
-public class Main {
+class Main {
     public static void main(String[] args){
         List<String[]> x = null;
         foo(x).toLowerCase();

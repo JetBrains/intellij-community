@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Bug
+class Bug
 {
 
   void foo(List<I> futures, I1<Object> callable){

@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 import static java.lang.System.out;
 
-public final class LambdaMain {
+final class LambdaMain {
   public static void main(final String... args) {
     for (final A<String, X> a : Arrays.<A<String, X>>asList(new A<String, X>() {
       @Override

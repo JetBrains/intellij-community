@@ -11,8 +11,8 @@ class Bar {
         foo.getText(prop);
     }
 }
-public abstract class Hashtable<K,V> implements Map<K,V>, Cloneable {
+abstract class Hashtable<K,V> implements Map<K,V>, Cloneable {
 }
 
-public abstract class Properties extends Hashtable<Object,Object> {
+abstract class Properties extends Hashtable<Object,Object> {
 }

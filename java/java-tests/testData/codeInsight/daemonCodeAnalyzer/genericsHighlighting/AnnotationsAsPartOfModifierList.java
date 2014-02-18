@@ -1,5 +1,5 @@
 @Deprecated @SuppressWarnings("")
-<error descr="Class 'Foo' must either be declared abstract or implement abstract method 'run()' in 'Runnable'">public class Foo implements Runnable</error> {
+<error descr="Class 'Foo' must either be declared abstract or implement abstract method 'run()' in 'Runnable'">class Foo implements Runnable</error> {
 
 }
 

@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Main {
+class Main {
   @NotNull
   private Object test1(@NotNull Object defVal, @Nullable final Object val) {
     return defVal;

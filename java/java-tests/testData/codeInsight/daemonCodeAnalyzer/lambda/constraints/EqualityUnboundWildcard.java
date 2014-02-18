@@ -1,4 +1,4 @@
-public class SampleExtendsWildcard {
+class SampleExtendsWildcard {
   public void highlightsTheBug(Stream<String> stream) {
     stream.flatMap((Block<?> sink, String element) -> {});
   }

@@ -2,7 +2,7 @@ package x;
 import java.util.*;
 import org.intellij.lang.annotations.Flow;
 
-public class ListTack {
+class ListTack {
     void f(String <caret>s) {
     }
     void g(List<String> l) {

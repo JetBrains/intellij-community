@@ -14,7 +14,7 @@ class SS {
 
 }
 
-public class Issue1 {
+class Issue1 {
 
   public static void main(String[] args) {
 

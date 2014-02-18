@@ -1,7 +1,7 @@
 import java.util.*;
 import Node.Details;
 
-public class Node<E> {
+class Node<E> {
     public class Details {
         public E data;
     }

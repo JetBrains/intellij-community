@@ -1,4 +1,4 @@
-public class WithingBounds {
+class WithingBounds {
     interface I {
     }
     interface I1 {

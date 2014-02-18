@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Npe {
+class Npe {
   @NotNull Object aField;
   @Nullable Object nullable() {
     return null;

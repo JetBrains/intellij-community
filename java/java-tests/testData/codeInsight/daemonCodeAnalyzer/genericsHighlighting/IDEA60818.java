@@ -1,4 +1,4 @@
-public class IdeaBugTest {
+class IdeaBugTest {
     interface A<T> {
     }
   

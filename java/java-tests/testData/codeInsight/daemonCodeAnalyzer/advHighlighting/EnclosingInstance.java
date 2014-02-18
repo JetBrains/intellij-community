@@ -24,7 +24,7 @@ class inner_holder {
   class inner {}
 }
 
-public class C1_57 extends inner_holder {
+class C1_57 extends inner_holder {
   // inner instance available through inheritance
   protected class c extends inner { 
     private class iii extends inner {}
@@ -88,7 +88,7 @@ class ABIllegal extends <error descr="No enclosing instance of type 'A' is in sc
 }
 
 
-public class A42 {
+class A42 {
   class B {}
 }
 

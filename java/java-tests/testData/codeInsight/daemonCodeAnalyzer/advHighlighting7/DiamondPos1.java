@@ -1,4 +1,4 @@
-public class Pos01<X> {
+class Pos01<X> {
 
     Pos01(X x) {}
 

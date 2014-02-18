@@ -1,6 +1,6 @@
 import java.lang.*;
 
-public class AssertIsNull {
+class AssertIsNull {
    void bar() {
      final Object o = call();
      Assertions.assertIsNull(o);

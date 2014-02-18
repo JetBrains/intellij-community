@@ -1,4 +1,4 @@
-public class ExampleProblem {
+class ExampleProblem {
     <T> void asserting(T t, Simple<T> l){
     }
 

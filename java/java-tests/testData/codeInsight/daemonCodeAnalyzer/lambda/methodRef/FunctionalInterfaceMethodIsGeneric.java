@@ -1,4 +1,4 @@
-public class Test {
+class Test {
 
     interface I {
         <T> String m();

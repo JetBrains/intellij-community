@@ -1,4 +1,4 @@
-public class <warning descr="Class 'XXX' is never used">XXX</warning> {
+class <warning descr="Class 'XXX' is never used">XXX</warning> {
   void <warning descr="Method 'fffff()' is never used">fffff</warning>(){}
   public void <warning descr="Method 'asdfaffffff()' is never used">asdfaffffff</warning>(){}
   protected void <warning descr="Method 'dasklfjhsad()' is never used">dasklfjhsad</warning>(){}

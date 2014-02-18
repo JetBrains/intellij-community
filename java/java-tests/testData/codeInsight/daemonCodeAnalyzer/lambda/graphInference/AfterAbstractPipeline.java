@@ -1,4 +1,4 @@
-public class Test<E_OUT> {
+class Test<E_OUT> {
     final <P_IN_WRAP_SINK> Sink<P_IN_WRAP_SINK> wrapSink(Sink<E_OUT> sink) {
         return null;
     }

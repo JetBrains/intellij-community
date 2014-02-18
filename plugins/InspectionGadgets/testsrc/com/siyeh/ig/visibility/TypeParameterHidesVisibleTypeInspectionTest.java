@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightInspection
 
   public void testSimple() {
     doTest("import java.util.*;\n" +
-           "public abstract class TypeParameterHidesVisibleTypeInspection<List> {\n" +
+           "abstract class TypeParameterHidesVisibleTypeInspection<List> {\n" +
            "    private Map map = new HashMap();\n" +
            "    public abstract List foo();\n" +
            "    public abstract </*Type parameter 'Set' hides visible type 'java.util.Set'*/Set/**/> Set bar();\n" +
@@ -37,7 +37,7 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightInspection
 
   public void testHiddenTypeParameter() {
     doTest("import java.util.*;\n" +
-           "public abstract class MyList<T> extends AbstractList<T> {\n" +
+           " abstract class MyList<T> extends AbstractList<T> {\n" +
            "    private List<T> elements;\n" +
            "    public </*Type parameter 'T' hides type parameter 'T'*/T/**/> T[] toArray( T[] array ) {\n" +
            "        return elements.toArray( array );\n" +

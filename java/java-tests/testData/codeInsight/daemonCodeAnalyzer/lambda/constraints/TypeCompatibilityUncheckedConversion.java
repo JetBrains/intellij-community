@@ -1,4 +1,4 @@
-public class Sample {
+class Sample {
   interface G<A> {}
   interface G1 extends G {}
 

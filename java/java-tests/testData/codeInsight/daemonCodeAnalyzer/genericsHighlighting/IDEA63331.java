@@ -7,7 +7,7 @@ class B<T> {
     B(List<A<?>> list) {}
 }
 
-public class Bug {
+class Bug {
 
     private static B case1(A<?> a) {
         return new B(Collections.singletonList(a));

@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class IDEA80386 {
+class IDEA80386 {
   void foo(Class<List> listClass) {
     <error descr="Incompatible types. Found: 'java.lang.Class<java.util.List>', required: 'java.lang.Class<? extends java.util.List<?>>'">Class<? extends List<?>> cls = listClass;</error>
     Class < ?extends List > cls1 = listClass;

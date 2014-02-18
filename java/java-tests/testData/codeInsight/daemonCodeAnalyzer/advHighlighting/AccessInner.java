@@ -53,3 +53,6 @@ class Class2 {
     }
   }
 }
+class Ax {
+    public interface B {}
+}

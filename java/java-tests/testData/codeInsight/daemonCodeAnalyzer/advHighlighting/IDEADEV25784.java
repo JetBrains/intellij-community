@@ -1,5 +1,5 @@
-public class X extends Y {}
-public class Y {
+class X extends Y {}
+class Y {
 
 	private static int x = 0;
 
