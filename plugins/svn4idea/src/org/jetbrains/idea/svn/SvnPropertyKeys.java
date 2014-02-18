@@ -25,4 +25,5 @@ public interface SvnPropertyKeys {
   String SVN_IGNORE = "svn:ignore";
   String SVN_EXTERNALS = "svn:externals";
   String LOG = "svn:log";
+  String MERGE_INFO = "svn:mergeinfo";
 }

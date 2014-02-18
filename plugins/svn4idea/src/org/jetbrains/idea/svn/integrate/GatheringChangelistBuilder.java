@@ -15,39 +15,40 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
-public class GatheringChangelistBuilder implements ChangelistBuilder {
-  private final Set<VirtualFile> myCheckSet;
-  private final List<Change> myChanges;
-  private final UpdatedFilesReverseSide myFiles;
-  private final VirtualFile myMergeRoot;
-  private final SvnVcs myVcs;
+public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 
-  public GatheringChangelistBuilder(final Project project, final UpdatedFilesReverseSide files, final VirtualFile mergeRoot) {
-    myVcs = SvnVcs.getInstance(project);
+  private static final Logger LOG = Logger.getInstance(GatheringChangelistBuilder.class);
+
+  @NotNull private final Set<VirtualFile> myCheckSet;
+  @NotNull private final List<Change> myChanges;
+  @NotNull private final UpdatedFilesReverseSide myFiles;
+  @NotNull private final SvnVcs myVcs;
+
+  public GatheringChangelistBuilder(@NotNull SvnVcs vcs, @NotNull UpdatedFilesReverseSide files) {
+    myVcs = vcs;
     myFiles = files;
-    myMergeRoot = mergeRoot;
-    myChanges = new ArrayList<Change>();
-    myCheckSet = new HashSet<VirtualFile>();
+    myChanges = ContainerUtil.newArrayList();
+    myCheckSet = ContainerUtil.newHashSet();
   }
 
   public void processChange(final Change change, VcsKey vcsKey) {
@@ -81,82 +82,36 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   private void addChange(final Change change) {
     final FilePath path = ChangesUtil.getFilePath(change);
     final VirtualFile vf = path.getVirtualFile();
-    if ((mergeinfoChanged(path.getIOFile()) || ((vf != null) && myFiles.containsFile(vf))) && (! myCheckSet.contains(vf))) {
+    if ((mergeInfoChanged(path.getIOFile()) || (vf != null && myFiles.containsFile(vf))) && !myCheckSet.contains(vf)) {
       myCheckSet.add(vf);
       myChanges.add(change);
     }
   }
 
-  private boolean mergeinfoChanged(final File file) {
-    final SVNWCClient client = myVcs.createWCClient();
+  private boolean mergeInfoChanged(final File file) {
+    SvnTarget target = SvnTarget.fromFile(file);
+
     try {
-      final SVNPropertyData current = client.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-      final SVNPropertyData base = client.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.BASE);
+      SVNPropertyData current =
+        myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.WORKING);
+      SVNPropertyData base =
+        myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.BASE);
+
       if (current != null) {
-        if (base == null) {
-          return true;
-        } else {
-          final SVNPropertyValue currentValue = current.getValue();
-          final SVNPropertyValue baseValue = base.getValue();
-          return ! Comparing.equal(currentValue, baseValue);
-        }
+        return base == null || !Comparing.equal(current.getValue(), base.getValue());
       }
     }
-    catch (SVNException e) {
-      //
+    catch (VcsException e) {
+      LOG.info(e);
     }
     return false;
-  }
-
-  public void processUnversionedFile(final VirtualFile file) {
-
-  }
-
-  public void processLocallyDeletedFile(final FilePath file) {
-
-  }
-
-  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
-    
-  }
-
-  public void processModifiedWithoutCheckout(final VirtualFile file) {
-
-  }
-
-  public void processIgnoredFile(final VirtualFile file) {
-
-  }
-
-  public void processLockedFolder(final VirtualFile file) {
-  }
-
-  public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
-  }
-
-  public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
-
-  }
-
-  public void processRootSwitch(VirtualFile file, String branch) {
   }
 
   public boolean reportChangesOutsideProject() {
     return true;
   }
 
-  @Override
-  public void reportAdditionalInfo(String text) {
-  }
-
-  @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
-  }
-
-  public void reportWarningMessage(final String message) {
-    // todo maybe, use further
-  }
-
+  @NotNull
   public List<Change> getChanges() {
     return myChanges;
   }

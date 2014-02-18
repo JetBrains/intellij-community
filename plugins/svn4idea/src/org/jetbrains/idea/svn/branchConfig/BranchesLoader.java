@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +62,7 @@ public class BranchesLoader {
   private static ISVNDirEntryHandler createHandler(@NotNull final SVNURL branchesUrl, @NotNull final List<SvnBranchItem> result) {
     return new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        // TODO: Remove equality check with branchesUrl when SVNLogClient will not be used directly, but rather through BrowseClient.
         if (!branchesUrl.equals(dirEntry.getURL()) && dirEntry.getDate() != null) {
           result.add(new SvnBranchItem(dirEntry.getURL().toDecodedString(), dirEntry.getDate(), dirEntry.getRevision()));
         }

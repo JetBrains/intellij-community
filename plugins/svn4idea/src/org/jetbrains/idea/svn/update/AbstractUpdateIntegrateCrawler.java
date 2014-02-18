@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.SvnWCRootCrawler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
 import java.util.Collection;
@@ -56,9 +55,6 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       showProgressMessage(progress, root);
     }
     try {
-      SVNUpdateClient client = myVcs.createUpdateClient();
-      client.setEventHandler(myHandler);
-
       long rev = doUpdate(root);
 
       if (rev < 0 && !isMerge()) {

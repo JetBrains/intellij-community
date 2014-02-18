@@ -57,9 +57,8 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       return "NOT_LOADED";
     }
 
-    public int compareTo(VcsRevisionNumber o) {
-      if (o == this) return 0;
-      return -1;
+    public int compareTo(@NotNull VcsRevisionNumber o) {
+      return o == this ? 0 : -1;
     }
   };
   public static final VcsRevisionNumber UNKNOWN = new VcsRevisionNumber() {
@@ -67,9 +66,8 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       return "UNKNOWN";
     }
 
-    public int compareTo(VcsRevisionNumber o) {
-      if (o == this) return 0;
-      return -1;
+    public int compareTo(@NotNull VcsRevisionNumber o) {
+      return o == this ? 0 : -1;
     }
   };
   private final VcsConfiguration myVcsConfiguration;
@@ -156,7 +154,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     synchronized (myLock) {
       final LazyRefreshingSelfQueue<String> oldQueue = getQueue(oldVcsRoot);
       final LazyRefreshingSelfQueue<String> newQueue = getQueue(newVcsRoot);
-      myData.put(key, new Pair<VcsRoot, VcsRevisionNumber>(newVcsRoot, NOT_LOADED));
+      myData.put(key, Pair.create(newVcsRoot, NOT_LOADED));
       oldQueue.forceRemove(key);
       newQueue.addRequest(key);
     }
@@ -178,7 +176,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
       if (value == null) {
         final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
-        myData.put(key, new Pair<VcsRoot, VcsRevisionNumber>(vcsRoot, NOT_LOADED));
+        myData.put(key, Pair.create(vcsRoot, NOT_LOADED));
         queue.addRequest(key);
       } else if (! value.getFirst().equals(vcsRoot)) {
         switchVcs(value.getFirst(), vcsRoot, key);
@@ -196,7 +194,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
           final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
           queue.forceRemove(path);
           queue.addRequest(path);
-          myData.put(path, new Pair<VcsRoot, VcsRevisionNumber>(vcsRoot, NOT_LOADED));
+          myData.put(path, Pair.create(vcsRoot, NOT_LOADED));
         }
       }
     }
@@ -268,7 +266,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
         myData.put(s, new Pair<VcsRoot, VcsRevisionNumber>(myVcsRoot, newNumber));
       }
 
-      if ((oldPair == null) || (oldPair != null) && (oldPair.getSecond().compareTo(newNumber) != 0)) {
+      if (oldPair == null || oldPair.getSecond().compareTo(newNumber) != 0) {
         LOG.debug("refresh triggered by " + s);
         mySomethingChanged = true;
       }
@@ -320,9 +318,6 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
 
   /**
    * Returns {@code true} if passed revision is up to date, comparing to latest repository revision.
-   *
-   * @param revision
-   * @return
    */
   private boolean getRevisionState(final ContentRevision revision) {
     if (revision != null) {
@@ -330,10 +325,8 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       final VcsRevisionNumber local = revision.getRevisionNumber();
       final String path = revision.getFile().getIOFile().getAbsolutePath();
       final VcsRevisionNumber remote = getNumber(path);
-      if ((NOT_LOADED == remote) || (UNKNOWN == remote)) {
-        return true;
-      }
-      return local.compareTo(remote) >= 0;
+
+      return NOT_LOADED == remote || UNKNOWN == remote || local.compareTo(remote) >= 0;
     }
     return true;
   }

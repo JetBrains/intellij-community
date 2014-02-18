@@ -46,6 +46,7 @@ import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -138,7 +139,7 @@ public class QuickMerge {
       try {
         url = SvnUtil.createUrl(mySourceUrl);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         finishWithError(continuationContext, e.getMessage(), true);
       }
 

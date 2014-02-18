@@ -331,7 +331,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
-    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myProject, myAccomulatedFiles, myMergeTarget == null ? null : myMergeTarget.getVirtualFile());
+    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myVcs, myAccomulatedFiles);
     try {
       provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator(), null);
     } catch (VcsException e) {
