@@ -18,11 +18,10 @@ package com.intellij.ui.messages;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,18 +45,15 @@ public class SheetController {
   private boolean myDoNotAskResult;
 
 
-  private JLabel myHeaderLabel = new JLabel();
-  private MultilineLabel myMessageLabel;
   private JButton[] buttons;
   private JButton myDefaultButton;
   private JButton myFocusedButton;
-  public static int SHEET_WIDTH = 400;
-  public int SHEET_HEIGHT = 150;
+  public final static int SHEET_WIDTH = 400;
+  public final static int SHEET_HEIGHT = 150;
 
   private String myResult;
   private JPanel mySheetPanel;
   private SheetMessage mySheetMessage;
-  private JTextArea myTextArea;
 
   SheetController(final SheetMessage sheetMessage,
                   final String title,
@@ -101,7 +97,6 @@ public class SheetController {
           myResult = ((JButton)e.getSource()).getText();
         }
         mySheetMessage.startAnimation();
-
       }
     };
 
@@ -141,32 +136,28 @@ public class SheetController {
     };
 
 
-    myHeaderLabel = new JLabel(title);
+    JLabel headerLabel = new JLabel(title);
 
-    myHeaderLabel.setFont(boldFont);
+    headerLabel.setFont(boldFont);
 
-    myHeaderLabel.repaint();
-    myHeaderLabel.setSize(myHeaderLabel.getPreferredSize());
+    headerLabel.repaint();
+    headerLabel.setSize(headerLabel.getPreferredSize());
 
-    sheetPanel.add(myHeaderLabel);
+    sheetPanel.add(headerLabel);
 
-    myTextArea = new JTextArea(message);
+    JTextArea textArea = new JTextArea(message);
 
-    myTextArea.setFont(regularFont);
-    myTextArea.setLineWrap(true);
-    myTextArea.setWrapStyleWord(true);
+    textArea.setFont(regularFont);
+    textArea.setLineWrap(true);
+    textArea.setWrapStyleWord(true);
 
-    myTextArea.setSize(250, 10);
-    myTextArea.setOpaque(false);
+    textArea.setSize(250, 10);
+    textArea.setOpaque(false);
 
+    sheetPanel.add(textArea);
 
-
-    sheetPanel.add(myTextArea);
-
-    myTextArea.repaint();
-    myTextArea.setSize(myTextArea.getPreferredSize());
-
-    SHEET_HEIGHT = myTextArea.getPreferredSize().height +  myHeaderLabel.getPreferredSize().height + 20 + 10 + 100;
+    textArea.repaint();
+    textArea.setSize(textArea.getPreferredSize());
 
     sheetPanel.setSize(SHEET_WIDTH, SHEET_HEIGHT);
 
@@ -174,14 +165,14 @@ public class SheetController {
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
     ico.setLocation(20, 20);
     sheetPanel.add(ico);
-    myHeaderLabel.setLocation(120, 20);
-    myTextArea.setLocation(120, 20 + myHeaderLabel.getPreferredSize().height + 10);
-    layoutWithAbsoluteLayout(title, message, buttons, sheetPanel);
+    headerLabel.setLocation(120, 20);
+    textArea.setLocation(120, 20 + headerLabel.getPreferredSize().height + 10);
+    layoutWithAbsoluteLayout(buttons, sheetPanel);
 
     return sheetPanel;
   }
 
-  private void layoutWithAbsoluteLayout(String title, String message, JButton[] buttons, JPanel sheetPanel) {
+  private void layoutWithAbsoluteLayout(JButton[] buttons, JPanel sheetPanel) {
     layoutButtons(buttons, sheetPanel);
 
     if (myDoNotAskOption != null) {
@@ -190,16 +181,13 @@ public class SheetController {
     }
   }
 
-
-
-
   private void paintShadow(Graphics2D g2d, Rectangle2D dialog) {
     Area shadow = new Area(new RoundRectangle2D.Double(0, 0, mySheetPanel.getBounds().width, mySheetPanel.getBounds().height, 10, 10));
 
     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.80f));
 
     Color color1 = Gray._130;
-    Color color2 = new Color(130, 130, 130, 0);
+    Color color2 = new JBColor(new Color(130, 130, 130, 0), new Color(130, 130, 130, 0));
 
     GradientPaint gp = new GradientPaint(
       0, mySheetPanel.getBounds().height - 10, color1,
@@ -210,7 +198,7 @@ public class SheetController {
     g2d.fill(shadow);
   }
 
-  private void layoutButtons(final JButton[] buttons, JPanel panel) {
+  private static void layoutButtons(final JButton[] buttons, JPanel panel) {
     for (int i = 0; i < buttons.length ; i ++) {
       panel.add(buttons[i]);
       buttons[i].repaint();
@@ -238,32 +226,18 @@ public class SheetController {
    * This method is used to show an image during message showing
    * @return image to show
    */
-  private Image getStaticImage() {
+  Image getStaticImage() {
     final JFrame myOffScreenFrame = new JFrame() ;
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    final BufferedImage image = new BufferedImage(SHEET_WIDTH, SHEET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil.createImage(SHEET_WIDTH, SHEET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+
+
 
     mySheetPanel.paint(image.createGraphics());
     myOffScreenFrame.dispose();
     return image;
-  }
-
-  public JPanel getStaticPanel() {
-    final Image staticImage = getStaticImage();
-    JPanel jPanel = new JPanel() {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g.create();
-        int zeroOffset = getHeight() - SHEET_HEIGHT;
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
-        g2d.drawImage(staticImage, 0 , zeroOffset, null);
-      }
-    };
-    jPanel.setOpaque(false);
-    return jPanel;
   }
 
   public boolean getDoNotAskResult () {
@@ -272,23 +246,5 @@ public class SheetController {
 
   public String getResult() {
     return myResult;
-  }
-}
-
-class MultilineLabel extends JTextPane {
-  private static final long serialVersionUID = 1L;
-  public MultilineLabel(){
-    super();
-    setEditable(false);
-    setCursor(null);
-    setOpaque(false);
-    setFocusable(false);
-
-    setPreferredSize(new Dimension(200,50));
-
-    StyledDocument doc = getStyledDocument();
-    SimpleAttributeSet center = new SimpleAttributeSet();
-    StyleConstants.setAlignment(center, StyleConstants.ALIGN_LEFT);
-    doc.setParagraphAttributes(0, doc.getLength(), center, false);
   }
 }
