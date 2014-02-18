@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.Options;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -114,7 +116,9 @@ public class IgnoreFileAction extends AnAction {
             return;
           }
 
-          if (!CvsUtil.fileIsUnderCvs(cvsIgnoreFile)) {
+          if (!CvsUtil.fileIsUnderCvs(cvsIgnoreFile) &&
+              !ChangeListManager.getInstance(context.getProject()).isIgnoredFile(cvsIgnoreFile) &&
+              !CvsEntriesManager.getInstance().fileIsIgnored(cvsIgnoreFile)) {
             createdCvsIgnoreFiles.add(cvsIgnoreFile);
           }
 
