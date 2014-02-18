@@ -67,9 +67,8 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
         RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME);
         if (rearranger.couldRearrange()) {
           rearranger.run();
-          return true;
         }
-        return false;
+        return true;
       }
     });
   }
