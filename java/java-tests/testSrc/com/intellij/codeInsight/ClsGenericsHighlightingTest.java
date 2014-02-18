@@ -101,7 +101,6 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
 
             String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
             model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-            model.commit();
           }
         });
       }
