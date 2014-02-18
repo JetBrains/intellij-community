@@ -51,19 +51,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     checkResultByText("some <selection>t<caret>ext</selection>\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,8); // alt-shift-click in existing selection
+    mouse().alt().shift().clickAt(0, 8); // alt-shift-click in existing selection
     checkResultByText("some <selection>t<caret>ext</selection>\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,6); // alt-shift-click at existing caret with selection
+    mouse().alt().shift().clickAt(0, 6); // alt-shift-click at existing caret with selection
     checkResultByText("some text\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(1,1); // alt-shift-click at the sole caret
+    mouse().alt().shift().clickAt(1, 1); // alt-shift-click at the sole caret
     checkResultByText("some text\n" +
                       "a<caret>nother line");
 
-    mouse().alt().shift().clickAt(0,30); // alt-shift-click in virtual space
+    mouse().alt().shift().clickAt(0, 30); // alt-shift-click in virtual space
     checkResultByText("some text<caret>\n" +
                       "a<caret>nother line");
 
@@ -152,7 +152,8 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     init("some<caret> text<caret>\n" +
          "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
          "<selection>ano<caret>ther</selection> line",
-         TestFileType.TEXT);
+         TestFileType.TEXT
+    );
     type('A');
     checkResultByText("someA<caret> textA<caret>\n" +
                       "some A<caret> A<caret>\n" +
@@ -173,7 +174,8 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   public void testCutAndPaste() throws Exception {
     init("<selection>one<caret></selection> two \n" +
          "<selection>three<caret></selection> four ",
-         TestFileType.TEXT);
+         TestFileType.TEXT
+    );
     executeAction("EditorCut");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
@@ -206,19 +208,5 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "three<caret> \n" +
                       "five  eightsix \n" +
                       "seven<caret>");
-  }
-
-  public void testStateStoreAndLoad() throws Exception {
-    init("some<caret> text<caret>\n" +
-         "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-         "<selection>ano<caret>ther</selection> line",
-         TestFileType.TEXT);
-    EditorHistoryManager.getInstance(ourProject).projectOpened();
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(ourProject);
-    fileEditorManager.closeFile(myVFile);
-    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(getProject(), myVFile, 0), false);
-    checkResultByText("some<caret> text<caret>\n" +
-                      "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-                      "<selection>ano<caret>ther</selection> line");
   }
 }
