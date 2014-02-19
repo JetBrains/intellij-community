@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.runners;
+package com.intellij.execution.console;
 
-import com.intellij.execution.console.BaseConsoleExecuteActionHandler;
-import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Condition;
