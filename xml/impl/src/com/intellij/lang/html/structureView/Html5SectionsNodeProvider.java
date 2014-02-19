@@ -53,11 +53,13 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     return new ActionPresentationData(XmlBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
+  @NotNull
   @Override
   public String getCheckBoxText() {
     return XmlBundle.message("html5.outline.mode");
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");

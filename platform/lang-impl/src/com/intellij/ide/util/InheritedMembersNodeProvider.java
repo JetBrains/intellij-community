@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,13 @@ import org.jetbrains.annotations.NotNull;
 public abstract class InheritedMembersNodeProvider<T extends TreeElement> implements FileStructureNodeProvider<T> {
   @NonNls public static final String ID = "SHOW_INHERITED";
 
+  @NotNull
   @Override
   public String getCheckBoxText() {
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");

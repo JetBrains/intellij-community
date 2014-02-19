@@ -66,11 +66,13 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public String getCheckBoxText() {
     return "Show Anonymous Classes";
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
