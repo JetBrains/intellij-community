@@ -18,7 +18,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.graph.GraphBlackBox;
+import com.intellij.vcs.log.graph.GraphFacade;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,7 +44,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static List<Integer> getVisibleCommits(@NotNull final GraphBlackBox facade) {
+  public static List<Integer> getVisibleCommits(@NotNull final GraphFacade facade) {
     return new AbstractList<Integer>() {
       @Override
       public Integer get(int index) {

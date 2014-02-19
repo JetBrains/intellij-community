@@ -19,7 +19,7 @@ import java.util.Set;
 
 /**
  * Use this provider to get information from the Graph. <br/>
- * An instance of GraphInfoProvider is obtained via {@link GraphBlackBox#getInfoProvider()}.
+ * An instance of GraphInfoProvider is obtained via {@link GraphFacade#getInfoProvider()}.
  */
 public interface GraphInfoProvider {
 

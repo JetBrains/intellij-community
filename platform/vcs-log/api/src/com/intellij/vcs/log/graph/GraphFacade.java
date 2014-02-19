@@ -28,7 +28,7 @@ import java.util.List;
  * <p/>
  * Any access to the methods of this class must be performed from the EDT.
  */
-public interface GraphBlackBox {
+public interface GraphFacade {
 
   /**
    * Paints the given row in the given Graphics.

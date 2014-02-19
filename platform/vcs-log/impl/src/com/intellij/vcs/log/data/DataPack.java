@@ -8,7 +8,7 @@ import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
-import com.intellij.vcs.log.graph.GraphBlackBox;
+import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.graph.GraphFacadeImpl;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.GraphBuilder;
@@ -78,7 +78,7 @@ public class DataPack {
   }
 
   @NotNull
-  public GraphBlackBox getGraphFacade() {
+  public GraphFacade getGraphFacade() {
     return myGraphFacade;
   }
 

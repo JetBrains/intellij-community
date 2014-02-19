@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class GraphFacadeImpl implements GraphBlackBox {
+public class GraphFacadeImpl implements GraphFacade {
 
   private static final Logger LOG = Logger.getInstance(GraphFacadeImpl.class);
   private static final Function<Node,Boolean> ALL_NODES_VISIBLE = new Function<Node, Boolean>() {
