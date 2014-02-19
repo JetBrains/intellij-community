@@ -53,6 +53,8 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
     execute(text);
   }
 
+  @SuppressWarnings("deprecation")
+  @Override
   @Deprecated
   /**
    * @deprecated to remove in IDEA 15

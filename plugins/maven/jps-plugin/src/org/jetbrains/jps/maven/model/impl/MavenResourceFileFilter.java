@@ -44,7 +44,7 @@ public class MavenResourceFileFilter implements FileFilter {
     return relPath != null && isIncluded(relPath);
   }
 
-  public boolean isIncluded(String relativePath) {
+  private boolean isIncluded(String relativePath) {
     if (myNormalizedIncludes == null) {
       if (myConfiguration.includes.isEmpty()) {
         myNormalizedIncludes = new String[]{"**" + File.separatorChar + '*'};

@@ -307,7 +307,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
 
   @NonNls
   public String toString() {
-    return "PsiTypeParameter";
+    return "PsiTypeParameter:" + getName();
   }
 
   @Override

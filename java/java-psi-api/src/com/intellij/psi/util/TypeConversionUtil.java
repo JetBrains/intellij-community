@@ -105,6 +105,12 @@ public class TypeConversionUtil {
       final int toTypeRank = getTypeRank(toType);
       if (!toIsPrimitive) {
         if (fromTypeRank == toTypeRank) return true;
+        if (toType instanceof PsiIntersectionType) {
+          for (PsiType type : ((PsiIntersectionType)toType).getConjuncts()) {
+            if (!areTypesConvertible(fromType, type)) return false;
+          }
+          return true;
+        }
         // JLS 5.5: A value of a primitive type can be cast to a reference type by boxing conversion(see 5.1.7)
         if (!(toType instanceof PsiClassType)) return false;
         PsiClass toClass = ((PsiClassType)toType).resolve();

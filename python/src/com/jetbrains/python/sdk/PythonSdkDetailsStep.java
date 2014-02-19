@@ -61,7 +61,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     myMore = moreDialog;
     final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, ownerComponent, existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.show(popupPoint);
+    popup.showInScreenCoordinates(ownerComponent, popupPoint.getPoint());
   }
 
   public PythonSdkDetailsStep(Project project,

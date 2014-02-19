@@ -108,10 +108,20 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     return new SvnRevisionNumber(SVNRevision.create(myRevision));
   }
 
-  public static SvnRepositoryContentRevision create(final SvnVcs vcs, final String repositoryRoot, final String path,
-                                                    @Nullable final FilePath localPath, final long revision) {
+  public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
+                                                    @NotNull String repositoryRoot,
+                                                    @NotNull String path,
+                                                    @Nullable FilePath localPath,
+                                                    long revision) {
+    return create(vcs, SvnUtil.appendMultiParts(repositoryRoot, path), localPath, revision);
+  }
+
+  public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
+                                                    @NotNull String fullPath,
+                                                    @Nullable FilePath localPath,
+                                                    long revision) {
     // TODO: Check if isDirectory = false always true for this method calls
-    FilePath remotePath = VcsUtil.getFilePathOnNonLocal(SvnUtil.appendMultiParts(repositoryRoot, path), false);
+    FilePath remotePath = VcsUtil.getFilePathOnNonLocal(fullPath, false);
 
     return create(vcs, remotePath, localPath, revision);
   }
@@ -172,8 +182,8 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     return myPath;
   }
 
-  public String getPath() {
-    return myPath;
+  public String getRelativePath(@NotNull String repositoryUrl) {
+    return SvnUtil.getRelativePath(repositoryUrl, myPath);
   }
 
   @Override

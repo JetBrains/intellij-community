@@ -15,11 +15,11 @@
  */
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
 
 import javax.swing.JComponent;
-import java.awt.Font;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
@@ -38,12 +38,13 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture pressAt(int visualLine, int visualColumn) {
     JComponent component = myEditor.getContentComponent();
+    Point p = getPoint(visualLine, visualColumn);
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_PRESSED,
                                            System.currentTimeMillis(),
                                            getModifiers(),
-                                           myX = getX(visualColumn),
-                                           myY = getY(visualLine),
+                                           myX = p.x,
+                                           myY = p.y,
                                            1,
                                            false,
                                            myButton));
@@ -82,12 +83,13 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {
     JComponent component = myEditor.getContentComponent();
+    Point p = getPoint(visualLine, visualColumn);
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
                                            System.currentTimeMillis(),
                                            getModifiers(),
-                                           myX = getX(visualColumn),
-                                           myY = getY(visualLine),
+                                           myX = p.x,
+                                           myY = p.y,
                                            1,
                                            false,
                                            myButton));
@@ -109,12 +111,8 @@ public class EditorMouseFixture {
     return this;
   }
 
-  private int getX(int visualColumn) {
-    return visualColumn * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
-  }
-
-  private int getY(int visualLine) {
-    return visualLine * myEditor.getLineHeight();
+  private Point getPoint(int visualLine, int visualColumn) {
+    return myEditor.visualPositionToXY(new VisualPosition(visualLine, visualColumn));
   }
 
   private int getModifiers() {

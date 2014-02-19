@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
   name = "ExportToHTMLSettings",
   storages = {
     @Storage(
-      file = StoragePathMacros.PROJECT_FILE
+      file = StoragePathMacros.WORKSPACE_FILE
     )}
 )
 public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {

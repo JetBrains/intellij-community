@@ -1,6 +1,7 @@
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -59,7 +60,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         try {
           context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
 
-          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context);
+          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
         catch (UnsupportedEncodingException e) {

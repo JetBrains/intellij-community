@@ -67,8 +67,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
         super.visitAnonymousClass(aClass);
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
-          final String functionalInterfaceErrorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(baseClassType);
-          if (functionalInterfaceErrorMessage == null) {
+          if (LambdaUtil.isFunctionalType(baseClassType)) {
             final PsiMethod[] methods = aClass.getMethods();
             if (methods.length == 1 && aClass.getFields().length == 0) {
               final PsiCodeBlock body = methods[0].getBody();

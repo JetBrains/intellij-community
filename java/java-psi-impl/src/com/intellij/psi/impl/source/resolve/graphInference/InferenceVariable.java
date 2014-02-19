@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 
 import java.util.*;
 
@@ -42,22 +43,15 @@ public class InferenceVariable {
   public void setInstantiation(PsiType instantiation) {
     myInstantiation = instantiation;
   }
-  
-  public void ignoreInstantiation() {
-    myInstantiation = PsiType.NULL;
-  }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
-    if (inferenceBound == InferenceBound.EQ && classType instanceof PsiClassType && ((PsiClassType)classType).resolve() == myParameter) {
-      return false;
-    }
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
     final int idx = list.indexOf(classType);
-    if (idx < 0 || inferenceBound == InferenceBound.EQ && classType instanceof PsiCapturedWildcardType && list.get(idx) != classType) {
+    if (idx < 0) {
       list.add(classType);
       return true;
     }
@@ -76,6 +70,33 @@ public class InferenceVariable {
         session.collectDependencies(bound, dependencies);
       }
     }
+
+    next:
+    for (InferenceVariable variable : session.getInferenceVariables()) {
+      if (!dependencies.contains(variable) && variable != this) {
+        for (InferenceBound inferenceBound : InferenceBound.values()) {
+          for (PsiType bound : getBounds(inferenceBound)) {
+            Set<InferenceVariable> deps = new HashSet<InferenceVariable>();
+            session.collectDependencies(bound, deps);
+            if (deps.contains(this)) {
+              dependencies.add(variable);
+              continue next;
+            }
+          }
+        }
+      }
+    }
+
+    if (!session.hasCapture(this)) {
+      return dependencies;
+    }
+
+    for (Iterator<InferenceVariable> iterator = dependencies.iterator(); iterator.hasNext(); ) {
+      if (!session.hasCapture(iterator.next())) {
+        iterator.remove();
+      }
+    }
+    session.collectCaptureDependencies(this, dependencies);
     return dependencies;
   }
 
@@ -87,16 +108,12 @@ public class InferenceVariable {
     myThrownBound = true;
   }
 
-  public InferenceVariable copy() {
-    final InferenceVariable variable = new InferenceVariable(myParameter);
-    for (InferenceBound bound : InferenceBound.values()) {
-      for (PsiType type : getBounds(bound)) {
-        variable.addBound(type, bound);
-      }
-    }
-    if (myThrownBound) {
-      variable.setThrownBound();
-    }
-    return variable;
+  public void replaceBounds(InferenceBound boundType, LinkedHashSet<PsiType> bounds) {
+    
+  }
+
+  @Override
+  public String toString() {
+    return myParameter.toString();
   }
 }

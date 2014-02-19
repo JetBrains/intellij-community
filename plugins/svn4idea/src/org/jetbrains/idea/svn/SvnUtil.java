@@ -39,13 +39,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -103,6 +104,16 @@ public class SvnUtil {
     final SVNInfo info = vcs.getInfo(parent);
 
     return info != null;
+  }
+
+  public static List<File> toFiles(Iterable<String> paths) {
+    List<File> result = ContainerUtil.newArrayList();
+
+    for (String path : paths) {
+      result.add(new File(path));
+    }
+
+    return result;
   }
 
   public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
@@ -763,16 +774,21 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNURL createUrl(@NotNull String url) throws SVNException {
-    SVNURL result = SVNURL.parseURIEncoded(url);
+  public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+    try {
+      SVNURL result = SVNURL.parseURIEncoded(url);
 
-    // explicitly check if port corresponds to default port and recreate url specifying default port indicator
-    if (result.hasPort() && hasDefaultPort(result)) {
-      result = SVNURL
-        .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+      // explicitly check if port corresponds to default port and recreate url specifying default port indicator
+      if (result.hasPort() && hasDefaultPort(result)) {
+        result = SVNURL
+          .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+      }
+
+      return result;
     }
-
-    return result;
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   public static SVNURL parseUrl(@NotNull String url) {

@@ -62,6 +62,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model) {
     super(model);
+    // Defence from javax.swing.JTable.initializeLocalVars:
+    //     setPreferredScrollableViewportSize(new Dimension(450, 400));
+    setPreferredScrollableViewportSize(null);
+
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {

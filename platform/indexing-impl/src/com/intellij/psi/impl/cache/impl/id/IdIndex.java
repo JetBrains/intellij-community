@@ -122,7 +122,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     return myInputFilter;
   }
   
-  private static boolean isIndexable(FileType fileType) {
+  public static boolean isIndexable(FileType fileType) {
     return fileType instanceof LanguageFileType ||
            fileType instanceof CustomSyntaxTableFileType ||
            IdTableBuilding.isIdIndexerRegistered(fileType) ||

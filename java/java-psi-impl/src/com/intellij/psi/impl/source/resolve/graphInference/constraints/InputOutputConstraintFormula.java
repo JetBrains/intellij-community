@@ -49,7 +49,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
       if (inferenceVariable != null) {
         return Collections.singleton(inferenceVariable);
       }
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(type) == null) {
+      if (LambdaUtil.isFunctionalType(type)) {
         final PsiType functionType =
           psiExpression instanceof PsiLambdaExpression
           ? FunctionalInterfaceParameterizationUtil.getGroundTargetType(type, (PsiLambdaExpression)psiExpression)

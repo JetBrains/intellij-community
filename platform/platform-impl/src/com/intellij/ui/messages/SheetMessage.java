@@ -17,6 +17,7 @@ package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,11 +34,14 @@ public class SheetMessage  implements ActionListener {
   private JDialog myWindow;
   private Window myParent;
   private SheetController myController;
-  private Timer myAnimator = new Timer(2, this);
+  private Timer myAnimator = new Timer(5,this);
 
   private boolean myShouldEnlarge = true;
 
-  private final static int SHEET_ANIMATION_STEP = 4;
+  private final static int SHEET_ANIMATION_STEP = 1;
+
+  private Image staticImage;
+  private int imageHeight;
 
   public SheetMessage(final Window owner,
                       final String title,
@@ -48,19 +52,25 @@ public class SheetMessage  implements ActionListener {
                       final String focusedButton,
                       final String defaultButton)
   {
-    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL) ;
+    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
+    myAnimator.setInitialDelay(0);
+
+
     myParent = owner;
-    myWindow.setSize(SheetController.SHEET_WIDTH, 0);
+    myWindow.setSize(SheetController.SHEET_WIDTH, SheetController.SHEET_HEIGHT);
     myWindow.setUndecorated(true);
     myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
-    myWindow.setContentPane(myController.getStaticPanel());
+
+
+    imageHeight = 0;
     registerMoveResizeHandler();
     myWindow.setFocusableWindowState(true);
     myWindow.setFocusable(true);
 
-    myAnimator.start();
+    startAnimation();
     myWindow.setVisible(true);
+    setPositionRelativeToParent();
   }
 
   public boolean toBeShown() {
@@ -72,39 +82,58 @@ public class SheetMessage  implements ActionListener {
   }
 
   void startAnimation () {
-    myWindow.setContentPane(myController.getStaticPanel());
+    staticImage = myController.getStaticImage();
+    JPanel staticPanel = new JPanel() {
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+        if (staticImage != null) {
+          Graphics2D g2d = (Graphics2D) g.create();
+
+          g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
+
+          int imageCropOffset = (UIUtil.isRetina()) ? imageHeight * 2 : imageHeight;
+
+          g.drawImage(staticImage, 0,0,SheetController.SHEET_WIDTH,imageHeight,
+                      0, staticImage.getHeight(null) - imageCropOffset,
+                      staticImage.getWidth(null) ,staticImage.getHeight(null) ,null);
+        }
+      }
+    };
+    staticPanel.setOpaque(false);
+    staticPanel.setSize(SheetController.SHEET_WIDTH,SheetController.SHEET_HEIGHT);
+    myWindow.setContentPane(staticPanel);
     myAnimator.start();
   }
-
-
 
   @Override
   public void actionPerformed(ActionEvent e) {
 
-    int windowHeight = (myShouldEnlarge) ? myWindow.getHeight() + SHEET_ANIMATION_STEP
-                                         : myWindow.getHeight() - SHEET_ANIMATION_STEP;
+    imageHeight = (myShouldEnlarge) ? imageHeight + SHEET_ANIMATION_STEP
+                                         : imageHeight - SHEET_ANIMATION_STEP;
 
-    myWindow.setSize(myWindow.getWidth(), windowHeight);
     setPositionRelativeToParent();
-    if (myWindow.getHeight() > myController.SHEET_HEIGHT) {
+    if (imageHeight > SheetController.SHEET_HEIGHT) {
       myAnimator.stop();
-      myWindow.setContentPane(
-        myController.getPanel(myWindow)
-      );
+      imageHeight = SheetController.SHEET_HEIGHT;
+      staticImage = null;
+      myWindow.setContentPane(myController.getPanel(myWindow));
       myController.requestFocus();
       myShouldEnlarge = false;
     }
 
-    if (myWindow.getHeight() < 0) {
+    if (imageHeight < 0) {
       myAnimator.stop();
       myWindow.dispose();
     }
+
+    myWindow.repaint();
   }
 
   private void setPositionRelativeToParent () {
     int width = myParent.getWidth();
-    myWindow.setLocation(width / 2 - SheetController.SHEET_WIDTH / 2 + myParent.getLocation().x, myParent.getInsets().top
-                                                                                                 + myParent.getLocation().y);
+    myWindow.setLocation(width / 2 - SheetController.SHEET_WIDTH / 2 + myParent.getLocation().x,
+                         myParent.getInsets().top + myParent.getLocation().y);
   }
 
   private void registerMoveResizeHandler () {

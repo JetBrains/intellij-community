@@ -150,10 +150,23 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         cancelEditing();
       }
     };
+
+    final HierarchyListener hierarchyListener = new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if (!tree.isShowing()) {
+          cancelEditing();
+        }
+      }
+    };
+
+    tree.addHierarchyListener(hierarchyListener);
     tree.addComponentListener(componentListener);
     rootPane.addComponentListener(componentListener);
+
     myRemoveActions.add(new Runnable() {
       public void run() {
+        tree.removeHierarchyListener(hierarchyListener);
         tree.addComponentListener(componentListener);
         rootPane.removeComponentListener(componentListener);
       }

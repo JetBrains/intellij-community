@@ -72,6 +72,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
+      if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+      if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
       return Comparing.equal(myT, myS);
     }
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);

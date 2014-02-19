@@ -244,7 +244,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       else {
         TemplatesGroup group = new TemplatesGroup(builder);
         groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>(Collections.singletonList(template)));
+        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
       }
     }
 
@@ -261,15 +261,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
       }
     }
-
-    // remove empty groups
-    //for (Iterator<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>> iterator = myTemplatesMap.entrySet().iterator();
-    //     iterator.hasNext(); ) {
-    //  Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry = iterator.next();
-    //  if (entry.getValue().isEmpty()) {
-    //    iterator.remove();
-    //  }
-    //}
 
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
 
@@ -385,9 +376,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
-
   private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
-    ArrayList<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    List<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    if (group.getModuleBuilder() != null) {
+      list.add(0, new BuilderBasedTemplate(group.getModuleBuilder()));
+    }
     if (group.getParentGroup() == null) {
       for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
         if (group.getName().equals(templatesGroup.getParentGroup())) {

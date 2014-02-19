@@ -66,7 +66,7 @@ public class InferLambdaParameterTypeIntention extends Intention {
     if (parameters.length != lambdaParameters.length) return null;
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      final PsiType psiType = GenericsUtil.eliminateWildcards(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType()));
+      final PsiType psiType = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType());
       if (psiType != null) {
         buf.append(useFQN ? psiType.getCanonicalText() : psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
       }

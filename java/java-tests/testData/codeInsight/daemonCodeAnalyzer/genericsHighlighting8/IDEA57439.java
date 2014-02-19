@@ -17,15 +17,15 @@ class B<T> extends A<A<T>> {
         foo2(sb);
         foo2(s);
     
-        foo3<error descr="'foo3(A<A<? extends T>>)' in 'B' cannot be applied to '(B<capture<?>>)'">(b)</error>;
-        foo3<error descr="'foo3(A<A<? extends T>>)' in 'B' cannot be applied to '(B<capture<? extends java.lang.String>>)'">(eb)</error>;
-        foo3<error descr="'foo3(A<A<? extends T>>)' in 'B' cannot be applied to '(B<capture<? super java.lang.String>>)'">(sb)</error>;
-        foo3<error descr="'foo3(A<A<? extends T>>)' in 'B' cannot be applied to '(B<java.lang.String>)'">(s)</error>;
+        foo3<error descr="'foo3(A<A<?>>)' in 'B' cannot be applied to '(B<capture<?>>)'">(b)</error>;
+        foo3<error descr="'foo3(A<A<?>>)' in 'B' cannot be applied to '(B<capture<? extends java.lang.String>>)'">(eb)</error>;
+        foo3<error descr="'foo3(A<A<?>>)' in 'B' cannot be applied to '(B<capture<? super java.lang.String>>)'">(sb)</error>;
+        foo3<error descr="'foo3(A<A<?>>)' in 'B' cannot be applied to '(B<java.lang.String>)'">(s)</error>;
 
-        foo4<error descr="'foo4(A<A<? super T>>)' in 'B' cannot be applied to '(B<capture<?>>)'">(b)</error>;
-        foo4<error descr="'foo4(A<A<? super T>>)' in 'B' cannot be applied to '(B<capture<? extends java.lang.String>>)'">(eb)</error>;
-        foo4<error descr="'foo4(A<A<? super T>>)' in 'B' cannot be applied to '(B<capture<? super java.lang.String>>)'">(sb)</error>;
-        foo4<error descr="'foo4(A<A<? super T>>)' in 'B' cannot be applied to '(B<java.lang.String>)'">(s)</error>;
+        foo4<error descr="'foo4(A<A<? super java.lang.Object>>)' in 'B' cannot be applied to '(B<capture<?>>)'">(b)</error>;
+        foo4<error descr="'foo4(A<A<? super java.lang.Object>>)' in 'B' cannot be applied to '(B<capture<? extends java.lang.String>>)'">(eb)</error>;
+        foo4<error descr="'foo4(A<A<? super java.lang.Object>>)' in 'B' cannot be applied to '(B<capture<? super java.lang.String>>)'">(sb)</error>;
+        foo4<error descr="'foo4(A<A<? super java.lang.Object>>)' in 'B' cannot be applied to '(B<java.lang.String>)'">(s)</error>;
 
         foo5(b);
         foo5(eb);

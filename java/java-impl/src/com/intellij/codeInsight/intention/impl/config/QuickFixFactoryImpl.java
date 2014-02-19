@@ -40,7 +40,6 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -55,6 +54,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -715,12 +715,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
         final long oldStamp = editor.getDocument().getModificationStamp();
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-          }
-        });
+        DocumentUtil.writeInRunUndoTransparentAction(runnable);
         if (oldStamp != editor.getDocument().getModificationStamp()) {
           String afterText = file.getText();
           if (Comparing.strEqual(beforeText, afterText)) {

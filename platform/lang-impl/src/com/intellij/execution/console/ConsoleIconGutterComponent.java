@@ -6,6 +6,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 
 class ConsoleIconGutterComponent extends JComponent {
-  static final int ICON_AREA_WIDTH = 15;
+  private final int iconAreaWidth;
 
   private int myLastPreferredHeight = -1;
   private final EditorImpl editor;
@@ -25,6 +26,9 @@ class ConsoleIconGutterComponent extends JComponent {
   public ConsoleIconGutterComponent(@NotNull Editor editor, @NotNull GutterContentProvider provider) {
     this.editor = (EditorImpl)editor;
     gutterContentProvider = provider;
+
+    // icon/one-char symbol + space
+    iconAreaWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor) * 2;
   }
 
   public void updateSize() {
@@ -41,7 +45,7 @@ class ConsoleIconGutterComponent extends JComponent {
   @Override
   public Dimension getPreferredSize() {
     myLastPreferredHeight = editor.getPreferredHeight();
-    return new Dimension(ICON_AREA_WIDTH, myLastPreferredHeight);
+    return new Dimension(iconAreaWidth, myLastPreferredHeight);
   }
 
   @Override

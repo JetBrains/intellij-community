@@ -26,8 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -35,14 +34,43 @@ import java.util.List;
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
-  private PsiClassType myCapture;
+  private List<Pair<PsiTypeParameter[], PsiClassType>> myCaptures = new ArrayList<Pair<PsiTypeParameter[], PsiClassType>>();
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
   }
 
-  public void setCapture(PsiClassType capture) {
-    myCapture = capture;
+  public void addCapture(PsiTypeParameter[] typeParameters, PsiClassType rightType) {
+    myCaptures.add(Pair.create(typeParameters, rightType));
+  }
+
+  public void forgetCaptures(List<InferenceVariable> variables) {
+    for (InferenceVariable variable : variables) {
+      final PsiTypeParameter parameter = variable.getParameter();
+      for (Iterator<Pair<PsiTypeParameter[], PsiClassType>> iterator = myCaptures.iterator(); iterator.hasNext(); ) {
+        Pair<PsiTypeParameter[], PsiClassType> capture = iterator.next();
+        for (PsiTypeParameter typeParameter : capture.first) {
+          if (parameter == typeParameter) {
+            iterator.remove();
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  public boolean hasCaptureConstraints(Iterable<InferenceVariable> variables) {
+    for (InferenceVariable variable : variables) {
+      final PsiTypeParameter parameter = variable.getParameter();
+      for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+        for (PsiTypeParameter typeParameter : capture.first) {
+          if (parameter == typeParameter){
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public boolean incorporate() {
@@ -96,12 +124,13 @@ public class InferenceIncorporationPhase {
       }
     }
 
-    if (myCapture != null) {
-      final PsiClass gClass = myCapture.resolve();
+    for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+      final PsiClassType right = capture.second;
+      final PsiClass gClass = right.resolve();
       LOG.assertTrue(gClass != null);
-      final PsiTypeParameter[] parameters = gClass.getTypeParameters();
-      PsiType[] typeArgs = myCapture.getParameters();
-      LOG.assertTrue(parameters.length == typeArgs.length);
+      final PsiTypeParameter[] parameters = capture.first;
+      PsiType[] typeArgs = right.getParameters();
+      if (parameters.length != typeArgs.length) continue;
       for (int i = 0; i < typeArgs.length; i++) {
         PsiType aType = typeArgs[i];
         if (aType instanceof PsiCapturedWildcardType) {
@@ -236,7 +265,7 @@ public class InferenceIncorporationPhase {
     boolean result = false;
     for (PsiType upperBound : upperBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
-      if (inferenceVar != null) {
+      if (inferenceVar != null && inferenceVariable != inferenceVar) {
 
         for (PsiType lowerBound : lowerBounds) {
           result |= inferenceVar.addBound(lowerBound, inferenceBound);
@@ -259,13 +288,9 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
-      if (mySession.isProperType(upperBound)) {
-        continue;
-      }
+      if (upperBound == null) continue;
       for (PsiType eqBound : eqBounds) {
-        if (mySession.isProperType(eqBound)) {
-          continue;
-        }
+        if (eqBound == null) continue;
         addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
@@ -277,14 +302,8 @@ public class InferenceIncorporationPhase {
   private void eqEq(List<PsiType> eqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound= eqBounds.get(i);
-      if (mySession.isProperType(sBound)) {
-        continue;
-      }
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
-        if (mySession.isProperType(tBound)) {
-          continue;
-        }
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
       }
     }
@@ -347,5 +366,44 @@ public class InferenceIncorporationPhase {
 
   private void addConstraint(ConstraintFormula constraint) {
     mySession.addConstraint(constraint);
+  }
+
+  public void collectCaptureDependencies(InferenceVariable variable, Set<InferenceVariable> dependencies) {
+    final PsiTypeParameter parameter = variable.getParameter();
+    for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+      for (PsiTypeParameter typeParameter : capture.first) {
+        if (typeParameter == parameter) {
+          collectAllVariablesOnBothSides(dependencies, capture);
+          break;
+        }
+      }
+    }
+  }
+
+  protected void collectAllVariablesOnBothSides(Set<InferenceVariable> dependencies, Pair<PsiTypeParameter[], PsiClassType> capture) {
+    mySession.collectDependencies(capture.second, dependencies);
+    for (PsiTypeParameter psiTypeParameter : capture.first) {
+      final InferenceVariable var = mySession.getInferenceVariable(psiTypeParameter);
+      if (var != null) {
+        dependencies.add(var);
+      }
+    }
+  }
+
+  public PsiSubstitutor checkIncorporated(PsiSubstitutor substitutor, Collection<InferenceVariable> variables) {
+    for (InferenceVariable variable : variables) { //todo equals bounds?
+      for (PsiType lowerBound : variable.getBounds(InferenceBound.LOWER)) {
+        lowerBound = substitutor.substitute(lowerBound);
+        if (mySession.isProperType(lowerBound)) {
+          for (PsiType upperBound : variable.getBounds(InferenceBound.UPPER)) {
+            upperBound = substitutor.substitute(upperBound);
+            if (mySession.isProperType(upperBound) && !TypeConversionUtil.isAssignable(upperBound, lowerBound)) {
+              return null;
+            }
+          }
+        }
+      }
+    }
+    return substitutor;
   }
 }

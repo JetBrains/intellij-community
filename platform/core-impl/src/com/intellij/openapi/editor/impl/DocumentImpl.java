@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
@@ -183,15 +184,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           final int finalStart = whiteSpaceStart;
           // document must be unblocked by now. If not, some Save handler attempted to modify PSI
           // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(DocumentImpl.this, project) {
             @Override
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(DocumentImpl.this, project) {
-                @Override
-                public void run() {
-                  deleteString(finalStart, lineEnd);
-                }
-              });
+              deleteString(finalStart, lineEnd);
             }
           });
           text = myText;

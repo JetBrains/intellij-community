@@ -16,6 +16,9 @@
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -66,6 +69,8 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     @NotNull private final ResourceRootConfiguration myRootConfiguration;
     @NotNull private final MavenModuleResourceConfiguration myModuleResourceConfiguration;
     @NotNull private final File myRoot;
+    private FileFilter myFileFilter;
+    private boolean myMainWebAppRoot;
 
     private MavenWebRootCopyingHandler(@NotNull MavenResourceFileProcessor fileProcessor,
                                        @NotNull ResourceRootConfiguration rootConfiguration,
@@ -75,11 +80,17 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       myRootConfiguration = rootConfiguration;
       myModuleResourceConfiguration = moduleResourceConfiguration;
       myRoot = root;
+      myFileFilter = new MavenResourceFileFilter(myRoot, myRootConfiguration);
+
+      //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
+      String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(moduleResourceConfiguration.directory),
+                                                     FileUtil.toSystemIndependentName(rootConfiguration.directory), '/');
+      myMainWebAppRoot = relativePath != null && "src/main/webapp".equals(StringUtil.trimEnd(relativePath, "/"));
     }
 
     @Override
     public void copyFile(@NotNull File from, @NotNull File to, @NotNull CompileContext context) throws IOException {
-      myFileProcessor.copyFile(from, to, myRootConfiguration, context);
+      myFileProcessor.copyFile(from, to, myRootConfiguration, context, myMainWebAppRoot ? myFileFilter : FileUtilRt.ALL_FILES);
     }
 
     @Override
@@ -91,7 +102,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     @NotNull
     @Override
     public FileFilter createFileFilter() {
-      return new MavenResourceFileFilter(myRoot, myRootConfiguration);
+      return myMainWebAppRoot ? FileUtilRt.ALL_FILES : myFileFilter;
     }
   }
 }

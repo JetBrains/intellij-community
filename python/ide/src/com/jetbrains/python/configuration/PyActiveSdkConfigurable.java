@@ -35,11 +35,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
@@ -126,7 +126,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          myMainPanel.grabFocus();
                                           PythonSdkDetailsStep
                                             .show(myProject, myProjectSdksModel.getSdks(),
                                                   myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
@@ -175,18 +174,15 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
-    notificationsComponent.setPreferredSize(new Dimension(500, 29));
+    final Dimension preferredSize = mySdkCombo.getPreferredSize();
+    notificationsComponent.setPreferredSize(new Dimension(500, preferredSize.height));
 
-    myDetailsButton = new JButton();
+    myDetailsButton = new FixedSizeButton();
     myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
-    myDetailsButton.setIconTextGap(0);
-    myDetailsButton.setPreferredSize(new Dimension(29, 29));
-    if (((UIUtil.isUnderAquaLookAndFeel())) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
-      myDetailsButton.putClientProperty("JButton.buttonType", "square");
-    }
+    //noinspection SuspiciousNameCombination
+    myDetailsButton.setPreferredSize(new Dimension(preferredSize.height, preferredSize.height));
 
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, notificationsArea);
-    mySdkCombo.setPreferredSize(new Dimension(250, 29));
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.insets = new Insets(2,2,2,2);
@@ -200,7 +196,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.weightx = 0.1;
     myMainPanel.add(mySdkCombo, c);
 
-    c.insets = new Insets(0,5,0,2);
+    c.insets = new Insets(2,0,2,2);
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;

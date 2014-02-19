@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -69,6 +70,7 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
@@ -345,7 +347,7 @@ public class FindInProjectUtil {
       Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module, fileIndex);
       final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
 
-      if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
+      final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(findModel);
 
       SearchScope customScope = findModel.getCustomScope();
       final GlobalSearchScope globalCustomScope = toGlobal(project, customScope);
@@ -357,13 +359,19 @@ public class FindInProjectUtil {
         @Override
         public boolean processFile(@NotNull VirtualFile virtualFile) {
           ProgressManager.checkCanceled();
-          if (!virtualFile.isDirectory() &&
-              (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
-              (globalCustomScope == null || globalCustomScope.contains(virtualFile))) {
-            final PsiFile psiFile = findFile(psiManager, virtualFile);
-            if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
-              myFiles.add(psiFile);
-            }
+          if (virtualFile.isDirectory() ||
+              (fileMaskRegExp != null && !fileMaskRegExp.matcher(virtualFile.getName()).matches()) ||
+              (globalCustomScope != null && !globalCustomScope.contains(virtualFile))) {
+            return true;
+          }
+          
+          if (useIdIndex && isCoveredByIdIndex(virtualFile)) {
+            return true;
+          }
+
+          PsiFile psiFile = findFile(psiManager, virtualFile);
+          if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+            myFiles.add(psiFile);
           }
           return true;
         }
@@ -412,6 +420,11 @@ public class FindInProjectUtil {
       return fileList;
     }
     return Collections.emptyList();
+  }
+
+  private static boolean isCoveredByIdIndex(VirtualFile file) {
+    return IdIndex.isIndexable(FileBasedIndexImpl.getFileType(file)) && 
+           ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isIndexingCandidate(file, IdIndex.NAME);
   }
 
   private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {

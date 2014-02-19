@@ -19,8 +19,6 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -31,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.NonNls;
 
@@ -58,15 +57,10 @@ class IntentionUsagePanel extends JPanel{
       @Override
       public void run() {
         if (myEditor.isDisposed()) return;
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                configureByText(usageText, fileType);
-              }
-            });
+            configureByText(usageText, fileType);
           }
         });
       }
