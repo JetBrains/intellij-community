@@ -2,7 +2,7 @@ import java.util.Map;
 import java.util.stream.Collector;
 
 
-public class Bug {
+class Bug {
 
 
   {
