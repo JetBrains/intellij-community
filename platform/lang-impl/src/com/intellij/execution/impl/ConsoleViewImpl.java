@@ -898,7 +898,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void registerConsoleEditorActions() {
-    new HyperlinkNavigationAction().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
+    HyperlinkNavigationAction hyperlinkNavigationAction = new HyperlinkNavigationAction();
+    hyperlinkNavigationAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
+    registerActionHandler(myEditor, IdeActions.ACTION_GOTO_DECLARATION, hyperlinkNavigationAction);
 
     if (!myIsViewer) {
       new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
