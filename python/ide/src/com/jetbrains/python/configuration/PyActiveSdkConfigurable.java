@@ -126,7 +126,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          myMainPanel.grabFocus();
                                           PythonSdkDetailsStep
                                             .show(myProject, myProjectSdksModel.getSdks(),
                                                   myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
