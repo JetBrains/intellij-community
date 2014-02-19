@@ -30,11 +30,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
@@ -75,9 +76,8 @@ public class IgnoreFileAction extends AnAction {
         CvsUtil.ignoreFile(selectedFile);
       }
       catch (IOException e1) {
-        Messages.showErrorDialog(
-          CvsBundle.message("message.error.ignore.files", selectedFile.getPresentableUrl(), e1.getLocalizedMessage()),
-          CvsBundle.message("message.error.ignore.files.title"));
+        final String message = CvsBundle.message("message.error.ignore.files", selectedFile.getPresentableUrl(), e1.getLocalizedMessage());
+        VcsBalloonProblemNotifier.showOverChangesView(context.getProject(), message, MessageType.ERROR);
       }
     }
     refreshFilesAndStatuses(context);
