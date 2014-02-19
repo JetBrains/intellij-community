@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -41,6 +42,15 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.listAp
  * @author peter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
+  public static boolean ourShowTemplatesInTests = false;
+
+  public static boolean shouldShowAllTemplates() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return ourShowTemplatesInTests;
+    }
+    return Registry.is("show.live.templates.in.completion");
+  }
+  
   public LiveTemplateCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -84,7 +94,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
   @SuppressWarnings("MethodMayBeStatic") //for Kotlin
   protected boolean showAllTemplates() {
-    return Registry.is("show.live.templates.in.completion");
+    return shouldShowAllTemplates();
   }
 
   private static void ensureTemplatesShown(Ref<Boolean> templatesShown,
