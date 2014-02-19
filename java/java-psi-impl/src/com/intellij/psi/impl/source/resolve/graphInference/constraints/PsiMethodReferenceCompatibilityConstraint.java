@@ -150,7 +150,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
       session.initBounds(method.getTypeParameters());
-      session.initBounds(containingClass.getTypeParameters());
+
+      if (!PsiTreeUtil.isContextAncestor(containingClass, myExpression, false) || 
+          PsiUtil.getEnclosingStaticElement(myExpression, containingClass) != null) {
+        session.initBounds(containingClass.getTypeParameters());
+      }
 
       if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
