@@ -22,14 +22,19 @@ import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -276,6 +281,45 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findUsages(findModel));
 
     findModel.setStringToFind("$foo");
+    assertSize(2, findUsages(findModel));
+  }
+
+  public void testWholeWordsInNonIndexedFiles() throws Exception {
+    createFile(myModule, "A.test123", "foo fo foo");
+
+    // don't use createFile here because it creates PsiFile and runs file type autodetection
+    // in real life some files might not be autodetected as plain text until the search starts 
+    VirtualFile custom = new WriteCommandAction<VirtualFile>(myProject) {
+      @Override
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        File dir = createTempDirectory();
+        File file = new File(dir.getPath(), "A.test1234");
+        file.createNewFile();
+        FileUtil.writeToFile(file, "foo fo foo");
+        addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
+        result.setResult(VfsUtil.findFileByIoFile(file, true));
+      }
+    }.execute().getResultObject();
+    
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
+    assertEquals(FileTypes.UNKNOWN, custom.getFileType());
+    assertFalse(FileTypeManagerImpl.isFileTypeDetectedFromContent(custom));
+
+    FindModel findModel = new FindModel();
+    findModel.setWholeWordsOnly(true);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setProjectScope(true);
+
+    findModel.setStringToFind("fo");
+    assertSize(2, findUsages(findModel));
+    
+    // and we should get the same with text loaded
+    assertNotNull(FileDocumentManager.getInstance().getDocument(custom));
+    assertEquals(FileTypes.PLAIN_TEXT, custom.getFileType());
+    assertTrue(FileTypeManagerImpl.isFileTypeDetectedFromContent(custom));
+
     assertSize(2, findUsages(findModel));
   }
 

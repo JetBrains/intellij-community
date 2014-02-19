@@ -1766,12 +1766,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private static FileType getFileType(VirtualFile file) {
+  public static FileType getFileType(VirtualFile file) {
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.PLAIN_TEXT && FileTypeManagerImpl.isFileTypeDetectedFromContent(file)) {
       fileType = FileTypes.UNKNOWN;
     }
     return fileType;
+  }
+
+  public boolean isIndexingCandidate(VirtualFile file, ID<?, ?> indexId) {
+    return !isTooLarge(file) && getAffectedIndexCandidates(file).contains(indexId);
   }
 
   private List<ID<?, ?>> getAffectedIndexCandidates(VirtualFile file) {
