@@ -107,6 +107,11 @@ public class LanguageConsoleBuilder {
     return myConsoleView;
   }
 
+  @Deprecated
+  /**
+   * @deprecated Don't use it directly!
+   * Will be private in IDEA >13
+   */
   public static class ProcessBackedExecutionEnabledCondition implements Condition<LanguageConsoleImpl> {
     private final ProcessHandler myProcessHandler;
 
