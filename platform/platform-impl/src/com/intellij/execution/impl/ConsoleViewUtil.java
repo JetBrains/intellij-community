@@ -40,8 +40,10 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsoleViewType;
 
@@ -62,6 +64,7 @@ public class ConsoleViewUtil {
 
   public static void setupConsoleEditor(final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
@@ -135,6 +138,7 @@ public class ConsoleViewUtil {
 
   // @noinspection MismatchedQueryAndUpdateOfCollection
   private static final Map<List<TextAttributesKey>, Key> ourContentTypes = Collections.synchronizedMap(new FactoryMap<List<TextAttributesKey>, Key>() {
+    @Override
     protected Key create(List<TextAttributesKey> keys) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
