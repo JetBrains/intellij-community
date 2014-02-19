@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -57,7 +56,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -109,7 +108,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myOneLine = oneLine;
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
-    myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
+    myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
     mySoftWrapModel = new SoftWrapModelImpl(this);
     Disposer.register(myDocumentWindow, mySoftWrapModel);
@@ -249,7 +248,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   @NotNull
-  public MarkupModel getMarkupModel() {
+  public MarkupModelEx getMarkupModel() {
     return myMarkupModelDelegate;
   }
 

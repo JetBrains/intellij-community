@@ -628,7 +628,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   @NotNull
-  public MarkupModel getMarkupModel() {
+  public MarkupModelEx getMarkupModel() {
     return myMarkupModel;
   }
 
