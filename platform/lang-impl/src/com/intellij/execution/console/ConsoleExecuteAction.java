@@ -18,6 +18,7 @@ package com.intellij.execution.console;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
+import com.intellij.execution.runners.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
@@ -49,7 +50,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
    * to remove in IDEA 14
    */
   public static ConsoleExecuteAction createAction(@NotNull final LanguageConsoleImpl languageConsole,
-                                                  @NotNull com.intellij.execution.runners.ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+                                                  @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
     final ConsoleExecuteActionHandler handler = consoleExecuteActionHandler;
     return new ConsoleExecuteAction(languageConsole, new ConsoleExecuteActionHandler(handler.myPreserveMarkup) {
       @Override

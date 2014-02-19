@@ -29,10 +29,10 @@ import java.nio.charset.Charset;
 /**
  * @author traff
  */
-public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler implements Condition<LanguageConsoleImpl> {
+public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler implements Condition<LanguageConsoleImpl> {
   private volatile ProcessHandler myProcessHandler;
 
-  public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
+  public ProcessBackedConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     super(preserveMarkup);
 
     myProcessHandler = processHandler;
