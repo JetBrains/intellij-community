@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,6 +54,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.ReferenceType;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -555,55 +557,55 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return highlighter;
   }
 
-  //@Override
-  //public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
-  //  super.readExternal(breakpointNode);
-  //  //noinspection HardCodedStringLiteral
-  //  final String url = breakpointNode.getAttributeValue("url");
-  //
-  //  //noinspection HardCodedStringLiteral
-  //  final String className = breakpointNode.getAttributeValue("class");
-  //  if (className != null) {
-  //    myClassName = className;
-  //  }
-  //
-  //  //noinspection HardCodedStringLiteral
-  //  final String packageName = breakpointNode.getAttributeValue("package");
-  //  if (packageName != null) {
-  //    myPackageName = packageName;
-  //  }
-  //
-  //  VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-  //  if (vFile == null) {
-  //    throw new InvalidDataException(DebuggerBundle.message("error.breakpoint.file.not.found", url));
-  //  }
-  //  final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-  //  if (doc == null) {
-  //    throw new InvalidDataException(DebuggerBundle.message("error.cannot.load.breakpoint.file", url));
-  //  }
-  //
-  //  // line number
-  //  final int line;
-  //  try {
-  //    //noinspection HardCodedStringLiteral
-  //    line = Integer.parseInt(breakpointNode.getAttributeValue("line"));
-  //  }
-  //  catch (Exception e) {
-  //    throw new InvalidDataException("Line number is invalid for breakpoint");
-  //  }
-  //  if (line < 0) {
-  //    throw new InvalidDataException("Line number is invalid for breakpoint");
-  //  }
-  //
-  //  RangeHighlighter highlighter = createHighlighter(myProject, doc, line);
-  //
-  //  if (highlighter == null) {
-  //    throw new InvalidDataException("");
-  //  }
-  //
-  //  myHighlighter = highlighter;
-  //  reload();
-  //}
+  @Override
+  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
+    super.readExternal(breakpointNode);
+    //noinspection HardCodedStringLiteral
+    //final String url = breakpointNode.getAttributeValue("url");
+
+    //noinspection HardCodedStringLiteral
+    final String className = breakpointNode.getAttributeValue("class");
+    if (className != null) {
+      myClassName = className;
+    }
+
+    //noinspection HardCodedStringLiteral
+    final String packageName = breakpointNode.getAttributeValue("package");
+    if (packageName != null) {
+      myPackageName = packageName;
+    }
+
+    //VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    //if (vFile == null) {
+    //  throw new InvalidDataException(DebuggerBundle.message("error.breakpoint.file.not.found", url));
+    //}
+    //final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
+    //if (doc == null) {
+    //  throw new InvalidDataException(DebuggerBundle.message("error.cannot.load.breakpoint.file", url));
+    //}
+    //
+    //// line number
+    //final int line;
+    //try {
+    //  //noinspection HardCodedStringLiteral
+    //  line = Integer.parseInt(breakpointNode.getAttributeValue("line"));
+    //}
+    //catch (Exception e) {
+    //  throw new InvalidDataException("Line number is invalid for breakpoint");
+    //}
+    //if (line < 0) {
+    //  throw new InvalidDataException("Line number is invalid for breakpoint");
+    //}
+    //
+    //RangeHighlighter highlighter = createHighlighter(myProject, doc, line);
+    //
+    //if (highlighter == null) {
+    //  throw new InvalidDataException("");
+    //}
+    //
+    //myHighlighter = highlighter;
+    //reload();
+  }
   //
   //@Override
   //@SuppressWarnings({"HardCodedStringLiteral"})
