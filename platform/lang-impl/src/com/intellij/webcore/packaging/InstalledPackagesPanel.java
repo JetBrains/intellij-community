@@ -71,6 +71,7 @@ public class InstalledPackagesPanel extends JPanel {
     // Defence from javax.swing.JTable.initializeLocalVars:
     //     setPreferredScrollableViewportSize(new Dimension(450, 400));
     myPackagesTable.setPreferredScrollableViewportSize(null);
+    myPackagesTable.setStriped(true);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
 
     myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
