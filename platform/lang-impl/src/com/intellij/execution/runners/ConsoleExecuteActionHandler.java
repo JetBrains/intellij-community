@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.console.BaseConsoleExecuteActionHandler;
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,7 +28,7 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler {
-  private ProcessHandler myProcessHandler;
+  private volatile ProcessHandler myProcessHandler;
 
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     super(preserveMarkup);
@@ -38,19 +36,8 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
     myProcessHandler = processHandler;
   }
 
-  @Nullable
-  private synchronized ProcessHandler getProcessHandler() {
-    return myProcessHandler;
-  }
-
-  public synchronized void setProcessHandler(@NotNull final ProcessHandler processHandler) {
+  public void setProcessHandler(@NotNull ProcessHandler processHandler) {
     myProcessHandler = processHandler;
-  }
-
-  @Override
-  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
-    //noinspection deprecation
-    execute(text);
   }
 
   @SuppressWarnings("deprecation")
@@ -70,9 +57,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
   public void sendText(String line) {
     final Charset charset = myProcessHandler instanceof BaseOSProcessHandler ?
                             ((BaseOSProcessHandler)myProcessHandler).getCharset() : null;
-    final ProcessHandler handler = getProcessHandler();
-    assert handler != null : "process handler is null";
-    final OutputStream outputStream = handler.getProcessInput();
+    final OutputStream outputStream = myProcessHandler.getProcessInput();
     assert outputStream != null : "output stream is null";
     try {
       byte[] bytes = charset != null ? (line + "\n").getBytes(charset) : line.getBytes();
@@ -84,7 +69,7 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
   }
 
   public final boolean isProcessTerminated() {
-    final ProcessHandler handler = getProcessHandler();
+    final ProcessHandler handler = myProcessHandler;
     return handler == null || handler.isProcessTerminated();
   }
 }
