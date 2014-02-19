@@ -56,11 +56,13 @@ public class InheritedMembersFilter implements FileStructureFilter {
     return true;
   }
 
+  @NotNull
   @Override
   public String getCheckBoxText() {
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
