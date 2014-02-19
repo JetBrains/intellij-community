@@ -389,6 +389,10 @@ public class BreakpointManager {
     return null;
   }
 
+  public Breakpoint findBreakpoint(XBreakpoint xBreakpoint) {
+    return myBreakpoints.get(xBreakpoint);
+  }
+
   private List<Element> myOriginalBreakpointsNodes = new ArrayList<Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
@@ -584,6 +588,7 @@ public class BreakpointManager {
     Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
     myBreakpoints.put(xBreakpoint, breakpoint);
     myBreakpointsListForIteration = null;
+    breakpoint.updateUI();
     RequestManagerImpl.createRequests(breakpoint);
     myDispatcher.getMulticaster().breakpointsChanged();
   }
@@ -621,6 +626,7 @@ public class BreakpointManager {
   public void writeExternal(@NotNull final Element parentNode) {
     // restore old breakpoints
     for (Element group : myOriginalBreakpointsNodes) {
+      group.detach();
       for (Element breakpoint : group.getChildren("breakpoint")) {
         if (breakpoint.getAttribute(CONVERTED_PARAM) == null) {
           breakpoint.setAttribute(CONVERTED_PARAM, "true");
