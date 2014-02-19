@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
+abstract class BaseProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
   @Override
   @Nullable
   public Settings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
