@@ -16,8 +16,10 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.console.BaseConsoleExecuteActionHandler;
+import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -27,7 +29,7 @@ import java.nio.charset.Charset;
 /**
  * @author traff
  */
-public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler {
+public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler implements Condition<LanguageConsoleImpl> {
   private volatile ProcessHandler myProcessHandler;
 
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
@@ -71,5 +73,10 @@ public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler
   public final boolean isProcessTerminated() {
     final ProcessHandler handler = myProcessHandler;
     return handler == null || handler.isProcessTerminated();
+  }
+
+  @Override
+  public boolean value(LanguageConsoleImpl console) {
+    return isProcessTerminated();
   }
 }

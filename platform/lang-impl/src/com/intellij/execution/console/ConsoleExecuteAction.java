@@ -48,15 +48,15 @@ public class ConsoleExecuteAction extends DumbAwareAction {
    * Only internal usage, to keep backward compatibility
    * to remove in IDEA 14
    */
-  public static ConsoleExecuteAction createAction(final LanguageConsoleImpl languageConsole,
-                                                             @Nullable Condition<LanguageConsoleImpl> enabledCondition,
-                                                             final BaseConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(languageConsole, new ConsoleExecuteActionHandler(consoleExecuteActionHandler.myPreserveMarkup) {
+  public static ConsoleExecuteAction createAction(@NotNull final LanguageConsoleImpl languageConsole,
+                                                  @NotNull com.intellij.execution.runners.ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    final ConsoleExecuteActionHandler handler = consoleExecuteActionHandler;
+    return new ConsoleExecuteAction(languageConsole, new ConsoleExecuteActionHandler(handler.myPreserveMarkup) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-        consoleExecuteActionHandler.doExecute(text, languageConsole, null);
+        handler.doExecute(text, languageConsole, null);
       }
-    }, enabledCondition);
+    }, consoleExecuteActionHandler);
   }
 
   ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
