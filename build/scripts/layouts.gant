@@ -474,6 +474,7 @@ public def layoutCommunityPlugins(String home) {
       dir("lib") {
         jar("tasks-api.jar") { module("tasks-api") }
         jar("tasks-core.jar") { module("tasks-core") }
+        jar("jira.jar") { module("jira") }
         jar("tasks-java.jar") { moduleOptional("tasks-java") }
         fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
           include(name: "**/*.jar")
