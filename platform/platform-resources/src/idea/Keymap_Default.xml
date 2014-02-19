@@ -112,6 +112,12 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F3"/>
   </action>
+  <action id="SelectNextOccurrence">
+    <keyboard-shortcut first-keystroke="alt N"/>
+  </action>
+  <action id="UnselectLastOccurrence">
+    <keyboard-shortcut first-keystroke="alt shift N"/>
+  </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>
