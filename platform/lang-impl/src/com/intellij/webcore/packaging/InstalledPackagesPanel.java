@@ -68,6 +68,9 @@ public class InstalledPackagesPanel extends JPanel {
         return tableCellRenderer;
       }
     };
+    // Defence from javax.swing.JTable.initializeLocalVars:
+    //     setPreferredScrollableViewportSize(new Dimension(450, 400));
+    myPackagesTable.setPreferredScrollableViewportSize(null);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
 
     myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
@@ -94,7 +97,6 @@ public class InstalledPackagesPanel extends JPanel {
       })
       .addExtraAction(myUpgradeButton);
 
-    decorator.setPreferredSize(new Dimension(500, 500));
     add(decorator.createPanel());
     myInstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.ADD);
     myUninstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.REMOVE);
