@@ -63,14 +63,22 @@ public class TextCompareProcessor {
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
 
+    int badLinesCount = 0;
     if (mySearchForSubFragments) {
       for (LineFragment lineBlock : lineBlocks) {
         if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
-        String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
-        String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
-        ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
-        lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
-        lineBlock.adjustTypeFromChildrenTypes();
+        try {
+          String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
+          String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
+          ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
+          lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
+          lineBlock.adjustTypeFromChildrenTypes();
+        }
+        catch (FilesTooBigForDiffException ignore) {
+          // If we can't by-word compare two lines - this is not a reason to break entire diff.
+          badLinesCount++;
+          if (badLinesCount > FilesTooBigForDiffException.MAX_BAD_LINES) break;
+        }
       }
     }
     return lineBlocks;
