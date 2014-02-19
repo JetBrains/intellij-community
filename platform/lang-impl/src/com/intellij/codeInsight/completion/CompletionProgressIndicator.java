@@ -199,7 +199,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                   " will move caret down and up in the editor", null);
       }
     } else if (DumbService.isDumb(getProject())) {
-      myLookup.addAdvertisement("Completion results might be incomplete until indexing is complete", MessageType.WARNING.getPopupBackground());
+      myLookup.addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
     }
 
     ProgressManager.checkCanceled();
