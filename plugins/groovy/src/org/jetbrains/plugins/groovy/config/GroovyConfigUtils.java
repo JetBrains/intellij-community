@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
@@ -46,7 +47,7 @@ import java.util.regex.Pattern;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(.*)\\.jar");
+  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static GroovyConfigUtils myGroovyConfigUtils;
 
   @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";
@@ -95,6 +96,11 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
+
+    if (groovyJarVersion == null) {
+      groovyJarVersion = getSDKJarVersion(new File(StringUtil.trimEnd(path, "!/")), GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+    }
+
     return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
 
@@ -189,5 +195,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
         return getSDKLibVersion(library);
       }
     });
+  }
+
+  public boolean isGroovyAll(@NotNull VirtualFile file) {
+    return GROOVY_ALL_JAR_PATTERN.matcher(file.getName()).matches();
   }
 }

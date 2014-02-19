@@ -245,6 +245,7 @@
                          displayName="Gant"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.EmbeddableGroovyLibraryPresentationProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryPresentationProvider" order="first"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 

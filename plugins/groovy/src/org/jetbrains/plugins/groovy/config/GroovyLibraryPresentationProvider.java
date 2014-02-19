@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +41,16 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
   }
 
   public boolean managesLibrary(final VirtualFile[] libraryFiles) {
-    return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null;
+    return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null && findGroovyAll(libraryFiles) == null;
+  }
+
+  private static VirtualFile findGroovyAll(VirtualFile[] libraryFiles) {
+    return ContainerUtil.find(libraryFiles, new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return GroovyConfigUtils.getInstance().isGroovyAll(file);
+      }
+    });
   }
 
   @Nls

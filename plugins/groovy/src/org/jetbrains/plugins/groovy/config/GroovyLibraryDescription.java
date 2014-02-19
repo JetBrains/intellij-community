@@ -72,18 +72,18 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   @Nullable
-  public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
-    final String name = dir.getName();
+  public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dirOrJar) {
+    final String name = dirOrJar.getName();
 
     final List<GroovyLibraryPresentationProviderBase> providers = ContainerUtil.findAll(LibraryPresentationProvider.EP_NAME.getExtensions(), GroovyLibraryPresentationProviderBase.class);
     for (final GroovyLibraryPresentationProviderBase provider : providers) {
-      if (provider.managesName(name) && provider.isSDKHome(dir)) {
+      if (provider.managesName(name) && provider.isSDKHome(dirOrJar)) {
         return provider;
       }
     }
 
     for (final GroovyLibraryPresentationProviderBase manager : providers) {
-      if (manager.isSDKHome(dir)) {
+      if (manager.isSDKHome(dirOrJar)) {
         return manager;
       }
     }
@@ -103,7 +103,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
       initial = findFile("/usr/share/groovy");
     }
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         if (!super.isFileSelectable(file)) {

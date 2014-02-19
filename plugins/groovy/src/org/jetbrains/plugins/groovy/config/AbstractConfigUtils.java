@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,12 +99,16 @@ public abstract class AbstractConfigUtils {
    */
   @Nullable
   public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
+    File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarPattern);
+    if (jars.length != 1) {
+      return null;
+    }
+    return getSDKJarVersion(jars[0], jarPattern, manifestPath);
+  }
+
+  public static String getSDKJarVersion(File jar, Pattern jarPattern, String manifestPath) {
     try {
-      File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarPattern);
-      if (jars.length != 1) {
-        return null;
-      }
-      JarFile jarFile = new JarFile(jars[0]);
+      JarFile jarFile = new JarFile(jar);
       try {
         JarEntry jarEntry = jarFile.getJarEntry(manifestPath);
         if (jarEntry == null) {
@@ -122,7 +127,7 @@ public abstract class AbstractConfigUtils {
           return version;
         }
 
-        final Matcher matcher = jarPattern.matcher(jars[0].getName());
+        final Matcher matcher = jarPattern.matcher(jar.getName());
         if (matcher.matches() && matcher.groupCount() == 1) {
           return matcher.group(1);
         }
@@ -132,7 +137,7 @@ public abstract class AbstractConfigUtils {
         jarFile.close();
       }
     }
-    catch (Exception e) {
+    catch (IOException e) {
       return null;
     }
   }
