@@ -28,7 +28,9 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.lang.PsiBuilderUtil.drop;
 import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.PsiBuilderUtil.rollbackTo;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class ExpressionParser {
@@ -342,7 +344,7 @@ public class ExpressionParser {
         if (dotTokenType == JavaTokenType.CLASS_KEYWORD && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P1 && builder.getCurrentOffset() == breakOffset) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
-            PsiBuilderUtil.drop(startMarker, dotPos);
+            drop(startMarker, dotPos);
             return expr;
           }
 
@@ -701,9 +703,7 @@ public class ExpressionParser {
     PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
     IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER) {
-      if (anno != null) {
-        anno.rollbackTo();
-      }
+      rollbackTo(anno);
       refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
@@ -732,9 +732,10 @@ public class ExpressionParser {
       return newExpr;
     }
 
-    myParser.getDeclarationParser().parseAnnotations(builder);
+    anno = myParser.getDeclarationParser().parseAnnotations(builder);
 
     if (builder.getTokenType() != JavaTokenType.LBRACKET) {
+      rollbackTo(anno);
       error(builder, refOrType == null ? JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
       newExpr.done(JavaElementType.NEW_EXPRESSION);
       return newExpr;
@@ -743,9 +744,12 @@ public class ExpressionParser {
     int bracketCount = 0;
     int dimCount = 0;
     while (true) {
-      myParser.getDeclarationParser().parseAnnotations(builder);
+      anno = myParser.getDeclarationParser().parseAnnotations(builder);
 
-      if (builder.getTokenType() != JavaTokenType.LBRACKET) break;
+      if (builder.getTokenType() != JavaTokenType.LBRACKET) {
+        rollbackTo(anno);
+        break;
+      }
       builder.advanceLexer();
 
       if (bracketCount == dimCount) {
