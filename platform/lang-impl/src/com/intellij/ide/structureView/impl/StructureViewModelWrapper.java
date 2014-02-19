@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,22 +45,22 @@ public class StructureViewModelWrapper implements StructureViewModel {
   }
 
   @Override
-  public void addEditorPositionListener(final FileEditorPositionListener listener) {
+  public void addEditorPositionListener(@NotNull final FileEditorPositionListener listener) {
     myStructureViewModel.addEditorPositionListener(listener);
   }
 
   @Override
-  public void removeEditorPositionListener(final FileEditorPositionListener listener) {
+  public void removeEditorPositionListener(@NotNull final FileEditorPositionListener listener) {
     myStructureViewModel.removeEditorPositionListener(listener);
   }
 
   @Override
-  public void addModelListener(final ModelListener modelListener) {
+  public void addModelListener(@NotNull final ModelListener modelListener) {
     myStructureViewModel.addModelListener(modelListener);
   }
 
   @Override
-  public void removeModelListener(final ModelListener modelListener) {
+  public void removeModelListener(@NotNull final ModelListener modelListener) {
     myStructureViewModel.removeModelListener(modelListener);
   }
 

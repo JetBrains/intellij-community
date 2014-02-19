@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,9 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     return HTML5_OUTLINE_PROVIDER_PROPERTY;
   }
 
+  @NotNull
   @Override
-  public Collection<Html5SectionTreeElement> provideNodes(final TreeElement node) {
+  public Collection<Html5SectionTreeElement> provideNodes(@NotNull final TreeElement node) {
     if (!(node instanceof HtmlFileTreeElement)) return Collections.emptyList();
 
     final XmlFile xmlFile = ((HtmlFileTreeElement)node).getElement();

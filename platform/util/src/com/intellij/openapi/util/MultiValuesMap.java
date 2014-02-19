@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -32,35 +33,38 @@ public class MultiValuesMap<K, V>{
     myBaseMap = ordered ? new LinkedHashMap<K, Collection<V>>() : new HashMap<K, Collection<V>>();
   }
 
-  public void putAll(K key, Collection<V> values) {
+  public void putAll(K key, @NotNull Collection<V> values) {
     for (V value : values) {
       put(key, value);
     }
   }
 
-  public void putAll(K key, V... values) {
+  public void putAll(K key, @NotNull V... values) {
     for (V value : values) {
       put(key, value);
     }
   }
 
   public void put(K key, V value) {
-    if (!myBaseMap.containsKey(key)) {
-      myBaseMap.put(key, myOrdered ? new LinkedHashSet<V>() : new HashSet<V>());
+    Collection<V> collection = myBaseMap.get(key);
+    if (collection == null) {
+      collection = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+      myBaseMap.put(key, collection);
     }
 
-    myBaseMap.get(key).add(value);
+    collection.add(value);
   }
 
-  @Nullable
   public Collection<V> get(K key){
     return myBaseMap.get(key);
   }
 
+  @NotNull
   public Set<K> keySet() {
     return myBaseMap.keySet();
   }
 
+  @NotNull
   public Collection<V> values() {
     Set<V> result = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
     for (final Collection<V> values : myBaseMap.values()) {
@@ -88,6 +92,7 @@ public class MultiValuesMap<K, V>{
     return myBaseMap.remove(key);
   }
 
+  @NotNull
   public Set<Map.Entry<K, Collection<V>>> entrySet() {
     return myBaseMap.entrySet();
   }
@@ -100,6 +105,7 @@ public class MultiValuesMap<K, V>{
     return myBaseMap.containsKey(key);
   }
 
+  @NotNull
   public Collection<V> collectValues() {
     Collection<V> result = new HashSet<V>();
     for (Collection<V> v : myBaseMap.values()) {

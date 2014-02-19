@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return myResourceBundle;
   }
 
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     Map<String, IProperty> propertyNames = new LinkedHashMap<String, IProperty>();
@@ -66,6 +68,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {

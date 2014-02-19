@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,9 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
   public static final String ID = "SHOW_ANONYMOUS";
   public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
 
+  @NotNull
   @Override
-  public Collection<JavaAnonymousClassTreeElement> provideNodes(TreeElement node) {
+  public Collection<JavaAnonymousClassTreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof PsiMethodTreeElement || node instanceof PsiFieldTreeElement || node instanceof ClassInitializerTreeElement) {
       final PsiElement el = ((PsiTreeElementBase)node).getElement();
       for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {

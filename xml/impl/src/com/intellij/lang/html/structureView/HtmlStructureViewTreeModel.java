@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   private String myStructureViewPlace;
 
   private static Sorter HTML_ALPHA_SORTER = new Sorter() {
+    @NotNull
     @Override
     public Comparator getComparator() {
       return new Comparator() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,6 +48,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     mySuperClassPointer = SmartPointerManager.getInstance(superClass.getProject()).createSmartPsiElementPointer(superClass);
   }
 
+  @NotNull
   public Collection<TreeElement> getChildren() {
     return myChildren;
   }
@@ -56,6 +58,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return (PsiClass)mySuperClassPointer.getElement();
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }

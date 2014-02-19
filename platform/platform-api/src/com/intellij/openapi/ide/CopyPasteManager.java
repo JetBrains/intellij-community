@@ -33,11 +33,11 @@ public abstract class CopyPasteManager {
     return ServiceManager.getService(CopyPasteManager.class);
   }
 
-  public abstract void addContentChangedListener(ContentChangedListener listener);
+  public abstract void addContentChangedListener(@NotNull ContentChangedListener listener);
 
-  public abstract void addContentChangedListener(ContentChangedListener listener, Disposable parentDisposable);
+  public abstract void addContentChangedListener(@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removeContentChangedListener(ContentChangedListener listener);
+  public abstract void removeContentChangedListener(@NotNull ContentChangedListener listener);
 
   /** @deprecated use {@link #getContents(DataFlavor)} or {@link #areDataFlavorsAvailable(DataFlavor...)} (to remove in IDEA 14) */
   @SuppressWarnings("unused")
@@ -53,6 +53,7 @@ public abstract class CopyPasteManager {
   @Nullable
   public abstract <T> T getContents(@NotNull DataFlavor flavor);
 
+  @NotNull
   public abstract Transferable[] getAllContents();
 
   public abstract void setContents(@NotNull Transferable content);

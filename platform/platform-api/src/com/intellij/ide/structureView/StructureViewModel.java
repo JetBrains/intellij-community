@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public interface StructureViewModel extends TreeModel {
    *
    * @param listener the listener to add.
    */
-  void addEditorPositionListener(FileEditorPositionListener listener);
+  void addEditorPositionListener(@NotNull FileEditorPositionListener listener);
 
   /**
    * Removes a listener which gets notified when the selection in the editor linked to the
@@ -49,7 +49,7 @@ public interface StructureViewModel extends TreeModel {
    *
    * @param listener the listener to remove.
    */
-  void removeEditorPositionListener(FileEditorPositionListener listener);
+  void removeEditorPositionListener(@NotNull FileEditorPositionListener listener);
 
   /**
    * Adds a listener which gets notified when the data represented by the structure view
@@ -57,7 +57,7 @@ public interface StructureViewModel extends TreeModel {
    *
    * @param modelListener the listener to add.
    */
-  void addModelListener(ModelListener modelListener);
+  void addModelListener(@NotNull ModelListener modelListener);
 
   /**
    * Removes a listener which gets notified when the data represented by the structure view
@@ -65,13 +65,14 @@ public interface StructureViewModel extends TreeModel {
    *
    * @param modelListener the listener to remove.
    */
-  void removeModelListener(ModelListener modelListener);
+  void removeModelListener(@NotNull ModelListener modelListener);
 
   /**
    * Returns the root element of the structure view tree.
    *
    * @return the structure view root.
    */
+  @Override
   @NotNull
   StructureViewTreeElement getRoot();
 
@@ -83,15 +84,12 @@ public interface StructureViewModel extends TreeModel {
   boolean shouldEnterElement(Object element);
 
   interface ElementInfoProvider extends StructureViewModel {
-
     boolean isAlwaysShowsPlus(StructureViewTreeElement element);
-
     boolean isAlwaysLeaf(StructureViewTreeElement element);
-
   }
 
   interface ExpandInfoProvider {
-    boolean isAutoExpand(StructureViewTreeElement element);
+    boolean isAutoExpand(@NotNull StructureViewTreeElement element);
     boolean isSmartExpand();
   }
 }

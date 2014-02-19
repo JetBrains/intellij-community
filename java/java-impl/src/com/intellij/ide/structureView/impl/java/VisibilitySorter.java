@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class VisibilitySorter implements Sorter{
   public static final Sorter INSTANCE = new VisibilitySorter();
 
   private static final ActionPresentation PRESENTATION = new ActionPresentation() {
+    @NotNull
     public String getText() {
       return IdeBundle.message("action.structureview.sort.by.visibility");
     }
@@ -44,6 +45,7 @@ public class VisibilitySorter implements Sorter{
   };
   @NonNls public static final String ID = "VISIBILITY_SORTER";
 
+  @NotNull
   public Comparator getComparator() {
     return VisibilityComparator.IMSTANCE;
   }

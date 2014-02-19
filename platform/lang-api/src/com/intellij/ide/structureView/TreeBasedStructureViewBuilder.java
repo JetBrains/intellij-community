@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @see TextEditorBasedStructureViewModel
  * @see com.intellij.lang.LanguageStructureViewBuilder#getStructureViewBuilder(com.intellij.psi.PsiFile)
  */
-public abstract class
-  TreeBasedStructureViewBuilder implements StructureViewBuilder {
+public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
   /**
    * @deprecated Use createStructureViewModel(Editor editor)
    */
@@ -60,7 +59,7 @@ public abstract class
 
   @Override
   @NotNull
-  public StructureView createStructureView(FileEditor fileEditor, Project project) {
+  public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     final StructureViewModel model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
     StructureView view = StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
     Disposer.register(view, new Disposable() {

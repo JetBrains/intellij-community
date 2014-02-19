@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -30,7 +31,8 @@ public abstract class StructureViewFactoryEx extends StructureViewFactory {
   @Nullable
   public abstract StructureViewWrapper getStructureViewWrapper();
 
-  public abstract Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type);
+  @NotNull
+  public abstract Collection<StructureViewExtension> getAllExtensions(@NotNull Class<? extends PsiElement> type);
 
   public abstract void setActiveAction(final String name, final boolean state);
 
@@ -40,5 +42,5 @@ public abstract class StructureViewFactoryEx extends StructureViewFactory {
     return (StructureViewFactoryEx)getInstance(project);
   }
 
-  public abstract void runWhenInitialized(Runnable runnable);
+  public abstract void runWhenInitialized(@NotNull Runnable runnable);
 }

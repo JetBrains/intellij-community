@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,21 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.TreeElementWrapper");
   public TreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
     super(project, value, treeModel);
   }
 
   @Override
-  public void copyFromNewInstance(final CachingChildrenTreeNode oldInstance) {
+  public void copyFromNewInstance(@NotNull final CachingChildrenTreeNode oldInstance) {
   }
 
   @Override
@@ -41,16 +45,23 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   @Override
   public void initChildren() {
     clearChildren();
-    TreeElement[] children = getValue().getChildren();
+    TreeElement value = getValue();
+    TreeElement[] children = value.getChildren();
     for (TreeElement child : children) {
+      if (child == null) {
+        LOG.error(value + " returned null child: " + Arrays.toString(children));
+      }
       addSubElement(createChildNode(child));
     }
     if (myTreeModel instanceof ProvidingTreeModel) {
       final Collection<NodeProvider> providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
       for (NodeProvider provider : providers) {
         if (((ProvidingTreeModel)myTreeModel).isEnabled(provider)) {
-          final Collection<TreeElement> nodes = provider.provideNodes(getValue());
+          final Collection<TreeElement> nodes = provider.provideNodes(value);
           for (TreeElement node : nodes) {
+            if (node == null) {
+              LOG.error(provider + " returned null node: " + nodes);
+            }
             addSubElement(createChildNode(node));
           }
         }

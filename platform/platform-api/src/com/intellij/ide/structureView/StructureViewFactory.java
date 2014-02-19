@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.structureView;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory interface for creating instances of the standard structure view component.
@@ -31,9 +32,10 @@ public abstract class StructureViewFactory {
    * @param project    the project containing the file for which the structure view is requested.
    * @return the structure view instance.
    */
+  @NotNull
   public abstract StructureView createStructureView(FileEditor fileEditor,
-                                    StructureViewModel treeModel,
-                                    Project project); 
+                                                    @NotNull StructureViewModel treeModel,
+                                                    @NotNull Project project);
 
   /**
    * Creates a structure view component instance for the specified editor.
@@ -44,10 +46,11 @@ public abstract class StructureViewFactory {
    * @param showRootNode pass <code>false</code> if root node of the structure built should not actually be shown in result tree.
    * @return the structure view instance.
    */
+  @NotNull
   public abstract StructureView createStructureView(FileEditor fileEditor,
-                                    StructureViewModel treeModel,
-                                    Project project,
-                                    boolean showRootNode);
+                                                    @NotNull StructureViewModel treeModel,
+                                                    @NotNull Project project,
+                                                    boolean showRootNode);
 
   public static StructureViewFactory getInstance(Project project) {
     return ServiceManager.getService(project, StructureViewFactory.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,19 +75,19 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
     return null;
   }
 
-  public void addEditorPositionListener(FileEditorPositionListener listener) {
+  public void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
 
   }
 
-  public void removeEditorPositionListener(FileEditorPositionListener listener) {
+  public void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
 
   }
 
-  public void addModelListener(ModelListener modelListener) {
+  public void addModelListener(@NotNull ModelListener modelListener) {
 
   }
 
-  public void removeModelListener(ModelListener modelListener) {
+  public void removeModelListener(@NotNull ModelListener modelListener) {
 
   }
 

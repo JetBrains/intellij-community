@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   @Override
-  protected void postprocess(PresentationData presentation) {
+  protected void postprocess(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
     }
@@ -81,7 +81,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
   }
 
-  protected void setForcedForeground(PresentationData presentation) {
+  protected void setForcedForeground(@NotNull PresentationData presentation) {
     final FileStatus status = getFileStatus();
     Color fgColor = getFileStatusColor(status);
     fgColor = fgColor == null ? status.getColor() : fgColor;
@@ -145,18 +145,11 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     if (myValue == null) {
       return null;
     }
-    else {
-      return (T)TreeAnchorizer.getService().retrieveElement(myValue);
-    }
+    return (T)TreeAnchorizer.getService().retrieveElement(myValue);
   }
 
   public final void setValue(T value) {
-    if (value == null) {
-      myValue = null;
-    }
-    else {
-      myValue = TreeAnchorizer.getService().createAnchor(value);
-    }
+    myValue = value == null ? null : TreeAnchorizer.getService().createAnchor(value);
   }
 
   public final Object getEqualityObject() {

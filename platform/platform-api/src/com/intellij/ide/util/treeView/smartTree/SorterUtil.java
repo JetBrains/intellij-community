@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -22,16 +24,19 @@ public class SorterUtil {
   private SorterUtil() {
   }
 
+  @NotNull
   public static String getStringPresentation(Object object) {
     String result = null;
     if (object instanceof SortableTreeElement) {
-      result = ((SortableTreeElement) object).getAlphaSortKey();
-    } else if (object instanceof TreeElement){
-      result =  ((TreeElement)object).getPresentation().getPresentableText();
-    } else if (object instanceof Group){
+      result = ((SortableTreeElement)object).getAlphaSortKey();
+    }
+    else if (object instanceof TreeElement) {
+      result = ((TreeElement)object).getPresentation().getPresentableText();
+    }
+    else if (object instanceof Group) {
       result = ((Group)object).getPresentation().getPresentableText();
     }
 
-    return result != null ? result : "";
+    return result == null ? "" : result;
   }
 }

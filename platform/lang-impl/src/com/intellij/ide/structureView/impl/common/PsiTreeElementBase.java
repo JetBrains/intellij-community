@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     myValue = psiElement;
   }
 
+  @NotNull
   @Override
   public ItemPresentation getPresentation() {
     return this;
@@ -94,6 +95,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return element != null ? element.toString() : "";
   }
 
+  @NotNull
   @Override
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();

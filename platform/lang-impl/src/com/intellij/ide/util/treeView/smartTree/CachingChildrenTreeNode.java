@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import gnu.trove.THashMap;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode");
   private List<CachingChildrenTreeNode> myChildren;
   private List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
@@ -95,12 +97,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected void filterChildren(Filter[] filters) {
+  protected void filterChildren(@NotNull Filter[] filters) {
     Collection<AbstractTreeNode> children = getChildren();
     for (Filter filter : filters) {
       for (Iterator<AbstractTreeNode> eachNode = children.iterator(); eachNode.hasNext();) {
         TreeElementWrapper eachChild = (TreeElementWrapper)eachNode.next();
-        if (!filter.isVisible(eachChild.getValue())) {
+        TreeElement value = eachChild.getValue();
+        if (value == null || !filter.isVisible(value)) {
           eachNode.remove();
         }
       }
@@ -108,7 +111,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(children);
   }
 
-  protected void groupChildren(Grouper[] groupers) {
+  protected void groupChildren(@NotNull Grouper[] groupers) {
     for (Grouper grouper : groupers) {
       groupElements(grouper);
     }
@@ -147,16 +150,22 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(result);
   }
 
-  private void processUngrouped(List<AbstractTreeNode<TreeElement>> ungrouped, Grouper grouper) {
+  private void processUngrouped(@NotNull List<AbstractTreeNode<TreeElement>> ungrouped, @NotNull Grouper grouper) {
     Map<TreeElement,AbstractTreeNode> ungroupedObjects = collectValues(ungrouped);
     Collection<Group> groups = grouper.group(this, ungroupedObjects.keySet());
 
     Map<Group, GroupWrapper> groupNodes = createGroupNodes(groups);
 
     for (Group group : groups) {
+      if (group == null) {
+        LOG.error(grouper + " returned null group: "+groups);
+      }
       GroupWrapper groupWrapper = groupNodes.get(group);
       Collection<TreeElement> children = group.getChildren();
       for (TreeElement node : children) {
+        if (node == null) {
+          LOG.error(group + " returned null child: " + children);
+        }
         CachingChildrenTreeNode child = createChildNode(node);
         groupWrapper.addSubElement(child);
         AbstractTreeNode abstractTreeNode = ungroupedObjects.get(node);
@@ -165,7 +174,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected TreeElementWrapper createChildNode(final TreeElement child) {
+  protected TreeElementWrapper createChildNode(@NotNull TreeElement child) {
     return new TreeElementWrapper(getProject(), child, myTreeModel);
   }
 
@@ -177,7 +186,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return objects;
   }
 
-  private Map<Group, GroupWrapper> createGroupNodes(Collection<Group> groups) {
+  private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<Group> groups) {
     Map<Group, GroupWrapper> result = new THashMap<Group, GroupWrapper>();
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
@@ -185,7 +194,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return result;
   }
 
-  protected GroupWrapper createGroupWrapper(final Project project, Group group, final TreeModel treeModel) {
+  protected GroupWrapper createGroupWrapper(final Project project, @NotNull Group group, final TreeModel treeModel) {
     return new GroupWrapper(project, group, treeModel);
   }
 
@@ -225,7 +234,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected abstract void copyFromNewInstance(final CachingChildrenTreeNode newInstance);
+  protected abstract void copyFromNewInstance(@NotNull CachingChildrenTreeNode newInstance);
 
   protected abstract void performTreeActions();
 

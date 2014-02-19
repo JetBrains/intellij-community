@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -27,8 +28,9 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvider {
+  @NotNull
   @Override
-  public Collection<TreeElement> provideNodes(TreeElement node) {
+  public Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
       final PsiClass aClass = ((JavaClassTreeElement)node).getValue();
       Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>();

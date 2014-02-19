@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SuperTypesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
   @NotNull
-  public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
+  public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
     Map<Group, SuperTypeGroup> groups = new THashMap<Group, SuperTypeGroup>();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,23 +35,23 @@ public abstract class FileStatusManager {
   public abstract void fileStatusesChanged();
   public abstract void fileStatusChanged(VirtualFile file);
 
-  public abstract void addFileStatusListener(FileStatusListener listener);
-  public abstract void addFileStatusListener(FileStatusListener listener, Disposable parentDisposable);
-  public abstract void removeFileStatusListener(FileStatusListener listener);
+  public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
+  public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);
+  public abstract void removeFileStatusListener(@NotNull FileStatusListener listener);
 
   /**
    * @deprecated Use getStatus(file).getText()} instead
    */
-  public String getStatusText(VirtualFile file){
+  public String getStatusText(@NotNull VirtualFile file){
     return getStatus(file).getText();
   }
 
   /**
    * @deprecated Use getStatus(file).getColor()} instead
    */
-  public Color getStatusColor(VirtualFile file){
+  public Color getStatusColor(@NotNull VirtualFile file){
     return getStatus(file).getColor();
   }
 
-  public abstract Color getNotChangedDirectoryColor(VirtualFile vf);
+  public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile vf);
 }

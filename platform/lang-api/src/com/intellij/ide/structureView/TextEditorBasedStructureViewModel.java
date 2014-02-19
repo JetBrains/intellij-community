@@ -85,12 +85,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  public final void addEditorPositionListener(FileEditorPositionListener listener) {
+  public final void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public final void removeEditorPositionListener(FileEditorPositionListener listener) {
+  public final void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
     myListeners.remove(listener);
   }
 
@@ -136,12 +136,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  public void addModelListener(ModelListener modelListener) {
+  public void addModelListener(@NotNull ModelListener modelListener) {
 
   }
 
   @Override
-  public void removeModelListener(ModelListener modelListener) {
+  public void removeModelListener(@NotNull ModelListener modelListener) {
 
   }
 

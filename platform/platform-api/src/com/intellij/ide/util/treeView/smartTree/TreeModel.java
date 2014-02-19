@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ public interface TreeModel {
    *
    * @return the tree root.
    */
-  @NotNull TreeElement getRoot();
+  @NotNull
+  TreeElement getRoot();
 
   /**
    * Returns the list of actions for grouping items in the tree.
@@ -37,7 +38,8 @@ public interface TreeModel {
    * @return the array of grouping actions.
    * @see Grouper#EMPTY_ARRAY
    */
-  @NotNull Grouper[] getGroupers();
+  @NotNull
+  Grouper[] getGroupers();
 
   /**
    * Returns the array of actions for sorting items in the tree.
@@ -45,7 +47,8 @@ public interface TreeModel {
    * @return the array of sorting actions.
    * @see Sorter#EMPTY_ARRAY
    */
-  @NotNull Sorter[] getSorters();
+  @NotNull
+  Sorter[] getSorters();
 
   /**
    * Returns the array of actions for filtering items in the tree.
@@ -53,5 +56,6 @@ public interface TreeModel {
    * @return the array of filtering actions.
    * @see Filter#EMPTY_ARRAY
    */
-  @NotNull Filter[] getFilters();
+  @NotNull
+  Filter[] getFilters();
 }
