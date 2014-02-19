@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
@@ -20,6 +21,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
     myElement = element;
   }
 
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     if (myElement instanceof YAMLFile ||
         myElement instanceof YAMLDocument ||
@@ -39,6 +41,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
   }
 
 
+  @NotNull
   public ItemPresentation getPresentation() {
     if (myElement instanceof YAMLKeyValue){
       final YAMLKeyValue kv = (YAMLKeyValue)myElement;
