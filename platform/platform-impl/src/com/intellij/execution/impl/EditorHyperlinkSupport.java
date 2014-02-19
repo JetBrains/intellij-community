@@ -80,7 +80,10 @@ public class EditorHyperlinkSupport {
       public void mouseClicked(EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
-          getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          if (runnable != null) {
+            runnable.run();
+          }
         }
       }
     });
