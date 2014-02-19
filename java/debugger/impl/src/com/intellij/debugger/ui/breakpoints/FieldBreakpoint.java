@@ -35,6 +35,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,6 +50,7 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.request.AccessWatchpointRequest;
 import com.sun.jdi.request.ModificationWatchpointRequest;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
@@ -361,15 +364,23 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     return field;
   }
 
-  //@Override
-  //public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
-  //  super.readExternal(breakpointNode);
-  //  //noinspection HardCodedStringLiteral
-  //  setFieldName(breakpointNode.getAttributeValue("field_name"));
-  //  if(getFieldName() == null) {
-  //    throw new InvalidDataException("No field name for field breakpoint");
-  //  }
-  //}
+  @Override
+  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
+    super.readExternal(breakpointNode);
+    //noinspection HardCodedStringLiteral
+    setFieldName(breakpointNode.getAttributeValue("field_name"));
+    if(getFieldName() == null) {
+      throw new InvalidDataException("No field name for field breakpoint");
+    }
+    try {
+      getProperties().WATCH_MODIFICATION = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
+    } catch (Exception e) {
+    }
+    try {
+      getProperties().WATCH_ACCESS = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
+    } catch (Exception e) {
+    }
+  }
   //
   //@Override
   //@SuppressWarnings({"HardCodedStringLiteral"})

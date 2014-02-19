@@ -33,6 +33,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -47,6 +49,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.ExceptionEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.ExceptionRequest;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
@@ -228,19 +231,28 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return JavaPsiFacade.getInstance(myProject).findClass(getClassName(), GlobalSearchScope.allScope(myProject));
   }
 
-  //public void readExternal(Element parentNode) throws InvalidDataException {
-  //  super.readExternal(parentNode);
-  //  //noinspection HardCodedStringLiteral
-  //  String className = parentNode.getAttributeValue("class_name");
-  //  setQualifiedName(className);
-  //  if(className == null) {
-  //    throw new InvalidDataException(READ_NO_CLASS_NAME);
-  //  }
-  //
-  //  //noinspection HardCodedStringLiteral
-  //  String packageName = parentNode.getAttributeValue("package_name");
-  //  setPackageName(packageName != null? packageName : calcPackageName(packageName));
-  //}
+  public void readExternal(Element parentNode) throws InvalidDataException {
+    super.readExternal(parentNode);
+    //noinspection HardCodedStringLiteral
+    String className = parentNode.getAttributeValue("class_name");
+    setQualifiedName(className);
+    if(className == null) {
+      throw new InvalidDataException(READ_NO_CLASS_NAME);
+    }
+
+    //noinspection HardCodedStringLiteral
+    String packageName = parentNode.getAttributeValue("package_name");
+    setPackageName(packageName != null? packageName : calcPackageName(packageName));
+
+    try {
+      getProperties().NOTIFY_CAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
+    } catch (Exception e) {
+    }
+    try {
+      getProperties().NOTIFY_UNCAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
+    } catch (Exception e) {
+    }
+  }
 
   private boolean isNotifyCaught() {
     return getProperties().NOTIFY_CAUGHT;

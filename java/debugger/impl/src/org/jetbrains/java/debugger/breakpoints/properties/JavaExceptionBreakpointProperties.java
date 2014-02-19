@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,7 +24,11 @@ import org.jetbrains.annotations.Nullable;
 public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<JavaExceptionBreakpointProperties> {
   public boolean NOTIFY_CAUGHT   = true;
   public boolean NOTIFY_UNCAUGHT = true;
+
+  @Attribute("class_name")
   public String myQualifiedName;
+
+  @Attribute("package_name")
   public String myPackageName;
 
   public JavaExceptionBreakpointProperties(String qualifiedName, String packageName) {

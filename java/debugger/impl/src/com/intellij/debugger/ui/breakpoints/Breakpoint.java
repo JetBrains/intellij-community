@@ -33,6 +33,8 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -44,6 +46,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -60,7 +64,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   //private boolean LOG_EXPRESSION_ENABLED = false;
   //private boolean REMOVE_AFTER_HIT = false;
   //private TextWithImports  myLogMessage; // an expression to be evaluated and printed
-  //@NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
   //private TextWithImportsImpl myLogMessage;
@@ -412,14 +416,31 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     RequestManagerImpl.deleteRequests(this);
   }
 
-  //@Override
-  //public void readExternal(Element parentNode) throws InvalidDataException {
-    //super.readExternal(parentNode);
-    //String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
-    //if (logMessage != null) {
-    //  setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage));
-    //}
-  //}
+  public void readExternal(Element parentNode) throws InvalidDataException {
+    FilteredRequestorImpl requestor = new FilteredRequestorImpl(myProject);
+    requestor.readTo(parentNode, this);
+    try {
+      setEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
+    } catch (Exception e) {
+    }
+    try {
+      setLogEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
+    } catch (Exception e) {
+    }
+    try {
+      if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
+        String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
+        if (logMessage != null) {
+          setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage));
+        }
+      }
+    } catch (Exception e) {
+    }
+    try {
+      setRemoveAfterHit(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
+    } catch (Exception e) {
+    }
+  }
 
   //@Override
   //public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -459,9 +480,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected boolean isLogExpressionEnabled() {
     return myXBreakpoint.getLogExpression() != null;
-  }
-
-  protected void setLogExpressionEnabled(boolean LOG_EXPRESSION_ENABLED) {
   }
 
   @Override

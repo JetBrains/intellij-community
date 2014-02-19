@@ -20,6 +20,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
 /**
@@ -41,6 +42,7 @@ public class InstanceFilter implements JDOMExternalizable{
     this.ENABLED = ENABLED;
   }
 
+  @Transient
   public long getId() {
     return ID;
   }

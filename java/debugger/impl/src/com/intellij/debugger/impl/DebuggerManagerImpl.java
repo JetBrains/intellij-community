@@ -180,17 +180,17 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public Element getState() {
     Element state = new Element("state");
-    //myBreakpointManager.writeExternal(state);
+    myBreakpointManager.writeExternal(state);
     return state;
   }
 
   @Override
   public void loadState(Element state) {
-    //myBreakpointManager.readExternal(state);
+    myBreakpointManager.readExternal(state);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    //myBreakpointManager.writeExternal(element);
+    myBreakpointManager.writeExternal(element);
   }
 
   public DebuggerSession attachVirtualMachine(Executor executor,

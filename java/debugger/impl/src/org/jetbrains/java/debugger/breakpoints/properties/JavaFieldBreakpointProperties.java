@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<JavaFieldBreakpointProperties> {
   public boolean WATCH_MODIFICATION = true;
   public boolean WATCH_ACCESS       = false;
+
+  @Attribute("field_name")
   public String myFieldName;
 
   public JavaFieldBreakpointProperties(String fieldName) {

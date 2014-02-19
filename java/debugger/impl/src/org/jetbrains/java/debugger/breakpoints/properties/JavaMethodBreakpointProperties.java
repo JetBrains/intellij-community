@@ -15,13 +15,17 @@
  */
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author egor
  */
 public class JavaMethodBreakpointProperties extends JavaBreakpointProperties<JavaMethodBreakpointProperties> {
+  @Attribute("class")
   public String myClassPattern;
+
+  @Attribute("method")
   public String myMethodName;
 
   public boolean WATCH_ENTRY = true;

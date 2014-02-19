@@ -20,23 +20,15 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.*;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.requests.LocatableEventRequestor;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.sun.jdi.BooleanValue;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +41,7 @@ import java.util.List;
 /*
  * Not used any more, since move to xBreakpoints
  */
-public abstract class FilteredRequestorImpl implements JDOMExternalizable, FilteredRequestor {
+public class FilteredRequestorImpl implements JDOMExternalizable, FilteredRequestor {
 
   public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
   public boolean  SUSPEND = true;
@@ -125,6 +117,30 @@ public abstract class FilteredRequestorImpl implements JDOMExternalizable, Filte
     myClassExclusionFilters = classExclusionFilters != null? classExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
 
+  public void readTo(Element parentNode, Breakpoint breakpoint) throws InvalidDataException {
+    readExternal(parentNode);
+    if (SUSPEND) {
+      breakpoint.setSuspendPolicy(SUSPEND_POLICY);
+    }
+    else {
+      breakpoint.setSuspendPolicy(DebuggerSettings.SUSPEND_NONE);
+    }
+
+    breakpoint.setCountFilterEnabled(COUNT_FILTER_ENABLED);
+    breakpoint.setCountFilter(COUNT_FILTER);
+
+    if (CONDITION_ENABLED) {
+      breakpoint.setCondition(myCondition != null ? myCondition.getText() : null);
+    }
+
+    breakpoint.setClassFiltersEnabled(CLASS_FILTERS_ENABLED);
+    breakpoint.setClassFilters(getClassFilters());
+    breakpoint.setClassExclusionFilters(getClassExclusionFilters());
+
+    breakpoint.setInstanceFiltersEnabled(INSTANCE_FILTERS_ENABLED);
+    breakpoint.setInstanceFilters(getInstanceFilters());
+  }
+
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) { // compatibility with older format
@@ -189,7 +205,9 @@ public abstract class FilteredRequestorImpl implements JDOMExternalizable, Filte
     return true;
   }
 
-  public abstract PsiElement getEvaluationElement();
+  public PsiElement getEvaluationElement() {
+    return null;
+  }
 
   public TextWithImports getCondition() {
     return myCondition;
@@ -217,5 +235,11 @@ public abstract class FilteredRequestorImpl implements JDOMExternalizable, Filte
 
   public boolean isInstanceFiltersEnabled() {
     return INSTANCE_FILTERS_ENABLED;
+  }
+
+  @Override
+  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
+    throws EventProcessingException {
+    return false;
   }
 }

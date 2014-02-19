@@ -38,6 +38,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -53,6 +55,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -360,6 +363,19 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return null;
   }
 
+  @Override
+  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
+    super.readExternal(breakpointNode);
+    try {
+      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
+    } catch (Exception e) {
+    }
+    try {
+      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
+    } catch (Exception e) {
+    }
+  }
+
   public String toString() {
     return getDescription();
   }
@@ -378,16 +394,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getProperties().WATCH_ENTRY;
   }
 
-  private void setWatchEntry(boolean WATCH_ENTRY) {
-    getProperties().WATCH_ENTRY = WATCH_ENTRY;
-  }
-
   private boolean isWatchExit() {
     return getProperties().WATCH_EXIT;
-  }
-
-  private void setWatchExit(boolean WATCH_EXIT) {
-    getProperties().WATCH_EXIT = WATCH_EXIT;
   }
 
   @Nullable

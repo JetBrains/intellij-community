@@ -21,6 +21,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
 import java.util.regex.Matcher;
@@ -42,9 +43,12 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     ENABLED = true;
   }
 
+  @Transient
   public String getPattern() {
     return PATTERN;
   }
+
+  @Transient
   public boolean isEnabled() {
     return ENABLED;
   }
