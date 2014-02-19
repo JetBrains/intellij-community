@@ -241,11 +241,22 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleView.getConsole();
   }
 
-  public static AnAction createConsoleExecAction(final LanguageConsoleView console,
-                                                 final ProcessHandler processHandler,
-                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
+                                                 @NotNull ProcessHandler processHandler,
+                                                 @NotNull ConsoleExecuteActionHandler consoleExecuteActionHandler) {
     return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
                                     new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler));
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public static AnAction createConsoleExecAction(LanguageConsoleImpl languageConsole,
+                                                 ProcessHandler processHandler,
+                                                 ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return ConsoleExecuteAction.createAction(languageConsole, new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler), consoleExecuteActionHandler);
   }
 
   @NotNull
