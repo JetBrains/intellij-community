@@ -233,12 +233,6 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
-    //noinspection HardCodedStringLiteral
-    String className = parentNode.getAttributeValue("class_name");
-    setQualifiedName(className);
-    if(className == null) {
-      throw new InvalidDataException(READ_NO_CLASS_NAME);
-    }
 
     //noinspection HardCodedStringLiteral
     String packageName = parentNode.getAttributeValue("package_name");
@@ -251,6 +245,13 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     try {
       getProperties().NOTIFY_UNCAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
     } catch (Exception e) {
+    }
+
+    //noinspection HardCodedStringLiteral
+    String className = parentNode.getAttributeValue("class_name");
+    setQualifiedName(className);
+    if(className == null) {
+      throw new InvalidDataException(READ_NO_CLASS_NAME);
     }
   }
 

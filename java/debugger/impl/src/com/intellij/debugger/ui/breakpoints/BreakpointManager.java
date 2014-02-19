@@ -454,13 +454,17 @@ public class BreakpointManager {
               anyExceptionBreakpointGroup = group;
             }
 
-            //if (anyExceptionBreakpointGroup != null) {
-            //  final Element breakpointElement = group.getChild("breakpoint");
-            //  if (breakpointElement != null) {
-            //    getAnyExceptionBreakpoint().readExternal(breakpointElement);
-            //  }
-            //}
-
+            if (anyExceptionBreakpointGroup != null) {
+              final Element breakpointElement = group.getChild("breakpoint");
+              if (breakpointElement != null) {
+                XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
+                JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+                XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
+                Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
+                breakpoint.readExternal(breakpointElement);
+                addBreakpoint(breakpoint);
+              }
+            }
           }
         }
         catch (InvalidDataException ignored) {

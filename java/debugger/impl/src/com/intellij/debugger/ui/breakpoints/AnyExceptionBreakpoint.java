@@ -60,13 +60,13 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     // should be emty - does not make sense for this breakpoint
   }
 
-  //public void readExternal(Element parentNode) throws InvalidDataException {
-  //  try {
-  //    super.readExternal(parentNode);
-  //  }
-  //  catch (InvalidDataException e) {
-  //    if(!READ_NO_CLASS_NAME.equals(e.getMessage())) throw e;
-  //  }
-  //}
+  public void readExternal(Element parentNode) throws InvalidDataException {
+    try {
+      super.readExternal(parentNode);
+    }
+    catch (InvalidDataException e) {
+      if(!READ_NO_CLASS_NAME.equals(e.getMessage())) throw e;
+    }
+  }
 
 }
