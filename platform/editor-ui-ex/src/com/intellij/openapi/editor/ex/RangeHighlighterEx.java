@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   boolean isAfterEndOfLine();
-  void setAfterEndOfLine(boolean val);
+  void setAfterEndOfLine(boolean value);
 
   int getAffectedAreaStartOffset();
 

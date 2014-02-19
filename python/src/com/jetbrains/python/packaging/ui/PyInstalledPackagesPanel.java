@@ -34,6 +34,7 @@ import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
@@ -50,6 +51,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
     super(project, area);
+    setPreferredSize(new Dimension(500, 500));
 
     myNotificationArea.addLinkHandler(INSTALL_SETUPTOOLS, new Runnable() {
       @Override

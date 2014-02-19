@@ -149,7 +149,7 @@ public class PushedFilePropertiesUpdater {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
-      indicator.setText("Updating file properties...");
+      indicator.setText("Initializing file system cache...");
     }
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (int i1 = 0; i1 < modules.length; i1++) {

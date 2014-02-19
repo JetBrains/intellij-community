@@ -41,6 +41,8 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     addListeners();
 
     addMouseMotionListener(this);
+
+    setOpaque(true);
   }
 
   private void addListeners() {
@@ -68,6 +70,8 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
   }
 
   private void computeMaxAnnotationWidth() {
+    gutterContentProvider.beforeUiComponentUpdate(editor);
+
     if (!gutterContentProvider.hasText()) {
       maxAnnotationWidth = 0;
       return;
@@ -75,7 +79,6 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
     FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
     int lineCount = editor.getDocument().getLineCount();
-    gutterContentProvider.beforeUiComponentUpdate(editor);
     int gutterSize = 0;
     for (int i = 0; i < lineCount; i++) {
       String text = gutterContentProvider.getText(i, editor);
@@ -100,9 +103,6 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
       if (clip.height < 0 || maxAnnotationWidth == 0) {
         return;
       }
-
-      g.setColor(editor.getBackgroundColor());
-      g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
       UISettings.setupAntialiasing(g);
 
