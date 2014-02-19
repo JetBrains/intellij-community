@@ -58,7 +58,9 @@ public class Splash extends JDialog implements StartupProgress {
     super((Frame)null, false);
 
     setUndecorated(true);
-    setResizable(false);
+    if (!(SystemInfo.isLinux && SystemInfo.isJavaVersionAtLeast("1.7"))) {
+      setResizable(false);
+    }
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
