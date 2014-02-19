@@ -76,6 +76,7 @@ public class ConsoleViewUtil {
         editorSettings.setAdditionalPageAtBottom(false);
         editorSettings.setAdditionalColumnsCount(0);
         editorSettings.setAdditionalLinesCount(0);
+        editorSettings.setRightMarginShown(false);
 
         editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
@@ -85,7 +86,6 @@ public class ConsoleViewUtil {
         }
         editor.setColorsScheme(scheme);
         scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-        scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
       }
     });
   }
