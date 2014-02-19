@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
@@ -25,11 +26,12 @@ import java.awt.event.MouseMotionListener;
 
 class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
   private static final TooltipGroup TOOLTIP_GROUP = new TooltipGroup("CONSOLE_GUTTER_TOOLTIP_GROUP", 0);
-  private static final int RIGHT_INSET = 6;
+
+  private final EditorImpl editor;
 
   private int maxAnnotationWidth = 0;
   private int myLastPreferredHeight = -1;
-  private final EditorImpl editor;
+  private final int lineEndInset;
 
   private final GutterContentProvider gutterContentProvider;
 
@@ -43,6 +45,8 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     addMouseMotionListener(this);
 
     setOpaque(true);
+
+    lineEndInset = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
   }
 
   private void addListeners() {
@@ -86,7 +90,11 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
         gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(text));
       }
     }
-    maxAnnotationWidth = gutterSize + RIGHT_INSET;
+
+    if (gutterSize != 0) {
+      gutterSize += lineEndInset;
+    }
+    maxAnnotationWidth = gutterSize;
   }
 
   @Override
@@ -142,7 +150,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
       String text = gutterContentProvider.getText(editor.visualToLogicalPosition(new VisualPosition(i, 0)).line, editor);
       if (text != null) {
         // right-aligned
-        g.drawString(text, maxAnnotationWidth - RIGHT_INSET - fontMetrics.stringWidth(text), y);
+        g.drawString(text, maxAnnotationWidth - lineEndInset - fontMetrics.stringWidth(text), y);
       }
       y += lineHeight;
     }

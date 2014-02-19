@@ -129,7 +129,7 @@ public class LanguageConsoleBuilder {
     }
 
     @Override
-    protected void setupEditorDefault(@NotNull final EditorEx editor) {
+    protected void setupEditorDefault(@NotNull EditorEx editor) {
       super.setupEditorDefault(editor);
 
       if (editor == getConsoleEditor()) {
@@ -137,6 +137,9 @@ public class LanguageConsoleBuilder {
         editor.getSettings().setAdditionalLinesCount(1);
       }
       else if (gutterContentProvider != null) {
+        editor.setCaretEnabled(true);
+        editor.setCaretVisible(true);
+
         final ConsoleIconGutterComponent lineStartGutter = new ConsoleIconGutterComponent(editor, gutterContentProvider);
         final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider);
         JLayeredPane layeredPane = new JBLayeredPane() {
@@ -157,13 +160,13 @@ public class LanguageConsoleBuilder {
             EditorComponentImpl editor = getEditorComponent();
             int w = getWidth();
             int h = getHeight();
-            Dimension lineStartGutterDimension = lineStartGutter.getPreferredSize();
-            lineStartGutter.setBounds(0, 0, lineStartGutterDimension.width, h);
+            int lineStartGutterWidth = lineStartGutter.getPreferredSize().width;
+            lineStartGutter.setBounds(0, 0, lineStartGutterWidth, h);
 
-            editor.setBounds(lineStartGutterDimension.width, 0, w - lineStartGutterDimension.width, h);
+            editor.setBounds(lineStartGutterWidth, 0, w - lineStartGutterWidth, h);
 
-            Dimension lineEndGutterDimension = lineEndGutter.getPreferredSize();
-            lineEndGutter.setBounds(w - lineEndGutterDimension.width - editor.getEditor().getScrollPane().getVerticalScrollBar().getWidth(), 0, lineEndGutterDimension.width, h);
+            int lineEndGutterWidth = lineEndGutter.getPreferredSize().width;
+            lineEndGutter.setBounds(lineStartGutterWidth + (w - lineEndGutterWidth - editor.getEditor().getScrollPane().getVerticalScrollBar().getWidth()), 0, lineEndGutterWidth, h);
           }
 
           @NotNull
@@ -207,8 +210,8 @@ public class LanguageConsoleBuilder {
       private final ConsoleIconGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 
-      private boolean lineSeparatorPainterAdded;
       private Runnable gutterSizeUpdater;
+      private RangeHighlighterEx rangeMarker;
 
       public GutterUpdateScheduler(@NotNull ConsoleIconGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
@@ -216,14 +219,13 @@ public class LanguageConsoleBuilder {
       }
 
       private void addLineSeparatorPainterIfNeed() {
-        if (lineSeparatorPainterAdded) {
+        if (rangeMarker != null) {
           return;
         }
 
-        lineSeparatorPainterAdded = true;
-
         EditorEx editor = getHistoryViewer();
-        editor.getMarkupModel().addRangeHighlighter(new MyRangeMarkerImpl(editor), 0, getDocument().getTextLength(), false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
+        rangeMarker = new MyRangeMarkerImpl(editor);
+        editor.getMarkupModel().addRangeHighlighter(rangeMarker, 0, getDocument().getTextLength(), false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
       private DocumentEx getDocument() {
@@ -246,8 +248,17 @@ public class LanguageConsoleBuilder {
           }
         }
         else if (event.getOldLength() > 0) {
-          assert gutterContentProvider != null;
-          gutterContentProvider.documentCleared(getHistoryViewer());
+          documentCleared();
+        }
+      }
+
+      private void documentCleared() {
+        assert gutterContentProvider != null;
+        gutterContentProvider.documentCleared(getHistoryViewer());
+        if (rangeMarker != null) {
+          // it is not optimisation - it seems, our range marker automatically removed on document cleared, so, we need to re-add it later
+          getHistoryViewer().getMarkupModel().removeHighlighter(rangeMarker);
+          rangeMarker = null;
         }
       }
 
@@ -258,8 +269,7 @@ public class LanguageConsoleBuilder {
       @Override
       public void updateFinished(@NotNull Document doc) {
         if (getDocument().getTextLength() == 0) {
-          assert gutterContentProvider != null;
-          gutterContentProvider.documentCleared(getHistoryViewer());
+          documentCleared();
         }
         else {
           addLineSeparatorPainterIfNeed();
@@ -291,10 +301,6 @@ public class LanguageConsoleBuilder {
         @Override
         public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
           Rectangle clip = g.getClipBounds();
-          if (clip.height < 0) {
-            return;
-          }
-
           int lineHeight = editor.getLineHeight();
           int startLine = clip.y / lineHeight;
           int endLine = Math.min(((clip.y + clip.height) / lineHeight) + 1, ((EditorImpl)editor).getVisibleLineCount());
@@ -302,11 +308,13 @@ public class LanguageConsoleBuilder {
             return;
           }
 
-          int y = ((startLine + 1) * lineHeight);
+          // workaround - editor ask us to paint line 4-6, but we should draw line for line 3 (startLine - 1) also, otherwise it will be not rendered
+          int actualStartLine = startLine == 0 ? 0 : startLine - 1;
+          int y = (actualStartLine + 1) * lineHeight;
           g.setColor(editor.getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
           assert gutterContentProvider != null;
-          for (int i = startLine; i < endLine; i++) {
-            if (gutterContentProvider.isShowSeparatorLine(editor.visualToLogicalPosition(new VisualPosition(i, 0)).line, editor)) {
+          for (int visualLine = actualStartLine; visualLine < endLine; visualLine++) {
+            if (gutterContentProvider.isShowSeparatorLine(editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line, editor)) {
               g.drawLine(0, y, clip.width, y);
             }
             y += lineHeight;
