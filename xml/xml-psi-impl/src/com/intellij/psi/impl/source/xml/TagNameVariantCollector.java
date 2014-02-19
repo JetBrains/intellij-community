@@ -47,7 +47,9 @@ public class TagNameVariantCollector {
     String elementNamespace = element.getNamespacePrefix().isEmpty() ? null : element.getNamespace();
 
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
-    PsiElement curElement = element;
+    PsiElement context = element.getParent();
+    PsiElement curElement = element.getParent();
+
     {
       while(curElement instanceof XmlTag){
         final XmlTag declarationTag = (XmlTag)curElement;
@@ -73,7 +75,6 @@ public class TagNameVariantCollector {
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();
     final XmlExtension extension = XmlExtension.getExtension(element.getContainingFile());
     final ArrayList<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
-    PsiElement context = element.getParent();
     for (final String namespace: namespaces) {
       final int initialSize = variants.size();
       processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
