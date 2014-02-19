@@ -137,9 +137,6 @@ public class LanguageConsoleBuilder {
         editor.getSettings().setAdditionalLinesCount(1);
       }
       else if (gutterContentProvider != null) {
-        editor.setCaretEnabled(true);
-        editor.setCaretVisible(true);
-
         final ConsoleIconGutterComponent lineStartGutter = new ConsoleIconGutterComponent(editor, gutterContentProvider);
         final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider);
         JLayeredPane layeredPane = new JBLayeredPane() {
