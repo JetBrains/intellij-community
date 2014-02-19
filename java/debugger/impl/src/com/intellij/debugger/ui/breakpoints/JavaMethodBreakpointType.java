@@ -36,7 +36,7 @@ import javax.swing.*;
  */
 public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> implements JavaBreakpointType {
   public JavaMethodBreakpointType() {
-    super("javaMethod", DebuggerBundle.message("method.breakpoints.tab.title"));
+    super("java-method", DebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
   @NotNull

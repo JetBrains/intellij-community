@@ -18,9 +18,9 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -35,7 +35,7 @@ import javax.swing.*;
  */
 public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> implements JavaBreakpointType {
   public JavaWildcardMethodBreakpointType() {
-    super("javaWildcardMethod", DebuggerBundle.message("method.breakpoints.tab.title"));
+    super("java-wildcard-method", DebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
   @NotNull
@@ -84,21 +84,20 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
 
   @Nullable
   @Override
-  public XBreakpoint<JavaMethodBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
-    AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(project);
+  public XBreakpoint<JavaMethodBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
+    final AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(project);
     dialog.show();
     if (!dialog.isOK()) {
       return null;
     }
-    AccessToken token = WriteAction.start();
-    try {
-      return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, new JavaMethodBreakpointProperties(
-        dialog.getClassPattern(),
-        dialog.getMethodName()));
-    }
-    finally {
-      token.finish();
-    }
+    return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<JavaMethodBreakpointProperties>>() {
+      @Override
+      public XBreakpoint<JavaMethodBreakpointProperties> compute() {
+        return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(JavaWildcardMethodBreakpointType.this, new JavaMethodBreakpointProperties(
+          dialog.getClassPattern(),
+          dialog.getMethodName()));
+      }
+    });
   }
 
   @Override

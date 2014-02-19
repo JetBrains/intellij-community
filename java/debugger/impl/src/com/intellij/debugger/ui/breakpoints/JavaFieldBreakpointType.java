@@ -19,8 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -44,7 +43,7 @@ import javax.swing.*;
  */
 public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> implements JavaBreakpointType {
   public JavaFieldBreakpointType() {
-    super("javaField", DebuggerBundle.message("field.watchpoints.tab.title"));
+    super("java-field", DebuggerBundle.message("field.watchpoints.tab.title"));
   }
 
   @NotNull
@@ -114,7 +113,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
                                      DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
           return false;
         }
-        String fieldName = getFieldName();
+        final String fieldName = getFieldName();
         if (fieldName.length() == 0) {
           Messages.showMessageDialog(project, DebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
                                      DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
@@ -122,24 +121,21 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
-          PsiFile psiFile  = psiClass.getContainingFile();
+          final PsiFile psiFile  = psiClass.getContainingFile();
           Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
           if(document != null) {
             PsiField field = psiClass.findFieldByName(fieldName, true);
             if(field != null) {
-              int line = document.getLineNumber(field.getTextOffset());
-              AccessToken token = WriteAction.start();
-              try {
-                XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
-                  .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName));
-                if (fieldBreakpoint != null) {
+              final int line = document.getLineNumber(field.getTextOffset());
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
+                    .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName));
                   result.set(fieldBreakpoint);
-                  return true;
                 }
-              }
-              finally {
-                token.finish();
-              }
+              });
+              return true;
             }
             else {
               Messages.showMessageDialog(project,

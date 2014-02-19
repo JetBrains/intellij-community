@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreakpointProperties> implements JavaBreakpointType {
   public JavaLineBreakpointType() {
-    super("javaLine", DebuggerBundle.message("line.breakpoints.tab.title"));
+    super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }
 
   @NotNull

@@ -21,9 +21,9 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -44,7 +44,7 @@ import javax.swing.*;
 public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties>
                                          implements JavaBreakpointType<JavaExceptionBreakpointProperties> {
   public JavaExceptionBreakpointType() {
-    super("javaException", DebuggerBundle.message("exception.breakpoints.tab.title"));
+    super("java-exception", DebuggerBundle.message("exception.breakpoints.tab.title"));
   }
 
   @NotNull
@@ -104,25 +104,24 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
 
   @Nullable
   @Override
-  public XBreakpoint<JavaExceptionBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
+  public XBreakpoint<JavaExceptionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final PsiClass throwableClass =
       JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", GlobalSearchScope.allScope(project));
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
       .createInheritanceClassChooser(DebuggerBundle.message("add.exception.breakpoint.classchooser.title"),
                                      GlobalSearchScope.allScope(project), throwableClass, true, true, null);
     chooser.showDialog();
-    PsiClass selectedClass = chooser.getSelected();
-    String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
+    final PsiClass selectedClass = chooser.getSelected();
+    final String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
     if (qName != null && qName.length() > 0) {
-      AccessToken token = WriteAction.start();
-      try {
-        return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
-          this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName()));
-      }
-      finally {
-        token.finish();
-      }
+      return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<JavaExceptionBreakpointProperties>>() {
+       @Override
+       public XBreakpoint<JavaExceptionBreakpointProperties> compute() {
+         return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
+           JavaExceptionBreakpointType.this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName()));
+       }
+     });
     }
     return null;
   }
