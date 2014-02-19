@@ -57,7 +57,7 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @Nullable
   @Override
-  public GraphChangeEvent performAction(@NotNull GraphAction action) {
+  public GraphAnswer performAction(@NotNull GraphAction action) {
     if (action instanceof LinearBranchesExpansionAction) {
       FragmentManager fragmentManager = myGraphModel.getFragmentManager();
       if (((LinearBranchesExpansionAction)action).shouldExpand()) {

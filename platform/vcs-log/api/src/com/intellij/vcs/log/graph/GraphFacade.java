@@ -42,7 +42,7 @@ public interface GraphFacade {
    * some modal progress or else.
    */
   @Nullable
-  GraphChangeEvent performAction(@NotNull GraphAction action);
+  GraphAnswer performAction(@NotNull GraphAction action);
 
   /**
    * Returns all commits in the graph without considering commits visibility.
@@ -83,8 +83,5 @@ public interface GraphFacade {
    */
   @NotNull
   GraphInfoProvider getInfoProvider();
-
-  interface GraphChangeEvent {
-  }
 
 }
