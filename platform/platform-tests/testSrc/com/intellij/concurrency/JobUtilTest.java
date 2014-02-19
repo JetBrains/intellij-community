@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Processor;
 
 import java.math.BigDecimal;
@@ -36,7 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class JobUtilTest extends PlatformTestCase {
+public class JobUtilTest extends PlatformLangTestCase {
+  private static final AtomicInteger COUNT = new AtomicInteger();
+
   @Override
   protected boolean isRunInWriteAction() {
     return false;
@@ -67,7 +69,6 @@ public class JobUtilTest extends PlatformTestCase {
     System.out.println(message);
     assertTrue(message, elapsed < expected);
   }
-  private static final AtomicInteger COUNT = new AtomicInteger();
 
   private static int busySleep(int ms) {
     long end = System.currentTimeMillis() + ms;
@@ -198,7 +199,7 @@ public class JobUtilTest extends PlatformTestCase {
     });
     if (exception.get() != null) throw exception.get();
   }
-  
+
   public void testExceptionalCompletion() throws Throwable {
     final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
