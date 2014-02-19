@@ -30,35 +30,42 @@ public class VisibilitySorter implements Sorter{
   public static final Sorter INSTANCE = new VisibilitySorter();
 
   private static final ActionPresentation PRESENTATION = new ActionPresentation() {
+    @Override
     @NotNull
     public String getText() {
       return IdeBundle.message("action.structureview.sort.by.visibility");
     }
 
+    @Override
     public String getDescription() {
       return null;
     }
 
+    @Override
     public Icon getIcon() {
       return AllIcons.ObjectBrowser.VisibilitySort;
     }
   };
   @NonNls public static final String ID = "VISIBILITY_SORTER";
 
+  @Override
   @NotNull
   public Comparator getComparator() {
     return VisibilityComparator.IMSTANCE;
   }
 
+  @Override
   public boolean isVisible() {
     return true;
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return PRESENTATION;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;

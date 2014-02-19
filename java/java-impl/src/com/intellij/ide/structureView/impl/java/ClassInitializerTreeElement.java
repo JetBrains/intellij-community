@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
     super(initializer);
   }
 
+  @Override
   public String getPresentableText() {
     PsiClassInitializer initializer = getElement();
     assert initializer != null;
@@ -38,6 +39,7 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
     return CodeInsightBundle.message("static.class.initializer", isStatic);
   }
 
+  @Override
   public String getLocationString() {
     PsiClassInitializer initializer = getElement();
     assert initializer != null;
@@ -51,15 +53,18 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return Collections.emptyList();
   }
 
+  @Override
   public int getAccessLevel() {
     return PsiUtil.ACCESS_LEVEL_PRIVATE;
   }
 
+  @Override
   public int getSubLevel() {
     return 0;
   }

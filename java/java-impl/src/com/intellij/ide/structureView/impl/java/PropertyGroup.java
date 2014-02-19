@@ -90,16 +90,19 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<TreeElement> getChildren() {
     return myChildren;
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     if (isStatic()) {
       if (getGetter() != null && getSetter() != null) {
@@ -130,10 +133,12 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return myIsStatic;
   }
 
+  @Override
   public String getLocationString() {
     return null;
   }
 
+  @Override
   public String getPresentableText() {
     return myPropertyName + ": " + myPropertyType.getPresentableText();
   }
@@ -176,6 +181,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return PropertyUtil.suggestGetterName(myPropertyName, myPropertyType);
   }
 
+  @Override
   public int getAccessLevel() {
     int result = PsiUtil.ACCESS_LEVEL_PRIVATE;
     if (getGetter() != null) {
@@ -190,6 +196,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return result;
   }
 
+  @Override
   public int getSubLevel() {
     return 0;
   }
@@ -237,6 +244,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return icon;
   }
 
+  @Override
   public TextAttributesKey getTextAttributesKey() {
     return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
   }
@@ -260,6 +268,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return this;
   }
 
+  @Override
   public int getWeight() {
     return 60;
   }

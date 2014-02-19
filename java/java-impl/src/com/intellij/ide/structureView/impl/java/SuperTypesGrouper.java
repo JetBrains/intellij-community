@@ -37,6 +37,7 @@ public class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
+  @Override
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
@@ -112,12 +113,14 @@ public class SuperTypesGrouper implements Grouper{
 
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.group.methods.by.defining.type"), null,
                                       AllIcons.General.ImplementingMethod);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;

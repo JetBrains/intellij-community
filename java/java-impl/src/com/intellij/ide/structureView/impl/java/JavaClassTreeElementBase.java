@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     return !(element instanceof PsiModifierListOwner) || ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PUBLIC);
   }
 
+  @Override
   public int getAccessLevel() {
     final PsiModifierList modifierList = ((PsiModifierListOwner)getElement()).getModifierList();
     if (modifierList == null) {
@@ -54,6 +55,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     return PsiUtil.getAccessLevel(modifierList);
   }
 
+  @Override
   public int getSubLevel() {
     return 0;
   }

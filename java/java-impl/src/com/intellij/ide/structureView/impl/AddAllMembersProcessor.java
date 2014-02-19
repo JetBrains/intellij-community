@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   private final PsiClass myPsiClass;
   private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
 
-  public AddAllMembersProcessor(Collection<PsiElement> allMembers, PsiClass psiClass) {
+  public AddAllMembersProcessor(@NotNull Collection<PsiElement> allMembers, @NotNull PsiClass psiClass) {
     for (PsiElement psiElement : allMembers) {
       if (psiElement instanceof PsiMethod) mapMethodBySignature((PsiMethod)psiElement);
     }
@@ -42,6 +42,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     myPsiClass = psiClass;
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
     PsiMember member = (PsiMember)element;
     if (!isInteresting(element)) return true;

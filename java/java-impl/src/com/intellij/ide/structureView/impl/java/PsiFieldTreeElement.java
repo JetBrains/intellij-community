@@ -31,11 +31,13 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
     super(isInherited,field);
  }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return Collections.emptyList();
   }
 
+  @Override
   public String getPresentableText() {
     return StringUtil.replace(PsiFormatUtil.formatVariable(
       getElement(),
@@ -48,6 +50,7 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
     return getElement();
   }
 
+  @Override
   @NotNull
   public String getAlphaSortKey() {
     final PsiField field = getElement();

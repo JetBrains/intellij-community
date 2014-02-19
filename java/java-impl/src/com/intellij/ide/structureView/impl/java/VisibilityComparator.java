@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.ide.util.treeView.SourceComparator;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +23,6 @@ import java.util.Comparator;
 public class VisibilityComparator implements Comparator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.impl.java.VisibilityComparator");
   private static final int GROUP_ACCESS_SUBLEVEL = 1;
-  public static Comparator THEN_SOURCE = new VisibilityComparator(SourceComparator.INSTANCE);
-  public static Comparator THEN_ALPHA = new VisibilityComparator(AlphaComparator.INSTANCE);
   public static Comparator IMSTANCE = new VisibilityComparator(null);
 
   private final Comparator myNextComparator;
@@ -36,6 +32,7 @@ public class VisibilityComparator implements Comparator {
     myNextComparator = comparator;
   }
 
+  @Override
   public int compare(@NotNull Object descriptor1, @NotNull Object descriptor2) {
     int accessLevel1 = getAccessLevel(descriptor1);
     int accessLevel2 = getAccessLevel(descriptor2);

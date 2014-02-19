@@ -32,6 +32,7 @@ import java.util.Map;
 public class PropertiesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_PROPERTIES";
 
+  @Override
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
@@ -60,11 +61,13 @@ public class PropertiesGrouper implements Grouper{
     return result.values();
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;

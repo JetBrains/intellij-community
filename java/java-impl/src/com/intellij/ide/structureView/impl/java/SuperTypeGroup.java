@@ -48,6 +48,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     mySuperClassPointer = SmartPointerManager.getInstance(superClass.getProject()).createSmartPsiElementPointer(superClass);
   }
 
+  @Override
   @NotNull
   public Collection<TreeElement> getChildren() {
     return myChildren;
@@ -58,11 +59,13 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return (PsiClass)mySuperClassPointer.getElement();
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     switch (myOverrides) {
       case IMPLEMENTS:
@@ -76,10 +79,12 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return null; // Can't be
   }
 
+  @Override
   public String getLocationString() {
     return null;
   }
 
+  @Override
   public String getPresentableText() {
     return toString();
   }
@@ -111,12 +116,14 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return this;
   }
 
+  @Override
   public int getAccessLevel() {
     final PsiClass superClass = getSuperClass();
     PsiModifierList modifierList = superClass == null ? null : superClass.getModifierList();
     return modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
   }
 
+  @Override
   public int getSubLevel() {
     return 1;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     myParents.add(cls);
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return getClassChildren();
@@ -89,10 +90,12 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     return myParents;
   }
 
+  @Override
   public String getPresentableText() {
     return getElement().getName();
   }
 
+  @Override
   public boolean isPublic() {
     return getElement().getParent() instanceof PsiFile || super.isPublic();
   }

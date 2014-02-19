@@ -32,6 +32,7 @@ public class KindSorter implements Sorter {
   boolean isPopup = false;
 
   private final Comparator COMPARATOR = new Comparator() {
+    @Override
     public int compare(final Object o1, final Object o2) {
       return getWeight(o1) - getWeight(o2);
     }
@@ -65,20 +66,24 @@ public class KindSorter implements Sorter {
     }
   };
 
+  @Override
   @NotNull
   public Comparator getComparator() {
     return COMPARATOR;
   }
 
+  @Override
   public boolean isVisible() {
     return false;
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     throw new IllegalStateException();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;

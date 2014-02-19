@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class InheritedMembersFilter implements FileStructureFilter {
   @NonNls public static final String ID = "SHOW_INHERITED";
 
+  @Override
   public boolean isVisible(TreeElement treeNode) {
     if (treeNode instanceof JavaClassTreeElementBase) {
       return !((JavaClassTreeElementBase)treeNode).isInherited();
@@ -38,24 +39,29 @@ public class InheritedMembersFilter implements FileStructureFilter {
     }
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;
   }
 
+  @Override
   public boolean isReverted() {
     return true;
   }
 
+  @Override
   public String getCheckBoxText() {
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
+  @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
   }
