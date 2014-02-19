@@ -32,10 +32,8 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class PsiUtilBase extends PsiUtilCore {
+public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
@@ -207,6 +205,12 @@ public class PsiUtilBase extends PsiUtilCore {
     while (true);
   }
 
+  @Nullable
+  @Override
+  public Editor findEditorByPsiElement(@NotNull PsiElement element) {
+    return findEditor(element);
+  }
+
   /**
    * Tries to find editor for the given element.
    * <p/>
@@ -232,8 +236,7 @@ public class PsiUtilBase extends PsiUtilCore {
       return null;
     }
 
-    VirtualFileSystem fileSystem = virtualFile.getFileSystem();
-    if (fileSystem instanceof LocalFileSystem) {
+    if (virtualFile.isInLocalFileSystem()) {
       // Try to find editor for the real file.
       final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
       for (FileEditor editor : editors) {
@@ -270,8 +273,6 @@ public class PsiUtilBase extends PsiUtilCore {
       PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
       return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 }
