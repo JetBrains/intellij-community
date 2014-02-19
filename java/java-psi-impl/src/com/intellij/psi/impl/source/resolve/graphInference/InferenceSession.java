@@ -217,13 +217,13 @@ public class InferenceSession {
     return null;
   }
 
-  private void collectAdditionalConstraints(PsiParameter[] parameters,
-                                            PsiExpression[] args,
-                                            PsiMethod parentMethod,
-                                            Set<ConstraintFormula> additionalConstraints) {
+  private static void collectAdditionalConstraints(PsiParameter[] parameters,
+                                                   PsiExpression[] args,
+                                                   PsiMethod parentMethod,
+                                                   Set<ConstraintFormula> additionalConstraints) {
     for (int i = 0; i < args.length; i++) {
       if (args[i] != null) {
-        PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
+        PsiType parameterType = getParameterType(parameters, args, i, PsiSubstitutor.EMPTY);
         if (!isPertinentToApplicability(args[i], parentMethod)) {
           additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
