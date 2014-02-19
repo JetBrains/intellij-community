@@ -272,10 +272,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private class MyMouseAdapter extends MouseAdapter {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
-    private final TableLinkMouseListener myTableListener;
+    private final TableLinkMouseListener myLinkListener;
 
     MyMouseAdapter() {
-      myTableListener = new TableLinkMouseListener();
+      myLinkListener = new TableLinkMouseListener();
     }
 
     @Nullable
@@ -313,6 +313,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     @Override
     public void mouseClicked(MouseEvent e) {
+      if (myLinkListener.onClick(e, e.getClickCount())) {
+        return;
+      }
+
       if (e.getClickCount() == 1) {
         Node jumpToNode = arrowToNode(e);
         if (jumpToNode != null) {
@@ -325,7 +329,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
           myUI.click(PositionUtil.getRowIndex(e));
         }
       }
-      myTableListener.onClick(e, e.getClickCount());
     }
 
     @Override
@@ -346,7 +349,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
 
     private boolean isAboveLink(MouseEvent e) {
-      return myTableListener.getTagAt(e) != null;
+      return myLinkListener.getTagAt(e) != null;
     }
 
     @Override
