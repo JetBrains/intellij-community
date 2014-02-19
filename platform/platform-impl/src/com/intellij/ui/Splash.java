@@ -78,7 +78,12 @@ public class Splash extends JDialog implements StartupProgress {
     Dimension size = getPreferredSize();
     setSize(size);
     pack();
-    setLocationRelativeTo(null);
+    setLocationInTheCenterOfScreen();
+  }
+
+  private void setLocationInTheCenterOfScreen() {
+    Rectangle deviceBounds = getGraphicsConfiguration().getBounds();
+    setLocation((deviceBounds.width - getWidth()) / 2, (deviceBounds.height - getHeight()) / 2);
   }
 
   public Splash(ApplicationInfoEx info) {
