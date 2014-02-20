@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -25,6 +26,17 @@ class SuperClassesManager extends MembersManager<PyClass> {
     super(PyClass.class);
   }
 
+
+  @NotNull
+  @Override
+  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
+    return Lists.<PyElement>newArrayList(usedElements.keySet());
+  }
+
+  @NotNull
+  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull PyElement member) {
+    return MultiMap.emptyInstance();
+  }
 
   @Override
   public boolean hasConflict(@NotNull final PyClass member, @NotNull final PyClass aClass) {

@@ -23,7 +23,7 @@ public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImp
                                  @NotNull final PyPushDownView view,
                                  @NotNull final PyClass classUnderRefactoring,
                                  @NotNull final PyMemberInfoStorage infoStorage) {
-    super(view, classUnderRefactoring, infoStorage);
+    super(view, classUnderRefactoring, infoStorage,  new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>>(classUnderRefactoring));
     myProject = project;
   }
 
@@ -41,10 +41,8 @@ public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImp
 
   @Override
   public void launch() {
-    UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> model =
-      new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>>(myClassUnderRefactoring);
     myView
-      .configure(new MembersViewInitializationInfo(model, PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring))));
+      .configure(new MembersViewInitializationInfo(myModel, PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring))));
     myView.initAndShow();
   }
 }

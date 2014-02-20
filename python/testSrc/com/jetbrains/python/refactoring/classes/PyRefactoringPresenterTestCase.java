@@ -99,15 +99,6 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
 
 
   /**
-   * @param name
-   * @return class by its name from file
-   */
-  @NotNull
-  protected PyClass getClassByName(@NotNull final String name) {
-    return myFixture.findElementByText("class " + name, PyClass.class);
-  }
-
-  /**
    * @return collection of members displayed by presenter
    */
   @NotNull

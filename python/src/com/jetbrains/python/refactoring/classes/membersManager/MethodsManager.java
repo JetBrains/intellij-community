@@ -3,7 +3,10 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
@@ -40,6 +43,21 @@ class MethodsManager extends MembersManager<PyFunction> {
   @Override
   public boolean hasConflict(@NotNull final PyFunction member, @NotNull final PyClass aClass) {
     return NamePredicate.hasElementWithSameName(member, Arrays.asList(aClass.getMethods()));
+  }
+
+  @NotNull
+  @Override
+  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
+    final MultiMap<PyClass, PyElement> result = new MultiMap<PyClass, PyElement>();
+    member.accept(new MyPyRecursiveElementVisitor(result));
+
+    return result;
   }
 
   @NotNull
@@ -230,6 +248,37 @@ class MethodsManager extends MembersManager<PyFunction> {
     @Override
     protected boolean applyNotNull(@NotNull final PyMemberInfo<PyFunction> input) {
       return input.isToAbstract() == myAllowAbstractOnly;
+    }
+  }
+
+  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitor {
+    @NotNull
+    private final MultiMap<PyClass, PyElement> myResult;
+
+    private MyPyRecursiveElementVisitor(@NotNull final MultiMap<PyClass, PyElement> result) {
+      myResult = result;
+    }
+
+    @Override
+    public void visitPyCallExpression(final PyCallExpression node) {
+      // TODO: refactor, messy code
+      final PyExpression callee = node.getCallee();
+      if (callee != null) {
+        final PsiReference calleeRef = callee.getReference();
+        if (calleeRef != null) {
+          final PsiElement calleeDeclaration = calleeRef.resolve();
+          if (calleeDeclaration instanceof PyFunction) {
+            final PyFunction calleeFunction = (PyFunction)calleeDeclaration;
+            final PyClass clazz = calleeFunction.getContainingClass();
+            if (clazz != null) {
+              if (PyUtil.isInit(calleeFunction)) {
+                return; // Init call should not be marked as dependency
+              }
+              myResult.putValue(clazz, calleeFunction);
+            }
+          }
+        }
+      }
     }
   }
 }

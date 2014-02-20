@@ -1,12 +1,16 @@
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * All presenters that use members inherits this class.
@@ -24,25 +28,40 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
   protected final PyClass myClassUnderRefactoring;
   @NotNull
   protected final PyMemberInfoStorage myStorage;
+  /**
+   * Member model
+   */
+  @NotNull
+  protected final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myModel;
 
   /**
    * @param view                  View for presenter
    * @param classUnderRefactoring class to be refactored
    * @param infoStorage           info storage
+   * @param model Member model (to be used for dependencies checking)
    */
   MembersBasedPresenterImpl(@NotNull final T view,
                             @NotNull final PyClass classUnderRefactoring,
-                            @NotNull final PyMemberInfoStorage infoStorage) {
+                            @NotNull final PyMemberInfoStorage infoStorage,
+                            @NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
     myView = view;
     myClassUnderRefactoring = classUnderRefactoring;
     myStorage = infoStorage;
+    myModel = model;
   }
 
   //TODO: Mark Async ?
   @Override
   public void okClicked() {
     final MultiMap<PyClass, PyMemberInfo<?>> conflicts = getConflicts();
-    if (conflicts.isEmpty() || myView.showConflictsDialog(conflicts)) {
+    final Collection<PyMemberInfo<?>> dependencyConflicts = new ArrayList<PyMemberInfo<?>>();
+    for (final PyMemberInfo<PyElement> memberInfo : myStorage.getClassMemberInfos(myClassUnderRefactoring)) {
+      if (myModel.checkForProblems(memberInfo) != MemberInfoModel.OK) {
+        dependencyConflicts.add(memberInfo);
+      }
+    }
+
+    if ((conflicts.isEmpty() && dependencyConflicts.isEmpty()) || myView.showConflictsDialog(conflicts, dependencyConflicts)) {
       try {
         validateView();
         doRefactor();
@@ -76,14 +95,16 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
 
   /**
    * Checks if one of destination classes already has members that should be moved, so conflict would take place.
+   *
    * @return map of conflicts (if any)
    * @see #getDestClassesToCheckConflicts()
    */
   @NotNull
   protected final MultiMap<PyClass, PyMemberInfo<?>> getConflicts() {
     final MultiMap<PyClass, PyMemberInfo<?>> result = new MultiMap<PyClass, PyMemberInfo<?>>();
+    final Collection<PyMemberInfo<PyElement>> memberInfos = myView.getSelectedMemberInfos();
     for (final PyClass destinationClass : getDestClassesToCheckConflicts()) {
-      for (final PyMemberInfo<PyElement> pyMemberInfo : myView.getSelectedMemberInfos()) {
+      for (final PyMemberInfo<PyElement> pyMemberInfo : memberInfos) {
         if (pyMemberInfo.hasConflict(destinationClass)) {
           result.putValue(destinationClass, pyMemberInfo);
         }
@@ -93,8 +114,8 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
   }
 
   /**
+   * @return classes where this refactoring will move members. To be used to check for conflicts (if one of target classes already has members)
    * @see #getConflicts()
-  * @return classes where this refactoring will move members. To be used to check for conflicts (if one of target classes already has members)
    */
   @NotNull
   protected abstract Iterable<? extends PyClass> getDestClassesToCheckConflicts();

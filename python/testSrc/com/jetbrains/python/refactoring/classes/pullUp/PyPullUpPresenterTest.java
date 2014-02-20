@@ -62,7 +62,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
     final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
 
     final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = new Capture<MultiMap<PyClass, PyMemberInfo<?>>>();
-    EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture))).andReturn(false).anyTimes();
+    EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture), EasyMock.<Collection<PyMemberInfo<?>>>anyObject())).andReturn(false).anyTimes();
     EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(infos).anyTimes();
     final PyClass parent = getClassByName("ParentWithConflicts");
     EasyMock.expect(myView.getSelectedParent()).andReturn(parent).anyTimes();

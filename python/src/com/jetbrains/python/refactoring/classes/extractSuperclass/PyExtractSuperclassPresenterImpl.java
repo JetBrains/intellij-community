@@ -34,7 +34,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
   PyExtractSuperclassPresenterImpl(@NotNull final PyExtractSuperclassView view,
                                    @NotNull final PyClass classUnderRefactoring,
                                    @NotNull final PyMemberInfoStorage infoStorage) {
-    super(view, classUnderRefactoring, infoStorage);
+    super(view, classUnderRefactoring, infoStorage, new PyExtractSuperclassInfoModel(classUnderRefactoring));
   }
 
   @Override
@@ -68,7 +68,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     final Collection<PyMemberInfo<PyElement>> pyMemberInfos =
       PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring));
     myView.configure(
-      new PyExtractSuperclassInitializationInfo(new PyExtractSuperclassInfoModel(myClassUnderRefactoring), pyMemberInfos, defaultFilePath,
+      new PyExtractSuperclassInitializationInfo(myModel, pyMemberInfos, defaultFilePath,
                                                 roots));
     myView.initAndShow();
 
