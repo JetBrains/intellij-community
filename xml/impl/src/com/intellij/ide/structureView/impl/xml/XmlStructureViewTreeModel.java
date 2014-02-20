@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel {
   private final XmlFile myFile;
-  private static final Class[] myClasses = new Class[]{XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
-  private static final Sorter[] mySorters = {Sorter.ALPHA_SORTER};
+  private static final Class[] CLASSES =
+    {XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
+  private static final Sorter[] SORTERS = {Sorter.ALPHA_SORTER};
 
   public XmlStructureViewTreeModel(XmlFile file, @Nullable Editor editor) {
     super(editor, file);
@@ -58,7 +59,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   @Override
   @NotNull
   protected Class[] getSuitableClasses() {
-    return myClasses;
+    return CLASSES;
   }
 
   @Override
@@ -76,6 +77,6 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   @Override
   @NotNull
   public Sorter[] getSorters() {
-    return mySorters;
+    return SORTERS;
   }
 }
