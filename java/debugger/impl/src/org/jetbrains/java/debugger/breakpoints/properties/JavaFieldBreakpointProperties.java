@@ -25,10 +25,10 @@ public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<Java
   public boolean WATCH_MODIFICATION = true;
   public boolean WATCH_ACCESS       = false;
 
-  @Attribute("field_name")
+  @Attribute("field")
   public String myFieldName;
 
-  @Attribute("class_name")
+  @Attribute("class")
   public String myClassName;
 
   public JavaFieldBreakpointProperties(String fieldName, String className) {

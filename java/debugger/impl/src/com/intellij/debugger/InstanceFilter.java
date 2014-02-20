@@ -20,6 +20,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
@@ -28,10 +30,13 @@ import org.jdom.Element;
  * Date: Aug 29, 2003
  * Time: 2:49:27 PM
  */
+@Tag("instance-filter")
 public class InstanceFilter implements JDOMExternalizable{
   public static final InstanceFilter[] EMPTY_ARRAY = new InstanceFilter[0];
-  
+
+  @Attribute("id")
   public long    ID      = 0;
+  @Attribute("enabled")
   public boolean ENABLED = true;
 
   public InstanceFilter() {
@@ -47,6 +52,7 @@ public class InstanceFilter implements JDOMExternalizable{
     return ID;
   }
 
+  @Transient
   public boolean isEnabled() {
     return ENABLED;
   }

@@ -17,6 +17,9 @@ package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +27,22 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extends XBreakpointProperties<T> {
+  @OptionTag("count-filter-enabled")
   public boolean COUNT_FILTER_ENABLED     = false;
+  @OptionTag("count-filter")
   public int COUNT_FILTER = 0;
 
+  @OptionTag("class-filters-enabled")
   public boolean CLASS_FILTERS_ENABLED    = false;
   private ClassFilter[] myClassFilters;
   private ClassFilter[] myClassExclusionFilters;
 
+  @OptionTag("instance-filters-enabled")
   public boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
+  @Tag("instance-filters")
+  @AbstractCollection(surroundWithTag = false)
   public InstanceFilter[] getInstanceFilters() {
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
@@ -49,6 +58,8 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     myInstanceFilters = filters;
   }
 
+  @Tag("class-filters")
+  @AbstractCollection(surroundWithTag = false)
   public final ClassFilter[] getClassFilters() {
     return myClassFilters != null ? myClassFilters : ClassFilter.EMPTY_ARRAY;
   }
@@ -57,6 +68,8 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     myClassFilters = classFilters;
   }
 
+  @Tag("class-exclusion-filters")
+  @AbstractCollection(surroundWithTag = false)
   public ClassFilter[] getClassExclusionFilters() {
     return myClassExclusionFilters != null ? myClassExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
