@@ -123,6 +123,10 @@ public class FunctionalInterfaceParameterizationUtil {
         return parameterization;
       }
 
+      if (!parameterization.isAssignableFrom(psiClassType)) {
+        return null;
+      }
+
       return getNonWildcardParameterization(parameterization);
     }
     return null;

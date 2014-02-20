@@ -747,6 +747,7 @@ public class InferenceSession {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
       final PsiTypeParameter typeParameter = var.getParameter();
       final PsiType eqBound = getEqualsBound(var, substitutor);
+      if (eqBound != PsiType.NULL && eqBound instanceof PsiPrimitiveType) continue;
       final PsiType lub = eqBound != PsiType.NULL && (myErased || eqBound != null) ? eqBound : getLowerBound(var, substitutor);
       if (lub != PsiType.NULL) {
         substitutor = substitutor.put(typeParameter, lub);
