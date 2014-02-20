@@ -9,6 +9,7 @@ hg4idea
 tasks
 tasks-core
 tasks-api
+jira
 github
 terminal
 IntelliLang
