@@ -18,8 +18,8 @@ package com.jetbrains.python.console;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author traff
  */
-public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler implements ConsoleCommunicationListener {
+public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecuteActionHandler implements ConsoleCommunicationListener {
   private final LanguageConsoleView myConsoleView;
 
   private String myInMultilineStringState = null;

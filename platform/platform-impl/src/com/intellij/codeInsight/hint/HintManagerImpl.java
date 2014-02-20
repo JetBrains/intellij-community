@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -587,6 +587,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                        @NotNull LogicalPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension hintSize = hint.getComponent().getPreferredSize();

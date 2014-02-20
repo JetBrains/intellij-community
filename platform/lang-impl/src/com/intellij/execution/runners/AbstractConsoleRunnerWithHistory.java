@@ -55,7 +55,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private final Project myProject;
 
-  private ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+  private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
   public AbstractConsoleRunnerWithHistory(@NotNull Project project, @NotNull String consoleTitle, @Nullable String workingDir) {
     myProject = project;
@@ -219,7 +219,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     actionList.add(closeAction);
 
 // run action
-    actionList.add(createConsoleExecAction(myConsoleView, myProcessHandler, myConsoleExecuteActionHandler));
+    actionList.add(createConsoleExecAction(myConsoleView, myConsoleExecuteActionHandler));
 
 // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
@@ -241,16 +241,36 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleView.getConsole();
   }
 
-  public static AnAction createConsoleExecAction(final LanguageConsoleView console,
-                                                 final ProcessHandler processHandler,
-                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
+                                                 @NotNull ProcessHandler processHandler,
+                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return createConsoleExecAction(console, consoleExecuteActionHandler);
+  }
+
+  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
+                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
     return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler));
+                                    consoleExecuteActionHandler);
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public static AnAction createConsoleExecAction(LanguageConsoleImpl languageConsole,
+                                                 ProcessHandler processHandler,
+                                                 ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return ConsoleExecuteAction.createAction(languageConsole, consoleExecuteActionHandler);
   }
 
   @NotNull
-  protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
-
+  protected abstract ProcessBackedConsoleExecuteActionHandler createConsoleExecuteActionHandler();
 
   public T getConsoleView() {
     return myConsoleView;
@@ -272,7 +292,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myProcessHandler;
   }
 
-  public ConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
+  public ProcessBackedConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
   }
 }

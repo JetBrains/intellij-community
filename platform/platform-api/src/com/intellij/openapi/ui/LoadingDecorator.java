@@ -161,8 +161,10 @@ public class LoadingDecorator {
       if (myVisible && !visible && myCurrentAlpha != -1) return;
 
       myVisible = visible;
-      setVisible(myVisible);
-      myCurrentAlpha = -1;
+      if (myVisible) {
+        setVisible(myVisible);
+        myCurrentAlpha = -1;
+      }
 
       if (myVisible) {
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {

@@ -949,6 +949,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myChangeListListener;
   }
 
+  /**
+   * Reconfigure repository's HTTP clients probably to apply new connection settings.
+   */
+  public void reconfigureRepositoryClients() {
+    for (TaskRepository repository : myRepositories) {
+      if (repository instanceof BaseRepositoryImpl) {
+        ((BaseRepositoryImpl)repository).reconfigureClient();
+      }
+    }
+  }
+
   public static class Config {
 
     @Property(surroundWithTag = false)

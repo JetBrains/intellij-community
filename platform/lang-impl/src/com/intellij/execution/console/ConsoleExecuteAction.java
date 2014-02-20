@@ -44,6 +44,21 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.<LanguageConsoleImpl>alwaysTrue());
   }
 
+  /**
+   * Only internal usage, to keep backward compatibility
+   * to remove in IDEA 14
+   */
+  public static ConsoleExecuteAction createAction(@NotNull final LanguageConsoleImpl languageConsole,
+                                                  @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    final ConsoleExecuteActionHandler handler = consoleExecuteActionHandler;
+    return new ConsoleExecuteAction(languageConsole, new ConsoleExecuteActionHandler(handler.myPreserveMarkup) {
+      @Override
+      void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+        handler.doExecute(text, languageConsole, null);
+      }
+    }, consoleExecuteActionHandler);
+  }
+
   ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
     this(console, null, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
@@ -97,7 +112,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     private final ConsoleHistoryModel myConsoleHistoryModel;
 
     private boolean myAddToHistory = true;
-    private final boolean myPreserveMarkup;
+    final boolean myPreserveMarkup;
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myConsoleHistoryModel = new ConsoleHistoryModel();
