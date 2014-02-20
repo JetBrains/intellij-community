@@ -34,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Override
-  protected final void startRunProfile(@NotNull final ExecutionEnvironment environment,
-                                       @Nullable final Callback callback,
-                                       @NotNull final Project project,
-                                       @NotNull final RunProfileState state) throws ExecutionException {
+  protected final void execute(@NotNull final ExecutionEnvironment environment,
+                               @Nullable final Callback callback,
+                               @NotNull final Project project,
+                               @NotNull final RunProfileState state) throws ExecutionException {
     prepare(project, environment, state).doWhenProcessed(new Consumer<RunProfileStarter>() {
       @Override
       public void consume(@Nullable final RunProfileStarter result) {
