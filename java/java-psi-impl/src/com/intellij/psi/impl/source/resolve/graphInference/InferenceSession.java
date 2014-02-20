@@ -205,7 +205,7 @@ public class InferenceSession {
       if (parameters != null && args != null) {
         final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
         if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, parentMethod, additionalConstraints);
+          collectAdditionalConstraints(parameters, args, parentMethod, PsiSubstitutor.EMPTY, additionalConstraints);
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
@@ -220,10 +220,11 @@ public class InferenceSession {
   private static void collectAdditionalConstraints(PsiParameter[] parameters,
                                                    PsiExpression[] args,
                                                    PsiMethod parentMethod,
+                                                   PsiSubstitutor siteSubstitutor,
                                                    Set<ConstraintFormula> additionalConstraints) {
     for (int i = 0; i < args.length; i++) {
       if (args[i] != null) {
-        PsiType parameterType = getParameterType(parameters, args, i, PsiSubstitutor.EMPTY);
+        PsiType parameterType = getParameterType(parameters, args, i, siteSubstitutor);
         if (!isPertinentToApplicability(args[i], parentMethod)) {
           additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
@@ -234,11 +235,13 @@ public class InferenceSession {
           final PsiCallExpression callExpression = (PsiCallExpression)args[i];
           final PsiExpressionList argumentList = callExpression.getArgumentList();
           if (argumentList != null) {
-            final PsiMethod method = callExpression.resolveMethod();
-            if (method != null) {
+            final JavaResolveResult result = callExpression.resolveMethodGenerics();
+            if (result instanceof MethodCandidateInfo) {
+              final PsiMethod method = ((MethodCandidateInfo)result).getElement();
+              LOG.assertTrue(method != null);
               final PsiExpression[] newArgs = argumentList.getExpressions();
               final PsiParameter[] newParams = method.getParameterList().getParameters();
-              collectAdditionalConstraints(newParams, newArgs, method, additionalConstraints);
+              collectAdditionalConstraints(newParams, newArgs, method, ((MethodCandidateInfo)result).getSiteSubstitutor(), additionalConstraints);
             }
           }
         }
