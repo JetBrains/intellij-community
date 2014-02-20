@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -114,7 +115,7 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public void executeInCaretContext(final Editor editor, Caret caret, final DataContext dataContext) {
+  public void executeInCaretContext(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
     if (caret == null && runForAllCarets()) {
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
