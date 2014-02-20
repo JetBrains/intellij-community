@@ -72,7 +72,7 @@ abstract class BaseProgramRunner<Settings extends RunnerSettings> implements Pro
                                   @NotNull RunProfileState state) throws ExecutionException;
 
   @Nullable
-  protected static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
+  static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
     if (descriptor != null) {
       descriptor.setExecutionId(environment.getExecutionId());
     }
