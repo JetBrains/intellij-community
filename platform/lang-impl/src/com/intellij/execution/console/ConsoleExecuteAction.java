@@ -66,7 +66,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
                               @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @NotNull Condition<LanguageConsoleImpl> enabledCondition) {
+                              @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
     this(console.getConsole(), console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 

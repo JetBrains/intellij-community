@@ -58,10 +58,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -115,6 +112,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   };
 
+  private final NotNullFunction<VirtualFile, PsiFile> myPsiFileFactory;
+
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
     this(project, title, language, true);
   }
@@ -123,7 +122,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this(project, title, new LightVirtualFile(title, language, ""), initComponents);
   }
 
+  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language, @Nullable NotNullFunction<VirtualFile, PsiFile> psiFileFactory) {
+    this(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
+  }
+
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull LightVirtualFile lightFile, boolean initComponents) {
+    this(project, title, lightFile, initComponents, null);
+  }
+
+  public LanguageConsoleImpl(@NotNull Project project,
+                             @NotNull String title,
+                             @NotNull LightVirtualFile lightFile,
+                             boolean initComponents,
+                             @Nullable NotNullFunction<VirtualFile, PsiFile> psiFileFactory) {
     myProject = project;
     myTitle = title;
     myVirtualFile = lightFile;
@@ -131,6 +142,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
     assert myEditorDocument != null;
+    myPsiFileFactory = psiFileFactory;
     myFile = createFile(myVirtualFile, myEditorDocument, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
@@ -679,7 +691,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @NotNull
   protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
-    return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
+    if (myPsiFileFactory == null) {
+      return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
+    }
+    else {
+      return myPsiFileFactory.fun(virtualFile);
+    }
   }
 
   private class MyLayout extends AbstractLayoutManager {
