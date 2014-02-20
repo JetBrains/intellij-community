@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -23,13 +24,25 @@ public class ClickGraphAction implements GraphAction {
 
   private final int myVisibleRow;
   @Nullable private final Point myRelativePoint;
+  @Nullable private final GraphPrintCell myPrintCell;
 
-  public ClickGraphAction(int visibleRow, @Nullable Point relativePoint) {
+  public ClickGraphAction(int visibleRow, @Nullable Point relativePoint, @Nullable GraphPrintCell printCell) {
     myVisibleRow = visibleRow;
     myRelativePoint = relativePoint;
+    myPrintCell = printCell;
   }
 
   public int getRow() {
     return myVisibleRow;
+  }
+
+  @Nullable
+  public Point getRelativePoint() {
+    return myRelativePoint;
+  }
+
+  @Nullable
+  public GraphPrintCell getPrintCell() {
+    return myPrintCell;
   }
 }

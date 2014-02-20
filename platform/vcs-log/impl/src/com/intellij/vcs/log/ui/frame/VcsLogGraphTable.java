@@ -12,17 +12,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Edge;
-import com.intellij.vcs.log.graph.elements.GraphElement;
-import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graph.render.*;
+import com.intellij.vcs.log.graph.*;
+import com.intellij.vcs.log.graph.render.CommitCell;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
+import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
@@ -31,7 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -53,7 +55,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
 
   @NotNull private final VcsLogUI myUI;
-  @NotNull private final GraphCellPainter myGraphPainter;
+  private final VcsLogDataHolder myLogDataHolder;
 
   private boolean myColumnsSizeInitialized = false;
   private volatile boolean myRepaintFreezed;
@@ -61,11 +63,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
     myUI = UI;
-
-    myGraphPainter = new SimpleGraphCellPainter(logDataHolder.isMultiRoot());
+    myLogDataHolder = logDataHolder;
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, logDataHolder, myUI.getColorManager()));
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(new SimpleGraphCellPainter(), logDataHolder, myUI.getColorManager()));
     setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder.getProject()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -88,31 +89,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
-
-    getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-      @Override
-      public void columnAdded(TableColumnModelEvent e) {
-        if (e.getToIndex() == AbstractVcsLogTableModel.ROOT_COLUMN) {
-          myGraphPainter.setRootColumn(getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN));
-        }
-      }
-
-      @Override
-      public void columnRemoved(TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnMoved(TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnMarginChanged(ChangeEvent e) {
-      }
-
-      @Override
-      public void columnSelectionChanged(ListSelectionEvent e) {
-      }
-    });
   }
 
   @Override
@@ -270,45 +246,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
-    private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
     private final TableLinkMouseListener myLinkListener;
 
     MyMouseAdapter() {
       myLinkListener = new TableLinkMouseListener();
-    }
-
-    @Nullable
-    private GraphPrintCell getGraphPrintCell(MouseEvent e) {
-      int rowIndex = PositionUtil.getRowIndex(e);
-      return getGraphPrintCellForRow(getModel(), rowIndex);
-    }
-
-    @Nullable
-    private GraphElement overCell(MouseEvent e) {
-      int y = PositionUtil.getYInsideRow(e);
-      int x = e.getX();
-      GraphPrintCell row = getGraphPrintCell(e);
-      return row != null ? myGraphPainter.mouseOver(row, x, y) : null;
-    }
-
-    @Nullable
-    private Node arrowToNode(MouseEvent e) {
-      int y = PositionUtil.getYInsideRow(e);
-      int x = e.getX();
-      GraphPrintCell row = getGraphPrintCell(e);
-      if (row == null) {
-        return null;
-      }
-      SpecialPrintElement printElement = myGraphPainter.mouseOverArrow(row, x, y);
-      if (printElement == null) {
-        return null;
-      }
-      Edge edge = printElement.getGraphElement().getEdge();
-      if (edge == null) {
-        return null;
-      }
-      return printElement.getType() == SpecialPrintElement.Type.DOWN_ARROW ? edge.getDownNode() : edge.getUpNode();
     }
 
     @Override
@@ -318,34 +259,36 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       if (e.getClickCount() == 1) {
-        Node jumpToNode = arrowToNode(e);
-        if (jumpToNode != null) {
-          jumpToRow(jumpToNode.getRowIndex());
-          return;
-        }
-        GraphElement graphElement = overCell(e);
-        myUI.click(graphElement);
-        if (graphElement == null) {
-          myUI.click(PositionUtil.getRowIndex(e));
-        }
+        performAction(e, new PairFunction<Integer, Point, GraphAction>() {
+          @Override
+          public GraphAction fun(Integer row, Point point) {
+            return new ClickGraphAction(row, point, getGraphPrintCellForRow(getModel(), row));
+          }
+        });
       }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      Node jumpToNode = arrowToNode(e);
-      if (jumpToNode != null || isAboveLink(e)) {
-        setCursor(HAND_CURSOR);
+      if (isAboveLink(e)) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
-        setCursor(DEFAULT_CURSOR);
+        performAction(e, new PairFunction<Integer, Point, GraphAction>() {
+          @Override
+          public GraphAction fun(Integer row, Point point) {
+            return new MouseOverAction(row, point, getGraphPrintCellForRow(getModel(), row));
+          }
+        });
       }
+    }
 
-      if (jumpToNode == null) {
-        myUI.over(overCell(e));
-      } else {
-        myUI.over(null);
-      }
+    private void performAction(@NotNull MouseEvent e, @NotNull PairFunction<Integer, Point, GraphAction> actionConstructor) {
+      int row = PositionUtil.getRowIndex(e.getPoint());
+      Point point = calcPoint4Graph(e.getPoint());
+      GraphFacade graphFacade = myLogDataHolder.getDataPack().getGraphFacade();
+      GraphAnswer answer = graphFacade.performAction(actionConstructor.fun(row, point));
+      handleAnswer(answer);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -361,6 +304,33 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public void mouseExited(MouseEvent e) {
       // Do nothing
     }
+  }
+
+  private void handleAnswer(@Nullable GraphAnswer answer) {
+    setCursor(Cursor.getDefaultCursor());
+    myUI.updateUI();
+
+    if (answer == null) {
+      return;
+    }
+    GraphActionRequest actionRequest = answer.getActionRequest();
+    if (actionRequest instanceof JumpToRowActionRequest) {
+      int row = ((JumpToRowActionRequest)actionRequest).getRow();
+      jumpToRow(row);
+    }
+    else if (actionRequest instanceof ChangeCursorActionRequest) {
+      setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
+    }
+  }
+
+  @NotNull
+  private Point calcPoint4Graph(@NotNull Point clickPoint) {
+    return new Point(clickPoint.x - getXOffset(), PositionUtil.getYInsideRow(clickPoint));
+  }
+
+  private int getXOffset() {
+    TableColumn rootColumn = getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN);
+    return myLogDataHolder.isMultiRoot() ? rootColumn.getWidth() : 0;
   }
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {

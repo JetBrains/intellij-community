@@ -19,11 +19,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.compressedlist.UpdateRequest;
+import com.intellij.vcs.log.graph.elements.Edge;
+import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
+import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
+import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.graphmodel.GraphModel;
+import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.GraphPrintCellModel;
+import com.intellij.vcs.log.printmodel.SelectController;
+import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +50,16 @@ public class GraphFacadeImpl implements GraphFacade {
     }
   };
 
-  private final GraphModel myGraphModel;
-  private final GraphPrintCellModel myPrintCellModel;
+  @NotNull private final GraphModel myGraphModel;
+  @NotNull private final GraphPrintCellModel myPrintCellModel;
+  @NotNull private final SimpleGraphCellPainter myGraphPainter;
 
-  public GraphFacadeImpl(GraphModel graphModel, GraphPrintCellModel printCellModel) {
+  @Nullable private GraphElement prevGraphElement;
+
+  public GraphFacadeImpl(@NotNull GraphModel graphModel, @NotNull GraphPrintCellModel printCellModel) {
     myGraphModel = graphModel;
     myPrintCellModel = printCellModel;
+    myGraphPainter = new SimpleGraphCellPainter();
   }
 
   @Override
@@ -71,20 +83,122 @@ public class GraphFacadeImpl implements GraphFacade {
       myPrintCellModel.setLongEdgeVisibility(((LongEdgesAction)action).shouldShowLongEdges());
     }
     else if (action instanceof ClickGraphAction) {
-      myPrintCellModel.getCommitSelectController().deselectAll();
-      Node node = myGraphModel.getGraph().getCommitNodeInRow(((ClickGraphAction)action).getRow());
-      if (node != null) {
-        FragmentManager fragmentController = myGraphModel.getFragmentManager();
-        myPrintCellModel.getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
-      }
+      return handleClick((ClickGraphAction)action);
+    }
+    else if (action instanceof MouseOverAction) {
+      return handleMouseOver((MouseOverAction)action);
     }
     return null;
+  }
+
+  @Nullable
+  private GraphAnswer handleMouseOver(MouseOverAction action) {
+    Node jumpToNode = arrowToNode(action.getRelativePoint(), action.getPrintCell());
+    if (jumpToNode != null) {
+      over(null);
+      return new ChangeCursorAnswer(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+    else {
+      over(overCell(action.getRelativePoint(), action.getPrintCell()));
+      return new ChangeCursorAnswer(Cursor.getDefaultCursor());
+    }
+  }
+
+  @Nullable
+  private GraphAnswer handleClick(@NotNull ClickGraphAction action) {
+    if (action.getRelativePoint() == null) {
+      return handleRowSelection(action.getRow());
+    }
+    else {
+      return handleMouseClick(action.getRow(), action.getRelativePoint(), action.getPrintCell());
+    }
+  }
+
+  @Nullable
+  private GraphAnswer handleRowSelection(int row) {
+    myPrintCellModel.getCommitSelectController().deselectAll();
+    Node node = myGraphModel.getGraph().getCommitNodeInRow(row);
+    if (node != null) {
+      FragmentManager fragmentController = myGraphModel.getFragmentManager();
+      myPrintCellModel.getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
+    }
+    return null;
+  }
+
+  @Nullable
+  private GraphAnswer handleMouseClick(int row, @NotNull Point point, @Nullable GraphPrintCell printCell) {
+    Node jumpToNode = arrowToNode(point, printCell);
+    if (jumpToNode != null) {
+      return new JumpToRowAnswer(jumpToNode.getRowIndex());
+    }
+    GraphElement graphElement = overCell(point, printCell);
+    myPrintCellModel.getSelectController().deselectAll();
+    if (graphElement == null) {
+      return handleRowSelection(row);
+    }
+    else {
+      return click(graphElement);
+    }
+  }
+
+  @Nullable
+  private Node arrowToNode(@NotNull Point point, @Nullable GraphPrintCell row) {
+    if (row == null) {
+      return null;
+    }
+    SpecialPrintElement printElement = myGraphPainter.mouseOverArrow(row, point.x, point.y);
+    if (printElement == null) {
+      return null;
+    }
+    Edge edge = printElement.getGraphElement().getEdge();
+    if (edge == null) {
+      return null;
+    }
+    return printElement.getType() == SpecialPrintElement.Type.DOWN_ARROW ? edge.getDownNode() : edge.getUpNode();
+  }
+
+  @Nullable
+  public GraphAnswer click(@Nullable GraphElement graphElement) {
+    FragmentManager fragmentController = myGraphModel.getFragmentManager();
+    if (graphElement == null) {
+      return null;
+    }
+    final GraphFragment fragment = fragmentController.relateFragment(graphElement);
+    if (fragment == null) {
+      return null;
+    }
+
+    UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+    return new JumpToRowAnswer(updateRequest.from());
+  }
+
+  public void over(@Nullable GraphElement graphElement) {
+    SelectController selectController = myPrintCellModel.getSelectController();
+    FragmentManager fragmentManager = myGraphModel.getFragmentManager();
+    if (graphElement == prevGraphElement) {
+      return;
+    }
+    else {
+      prevGraphElement = graphElement;
+    }
+    selectController.deselectAll();
+    if (graphElement != null) {
+      GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
+      selectController.select(graphFragment);
+    }
   }
 
   @NotNull
   @Override
   public List<Integer> getAllCommits() {
     throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  private GraphElement overCell(@NotNull Point point, @Nullable GraphPrintCell row) {
+    int y = point.y;
+    int x = point.x;
+    return row != null ? myGraphPainter.mouseOver(row, x, y) : null;
   }
 
   @Override
@@ -145,12 +259,7 @@ public class GraphFacadeImpl implements GraphFacade {
   private class GraphInfoProviderImpl implements GraphInfoProvider {
 
     @Override
-    public int getOneOfHeads(int commit) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Set<Integer> getContainingBranches(int commitIndex) {
+    public Set<Integer> getContainingBranches(int visibleRow) {
       throw new UnsupportedOperationException();
     }
 
@@ -180,4 +289,44 @@ public class GraphFacadeImpl implements GraphFacade {
     }
   }
 
+  private static class JumpToRowAnswer implements GraphAnswer {
+    private final int myRow;
+
+    public JumpToRowAnswer(int row) {
+      myRow = row;
+    }
+
+    @Nullable
+    @Override
+    public GraphChange getGraphChange() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public GraphActionRequest getActionRequest() {
+      return new JumpToRowActionRequest(myRow);
+    }
+
+  }
+
+  private static class ChangeCursorAnswer implements GraphAnswer {
+    private final Cursor myCursor;
+
+    public ChangeCursorAnswer(@NotNull Cursor cursor) {
+      myCursor = cursor;
+    }
+
+    @Nullable
+    @Override
+    public GraphChange getGraphChange() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public GraphActionRequest getActionRequest() {
+      return new ChangeCursorActionRequest(myCursor);
+    }
+  }
 }

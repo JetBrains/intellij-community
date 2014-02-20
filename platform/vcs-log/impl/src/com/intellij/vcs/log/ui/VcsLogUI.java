@@ -12,7 +12,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogFilterer;
@@ -20,11 +19,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.ClickGraphAction;
 import com.intellij.vcs.log.graph.LinearBranchesExpansionAction;
 import com.intellij.vcs.log.graph.LongEdgesAction;
-import com.intellij.vcs.log.graph.elements.GraphElement;
-import com.intellij.vcs.log.graphmodel.FragmentManager;
-import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.impl.VcsLogImpl;
-import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -53,8 +48,6 @@ public class VcsLogUI {
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
-
-  @Nullable private GraphElement prevGraphElement;
 
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
                   @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
@@ -174,51 +167,9 @@ public class VcsLogUI {
     return myLogDataHolder.getDataPack().getGraphFacade().getInfoProvider().areLongEdgesHidden();
   }
 
-  public void over(@Nullable GraphElement graphElement) {
-    SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
-    FragmentManager fragmentManager = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
-    if (graphElement == prevGraphElement) {
-      return;
-    }
-    else {
-      prevGraphElement = graphElement;
-    }
-    selectController.deselectAll();
-    if (graphElement == null) {
-      updateUI();
-    }
-    else {
-      GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
-      selectController.select(graphFragment);
-      updateUI();
-    }
-  }
-
-  public void click(@Nullable GraphElement graphElement) {
-    SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
-    final FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
-    selectController.deselectAll();
-    if (graphElement == null) {
-      return;
-    }
-    final GraphFragment fragment = fragmentController.relateFragment(graphElement);
-    if (fragment == null) {
-      return;
-    }
-
-    myMainFrame.getGraphTable().executeWithoutRepaint(new Runnable() {
-      @Override
-      public void run() {
-        UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
-        jumpToRow(updateRequest.from());
-      }
-    });
-    updateUI();
-  }
-
   public void click(int rowIndex) {
     DataPack dataPack = myLogDataHolder.getDataPack();
-    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
+    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null, null));
     updateUI();
   }
 

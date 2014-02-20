@@ -15,25 +15,19 @@
  */
 package com.intellij.vcs.log.graph;
 
-import java.util.Set;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Use this provider to get information from the Graph. <br/>
- * An instance of GraphInfoProvider is obtained via {@link GraphFacade#getInfoProvider()}.
- */
-public interface GraphInfoProvider {
+import java.awt.*;
 
-  Set<Integer> getContainingBranches(int visibleRow); // this requires graph iteration => can take some time
+public class ChangeCursorActionRequest implements GraphActionRequest {
+  @NotNull private final Cursor myCursor;
 
-  RowInfo getRowInfo(int visibleRow);
-
-  boolean areLongEdgesHidden();
-
-  /**
-   * Some information about row highlighting etc. TBD
-   */
-  interface RowInfo {
-    int getOneOfHeads();
+  public ChangeCursorActionRequest(@NotNull Cursor cursor) {
+    myCursor = cursor;
   }
 
+  @NotNull
+  public Cursor getCursor() {
+    return myCursor;
+  }
 }
