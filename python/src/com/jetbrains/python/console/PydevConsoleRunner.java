@@ -91,6 +91,7 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
  */
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
 
@@ -188,6 +189,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       @Override
       public void run() {
         ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
+          @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             indicator.setText("Connecting to console...");
             try {
@@ -195,6 +197,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             }
             catch (ExecutionException e) {
               LOG.warn("Error running console", e);
+              assert myProject != null;
               ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
             }
           }
@@ -247,14 +250,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       args.add(String.valueOf(port));
     }
     return new CommandLineArgumentsProvider() {
+      @Override
       public String[] getArguments() {
         return ArrayUtil.toStringArray(args);
       }
 
+      @Override
       public boolean passParentEnvs() {
         return false;
       }
 
+      @Override
       public Map<String, String> getAdditionalEnvs() {
         return addDefaultEnvironments(sdk, environmentVariables);
       }
@@ -348,7 +354,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         try {
           return Integer.parseInt(line);
         }
-        catch (NumberFormatException e) {
+        catch (NumberFormatException ignored) {
           continue;
         }
       }
@@ -357,7 +363,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
         Thread.sleep(200);
       }
-      catch (InterruptedException e1) {
+      catch (InterruptedException ignored) {
       }
 
       if (process.exitValue() != 0) {
@@ -365,7 +371,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         try {
           error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           error = "Console process terminated with exit code " + process.exitValue();
         }
         throw new ExecutionException(error);
@@ -458,6 +464,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       @Override
       public void actionPerformed(final AnActionEvent e) {
         new WriteCommandAction(getLanguageConsole().getProject(), getLanguageConsole().getFile()) {
+          @Override
           protected void run(final Result result) throws Throwable {
             String text = getLanguageConsole().getEditorDocument().getText();
             String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
@@ -495,7 +502,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       try {
         res = myPydevConsoleCommunication.handshake();
       }
-      catch (XmlRpcException e) {
+      catch (XmlRpcException ignored) {
         res = false;
       }
       if (res) {
@@ -510,7 +517,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           try {
             Thread.sleep(100);
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignored) {
           }
         }
       }
@@ -549,7 +556,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             // waiting for REPL communication before destroying process handler
             Thread.sleep(300);
           }
-          catch (Exception e1) {
+          catch (Exception ignored) {
             // Ignore
           }
           generalStopAction.actionPerformed(furtherActionEvent);
@@ -673,8 +680,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
-            PydevConsoleRunner.this.closeCommunication();
+            closeCommunication();
           }
         });
 
