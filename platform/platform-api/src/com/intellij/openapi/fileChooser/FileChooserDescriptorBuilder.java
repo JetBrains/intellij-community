@@ -86,14 +86,17 @@ public class FileChooserDescriptorBuilder {
     myDescription = description;
     return this;
   }
-  
-  public FileChooserDescriptorBuilder showFileSystemRoots(boolean showFileSystemRoots) {
-    myShowFileSystemRoots = showFileSystemRoots;
+
+  /**
+   * Don't show system roots in case of empty root list
+   */
+  public FileChooserDescriptorBuilder hideSystemRoots() {
+    myShowFileSystemRoots = false;
     return this;
   }
   
-  public FileChooserDescriptorBuilder hideIgnored(boolean hideIgnored) {
-    myHideIgnored = hideIgnored;
+  public FileChooserDescriptorBuilder showIgnored() {
+    myHideIgnored = false;
     return this;
   }
   
