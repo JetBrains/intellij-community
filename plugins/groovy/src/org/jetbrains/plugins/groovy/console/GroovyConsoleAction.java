@@ -20,7 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -40,11 +40,11 @@ public class GroovyConsoleAction extends GroovyShellActionBase {
   }
 
   @Override
-  protected LanguageConsoleImpl createConsole(final @NotNull Project project, String title) {
-    return new LanguageConsoleImpl(project, title, GroovyFileType.GROOVY_LANGUAGE, new NotNullFunction<VirtualFile, PsiFile>() {
+  protected LanguageConsoleImpl createConsole(@NotNull Project project, String title) {
+    return new LanguageConsoleImpl(project, title, GroovyFileType.GROOVY_LANGUAGE, new PairFunction<VirtualFile, Project, PsiFile>() {
       @NotNull
       @Override
-      public PsiFile fun(VirtualFile file) {
+      public PsiFile fun(@NotNull VirtualFile file, @NotNull Project project) {
         return new GroovyCodeFragment(project, file);
       }
     });

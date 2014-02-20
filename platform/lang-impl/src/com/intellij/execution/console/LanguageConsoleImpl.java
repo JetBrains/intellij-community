@@ -112,7 +112,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   };
 
-  private final NotNullFunction<VirtualFile, PsiFile> myPsiFileFactory;
+  private final PairFunction<VirtualFile, Project, PsiFile> myPsiFileFactory;
 
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
     this(project, title, language, true);
@@ -122,7 +122,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this(project, title, new LightVirtualFile(title, language, ""), initComponents);
   }
 
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language, @Nullable NotNullFunction<VirtualFile, PsiFile> psiFileFactory) {
+  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
     this(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
   }
 
@@ -134,7 +134,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                              @NotNull String title,
                              @NotNull LightVirtualFile lightFile,
                              boolean initComponents,
-                             @Nullable NotNullFunction<VirtualFile, PsiFile> psiFileFactory) {
+                             @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
     myProject = project;
     myTitle = title;
     myVirtualFile = lightFile;
@@ -695,7 +695,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
     }
     else {
-      return myPsiFileFactory.fun(virtualFile);
+      return myPsiFileFactory.fun(virtualFile, project);
     }
   }
 

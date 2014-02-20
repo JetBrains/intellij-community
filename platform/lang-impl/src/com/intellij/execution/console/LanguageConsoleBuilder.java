@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public final class LanguageConsoleBuilder {
   private Condition<LanguageConsoleImpl> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
-  private NotNullFunction<VirtualFile, PsiFile> psiFileFactory;
+  private PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
   @Nullable
   private BaseConsoleExecuteActionHandler executeActionHandler;
   @Nullable
@@ -70,7 +70,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  public LanguageConsoleBuilder psiFileFactory(@NotNull NotNullFunction<VirtualFile, PsiFile> value) {
+  public LanguageConsoleBuilder psiFileFactory(@NotNull PairFunction<VirtualFile, Project, PsiFile> value) {
     psiFileFactory = value;
     return this;
   }
@@ -157,7 +157,7 @@ public final class LanguageConsoleBuilder {
     public GutteredLanguageConsole(@NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable NotNullFunction<VirtualFile, PsiFile> psiFileFactory) {
+                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
       super(project, language.getDisplayName() + " Console", language, psiFileFactory);
 
       setShowSeparatorLine(false);
