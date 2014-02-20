@@ -32,6 +32,6 @@ public class SelectionStartColumnMacro extends EditorMacro {
     if (selectionStartPosition == null) {
       return null;
     }
-    return String.valueOf(editor.visualToLogicalPosition(selectionStartPosition).column + 1);
+    return getColumnNumber(editor, editor.visualToLogicalPosition(selectionStartPosition));
   }
 }
