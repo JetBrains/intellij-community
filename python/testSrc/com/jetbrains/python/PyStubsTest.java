@@ -29,16 +29,17 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 
 import java.util.Collection;
@@ -410,5 +411,17 @@ public class PyStubsTest extends PyTestCase {
     final PyTargetExpression foo = c.findClassAttribute("foo", false);
     final String docString = foo.getDocStringValue();
     assertEquals("Foo docstring.", docString);
+  }
+
+  public void testMetaClass() {
+    final PyFile file = getTestFile();
+    final PyClass c = file.findTopLevelClass("C");
+    assertNotNull(c);
+    assertNotNull(c.getMetaClassExpression());
+    final PyClass d = file.findTopLevelClass("D");
+    assertNotNull(d);
+    assertNull(d.getMetaClassExpression());
+    assertNotNull(d.getMetaClassType(TypeEvalContext.codeInsightFallback()));
+    assertNotParsed(file);
   }
 }
