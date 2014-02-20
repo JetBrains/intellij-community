@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public interface BusyObject {
 
+  @NotNull
   ActionCallback getReady(@NotNull Object requestor);
 
   abstract class Impl implements BusyObject {
@@ -66,9 +67,7 @@ public interface BusyObject {
       if (isReady()) {
         return new ActionCallback.Done();
       }
-      else {
-        return addReadyCallback(requestor);
-      }
+      return addReadyCallback(requestor);
     }
 
     @NotNull
@@ -84,6 +83,7 @@ public interface BusyObject {
       }
     }
 
+    @NotNull
     private ActionCallback[] getReadyCallbacks() {
       synchronized (myReadyCallbacks) {
         ActionCallback[] result = myReadyCallbacks.values().toArray(new ActionCallback[myReadyCallbacks.size()]);
@@ -92,6 +92,7 @@ public interface BusyObject {
       }
     }
 
+    @NotNull
     private Pair<ActionCallback, List<ActionCallback>> getReadyCallbacks(Object readyRequestor) {
       synchronized (myReadyCallbacks) {
         ActionCallback done = myReadyCallbacks.get(readyRequestor);
