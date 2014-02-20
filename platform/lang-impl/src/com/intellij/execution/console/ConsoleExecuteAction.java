@@ -95,7 +95,8 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   @Override
   public final void update(AnActionEvent e) {
     EditorEx editor = myConsole.getConsoleEditor();
-    boolean enabled = !editor.isRendererMode() && isEnabled() && !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence());
+    boolean enabled = !editor.isRendererMode() && isEnabled() &&
+                      (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {
       Lookup lookup = LookupManager.getActiveLookup(editor);
       enabled = lookup == null || !lookup.isCompletion();
@@ -126,6 +127,10 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
     public ConsoleHistoryModel getConsoleHistoryModel() {
       return myConsoleHistoryModel;
+    }
+
+    public boolean isEmptyCommandExecutionAllowed() {
+      return true;
     }
 
     public void setAddCurrentToHistory(boolean addCurrentToHistory) {
