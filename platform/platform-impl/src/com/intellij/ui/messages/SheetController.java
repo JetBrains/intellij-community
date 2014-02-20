@@ -23,10 +23,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -48,12 +45,14 @@ public class SheetController {
   private JButton[] buttons;
   private JButton myDefaultButton;
   private JButton myFocusedButton;
-  public final static int SHEET_WIDTH = 400;
-  public final static int SHEET_HEIGHT = 150;
+  public int SHEET_WIDTH = 400;
+  public int SHEET_HEIGHT = 150;
 
   private String myResult;
   private JPanel mySheetPanel;
   private SheetMessage mySheetMessage;
+
+  private Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
   SheetController(final SheetMessage sheetMessage,
                   final String title,
@@ -66,15 +65,27 @@ public class SheetController {
     myDoNotAskOption = doNotAskOption;
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
-    for (int i = 0; i < buttonTitles.length; i++) {
-      buttons[i] = new JButton(buttonTitles[i]);
-      if (buttonTitles[i].equals(defaultButtonTitle)) {
+
+    myResult = null;
+
+    for (int i = 0; i < buttons.length; i++) {
+      int titleIndex = buttonTitles.length - 1 - i;
+      buttons[i] = new JButton(buttonTitles[titleIndex]);
+      if (buttonTitles[titleIndex].equals(defaultButtonTitle)) {
         myDefaultButton = buttons[i];
       }
-      if (buttonTitles[i].equals(focusedButton)) {
+      if (buttonTitles[titleIndex].equals(focusedButton)) {
         myFocusedButton = buttons[i];
       }
+      if (buttonTitles[titleIndex].equals("Cancel")) {
+        myResult = "Cancel";
+      }
     }
+
+    if (myResult == null) {
+      myResult = buttonTitles[0];
+    }
+
     mySheetPanel = createSheetPanel(title, message, buttons);
 
 
@@ -99,6 +110,10 @@ public class SheetController {
         mySheetMessage.startAnimation();
       }
     };
+
+    mySheetPanel.registerKeyboardAction(actionListener,
+                                        KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                                        JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (JButton button: buttons) {
       button.addActionListener(actionListener);
@@ -145,20 +160,26 @@ public class SheetController {
 
     sheetPanel.add(headerLabel);
 
-    JTextArea textArea = new JTextArea(message);
+    JEditorPane textArea = new JEditorPane();
 
+    textArea.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     textArea.setFont(regularFont);
-    textArea.setLineWrap(true);
-    textArea.setWrapStyleWord(true);
+    textArea.setEditable(false);
 
-    textArea.setSize(250, 10);
+    textArea.setContentType("text/html");
+    textArea.setSize(250, Short.MAX_VALUE);
+    textArea.setText(message);
+    messageArea.setSize(250, textArea.getPreferredSize().height);
+    textArea.setSize(messageArea);
+
     textArea.setOpaque(false);
 
     sheetPanel.add(textArea);
 
     textArea.repaint();
-    textArea.setSize(textArea.getPreferredSize());
 
+
+    SHEET_HEIGHT = 20 + headerLabel.getPreferredSize().height + 10 + messageArea.height + 10 + 70;
     sheetPanel.setSize(SHEET_WIDTH, SHEET_HEIGHT);
 
     ico.setOpaque(false);
@@ -198,14 +219,27 @@ public class SheetController {
     g2d.fill(shadow);
   }
 
-  private static void layoutButtons(final JButton[] buttons, JPanel panel) {
-    for (int i = 0; i < buttons.length ; i ++) {
-      panel.add(buttons[i]);
-      buttons[i].repaint();
+  private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-      Dimension size = buttons[i].getPreferredSize();
-      buttons[i].setBounds(SHEET_WIDTH - (size.width + 10) * (buttons.length - i) -  15, SHEET_HEIGHT - 45,
-                           size.width, size.height);
+    int buttonsWidth = 120;
+
+    for (JButton button : buttons) {
+      panel.add(button);
+      button.repaint();
+      buttonsWidth = button.getWidth() + 10;
+    }
+
+    SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
+
+    int buttonShift = 15;
+
+    for (JButton button : buttons) {
+      Dimension size = button.getPreferredSize();
+      buttonShift += size.width;
+      button.setBounds(SHEET_WIDTH - buttonShift,
+                       SHEET_HEIGHT - 45,
+                       size.width, size.height);
+      buttonShift += 10;
     }
   }
 

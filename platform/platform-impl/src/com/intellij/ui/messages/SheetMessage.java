@@ -21,10 +21,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 
 
 /**
@@ -57,7 +54,7 @@ public class SheetMessage  implements ActionListener {
 
 
     myParent = owner;
-    myWindow.setSize(SheetController.SHEET_WIDTH, SheetController.SHEET_HEIGHT);
+
     myWindow.setUndecorated(true);
     myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
@@ -69,6 +66,7 @@ public class SheetMessage  implements ActionListener {
     myWindow.setFocusable(true);
 
     startAnimation();
+    myWindow.setSize(myController.SHEET_WIDTH, myController.SHEET_HEIGHT);
     myWindow.setVisible(true);
     setPositionRelativeToParent();
   }
@@ -94,14 +92,14 @@ public class SheetMessage  implements ActionListener {
 
           int imageCropOffset = (UIUtil.isRetina()) ? imageHeight * 2 : imageHeight;
 
-          g.drawImage(staticImage, 0,0,SheetController.SHEET_WIDTH,imageHeight,
+          g.drawImage(staticImage, 0,0,myController.SHEET_WIDTH,imageHeight,
                       0, staticImage.getHeight(null) - imageCropOffset,
                       staticImage.getWidth(null) ,staticImage.getHeight(null) ,null);
         }
       }
     };
     staticPanel.setOpaque(false);
-    staticPanel.setSize(SheetController.SHEET_WIDTH,SheetController.SHEET_HEIGHT);
+    staticPanel.setSize(myController.SHEET_WIDTH,myController.SHEET_HEIGHT);
     myWindow.setContentPane(staticPanel);
     myAnimator.start();
   }
@@ -113,9 +111,9 @@ public class SheetMessage  implements ActionListener {
                                          : imageHeight - SHEET_ANIMATION_STEP;
 
     setPositionRelativeToParent();
-    if (imageHeight > SheetController.SHEET_HEIGHT) {
+    if (imageHeight > myController.SHEET_HEIGHT) {
       myAnimator.stop();
-      imageHeight = SheetController.SHEET_HEIGHT;
+      imageHeight = myController.SHEET_HEIGHT;
       staticImage = null;
       myWindow.setContentPane(myController.getPanel(myWindow));
       myController.requestFocus();
@@ -132,7 +130,7 @@ public class SheetMessage  implements ActionListener {
 
   private void setPositionRelativeToParent () {
     int width = myParent.getWidth();
-    myWindow.setLocation(width / 2 - SheetController.SHEET_WIDTH / 2 + myParent.getLocation().x,
+    myWindow.setLocation(width / 2 - myController.SHEET_WIDTH / 2 + myParent.getLocation().x,
                          myParent.getInsets().top + myParent.getLocation().y);
   }
 

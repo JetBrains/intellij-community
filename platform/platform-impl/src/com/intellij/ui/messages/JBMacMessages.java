@@ -49,7 +49,8 @@ public class JBMacMessages extends MacMessagesEmulation {
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, null,
                                                  new String [] {defaultButton, alternateButton, otherButton}, null, defaultButton, alternateButton);
-    int result = sheetMessage.getResult().equals(defaultButton) ? Messages.YES : Messages.NO;
+    String resultString = sheetMessage.getResult();
+    int result = resultString.equals(defaultButton) ? Messages.YES : resultString.equals(alternateButton) ? Messages.NO : Messages.CANCEL;
     if (doNotAskOption != null) {
         doNotAskOption.setToBeShown(sheetMessage.toBeShown(), result);
     }
