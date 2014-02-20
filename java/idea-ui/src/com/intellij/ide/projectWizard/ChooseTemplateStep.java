@@ -73,4 +73,8 @@ public class ChooseTemplateStep extends ModuleWizardStep {
       myWizardContext.setProjectTemplate(myTemplateList.getSelectedTemplate());
     }
   }
+
+  public ProjectTemplateList getTemplateList() {
+    return myTemplateList;
+  }
 }

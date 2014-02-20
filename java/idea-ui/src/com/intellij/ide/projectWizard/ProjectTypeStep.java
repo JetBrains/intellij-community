@@ -114,7 +114,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   };
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
-  private boolean myRemoteTemplatesLoaded;
   private String myCurrentCard;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
@@ -460,13 +459,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   @Override
-  public void updateStep() {
-    if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
-      loadRemoteTemplates();
-    }
-  }
-
-  @Override
   public boolean validate() throws ConfigurationException {
     ModuleWizardStep step = getCustomStep();
     return step != null ? step.validate() : super.validate();
@@ -519,12 +511,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return map;
   }
 
-  private void loadRemoteTemplates() {
+  void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myTemplatesList.setPaintBusy(true);
+          chooseTemplateStep.getTemplateList().setPaintBusy(true);
           RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
           String[] groups = factory.getGroups();
           for (String group : groups) {
@@ -545,12 +538,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
               if (group == null) return;
               Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
               setTemplatesList(group, templates, true);
+              chooseTemplateStep.updateStep();
             }
           });
         }
         finally {
           myTemplatesList.setPaintBusy(false);
-          myRemoteTemplatesLoaded = true;
+          chooseTemplateStep.getTemplateList().setPaintBusy(false);
         }
       }
     });

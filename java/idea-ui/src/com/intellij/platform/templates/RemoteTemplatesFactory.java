@@ -55,8 +55,6 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
-  public static final String SAMPLES_GALLERY = "Samples Gallery";
-  private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
 
   public static final String INPUT_FIELD = "input-field";
   public static final String TEMPLATE = "template";
@@ -113,20 +111,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @SuppressWarnings("unchecked")
   public static MultiMap<String, ArchivedProjectTemplate> createFromText(String text) throws IOException, JDOMException {
 
-    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
-    List<Element> groups = rootElement.getChildren("group", NAMESPACE);
     MultiMap<String, ArchivedProjectTemplate> map = new MultiMap<String, ArchivedProjectTemplate>();
-    if (groups.isEmpty()) { // sample gallery by default
-      map.put(SAMPLES_GALLERY, createGroupTemplates(rootElement, Namespace.NO_NAMESPACE));
+    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
+    List<ArchivedProjectTemplate> templates = createGroupTemplates(rootElement, Namespace.NO_NAMESPACE);
+    for (ArchivedProjectTemplate template : templates) {
+      map.putValue(template.getCategory(), template);
     }
-    else {
-      for (Element group : groups) {
-        if (checkRequiredPlugins(group, NAMESPACE)) {
-          map.put(group.getChildText("name", NAMESPACE), createGroupTemplates(group, NAMESPACE));
-        }
-      }
-    }
-
     return map;
   }
 

@@ -47,10 +47,14 @@ public class NewProjectWizard extends AbstractProjectWizard {
     myWizardContext.setNewWizard(true);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     mySequence.addCommonStep(projectTypeStep);
-    mySequence.addCommonStep(new ChooseTemplateStep(myWizardContext, projectTypeStep));
+    ChooseTemplateStep chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
+    mySequence.addCommonStep(chooseTemplateStep);
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
+    }
+    if (myWizardContext.isCreatingNewProject()) {
+      projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
   }
