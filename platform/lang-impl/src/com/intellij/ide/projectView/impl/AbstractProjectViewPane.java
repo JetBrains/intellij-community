@@ -672,6 +672,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
   }
 
+  @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return new ActionCallback.Rejected();
