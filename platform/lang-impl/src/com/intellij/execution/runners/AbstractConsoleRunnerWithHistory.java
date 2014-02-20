@@ -208,18 +208,16 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
     List<AnAction> actionList = ContainerUtil.newArrayList();
 
-//stop
-    final AnAction stopAction = createStopAction();
-    actionList.add(stopAction);
+    //stop
+    actionList.add(createStopAction());
 
-//close
-    final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
-    actionList.add(closeAction);
+    //close
+    actionList.add(createCloseAction(defaultExecutor, contentDescriptor));
 
-// run action
-    actionList.add(createConsoleExecAction(myConsoleView, myConsoleExecuteActionHandler));
+    // run action
+    actionList.add(createConsoleExecAction(myConsoleExecuteActionHandler));
 
-// Help
+    // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
     toolbarActions.addAll(actionList);
@@ -247,13 +245,11 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
                                                  @NotNull ProcessHandler processHandler,
                                                  @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return createConsoleExecAction(console, consoleExecuteActionHandler);
+    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
   }
 
-  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
-                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    consoleExecuteActionHandler);
+  protected AnAction createConsoleExecAction(@NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
   }
 
   @SuppressWarnings("UnusedDeclaration")
