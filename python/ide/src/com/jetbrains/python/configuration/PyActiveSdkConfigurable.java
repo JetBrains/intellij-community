@@ -101,6 +101,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       public void actionPerformed(ActionEvent e) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
         myPackagesPanel.updatePackages(selectedSdk != null ? new PyPackageManagementService(myProject, selectedSdk) : null);
+        if (selectedSdk != null)
+          myPackagesPanel.updateNotifications(selectedSdk);
       }
     });
     myDetailsCallback = new NullableConsumer<Sdk>() {
