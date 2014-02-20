@@ -179,8 +179,8 @@ public class InferenceSession {
           return parameterType;
         }
       }
-      if (arg instanceof PsiMethodCallExpression) {
-        final PsiMethod method = ((PsiMethodCallExpression)arg).resolveMethod();
+      if (arg instanceof PsiCallExpression) {
+        final PsiMethod method = ((PsiCallExpression)arg).resolveMethod();
         if (method != null) {
           final PsiType returnType = method.getReturnType();
           if (returnType != null && returnType.getArrayDimensions() == parameterType.getArrayDimensions()) {
@@ -492,7 +492,10 @@ public class InferenceSession {
   private PsiType getTargetType(final PsiExpression context) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {
-      final PsiElement gParent = parent.getParent();
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiAnonymousClass) {
+        gParent = gParent.getParent();
+      }
       if (gParent instanceof PsiCallExpression) {
         final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
         if (argumentList != null) {
@@ -561,8 +564,8 @@ public class InferenceSession {
       }
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
-      final PsiCallExpression callExpression = (PsiCallExpression)argumentList.getParent();
-      if (callExpression.getTypeArguments().length > 0) {
+      final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(argumentList, PsiCallExpression.class);
+      if (callExpression != null && callExpression.getTypeArguments().length > 0) {
         return getParameterType(parameters, args, i, ((MethodCandidateInfo)result).typeArgumentsSubstitutor());
       }
       final PsiType parameterType = getParameterType(parameters, args, i, pair != null ? pair.second : PsiSubstitutor.EMPTY);
