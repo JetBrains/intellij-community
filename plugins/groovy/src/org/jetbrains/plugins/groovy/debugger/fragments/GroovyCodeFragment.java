@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -59,7 +60,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     this(project, new LightVirtualFile("Dummy.groovy", GroovyFileType.GROOVY_FILE_TYPE, text));
   }
 
-  public GroovyCodeFragment(Project project, LightVirtualFile virtualFile) {
+  public GroovyCodeFragment(Project project, VirtualFile virtualFile) {
     super(new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile, true));
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
   }
