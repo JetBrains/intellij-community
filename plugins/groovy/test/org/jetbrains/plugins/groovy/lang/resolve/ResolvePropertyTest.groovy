@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1267,6 +1267,66 @@ def A = [a:{-1}]
 
 print <caret>A.a()
 ''', PsiVariable)
+  }
+
+  void testPropertyVsAccessor() {
+    resolveByText('''\
+class ProductServiceImplTest  {
+    BackendClient backendClient
+
+    def setup() {
+        new ProductServiceImpl() {
+            protected BackendClient getBackendClient() {
+                return backend<caret>Client // <--- this expression is highlighted as member variable
+            }
+        }
+    }
+}
+
+class BackendClient{}
+class ProductServiceImpl{}
+''', GrMethod)
+  }
+
+  void testPropertyVsAccessor2() {
+    resolveByText('''\
+class ProductServiceImplTest  {
+    def setup() {
+        new ProductServiceImpl() {
+            BackendClient backendClient
+
+            protected BackendClient getBackendClient() {
+                return backendC<caret>lient
+            }
+        }
+    }
+}
+
+class BackendClient{}
+class ProductServiceImpl{}
+''', GrField)
+  }
+
+  void testPropertyVsAccessor3() {
+    resolveByText('''\
+class ProductServiceImplTest  {
+    BackendClient backendClient
+
+    protected BackendClient getBackendClient() {
+        return backendClient
+    }
+    def setup() {
+        new ProductServiceImpl() {
+           def foo() {
+             return backendClie<caret>nt
+           }
+        }
+    }
+}
+
+class BackendClient{}
+class ProductServiceImpl{}
+''', GrMethod)
   }
 
 }

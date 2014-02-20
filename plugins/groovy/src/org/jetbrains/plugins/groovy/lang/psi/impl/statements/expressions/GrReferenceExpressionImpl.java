@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiField) {
         final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiTreeUtil.isContextAncestor(containingClass, this, true)) return fieldCandidates;
+        if (containingClass != null && PsiUtil.getContextClass(this) == containingClass) return fieldCandidates;
       }
       else if (!(element instanceof GrBindingVariable)) {
         return fieldCandidates;
