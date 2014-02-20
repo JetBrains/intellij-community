@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
@@ -130,7 +129,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                             .show(myProject, myProjectSdksModel.getSdks(),
                                                   myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
                                                   new PythonSdkDetailsDialog(myModule, myDetailsCallback), myMainPanel,
-                                                  RelativePoint.fromScreen(myDetailsButton.getLocationOnScreen()), true,
+                                                  myDetailsButton.getLocationOnScreen(), true,
                                                   new NullableConsumer<Sdk>() {
                                                     @Override
                                                     public void consume(Sdk sdk) {
