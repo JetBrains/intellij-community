@@ -236,7 +236,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
 
     @NotNull
     @Override
-    protected ProcessBackedConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
+    protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
       ProcessBackedConsoleExecuteActionHandler handler = new ProcessBackedConsoleExecuteActionHandler(getProcessHandler(), false) {
         @Override
         public void processLine(@NotNull String line) {

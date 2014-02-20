@@ -86,7 +86,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     }
     myProcessHandler = createProcessHandler(process);
 
-    myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
+    myConsoleExecuteActionHandler = createExecuteActionHandler();
 
     ProcessTerminatedListener.attach(myProcessHandler);
 
@@ -264,7 +264,19 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   @NotNull
-  protected abstract ProcessBackedConsoleExecuteActionHandler createConsoleExecuteActionHandler();
+  protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
+    //noinspection deprecation
+    return createConsoleExecuteActionHandler();
+  }
+
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
+    throw new AbstractMethodError();
+  }
 
   public T getConsoleView() {
     return myConsoleView;
