@@ -537,7 +537,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
           context.setUsageView(usageView);
-          configureActions(context);
+          context.configureActions();
         }
 
         @Override
@@ -546,8 +546,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
     );
   }
-
-  protected void configureActions(final UsageViewContext context) {}
 
   protected String getDefaultTitle() {
     return SSRBundle.message("structural.search.title");

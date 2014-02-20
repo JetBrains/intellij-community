@@ -79,6 +79,8 @@ public class UsageViewContext {
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
   }
 
+  protected void configureActions() {}
+
   private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
     private final String myPresentableText;
 

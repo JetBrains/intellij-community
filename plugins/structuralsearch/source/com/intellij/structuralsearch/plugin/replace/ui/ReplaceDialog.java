@@ -1,31 +1,21 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.ui.*;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 // Class to show the user the request for search
 
@@ -96,127 +86,6 @@ public class ReplaceDialog extends SearchDialog {
 
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
     return new ReplaceUsageViewContext(searchContext, configuration);
-  }
-
-  private static boolean isValid(UsageInfo2UsageAdapter info, UsageViewContext context) {
-    final UsageInfo usageInfo = info.getUsageInfo();
-    return !context.isExcluded(info) && usageInfo.getElement() != null && usageInfo.getElement().isValid();
-  }
-
-  protected void configureActions(UsageViewContext context) {
-    final ReplaceUsageViewContext replaceContext = (ReplaceUsageViewContext)context;
-
-    final Runnable replaceRunnable = new Runnable() {
-      public void run() {
-        Project p = searchContext.getProject();
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(getDefaultTitle());
-
-        doReplace(replaceContext);
-        replaceContext.getUsageView().close();
-
-        labelAction.finish();
-      }
-    };
-
-    //noinspection HardCodedStringLiteral
-    replaceContext.getUsageView()
-      .addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
-
-    final Runnable replaceSelected = new Runnable() {
-      public void run() {
-        final Set<Usage> infos = replaceContext.getUsageView().getSelectedUsages();
-        if (infos == null || infos.isEmpty()) return;
-
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(getDefaultTitle());
-
-        for (final Usage info : infos) {
-          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
-
-          if (isValid(usage, replaceContext)) {
-            replaceOne(usage, replaceContext, searchContext.getProject(), false);
-          }
-        }
-
-        labelAction.finish();
-
-        if (replaceContext.getUsageView().getUsagesCount() > 0) {
-          for (Usage usage : replaceContext.getUsageView().getSortedUsages()) {
-            if (!replaceContext.isExcluded(usage)) {
-              replaceContext.getUsageView().selectUsages(new Usage[]{usage});
-              return;
-            }
-          }
-        }
-      }
-    };
-
-    replaceContext.getUsageView().addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
-
-    final Runnable previewReplacement = new Runnable() {
-      public void run() {
-        Set<Usage> selection = replaceContext.getUsageView().getSelectedUsages();
-
-        if (selection != null && !selection.isEmpty()) {
-          UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
-
-          if (isValid(usage, replaceContext)) {
-            replaceOne(usage, replaceContext, searchContext.getProject(), true);
-          }
-        }
-      }
-    };
-
-    replaceContext.getUsageView().addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
-
-    super.configureActions(context);
-  }
-
-  private static void ensureFileWritable(final UsageInfo2UsageAdapter usage) {
-    final VirtualFile file = usage.getFile();
-
-    if (file != null && !file.isWritable()) {
-      ReadonlyStatusHandler.getInstance(usage.getElement().getProject()).ensureFilesWritable(file);
-    }
-  }
-
-  private static void replaceOne(UsageInfo2UsageAdapter info, ReplaceUsageViewContext context, Project project, boolean doConfirm) {
-    ReplacementInfo replacementInfo = context.getUsage2ReplacementInfo().get(info);
-    boolean approved;
-
-    if (doConfirm) {
-      ReplacementPreviewDialog wrapper = new ReplacementPreviewDialog(project, info.getUsageInfo(), replacementInfo.getReplacement());
-
-      wrapper.show();
-      approved = wrapper.isOK();
-    }
-    else {
-      approved = true;
-    }
-
-    if (approved) {
-      ensureFileWritable(info);
-      context.getUsageView().removeUsage(info);
-      context.getReplacer().replace(replacementInfo);
-
-      if (context.getUsageView().getUsagesCount() == 0) {
-        context.getUsageView().close();
-      }
-    }
-  }
-
-  private static void doReplace(ReplaceUsageViewContext context) {
-    List<Usage> infos = context.getUsageView().getSortedUsages();
-    List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
-
-    for (final Usage info : infos) {
-      UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
-
-      if (isValid(usage, context)) {
-        results.add(context.getUsage2ReplacementInfo().get(usage));
-      }
-    }
-
-    context.getReplacer().replaceAll(results);
   }
 
   public ReplaceDialog(SearchContext searchContext) {
