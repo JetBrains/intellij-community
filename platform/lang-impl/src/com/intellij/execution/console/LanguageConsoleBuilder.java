@@ -43,7 +43,7 @@ public class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder(@NotNull Project project, @NotNull Language language) {
-    myConsole = new MyLanguageConsole(project, language);
+    myConsole = new GutteredLanguageConsole(project, language);
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull ProcessHandler processHandler) {
@@ -91,7 +91,7 @@ public class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider provider) {
-    ((MyLanguageConsole)myConsole).gutterContentProvider = provider;
+    ((GutteredLanguageConsole)myConsole).gutterContentProvider = provider;
     return this;
   }
 
@@ -127,11 +127,11 @@ public class LanguageConsoleBuilder {
     }
   }
 
-  private static class MyLanguageConsole extends LanguageConsoleImpl {
+  private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     @Nullable
     private GutterContentProvider gutterContentProvider;
 
-    public MyLanguageConsole(@NotNull Project project, @NotNull Language language) {
+    public GutteredLanguageConsole(@NotNull Project project, @NotNull Language language) {
       super(project, language.getDisplayName() + " Console", language, false);
     }
 
@@ -222,7 +222,7 @@ public class LanguageConsoleBuilder {
         this.lineEndGutter = lineEndGutter;
 
         // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
-        getHistoryViewer().getMarkupModel().addMarkupModelListener(MyLanguageConsole.this, new MarkupModelListener.Adapter() {
+        getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener.Adapter() {
           @Override
           public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
             if (lineSeparatorPainter == highlighter) {
@@ -239,7 +239,7 @@ public class LanguageConsoleBuilder {
 
         EditorEx editor = getHistoryViewer();
         int endOffset = getDocument().getTextLength();
-        lineSeparatorPainter = new MyRangeMarkerImpl(editor, endOffset);
+        lineSeparatorPainter = new LineSeparatorPainter(editor, endOffset);
         editor.getMarkupModel().addRangeHighlighter(lineSeparatorPainter, 0, endOffset, false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
@@ -306,7 +306,7 @@ public class LanguageConsoleBuilder {
       }
     }
 
-    private final class MyRangeMarkerImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
+    private final class LineSeparatorPainter extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
         public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
@@ -332,7 +332,7 @@ public class LanguageConsoleBuilder {
         }
       };
 
-      public MyRangeMarkerImpl(@NotNull EditorEx editor, int endOffset) {
+      public LineSeparatorPainter(@NotNull EditorEx editor, int endOffset) {
         super(editor.getDocument(), 0, endOffset, false);
       }
 
