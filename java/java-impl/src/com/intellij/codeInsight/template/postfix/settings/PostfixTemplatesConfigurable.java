@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.options.Configurable;
@@ -155,6 +156,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   private void updateComponents() {
     boolean pluginEnabled = myPostfixTemplatesEnabled.isSelected();
+    myCompletionEnabledCheckbox.setVisible(!LiveTemplateCompletionContributor.shouldShowAllTemplates());
     myCompletionEnabledCheckbox.setEnabled(pluginEnabled);
     myShortcutComboBox.setEnabled(pluginEnabled);
     if (myTemplatesListPanel != null) {
