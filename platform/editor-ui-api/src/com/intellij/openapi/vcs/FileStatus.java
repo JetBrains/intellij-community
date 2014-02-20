@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -24,7 +25,6 @@ public interface FileStatus {
   Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
   Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);
   Color COLOR_NOT_CHANGED_IMMEDIATE = new Color(50, 100, 180);
-  Color t = new Color(47, 109, 255);
 
   Color COLOR_MERGE = new Color(117, 3, 220);
   Color COLOR_MODIFIED = new Color(0, 50, 160);
@@ -63,7 +63,9 @@ public interface FileStatus {
 
   Color getColor();
 
+  @NotNull
   ColorKey getColorKey();
 
+  @NotNull
   String getId();
 }
