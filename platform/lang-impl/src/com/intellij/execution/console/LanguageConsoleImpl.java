@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -225,7 +224,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.setCaretEnabled(false);
 
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
-    DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(myFile, false);
     myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
     myConsoleEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
