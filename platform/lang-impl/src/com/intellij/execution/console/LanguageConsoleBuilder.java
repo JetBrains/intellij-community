@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class LanguageConsoleBuilder {
+public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
   @Nullable
@@ -51,6 +51,7 @@ public class LanguageConsoleBuilder {
   @Nullable
   private GutterContentProvider gutterContentProvider;
 
+  // todo to be removed
   public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
   }
