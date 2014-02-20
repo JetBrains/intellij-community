@@ -69,7 +69,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
     try {
       setLine(event.translateLineViaDiff(getLine()));
     }
-    catch (FilesTooBigForDiffException e1) {
+    catch (FilesTooBigForDiffException ignored) {
       return false;
     }
     if (getLine() < 0 || getLine() >= getDocument().getLineCount()) {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.EditorHintListener;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -176,6 +177,14 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertTrue(foldRegions[0].isExpanded());
   }
 
+  public void testSelectAfterNotFoundAndUnselect() throws Exception {
+    init("text <selection><caret>text</selection> <selection><caret>text</selection>");
+    executeAction();
+    executeReverseAction();
+    executeAction();
+    checkResult("text <selection><caret>text</selection> <selection><caret>text</selection>");
+  }
+
   private void init(String text) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, text);
   }
@@ -185,10 +194,10 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
   }
 
   private void executeAction() {
-    myFixture.performEditorAction("SelectNextOccurrence");
+    myFixture.performEditorAction(IdeActions.ACTION_SELECT_NEXT_OCCURENCE);
   }
 
   private void executeReverseAction() {
-    myFixture.performEditorAction("UnselectLastOccurrence");
+    myFixture.performEditorAction(IdeActions.ACTION_UNSELECT_LAST_OCCURENCE);
   }
 }

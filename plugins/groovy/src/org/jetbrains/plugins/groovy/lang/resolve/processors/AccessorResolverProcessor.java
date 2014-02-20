@@ -110,7 +110,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     boolean isAccessible = isAccessible(method);
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-    boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
+    boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
     final GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true, true);
     if (isAccessible && isStaticsOK) {
       addCandidate(candidate);

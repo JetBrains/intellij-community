@@ -29,10 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtilsCore;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -72,7 +69,7 @@ public class PluginManagerCore {
   static final String EDIT = "edit";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   static List<String> ourDisabledPlugins = null;
-  static MultiMap<String, String> ourDisabledPluginVersions = null;
+  static MultiMap<String, String> ourBrokenPluginVersions = null;
   static IdeaPluginDescriptor[] ourPlugins;
   static String myPluginError = null;
   static List<String> myPlugins2Disable = null;
@@ -120,9 +117,13 @@ public class PluginManagerCore {
     return ourDisabledPlugins;
   }
 
-  public static MultiMap<String, String> getDisabledPluginVersions() {
-    if (ourDisabledPluginVersions == null) {
-      ourDisabledPluginVersions = MultiMap.createSet();
+  private static boolean isBrokenPlugin(IdeaPluginDescriptor descriptor) {
+    return getBrokenPluginVersions().get(descriptor.getPluginId().getIdString()).contains(descriptor.getVersion());
+  }
+
+  public static MultiMap<String, String> getBrokenPluginVersions() {
+    if (ourBrokenPluginVersions == null) {
+      ourBrokenPluginVersions = MultiMap.createSet();
 
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
         BufferedReader br = new BufferedReader(new InputStreamReader(PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt")));
@@ -142,7 +143,7 @@ public class PluginManagerCore {
             String pluginId = tokens.get(0);
             List<String> versions = tokens.subList(1, tokens.size());
 
-            ourDisabledPluginVersions.putValues(pluginId, versions);
+            ourBrokenPluginVersions.putValues(pluginId, versions);
           }
         }
         catch (IOException e) {
@@ -153,7 +154,7 @@ public class PluginManagerCore {
         }
       }
     }
-    return ourDisabledPluginVersions;
+    return ourBrokenPluginVersions;
   }
 
   static boolean isUnitTestMode() {
@@ -996,8 +997,7 @@ public class PluginManagerCore {
           }
         }
       } else {
-        shouldLoad = !getDisabledPlugins().contains(idString) &&
-                     !getDisabledPluginVersions().get(idString).contains(descriptor.getVersion());
+        shouldLoad = !getDisabledPlugins().contains(idString);
       }
       if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
         if (isIncompatible(descriptor)) return true;
@@ -1037,11 +1037,11 @@ public class PluginManagerCore {
       if (skipped != null) {
         return skipped.booleanValue();
       }
-      boolean result = shouldSkipPlugin(descriptor, ourPlugins);
+      boolean result = shouldSkipPlugin(descriptor, ourPlugins) || isBrokenPlugin(descriptor);
       descriptorImpl.setSkipped(result);
       return result;
     }
-    return shouldSkipPlugin(descriptor, ourPlugins);
+    return shouldSkipPlugin(descriptor, ourPlugins) || isBrokenPlugin(descriptor);
   }
 
   static void initializePlugins(@Nullable StartupProgress progress) {
@@ -1055,6 +1055,9 @@ public class PluginManagerCore {
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     final HashMap<String, String> disabledPluginNames = new HashMap<String, String>();
+
+    List<String> brokenPluginsList = new ArrayList<String>();
+
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       final List<String> modules = descriptor.getModules();
       if (modules != null) {
@@ -1065,7 +1068,16 @@ public class PluginManagerCore {
         }
       }
 
-      if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {
+      boolean skipped = shouldSkipPlugin(descriptor, pluginDescriptors);
+
+      if (!skipped) {
+        if (isBrokenPlugin(descriptor)) {
+          brokenPluginsList.add(descriptor.getName());
+          skipped = true;
+        }
+      }
+
+      if (!skipped) {
         result.add(descriptor);
       }
       else {
@@ -1075,7 +1087,14 @@ public class PluginManagerCore {
       }
     }
 
-    prepareLoadingPluginsErrorMessage(filterBadPlugins(result, disabledPluginNames));
+    String errorMessage = filterBadPlugins(result, disabledPluginNames);
+
+    if (!brokenPluginsList.isEmpty()) {
+      errorMessage = "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
+                     + "<br>\n" + StringUtil.notNullize(errorMessage);
+    }
+
+    prepareLoadingPluginsErrorMessage(errorMessage);
 
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
     for (final IdeaPluginDescriptorImpl descriptor : result) {

@@ -49,10 +49,12 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     new WatchEditorSessionListener(session).install();
   }
 
+  @Override
   protected JComponent createInplaceEditorComponent() {
     return myExpressionEditor.getComponent();
   }
 
+  @Override
   public void cancelEditing() {
     if (!isShown()) return;
     super.cancelEditing();
@@ -62,6 +64,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
   }
 
+  @Override
   public void doOKAction() {
     String expression = myExpressionEditor.getText();
     myExpressionEditor.saveTextInHistory();

@@ -36,7 +36,7 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
   public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
-  protected void startRunProfile(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
+  protected void execute(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
     throws ExecutionException {
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override
@@ -45,14 +45,7 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, environment);
-        if (descriptor != null) {
-          descriptor.setExecutionId(environment.getExecutionId());
-        }
-        if (callback != null) {
-          callback.processStarted(descriptor);
-        }
-        return descriptor;
+        return postProcess(environment, doExecute(project, state, contentToReuse, environment), callback);
       }
     }, state, environment);
   }

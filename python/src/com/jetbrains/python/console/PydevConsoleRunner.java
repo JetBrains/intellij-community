@@ -568,7 +568,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @NotNull
   @Override
-  protected ProcessBackedConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
+  protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);

@@ -1172,13 +1172,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   @Override
-  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
+  public PyType getMetaClassType(@NotNull TypeEvalContext context) {
     if (context.maySwitchToAST(this)) {
       final PyExpression expression = getMetaClassExpression();
       if (expression != null) {
         final PyType type = context.getType(expression);
-        if (type instanceof PyClassLikeType) {
-          return (PyClassLikeType)type;
+        if (type != null) {
+          return type;
         }
       }
     }
@@ -1190,6 +1190,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         final PyFile pyFile = (PyFile)file;
         if (name != null) {
           return classTypeFromQName(name, pyFile, context);
+        }
+      }
+    }
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element instanceof PyTypedElement) {
+          return context.getType((PyTypedElement)element);
         }
       }
     }
@@ -1215,14 +1226,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final PyTargetExpression attribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
       if (attribute != null) {
         return attribute;
-      }
-      final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
-        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
-        if (element instanceof PyExpression) {
-          return (PyExpression)element;
-        }
       }
     }
     return null;

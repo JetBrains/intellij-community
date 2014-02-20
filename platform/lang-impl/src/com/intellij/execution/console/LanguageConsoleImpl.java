@@ -31,8 +31,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
@@ -165,20 +163,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void initComponents() {
-    final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
-    final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
-      @NotNull
-      @Override
-      public Color getDefaultBackground() {
-        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null ? super.getDefaultBackground() : color;
-      }
-    };
-    myConsoleEditor.setColorsScheme(scheme);
-    myHistoryViewer.setColorsScheme(scheme);
+    setupComponents();
+
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleEditor.getComponent());
-    setupComponents();
+
     DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
 
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
@@ -288,14 +277,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
-  public void setTextToEditor(@NotNull final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleEditor.getDocument().setText(text);
-      }
-    });
-    queueUiUpdate(true);
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link #setInputText}
+   * to remove in IDEA 15
+   */
+  public void setTextToEditor(@NotNull String text) {
+    setInputText(text);
   }
 
   protected void setupEditorDefault(@NotNull EditorEx editor) {

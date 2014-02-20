@@ -267,9 +267,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
-    final PyClassLikeType ownMeta = myClass.getMetaClassType(context);
+    final PyType ownMeta = myClass.getMetaClassType(context);
     if (ownMeta != null) {
-      return ownMeta;
+      return (ownMeta instanceof PyClassLikeType) ? (PyClassLikeType)ownMeta : null;
     }
     if (inherited) {
       for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import java.util.List;
  */
 @SuppressWarnings("unchecked")
 public class StandardPatterns {
+
+  private static final FalsePattern FALSE_PATTERN = new FalsePattern();
 
   public static StringPattern string() {
     return new StringPattern();
@@ -178,4 +180,30 @@ public class StandardPatterns {
     });
   }
 
+
+  public static <E> ElementPattern<E> alwaysFalse() {
+    return FALSE_PATTERN;
+  }
+
+  private static final class FalsePattern implements ElementPattern {
+    @Override
+    public boolean accepts(@Nullable Object o) {
+      return false;
+    }
+
+    @Override
+    public boolean accepts(@Nullable Object o, ProcessingContext context) {
+      return false;
+    }
+
+    @Override
+    public ElementPatternCondition getCondition() {
+      return new ElementPatternCondition(new InitialPatternCondition(Object.class) {
+        @Override
+        public boolean accepts(@Nullable Object o, ProcessingContext context) {
+          return false;
+        }
+      });
+    }
+  }
 }

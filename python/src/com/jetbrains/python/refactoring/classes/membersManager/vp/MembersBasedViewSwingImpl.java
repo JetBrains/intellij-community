@@ -2,13 +2,15 @@ package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersConflictDialog;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import org.jetbrains.annotations.NotNull;
@@ -72,10 +74,12 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
     //TODO: Take this from presenter to prevent inconsistence: now it is possible to create view that supports abstract backed by presenter that does not. And vice versa.
   }
 
+
   @Override
-  public boolean showConflictsDialog(@NotNull final MultiMap<PsiElement, String> conflicts) {
-    Preconditions.checkArgument(!conflicts.isEmpty(), "Can't show dialog for empty conflicts");
-    final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+  public boolean showConflictsDialog(@NotNull final MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
+                                     @NotNull final Collection<PyMemberInfo<?>> dependenciesConflicts) {
+    Preconditions.checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
+    final DialogWrapper conflictsDialog = new MembersConflictDialog(myProject, duplicatesConflict, dependenciesConflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();
   }
@@ -133,6 +137,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   public void initAndShow() {
     Preconditions.checkArgument(myConfigured, "Not configured, run 'configure' first!");
     init();
+    myPyMemberSelectionPanel.redraw();  // To display errors for checked member
     show();
   }
 }

@@ -105,6 +105,7 @@ public class GrClosureSignatureUtil {
   }
 
 
+  @NotNull
   public static GrClosureSignature createSignature(final GrClosableBlock block) {
     return new GrClosureSignatureImpl(block.getAllParameters(), null) {
       @Override

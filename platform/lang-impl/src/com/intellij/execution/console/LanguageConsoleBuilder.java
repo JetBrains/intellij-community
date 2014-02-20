@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -42,10 +43,11 @@ public class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder(@NotNull Project project, @NotNull Language language) {
-    myConsole = new MyLanguageConsole(project, language);
+    myConsole = new GutteredLanguageConsole(project, language);
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull ProcessHandler processHandler) {
+    //noinspection deprecation
     myExecutionEnabled = new ProcessBackedExecutionEnabledCondition(processHandler);
     return this;
   }
@@ -89,7 +91,7 @@ public class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider provider) {
-    ((MyLanguageConsole)myConsole).gutterContentProvider = provider;
+    ((GutteredLanguageConsole)myConsole).gutterContentProvider = provider;
     return this;
   }
 
@@ -125,11 +127,11 @@ public class LanguageConsoleBuilder {
     }
   }
 
-  private static class MyLanguageConsole extends LanguageConsoleImpl {
+  private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     @Nullable
     private GutterContentProvider gutterContentProvider;
 
-    public MyLanguageConsole(@NotNull Project project, @NotNull Language language) {
+    public GutteredLanguageConsole(@NotNull Project project, @NotNull Language language) {
       super(project, language.getDisplayName() + " Console", language, false);
     }
 
@@ -208,26 +210,37 @@ public class LanguageConsoleBuilder {
       }
     }
 
-    private class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
+    private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
       private final ConsoleIconGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 
       private Runnable gutterSizeUpdater;
-      private RangeHighlighterEx rangeMarker;
+      private RangeHighlighterEx lineSeparatorPainter;
 
       public GutterUpdateScheduler(@NotNull ConsoleIconGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
         this.lineEndGutter = lineEndGutter;
+
+        // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
+        getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener.Adapter() {
+          @Override
+          public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+            if (lineSeparatorPainter == highlighter) {
+              lineSeparatorPainter = null;
+            }
+          }
+        });
       }
 
       private void addLineSeparatorPainterIfNeed() {
-        if (rangeMarker != null) {
+        if (lineSeparatorPainter != null) {
           return;
         }
 
         EditorEx editor = getHistoryViewer();
-        rangeMarker = new MyRangeMarkerImpl(editor);
-        editor.getMarkupModel().addRangeHighlighter(rangeMarker, 0, getDocument().getTextLength(), false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
+        int endOffset = getDocument().getTextLength();
+        lineSeparatorPainter = new LineSeparatorPainter(editor, endOffset);
+        editor.getMarkupModel().addRangeHighlighter(lineSeparatorPainter, 0, endOffset, false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
       private DocumentEx getDocument() {
@@ -257,11 +270,6 @@ public class LanguageConsoleBuilder {
       private void documentCleared() {
         assert gutterContentProvider != null;
         gutterContentProvider.documentCleared(getHistoryViewer());
-        if (rangeMarker != null) {
-          // it is not optimisation - it seems, our range marker automatically removed on document cleared, so, we need to re-add it later
-          getHistoryViewer().getMarkupModel().removeHighlighter(rangeMarker);
-          rangeMarker = null;
-        }
       }
 
       @Override
@@ -298,7 +306,7 @@ public class LanguageConsoleBuilder {
       }
     }
 
-    private class MyRangeMarkerImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
+    private final class LineSeparatorPainter extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
         public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
@@ -324,13 +332,18 @@ public class LanguageConsoleBuilder {
         }
       };
 
-      public MyRangeMarkerImpl(@NotNull EditorEx editor) {
-        super(editor.getDocument(), 0, 1, false);
+      public LineSeparatorPainter(@NotNull EditorEx editor, int endOffset) {
+        super(editor.getDocument(), 0, endOffset, false);
       }
 
       @Override
       protected void changedUpdateImpl(DocumentEvent e) {
         setIntervalEnd(myDocument.getTextLength());
+      }
+
+      @Override
+      public boolean setValid(boolean value) {
+        return super.setValid(value);
       }
 
       @Override

@@ -17,7 +17,7 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 
 /**
  * @author Dennis.Ushakov
@@ -28,26 +28,7 @@ public class PyDependentMembersCollector extends DependentMembersCollectorBase<P
   }
 
   @Override
-  public void collect(PyElement member) {
-    //TODO: Move to MembersManager as well
-    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyCallExpression(PyCallExpression node) {
-        final Callable markedFunction = node.resolveCalleeFunction(PyResolveContext.noImplicits());
-        final PyFunction function = markedFunction != null ? markedFunction.asMethod() : null;
-        if (!existsInSuperClass(function)) {
-          myCollection.add(function);
-        }
-      }
-    };
-    member.accept(visitor);
-  }
-
-  private boolean existsInSuperClass(PyFunction classMember) {
-    if (getSuperClass() == null) return false;
-    final String name = classMember != null ? classMember.getName() : null;
-    if (name == null) return false;
-    final PyFunction methodBySignature = (getSuperClass()).findMethodByName(name, true);
-    return methodBySignature != null;
+  public void collect(final PyElement member) {
+    myCollection.addAll(MembersManager.getAllDependencies(myClass, member, getSuperClass()));
   }
 }

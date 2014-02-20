@@ -78,6 +78,7 @@ public class ComboboxEditorTextField extends EditorTextField {
     UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
   }
 
+  @Override
   protected void updateBorder(@NotNull final EditorEx editor) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       editor.setBorder(isEnabled() ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);

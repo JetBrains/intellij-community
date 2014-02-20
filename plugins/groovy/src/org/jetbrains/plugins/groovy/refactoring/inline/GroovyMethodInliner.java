@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
         if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
           qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
-          if (!GroovyInlineMethodUtil.isSimpleReference(qualifier)) {
+          if (PsiUtil.isSuperReference(qualifier)) {
+            qualifier = null;
+          }
+          else if (!GroovyInlineMethodUtil.isSimpleReference(qualifier)) {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
