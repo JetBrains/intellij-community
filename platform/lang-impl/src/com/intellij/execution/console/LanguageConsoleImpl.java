@@ -288,14 +288,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
-  public void setTextToEditor(@NotNull final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleEditor.getDocument().setText(text);
-      }
-    });
-    queueUiUpdate(true);
+  @Deprecated
+  /**
+   * @deprecated Use {@link #setInputText}
+   * to remove in IDEA 15
+   */
+  public void setTextToEditor(@NotNull String text) {
+    setInputText(text);
   }
 
   protected void setupEditorDefault(@NotNull EditorEx editor) {
