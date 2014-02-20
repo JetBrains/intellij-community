@@ -18,7 +18,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,26 +34,22 @@ public class ChooseTemplateStep extends ModuleWizardStep {
   private final ProjectTypeStep myProjectTypeStep;
 
   private JPanel myPanel;
-  private JBRadioButton myEmptyProjectButton;
-  private JBRadioButton myFromTemplateButton;
   private ProjectTemplateList myTemplateList;
+  private JBCheckBox myCreateFromTemplateCheckBox;
 
   public ChooseTemplateStep(WizardContext wizardContext, ProjectTypeStep projectTypeStep) {
     myWizardContext = wizardContext;
     myProjectTypeStep = projectTypeStep;
-    ActionListener listener = new ActionListener() {
+    myCreateFromTemplateCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateSelection();
+        myTemplateList.setEnabled(myCreateFromTemplateCheckBox.isSelected());
+        if (myCreateFromTemplateCheckBox.isSelected()) {
+          myTemplateList.getList().requestFocus();
+        }
       }
-    };
-    myEmptyProjectButton.addActionListener(listener);
-    myFromTemplateButton.addActionListener(listener);
-    updateSelection();
-  }
-
-  private void updateSelection() {
-    myTemplateList.setEnabled(myFromTemplateButton.isSelected());
+    });
+    myTemplateList.setEnabled(false);
   }
 
   @Override
@@ -73,7 +69,7 @@ public class ChooseTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    if (myFromTemplateButton.isSelected()) {
+    if (myCreateFromTemplateCheckBox.isSelected()) {
       myWizardContext.setProjectTemplate(myTemplateList.getSelectedTemplate());
     }
   }

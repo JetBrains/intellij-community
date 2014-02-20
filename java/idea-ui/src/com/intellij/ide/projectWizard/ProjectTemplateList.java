@@ -177,6 +177,10 @@ public class ProjectTemplateList extends JPanel {
     });
   }
 
+  public JBList getList() {
+    return myList;
+  }
+
   public void addListSelectionListener(ListSelectionListener listener) {
     myList.addListSelectionListener(listener);
   }
