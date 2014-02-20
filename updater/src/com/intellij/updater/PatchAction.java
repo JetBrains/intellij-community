@@ -102,9 +102,11 @@ public abstract class PatchAction {
       return true;
     }
     catch (OverlappingFileLockException e) {
+      Runner.printStackTrace(e);
       return false;
     }
     catch (IOException e) {
+      Runner.printStackTrace(e);
       return false;
     }
   }

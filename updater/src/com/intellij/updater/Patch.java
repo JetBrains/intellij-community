@@ -34,6 +34,7 @@ public class Patch {
     throws IOException, OperationCancelledException {
     DiffCalculator.Result diff;
 
+    Runner.logger.info("Calculating difference...");
     ui.startProcess("Calculating difference...");
     ui.checkCancelled();
 
@@ -60,6 +61,7 @@ public class Patch {
       }
     }
 
+    Runner.logger.info("Preparing actions...");
     ui.startProcess("Preparing actions...");
     ui.checkCancelled();
 
@@ -146,6 +148,7 @@ public class Patch {
     final LinkedHashSet<String> files = Utils.collectRelativePaths(toDir);
     final List<ValidationResult> result = new ArrayList<ValidationResult>();
 
+    Runner.logger.info("Validating installation...");
     forEach(myActions, "Validating installation...", ui, true,
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
@@ -197,10 +200,12 @@ public class Patch {
               });
     }
     catch (OperationCancelledException e) {
+      Runner.printStackTrace(e);
       shouldRevert = true;
       cancelled = true;
     }
     catch (Throwable e) {
+      Runner.printStackTrace(e);
       shouldRevert = true;
       ui.showError(e);
     }

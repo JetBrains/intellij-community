@@ -20,6 +20,7 @@ public class Utils {
       myTempDir = File.createTempFile("idea.updater.", ".tmp");
       delete(myTempDir);
       myTempDir.mkdirs();
+      Runner.logger.info("created temp file: " + myTempDir.getPath());
     }
 
     return File.createTempFile("temp.", ".tmp", myTempDir);
@@ -28,13 +29,16 @@ public class Utils {
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
+    Runner.logger.info("deleted tmp dir: " + result.getPath());
     result.mkdirs();
+    Runner.logger.info("created tmp dir: " + result.getPath());
     return result;
   }
 
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
+    Runner.logger.info("deleted file " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -44,6 +48,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
+          Runner.logger.info("deleted file " + each.getPath());
         }
       }
     }
@@ -53,6 +58,7 @@ public class Utils {
         Thread.sleep(10);
       }
       catch (InterruptedException ignore) {
+        Runner.printStackTrace(ignore);
       }
     }
     if (file.exists()) throw new IOException("Cannot delete file " + file);
@@ -60,11 +66,13 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true)) {
+      Runner.logger.error("Can't set executable permissions for file");
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
 
   public static void copy(File from, File to) throws IOException {
+    Runner.logger.info("from " + from.getPath() + " to " + to.getPath());
     if (from.isDirectory()) {
       File[] files = from.listFiles();
       if (files == null) throw new IOException("Cannot get directory's content: " + from);
@@ -141,6 +149,7 @@ public class Utils {
   public static InputStream getEntryInputStream(ZipFile zipFile, String entryPath) throws IOException {
     InputStream result = findEntryInputStream(zipFile, entryPath);
     if (result == null) throw new IOException("Entry " + entryPath + " not found");
+    Runner.logger.info("entryPath: " + entryPath);
     return result;
   }
 
