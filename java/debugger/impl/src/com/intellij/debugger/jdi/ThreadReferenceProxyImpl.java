@@ -129,6 +129,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   protected void clearCaches() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    myName = null;
     myFrames = null;
     myFrameCount = -1;
     super.clearCaches();
