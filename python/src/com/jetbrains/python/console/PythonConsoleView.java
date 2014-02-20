@@ -77,7 +77,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   private final LanguageConsoleViewImpl myLanguageConsoleView;
   
-  private Disposable mySplittedDisposable;
+  private Disposable mySplitDisposable;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(new BorderLayout());
@@ -403,7 +403,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
-    mySplittedDisposable = componentDisposable;
+    mySplitDisposable = componentDisposable;
     p.add(component, JSplitPane.RIGHT);
     p.setDividerLocation((int)getSize().getWidth()*2/3);
     add(p, BorderLayout.CENTER);
@@ -417,9 +417,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
     validate();
     repaint();
-    if (mySplittedDisposable != null) {
-      Disposer.dispose(mySplittedDisposable);
-      mySplittedDisposable = null;
+    if (mySplitDisposable != null) {
+      Disposer.dispose(mySplitDisposable);
+      mySplitDisposable = null;
     }
   }
 

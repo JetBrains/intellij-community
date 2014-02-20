@@ -288,6 +288,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
    * @deprecated Use {@link #setInputText}
