@@ -30,10 +30,7 @@ import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsProject;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -66,8 +63,10 @@ public class MavenResourceFileProcessor {
     myFilteringExcludedExtensions = moduleConfiguration.getFilteringExcludedExtensions();
   }
 
-  protected void copyFile(File file, File targetFile, ResourceRootConfiguration rootConfiguration, CompileContext context) throws IOException {
-    boolean shouldFilter = rootConfiguration.isFiltered && !myFilteringExcludedExtensions.contains(FileUtilRt.getExtension(file.getName()));
+  public void copyFile(File file, File targetFile, ResourceRootConfiguration rootConfiguration, CompileContext context,
+                       FileFilter filteringFilter) throws IOException {
+    boolean shouldFilter = rootConfiguration.isFiltered && !myFilteringExcludedExtensions.contains(FileUtilRt.getExtension(file.getName()))
+                           && filteringFilter.accept(file);
     if (shouldFilter && file.length() > FILTERING_SIZE_LIMIT) {
       context.processMessage(new CompilerMessage("MavenResources", BuildMessage.Kind.WARNING,
                                                  "File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering",

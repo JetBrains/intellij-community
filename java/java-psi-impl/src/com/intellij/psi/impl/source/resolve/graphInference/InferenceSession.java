@@ -16,13 +16,11 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -35,6 +33,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +45,7 @@ import java.util.*;
  */
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
+  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
 
   private final Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
@@ -187,83 +187,107 @@ public class InferenceSession {
     return infer(null, null, null);
   }
 
-  @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
-                              @Nullable PsiElement parent) {
-    return infer(parameters, args, parent, DefaultParameterTypeInferencePolicy.INSTANCE);
-  }
-
-  @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
-                              @Nullable PsiElement parent,
-                              ParameterTypeInferencePolicy policy) {
-    return infer(parameters, args, parent, false, policy);
-  }
-
-  @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
-                              @Nullable PsiElement parent,
-                              boolean acceptNonPertinentArgs,
-                              ParameterTypeInferencePolicy policy) {
-
-    if (!repeatInferencePhases(parameters == null || !policy.allowPostponeInference())) {
-      return prepareSubstitution();
+  private PsiSubstitutor tryToInfer(@Nullable PsiParameter[] parameters,
+                                    @Nullable PsiExpression[] args,
+                                    @Nullable PsiCallExpression parent,
+                                    PsiMethod parentMethod) {
+    if (!repeatInferencePhases(true)) {
+      //inferred result would be checked as candidate won't be applicable
+      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor, false);
     }
 
-    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
-
-    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
-    if (pair != null) {
-      initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
-      for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-        inferenceVariable.ignoreInstantiation();
-      }
+    if (parentMethod != null) {
+      initReturnTypeConstraint(parentMethod, parent);
       if (!repeatInferencePhases(true)) {
         return prepareSubstitution();
       }
 
-      PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
-      LOG.assertTrue(parent != null);
-      PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
-      LOG.assertTrue(argumentList != null);
-      MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
-    }
-
-    if (parameters != null && args != null && (acceptNonPertinentArgs || pair != null)) {
-      final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
-      if (parameters.length > 0) {
-        for (int i = 0; i < args.length; i++) {
-          if (args[i] != null) {
-            PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
-            if (pair == null || !isPertinentToApplicability(args[i], pair.first)) {
-              additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
-            }
-            additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
-          }
+      if (parameters != null && args != null) {
+        final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
+        if (parameters.length > 0) {
+          collectAdditionalConstraints(parameters, args, parentMethod, additionalConstraints);
         }
-      }
 
-      if (!additionalConstraints.isEmpty()) {
-        for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-          inferenceVariable.ignoreInstantiation();
-        }
-        if (!proceedWithAdditionalConstraints(additionalConstraints)) {
+        if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
           return prepareSubstitution();
         }
       }
     }
 
-    for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-      inferenceVariable.ignoreInstantiation();
+    return null;
+  }
+
+  private static void collectAdditionalConstraints(PsiParameter[] parameters,
+                                                   PsiExpression[] args,
+                                                   PsiMethod parentMethod,
+                                                   Set<ConstraintFormula> additionalConstraints) {
+    for (int i = 0; i < args.length; i++) {
+      if (args[i] != null) {
+        PsiType parameterType = getParameterType(parameters, args, i, PsiSubstitutor.EMPTY);
+        if (!isPertinentToApplicability(args[i], parentMethod)) {
+          additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        }
+        additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
+        if (args[i] instanceof PsiCallExpression) {
+          //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
+          //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
+          final PsiCallExpression callExpression = (PsiCallExpression)args[i];
+          final PsiExpressionList argumentList = callExpression.getArgumentList();
+          if (argumentList != null) {
+            final PsiMethod method = callExpression.resolveMethod();
+            if (method != null) {
+              final PsiExpression[] newArgs = argumentList.getExpressions();
+              final PsiParameter[] newParams = method.getParameterList().getParameters();
+              collectAdditionalConstraints(newParams, newArgs, method, additionalConstraints);
+            }
+          }
+        }
+      }
     }
-    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
+  }
+
+  @NotNull
+  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
+                              @Nullable PsiExpression[] args,
+                              @Nullable PsiElement parent) {
+    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+    return infer(parameters, args, parent, pair != null ? pair.first : null);
+  }
+
+  @NotNull
+  public PsiSubstitutor infer(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent, PsiMethod parentMethod) {
+    final PsiSubstitutor subst = tryToInfer(parameters, args, parent instanceof PsiCallExpression ? ((PsiCallExpression)parent) : null, parentMethod);
+    if (subst != null) {
+      return subst;
+    }
+
+    final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor);
+    if (substitutor != null) {
+      mySiteSubstitutor = substitutor;
+      for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
+        final InferenceVariable variable = getInferenceVariable(parameter);
+        if (variable != null) {
+          variable.setInstantiation(substitutor.substitute(parameter));
+        }
+      }
+    } else {
+      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor, false);
+    }
 
     return prepareSubstitution();
   }
 
+  public PsiSubstitutor resolveDependencies(Collection<InferenceVariable> variables) {
+    PsiSubstitutor substitutor = mySiteSubstitutor;
+    for (InferenceVariable variable : variables) {
+      final PsiType equalsBound = getEqualsBound(variable, substitutor);
+      if (equalsBound != PsiType.NULL) {
+        substitutor = substitutor.put(variable.getParameter(), equalsBound);
+      }
+    }
+    return substitutor;
+  }
+  
   private PsiSubstitutor prepareSubstitution() {
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
@@ -321,11 +345,10 @@ public class InferenceSession {
         returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context);
         PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
         if (targetType == null) {
-          final PsiType finalReturnType = returnType;
           targetType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, false, new Computable<PsiType>() {
             @Override
             public PsiType compute() {
-              return getTargetType(context, finalReturnType);
+              return getTargetType(context);
             }
           });
         }
@@ -346,15 +369,35 @@ public class InferenceSession {
   public void registerConstraints(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
-      resolveBounds(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
-      myConstraints.add(new TypeCompatibilityConstraint(inferenceVariable.getInstantiation(), returnType));
+      final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
+      myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutor.substitute(inferenceVariable.getParameter()), myContext)));
     } 
     else {
       if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
         setErased();
       }
-      myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(
-        targetType, false), returnType));
+      if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
+        final PsiClass psiClass = resolveResult.getElement();
+        if (psiClass != null) {
+          LOG.assertTrue(returnType instanceof PsiClassType);
+          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+          PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
+          for (int i = 0; i < typeParameters.length; i++) {
+            PsiTypeParameter typeParameter = typeParameters[i];
+            copy[i] = elementFactory.createTypeParameterFromText(typeParameter.getName(), null);
+            initBounds(copy[i]);
+            subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
+          }
+          final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
+          myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
+          myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
+        }
+      } else {
+        myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : targetType, returnType));
+      }
     }
   }
 
@@ -427,7 +470,7 @@ public class InferenceSession {
     return false;
   }
   
-  private PsiType getTargetType(final PsiExpression context, PsiType returnType) {
+  private PsiType getTargetType(final PsiExpression context) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {
       final PsiElement gParent = parent.getParent();
@@ -435,50 +478,50 @@ public class InferenceSession {
         final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
         if (argumentList != null) {
           final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(argumentList);
-          final JavaResolveResult resolveResult;
-          if (pair == null) {
-            final MethodCandidatesProcessor processor = new MethodResolverProcessor((PsiCallExpression)gParent, argumentList, context.getContainingFile()) {
-              @Override
-              protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
-                if (argumentList != null) {
-                  final PsiExpression[] expressions = argumentList.getExpressions();
-                  final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
-                  final PsiType[] types = PsiType.createArray(expressions.length);
-                  for (int i = 0; i < expressions.length; i++) {
-                    if (i != idx) {
-                      types[i] = expressions[i].getType();
-                    }
-                    else {
-                      types[i] = PsiType.NULL;
-                    }
+          final MethodCandidatesProcessor processor = new MethodResolverProcessor((PsiCallExpression)gParent, argumentList, context.getContainingFile()) {
+            @Override
+            protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
+              if (argumentList != null) {
+                final PsiExpression[] expressions = argumentList.getExpressions();
+                final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
+                final PsiType[] types = PsiType.createArray(expressions.length);
+                for (int i = 0; i < expressions.length; i++) {
+                  if (i != idx) {
+                    types[i] = expressions[i].getType();
                   }
-                  return types;
+                  else {
+                    types[i] = PsiType.NULL;
+                  }
                 }
-                else {
-                  return null;
-                }
+                return types;
               }
-            };
-            try {
-              PsiScopesUtil.setupAndRunProcessor(processor, (PsiCallExpression)gParent, false);
+              else {
+                return null;
+              }
             }
-            catch (MethodProcessorSetupFailedException e) {
-              return null;
-            }
-            final JavaResolveResult[] results = processor.getResult();
-            return results.length == 1 ? getTypeByMethod(context, argumentList, null, results[0], results[0].getElement()) : null;
+          };
+          try {
+            PsiScopesUtil.setupAndRunProcessor(processor, (PsiCallExpression)gParent, false);
           }
-          return getTypeByMethod(context, argumentList, pair, null, pair.first);
+          catch (MethodProcessorSetupFailedException e) {
+            return null;
+          }
+          final JavaResolveResult[] results = processor.getResult();
+          return results.length == 1 ? getTypeByMethod(context, argumentList, pair, results[0], results[0].getElement()) : null;
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {
       PsiType targetType = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
       if (targetType == null) {
-        targetType = getTargetType((PsiExpression)parent, returnType);
+        targetType = getTargetType((PsiExpression)parent);
       }
       return targetType;
     }
     else if (parent instanceof PsiLambdaExpression) {
+      if (PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiExpressionList) {
+        final PsiType typeTypeByParentCall = getTargetType((PsiLambdaExpression)parent);
+        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, (PsiLambdaExpression)parent));
+      }
       return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
     }
     return null;
@@ -499,16 +542,23 @@ public class InferenceSession {
       }
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
-      if (pair != null) {
-        return getParameterType(parameters, args, i, pair.second);
+      final PsiCallExpression callExpression = (PsiCallExpression)argumentList.getParent();
+      if (callExpression.getTypeArguments().length > 0) {
+        return getParameterType(parameters, args, i, ((MethodCandidateInfo)result).typeArgumentsSubstitutor());
       }
-      else {
-        args[i] = null;
-        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferSubstitutorFromArgs(LiftParameterTypeInferencePolicy.INSTANCE, args);
-        final Set<PsiTypeParameter> typeParameters = substitutor.getSubstitutionMap().keySet();
-        initBounds(typeParameters.toArray(new PsiTypeParameter[typeParameters.size()]));
-        return getParameterType(parameters, args, i, substitutor);
+      final PsiType parameterType = getParameterType(parameters, args, i, pair != null ? pair.second : PsiSubstitutor.EMPTY);
+      args[i] = null;
+      final PsiTypeParameter[] typeParameters = ((PsiMethod)parentMethod).getTypeParameters();
+      final InferenceSession session = new InferenceSession(typeParameters, ((MethodCandidateInfo)result).getSiteSubstitutor(), myManager, argumentList);
+      session.initExpressionConstraints(parameters, args, argumentList, (PsiMethod)parentMethod);
+      if (session.tryToInfer(parameters, args, callExpression, (PsiMethod)parentMethod) != null) {
+        return null;
       }
+      final Collection<PsiTypeParameter> params = session.getTypeParams();
+      initBounds(params.toArray(new PsiTypeParameter[params.size()]));
+      liftBounds(session.getInferenceVariables());
+      final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSiteSubstitutor();
+      return substitutor.substitute(parameterType);
     }
     return null;
   }
@@ -607,107 +657,10 @@ public class InferenceSession {
     return true;
   }
 
-  protected PsiSubstitutor resolveBounds(boolean acceptInitialUpperBound) {
-    return resolveBounds(getInferenceVariables(), mySiteSubstitutor, acceptInitialUpperBound);
-  }
-
-  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
-                                       PsiSubstitutor substitutor,
-                                       boolean acceptInitialUpperBound) {
-    final List<List<InferenceVariable>> independentVars = InferenceVariablesOrder.resolveOrder(inferenceVariables, this);
-    for (List<InferenceVariable> variables : independentVars) {
-      for (InferenceVariable inferenceVariable : variables) {
-
-        final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
-        try {
-          if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
-          final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
-          final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-          final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
-          if (myErased && eqBounds.contains(null) || /*lowerBounds.contains(null) || */upperBounds.contains(null)) {
-            inferenceVariable.setInstantiation(null);
-            continue;
-          }
-          PsiType bound = null;
-          if (eqBounds.size() > 1) {
-            for (Iterator<PsiType> iterator = eqBounds.iterator(); iterator.hasNext(); ) {
-              final PsiType unsubstBound = iterator.next();
-              PsiType eqBound = substituteNonProperBound(unsubstBound, substitutor);
-              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || !(bound instanceof PsiCapturedWildcardType && bound.equals(unsubstBound)) && Comparing.equal(bound, eqBound)) {
-                iterator.remove();
-              } else if (bound == null) {
-                bound = eqBound; 
-              }
-            }
-            if (eqBounds.size() > 1) continue;
-          }
-          bound = eqBounds.isEmpty() ? null :  substituteNonProperBound(eqBounds.get(0), substitutor);
-          if (bound != null) {
-            inferenceVariable.setInstantiation(bound);
-          } else {
-            PsiType lub = null;
-            for (PsiType lowerBound : lowerBounds) {
-              lowerBound = substituteNonProperBound(lowerBound, substitutor);
-              if (isProperType(lowerBound)) {
-                if (lub == null) {
-                  lub = lowerBound;
-                }
-                else {
-                  lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
-                }
-              }
-            }
-            if (lub != null) {
-              inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
-            }
-            else {
-              boolean inferred = false;
-              PsiType glb = null;
-              if (inferenceVariable.isThrownBound() && isThrowable(upperBounds)) {
-                glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
-                inferred = true;
-              } else {
-                int boundCandidatesNumber = 0;
-                for (PsiType upperBound : upperBounds) {
-                  PsiType substitutedBound = substituteNonProperBound(upperBound, substitutor);
-                  if (isProperType(substitutedBound)) {
-                    boundCandidatesNumber++;
-                    if (!upperBound.equals(substitutedBound)) {
-                      inferred = true;
-                    }
-                    if (glb == null) {
-                      glb = substitutedBound;
-                    }
-                    else {
-                      glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBound);
-                    }
-                  }
-                }
-                if (!inferred) {
-                  inferred = boundCandidatesNumber > typeParameter.getExtendsListTypes().length && (typeParameter.getExtendsListTypes().length > 0 || boundCandidatesNumber > 1);
-                }
-              }
-              if (glb != null && (acceptInitialUpperBound && !isInsideRecursiveCall(typeParameter) || inferred)) {
-                inferenceVariable.setInstantiation(glb);
-              }
-            }
-          }
-        }
-        finally {
-          final PsiType instantiation = inferenceVariable.getInstantiation();
-          if (instantiation != PsiType.NULL) {
-            substitutor = substitutor.put(typeParameter, instantiation);
-          }
-        }
-      }
-    }
-    return substitutor;
-  }
-
-  private static boolean isThrowable(List<PsiType> upperBounds) {
+  private boolean isThrowable(List<PsiType> upperBounds) {
     boolean commonThrowable = false;
     for (PsiType upperBound : upperBounds) {
-      if (upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || !isProperType(upperBound)) continue;
       if (upperBound.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) ||
           upperBound.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE)) {
         commonThrowable = true;
@@ -720,6 +673,124 @@ public class InferenceSession {
 
   private PsiType substituteNonProperBound(PsiType bound, PsiSubstitutor substitutor) {
     return isProperType(bound) ? bound : substitutor.substitute(bound);
+  }
+
+  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
+                                       PsiSubstitutor substitutor) {
+    final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
+    while (!allVars.isEmpty()) {
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
+      if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
+        final PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, true);
+        if (firstSubstitutor != null) {
+          substitutor = firstSubstitutor;
+          allVars.removeAll(vars);
+          continue;
+        }
+      }
+
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
+      for (InferenceVariable var : vars) {
+        final PsiTypeParameter parameter = var.getParameter();
+        final PsiTypeParameter copy = elementFactory.createTypeParameterFromText(parameter.getName(), null);
+        final PsiType lub = getLowerBound(var, substitutor);
+        final PsiType glb = getUpperBound(var, substitutor);
+        final InferenceVariable zVariable = new InferenceVariable(copy);
+        zVariable.addBound(glb, InferenceBound.UPPER);
+        if (lub != PsiType.NULL) {
+          if (!TypeConversionUtil.isAssignable(glb, lub)) {
+            return null;
+          }
+          copy.putUserData(LOWER_BOUND, lub);
+          zVariable.addBound(lub, InferenceBound.LOWER);
+        }
+        myInferenceVariables.put(copy, zVariable);
+      }
+      myIncorporationPhase.forgetCaptures(vars);
+      if (!myIncorporationPhase.incorporate()) {
+        return null;
+      }
+    }
+    return substitutor;
+  }
+
+  private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
+    return composeBound(var, InferenceBound.LOWER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+      @Override
+      public PsiType fun(Pair<PsiType, PsiType> pair) {
+        return GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager);
+      }
+    }, substitutor);
+  }
+
+  private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor, boolean checkResult) {
+    for (InferenceVariable var : vars) {
+      LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
+      final PsiTypeParameter typeParameter = var.getParameter();
+      final PsiType eqBound = getEqualsBound(var, substitutor);
+      final PsiType lub = eqBound != PsiType.NULL && (myErased || eqBound != null) ? eqBound : getLowerBound(var, substitutor);
+      if (lub != PsiType.NULL) {
+        substitutor = substitutor.put(typeParameter, lub);
+      } 
+      else if (var.isThrownBound() && isThrowable(var.getBounds(InferenceBound.UPPER))) {
+        final PsiClassType runtimeException = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
+        substitutor = substitutor.put(typeParameter, runtimeException);
+      } 
+      else {
+        substitutor = substitutor.put(typeParameter, getUpperBound(var, substitutor));
+      }
+    }
+
+    return checkResult ? myIncorporationPhase.checkIncorporated(substitutor, vars) : substitutor;
+  }
+
+  private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
+    return composeBound(var, InferenceBound.UPPER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+      @Override
+      public PsiType fun(Pair<PsiType, PsiType> pair) {
+        return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
+      }
+    }, substitutor);
+  }
+
+  public PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {
+    return composeBound(var, InferenceBound.EQ, new Function<Pair<PsiType, PsiType>, PsiType>() {
+      @Override
+      public PsiType fun(Pair<PsiType, PsiType> pair) {
+        return pair.first; //todo check if equals
+      }
+    }, substitutor);
+  }
+
+  private PsiType composeBound(InferenceVariable variable,
+                               InferenceBound boundType,
+                               Function<Pair<PsiType, PsiType>, PsiType> fun,
+                               PsiSubstitutor substitutor) {
+    final List<PsiType> lowerBounds = variable.getBounds(boundType);
+    PsiType lub = PsiType.NULL;
+    for (PsiType lowerBound : lowerBounds) {
+      lowerBound = substituteNonProperBound(lowerBound, substitutor);
+      final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+      collectDependencies(lowerBound, dependencies);
+      if (dependencies.size() == 1 && dependencies.contains(variable) && isInsideRecursiveCall(dependencies)) {
+        lub = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(variable.getParameter());
+      } else if (dependencies.isEmpty() || isInsideRecursiveCall(dependencies)) {
+        if (lub == PsiType.NULL) {
+          lub = lowerBound;
+        }
+        else {
+          lub = fun.fun(Pair.create(lub, lowerBound));
+        }
+      }
+    }
+    return lub;
+  }
+
+  private boolean isInsideRecursiveCall(HashSet<InferenceVariable> dependencies) {
+    for (InferenceVariable dependency : dependencies) {
+      if (!isInsideRecursiveCall(dependency.getParameter())) return false;
+    }
+    return true;
   }
 
   public PsiManager getManager() {
@@ -746,11 +817,26 @@ public class InferenceSession {
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
     while (!additionalConstraints.isEmpty()) {
+      //extract subset of constraints
+      final Set<ConstraintFormula> subset = buildSubset(additionalConstraints);
+
+      //collect all input variables of selection 
       final Set<InferenceVariable> varsToResolve = new HashSet<InferenceVariable>();
+      for (ConstraintFormula formula : subset) {
+        if (formula instanceof InputOutputConstraintFormula) {
+          final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)formula).getInputVariables(this);
+          if (inputVariables != null) {
+            varsToResolve.addAll(inputVariables);
+          }
+        }
+      }
 
-      final Set<ConstraintFormula> subset = buildSubset(additionalConstraints, varsToResolve);
+      //resolve input variables
+      PsiSubstitutor substitutor = resolveSubset(varsToResolve, mySiteSubstitutor, true);
 
-      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, true);
+      if (substitutor == null) {
+        return false;
+      }
 
       if (myContext instanceof PsiCallExpression) {
         PsiExpressionList argumentList = ((PsiCallExpression)myContext).getArgumentList();
@@ -771,8 +857,7 @@ public class InferenceSession {
     return true;
   }
 
-  private Set<ConstraintFormula> buildSubset(final Set<ConstraintFormula> additionalConstraints,
-                                             final Set<InferenceVariable> varsToResolve) {
+  private Set<ConstraintFormula> buildSubset(final Set<ConstraintFormula> additionalConstraints) {
 
     final Set<ConstraintFormula> subset = new HashSet<ConstraintFormula>();
     final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
@@ -802,10 +887,6 @@ public class InferenceSession {
           }
           if (!dependsOnOutput) {
             subset.add(constraint);
-            for (InferenceVariable variable : inputVariables) {
-              varsToResolve.addAll(variable.getDependencies(this));
-              varsToResolve.add(variable);
-            }
           }
         }
         else {
@@ -891,8 +972,9 @@ public class InferenceSession {
                                                       PsiType tType,
                                                       @Nullable InferenceSession session, 
                                                       PsiExpression... args) {
-    final PsiClassType.ClassResolveResult sResult = PsiUtil.resolveGenericsClassInType(sType);
-    final PsiMethod sInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(sResult); //todo capture of Si
+    final PsiType capturedSType = sType;//todo capture of Si session != null && sType != null ? PsiUtil.captureToplevelWildcards(sType, session.myContext) : sType;
+    final PsiClassType.ClassResolveResult sResult = PsiUtil.resolveGenericsClassInType(capturedSType);
+    final PsiMethod sInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(sResult);
     LOG.assertTrue(sInterfaceMethod != null);
     final PsiSubstitutor sSubstitutor = LambdaUtil.getSubstitutor(sInterfaceMethod, sResult);
 
@@ -1053,5 +1135,29 @@ public class InferenceSession {
       }
     }
     return false;
+  }
+
+  public void collectCaptureDependencies(InferenceVariable inferenceVariable, Set<InferenceVariable> dependencies) {
+    myIncorporationPhase.collectCaptureDependencies(inferenceVariable, dependencies);
+  }
+
+  public boolean hasCapture(InferenceVariable inferenceVariable) {
+    return myIncorporationPhase.hasCaptureConstraints(Arrays.asList(inferenceVariable));
+  }
+
+  public void liftBounds(Collection<InferenceVariable> variables) {
+    for (InferenceVariable variable : variables) {
+      final PsiTypeParameter parameter = variable.getParameter();
+      final InferenceVariable inferenceVariable = getInferenceVariable(parameter);
+      if (inferenceVariable != null) {
+        for (InferenceBound boundType : InferenceBound.values()) {
+          for (PsiType bound : variable.getBounds(boundType)) {
+            inferenceVariable.addBound(bound, boundType);
+          }
+        }
+      } else {
+        myInferenceVariables.put(parameter, variable);
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
@@ -68,8 +69,13 @@ class AddHandler {
     //    }
     //  });
     //}
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    final CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
     for (VirtualFile file : myAllFiles) {
-      if (!CvsUtil.fileIsUnderCvs(file.getParent())) {
+      if (changeListManager.isIgnoredFile(file)) {
+        continue;
+      }
+      else if (!CvsUtil.fileIsUnderCvs(file.getParent())) {
         continue;
       }
       else if (CvsUtil.fileIsLocallyRemoved(file)) {
@@ -78,7 +84,10 @@ class AddHandler {
       else if (CvsUtil.fileIsUnderCvs(file)) {
         continue;
       }
-      else if (CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent()).isOffline()) {
+      else if (cvsEntriesManager.getCvsConnectionSettingsFor(file.getParent()).isOffline()) {
+        continue;
+      }
+      else if (cvsEntriesManager.fileIsIgnored(file)) {
         continue;
       }
       else {

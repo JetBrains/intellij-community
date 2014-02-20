@@ -40,7 +40,7 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
     final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(defaultType) == null) {
+      if (LambdaUtil.isFunctionalType(defaultType)) {
         final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(defaultType);
         if (method != null) {
           final PsiParameter[] params = method.getParameterList().getParameters();

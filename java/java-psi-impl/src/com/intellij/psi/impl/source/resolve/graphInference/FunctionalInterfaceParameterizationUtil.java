@@ -102,14 +102,12 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      session.resolveBounds(false);
+      final PsiSubstitutor substitutor = session.resolveDependencies(session.getInferenceVariables());
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
-        final InferenceVariable variable = session.getInferenceVariable(typeParameter);
-        final PsiType instantiation = variable.getInstantiation();
-        if (instantiation != PsiType.NULL) {
-          newTypeParameters[i] = instantiation;
+        if (substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+          newTypeParameters[i] = substitutor.substitute(typeParameter);
         } else {
           newTypeParameters[i] = parameters[i];
         }

@@ -97,6 +97,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return node == null ? -1 : node.myLayer;
   }
 
+  @NotNull
   @Override
   public HighlighterTargetArea getTargetArea() {
     return getData().getTargetArea();
@@ -209,8 +210,8 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setAfterEndOfLine(boolean afterEndOfLine) {
-    getData().setAfterEndOfLine(afterEndOfLine);
+  public void setAfterEndOfLine(boolean value) {
+    getData().setAfterEndOfLine(value);
   }
 
   @Override
@@ -220,7 +221,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public int getAffectedAreaEndOffset() {
-    return getData().getAffectedAreaEndOffset();
+    return getEndOffset();
   }
 
   @Override

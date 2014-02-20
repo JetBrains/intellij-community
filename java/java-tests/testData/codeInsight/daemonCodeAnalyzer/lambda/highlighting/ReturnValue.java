@@ -36,7 +36,7 @@ class Test1 {
       if (s.equals("1")) {
         return Option.option(1);
       } else {
-        return Option.option<error descr="'option(java.lang.Integer)' in 'Test1.Option' cannot be applied to '(java.lang.String)'">("2")</error>;
+        return Option.option<error descr="'option(T)' in 'Test1.Option' cannot be applied to '(java.lang.String)'">("2")</error>;
       }
     };
   }

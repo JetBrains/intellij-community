@@ -53,7 +53,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -280,8 +279,10 @@ public class PythonSdkType extends SdkType {
 
   public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    final Point point = parentComponent.getMousePosition();
+    SwingUtilities.convertPointToScreen(point, parentComponent);
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, false, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {

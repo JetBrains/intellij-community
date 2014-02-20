@@ -65,7 +65,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         returnType = substitutor.substitute(returnType);
         if (!session.isProperType(returnType)) {
           for (PsiExpression returnExpression : returnExpressions) {
-            constraints.add(new ExpressionCompatibilityConstraint(returnExpression, GenericsUtil.eliminateWildcards(returnType)));
+            constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
           }
         }
       }

@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -55,13 +54,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   public static void show(final Project project,
                           final Sdk[] existingSdks,
                           DialogWrapper moreDialog,
-                          JComponent ownerComponent, final RelativePoint popupPoint,
+                          JComponent ownerComponent, final Point popupPoint,
                           final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
     myMore = moreDialog;
     final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, ownerComponent, existingSdks, showMore, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.show(popupPoint);
+    popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
   public PythonSdkDetailsStep(Project project,

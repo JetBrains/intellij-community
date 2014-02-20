@@ -77,8 +77,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         super.visitAnonymousClass(aClass);
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
-          final String functionalInterfaceErrorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(baseClassType);
-          if (functionalInterfaceErrorMessage == null) {
+          if (LambdaUtil.isFunctionalType(baseClassType)) {
             final PsiMethod[] methods = aClass.getMethods();
             if (methods.length == 1 && aClass.getFields().length == 0) {
               final PsiCodeBlock body = methods[0].getBody();
@@ -288,9 +287,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
 
     private static boolean isInferred(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
-      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || LambdaHighlightingUtil
-                                                                                                              .checkInterfaceFunctional(
-                                                                                                                interfaceType) != null;
+      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || !LambdaUtil.isFunctionalType(interfaceType);
     }
 
     private static String composeLambdaText(PsiMethod method, final boolean appendType) {

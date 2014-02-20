@@ -25,10 +25,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,13 +69,13 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithBounds() {
     doTest();
   }
-  public void _testInferenceWithSuperBounds() {  //todo waiting for capture bound
+  public void testInferenceWithSuperBounds() {
     doTest();
   }
   public void testInferenceWithUpperBoundPromotion() {
     doTest();
   }
-  public void _testVariance() { //todo waiting for capture bound
+  public void testVariance() {
     doTest();
   }
   public void testForeachTypes() {
@@ -246,7 +244,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA66311_16() {
     doTest();
   }
-  public void _testIDEA76283() {//todo bounds
+  public void testIDEA76283() {
     doTest();
   }
   public void testIDEA74899() {
@@ -738,6 +736,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA114797() throws Exception {
+    doTest();
+  }
+
+  public void testCastToIntersectionType() throws Exception {
     doTest();
   }
 

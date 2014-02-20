@@ -19,30 +19,18 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
-  private boolean oldRegistryValue;
-
-  @Override
-  public void setUp() {
-    super.setUp();
-    RegistryValue registryValue = Registry.get("show.live.templates.in.completion");
-    oldRegistryValue = registryValue.asBoolean();
-    registryValue.setValue(false);
-  }
-
   @Override
   public void tearDown() throws Exception {
-    RegistryValue registryValue = Registry.get("show.live.templates.in.completion");
-    registryValue.setValue(oldRegistryValue);
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = false;
 
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -53,13 +41,13 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testSimpleCompletionList() {
-    Registry.get("show.live.templates.in.completion").setValue(true);
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
 
     doAutoPopupTest("ins", InstanceofExpressionPostfixTemplate.class);
   }
 
   public void testAutopopupWithEnabledLiveTemplatesInCompletion() {
-    Registry.get("show.live.templates.in.completion").setValue(true);
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
 
     configureByFile();
     type("instanceof");

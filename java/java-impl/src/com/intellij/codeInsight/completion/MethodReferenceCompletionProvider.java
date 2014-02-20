@@ -19,9 +19,8 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -36,7 +35,7 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
     final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(defaultType) == null) {
+      if (LambdaUtil.isFunctionalType(defaultType)) {
         final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(defaultType);
         if (returnType != null) {
           final ExpectedTypeInfoImpl typeInfo =

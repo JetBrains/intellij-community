@@ -52,6 +52,10 @@ public interface EditorEx extends Editor {
   @Override
   DocumentEx getDocument();
 
+  @Override
+  @NotNull
+  MarkupModelEx getMarkupModel();
+
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 

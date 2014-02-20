@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.Options;
@@ -29,13 +30,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -50,7 +53,6 @@ public class IgnoreFileAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.IgnoreFileAction");
 
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
-  private final Map<VirtualFile,Set<VirtualFile>> myParentToSelectedChildren = new HashMap<VirtualFile, Set<VirtualFile>>();
 
   public IgnoreFileAction() {
     myVisibility.canBePerformedOnSeveralFiles();
@@ -63,22 +65,21 @@ public class IgnoreFileAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren = MultiMap.createSmartList();
     final CvsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
     for (VirtualFile selectedFile : selectedFiles) {
       final VirtualFile parent = selectedFile.getParent();
-      if (!myParentToSelectedChildren.containsKey(parent)) myParentToSelectedChildren.put(parent, new HashSet<VirtualFile>());
-      myParentToSelectedChildren.get(parent).add(selectedFile);
+      parentToSelectedChildren.putValue(parent, selectedFile);
       try {
         CvsUtil.ignoreFile(selectedFile);
       }
       catch (IOException e1) {
-        Messages.showErrorDialog(
-          CvsBundle.message("message.error.ignore.files", selectedFile.getPresentableUrl(), e1.getLocalizedMessage()),
-          CvsBundle.message("message.error.ignore.files.title"));
+        final String message = CvsBundle.message("message.error.ignore.files", selectedFile.getPresentableUrl(), e1.getLocalizedMessage());
+        VcsBalloonProblemNotifier.showOverChangesView(context.getProject(), message, MessageType.ERROR);
       }
     }
-    refreshFilesAndStatuses(context);
+    refreshFilesAndStatuses(context, parentToSelectedChildren);
   }
 
   private static void refreshPanel(CvsContext context) {
@@ -89,69 +90,67 @@ public class IgnoreFileAction extends AnAction {
     }
   }
 
-  private void refreshFilesAndStatuses(final CvsContext context) {
+  private static void refreshFilesAndStatuses(final CvsContext context, final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren) {
     final Refreshable refreshablePanel = context.getRefreshableDialog();
     if (refreshablePanel != null) refreshablePanel.saveState();
     final int[] refreshedParents = new int[]{0};
     final Collection<VirtualFile> createdCvsIgnoreFiles = new ArrayList<VirtualFile>();
-    for (final VirtualFile parent : myParentToSelectedChildren.keySet()) {
-      parent.refresh(true, true, parentPostRefreshAction(refreshedParents, createdCvsIgnoreFiles, context, parent));
-    }
-  }
+    for (final VirtualFile parent : parentToSelectedChildren.keySet()) {
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            final VirtualFile cvsIgnoreFile =
+              CvsVfsUtil.refreshAndfFindChild(parent, CvsUtil.CVS_IGNORE_FILE);
+            if (cvsIgnoreFile == null) {
+              final String path = parent.getPath() + "/" + CvsUtil.CVS_IGNORE_FILE;
+              LOG.error(String.valueOf(CvsVfsUtil.findFileByPath(path)) + " " + parent.getPath() + " " +
+                        new File(VfsUtil.virtualToIoFile(parent), CvsUtil.CVS_IGNORE_FILE).isFile());
+              return;
+            }
 
-  private Runnable parentPostRefreshAction(final int[] refreshedParents,
-                                           final Collection<VirtualFile> createdCvsIgnoreFiles,
-                                           final CvsContext context,
-                                           final VirtualFile parent) {
-    return new Runnable() {
-      public void run() {
-        try {
-          final VirtualFile cvsIgnoreFile = CvsVfsUtil.refreshAndfFindChild(parent, CvsUtil.CVS_IGNORE_FILE);
-          if (cvsIgnoreFile == null) {
-            final String path = parent.getPath() + "/" + CvsUtil.CVS_IGNORE_FILE;
-            LOG.error(String.valueOf(CvsVfsUtil.findFileByPath(path)) + " " + parent.getPath() + " " +
-                      new File(VfsUtil.virtualToIoFile(parent), CvsUtil.CVS_IGNORE_FILE).isFile());
-            return;
+            if (!CvsUtil.fileIsUnderCvs(cvsIgnoreFile) &&
+                !ChangeListManager.getInstance(context.getProject()).isIgnoredFile(cvsIgnoreFile) &&
+                !CvsEntriesManager.getInstance().fileIsIgnored(cvsIgnoreFile)) {
+              createdCvsIgnoreFiles.add(cvsIgnoreFile);
+            }
+
+            final Collection<VirtualFile> filesToUpdateStatus = parentToSelectedChildren.get(parent);
+            for (final VirtualFile file : filesToUpdateStatus) {
+              FileStatusManager.getInstance(context.getProject()).fileStatusChanged(file);
+              VcsDirtyScopeManager.getInstance(context.getProject()).fileDirty(file);
+            }
           }
-
-          if (!CvsUtil.fileIsUnderCvs(cvsIgnoreFile)) {
-            createdCvsIgnoreFiles.add(cvsIgnoreFile);
-          }
-
-          final Set<VirtualFile> filesToUpdateStatus = myParentToSelectedChildren.get(parent);
-          for (final VirtualFile file : filesToUpdateStatus) {
-            FileStatusManager.getInstance(context.getProject()).fileStatusChanged(file);
-            VcsDirtyScopeManager.getInstance(context.getProject()).fileDirty(file);
+          finally {
+            refreshedParents[0]++;
+            if (refreshedParents[0] == parentToSelectedChildren.size()) {
+              // all parents are refreshed
+              if (createdCvsIgnoreFiles.isEmpty()) {
+                refreshPanel(context);
+              }
+              else {
+                addCvsIgnoreFilesToCvsAndRefreshPanel();
+              }
+            }
           }
         }
-        finally {
-          refreshedParents[0]++;
-          if (allParentsWasRefreshed(refreshedParents)) {
-            if (createdCvsIgnoreFiles.isEmpty()) {
+
+        private void addCvsIgnoreFilesToCvsAndRefreshPanel() {
+          createAddFilesAction().actionPerformed(createContext(createdCvsIgnoreFiles, context));
+        }
+
+        private AddFileOrDirectoryAction createAddFilesAction() {
+          return new AddFileOrDirectoryAction(CvsBundle.message("adding.cvsignore.files.to.cvs.action.name"), Options.ON_FILE_ADDING) {
+            protected void onActionPerformed(CvsContext context,
+                                             CvsTabbedWindow tabbedWindow,
+                                             boolean successfully,
+                                             CvsHandler handler) {
               refreshPanel(context);
             }
-            else {
-              addCvsIgnoreFilesToCvsAndRefreshPanel();
-            }
-          }
+          };
         }
-      }
-
-      private void addCvsIgnoreFilesToCvsAndRefreshPanel() {
-        createAddFilesAction().actionPerformed(createContext(createdCvsIgnoreFiles, context));
-      }
-
-      private AddFileOrDirectoryAction createAddFilesAction() {
-        return new AddFileOrDirectoryAction(CvsBundle.message("adding.cvsignore.files.to.cvs.action.name"), Options.ON_FILE_ADDING) {
-          protected void onActionPerformed(CvsContext context,
-                                           CvsTabbedWindow tabbedWindow,
-                                           boolean successfully,
-                                           CvsHandler handler) {
-            refreshPanel(context);
-          }
-        };
-      }
-    };
+      };
+      parent.refresh(true, true, runnable);
+    }
   }
 
   private static CvsContextAdapter createContext(final Collection<VirtualFile> createdCvsIgnoreFiles, final CvsContext context) {
@@ -169,9 +168,5 @@ public class IgnoreFileAction extends AnAction {
         return context.getProject();
       }
     };
-  }
-
-  private boolean allParentsWasRefreshed(final int[] refreshedParents) {
-    return refreshedParents[0] == myParentToSelectedChildren.size();
   }
 }

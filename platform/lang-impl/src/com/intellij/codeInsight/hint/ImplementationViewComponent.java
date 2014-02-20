@@ -22,8 +22,6 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -48,6 +46,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usages.UsageView;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -411,25 +410,19 @@ public class ImplementationViewComponent extends JPanel {
   private void updateTextElement(final PsiElement elt) {
     final String newText = getNewText(elt);
     if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Document fragmentDoc = myEditor.getDocument();
-            fragmentDoc.setReadOnly(false);
+        Document fragmentDoc = myEditor.getDocument();
+        fragmentDoc.setReadOnly(false);
 
-            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-            fragmentDoc.setReadOnly(true);
-            myEditor.getCaretModel().moveToOffset(0);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        });
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+        fragmentDoc.setReadOnly(true);
+        myEditor.getCaretModel().moveToOffset(0);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
   }
-
 
   @Nullable
   public static String getNewText(PsiElement elt) {

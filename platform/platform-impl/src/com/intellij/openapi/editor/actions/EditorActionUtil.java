@@ -784,4 +784,21 @@ public class EditorActionUtil {
   public static void moveCaretToLineStartIgnoringSoftWraps(@NotNull Editor editor) {
     editor.getCaretModel().moveToLogicalPosition(EditorUtil.calcCaretLineRange(editor).first);
   }
+
+  /**
+   * This method will make required expansions of collapsed region to make given offset 'visible'.
+   */
+  public static void makePositionVisible(@NotNull final Editor editor, final int offset) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldRegion collapsedRegionAtOffset;
+    while ((collapsedRegionAtOffset  = foldingModel.getCollapsedRegionAtOffset(offset)) != null) {
+      final FoldRegion region = collapsedRegionAtOffset;
+      foldingModel.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          region.setExpanded(true);
+        }
+      });
+    }
+  }
 }

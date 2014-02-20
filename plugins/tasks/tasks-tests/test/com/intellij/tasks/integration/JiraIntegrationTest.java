@@ -129,13 +129,17 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     myRepository.setUrl(url);
     Task task = myRepository.findTask(key);
     assertNotNull("Test task not found", task);
-    assertEquals(String.format("Initial state of test task '%s' should be 'Reopened'", key),
-                 TaskState.REOPENED, task.getState());
+    // set required initial state, if was left wrong
+    if (task.getState() != TaskState.REOPENED) {
+      myRepository.setTaskState(task, TaskState.REOPENED);
+    }
     try {
+      //assertEquals("Wrong initial state of test issue: " + key, TaskState.REOPENED, task.getState());
       myRepository.setTaskState(task, TaskState.RESOLVED);
       task = myRepository.findTask(key);
       assertEquals(task.getState(), TaskState.RESOLVED);
-    } finally {
+    }
+    finally {
       try {
         // always attempt to restore original state of the issue
         myRepository.setTaskState(task, TaskState.REOPENED);

@@ -106,6 +106,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testClassAfterAnno2()     { doTest() }
   void testExtends()             { doTest() }
   void testImplements()          { doTest() }
+  void testAfterNumberLiteral()  { doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 

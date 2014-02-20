@@ -389,11 +389,21 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+      final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
+      if (erasure != null) {
+        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+        for (PsiType boundType : boundTypes) {
+          if (TypeConversionUtil.isAssignable(boundType, erasure) || TypeConversionUtil.isAssignable(erasure, boundType)) {
+            return boundType;
+          }
+        }
+      }
     }
 
     if (captureContext != null) {
       substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard()
-                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
+                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext, typeParameter);
     }
     return substituted;
   }

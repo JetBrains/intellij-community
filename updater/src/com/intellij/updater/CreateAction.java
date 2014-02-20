@@ -29,7 +29,6 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected ValidationResult doValidate(File toFile) {
-    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 

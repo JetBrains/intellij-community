@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 public interface AnActionListener {
   void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
+  /**
+   * Note that using <code>dataContext</code> in implementing methods is unsafe - it could have been invalidated by the performed action.
+   */
   void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
   void beforeEditorTyping(char c, DataContext dataContext);

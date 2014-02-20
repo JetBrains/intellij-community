@@ -20,47 +20,29 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class ClsGenericsHighlightingTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public ClsGenericsHighlightingTest() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -68,14 +50,11 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
-
+    TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/clsHighlighting";
-    myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/clsHighlighting");
+    JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-
     myFixture.setUp();
     myModule = builder.getFixture().getModule();
   }
@@ -88,41 +67,37 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
     myModule = null;
   }
 
-  private void addLibrary(@NotNull final String... libraryPath) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final LibraryTable libraryTable = model.getModuleLibraryTable();
-        final Library library = libraryTable.createLibrary("test");
-
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (String annotationsDir : libraryPath) {
-          final VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(myFixture.getTestDataPath() + "/libs/" + annotationsDir);
-          assertNotNull(libJarLocal);
-          final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
-          assertNotNull(jarRoot);
-          libraryModel.addRoot(jarRoot , OrderRootType.CLASSES);
-        }
-        libraryModel.commit();
-        final String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
-        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-        model.commit();
-      }
-    });
-  }
-
-  public void testIDEA97887() throws Throwable {
-    doTest();
-  }
-
-  public void testIDEA118733() throws Exception {
-    doTest();
-  }
+  public void testIDEA97887() { doTest(); }
+  public void testIDEA118733() { doTest(); }
 
   private void doTest() {
-    addLibrary(getTestName(false) + ".jar");
-    myFixture.configureByFile(getTestName(false) + ".java");
+    String name = getTestName(false);
+    addLibrary(name + ".jar");
+    myFixture.configureByFile(name + ".java");
     myFixture.checkHighlighting();
+  }
+
+  private void addLibrary(@NotNull final String... libraryPath) {
+    ModuleRootModificationUtil.updateModel(myModule, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        LibraryTable libraryTable = model.getModuleLibraryTable();
+        Library library = libraryTable.createLibrary("test");
+
+        Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (String annotationsDir : libraryPath) {
+          String path = myFixture.getTestDataPath() + "/libs/" + annotationsDir;
+          VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+          assertNotNull(libJarLocal);
+          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
+          assertNotNull(jarRoot);
+          libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+
+        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
+        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
+      }
+    });
   }
 }

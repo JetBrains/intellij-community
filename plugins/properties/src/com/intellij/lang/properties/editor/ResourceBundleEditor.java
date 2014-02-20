@@ -59,6 +59,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -572,36 +573,31 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void run() {
         if (!isValid()) return;
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                Project project = propertiesFile.getProject();
-                PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-                documentManager.commitDocument(document);
-                Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
-                if (propertiesFileDocument == null) {
-                  return;
-                }
-                documentManager.commitDocument(propertiesFileDocument);
+            Project project = propertiesFile.getProject();
+            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+            documentManager.commitDocument(document);
+            Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
+            if (propertiesFileDocument == null) {
+              return;
+            }
+            documentManager.commitDocument(propertiesFileDocument);
 
-                if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-                  uninstallDocumentListeners();
-                  try {
-                    document.replaceString(0, document.getTextLength(), oldText);
-                  }
-                  finally {
-                    installDocumentListeners();
-                  }
-                  return;
-                }
-                String propertyName = getSelectedPropertyName();
-                if (propertyName == null) return;
-                updatePropertyValueFromDocument(propertyName, propertiesFile, text);
+            if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+              uninstallDocumentListeners();
+              try {
+                document.replaceString(0, document.getTextLength(), oldText);
               }
-            });
+              finally {
+                installDocumentListeners();
+              }
+              return;
+            }
+            String propertyName = getSelectedPropertyName();
+            if (propertyName == null) return;
+            updatePropertyValueFromDocument(propertyName, propertiesFile, text);
           }
         });
       }

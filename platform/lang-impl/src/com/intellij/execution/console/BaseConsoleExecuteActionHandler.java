@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,54 +15,20 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.execution.process.ConsoleHistoryModel;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseConsoleExecuteActionHandler {
-  private boolean myAddCurrentToHistory = true;
-  private final ConsoleHistoryModel myConsoleHistoryModel;
-  private final boolean myPreserveMarkup;
-
+public abstract class BaseConsoleExecuteActionHandler extends ConsoleExecuteAction.ConsoleExecuteActionHandler {
   public BaseConsoleExecuteActionHandler(boolean preserveMarkup) {
-    myConsoleHistoryModel = new ConsoleHistoryModel();
-    myPreserveMarkup = preserveMarkup;
-  }
-
-  public ConsoleHistoryModel getConsoleHistoryModel() {
-    return myConsoleHistoryModel;
-  }
-
-  public void setAddCurrentToHistory(boolean addCurrentToHistory) {
-    myAddCurrentToHistory = addCurrentToHistory;
+    super(preserveMarkup);
   }
 
   public void runExecuteAction(@NotNull LanguageConsoleView consoleView) {
-    runExecuteAction(consoleView, consoleView.getConsole());
+    runExecuteAction(consoleView.getConsole(), consoleView);
   }
 
-  private void runExecuteAction(@Nullable LanguageConsoleView consoleView, @NotNull LanguageConsoleImpl console) {
-    // process input and add to history
-    Document document = console.getCurrentEditor().getDocument();
-    String text = document.getText();
-    TextRange range = new TextRange(0, document.getTextLength());
-
-    console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-
-    if (myAddCurrentToHistory) {
-      console.addCurrentToHistory(range, false, myPreserveMarkup);
-    }
-
-    console.setInputText("");
-
-    ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
-
-    myConsoleHistoryModel.addToHistory(text);
+  @Override
+  final void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
     if (consoleView == null) {
       //noinspection deprecation
       execute(text);
@@ -72,17 +38,18 @@ public abstract class BaseConsoleExecuteActionHandler {
     }
   }
 
+  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
+    //noinspection deprecation
+    execute(text);
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
    * @deprecated to remove in IDEA 15
    */
   public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
-    runExecuteAction(null, languageConsole);
-  }
-
-  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
-    //noinspection deprecation
-    execute(text);
+    runExecuteAction(languageConsole, null);
   }
 
   @Deprecated
@@ -93,6 +60,12 @@ public abstract class BaseConsoleExecuteActionHandler {
     throw new AbstractMethodError();
   }
 
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   *
+   * Never used. It is Python specific implementation.
+   */
   public void finishExecution() {
   }
 

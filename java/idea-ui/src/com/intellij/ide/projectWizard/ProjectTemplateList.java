@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -177,10 +178,19 @@ public class ProjectTemplateList extends JPanel {
     });
   }
 
+  public JBList getList() {
+    return myList;
+  }
+
   public void addListSelectionListener(ListSelectionListener listener) {
     myList.addListSelectionListener(listener);
   }
 
+  public void setPaintBusy(boolean b) {
+    myList.setPaintBusy(b);
+  }
+
+  @TestOnly
   public boolean setSelectedTemplate(String name) {
     ListModel model1 = myList.getModel();
     for (int j = 0; j < model1.getSize(); j++) {
@@ -191,9 +201,5 @@ public class ProjectTemplateList extends JPanel {
     }
 
     return false;
-  }
-
-  public void setPaintBusy(boolean b) {
-    myList.setPaintBusy(b);
   }
 }

@@ -62,7 +62,7 @@ public class InheritanceUtil {
     return true;
   }
 
-  @Contract("null, _ -> fail")
+  @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
@@ -71,12 +71,12 @@ public class InheritanceUtil {
     return false;
   }
 
-  @Contract("null, _ -> fail")
+  @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull final String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
 
-  @Contract("null, _, _ -> fail")
+  @Contract("null, _, _ -> false")
   public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull final String baseClassName) {
     if (psiClass == null) {
       return false;

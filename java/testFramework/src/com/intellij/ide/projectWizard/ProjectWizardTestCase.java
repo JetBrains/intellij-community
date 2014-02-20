@@ -82,7 +82,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
   }
 
-  protected void runWizard(String group, String name, Project project, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected void runWizard(String group, final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
 
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
@@ -95,7 +95,17 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       adjuster.consume(step);
     }
 
-    runWizard(adjuster);
+    runWizard(new Consumer<Step>() {
+      @Override
+      public void consume(Step step) {
+        if (name != null && step instanceof ChooseTemplateStep) {
+          ((ChooseTemplateStep)step).setSelectedTemplate(name);
+        }
+        if (adjuster != null) {
+          adjuster.consume(step);
+        }
+      }
+    });
   }
 
   protected void createWizard(Project project) throws IOException {

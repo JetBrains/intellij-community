@@ -114,7 +114,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   };
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
-  private boolean myRemoteTemplatesLoaded;
   private String myCurrentCard;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
@@ -244,7 +243,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       else {
         TemplatesGroup group = new TemplatesGroup(builder);
         groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>(Collections.singletonList(template)));
+        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
       }
     }
 
@@ -261,15 +260,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
       }
     }
-
-    // remove empty groups
-    //for (Iterator<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>> iterator = myTemplatesMap.entrySet().iterator();
-    //     iterator.hasNext(); ) {
-    //  Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry = iterator.next();
-    //  if (entry.getValue().isEmpty()) {
-    //    iterator.remove();
-    //  }
-    //}
 
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
 
@@ -385,9 +375,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
-
   private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
-    ArrayList<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    List<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    if (group.getModuleBuilder() != null) {
+      list.add(0, new BuilderBasedTemplate(group.getModuleBuilder()));
+    }
     if (group.getParentGroup() == null) {
       for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
         if (group.getName().equals(templatesGroup.getParentGroup())) {
@@ -467,13 +459,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   @Override
-  public void updateStep() {
-    if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
-      loadRemoteTemplates();
-    }
-  }
-
-  @Override
   public boolean validate() throws ConfigurationException {
     ModuleWizardStep step = getCustomStep();
     return step != null ? step.validate() : super.validate();
@@ -526,12 +511,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     return map;
   }
 
-  private void loadRemoteTemplates() {
+  void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myTemplatesList.setPaintBusy(true);
+          chooseTemplateStep.getTemplateList().setPaintBusy(true);
           RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
           String[] groups = factory.getGroups();
           for (String group : groups) {
@@ -552,12 +538,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
               if (group == null) return;
               Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
               setTemplatesList(group, templates, true);
+              chooseTemplateStep.updateStep();
             }
           });
         }
         finally {
           myTemplatesList.setPaintBusy(false);
-          myRemoteTemplatesLoaded = true;
+          chooseTemplateStep.getTemplateList().setPaintBusy(false);
         }
       }
     });

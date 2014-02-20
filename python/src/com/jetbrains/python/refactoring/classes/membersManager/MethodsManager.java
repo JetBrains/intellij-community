@@ -12,7 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
-import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +121,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   // TODO: Copy/Paste with PyClass.getMeta..
   private static boolean addMetaAbcIfNeeded(@NotNull final PyClass aClass) {
     final PsiFile file = aClass.getContainingFile();
-    final PyClassLikeType type = aClass.getMetaClassType(TypeEvalContext.userInitiated(file));
+    final PyType type = aClass.getMetaClassType(TypeEvalContext.userInitiated(file));
     if (type != null) {
       return false; //User already has metaclass. He probably knows about metaclasses, so we should not add ABCMeta
     }

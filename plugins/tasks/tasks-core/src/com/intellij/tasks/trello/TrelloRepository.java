@@ -154,7 +154,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(HttpMethod method) {
     if (StringUtil.isEmpty(myPassword)) {
-       return;
+      return;
     }
     String params = EncodingUtil.formUrlEncode(new NameValuePair[]{
       new NameValuePair("token", myPassword),
@@ -293,15 +293,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   private String executeMethod(HttpMethod method) throws Exception {
     HttpClient client = getHttpClient();
     String entityContent;
-    try {
-      client.executeMethod(method);
-      // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
-      // in Content-Type header and by default this method decodes from Latin-1
-      entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
-    }
-    finally {
-      method.releaseConnection();
-    }
+    client.executeMethod(method);
+    // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
+    // in Content-Type header and by default this method decodes from Latin-1
+    entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
     LOG.debug(entityContent);
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       Header header = method.getResponseHeader("Content-Type");

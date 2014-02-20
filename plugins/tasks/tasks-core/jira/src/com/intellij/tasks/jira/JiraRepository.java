@@ -163,17 +163,12 @@ public class JiraRepository extends BaseRepositoryImpl {
     LOG.debug("URI: " + method.getURI());
     int statusCode;
     String entityContent;
-    try {
-      statusCode = getHttpClient().executeMethod(method);
-      LOG.debug("Status code: " + statusCode);
-      // may be null if 204 No Content received
-      final InputStream stream = method.getResponseBodyAsStream();
-      entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
-      TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
-    }
-    finally {
-      method.releaseConnection();
-    }
+    statusCode = client.executeMethod(method);
+    LOG.debug("Status code: " + statusCode);
+    // may be null if 204 No Content received
+    final InputStream stream = method.getResponseBodyAsStream();
+    entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
+    TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus
     //if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {

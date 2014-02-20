@@ -15,17 +15,27 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.CommitEventType;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,10 +44,25 @@ import java.io.File;
  * Time: 11:13 AM
  */
 public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
-  private final ProgressIndicator myProgress;
 
-  public IdeaCommitHandler(ProgressIndicator progress) {
+  @Nullable private final ProgressIndicator myProgress;
+  @NotNull private final List<VirtualFile> myDeletedFiles = ContainerUtil.newArrayList();
+  private final boolean myCheckCancel;
+  private final boolean myTrackDeletedFiles;
+
+  public IdeaCommitHandler(@Nullable ProgressIndicator progress) {
+    this(progress, false, false);
+  }
+
+  public IdeaCommitHandler(@Nullable ProgressIndicator progress, boolean checkCancel, boolean trackDeletedFiles) {
     myProgress = progress;
+    myCheckCancel = checkCancel;
+    myTrackDeletedFiles = trackDeletedFiles;
+  }
+
+  @NotNull
+  public List<VirtualFile> getDeletedFiles() {
+    return myDeletedFiles;
   }
 
   @Override
@@ -57,17 +82,30 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
 
   public void handleEvent(SVNEvent event, double p) {
     final String path = SvnUtil.getPathForProgress(event);
-    if (path == null) {
-      return;
-    }
+    if (path != null) {
+      CommitEventType eventType = convert(event.getAction());
 
-    updateProgress(convert(event.getAction()), path);
+      if (CommitEventType.deleting.equals(eventType) && myTrackDeletedFiles) {
+        trackDeletedFile(event);
+      }
+      updateProgress(eventType, path);
+    }
   }
 
-  public void checkCancelled() {
+  public void checkCancelled() throws SVNCancelException {
+    if (myCheckCancel && myProgress != null) {
+      try {
+        myProgress.checkCanceled();
+      }
+      catch (ProcessCanceledException ex) {
+        throw new SVNCancelException();
+      }
+    }
   }
 
   private void updateProgress(@NotNull CommitEventType type, @NotNull String target) {
+    if (myProgress == null) return;
+
     if (CommitEventType.adding.equals(type)) {
       myProgress.setText2(SvnBundle.message("progress.text2.adding", target));
     } else if (CommitEventType.deleting.equals(type)) {
@@ -81,6 +119,21 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
     }
   }
 
+  private void trackDeletedFile(@NotNull SVNEvent event) {
+    @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+    VirtualFile virtualFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Nullable
+      public VirtualFile compute() {
+        return VirtualFileManager.getInstance().findFileByUrl(filePath);
+      }
+    });
+
+    if (virtualFile != null) {
+      myDeletedFiles.add(virtualFile);
+    }
+  }
+
+  @NotNull
   private static CommitEventType convert(@NotNull SVNEventAction action) {
     CommitEventType result = null;
 

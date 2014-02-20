@@ -104,7 +104,6 @@ class Outer {
   void arrays(String @TA ... docs) {
     @TA String @TA [] @TA [] docs1 = new @TA String @TA [2] @TA [2];
     @TA int @TA [] ints = new @TA int @TA [2];
-    new Boolean @TA [2] <error descr="Annotations are not allowed here">@TA</error>;
   }
 
   int @TA [] mixedArrays @TA [] <error descr="Annotations are not allowed here">@TA</error> = new int[0][0];

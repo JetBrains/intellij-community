@@ -195,7 +195,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
   }
 
-  private void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, List<String> parameters) {
+  private static void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, List<String> parameters) {
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, path, pegRevision);
@@ -261,7 +261,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       for (File file : paths) {
         CommandUtil.put(parameters, file);
       }
-      CommandUtil.put(parameters, true, "--xml");
+      parameters.add("--xml");
 
       // Currently do not handle exceptions here like in SvnVcs.handleInfoException - just continue with parsing in case of warnings for
       // some of the requested items

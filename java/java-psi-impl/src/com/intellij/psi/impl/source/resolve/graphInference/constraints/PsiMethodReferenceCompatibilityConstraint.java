@@ -85,11 +85,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (targetParameters.length == parameters.length + 1) {
         specialCase(session, constraints, substitutor, targetParameters);
         for (int i = 1; i < targetParameters.length; i++) {
-          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
+          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), substitutor.substitute(targetParameters[i].getType())));
         }
       } else if (targetParameters.length == parameters.length) {
         for (int i = 0; i < targetParameters.length; i++) {
-          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
+          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i].getType()), substitutor.substitute(targetParameters[i].getType())));
         }
       } else {
         return false;
@@ -100,13 +100,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
 
         if (applicableMethodReturnType != null) {
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(applicableMethodReturnType)));
+          constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(applicableMethodReturnType)));
         } else if (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor()) {
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(applicableMember.getProject());
           final PsiClass containingClass = qualifierResolveResult.getContainingClass();
           if (containingClass != null) {
             final PsiClassType classType = elementFactory.createType(containingClass, psiSubstitutor);
-            constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), classType));
+            constraints.add(new TypeCompatibilityConstraint(returnType, classType));
           }
         }
       }
@@ -150,10 +150,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
       session.initBounds(method.getTypeParameters());
-      session.initBounds(containingClass.getTypeParameters());
 
-      if (typeParameters.length == 0 && ((PsiMethod)resolve).getTypeParameters().length > 0) {
+      if (!PsiTreeUtil.isContextAncestor(containingClass, myExpression, false) || 
+          PsiUtil.getEnclosingStaticElement(myExpression, containingClass) != null) {
+        session.initBounds(containingClass.getTypeParameters());
+      }
 
+      if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
@@ -176,7 +179,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs()) {
+      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs() && 
+          PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType, ContainerUtil.newHashSet(containingClass.getTypeParameters()))) { //todo specification bug?
         specialCase(session, constraints, substitutor, targetParameters);
       }
       constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(referencedMethodReturnType)));
@@ -214,7 +218,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
     if (qualifierClass != null) {
       session.initBounds(qualifierClass.getTypeParameters());
-      constraints.add(new StrictSubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType()))));
+      constraints.add(new StrictSubtypingConstraint(qualifierType, substitutor.substitute(targetParameters[0].getType())));
     }
   }
 
