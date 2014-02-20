@@ -173,9 +173,25 @@ public class InferenceSession {
   private static PsiType getParameterType(PsiParameter[] parameters, PsiExpression[] args, int i, PsiSubstitutor substitutor) {
     PsiType parameterType = substitutor.substitute(parameters[i < parameters.length ? i : parameters.length - 1].getType());
     if (parameterType instanceof PsiEllipsisType) {
-      if (args.length != parameters.length || 
-          PsiPolyExpressionUtil.isPolyExpression(args[i]) || 
-          args[i] != null && !(args[i].getType() instanceof PsiArrayType)) {
+      final PsiExpression arg = args[i];
+      if (arg instanceof PsiNewExpression) {
+        if (((PsiNewExpression)arg).getArrayDimensions().length == parameterType.getArrayDimensions() || ((PsiNewExpression)arg).getArrayInitializer() != null) {
+          return parameterType;
+        }
+      }
+      if (arg instanceof PsiMethodCallExpression) {
+        final PsiMethod method = ((PsiMethodCallExpression)arg).resolveMethod();
+        if (method != null) {
+          final PsiType returnType = method.getReturnType();
+          if (returnType != null && returnType.getArrayDimensions() == parameterType.getArrayDimensions()) {
+            return parameterType;
+          }
+        }
+      }
+
+      if (args.length != parameters.length ||
+          PsiPolyExpressionUtil.isPolyExpression(arg) ||
+          arg != null && !(arg.getType() instanceof PsiArrayType)) {
         parameterType = ((PsiEllipsisType)parameterType).getComponentType();
       }
     }
