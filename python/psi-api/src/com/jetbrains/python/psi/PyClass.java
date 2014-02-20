@@ -25,6 +25,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -221,14 +222,15 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   //TODO: Add "addMetaClass" or move methods out of here
   /**
    * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
+   *
+   * The metaclass might be defined outside the class in case of Python 2 file-level __metaclass__ attributes.
    */
   @Nullable
-  PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context);
+  PyType getMetaClassType(@NotNull TypeEvalContext context);
 
   /**
    * Returns the expression that defines the metaclass of the class.
    *
-   * It might be defined outside the class in case of file-level __metaclass__ attributes.
    * Operates at the AST level.
    */
   @Nullable
