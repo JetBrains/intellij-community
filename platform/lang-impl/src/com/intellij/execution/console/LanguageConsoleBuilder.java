@@ -239,7 +239,7 @@ public class LanguageConsoleBuilder {
 
         EditorEx editor = getHistoryViewer();
         int endOffset = getDocument().getTextLength();
-        lineSeparatorPainter = new MyRangeMarkerImpl(editor, endOffset);
+        lineSeparatorPainter = new LineSeparatorPainter(editor, endOffset);
         editor.getMarkupModel().addRangeHighlighter(lineSeparatorPainter, 0, endOffset, false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
@@ -306,7 +306,7 @@ public class LanguageConsoleBuilder {
       }
     }
 
-    private final class MyRangeMarkerImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
+    private final class LineSeparatorPainter extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
         public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
@@ -332,7 +332,7 @@ public class LanguageConsoleBuilder {
         }
       };
 
-      public MyRangeMarkerImpl(@NotNull EditorEx editor, int endOffset) {
+      public LineSeparatorPainter(@NotNull EditorEx editor, int endOffset) {
         super(editor.getDocument(), 0, endOffset, false);
       }
 
