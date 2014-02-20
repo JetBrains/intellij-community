@@ -362,6 +362,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         });
       }
       else {
+        myRootModel.dispose();
         myRootModel = newModel;
       }
 
