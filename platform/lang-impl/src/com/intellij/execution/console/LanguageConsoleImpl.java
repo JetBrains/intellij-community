@@ -261,6 +261,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
     });
+
+    //noinspection deprecation
     for (AnAction action : createActions()) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myConsoleEditor.getComponent());
     }
@@ -272,6 +274,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated LanguageConsoleImpl is not intended to be extended
+   */
   protected AnAction[] createActions() {
     return AnAction.EMPTY_ARRAY;
   }
