@@ -57,6 +57,11 @@ public abstract class PostfixTemplatesUtils {
   }
 
   @Contract("null -> false")
+  public static boolean isThrowable(@Nullable PsiType type) {
+    return type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
+  }
+
+  @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
     return type != null && type instanceof PsiArrayType;
   }

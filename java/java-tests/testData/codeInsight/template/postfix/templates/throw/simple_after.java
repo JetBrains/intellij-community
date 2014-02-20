@@ -1,5 +1,7 @@
+import java.lang.RuntimeException;
+
 public class Foo {
-    void m(Object o) {
-        throw o;<caret>
+    void m() {
+        throw new RuntimeException("error");
     }
 }
