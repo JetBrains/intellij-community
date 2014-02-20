@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -74,7 +75,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     return ref;
   }
 
-  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', String text, Class<T> refType = PsiReference) {
+  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', @Language("Groovy") String text, Class<T> refType = PsiReference) {
     myFixture.configureByText fileName, text
     final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assertInstanceOf(ref, refType)

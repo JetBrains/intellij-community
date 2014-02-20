@@ -1891,4 +1891,16 @@ class GrTypeDefinition  {
     assert expr.multiResolve(true).length > 1
   }
 
+  void testStaticMethodInInstanceContext() {
+    GrMethod resolved = resolveByText('''\
+class Foo {
+    def foo(String s){}
+    static def foo(File f){}
+}
+
+new Foo().f<caret>oo(new File(''))
+''', GrMethod)
+
+    assertTrue(resolved.hasModifierProperty(PsiModifier.STATIC))
+  }
 }
