@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -12,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -22,6 +38,7 @@ import java.io.IOException;
 /**
  * @author Dmitry Avdeev
  */
+@SkipSlowTestLocally
 public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
@@ -171,7 +188,7 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
         assertSize(0, psiFile.getClasses());
         assertEquals("", psiManager.findFile(file).getText());
         PlatformTestUtil.tryGcSoftlyReachableObjects();
-        
+
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
         assertFalse(count1 == tracker.getJavaStructureModificationCount());
@@ -182,7 +199,7 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
       }
     }.execute();
   }
-  
+
   public void testClassShouldNotAppearWithoutEvents_WithoutPsi() throws IOException {
     final GlobalSearchScope allScope = GlobalSearchScope.allScope(getProject());
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -197,7 +214,7 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
       protected void run() throws Throwable {
         assertNull(facade.findClass("Foo", allScope));
         long count1 = tracker.getJavaStructureModificationCount();
-        
+
         PlatformTestUtil.tryGcSoftlyReachableObjects();
         assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
@@ -232,7 +249,7 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
 
         document.deleteString(0, document.getTextLength());
 
-        // some plugins (e.g. Copyright) hold file reference in an invokeLater runnable, let them pass 
+        // some plugins (e.g. Copyright) hold file reference in an invokeLater runnable, let them pass
         UIUtil.dispatchAllInvocationEvents();
 
         // gc softly-referenced file and AST

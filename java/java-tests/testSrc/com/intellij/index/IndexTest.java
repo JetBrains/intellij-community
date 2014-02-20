@@ -30,6 +30,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -44,8 +45,9 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 12, 2007
  */
+@SkipSlowTestLocally
 public class IndexTest extends IdeaTestCase {
-  
+
   public void testUpdate() throws StorageException, IOException {
     final File storageFile = FileUtil.createTempFile("indextest", "storage");
     final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
@@ -137,7 +139,7 @@ public class IndexTest extends IdeaTestCase {
     FileTypeManager.getInstance().registerFileType(TestFileType.INSTANCE, "fff");
     final FFFLangParserDefinition parserDefinition = new FFFLangParserDefinition();
     LanguageParserDefinitions.INSTANCE.addExplicitExtension(FFFLanguage.INSTANCE, parserDefinition);
-    
+
     final TestStubElementType stubType = new TestStubElementType();
     SerializationManager.getInstance().registerSerializer(TestStubElement.class, stubType);
 
@@ -145,7 +147,7 @@ public class IndexTest extends IdeaTestCase {
     fffFile.createNewFile();
 
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fffFile);
-    
+
     assertNotNull(vFile);
     assertEquals(TestFileType.INSTANCE, vFile.getFileType());
 
@@ -181,9 +183,9 @@ public class IndexTest extends IdeaTestCase {
       final List<SerializedStubTree> trees = data.toValueList();
 
       final SerializedStubTree tree = assertOneElement(trees);
-      
+
       assertTrue(Comparing.equal(bytes, tree.getBytes()));
-      
+
       final StubElement deserialized = tree.getStub();
     }
     finally {
@@ -192,7 +194,7 @@ public class IndexTest extends IdeaTestCase {
 
   }
   */
-  
+
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }
@@ -200,7 +202,7 @@ public class IndexTest extends IdeaTestCase {
   public void testCollectedPsiWithChangedDocument() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
-    
+
     final VirtualFile vFile = createChildData(dir, "Foo.java");
     VfsUtil.saveText(vFile, "class Foo {}");
 
@@ -232,11 +234,11 @@ public class IndexTest extends IdeaTestCase {
       }
     });
   }
-  
+
   public void testSavedUncommittedDocument() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
-    
+
     final VirtualFile vFile = createChildData(dir, "Foo.java");
     VfsUtil.saveText(vFile, "");
 
@@ -254,10 +256,10 @@ public class IndexTest extends IdeaTestCase {
         Document document = FileDocumentManager.getInstance().getDocument(vFile);
         document.insertString(0, "class Foo {}");
         FileDocumentManager.getInstance().saveDocument(document);
-        
+
         assertTrue(count == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
         assertNull(facade.findClass("Foo", scope));
-        
+
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertNotNull(facade.findClass("Foo", scope));
         assertNotNull(facade.findClass("Foo", scope).getText());
@@ -279,11 +281,11 @@ public class IndexTest extends IdeaTestCase {
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     //todo should file type be changed silently without events?
     //assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
-    
+
     final PsiFile file = getPsiFile(document);
     assertInstanceOf(file, PsiPlainTextFile.class);
     assertEquals("Foo", file.getText());
-    
+
     assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
 
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
@@ -296,13 +298,13 @@ public class IndexTest extends IdeaTestCase {
         FileDocumentManager.getInstance().saveDocument(document);
         assertEquals("Foo", file.getText());
         assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
-        
+
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertEquals(" Foo", file.getText());
         assertEmpty(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
-        
+
       }
     });
   }
-  
+
 }
