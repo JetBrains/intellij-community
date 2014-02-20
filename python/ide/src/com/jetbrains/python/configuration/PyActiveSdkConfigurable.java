@@ -350,7 +350,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (!sdkList.contains(selection)) {
       selection = null;
     }
-    final boolean showAll = VirtualEnvProjectFilter.removeNotMatching(myProject, sdkList);
+    VirtualEnvProjectFilter.removeNotMatching(myProject, sdkList);
     // if the selection is a non-matching virtualenv, show it anyway
     if (selection != null && !sdkList.contains(selection)) {
       sdkList.add(0, selection);
@@ -377,10 +377,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       items.add(sdk);
     }
 
-    if (showAll) {
-      items.add(PySdkListCellRenderer.SEPARATOR);
-      items.add(SHOW_ALL);
-    }
+    items.add(PySdkListCellRenderer.SEPARATOR);
+    items.add(SHOW_ALL);
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
     //noinspection unchecked
