@@ -79,10 +79,19 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   
   private Disposable mySplitDisposable;
 
-  public PythonConsoleView(final Project project, final String title, Sdk sdk) {
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(new BorderLayout());
 
-    myLanguageConsoleView = new LanguageConsoleViewImpl(new PythonLanguageConsole(project, title, sdk));
+    LanguageConsoleImpl languageConsole = new LanguageConsoleImpl(project, title, PythonLanguage.getInstance(), false);
+    if (languageConsole.getFile().getVirtualFile() != null) {
+      languageConsole.getFile().getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    }
+    // Mark editor as console one, to prevent autopopup completion
+    languageConsole.getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    languageConsole.setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
+    languageConsole.initComponents();
+
+    myLanguageConsoleView = new LanguageConsoleViewImpl(languageConsole);
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
 
@@ -96,7 +105,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getPythonLanguageConsole().setConsoleCommunication(communication);
+    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
   }
 
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
@@ -110,8 +119,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     getLanguageConsole().getHistoryViewer().getComponent().updateUI();
   }
 
-  private PythonLanguageConsole getPythonLanguageConsole() {
-    return ((PythonLanguageConsole)getLanguageConsole());
+  private LanguageConsoleImpl getPythonLanguageConsole() {
+    return getLanguageConsole();
   }
 
   public LanguageConsoleImpl getLanguageConsole() {
@@ -348,7 +357,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void setSdk(Sdk sdk) {
-    getPythonLanguageConsole().setSdk(sdk);
+    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
   }
 
   @Override
@@ -420,35 +429,6 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     if (mySplitDisposable != null) {
       Disposer.dispose(mySplitDisposable);
       mySplitDisposable = null;
-    }
-  }
-
-  private static class PythonLanguageConsole extends LanguageConsoleImpl {
-
-    public PythonLanguageConsole(final Project project, final String title, final Sdk sdk) {
-      super(project, title, PythonLanguage.getInstance(), false);
-      initLanguageLevel(sdk);
-      // Mark editor as console one, to prevent autopopup completion
-      getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-
-      setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
-
-      initComponents();
-    }
-
-    private void initLanguageLevel(@Nullable Sdk sdk) {
-      if (myFile.getVirtualFile() != null) {
-        //noinspection ConstantConditions
-        myFile.getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
-      }
-    }
-
-    public void setConsoleCommunication(final ConsoleCommunication communication) {
-      myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
-    }
-
-    public void setSdk(Sdk sdk) {
-      myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
     }
   }
 }
