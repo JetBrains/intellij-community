@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -77,4 +78,11 @@ public class ChooseTemplateStep extends ModuleWizardStep {
   public ProjectTemplateList getTemplateList() {
     return myTemplateList;
   }
+
+  @TestOnly
+  public boolean setSelectedTemplate(String name) {
+    myCreateFromTemplateCheckBox.setSelected(true);
+    return myTemplateList.setSelectedTemplate(name);
+  }
+
 }
