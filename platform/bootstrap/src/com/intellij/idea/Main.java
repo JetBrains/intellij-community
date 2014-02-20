@@ -153,11 +153,12 @@ public class Main {
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath(),
+                         copyPatchFile.getPath() + File.pathSeparator + PathManager.getLibPath() + "/log4j.jar",
                          "-Djava.io.tmpdir=" + tempDir,
                          "com.intellij.updater.Runner",
                          "install",
-                         PathManager.getHomePath());
+                         PathManager.getHomePath(),
+                         PathManager.getLogPath());
 
       status = Restarter.scheduleRestart(ArrayUtilRt.toStringArray(args));
     }
