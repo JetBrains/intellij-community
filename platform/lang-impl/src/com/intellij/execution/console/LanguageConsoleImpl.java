@@ -215,7 +215,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
 
-    //noinspection PointlessBooleanExpression,ConstantConditions
+    //noinspection ConstantConditions
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
@@ -226,7 +226,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
     myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
 
-    final VisibleAreaListener areaListener = new VisibleAreaListener() {
+    myConsoleEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
         final int offset = myConsoleEditor.getScrollingModel().getHorizontalScrollOffset();
@@ -242,8 +242,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           }
         }
       }
-    };
-    myConsoleEditor.getScrollingModel().addVisibleAreaListener(areaListener);
+    });
     final DocumentAdapter docListener = new DocumentAdapter() {
       @Override
       public void documentChanged(final DocumentEvent e) {
