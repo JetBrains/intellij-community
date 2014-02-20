@@ -139,65 +139,63 @@ public class LanguageConsoleBuilder {
     protected void setupEditorDefault(@NotNull EditorEx editor) {
       super.setupEditorDefault(editor);
 
-      if (editor == getConsoleEditor()) {
-        // todo consider to fix platform
-        editor.getSettings().setAdditionalLinesCount(1);
+      if (editor == getConsoleEditor() || gutterContentProvider == null) {
+        return;
       }
-      else if (gutterContentProvider != null) {
-        final ConsoleIconGutterComponent lineStartGutter = new ConsoleIconGutterComponent(editor, gutterContentProvider);
-        final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider);
-        JLayeredPane layeredPane = new JBLayeredPane() {
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension editorSize = getEditorComponent().getPreferredSize();
-            return new Dimension(lineStartGutter.getPreferredSize().width + editorSize.width, editorSize.height);
-          }
 
-          @Override
-          public Dimension getMinimumSize() {
-            Dimension editorSize = getEditorComponent().getMinimumSize();
-            return new Dimension(lineStartGutter.getPreferredSize().width + editorSize.width, editorSize.height);
-          }
+      final ConsoleIconGutterComponent lineStartGutter = new ConsoleIconGutterComponent(editor, gutterContentProvider);
+      final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider);
+      JLayeredPane layeredPane = new JBLayeredPane() {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension editorSize = getEditorComponent().getPreferredSize();
+          return new Dimension(lineStartGutter.getPreferredSize().width + editorSize.width, editorSize.height);
+        }
 
-          @Override
-          public void doLayout() {
-            EditorComponentImpl editor = getEditorComponent();
-            int w = getWidth();
-            int h = getHeight();
-            int lineStartGutterWidth = lineStartGutter.getPreferredSize().width;
-            lineStartGutter.setBounds(0, 0, lineStartGutterWidth, h);
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension editorSize = getEditorComponent().getMinimumSize();
+          return new Dimension(lineStartGutter.getPreferredSize().width + editorSize.width, editorSize.height);
+        }
 
-            editor.setBounds(lineStartGutterWidth, 0, w - lineStartGutterWidth, h);
+        @Override
+        public void doLayout() {
+          EditorComponentImpl editor = getEditorComponent();
+          int w = getWidth();
+          int h = getHeight();
+          int lineStartGutterWidth = lineStartGutter.getPreferredSize().width;
+          lineStartGutter.setBounds(0, 0, lineStartGutterWidth, h);
 
-            int lineEndGutterWidth = lineEndGutter.getPreferredSize().width;
-            lineEndGutter.setBounds(lineStartGutterWidth + (w - lineEndGutterWidth - editor.getEditor().getScrollPane().getVerticalScrollBar().getWidth()), 0, lineEndGutterWidth, h);
-          }
+          editor.setBounds(lineStartGutterWidth, 0, w - lineStartGutterWidth, h);
 
-          @NotNull
-          private EditorComponentImpl getEditorComponent() {
-            for (int i = getComponentCount() - 1; i >= 0; i--) {
-              Component component = getComponent(i);
-              if (component instanceof EditorComponentImpl) {
-                return (EditorComponentImpl)component;
-              }
+          int lineEndGutterWidth = lineEndGutter.getPreferredSize().width;
+          lineEndGutter.setBounds(lineStartGutterWidth + (w - lineEndGutterWidth - editor.getEditor().getScrollPane().getVerticalScrollBar().getWidth()), 0, lineEndGutterWidth, h);
+        }
+
+        @NotNull
+        private EditorComponentImpl getEditorComponent() {
+          for (int i = getComponentCount() - 1; i >= 0; i--) {
+            Component component = getComponent(i);
+            if (component instanceof EditorComponentImpl) {
+              return (EditorComponentImpl)component;
             }
-            throw new IllegalStateException();
           }
-        };
+          throw new IllegalStateException();
+        }
+      };
 
-        layeredPane.add(lineStartGutter, JLayeredPane.DEFAULT_LAYER);
+      layeredPane.add(lineStartGutter, JLayeredPane.DEFAULT_LAYER);
 
-        JScrollPane scrollPane = editor.getScrollPane();
-        layeredPane.add(scrollPane.getViewport().getView(), JLayeredPane.DEFAULT_LAYER);
+      JScrollPane scrollPane = editor.getScrollPane();
+      layeredPane.add(scrollPane.getViewport().getView(), JLayeredPane.DEFAULT_LAYER);
 
-        layeredPane.add(lineEndGutter, JLayeredPane.PALETTE_LAYER);
+      layeredPane.add(lineEndGutter, JLayeredPane.PALETTE_LAYER);
 
-        scrollPane.setViewportView(layeredPane);
+      scrollPane.setViewportView(layeredPane);
 
-        GutterUpdateScheduler gutterUpdateScheduler = new GutterUpdateScheduler(lineStartGutter, lineEndGutter);
-        getProject().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, gutterUpdateScheduler);
-        editor.getDocument().addDocumentListener(gutterUpdateScheduler);
-      }
+      GutterUpdateScheduler gutterUpdateScheduler = new GutterUpdateScheduler(lineStartGutter, lineEndGutter);
+      getProject().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, gutterUpdateScheduler);
+      editor.getDocument().addDocumentListener(gutterUpdateScheduler);
     }
 
     @Override

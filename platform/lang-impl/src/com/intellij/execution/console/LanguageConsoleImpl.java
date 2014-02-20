@@ -300,7 +300,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editor.setBorder(null);
 
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setAdditionalLinesCount(myHistoryViewer == editor ? 0 : 2);
+    if (myHistoryViewer != editor) {
+      editorSettings.setAdditionalLinesCount(1);
+    }
     editorSettings.setAdditionalColumnsCount(1);
   }
 
