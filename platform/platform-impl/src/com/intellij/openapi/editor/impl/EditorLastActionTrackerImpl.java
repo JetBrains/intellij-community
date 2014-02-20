@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LastActionTrackerImpl extends LastActionTracker implements ApplicationComponent, AnActionListener, EditorMouseListener {
+public class EditorLastActionTrackerImpl extends EditorLastActionTracker implements ApplicationComponent, AnActionListener, EditorMouseListener {
   private final ActionManager myActionManager;
   private final EditorEventMulticaster myEditorEventMulticaster;
 
   private String myLastActionId;
+  private Editor myCurrentEditor;
   private Editor myLastEditor;
 
-  LastActionTrackerImpl(ActionManager actionManager, EditorFactory editorFactory) {
+  EditorLastActionTrackerImpl(ActionManager actionManager, EditorFactory editorFactory) {
     myActionManager = actionManager;
     myEditorEventMulticaster = editorFactory.getEventMulticaster();
   }
@@ -53,7 +55,7 @@ public class LastActionTrackerImpl extends LastActionTracker implements Applicat
   @NotNull
   @Override
   public String getComponentName() {
-    return "LastActionTracker";
+    return "EditorLastActionTracker";
   }
 
   @Override
@@ -64,7 +66,8 @@ public class LastActionTrackerImpl extends LastActionTracker implements Applicat
 
   @Override
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (CommonDataKeys.EDITOR.getData(dataContext) != myLastEditor) {
+    myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (myCurrentEditor != myLastEditor) {
       resetLastAction();
     }
   }
@@ -72,7 +75,8 @@ public class LastActionTrackerImpl extends LastActionTracker implements Applicat
   @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     myLastActionId = getActionId(action);
-    myLastEditor = CommonDataKeys.EDITOR.getData(dataContext);
+    myLastEditor = myCurrentEditor;
+    myCurrentEditor = null;
   }
 
   @Override

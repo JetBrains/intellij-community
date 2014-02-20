@@ -42,6 +42,7 @@ public class UnselectLastOccurrenceAction extends EditorAction {
       else {
         editor.getSelectionModel().removeSelection();
       }
+      SelectNextOccurrenceAction.Handler.getAndResetNotFoundStatus(editor);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

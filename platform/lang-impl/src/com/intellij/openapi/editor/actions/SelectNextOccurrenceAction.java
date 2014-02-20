@@ -23,7 +23,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
-import com.intellij.openapi.actionSystem.LastActionTracker;
+import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -45,7 +45,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  static class Handler extends EditorActionHandler {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return super.isEnabled(editor, dataContext) && editor.getProject() != null && editor.getCaretModel().supportsMultipleCarets();
@@ -127,7 +127,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
                                                        false);
     }
 
-    private static boolean getAndResetNotFoundStatus(Editor editor) {
+    static boolean getAndResetNotFoundStatus(Editor editor) {
       boolean status = editor.getUserData(NOT_FOUND) != null;
       editor.putUserData(NOT_FOUND, null);
       return status && isRepeatedActionInvocation();
@@ -149,7 +149,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
     }
 
     private static boolean isRepeatedActionInvocation() {
-      String lastActionId = LastActionTracker.getInstance().getLastActionId();
+      String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
       return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_LAST_OCCURENCE.equals(lastActionId);
     }
   }
