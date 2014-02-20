@@ -78,8 +78,9 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     //if(!isValid()) {
     //  return DebuggerBundle.message("status.breakpoint.invalid");
     //}
+
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
-    final String className = "Class";//properties.getClassName();
+    final String className = properties.myClassName;
     return className != null && !className.isEmpty() ? className + "." + properties.myFieldName : properties.myFieldName;
   }
 
@@ -107,7 +108,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     final Ref<XLineBreakpoint> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       protected boolean validateData() {
-        String className = getClassName();
+        final String className = getClassName();
         if (className.length() == 0) {
           Messages.showMessageDialog(project, DebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
                                      DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
@@ -131,7 +132,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
                 @Override
                 public void run() {
                   XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
-                    .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName));
+                    .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
                   result.set(fieldBreakpoint);
                 }
               });

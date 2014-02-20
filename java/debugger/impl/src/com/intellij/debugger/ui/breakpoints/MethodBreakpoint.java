@@ -118,6 +118,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       mySignature = descriptor.methodSignature;
       myIsStatic = descriptor.isStatic;
     }
+    PsiClass psiClass = getPsiClass();
+    if (psiClass != null) {
+      getProperties().myClassPattern = psiClass.getQualifiedName();
+    }
     if (myIsStatic) {
       setInstanceFiltersEnabled(false);
     }

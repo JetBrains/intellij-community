@@ -137,6 +137,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, getSourcePosition());
     if(field != null) {
       setFieldName(field.getName());
+      PsiClass psiClass = field.getContainingClass();
+      if (psiClass != null) {
+        getProperties().myClassName = psiClass.getQualifiedName();
+      }
       myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
     }
     if (myIsStatic) {

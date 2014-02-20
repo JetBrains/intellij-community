@@ -28,8 +28,12 @@ public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<Java
   @Attribute("field_name")
   public String myFieldName;
 
-  public JavaFieldBreakpointProperties(String fieldName) {
+  @Attribute("class_name")
+  public String myClassName;
+
+  public JavaFieldBreakpointProperties(String fieldName, String className) {
     myFieldName = fieldName;
+    myClassName = className;
   }
 
   public JavaFieldBreakpointProperties() {
@@ -48,5 +52,6 @@ public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<Java
     WATCH_MODIFICATION = state.WATCH_MODIFICATION;
     WATCH_ACCESS = state.WATCH_ACCESS;
     myFieldName = state.myFieldName;
+    myClassName = state.myClassName;
   }
 }
