@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +25,10 @@ class InstanceFieldsManager extends FieldsManager {
     super(false);
   }
 
+  @Override
+  public boolean hasConflict(@NotNull final PyTargetExpression member, @NotNull final PyClass aClass) {
+    return NamePredicate.hasElementWithSameName(member, aClass.getInstanceAttributes());
+  }
 
   @Override
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
@@ -77,7 +82,7 @@ class InstanceFieldsManager extends FieldsManager {
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(PyNames.INIT);
     functionBuilder.parameter(PyNames.CANONICAL_SELF); //TODO: Take param from codestyle?
     final PyFunction function = functionBuilder.buildFunction(to.getProject(), LanguageLevel.forElement(to));
-    return PyClassRefactoringUtil.addMethods(to, function).get(0);
+    return PyClassRefactoringUtil.addMethods(to, true, function).get(0);
   }
 
   @Override

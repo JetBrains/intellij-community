@@ -126,6 +126,14 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     myTableModel.fireTableDataChanged();
   }
 
+  /**
+   * Redraws table
+   */
+  public void redraw() {
+    myTableModel.redraw(getSelectedMemberInfos());
+    myTableModel.fireTableDataChanged();
+  }
+
   public void setMemberInfos(Collection<M> memberInfos) {
     myMemberInfos = new ArrayList<M>(memberInfos);
     fireMemberInfoChange(memberInfos);
@@ -313,9 +321,13 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
 
       Collection<M> changed = Collections.singletonList(myTable.myMemberInfos.get(rowIndex));
+      redraw(changed);
+//      fireTableRowsUpdated(rowIndex, rowIndex);
+    }
+
+    public void redraw(Collection<M> changed) {
       myTable.fireMemberInfoChange(changed);
       fireTableDataChanged();
-//      fireTableRowsUpdated(rowIndex, rowIndex);
     }
   }
 

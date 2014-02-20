@@ -5,15 +5,14 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,6 +33,21 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
     myStatic = isStatic;
   }
 
+
+  @NotNull
+  @Override
+  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
+    final MultiMap<PyClass, PyElement> result = new MultiMap<PyClass, PyElement>();
+    member.accept(new MyPyRecursiveElementVisitor(result));
+    return result;
+  }
+
   @Override
   protected Collection<? extends PyElement> getElementsToStoreReferences(@NotNull final Collection<PyTargetExpression> elements) {
     // We need to save references from assignments
@@ -50,7 +64,8 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                                               @NotNull final Collection<PyMemberInfo<PyTargetExpression>> members,
                                               @NotNull final PyClass... to) {
-    return moveAssignments(from, Collections2.filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
+    return moveAssignments(from, Collections2
+      .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
                            to);
   }
 
@@ -114,6 +129,29 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
     @Override
     public PyAssignmentStatement apply(@NotNull final PyTargetExpression input) {
       return PsiTreeUtil.getParentOfType(input, PyAssignmentStatement.class);
+    }
+  }
+
+  /**
+   * Fetches field declarations
+   */
+  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitor {
+    @NotNull
+    private final MultiMap<PyClass, PyElement> myResult;
+
+    private MyPyRecursiveElementVisitor(@NotNull final MultiMap<PyClass, PyElement> result) {
+      myResult = result;
+    }
+
+    @Override
+    public void visitPyReferenceExpression(final PyReferenceExpression node) {
+      final PsiElement declaration = node.getReference().resolve();
+      if (declaration instanceof PyElement) {
+        final PyClass parent = PsiTreeUtil.getParentOfType(declaration, PyClass.class);
+        if (parent != null) {
+          myResult.putValue(parent, (PyElement)declaration);
+        }
+      }
     }
   }
 }

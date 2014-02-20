@@ -104,6 +104,6 @@ public class PyMemberSelectionPanel extends JPanel {
    * Redraws table. Call it when some new data is available.
    */
   public void redraw() {
-    myTable.fireExternalDataChange();
+    myTable.redraw();
   }
 }

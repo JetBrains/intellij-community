@@ -16,6 +16,7 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   private final boolean myCouldBeAbstract;
 
   /**
-   * TODO: Doc new param
+   * @param couldBeAbstract if element could be marked as abstract (like abstract method)
    * @param member         element itself
    * @param isStatic       is it static or not?
    * @param displayName    element display name
@@ -71,5 +72,14 @@ public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   @Override
   public int hashCode() {
     return getMember().hashCode();
+  }
+
+  /**
+   * Checks if moving this member to some class may create conflict.
+   * @param destinationClass destination class to check
+   * @return true if conflict.
+   */
+  public boolean hasConflict(@NotNull final PyClass destinationClass) {
+    return myMembersManager.hasConflict(myMember, destinationClass);
   }
 }

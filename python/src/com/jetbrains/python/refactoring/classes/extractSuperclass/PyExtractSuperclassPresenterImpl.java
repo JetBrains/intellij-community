@@ -7,9 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
@@ -24,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Ilya.Kazakevich
@@ -32,20 +31,10 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
   implements PyExtractSuperclassPresenter {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
 
-
-  @NotNull
-  private static final MultiMap<PsiElement, String> EMPTY_MAP = MultiMap.create();
-
   PyExtractSuperclassPresenterImpl(@NotNull final PyExtractSuperclassView view,
                                    @NotNull final PyClass classUnderRefactoring,
                                    @NotNull final PyMemberInfoStorage infoStorage) {
-    super(view, classUnderRefactoring, infoStorage);
-  }
-
-  @NotNull
-  @Override
-  protected MultiMap<PsiElement, String> getConflicts() {
-    return EMPTY_MAP; //There are no conflicts for extracting
+    super(view, classUnderRefactoring, infoStorage, new PyExtractSuperclassInfoModel(classUnderRefactoring));
   }
 
   @Override
@@ -79,7 +68,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     final Collection<PyMemberInfo<PyElement>> pyMemberInfos =
       PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring));
     myView.configure(
-      new PyExtractSuperclassInitializationInfo(new PyExtractSuperclassInfoModel(myClassUnderRefactoring), pyMemberInfos, defaultFilePath,
+      new PyExtractSuperclassInitializationInfo(myModel, pyMemberInfos, defaultFilePath,
                                                 roots));
     myView.initAndShow();
 
@@ -95,5 +84,11 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
   protected void refactorNoPreview() {
     PyExtractSuperclassHelper
       .extractSuperclass(myClassUnderRefactoring, myView.getSelectedMemberInfos(), myView.getSuperClassName(), myView.getModuleFile());
+  }
+
+  @NotNull
+  @Override
+  protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
+    return Collections.emptyList(); // No conflict can take place in newly created classes
   }
 }

@@ -39,13 +39,13 @@ public abstract class NullCheckPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return getTopmostExpression(context) != null;
+    return PostfixTemplatesUtils.isNotPrimitiveTypeExpression(getTopmostExpression(context));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
     PsiExpression expr = getTopmostExpression(context);
-    if (expr == null) return;
+    if (!PostfixTemplatesUtils.isNotPrimitiveTypeExpression(expr)) return;
 
     Project project = expr.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();

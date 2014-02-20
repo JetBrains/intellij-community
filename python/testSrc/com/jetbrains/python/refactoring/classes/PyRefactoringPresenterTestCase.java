@@ -6,6 +6,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenter;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewInitializationInfo;
 import org.easymock.Capture;
@@ -83,21 +84,19 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
     myMocksControl = new MocksControl(MocksControl.MockType.NICE);
     myView = myMocksControl.createMock(myViewClass);
 
+    configureMockCapture();
+  }
+
+  /**
+   * Configures view to capture config info
+   */
+  private void configureMockCapture() {
     myViewConfigCapture = new Capture<C>();
 
     myView.configure(EasyMock.capture(myViewConfigCapture));
     EasyMock.expectLastCall().once();
   }
 
-
-  /**
-   * @param name
-   * @return class by its name from file
-   */
-  @NotNull
-  protected PyClass getClassByName(@NotNull final String name) {
-    return myFixture.findElementByText("class " + name, PyClass.class);
-  }
 
   /**
    * @return collection of members displayed by presenter
@@ -116,5 +115,20 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
     public String apply(@NotNull final PyClass input) {
       return input.getName();
     }
+  }
+
+  /**
+   * Returns member infos presenter wants to display
+   * @param presenter presenter to check
+   * @return collection of member infos
+   */
+  @NotNull
+  protected Collection<PyMemberInfo<PyElement>> getMemberInfos(@NotNull MembersBasedPresenter presenter) {
+    myMocksControl.replay();
+    presenter.launch();
+    final Collection<PyMemberInfo<PyElement>> result = myViewConfigCapture.getValue().getMemberInfos();
+    myMocksControl.reset();
+    configureMockCapture();
+    return result;
   }
 }
