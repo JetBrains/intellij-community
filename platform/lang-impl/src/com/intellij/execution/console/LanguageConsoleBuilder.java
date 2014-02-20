@@ -46,6 +46,7 @@ public class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull ProcessHandler processHandler) {
+    //noinspection deprecation
     myExecutionEnabled = new ProcessBackedExecutionEnabledCondition(processHandler);
     return this;
   }
