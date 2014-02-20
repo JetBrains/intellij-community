@@ -64,4 +64,9 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
    * @return true if reference is of form ClassType::new
    */
   boolean isConstructor();
+
+  /**
+   * Potentially compatible, and if exact - congruent 
+   */
+  boolean isAcceptable(PsiType left);
 }
