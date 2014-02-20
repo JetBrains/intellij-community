@@ -139,7 +139,11 @@ public class LanguageConsoleBuilder {
     protected void setupEditorDefault(@NotNull EditorEx editor) {
       super.setupEditorDefault(editor);
 
-      if (editor == getConsoleEditor() || gutterContentProvider == null) {
+      if (editor == getConsoleEditor()) {
+        editor.setOneLineMode(true);
+        return;
+      }
+      else if (gutterContentProvider == null) {
         return;
       }
 
