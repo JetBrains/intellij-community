@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,14 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
     return myRoot;
   }
 
-  public StructureViewModelBase withSorters(Sorter... sorters) {
+  @NotNull
+  public StructureViewModelBase withSorters(@NotNull Sorter... sorters) {
     mySorters = sorters;
     return this;
   }
 
-  public StructureViewModelBase withSuitableClasses(Class... suitableClasses) {
+  @NotNull
+  public StructureViewModelBase withSuitableClasses(@NotNull Class... suitableClasses) {
     mySuitableClasses = suitableClasses;
     return this;
   }

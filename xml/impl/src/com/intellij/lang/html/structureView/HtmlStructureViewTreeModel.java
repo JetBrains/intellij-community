@@ -94,7 +94,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  public void setPlace(final String place) {
+  public void setPlace(@NotNull final String place) {
     myStructureViewPlace = place;
   }
 
