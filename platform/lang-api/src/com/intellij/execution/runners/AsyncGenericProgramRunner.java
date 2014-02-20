@@ -79,14 +79,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        RunContentDescriptor descriptor = starter == null ? null : starter.execute(project, executor, state, contentToReuse, environment);
-        if (descriptor != null) {
-          descriptor.setExecutionId(environment.getExecutionId());
-        }
-        if (callback != null) {
-          callback.processStarted(descriptor);
-        }
-        return descriptor;
+        return postProcess(environment, starter == null ? null : starter.execute(project, executor, state, contentToReuse, environment), callback);
       }
     }, state, environment);
   }

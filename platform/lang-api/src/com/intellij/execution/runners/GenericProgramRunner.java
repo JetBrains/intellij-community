@@ -45,14 +45,7 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, environment);
-        if (descriptor != null) {
-          descriptor.setExecutionId(environment.getExecutionId());
-        }
-        if (callback != null) {
-          callback.processStarted(descriptor);
-        }
-        return descriptor;
+        return postProcess(environment, doExecute(project, state, contentToReuse, environment), callback);
       }
     }, state, environment);
   }
