@@ -77,6 +77,7 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -453,7 +454,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         e.getPresentation().setEnabled(enabled);
       }
     };
-    anAction.registerCustomShortcutSet(KeyEvent.VK_C, KeyEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }
@@ -465,7 +466,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       public void actionPerformed(final AnActionEvent e) {
         new WriteCommandAction(getLanguageConsole().getProject(), getLanguageConsole().getFile()) {
           @Override
-          protected void run(final Result result) throws Throwable {
+          protected void run(@NotNull final Result result) throws Throwable {
             String text = getLanguageConsole().getEditorDocument().getText();
             String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
             getLanguageConsole().getEditorDocument().setText(newText);
