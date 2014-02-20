@@ -73,10 +73,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     return myConsoleView.getConsole().getHistoryViewer().getDocument().getText();
   }
 
-  private void outputContains(String substring) {
-    Assert.assertTrue(output().contains(substring));
-  }
-
   public void setProcessCanTerminate(boolean processCanTerminate) {
     myProcessCanTerminate = processCanTerminate;
   }
@@ -84,6 +80,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   @Override
   public void tearDown() throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
         try {
           if (myConsoleView != null) {
@@ -118,7 +115,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     if (myConsoleView != null) {
       new WriteAction() {
-        protected void run(Result result) throws Throwable {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
         }
@@ -126,6 +124,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
+  @Override
   public void runTestOn(final String sdkHome) throws Exception {
     final Project project = getProject();
 
@@ -202,7 +201,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  private Sdk getSdk(final String sdkHome) {
+  private static Sdk getSdk(final String sdkHome) {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
 
     return sdk != null ? sdk : new ProjectJdkImpl("Python Test Sdk " + sdkHome, PythonSdkType.getInstance()) {
@@ -235,7 +234,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   /**
    * Waits until all passed strings appear in output.
-   * If they don't appear in timelimit, then exception is raised.
+   * If they don't appear in time limit, then exception is raised.
    *
    * @param string
    * @throws InterruptedException
@@ -305,7 +304,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
           Thread.sleep(500);
         }
       }
-      catch (Exception e) {
+      catch (Exception ignored) {
       }
     }
 
