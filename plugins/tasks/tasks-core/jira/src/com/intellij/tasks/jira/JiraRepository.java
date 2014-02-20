@@ -249,8 +249,11 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   public void setUrl(String url) {
-    myApiVersion = null;
-    super.setUrl(url);
+    // reset remote API version, only if server URL was changed
+    if (!getUrl().equals(url)) {
+      myApiVersion = null;
+      super.setUrl(url);
+    }
   }
 
   public String getRestUrl(String... parts) {
