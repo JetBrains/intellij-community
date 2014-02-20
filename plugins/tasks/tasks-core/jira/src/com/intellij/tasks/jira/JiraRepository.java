@@ -81,7 +81,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     ensureApiVersionDiscovered();
     String jqlQuery = mySearchQuery;
     if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-      jqlQuery += String.format("and summary ~ '%s'", query);
+      jqlQuery += String.format(" and summary ~ '%s'", query);
     }
     else if (StringUtil.isNotEmpty(query)) {
       jqlQuery = String.format("summary ~ '%s'", query);
@@ -128,7 +128,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     catch (Exception e) {
       // probably JIRA version prior 4.2
-      if (method.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      // without isRequestSent() getStatusCode() might throw NPE, if connection was refused
+      if (method.isRequestSent() && method.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return new JiraSoapApi(this);
       }
       else {
