@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,17 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * @author Vladimir Kondratyev
+ * This interface specifies a location in its file editor.
+ * The Comparable interface implementation should present some natural order on locations.
+ * Usually it's top-to-bottom & left-to-right order.
+ *
+ * The locations from different editors are
+ * not expected to be compared together.
  */
-public enum FileEditorStateLevel {
-  FULL,
-  UNDO,
-  NAVIGATION
+public interface FileEditorLocation extends Comparable<FileEditorLocation> {
+  @NotNull
+  FileEditor getEditor();
 }

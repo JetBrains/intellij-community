@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
  */
 package com.intellij.openapi.fileEditor;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
- * This interface specifies a location in its file editor.
- * The Comparable interface implementation should present some natural order on locations.
- * Usually it's top-to-bottom & left-to-right order.
+ * This object is used to store/restore editor state between restarts.
+ * For example, text editor can store caret position, scroll position,
+ * information about folded regions, etc.
  *
- * The locations from different editors are
- * not expected to be compared together.
+ * @author Vladimir Kondratyev
  */
-public interface FileEditorLocation extends Comparable<FileEditorLocation> {
-  @NotNull
-  FileEditor getEditor();
+public interface FileEditorState {
+  FileEditorState INSTANCE = new FileEditorState() {
+    @Override
+    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+      return true;
+    }
+  };
+
+  boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level);
 }
