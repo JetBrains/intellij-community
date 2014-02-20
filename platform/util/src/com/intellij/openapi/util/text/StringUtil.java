@@ -968,8 +968,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract("null -> true")
-  public static boolean isEmptyOrSpaces(@Nullable final String s) {
-    if (s == null || s.isEmpty()) {
+  // we need to keep this method to preserve backward compatibility
+  public static boolean isEmptyOrSpaces(@Nullable String s) {
+    return isEmptyOrSpaces(((CharSequence)s));
+  }
+
+  @Contract("null -> true")
+  public static boolean isEmptyOrSpaces(@Nullable CharSequence s) {
+    if (isEmpty(s)) {
       return true;
     }
     for (int i = 0; i < s.length(); i++) {
