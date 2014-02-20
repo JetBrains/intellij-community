@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -427,8 +427,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   private TreeStructureProvider createWrapProvider(final NodeWrapper rootWrapper) {
     return new TreeStructureProvider() {
+      @NotNull
       @Override
-      public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
+      public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
 
         if (parent instanceof NodeWrapper) {
           return children;
