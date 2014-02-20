@@ -187,8 +187,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
       myChildren.set(index, messageNode);
       fireNodeStructureChanged(messageNode);
     }
-    WatchInplaceEditor editor = new WatchInplaceEditor(this, mySession, myWatchesView, messageNode, "watch", node);
-    editor.show();
+    new WatchInplaceEditor(this, mySession, myWatchesView, messageNode, "watch", node).show();
   }
 
   private class MyEvaluationCallback extends XEvaluationCallbackBase {
