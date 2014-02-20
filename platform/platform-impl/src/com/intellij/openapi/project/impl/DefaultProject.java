@@ -37,7 +37,7 @@ public class DefaultProject extends ProjectImpl {
 
   @Override
   public synchronized void dispose() {
-    if (!ApplicationManager.getApplication().isDisposeInProgress()) {
+    if (!ApplicationManager.getApplication().isDisposeInProgress() && !ApplicationManager.getApplication().isUnitTestMode()) {
       Logger.getInstance(DefaultProject.class).error(new Exception("Too young to die"));
     }
 
