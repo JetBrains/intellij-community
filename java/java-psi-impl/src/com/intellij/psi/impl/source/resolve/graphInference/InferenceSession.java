@@ -1106,15 +1106,15 @@ public class InferenceSession {
         return false;
       }
 
-      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
-      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
+      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
 
       if (sPrimitive ^ tPrimitive) {
         final PsiMember member = ((PsiMethodReferenceExpression)arg).getPotentiallyApplicableMember();
         LOG.assertTrue(member != null);
         if (member instanceof PsiMethod) {
           final PsiType methodReturnType = ((PsiMethod)member).getReturnType();
-          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType ||
+          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType && methodReturnType != PsiType.VOID ||
               tPrimitive && methodReturnType instanceof PsiClassType) {
             return true;
           }
