@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Provides services for moving the caret and retrieving information about caret position.
@@ -168,8 +167,8 @@ public interface CaretModel {
 
   /**
    * Returns current caret - the one, query and update methods in the model operate at the moment. In the current implementation this is
-   * either an iteration-current caret within the context of {@link #runForEachCaret(Runnable)} method, or the 'primary' caret without that
-   * context. Users {@link #runForEachCaret(Runnable)} method should use caret parameter passed to
+   * either an iteration-current caret within the context of {@link #runForEachCaret(CaretAction)} method, or the 'primary' caret without that
+   * context. Users {@link #runForEachCaret(CaretAction)} method should use caret parameter passed to
    * {@link com.intellij.openapi.editor.CaretAction#perform(Caret)} method instead of this method, as the definition of current caret (as
    * well as caret instance operated on by model methods) can potentially change.
    */
@@ -215,14 +214,14 @@ public interface CaretModel {
   void removeSecondaryCarets();
 
   /**
-   * Sets the number of carets, their positions and selection ranges according to the provided parameters. Null values in any of the lists
-   * will mean that corresponding caret's position and/or selection won't be changed.
+   * Sets the number of carets, their positions and selection ranges according to the provided parameters. Null values in any of the
+   * collections will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
    * If multiple carets are not supported, the behaviour is unspecified.
    *
    * @see #supportsMultipleCarets()
    */
-  void setCarets(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections);
+  void setCaretsAndSelections(@NotNull Collection<LogicalPosition> caretPositions, @NotNull Collection<? extends Segment> selections);
 
   /**
    * Executes the given task for each existing caret. Carets are iterated in their position order. Set of carets to iterate over is

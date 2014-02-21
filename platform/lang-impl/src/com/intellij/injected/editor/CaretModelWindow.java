@@ -205,7 +205,7 @@ public class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void setCarets(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull Collection<LogicalPosition> caretPositions, @NotNull Collection<? extends Segment> selections) {
     List<LogicalPosition> convertedPositions = new ArrayList<LogicalPosition>(caretPositions);
     for (LogicalPosition position : caretPositions) {
       convertedPositions.add(myEditorWindow.injectedToHost(position));
@@ -215,7 +215,7 @@ public class CaretModelWindow implements CaretModel {
       convertedSelections.add(new TextRange(myEditorWindow.getDocument().injectedToHost(selection.getStartOffset()),
                                             myEditorWindow.getDocument().injectedToHost(selection.getEndOffset())));
     }
-    myDelegate.setCarets(convertedPositions, convertedSelections);
+    myDelegate.setCaretsAndSelections(convertedPositions, convertedSelections);
   }
 
   private InjectedCaret createInjectedCaret(Caret caret) {

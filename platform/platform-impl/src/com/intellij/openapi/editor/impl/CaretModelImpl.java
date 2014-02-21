@@ -452,7 +452,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void setCarets(@NotNull final List<LogicalPosition> caretPositions, @NotNull final List<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull final Collection<LogicalPosition> caretPositions, @NotNull final Collection<? extends Segment> selections) {
     myEditor.assertIsDispatchThread();
     if (caretPositions.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");

@@ -209,7 +209,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         caretPositions.add(pos);
         selections.add(caret.selection == null ? null : caret.selection);
       }
-      myEditor.getCaretModel().setCarets(caretPositions, selections);
+      myEditor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
     }
     else {
       assertEquals("Caret model doesn't support multiple carets", 1, carets.size());
