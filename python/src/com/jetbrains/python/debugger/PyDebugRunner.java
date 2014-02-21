@@ -40,7 +40,6 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
-import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -123,19 +122,14 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                   @NotNull final ExecutionResult result,
                                                                   @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();
-    ProcessHandler processHandler = result.getProcessHandler();
-
     if (console instanceof PythonDebugLanguageConsoleView) {
       PythonConsoleView pythonConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
+      pythonConsoleView.setConsoleCommunication(new PythonDebugConsoleCommunication(project, debugProcess));
 
-
-      ConsoleCommunication consoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
-      pythonConsoleView.setConsoleCommunication(consoleCommunication);
-
+      ProcessHandler processHandler = result.getProcessHandler();
       PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
                                                                                                                     processHandler,
-                                                                                                                    consoleCommunication);
-
+                                                                                                                    new PythonDebugConsoleCommunication(project, debugProcess));
       pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);

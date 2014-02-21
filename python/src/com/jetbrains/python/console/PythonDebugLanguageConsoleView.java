@@ -63,7 +63,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView) {
     super(new CardLayout());
-    myPydevConsoleView = createConsoleView(project, sdk);
+    myPydevConsoleView = new PythonConsoleView(project, "Python Console", sdk);
     myTextConsole = consoleView;
 
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
@@ -83,10 +83,6 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   public void executeCode(@NotNull String code, @Nullable Editor e) {
     showDebugConsole(true);
     getPydevConsoleView().executeCode(code, e);
-  }
-
-  private static PythonConsoleView createConsoleView(Project project, Sdk sdk) {
-    return new PythonConsoleView(project, "Python Console", sdk);
   }
 
   private void doShowConsole(String type) {
