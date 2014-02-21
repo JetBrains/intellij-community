@@ -86,7 +86,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testInlineOneClass() throws Exception {
     doTest(false, true);
   }
-  
+
   public void testInlineOneClassWithConflicts() throws Exception {
     doTest(true, true);
   }
@@ -115,7 +115,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
-  public void testNewexpr() throws Exception {
+  public void testNewExpr() throws Exception {
     doTest();
   }
 
@@ -143,7 +143,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
-  public void testInnerclassReference() throws Exception {
+  public void testInnerClassReference() throws Exception {
     doTest();
   }
 
@@ -154,7 +154,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testNewArrayInitializerExpr() throws Exception {
     doTest();
   }
-  
+
   public void testNewArrayDimensionsExpr() throws Exception {
     doTest();
   }
