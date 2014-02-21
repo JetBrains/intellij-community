@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -678,9 +678,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void insertLookupString(LookupElement item, final int prefix) {
-    Document document = myEditor.getDocument();
+    final Document document = myEditor.getDocument();
 
-    String lookupString = getCaseCorrectedLookupString(item);
+    final String lookupString = getCaseCorrectedLookupString(item);
 
     if (myEditor.getSelectionModel().hasBlockSelection()) {
       LogicalPosition blockStart = myEditor.getSelectionModel().getBlockStart();
@@ -710,20 +710,25 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myEditor.getSelectionModel().setBlockSelection(start, end);
       myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine, end.column));
     } else {
-      EditorModificationUtil.deleteSelectedText(myEditor);
-      final int caretOffset = myEditor.getCaretModel().getOffset();
-      int lookupStart = caretOffset - prefix;
+      myEditor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          EditorModificationUtil.deleteSelectedText(myEditor);
+          final int caretOffset = myEditor.getCaretModel().getOffset();
+          int lookupStart = caretOffset - prefix;
 
-      int len = document.getTextLength();
-      LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
-                     "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
-      LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
+          int len = document.getTextLength();
+          LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
+                         "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+          LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
-      document.replaceString(lookupStart, caretOffset, lookupString);
+          document.replaceString(lookupStart, caretOffset, lookupString);
 
-      int offset = lookupStart + lookupString.length();
-      myEditor.getCaretModel().moveToOffset(offset);
-      myEditor.getSelectionModel().removeSelection();
+          int offset = lookupStart + lookupString.length();
+          myEditor.getCaretModel().moveToOffset(offset);
+          myEditor.getSelectionModel().removeSelection();
+        }
+      });
     }
 
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
