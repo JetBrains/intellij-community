@@ -628,7 +628,7 @@ public class CodeCompletionHandlerBase {
         @Override
         public void perform(Caret caret) {
           CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update, editor, caret.getOffset(), caret.getOffset() + idEndOffsetDelta);
-          if (caret == editor.getCaretModel().getPrimaryCaret()) {
+          if (caret.getVisualPosition().equals(editor.getCaretModel().getPrimaryCaret().getVisualPosition())) {
             contextRef.set(currentContext);
           }
         }
