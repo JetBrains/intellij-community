@@ -376,14 +376,6 @@ public class LambdaUtil {
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
       if (lambdaIdx > -1) {
 
-        PsiType cachedType = null;
-        final Pair<PsiMethod, PsiSubstitutor> method = MethodCandidateInfo.getCurrentMethod(parent);
-        if (method != null) {
-          final PsiParameter[] parameters = method.first.getParameterList().getParameters();
-          cachedType = lambdaIdx < parameters.length ? method.second.substitute(getNormalizedType(parameters[adjustLambdaIdx(lambdaIdx, method.first, parameters)])) : null;
-          if (!tryToSubstitute) return cachedType;
-        }
-
         PsiElement gParent = expressionList.getParent();
 
         if (gParent instanceof PsiAnonymousClass) {
@@ -399,22 +391,6 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                if (cachedType != null) {
-                  final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
-                  if (interfaceMethod != null) {
-                    final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
-                    if (paramIdx == -1) {
-                      if (!dependsOnTypeParams(cachedType, cachedType, expression) && !dependsOnTypeParams(getFunctionalInterfaceReturnType(cachedType), cachedType, expression)) {
-                        return cachedType;
-                      }
-                    }
-                    else {
-                      if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethod.getParameterList().getParameters()[paramIdx].getType()), cachedType, expression)) {
-                        return cachedType;
-                      }
-                    }
-                  }
-                }
                 return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
