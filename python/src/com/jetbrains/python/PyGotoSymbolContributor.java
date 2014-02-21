@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +42,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
     symbols.addAll(PyClassNameIndex.allKeys(project));
+    symbols.addAll(PyModuleNameIndex.getAllKeys(project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyVariableNameIndex.KEY, project));
     return ArrayUtil.toStringArray(symbols);
@@ -54,6 +56,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
     symbols.addAll(PyClassNameIndex.find(name, project, scope));
+    symbols.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
     symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
     symbols.addAll(PyVariableNameIndex.find(name, project, scope));
 
