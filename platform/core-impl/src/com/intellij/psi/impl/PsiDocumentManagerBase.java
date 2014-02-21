@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -166,22 +167,23 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     Document document = getCachedDocument(file);
     if (document != null) {
-      if (!file.getViewProvider().isPhysical() &&
-          document.getUserData(HARD_REF_TO_PSI) == null) {
+      if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
         cachePsi(document, file);
       }
       return document;
     }
 
-    if (!file.getViewProvider().isEventSystemEnabled()) return null;
-    document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (!viewProvider.isEventSystemEnabled()) return null;
 
+    document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
-        throw new AssertionError("Modified PSI with no document: " + file + "; physical=" + file.getViewProvider().isPhysical());
+        throw new AssertionError("Modified PSI with no document: " + file + "; physical=" + viewProvider.isPhysical() +
+                                 "; BFD=" + BinaryFileTypeDecompilers.INSTANCE.forFileType(file.getFileType()));
       }
 
-      if (!file.getViewProvider().isPhysical()) {
+      if (!viewProvider.isPhysical()) {
         cachePsi(document, file);
       }
     }
@@ -690,17 +692,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!myProject.isInitialized() || myProject.isDisposed()) {
       return;
     }
-    
+
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
       return;
     }
-    
+
     final PsiFileImpl psiFile = (PsiFileImpl)getPsiFile(document);
     if (psiFile == null) {
       return;
     }
-    
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         psiFile.getViewProvider().beforeContentsSynchronized();
