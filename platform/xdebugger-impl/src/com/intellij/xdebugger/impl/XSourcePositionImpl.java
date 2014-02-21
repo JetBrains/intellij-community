@@ -85,7 +85,7 @@ public class XSourcePositionImpl implements XSourcePosition {
       offset = -1;
     }
     else {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
+      Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
       if (document == null) {
         return null;
       }
