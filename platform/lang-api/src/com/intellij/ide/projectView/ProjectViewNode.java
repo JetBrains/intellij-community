@@ -44,7 +44,7 @@ import java.util.List;
  * @see TreeStructureProvider#modify(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection, com.intellij.ide.projectView.ViewSettings)
  */
 
-public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider {
+public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
@@ -82,6 +82,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return null;
   }
 
+  @Override
   public final ViewSettings getSettings() {
     return mySettings;
   }

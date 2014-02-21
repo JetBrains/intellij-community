@@ -284,8 +284,7 @@ public class FileStructureDialog extends DialogWrapper {
 
     if (text == null) return;
 
-    Shortcut[] shortcuts = action instanceof FileStructureFilter ?
-                          ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+    Shortcut[] shortcuts = FileStructurePopup.extractShortcutFor(action);
 
 
     final JCheckBox chkFilter = new JCheckBox();

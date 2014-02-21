@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -713,8 +714,7 @@ public class FileStructurePopup implements Disposable {
 
     if (text == null) return;
 
-    Shortcut[] shortcuts = action instanceof FileStructureFilter ?
-                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+    Shortcut[] shortcuts = extractShortcutFor(action);
 
 
     final JCheckBox chkFilter = new JCheckBox();
@@ -783,10 +783,20 @@ public class FileStructurePopup implements Disposable {
     myCheckBoxes.put(action.getClass(), chkFilter);
   }
 
+  @NotNull
+  static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
+    if (action instanceof ActionShortcutProvider) {
+      String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
+      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    }
+    return action instanceof FileStructureFilter ?
+                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+  }
+
   private static boolean getDefaultValue(TreeAction action) {
     if (action instanceof PropertyOwner) {
       final String propertyName = ((PropertyOwner)action).getPropertyName();
-      return PropertiesComponent.getInstance().getBoolean(getPropertyName(propertyName), false);
+      return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), false);
     }
 
     return false;
@@ -795,13 +805,8 @@ public class FileStructurePopup implements Disposable {
   private static void saveState(TreeAction action, boolean state) {
     if (action instanceof PropertyOwner) {
       final String propertyName = ((PropertyOwner)action).getPropertyName();
-      PropertiesComponent.getInstance().setValue(getPropertyName(propertyName), Boolean.toString(state));
+      PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), Boolean.toString(state));
     }
-  }
-
-  @NonNls
-  public static String getPropertyName(String propertyName) {
-    return propertyName + ".file.structure.state";
   }
 
   public void setTitle(String title) {

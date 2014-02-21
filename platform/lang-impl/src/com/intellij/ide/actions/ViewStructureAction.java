@@ -22,6 +22,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.FileStructurePopup;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ViewStructureAction extends AnAction {
-  private static final String PLACE = "StructureViewPopup";
 
   public ViewStructureAction() {
     setEnabledInModalContext(true);
@@ -107,13 +107,9 @@ public class ViewStructureAction extends AnAction {
     StructureViewModel model = structureView.getTreeModel();
     if (model instanceof PlaceHolder) {
       //noinspection unchecked
-      ((PlaceHolder)model).setPlace(PLACE);
+      ((PlaceHolder)model).setPlace(TreeStructureUtil.PLACE);
     }
     return createStructureViewPopup(project, fileEditor, structureView);
-  }
-
-  public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
-    return PLACE.equals(model.getPlace());
   }
 
   @NotNull

@@ -35,6 +35,7 @@
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module" module-name="structure-view-api" exported="" />
   </component>
 </module>
 

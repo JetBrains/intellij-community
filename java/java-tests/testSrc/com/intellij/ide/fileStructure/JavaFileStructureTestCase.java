@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.ide.fileStructure;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
-import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.testFramework.FileStructureTestBase;
 import com.intellij.testFramework.IdeaTestCase;
 
@@ -66,7 +66,7 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   }
 
   private static String getAnonymousPropertyName() {
-    return FileStructurePopup.getPropertyName(JavaAnonymousClassesNodeProvider.JAVA_ANONYMOUS_PROPERTY_NAME);
+    return TreeStructureUtil.getPropertyName(JavaAnonymousClassesNodeProvider.JAVA_ANONYMOUS_PROPERTY_NAME);
   }
 
   @Override

@@ -255,6 +255,7 @@ binding.setVariable("platformApiModules", [
   "lvcs-api",
   "projectModel-api",
   "platform-api",
+  "structure-view-api",
   "usageView",
   "vcs-api",
   "vcs-log-api",
@@ -262,6 +263,7 @@ binding.setVariable("platformApiModules", [
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
+  "xml-structure-view-api",
 ])
 
 
@@ -278,6 +280,7 @@ binding.setVariable("platformImplementationModules", [
   "lvcs-impl",
   "projectModel-impl",
   "platform-impl",
+  "structure-view-impl",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
@@ -290,6 +293,7 @@ binding.setVariable("platformImplementationModules", [
   "xml",
   "xml-analysis-impl",
   "xml-psi-impl",
+  "xml-structure-view-impl",
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->

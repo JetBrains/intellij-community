@@ -30,6 +30,7 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="analysis-impl" exported="" />
+    <orderEntry type="module" module-name="structure-view-impl" exported="" />
   </component>
 </module>
 
