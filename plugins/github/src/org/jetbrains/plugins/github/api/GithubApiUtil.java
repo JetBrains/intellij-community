@@ -33,12 +33,14 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import sun.security.validator.ValidatorException;
 
 import javax.net.ssl.SSLHandshakeException;
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -91,6 +93,8 @@ public class GithubApiUtil {
                                       @Nullable String requestBody,
                                       @NotNull Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
+    LOG.assertTrue(!EventQueue.isDispatchThread(), "Network operation in EDT");
+    EventQueue.isDispatchThread();
     HttpMethod method = null;
     try {
       String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
