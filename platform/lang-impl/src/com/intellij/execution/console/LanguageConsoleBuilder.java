@@ -55,6 +55,8 @@ public final class LanguageConsoleBuilder {
   @Nullable
   private GutterContentProvider gutterContentProvider;
 
+  private boolean oneLineInput;
+
   // todo to be removed
   public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
@@ -74,6 +76,9 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  /**
+   * @see {@link com.intellij.psi.PsiCodeFragment}
+   */
   public LanguageConsoleBuilder psiFileFactory(@NotNull PairFunction<VirtualFile, Project, PsiFile> value) {
     psiFileFactory = value;
     return this;
@@ -125,8 +130,24 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  /**
+   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   */
+  public LanguageConsoleBuilder oneLineInput() {
+    oneLineInput(true);
+    return this;
+  }
+
+  /**
+   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   */
+  public LanguageConsoleBuilder oneLineInput(boolean value) {
+    oneLineInput = value;
+    return this;
+  }
+
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory, oneLineInput);
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
@@ -157,15 +178,22 @@ public final class LanguageConsoleBuilder {
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     @Nullable
     private final GutterContentProvider gutterContentProvider;
+    @Nullable
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     public GutteredLanguageConsole(@NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, language.getDisplayName() + " Console", language);
+                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory,
+                                   boolean oneLineInput) {
+      super(project, language.getDisplayName() + " Console", language, false);
 
       setShowSeparatorLine(false);
+
+      if (oneLineInput) {
+        getConsoleEditor().setOneLineMode(true);
+      }
+
       this.gutterContentProvider = gutterContentProvider;
       this.psiFileFactory = psiFileFactory;
     }
