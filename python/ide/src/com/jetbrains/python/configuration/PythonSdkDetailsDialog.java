@@ -235,6 +235,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       mySdkList.updateUI();
     }
   }
+
   @Nullable
   private Sdk getSdk() {
     if (myModule == null) {
@@ -246,12 +247,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
-      .show(myProject, myProjectSdksModel.getSdks(), this, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(), false, new NullableConsumer<Sdk>() {
-        @Override
-        public void consume(Sdk sdk) {
-          addCreatedSdk(sdk, false);
-        }
-      });
+      .show(myProject, myProjectSdksModel.getSdks(), this, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(), false,
+            new NullableConsumer<Sdk>() {
+              @Override
+              public void consume(Sdk sdk) {
+                addCreatedSdk(sdk, false);
+              }
+            });
   }
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {

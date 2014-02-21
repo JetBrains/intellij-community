@@ -165,9 +165,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       @Override
       public void setSelectedItem(Object item) {
         if (SHOW_ALL.equals(item)) {
-          PythonSdkDetailsDialog options = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                                           new PythonSdkDetailsDialog(myModule, myDetailsCallback);
-          options.show();
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              PythonSdkDetailsDialog options = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                               new PythonSdkDetailsDialog(myModule, myDetailsCallback);
+              options.show();
+            }
+          });
           return;
         }
         if (!PySdkListCellRenderer.SEPARATOR.equals(item))
