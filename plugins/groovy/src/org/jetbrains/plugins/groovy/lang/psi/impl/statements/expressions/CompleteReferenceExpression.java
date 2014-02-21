@@ -442,7 +442,6 @@ public class CompleteReferenceExpression {
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
 
     private List<GroovyResolveResult> myInapplicable;
-    private GroovyResolveResult[] myInapplicableResults;
 
     protected CompleteReferenceProcessor(@NotNull GrReferenceExpression place,
                                          @NotNull Consumer<LookupElement> consumer,
