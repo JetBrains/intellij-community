@@ -180,7 +180,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull Collection<LogicalPosition> caretPositions, @NotNull Collection<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
     throw new UnsupportedOperationException("Multiple carets are not supported");
   }
 

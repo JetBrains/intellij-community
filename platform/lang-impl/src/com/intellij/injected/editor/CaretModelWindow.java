@@ -205,7 +205,7 @@ public class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull Collection<LogicalPosition> caretPositions, @NotNull Collection<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
     List<LogicalPosition> convertedPositions = new ArrayList<LogicalPosition>(caretPositions);
     for (LogicalPosition position : caretPositions) {
       convertedPositions.add(myEditorWindow.injectedToHost(position));

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Provides services for moving the caret and retrieving information about caret position.
@@ -221,7 +222,7 @@ public interface CaretModel {
    *
    * @see #supportsMultipleCarets()
    */
-  void setCaretsAndSelections(@NotNull Collection<LogicalPosition> caretPositions, @NotNull Collection<? extends Segment> selections);
+  void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections);
 
   /**
    * Executes the given task for each existing caret. Carets are iterated in their position order. Set of carets to iterate over is
