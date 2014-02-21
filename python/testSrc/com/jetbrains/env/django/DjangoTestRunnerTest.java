@@ -10,7 +10,6 @@ import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.facet.DjangoFacetConfiguration;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
