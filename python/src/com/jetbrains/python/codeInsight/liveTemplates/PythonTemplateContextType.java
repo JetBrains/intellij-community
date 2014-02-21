@@ -16,7 +16,15 @@
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.FileTypeBasedContextType;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author yole
@@ -24,5 +32,23 @@ import com.jetbrains.python.PythonFileType;
 public class PythonTemplateContextType extends FileTypeBasedContextType {
   public PythonTemplateContextType() {
     super("Python", "Python", PythonFileType.INSTANCE);
+  }
+
+  @Override
+  public boolean isInContext(@NotNull PsiFile file, int offset) {
+    if (super.isInContext(file, offset)) {
+      final PsiElement element = file.findElementAt(offset);
+      if (element != null) {
+        return !isAfterDot(element);
+      }
+    }
+    return false;
+  }
+
+  private static boolean isAfterDot(@NotNull PsiElement element) {
+    ProcessingContext context = new ProcessingContext();
+    final PsiElementPattern.Capture<PsiElement> capture = psiElement().afterLeafSkipping(psiElement().whitespace(),
+                                                                                         psiElement().withElementType(PyTokenTypes.DOT));
+    return capture.accepts(element, context);
   }
 }
