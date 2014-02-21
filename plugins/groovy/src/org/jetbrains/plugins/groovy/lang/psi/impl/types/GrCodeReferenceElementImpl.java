@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -512,7 +513,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           else {
             // if ref is an annotation name reference we should not process declarations of annotated elements
             // because inner annotations are not permitted and it can cause infinite recursion
-            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContextFile(ref) : ref;
+            PsiElement placeToStartWalking = isAnnotationRef(ref) ? FileContextUtil.getContextFile(ref) : ref;
             ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;
@@ -598,16 +599,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     private static boolean isAnnotationRef(GrCodeReferenceElement ref) {
       final PsiElement parent = ref.getParent();
       return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
-    }
-
-    private static PsiFile getContextFile(@NotNull PsiElement ref) {
-      final PsiFile file = ref.getContainingFile();
-      if (file.isPhysical() || file.getContext() == null) {
-        return file;
-      }
-      else {
-        return getContextFile(file.getContext());
-      }
     }
 
     private static void processAccessors(GrCodeReferenceElementImpl ref,
