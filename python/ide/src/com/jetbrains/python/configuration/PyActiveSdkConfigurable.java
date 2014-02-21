@@ -43,10 +43,7 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PythonSdkDetailsStep;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +115,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           myProjectSdksModel.removeSdk(sdk);
           mySdkCombo.setSelectedItem(addedSdk);
         }
-        else if (getSdk() != sdk) {
+        else if (getSdk() != sdk && sdk != null) {
+          PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
+          if (additionalData != null) {
+            final String path = additionalData.getAssociatedProjectPath();
+            if (!path.equals(myProject.getBasePath()))
+              additionalData.setAssociatedProjectPath(null);
+          }
+          updateSdkList(false);
           mySdkCombo.setSelectedItem(sdk);
         }
       }
