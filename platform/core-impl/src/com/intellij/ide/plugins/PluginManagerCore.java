@@ -1059,14 +1059,6 @@ public class PluginManagerCore {
     List<String> brokenPluginsList = new ArrayList<String>();
 
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      final List<String> modules = descriptor.getModules();
-      if (modules != null) {
-        for (String module : modules) {
-          if (!ourModulesToContainingPlugins.containsKey(module)) {
-            ourModulesToContainingPlugins.put(module, descriptor);
-          }
-        }
-      }
 
       boolean skipped = shouldSkipPlugin(descriptor, pluginDescriptors);
 
@@ -1078,6 +1070,14 @@ public class PluginManagerCore {
       }
 
       if (!skipped) {
+        final List<String> modules = descriptor.getModules();
+        if (modules != null) {
+          for (String module : modules) {
+            if (!ourModulesToContainingPlugins.containsKey(module)) {
+              ourModulesToContainingPlugins.put(module, descriptor);
+            }
+          }
+        }
         result.add(descriptor);
       }
       else {
