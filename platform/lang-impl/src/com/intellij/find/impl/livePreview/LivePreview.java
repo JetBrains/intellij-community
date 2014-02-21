@@ -262,6 +262,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
             @Override
             public void run() {
               for (FoldRegion region : allRegions) {
+                if (!region.isValid()) continue;
                 if (cursor.intersects(TextRange.create(region))) {
                   region.setExpanded(true);
                 }
