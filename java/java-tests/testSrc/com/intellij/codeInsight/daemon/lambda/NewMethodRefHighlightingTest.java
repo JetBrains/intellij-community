@@ -165,6 +165,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIncorrectArrayCreationSignature() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
