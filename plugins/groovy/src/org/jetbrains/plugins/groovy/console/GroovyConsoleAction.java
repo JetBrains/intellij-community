@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PairFunction;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -40,13 +40,13 @@ public class GroovyConsoleAction extends GroovyShellActionBase {
   }
 
   @Override
-  protected LanguageConsoleImpl createConsole(@NotNull Project project, String title) {
-    return new LanguageConsoleImpl(project, title, GroovyFileType.GROOVY_LANGUAGE, new PairFunction<VirtualFile, Project, PsiFile>() {
+  protected LanguageConsoleImpl createConsole(Project project, String title) {
+    return new LanguageConsoleImpl(project, title, GroovyFileType.GROOVY_LANGUAGE) {
       @NotNull
       @Override
-      public PsiFile fun(@NotNull VirtualFile file, @NotNull Project project) {
-        return new GroovyCodeFragment(project, file);
+      protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+        return new GroovyCodeFragment(getProject(), virtualFile);
       }
-    });
+    };
   }
 }

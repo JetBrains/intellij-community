@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
@@ -35,6 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @experimental
+ */
 public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
@@ -153,15 +157,28 @@ public final class LanguageConsoleBuilder {
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     @Nullable
     private final GutterContentProvider gutterContentProvider;
+    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     public GutteredLanguageConsole(@NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
                                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, language.getDisplayName() + " Console", language, psiFileFactory);
+      super(project, language.getDisplayName() + " Console", language);
 
       setShowSeparatorLine(false);
       this.gutterContentProvider = gutterContentProvider;
+      this.psiFileFactory = psiFileFactory;
+    }
+
+    @NotNull
+    @Override
+    protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+      if (psiFileFactory == null) {
+        return super.createFile(virtualFile, document, project);
+      }
+      else {
+        return psiFileFactory.fun(virtualFile, project);
+      }
     }
 
     @Override
