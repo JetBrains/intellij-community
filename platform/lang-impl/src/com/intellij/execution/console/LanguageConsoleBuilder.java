@@ -147,11 +147,14 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory, oneLineInput);
+    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory);
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
+    }
+    if (oneLineInput) {
+      console.getConsoleEditor().setOneLineMode(true);
     }
     console.initComponents();
     return consoleView;
@@ -184,15 +187,10 @@ public final class LanguageConsoleBuilder {
     public GutteredLanguageConsole(@NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory,
-                                   boolean oneLineInput) {
+                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
       super(project, language.getDisplayName() + " Console", language, false);
 
       setShowSeparatorLine(false);
-
-      if (oneLineInput) {
-        getConsoleEditor().setOneLineMode(true);
-      }
 
       this.gutterContentProvider = gutterContentProvider;
       this.psiFileFactory = psiFileFactory;
