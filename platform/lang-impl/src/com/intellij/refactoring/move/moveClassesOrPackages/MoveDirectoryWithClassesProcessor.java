@@ -197,6 +197,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       for (PsiDirectory directory : myDirectories) {
         directory.delete();
       }
+
+      CommonMoveUtil.postprocessUsages(usages);
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];

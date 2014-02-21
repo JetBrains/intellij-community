@@ -30,6 +30,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
+import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -226,6 +227,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       // qualifier info must be decoded after members are moved
       final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(myTargetClass.getLanguage());
       if (handler != null) handler.decodeContextInfo(myTargetClass);
+
+      CommonMoveUtil.postprocessUsages(usages);
 
       myMembersToMove.clear();
       if (myMoveCallback != null) {
