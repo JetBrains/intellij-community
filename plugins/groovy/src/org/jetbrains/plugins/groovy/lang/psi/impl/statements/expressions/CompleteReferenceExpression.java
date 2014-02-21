@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -179,7 +180,7 @@ public class CompleteReferenceExpression {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
     if (containingClass != null) return;
 
-    final PsiFile file = refExpr.getContainingFile();
+    final PsiFile file = FileContextUtil.getContextFile(refExpr);
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
         @Override
