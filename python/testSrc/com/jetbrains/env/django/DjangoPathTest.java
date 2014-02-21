@@ -3,17 +3,23 @@ package com.jetbrains.env.django;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.django.run.DjangoServerRunConfiguration;
 import com.jetbrains.django.run.DjangoServerRunConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User : catherine
@@ -42,7 +48,7 @@ public class DjangoPathTest extends PyEnvTestCase {
 
 
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForOutput(THE_END_OF_SYS_PATH);
 
         doTest(output(), getTestDataPath());
       }
@@ -82,11 +88,23 @@ public class DjangoPathTest extends PyEnvTestCase {
 
       @Override
       protected void configure(AbstractPythonRunConfiguration config) {
-        ((DjangoTestsRunConfiguration)config).setTarget("mysite.SimpleTest");
+        String target = "mysite.SimpleTest";
+        try {
+          final PyPackage django = ((PyPackageManagerImpl)PyPackageManager.getInstance(config.getSdk())).findPackage("django");
+          if (django != null) {
+            final List<String> version = StringUtil.split(django.getVersion(), ".");
+            if (Integer.parseInt(version.get(1)) >= 6)
+              target = "mysite.tests.SimpleTest";
+          }
+        }
+        catch (PyExternalProcessException ignored) {
+        }
+
+        ((DjangoTestsRunConfiguration)config).setTarget(target);
       }
 
       public void testing() throws Exception {
-        waitForOutput("The end of sys.path");
+        waitForOutput(THE_END_OF_SYS_PATH);
         doTest(output(), getTestDataPath());
       }
     });
@@ -102,12 +120,12 @@ public class DjangoPathTest extends PyEnvTestCase {
       }
 
       public void testing() throws Exception {
-        waitForOutput("The end of sys.path");
+        waitForOutput(THE_END_OF_SYS_PATH);
 
         final String[] splittedOutput = output().split("\\n");
         final ArrayList<String> outputList = Lists.newArrayList();
         for (String s : splittedOutput) {
-          if (s.equals("The end of sys.path")) {
+          if (s.equals(THE_END_OF_SYS_PATH)) {
             break;
           }
           outputList.add(s);

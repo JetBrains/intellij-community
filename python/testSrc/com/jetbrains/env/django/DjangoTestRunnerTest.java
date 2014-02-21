@@ -4,12 +4,18 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.facet.DjangoFacetConfiguration;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
+import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +56,19 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
 
       @Override
       protected void configure(AbstractPythonRunConfiguration config) {
-        ((DjangoTestsRunConfiguration)config).setTarget("myapp.SimpleTest");
+        String target = "mysite.SimpleTest";
+        try {
+          final PyPackage django = ((PyPackageManagerImpl)PyPackageManager.getInstance(config.getSdk())).findPackage("django");
+          if (django != null) {
+            final List<String> version = StringUtil.split(django.getVersion(), ".");
+            if (Integer.parseInt(version.get(1)) >= 6)
+              target = "mysite.tests.SimpleTest";
+          }
+        }
+        catch (PyExternalProcessException ignored) {
+        }
+
+        ((DjangoTestsRunConfiguration)config).setTarget(target);
         if (customSettings != null)
           ((DjangoTestsRunConfiguration)config).setSettingsFile(getTestDataPath() + customSettings);
           ((DjangoTestsRunConfiguration)config).useCustomSettings(true);
