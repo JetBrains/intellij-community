@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -69,10 +70,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
-    String text = textWithImports.getText();
-    String imports = textWithImports.getImports();
-
-    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(text, context);
+    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(textWithImports.getText(), context);
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
@@ -83,8 +81,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       }
     });
 
-
-    text = toEval.getText();
+    String text = toEval.getText();
     final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
@@ -166,7 +163,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$_" + new Random().nextInt(42));
     hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
-    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
+    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, textWithImports.getImports());
     JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
@@ -209,6 +206,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
             return;
           }
+
+          if (resolved instanceof GrBindingVariable && !PsiTreeUtil.isAncestor(resolved.getContainingFile(), toEval, false)) {
+            return;
+          }
+
           String value;
           if (closure != null &&
               PsiTreeUtil.findCommonParent(resolved, closure) != closure &&
