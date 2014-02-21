@@ -24,6 +24,8 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -500,26 +502,17 @@ public class InferenceSession {
         final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
         if (argumentList != null) {
           final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(argumentList);
-          final MethodCandidatesProcessor processor = new MethodResolverProcessor((PsiCallExpression)gParent, argumentList, context.getContainingFile()) {
+          final PsiFile placeFile = context.getContainingFile();
+          final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(placeFile)){
+            @Override
+            protected PsiType[] getArgumentTypes() {
+              return InferenceSession.getArgumentTypes(argumentList, context);
+            }
+          };
+          final MethodCandidatesProcessor processor = new MethodResolverProcessor((PsiCallExpression)gParent, placeFile, new PsiConflictResolver[]{conflictResolver}) {
             @Override
             protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
-              if (argumentList != null) {
-                final PsiExpression[] expressions = argumentList.getExpressions();
-                final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
-                final PsiType[] types = PsiType.createArray(expressions.length);
-                for (int i = 0; i < expressions.length; i++) {
-                  if (i != idx) {
-                    types[i] = expressions[i].getType();
-                  }
-                  else {
-                    types[i] = PsiType.NULL;
-                  }
-                }
-                return types;
-              }
-              else {
-                return null;
-              }
+              return getArgumentTypes(argumentList, context);
             }
           };
           try {
@@ -547,6 +540,26 @@ public class InferenceSession {
       return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
     }
     return null;
+  }
+
+  private static PsiType[] getArgumentTypes(PsiExpressionList argumentList, PsiExpression context) {
+    if (argumentList != null) {
+      final PsiExpression[] expressions = argumentList.getExpressions();
+      final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
+      final PsiType[] types = PsiType.createArray(expressions.length);
+      for (int i = 0; i < expressions.length; i++) {
+        if (i != idx) {
+          types[i] = expressions[i].getType();
+        }
+        else {
+          types[i] = PsiType.NULL;
+        }
+      }
+      return types;
+    }
+    else {
+      return null;
+    }
   }
 
   private PsiType getTypeByMethod(PsiExpression context,

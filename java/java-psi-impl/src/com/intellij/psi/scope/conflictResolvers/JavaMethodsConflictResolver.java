@@ -415,9 +415,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private PsiType[] getActualParameterTypes() {
     if (myActualParameterTypes == null) {
       LOG.assertTrue(myArgumentsList instanceof PsiExpressionList, myArgumentsList);
-      myActualParameterTypes = ((PsiExpressionList)myArgumentsList).getExpressionTypes();
+      myActualParameterTypes = getArgumentTypes();
     }
     return myActualParameterTypes;
+  }
+
+  protected PsiType[] getArgumentTypes() {
+    return ((PsiExpressionList)myArgumentsList).getExpressionTypes();
   }
 
   private enum Specifics {

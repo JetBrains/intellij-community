@@ -122,6 +122,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
