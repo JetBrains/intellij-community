@@ -27,7 +27,7 @@ import com.intellij.ui.ToggleActionButton;
 
 public class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
   public ToggleAutoScrollAction() {
-    super("Auto Scroll", AllIcons.General.AutoscrollToSource);
+    super("Synchronize Scrolling", AllIcons.General.AutoscrollToSource);
   }
 
   @Override
