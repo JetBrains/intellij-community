@@ -16,11 +16,12 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.testFramework.FileBasedTestCaseHelperEx;
+import com.intellij.testFramework.Parameterized;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@RunWith(com.intellij.testFramework.Parameterized.class)
+@RunWith(Parameterized.class)
 public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTestCase implements FileBasedTestCaseHelperEx {
   @Override
   public String getRelativeBasePath() {
@@ -34,11 +35,13 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
     return fileName.substring(BEFORE_PREFIX.length());
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected void doAllTests() {
     super.doAllTests();
   }
 
+  @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
   @Test
   public void runSingle() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
@@ -60,6 +63,5 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
     if (throwables[0] != null) {
       throw throwables[0];
     }
-    
   }
 }
