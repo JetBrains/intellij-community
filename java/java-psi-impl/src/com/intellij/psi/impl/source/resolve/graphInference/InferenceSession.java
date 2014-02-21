@@ -1089,8 +1089,8 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      LOG.assertTrue(sParameters.length == tParameters.length);
       if (session != null) {
+        LOG.assertTrue(sParameters.length == tParameters.length);
         for (int i = 0; i < tParameters.length; i++) {
           session.addConstraint(new TypeEqualityConstraint(tSubstitutor.substitute(tParameters[i].getType()),
                                                            sSubstitutor.substitute(sParameters[i].getType())));
