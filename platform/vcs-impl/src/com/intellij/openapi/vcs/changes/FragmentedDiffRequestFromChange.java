@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -153,12 +152,18 @@ public class FragmentedDiffRequestFromChange {
           if (!lineFragment.isEqual()) {
             final TextRange oldRange = lineFragment.getRange(FragmentSide.SIDE1);
             final TextRange newRange = lineFragment.getRange(FragmentSide.SIDE2);
-            myRanges.add(new BeforeAfter<TextRange>(new UnfairTextRange(myOldDocument.getLineNumber(oldRange.getStartOffset()),
-                                                                        myOldDocument.getLineNumber(
-                                                                          correctRangeEnd(oldRange.getEndOffset(), myOldDocument))),
-                                                    new UnfairTextRange(myDocument.getLineNumber(newRange.getStartOffset()), myDocument
-                                                      .getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument)))
-            ));
+            int beforeBegin = myOldDocument.getLineNumber(oldRange.getStartOffset());
+            int beforeEnd = myOldDocument.getLineNumber(correctRangeEnd(oldRange.getEndOffset(), myOldDocument));
+            int afterBegin = myDocument.getLineNumber(newRange.getStartOffset());
+            int afterEnd = myDocument.getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument));
+            if (oldRange.isEmpty()) {
+              beforeEnd = beforeBegin - 1;
+            }
+            if (newRange.isEmpty()) {
+              afterEnd = afterBegin - 1;
+            }
+            myRanges
+              .add(new BeforeAfter<TextRange>(new UnfairTextRange(beforeBegin, beforeEnd), new UnfairTextRange(afterBegin, afterEnd)));
           }
         }
         cache
