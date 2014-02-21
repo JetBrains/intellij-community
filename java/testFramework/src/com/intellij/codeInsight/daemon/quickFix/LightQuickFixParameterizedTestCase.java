@@ -50,12 +50,5 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
         doSingleTest(myFileSuffix, myTestDataPath);
       }
     });
-    };
-
-    invokeTestRunnable(runnable);
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
   }
 }
