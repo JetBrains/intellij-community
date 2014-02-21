@@ -350,9 +350,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
      * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
      */
   protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
-    checkResultByText(message, fileText, ignoreTrailingSpaces, null);  
+    checkResultByText(message, fileText, ignoreTrailingSpaces, null);
   }
-  
+
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
@@ -547,7 +547,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void paste() {
     executeAction(IdeActions.ACTION_EDITOR_PASTE);
   }
-  
+
   protected static void moveCaretToPreviousWordWithSelection() {
     executeAction("EditorPreviousWordWithSelection");
   }
@@ -559,7 +559,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void cutLineBackward() {
     executeAction("EditorCutLineBackward");
   }
-  
+
   protected static void cutToLineEnd() {
     executeAction("EditorCutLineEnd");
   }
@@ -567,7 +567,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void killToWordStart() {
     executeAction("EditorKillToWordStart");
   }
-  
+
   protected static void killToWordEnd() {
     executeAction("EditorKillToWordEnd");
   }
@@ -591,7 +591,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
-  
+
   protected static void executeAction(@NonNls @NotNull final String actionId) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
@@ -636,14 +636,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
 
   /**
-   * @Parameterized.Parameter fields are injected on parameterized test creation. 
+   * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
   @Parameterized.Parameter(0)
   public String myFileSuffix;
 
   /**
-   * path to the root of test data in case of com.intellij.testFramework.FileBasedTestCaseHelperEx 
-   * or 
+   * path to the root of test data in case of com.intellij.testFramework.FileBasedTestCaseHelperEx
+   * or
    * path to the directory with current test data in case of @TestDataPath
    */
   @Parameterized.Parameter(1)
@@ -697,7 +697,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
     return result;
   }
-  
+
   @Override
   public String getName() {
     if (myFileSuffix != null) {
@@ -747,7 +747,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected void runSingleTest(Runnable testRunnable) throws Throwable {
+  protected void runSingleTest(final Runnable testRunnable) throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = new Runnable() {
