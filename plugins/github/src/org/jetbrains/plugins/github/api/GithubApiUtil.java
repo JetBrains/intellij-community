@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -93,8 +94,8 @@ public class GithubApiUtil {
                                       @Nullable String requestBody,
                                       @NotNull Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
-    LOG.assertTrue(!EventQueue.isDispatchThread(), "Network operation in EDT");
-    EventQueue.isDispatchThread();
+    LOG.assertTrue(!EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode(), "Network operation in EDT");
+
     HttpMethod method = null;
     try {
       String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
