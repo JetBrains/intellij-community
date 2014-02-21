@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.source.codeStyle;
 
@@ -47,6 +43,9 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.util.*;
 
+/**
+ * @author max
+ */
 public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl");
 
@@ -87,8 +86,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Override
-  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset)
-    throws IncorrectOperationException {
+  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (SourceTreeToPsiMap.hasTreeElement(element)) {
       final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
@@ -164,7 +162,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       ContainerUtil.addAll(redundant, imports);
       redundant.removeAll(allImports);
       for (PsiImportStatementBase importStatement : imports) {
-        if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) {
+        if (importStatement instanceof JspxImportStatement && importStatement.isForeignFileImport()) {
           redundant.remove(importStatement);
         }
       }
@@ -481,7 +479,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (fromLiterals != null) {
       ContainerUtil.addAll(names, fromLiterals);
     }
-    
+
     ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).names);
     ContainerUtil.addAll(names, suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).names);
 
