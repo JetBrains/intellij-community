@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SkipSlowTestLocally
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
   private final Disposable my = Disposer.newDisposable();
   @Override

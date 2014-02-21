@@ -15,6 +15,9 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.module.JpsModule;
+
 /**
  * @author: db
  * Date: 22.09.11
@@ -122,4 +125,18 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testMoveClassToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassFromJavaFileToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+  
 }

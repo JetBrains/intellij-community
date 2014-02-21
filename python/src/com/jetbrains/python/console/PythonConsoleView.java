@@ -77,12 +77,21 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   private final LanguageConsoleViewImpl myLanguageConsoleView;
   
-  private Disposable mySplittedDisposable;
+  private Disposable mySplitDisposable;
 
-  public PythonConsoleView(final Project project, final String title, Sdk sdk) {
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(new BorderLayout());
 
-    myLanguageConsoleView = new LanguageConsoleViewImpl(new PythonLanguageConsole(project, title, sdk));
+    LanguageConsoleImpl languageConsole = new LanguageConsoleImpl(project, title, PythonLanguage.getInstance(), false);
+    if (languageConsole.getFile().getVirtualFile() != null) {
+      languageConsole.getFile().getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    }
+    // Mark editor as console one, to prevent autopopup completion
+    languageConsole.getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    languageConsole.setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
+    languageConsole.initComponents();
+
+    myLanguageConsoleView = new LanguageConsoleViewImpl(languageConsole);
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
 
@@ -96,7 +105,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getPythonLanguageConsole().setConsoleCommunication(communication);
+    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
   }
 
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
@@ -110,8 +119,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     getLanguageConsole().getHistoryViewer().getComponent().updateUI();
   }
 
-  private PythonLanguageConsole getPythonLanguageConsole() {
-    return ((PythonLanguageConsole)getLanguageConsole());
+  private LanguageConsoleImpl getPythonLanguageConsole() {
+    return getLanguageConsole();
   }
 
   public LanguageConsoleImpl getLanguageConsole() {
@@ -165,11 +174,11 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
       public void run() {
         String text = getPythonLanguageConsole().getConsoleEditor().getDocument().getText();
 
-        getPythonLanguageConsole().setTextToEditor(code);
+        getPythonLanguageConsole().setInputText(code);
         myExecuteActionHandler.runExecuteAction(myLanguageConsoleView);
 
         if (!StringUtil.isEmpty(text)) {
-          getPythonLanguageConsole().setTextToEditor(text);
+          getPythonLanguageConsole().setInputText(text);
         }
       }
     });
@@ -348,7 +357,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void setSdk(Sdk sdk) {
-    getPythonLanguageConsole().setSdk(sdk);
+    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
   }
 
   @Override
@@ -403,7 +412,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
-    mySplittedDisposable = componentDisposable;
+    mySplitDisposable = componentDisposable;
     p.add(component, JSplitPane.RIGHT);
     p.setDividerLocation((int)getSize().getWidth()*2/3);
     add(p, BorderLayout.CENTER);
@@ -417,38 +426,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
     validate();
     repaint();
-    if (mySplittedDisposable != null) {
-      Disposer.dispose(mySplittedDisposable);
-      mySplittedDisposable = null;
-    }
-  }
-
-  private static class PythonLanguageConsole extends LanguageConsoleImpl {
-
-    public PythonLanguageConsole(final Project project, final String title, final Sdk sdk) {
-      super(project, title, PythonLanguage.getInstance(), false);
-      initLanguageLevel(sdk);
-      // Mark editor as console one, to prevent autopopup completion
-      getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-
-      setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
-
-      initComponents();
-    }
-
-    private void initLanguageLevel(@Nullable Sdk sdk) {
-      if (myFile.getVirtualFile() != null) {
-        //noinspection ConstantConditions
-        myFile.getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
-      }
-    }
-
-    public void setConsoleCommunication(final ConsoleCommunication communication) {
-      myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
-    }
-
-    public void setSdk(Sdk sdk) {
-      myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
+    if (mySplitDisposable != null) {
+      Disposer.dispose(mySplitDisposable);
+      mySplitDisposable = null;
     }
   }
 }

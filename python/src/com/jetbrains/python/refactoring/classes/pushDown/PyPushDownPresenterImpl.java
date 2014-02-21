@@ -1,10 +1,8 @@
 package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
@@ -25,7 +23,7 @@ public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImp
                                  @NotNull final PyPushDownView view,
                                  @NotNull final PyClass classUnderRefactoring,
                                  @NotNull final PyMemberInfoStorage infoStorage) {
-    super(view, classUnderRefactoring, infoStorage);
+    super(view, classUnderRefactoring, infoStorage,  new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>>(classUnderRefactoring));
     myProject = project;
   }
 
@@ -37,16 +35,14 @@ public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImp
 
   @NotNull
   @Override
-  protected MultiMap<PsiElement, String> getConflicts() {
-    return new PyPushDownConflicts(myClassUnderRefactoring, myStorage.getClassMemberInfos(myClassUnderRefactoring)).getConflicts();
+  protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
+    return PyPushDownProcessor.getInheritors(myClassUnderRefactoring);
   }
 
   @Override
   public void launch() {
-    UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> model =
-      new UsedByDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>>(myClassUnderRefactoring);
     myView
-      .configure(new MembersViewInitializationInfo(model, PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring))));
+      .configure(new MembersViewInitializationInfo(myModel, PyUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring))));
     myView.initAndShow();
   }
 }

@@ -35,6 +35,7 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
     setIcon(icon);
   }
 
+  @Override
   @NotNull
   public String getExpression() {
     return myExpression;

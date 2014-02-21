@@ -121,8 +121,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             if (methodParameters.length == 0) continue;
             final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
             final PsiType paramType = param.getType();
-            if (!LambdaUtil.isAcceptable(lambdaExpression, ((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType),
-                                         lambdaExpression.hasFormalParameterTypes())) {
+            if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
               iterator.remove();
             }
           }
@@ -541,7 +540,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return Specifics.FIRST;
         }
       }
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && myArgumentsList instanceof PsiExpressionList) {
+
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && myArgumentsList instanceof PsiExpressionList && (typeParameters1.length == 0 || typeParameters2.length == 0)) {
         boolean toCompareFunctional = false;
         for (int i = 0; i < myActualParameterTypes.length; i++) {
           if (types1.length > 0 && LambdaUtil.isFunctionalType(types1[Math.min(i, types1.length - 1)]) &&

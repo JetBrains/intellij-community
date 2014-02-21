@@ -116,6 +116,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     layeredPane.add(inplaceEditorComponent, new Integer(250));
 
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         layeredPane.remove(inplaceEditorComponent);
       }
@@ -126,9 +127,11 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     getPreferredFocusedComponent().requestFocus();
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         final Project project = getProject();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!isShown() || project == null || project.isDisposed()) {
               return;
@@ -146,6 +149,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         });
       }
 
+      @Override
       public void componentHidden(ComponentEvent e) {
         cancelEditing();
       }
@@ -165,6 +169,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     rootPane.addComponentListener(componentListener);
 
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         tree.removeHierarchyListener(hierarchyListener);
         tree.addComponentListener(componentListener);
@@ -174,16 +179,19 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     final RunContentManager contentManager = ExecutionManager.getInstance(getProject()).getContentManager();
     final RunContentListener runContentListener = new RunContentListener() {
+      @Override
       public void contentSelected(RunContentDescriptor descriptor) {
         cancelEditing();
       }
 
+      @Override
       public void contentRemoved(RunContentDescriptor descriptor) {
         cancelEditing();
       }
     };
     contentManager.addRunContentListener(runContentListener);
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         contentManager.removeRunContentListener(runContentListener);
       }
@@ -192,18 +200,21 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final JComponent editorComponent = getEditorComponent();
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
     editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
     editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         cancelEditing();
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!isShown()) return;
         defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
@@ -211,6 +222,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     });
 
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         defaultToolkit.removeAWTEventListener(TreeInplaceEditor.this);
       }
@@ -221,6 +233,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected void onShown() {
   }
 
+  @Override
   public void eventDispatched(AWTEvent event) {
     if (!isShown()) {
       return;

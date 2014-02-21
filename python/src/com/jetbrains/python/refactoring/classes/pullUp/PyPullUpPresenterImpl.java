@@ -17,11 +17,8 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
@@ -48,7 +45,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
    * @param clazz       class to refactor
    */
   PyPullUpPresenterImpl(@NotNull final PyPullUpView view, @NotNull final PyMemberInfoStorage infoStorage, @NotNull final PyClass clazz) {
-    super(view, clazz, infoStorage);
+    super(view, clazz, infoStorage, new PyPullUpInfoModel(clazz, view));
     myParents = PyAncestorsUtils.getAncestorsUnderUserControl(clazz);
     Preconditions.checkArgument(!myParents.isEmpty(), "No parents found");
   }
@@ -57,7 +54,7 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   @Override
   public void launch() {
     myView.configure(
-      new PyPullUpViewInitializationInfo(new PyPullUpInfoModel(), myStorage.getClassMemberInfos(myClassUnderRefactoring), myParents));
+      new PyPullUpViewInitializationInfo(myModel, myStorage.getClassMemberInfos(myClassUnderRefactoring), myParents));
     myView.initAndShow();
   }
 
@@ -93,54 +90,10 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   }
 
 
-  @Override
   @NotNull
-  public MultiMap<PsiElement, String> getConflicts() {
-    final Collection<PyMemberInfo<PyElement>> infos = myView.getSelectedMemberInfos();
-    final PyClass superClass = myView.getSelectedParent();
-    return PyPullUpConflictsUtil.checkConflicts(infos, superClass);
-  }
-
-  private class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
-
-    PyPullUpInfoModel() {
-      super(myClassUnderRefactoring, null, false);
-    }
-
-    @Override
-    public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
-      return member.isCouldBeAbstract() && isMemberEnabled(member); // TODO: copy paste with other models, get rid of
-    }
-
-    @Override
-    public int checkForProblems(@NotNull final PyMemberInfo<PyElement> member) {
-      return member.isChecked() ? OK : super.checkForProblems(member);
-    }
-
-
-    @Override
-    protected int doCheck(@NotNull final PyMemberInfo<PyElement> memberInfo, final int problem) {
-      if (problem == ERROR && memberInfo.isStatic()) {
-        return WARNING;
-      }
-      return problem;
-    }
-
-    @Override
-    public boolean isMemberEnabled(final PyMemberInfo<PyElement> member) {
-      final PyClass currentSuperClass = myView.getSelectedParent();
-      if (member.getMember() instanceof PyClass) {
-        //TODO: Delegate to Memebers Managers
-        final PyClass memberClass = (PyClass)member.getMember();
-        if (memberClass.isSubclass(currentSuperClass) || currentSuperClass.isSubclass(memberClass)) {
-          return false; //Class is already parent of superclass
-        }
-      }
-      if (!PyPullUpConflictsUtil.checkConflicts(Collections.singletonList(member), myView.getSelectedParent()).isEmpty()) {
-        return false; //Member has conflict
-      }
-      return (!myStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) && member.getMember() != currentSuperClass;
-    }
+  @Override
+  protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
+    return Collections.singletonList(myView.getSelectedParent());
   }
 }
 

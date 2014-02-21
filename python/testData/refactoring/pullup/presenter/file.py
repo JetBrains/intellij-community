@@ -60,3 +60,23 @@ class Bar(object):
 class Foo(Bar):
     def __init__(self):
         self.foo = 12
+
+
+class ParentWithConflicts(Bar):
+    CLASS_FIELD = 42
+    def __init__(self):
+        self.instance_field = 12
+
+    def my_func(self):
+        pass
+
+
+class ChildWithConflicts(ParentWithConflicts, Bar): # Bar -> conflict
+    CLASS_FIELD = 42 # Conflict
+    GOOD_FIELD = 32
+    def __init__(self):
+        self.instance_field = 12 # Conflict
+        self.good_instance_field = "egg"
+
+    def my_func(self): # Conflict
+        pass

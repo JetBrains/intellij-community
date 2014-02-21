@@ -80,11 +80,11 @@ public final class PyClassRefactoringUtil {
     if (methods.isEmpty()) {
       return Collections.emptyList();
     }
-    for (PsiElement e : methods) {
+    for (final PsiElement e : methods) {
       rememberNamedReferences(e);
     }
     final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
-    return addMethods(superClass, elements);
+    return addMethods(superClass, true,  elements);
   }
 
   /**
@@ -92,28 +92,31 @@ public final class PyClassRefactoringUtil {
    *
    * @param destination where to add methods
    * @param methods     methods
-   * @return newly added methods
+   * @param skipIfExist do not add anything if method already exists
+   * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
   @NotNull
-  public static List<PyFunction> addMethods(@NotNull final PyClass destination, @NotNull final PyFunction... methods) {
+  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, @NotNull final PyFunction... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
-    final List<PyFunction> newlyCreatedMethods = new ArrayList<PyFunction>(methods.length);
+    final List<PyFunction> result = new ArrayList<PyFunction>(methods.length);
 
     for (final PyFunction method : methods) {
 
-      if (destination.findMethodByName(method.getName(), false) != null) {
-        continue; //We skip adding if class already has this method. I am not sure if this behaviour is correct, but it was here, so I left if for backward compatibility
+      final PyFunction existingMethod = destination.findMethodByName(method.getName(), false);
+      if ((existingMethod != null) && skipIfExist) {
+        result.add(existingMethod);
+        continue; //We skip adding if class already has this method.
       }
 
 
       final PyFunction newMethod = insertMethodInProperPlace(destStatementList, method);
-      newlyCreatedMethods.add(newMethod);
+      result.add(newMethod);
       restoreNamedReferences(newMethod);
     }
 
     PyPsiUtils.removeRedundantPass(destStatementList);
-    return newlyCreatedMethods;
+    return result;
   }
 
   /**

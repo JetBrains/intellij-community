@@ -17,9 +17,11 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -45,6 +47,7 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +60,30 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   public PsiMethodReferenceExpressionImpl() {
     super(JavaElementType.METHOD_REF_EXPRESSION);
+  }
+
+  public static boolean onArrayType(PsiClass containingClass, MethodSignature signature) {
+    if (arrayCompatibleSignature(signature.getParameterTypes(), new Function<PsiType[], PsiType>() {
+      @Override
+      public PsiType fun(PsiType[] types) {
+        return types[0];
+      }
+    })) {
+      if (containingClass != null) {
+        final Project project = containingClass.getProject();
+        final LanguageLevel level = PsiUtil.getLanguageLevel(containingClass);
+        return containingClass == JavaPsiFacade.getElementFactory(project).getArrayClass(level);
+      }
+    }
+    return false;
+  }
+
+  public static <T> boolean arrayCompatibleSignature(T[] paramTypes, Function<T[], PsiType> fun) {
+    if (paramTypes.length == 1) {
+      final PsiType paramType = fun.fun(paramTypes);
+      if (paramType != null && TypeConversionUtil.isAssignable(PsiType.INT, paramType)) return true;
+    }
+    return false;
   }
 
   @Override
@@ -110,9 +137,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (parametersCount == interfaceArity - 1 && !isStatic) {
             return true;
           }
+          if (((PsiMethod)element).isVarArgs()) return true;
         } else if (!isStatic) {
           return true;
         }
+      } else if (element instanceof PsiClass) {
+        return true;
       }
     }
     return false;
@@ -410,7 +440,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             ClassCandidateInfo candidateInfo = null;
             if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) &&
                 signature.getParameterTypes().length == 0 ||
-                PsiMethodReferenceUtil.onArrayType(containingClass, signature)) {
+                onArrayType(containingClass, signature)) {
               candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
             }
             return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
@@ -694,5 +724,112 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return true;
       }
     }
+  }
+
+  @Override
+  public boolean isAcceptable(PsiType left) {
+    if (left instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
+        if (isAcceptable(conjunct)) return true;
+      }
+      return false;
+    }
+
+    left = FunctionalInterfaceParameterizationUtil.getGroundTargetType(left);
+    if (!isPotentiallyCompatible(left)) {
+      return false;
+    }
+
+    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+      if (!isExact()) {
+        return true;
+      }
+    }
+
+     // A method reference is congruent with a function type if the following are true:
+     //   The function type identifies a single compile-time declaration corresponding to the reference.
+     //   One of the following is true:
+     //      i)The return type of the function type is void.
+     //     ii)The return type of the function type is R; 
+     //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
+     //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
+
+    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
+    if (map == null) {
+      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
+      PsiMethodReferenceUtil.ourRefs.set(map);
+    }
+
+    final JavaResolveResult result;
+    try {
+      if (map.put(this, left) != null) {
+        return false;
+      }
+      result = advancedResolve(false);
+    }
+    finally {
+      map.remove(this);
+    }
+
+    final PsiElement resolve = result.getElement();
+    if (resolve == null) {
+      return false;
+    }
+
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (interfaceMethod != null) {
+      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
+
+      LOG.assertTrue(interfaceReturnType != null);
+
+      if (interfaceReturnType == PsiType.VOID) {
+        return true;
+      }
+
+      final PsiSubstitutor subst = result.getSubstitutor();
+
+      PsiType methodReturnType = null;
+      PsiClass containingClass = null;
+      if (resolve instanceof PsiMethod) {
+        containingClass = ((PsiMethod)resolve).getContainingClass();
+
+        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(this, this, (PsiMethod)resolve, null, PsiUtil.getLanguageLevel(this));
+
+        if (returnType == null) {
+          returnType = ((PsiMethod)resolve).getReturnType();
+        }
+
+        if (returnType == PsiType.VOID) {
+          return false;
+        }
+
+        methodReturnType = subst.substitute(returnType);
+      }
+      else if (resolve instanceof PsiClass) {
+        if (resolve == JavaPsiFacade.getElementFactory(resolve.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
+          final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
+          if (typeParameters.length == 1) {
+            final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
+            if (arrayComponentType == null) {
+              return false;
+            }
+            methodReturnType = arrayComponentType.createArrayType();
+          }
+        }
+        containingClass = (PsiClass)resolve;
+      }
+
+      if (methodReturnType == null) {
+        if (containingClass == null) {
+          return false;
+        }
+        methodReturnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, subst);
+      }
+
+      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false);
+    }
+    return false;
   }
 }

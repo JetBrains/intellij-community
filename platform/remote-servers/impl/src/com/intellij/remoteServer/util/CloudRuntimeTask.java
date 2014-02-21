@@ -20,10 +20,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class CloudRuntimeTask<
@@ -35,6 +37,9 @@ public abstract class CloudRuntimeTask<
 
   private final Project myProject;
   private final String myTitle;
+
+  private final AtomicReference<Boolean> mySuccess = new AtomicReference<Boolean>();
+  private final AtomicReference<String> myErrorMessage = new AtomicReference<String>();
 
   public CloudRuntimeTask(Project project, String title) {
     myProject = project;
@@ -87,6 +92,9 @@ public abstract class CloudRuntimeTask<
       };
     }
 
+    mySuccess.set(false);
+    myErrorMessage.set(null);
+
     AtomicReference<T> result = new AtomicReference<T>();
     run(semaphore, result);
 
@@ -110,6 +118,7 @@ public abstract class CloudRuntimeTask<
       public void run() {
         try {
           result.set(CloudRuntimeTask.this.run(serverRuntime));
+          mySuccess.set(true);
         }
         catch (ServerRuntimeException e) {
           runtimeErrorOccurred(e.getMessage());
@@ -122,7 +131,19 @@ public abstract class CloudRuntimeTask<
   }
 
   protected void runtimeErrorOccurred(@NotNull String errorMessage) {
+    myErrorMessage.set(errorMessage);
     LOG.info(errorMessage);
+  }
+
+  public void showMessageDialog(JComponent component, String successMessage, String title) {
+    if (mySuccess.get()) {
+      Messages.showInfoMessage(component, successMessage, title);
+      return;
+    }
+    String errorMessage = myErrorMessage.get();
+    if (errorMessage != null) {
+      Messages.showErrorDialog(component, errorMessage, title);
+    }
   }
 
   protected abstract SR getServerRuntime();

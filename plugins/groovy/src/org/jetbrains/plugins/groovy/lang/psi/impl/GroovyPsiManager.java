@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.*;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -189,53 +188,8 @@ public class GroovyPsiManager {
     return result;
   }
 
+  private static final PsiType UNKNOWN_TYPE = new GrPsiTypeStub();
 
-  private static final PsiType UNKNOWN_TYPE = new PsiType(PsiAnnotation.EMPTY_ARRAY) {
-    @NotNull
-    @Override
-    public String getPresentableText() {
-      return "?";
-    }
-
-    @NotNull
-    @Override
-    public String getCanonicalText() {
-      return "?";
-    }
-
-    @NotNull
-    @Override
-    public String getInternalCanonicalText() {
-      return "?";
-    }
-
-    @Override
-    public boolean isValid() {
-      return true;
-    }
-
-    @Override
-    public boolean equalsToText(@NotNull @NonNls String text) {
-      return false;
-    }
-
-    @Override
-    public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public GlobalSearchScope getResolveScope() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public PsiType[] getSuperTypes() {
-      return PsiType.EMPTY_ARRAY;
-    }
-  };
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);

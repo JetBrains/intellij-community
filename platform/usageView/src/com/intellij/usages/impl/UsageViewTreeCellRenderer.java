@@ -245,7 +245,8 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     }
     pref.width = Math.max(visibleRect.width, pref.width);
     myRowBoundsCalled = true;
-    final Rectangle bounds = getTree().getRowBounds(row);
+    final JTree tree = getTree();
+    final Rectangle bounds = tree == null ? null : tree.getRowBounds(row);
     myRowBoundsCalled = false;
     int y = bounds == null ? 0 : bounds.y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);

@@ -63,16 +63,16 @@ abstract class BaseProgramRunner<Settings extends RunnerSettings> implements Pro
 
     Project project = environment.getProject();
     RunManager.getInstance(project).refreshUsagesList(environment.getRunProfile());
-    startRunProfile(environment, callback, project, state);
+    execute(environment, callback, project, state);
   }
 
-  protected abstract void startRunProfile(@NotNull ExecutionEnvironment environment,
-                                          @Nullable Callback callback,
-                                          @NotNull Project project,
-                                          @NotNull RunProfileState state) throws ExecutionException;
+  protected abstract void execute(@NotNull ExecutionEnvironment environment,
+                                  @Nullable Callback callback,
+                                  @NotNull Project project,
+                                  @NotNull RunProfileState state) throws ExecutionException;
 
   @Nullable
-  protected static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
+  static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
     if (descriptor != null) {
       descriptor.setExecutionId(environment.getExecutionId());
     }

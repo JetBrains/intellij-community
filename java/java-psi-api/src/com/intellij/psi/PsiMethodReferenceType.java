@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * A type which represents a function denoted by a method reference.
  */
 public class PsiMethodReferenceType extends PsiType {
+  @NotNull
   private final PsiMethodReferenceExpression myReference;
 
   public PsiMethodReferenceType(@NotNull final PsiMethodReferenceExpression reference) {

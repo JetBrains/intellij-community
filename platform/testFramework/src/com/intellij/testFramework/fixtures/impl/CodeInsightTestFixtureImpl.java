@@ -1367,7 +1367,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             caretPositions.add(caret.offset == null ? null : myEditor.offsetToLogicalPosition(caret.offset));
             selections.add(caret.selection == null ? null : caret.selection);
           }
-          myEditor.getCaretModel().setCarets(caretPositions, selections);
+          myEditor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
         }
         else {
           assert loader.caretState.carets.size() == 1 : "Multiple carets are not supported by the model";

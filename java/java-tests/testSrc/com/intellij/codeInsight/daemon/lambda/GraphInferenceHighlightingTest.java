@@ -136,6 +136,22 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testArrayPassedToVarargsMethod() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA121055() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeByAnonymousClass() throws Exception {
+    doTest();
+  }
+
+  public void testStaticInheritorsAmbiguity() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

@@ -249,7 +249,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
           }
         }
       }
-      myEditor.getCaretModel().setCarets(positions, selections);
+      myEditor.getCaretModel().setCaretsAndSelections(positions, selections);
     }
     else {
       removeSelection();

@@ -18,8 +18,15 @@ package com.intellij.remoteServer.util.ssh;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.remoteServer.ServerType;
+import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.impl.configuration.RemoteServerImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
@@ -27,10 +34,12 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.remoteServer.util.*;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.io.File;
 
 /**
@@ -61,6 +70,13 @@ public class SshKeyChecker {
     if (isSshKeyErrorMessage(errorMessage) && logManager != null) {
       new DeploymentHandler(serverRuntime, logManager.getMainLoggingHandler(), deploymentTask).handle();
     }
+  }
+
+  public <C extends ServerConfiguration> void setupUploadLabel(HyperlinkLabel label,
+                                                               UnnamedConfigurable serverConfigurable,
+                                                               C serverConfiguration,
+                                                               ServerType<C> serverType) {
+    new ConfigurableHandler<C>(label, serverConfigurable, serverConfiguration, serverType);
   }
 
   private class ServerHandler extends HandlerBase {
@@ -207,6 +223,62 @@ public class SshKeyChecker {
                             view.showDeployment(connection, s);
                           }
                         });
+    }
+  }
+
+  private class ConfigurableHandler<C extends ServerConfiguration> extends HandlerBase implements HyperlinkListener {
+
+    private final UnnamedConfigurable myServerConfigurable;
+    private final C myServerConfiguration;
+    private final ServerType<C> myServerType;
+
+    private final HyperlinkLabel myLabel;
+
+    public ConfigurableHandler(HyperlinkLabel label,
+                               final UnnamedConfigurable serverConfigurable,
+                               C serverConfiguration,
+                               ServerType<C> serverType) {
+      myServerConfigurable = serverConfigurable;
+      myServerConfiguration = serverConfiguration;
+      myServerType = serverType;
+
+      label.setHyperlinkText("Upload Public SSH Key");
+      label.addHyperlinkListener(this);
+      myLabel = label;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      chooseKey();
+    }
+
+    @Override
+    protected void uploadKey(final File sskKey) {
+      try {
+        myServerConfigurable.apply();
+      }
+      catch (ConfigurationException e) {
+        Messages.showErrorDialog("Cannot upload SSH key: " + e.getMessage(), e.getTitle());
+        return;
+      }
+
+      RemoteServer<C> server = new RemoteServerImpl<C>("<temp server to upload ssh key>", myServerType, myServerConfiguration);
+
+      CloudConnectionTask task = new CloudConnectionTask(null, "Uploading SSH key", server) {
+
+        @Override
+        protected Object run(CloudServerRuntimeInstance serverRuntime) throws ServerRuntimeException {
+          ((SshKeyAwareServerRuntime)serverRuntime).addSshKey(sskKey);
+          return null;
+        }
+      };
+      task.performSync();
+      task.showMessageDialog(myLabel, "SSH key was uploaded", "Public SSH Key");
+    }
+
+    @Override
+    protected Project getProject() {
+      return null;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +42,7 @@ import java.io.File;
 import java.lang.ref.Reference;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PsiDocumentManagerImplTest extends PlatformTestCase {
+public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
   private PsiDocumentManagerImpl getPsiDocumentManager() {
     return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
   }
@@ -72,7 +72,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   private static LightVirtualFile createFile() {
-    return new LightVirtualFile("foo.java");
+    return new LightVirtualFile("foo.txt");
   }
 
   public void testDocumentGced() throws Exception {
@@ -195,7 +195,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       PsiManager alienManager = PsiManager.getInstance(alienProject);
       final String alienText = "alien";
 
-      LightVirtualFile alienVirt = new LightVirtualFile("foo.java", alienText);
+      LightVirtualFile alienVirt = new LightVirtualFile("foo.txt", alienText);
       final PsiFile alienFile = alienManager.findFile(alienVirt);
       final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
       final Document alienDocument = alienDocManager.getDocument(alienFile);

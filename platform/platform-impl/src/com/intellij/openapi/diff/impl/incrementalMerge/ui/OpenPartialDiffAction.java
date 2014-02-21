@@ -76,7 +76,7 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
   }
 
   private String composeName() {
-    if (myLeftIndex == 1 && myRightIndex == 0) {
+    if (myLeftIndex == 0 && myRightIndex == 1) {
       return DiffBundle.message("merge.partial.diff.action.name.0.1");
     }
     if (myLeftIndex == 1 && myRightIndex == 2) {

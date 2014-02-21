@@ -88,8 +88,6 @@ class ConsoleIconGutterComponent extends JComponent {
       return;
     }
 
-    gutterContentProvider.beforeUiComponentUpdate(editor);
-
     g.setFont(editor.getColorsScheme().getFont(EditorFontType.PLAIN));
     int y = ((startLine + 1) * lineHeight) - editor.getDescent();
     for (int i = startLine; i < endLine; i++) {

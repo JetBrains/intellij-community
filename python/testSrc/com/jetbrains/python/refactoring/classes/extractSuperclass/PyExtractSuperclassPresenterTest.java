@@ -53,7 +53,7 @@ public class PyExtractSuperclassPresenterTest
    *
    * @param py3k if py 3?
    */
-  private void ensureStaticNoObject( final boolean py3k) {
+  private void ensureStaticNoObject(final boolean py3k) {
     final Collection<PyPresenterTestMemberEntry> members = launchAndGetMembers("StaticOnly");
 
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher =
@@ -77,7 +77,6 @@ public class PyExtractSuperclassPresenterTest
     sut.okClicked();
 
     Assert.assertTrue("No error displayed empty list of selected members", errorMessageCapture.hasCaptured());
-
   }
 
   /**
@@ -101,7 +100,6 @@ public class PyExtractSuperclassPresenterTest
     sut.okClicked();
 
     Assert.assertTrue("No error displayed for invalid class name", errorMessageCapture.hasCaptured());
-
   }
 
   /**

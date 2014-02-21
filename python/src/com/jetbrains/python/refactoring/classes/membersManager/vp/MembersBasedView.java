@@ -1,8 +1,8 @@
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
@@ -22,10 +22,16 @@ public interface MembersBasedView<C extends MembersViewInitializationInfo> {
   /**
    * Display conflict dialogs.
    *
-   * @param conflicts conflicts.
+   * @param duplicatesConflict    duplicates conflicts : that means destination class has the same member.
+   *                              If member "foo" already exists in class "bar": pass [bar] -] [foo].
+   * @param dependenciesConflicts dependency conflict: list of elements used by member under refactoring and would not be available
+   *                              at new destination. If user wants to move method, that uses field "bar" which would not be available at new class,
+   *                              pass [bar] field
    * @return true if user's choice is "continue". False if "cancel"
    */
-  boolean showConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts);
+  boolean showConflictsDialog(
+    @NotNull MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
+    @NotNull Collection<PyMemberInfo<?>> dependenciesConflicts);
 
   /**
    * Displays error message

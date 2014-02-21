@@ -65,7 +65,7 @@ public class EditorInfo {
         caretPositions.add(pos);
         selections.add(caret.selection == null ? null : caret.selection);
       }
-      editor.getCaretModel().setCarets(caretPositions, selections);
+      editor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
     }
     else {
       assert caretState.carets.size() == 1 : "Multiple carets are not supported by the model";

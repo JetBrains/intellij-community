@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
                               @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @NotNull Condition<LanguageConsoleImpl> enabledCondition) {
+                              @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
     this(console.getConsole(), console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
@@ -94,9 +95,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   @Override
   public final void update(AnActionEvent e) {
     EditorEx editor = myConsole.getConsoleEditor();
-    Lookup lookup = LookupManager.getActiveLookup(editor);
-    e.getPresentation().setEnabled(!editor.isRendererMode() && isEnabled() &&
-                                   (lookup == null || !lookup.isCompletion()));
+    boolean enabled = !editor.isRendererMode() && isEnabled() &&
+                      (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
+    if (enabled) {
+      Lookup lookup = LookupManager.getActiveLookup(editor);
+      enabled = lookup == null || !lookup.isCompletion();
+    }
+
+    e.getPresentation().setEnabled(enabled);
   }
 
   @Override
@@ -121,6 +127,10 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
     public ConsoleHistoryModel getConsoleHistoryModel() {
       return myConsoleHistoryModel;
+    }
+
+    public boolean isEmptyCommandExecutionAllowed() {
+      return true;
     }
 
     public void setAddCurrentToHistory(boolean addCurrentToHistory) {

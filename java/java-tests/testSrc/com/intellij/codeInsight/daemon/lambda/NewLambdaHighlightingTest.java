@@ -113,7 +113,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testFunctionalInterfacesCalculation() throws Exception {
     doTest();
   }
-  
+
+  public void testMissedSiteSubstitutorDuringDeepAdditionalConstraintsGathering() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA120992() throws Exception {
+    doTest();
+  }
 
   private void doTest() {
     doTest(false);

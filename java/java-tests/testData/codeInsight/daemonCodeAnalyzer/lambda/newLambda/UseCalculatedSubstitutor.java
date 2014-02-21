@@ -8,7 +8,7 @@ class Test {
     void foo(I<? extends String, ? extends List<? extends String>> fip) { }
 
     void test() {
-        foo<error descr="'foo(Test.I<? extends java.lang.String,? extends java.util.List<? extends java.lang.String>>)' in 'Test' cannot be applied to '(<lambda expression>)'">((ArrayList<? extends String> p) -> p.get(0))</error>;
+        foo(<error descr="Cannot infer functional interface type">(ArrayList<? extends String> p) -> p.get(0)</error>);
     }
 }
 

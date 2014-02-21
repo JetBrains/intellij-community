@@ -305,17 +305,19 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   }
 
   @Nullable
-  public WebBrowser findBrowserById(@Nullable String idOrName) {
-    if (StringUtil.isEmpty(idOrName)) {
+  /**
+   * @param idOrFamilyName UUID or, due to backward compatibility, browser family name or JS debugger engine ID
+   */
+  public WebBrowser findBrowserById(@Nullable String idOrFamilyName) {
+    if (StringUtil.isEmpty(idOrFamilyName)) {
       return null;
     }
 
-    UUID id = parseUuid(idOrName);
+    UUID id = parseUuid(idOrFamilyName);
     if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getName().equals(idOrName) ||
-            browser.getFamily().name().equalsIgnoreCase(idOrName) ||
-            browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
+        if (browser.getFamily().name().equalsIgnoreCase(idOrFamilyName) ||
+            browser.getFamily().getName().equalsIgnoreCase(idOrFamilyName)) {
           return browser;
         }
       }
@@ -331,14 +333,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   }
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getFirstBrowser(BrowserFamily)}
+   */
   public WebBrowser getBrowser(@NotNull BrowserFamily family) {
-    WebBrowser browser = findBrowser(family);
-    LOG.assertTrue(browser != null, "Must be at least one browser per family");
-    return browser;
+    return getFirstBrowser(family);
   }
 
-  @Nullable
-  public WebBrowser findBrowser(@NotNull BrowserFamily family) {
+  @NotNull
+  public WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (browser.isActive() && family.equals(browser.getFamily())) {
         return browser;
@@ -351,7 +355,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       }
     }
 
-    return null;
+    throw new IllegalStateException("Must be at least one browser per family");
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {

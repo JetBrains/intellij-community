@@ -66,7 +66,7 @@ public class Mappings {
 
   private final TIntHashSet myChangedClasses;
   private final THashSet<File> myChangedFiles;
-  private final Set<ClassRepr> myDeletedClasses;
+  private final Set<Pair<ClassRepr, File>> myDeletedClasses;
   private final Set<ClassRepr> myAddedClasses;
   private final Object myLock;
   private final File myRootDir;
@@ -102,7 +102,7 @@ public class Mappings {
     myIsDelta = true;
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = new THashSet(FileUtil.FILE_HASHING_STRATEGY);
-    myDeletedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myDeletedClasses = new HashSet<Pair<ClassRepr, File>>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "myDelta");
@@ -222,10 +222,10 @@ public class Mappings {
   private final LinkedBlockingQueue<Runnable> myPostPasses = new LinkedBlockingQueue<Runnable>();
 
   private void runPostPasses() {
-    final Set<ClassRepr> deleted = myDeletedClasses;
+    final Set<Pair<ClassRepr, File>> deleted = myDeletedClasses;
     if (deleted != null) {
-      for (ClassRepr repr : deleted) {
-        myChangedClasses.remove(repr.name);
+      for (Pair<ClassRepr, File> pair : deleted) {
+        myChangedClasses.remove(pair.first.name);
       }
     }
     for (Runnable pass = myPostPasses.poll(); pass != null; pass = myPostPasses.poll()) {
@@ -687,24 +687,21 @@ public class Mappings {
     }
   }
 
-  void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
-    final File sourceFile = myClassToSourceFile.get(className);
-    if (sourceFile != null) {
-      final TIntHashSet dependants = myClassToClassDependency.get(className);
-      if (dependants != null) {
-        dependants.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int depClass) {
-            final File depFile = myClassToSourceFile.get(depClass);
-            if (depFile != null && !FileUtil.filesEqual(depFile, sourceFile)) {
-              if (filter == null || filter.accept(depFile)) {
-                affectedFiles.add(depFile);
-              }
+  void affectAll(final int className, @NotNull final File sourceFile, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+    final TIntHashSet dependants = myClassToClassDependency.get(className);
+    if (dependants != null) {
+      dependants.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int depClass) {
+          final File depFile = myClassToSourceFile.get(depClass);
+          if (depFile != null && !FileUtil.filesEqual(depFile, sourceFile)) {
+            if (filter == null || filter.accept(depFile)) {
+              affectedFiles.add(depFile);
             }
-            return true;
           }
-        });
-      }
+          return true;
+        }
+      });
     }
   }
 
@@ -1003,12 +1000,13 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final Collection<ClassRepr> classes = mySourceFileToClasses.get(new File(file));
+            final File sourceFile = new File(file);
+            final Collection<ClassRepr> classes = mySourceFileToClasses.get(sourceFile);
 
             if (classes != null) {
               for (ClassRepr c : classes) {
                 debug("Affecting usages of removed class ", c.name);
-                affectAll(c.name, myAffectedFiles, myFilter);
+                affectAll(c.name, sourceFile, myAffectedFiles, myFilter);
               }
             }
           }
@@ -1743,27 +1741,23 @@ public class Mappings {
       return !myEasyMode;
     }
 
-    private void processRemovedClases(final DiffState state) {
+    private void processRemovedClases(final DiffState state, @NotNull File fileName) {
       final Collection<ClassRepr> removed = state.myClassDiff.removed();
       if (removed.isEmpty()) {
         return;
       }
+      myDelta.myChangedFiles.add(fileName);
+      
       debug("Processing removed classes:");
+      
       for (final ClassRepr c : removed) {
-        myDelta.addDeletedClass(c);
-
-        final File fileName = myClassToSourceFile.get(c.name);
-
-        if (fileName != null) {
-          myDelta.myChangedFiles.add(fileName);
-        }
-
+        myDelta.addDeletedClass(c, fileName);
         if (!myEasyMode) {
           myPresent.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
           debug("Affecting usages of removed class ", c.name);
-          affectAll(c.name, myAffectedFiles, myFilter);
+          affectAll(c.name, fileName, myAffectedFiles, myFilter);
         }
       }
       debug("End of removed classes processing.");
@@ -1939,7 +1933,7 @@ public class Mappings {
             }
           }
 
-          processRemovedClases(state);
+          processRemovedClases(state, fileName);
           processAddedClasses(state, fileName);
 
           if (!myEasyMode) {
@@ -2003,8 +1997,13 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final Mappings delta, @NotNull final ClassRepr cr, final Set<UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
+  private void cleanupRemovedClass(final Mappings delta, @NotNull final ClassRepr cr, File sourceFile, final Set<UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
+    if (!FileUtil.filesEqual(sourceFile, myClassToSourceFile.get(className))) { 
+      // if classname is already mapped to a different source, the class with such FQ name exists elsewhere, so
+      // we cannot destroy all these links
+      return;
+    }
 
     for (final int superSomething : cr.getSupers()) {
       delta.registerRemovedSuperClass(className, superSomething);
@@ -2033,21 +2032,22 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final File fileName = new File(file);
-            final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
+            final File deletedFile = new File(file);
+            final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(deletedFile);
 
             if (fileClasses != null) {
               for (final ClassRepr aClass : fileClasses) {
-                cleanupRemovedClass(delta, aClass, aClass.getUsages(), dependenciesTrashBin);
+                cleanupRemovedClass(delta, aClass, deletedFile, aClass.getUsages(), dependenciesTrashBin);
               }
-              mySourceFileToClasses.remove(fileName);
+              mySourceFileToClasses.remove(deletedFile);
             }
           }
         }
 
         if (!delta.isRebuild()) {
-          for (final ClassRepr repr : delta.getDeletedClasses()) {
-            cleanupRemovedClass(delta, repr, repr.getUsages(), dependenciesTrashBin);
+          for (final Pair<ClassRepr, File> pair : delta.getDeletedClasses()) {
+            final ClassRepr deletedClass = pair.first;
+            cleanupRemovedClass(delta, deletedClass, pair.second, deletedClass.getUsages(), dependenciesTrashBin);
           }
           for (ClassRepr repr : delta.getAddedClasses()) {
             if (!repr.isAnonymous() && !repr.isLocal()) {
@@ -2345,10 +2345,10 @@ public class Mappings {
     return myIsRebuild;
   }
 
-  private void addDeletedClass(final ClassRepr cr) {
+  private void addDeletedClass(final ClassRepr cr, File fileName) {
     assert (myDeletedClasses != null);
 
-    myDeletedClasses.add(cr);
+    myDeletedClasses.add(Pair.create(cr, fileName));
 
     addChangedClass(cr.name);
   }
@@ -2373,8 +2373,8 @@ public class Mappings {
   }
 
   @NotNull
-  private Set<ClassRepr> getDeletedClasses() {
-    return myDeletedClasses == null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
+  private Set<Pair<ClassRepr, File>> getDeletedClasses() {
+    return myDeletedClasses == null ? Collections.<Pair<ClassRepr, File>>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   @NotNull

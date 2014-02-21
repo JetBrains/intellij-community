@@ -1,9 +1,6 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,11 +19,15 @@ class ClassFieldsManager extends FieldsManager {
     super(true);
   }
 
+  @Override
+  public boolean hasConflict(@NotNull final PyTargetExpression member, @NotNull final PyClass aClass) {
+    return NamePredicate.hasElementWithSameName(member, aClass.getClassAttributes());
+  }
 
   @Override
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
-                                 @NotNull final Collection<PyAssignmentStatement> statements,
-                                 @NotNull final PyClass... to) {
+                                                  @NotNull final Collection<PyAssignmentStatement> statements,
+                                                  @NotNull final PyClass... to) {
     //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
     final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {

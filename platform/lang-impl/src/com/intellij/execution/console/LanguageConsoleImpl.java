@@ -31,8 +31,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
@@ -60,10 +58,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,6 +112,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   };
 
+  private final PairFunction<VirtualFile, Project, PsiFile> myPsiFileFactory;
+
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
     this(project, title, language, true);
   }
@@ -125,7 +122,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this(project, title, new LightVirtualFile(title, language, ""), initComponents);
   }
 
+  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+    this(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
+  }
+
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull LightVirtualFile lightFile, boolean initComponents) {
+    this(project, title, lightFile, initComponents, null);
+  }
+
+  public LanguageConsoleImpl(@NotNull Project project,
+                             @NotNull String title,
+                             @NotNull LightVirtualFile lightFile,
+                             boolean initComponents,
+                             @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
     myProject = project;
     myTitle = title;
     myVirtualFile = lightFile;
@@ -133,6 +142,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
     assert myEditorDocument != null;
+    myPsiFileFactory = psiFileFactory;
     myFile = createFile(myVirtualFile, myEditorDocument, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
@@ -165,20 +175,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void initComponents() {
-    final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
-    final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
-      @NotNull
-      @Override
-      public Color getDefaultBackground() {
-        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null ? super.getDefaultBackground() : color;
-      }
-    };
-    myConsoleEditor.setColorsScheme(scheme);
-    myHistoryViewer.setColorsScheme(scheme);
+    setupComponents();
+
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleEditor.getComponent());
-    setupComponents();
+
     DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
 
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
@@ -226,7 +227,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
 
-    //noinspection PointlessBooleanExpression,ConstantConditions
+    //noinspection ConstantConditions
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
@@ -235,9 +236,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.setCaretEnabled(false);
 
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
+    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
-    final VisibleAreaListener areaListener = new VisibleAreaListener() {
+    myConsoleEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
         final int offset = myConsoleEditor.getScrollingModel().getHorizontalScrollOffset();
@@ -253,8 +254,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           }
         }
       }
-    };
-    myConsoleEditor.getScrollingModel().addVisibleAreaListener(areaListener);
+    });
     final DocumentAdapter docListener = new DocumentAdapter() {
       @Override
       public void documentChanged(final DocumentEvent e) {
@@ -273,6 +273,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
     });
+
+    //noinspection deprecation
     for (AnAction action : createActions()) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myConsoleEditor.getComponent());
     }
@@ -284,18 +286,22 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated LanguageConsoleImpl is not intended to be extended
+   */
   protected AnAction[] createActions() {
     return AnAction.EMPTY_ARRAY;
   }
 
-  public void setTextToEditor(@NotNull final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleEditor.getDocument().setText(text);
-      }
-    });
-    queueUiUpdate(true);
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link #setInputText}
+   * to remove in IDEA 15
+   */
+  public void setTextToEditor(@NotNull String text) {
+    setInputText(text);
   }
 
   protected void setupEditorDefault(@NotNull EditorEx editor) {
@@ -306,9 +312,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editor.setBorder(null);
 
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setAdditionalLinesCount(myHistoryViewer == editor ? 0 : 2);
+    if (myHistoryViewer != editor) {
+      editorSettings.setAdditionalLinesCount(1);
+    }
     editorSettings.setAdditionalColumnsCount(1);
-    editorSettings.setRightMarginShown(false);
   }
 
   public void setUiUpdateRunnable(Runnable uiUpdateRunnable) {
@@ -684,7 +691,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @NotNull
   protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
-    return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
+    if (myPsiFileFactory == null) {
+      return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
+    }
+    else {
+      return myPsiFileFactory.fun(virtualFile, project);
+    }
   }
 
   private class MyLayout extends AbstractLayoutManager {

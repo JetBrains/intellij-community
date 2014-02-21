@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -112,63 +111,70 @@ public class FragmentedDiffRequestFromChange {
       return myOldDocument;
     }
 
-    public void execute(final Change change, final FilePath filePath, final SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>> cache,
+    public void execute(final Change change,
+                        final FilePath filePath,
+                        final SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>> cache,
                         final LineStatusTrackerManagerI lstManager) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myDocument = null;
-            myOldDocument = documentFromRevision(change.getBeforeRevision());
-            final String convertedPath = FilePathsHelper.convertPath(filePath);
-            if (filePath.getVirtualFile() != null) {
-              myDocument = FileStatus.DELETED.equals(change.getFileStatus()) ? new DocumentImpl("") :
-                           FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
-              if (myDocument != null) {
-                final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath));
-                if (cached != null) {
-                  myRanges = cached;
-                  return;
-                }
-              }
+      try {
+        myDocument = null;
+        myOldDocument = documentFromRevision(change.getBeforeRevision());
+        final String convertedPath = FilePathsHelper.convertPath(filePath);
+        if (filePath.getVirtualFile() != null) {
+          myDocument = FileStatus.DELETED.equals(change.getFileStatus())
+                       ? new DocumentImpl("")
+                       : FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
+          if (myDocument != null) {
+            final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath));
+            if (cached != null) {
+              myRanges = cached;
+              return;
             }
-
-            if (myDocument == null) {
-              myDocument = documentFromRevision(change.getAfterRevision());
-              final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(-1L, convertedPath));
-              if (cached != null) {
-                myRanges = cached;
-                return;
-              }
-            }
-
-            ComparisonPolicy comparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
-            if (comparisonPolicy == null) {
-              comparisonPolicy = ComparisonPolicy.DEFAULT;
-            }
-            final TextCompareProcessor processor = new TextCompareProcessor(comparisonPolicy);
-            final ArrayList<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
-            myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());
-            for (LineFragment lineFragment : lineFragments) {
-              if (! lineFragment.isEqual()) {
-                final TextRange oldRange = lineFragment.getRange(FragmentSide.SIDE1);
-                final TextRange newRange = lineFragment.getRange(FragmentSide.SIDE2);
-                myRanges.add(new BeforeAfter<TextRange>(new UnfairTextRange(myOldDocument.getLineNumber(oldRange.getStartOffset()),
-                                           myOldDocument.getLineNumber(correctRangeEnd(oldRange.getEndOffset(), myOldDocument))),
-                                                        new UnfairTextRange(myDocument.getLineNumber(newRange.getStartOffset()),
-                                           myDocument.getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument)))));
-              }
-            }
-            cache.put(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath), new ArrayList<BeforeAfter<TextRange>>(myRanges));
-          }
-          catch (VcsException e) {
-            myException = e;
-          }
-          catch (FilesTooBigForDiffException e) {
-            myException = new VcsException(e);
           }
         }
-      });
+
+        if (myDocument == null) {
+          myDocument = documentFromRevision(change.getAfterRevision());
+          final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(-1L, convertedPath));
+          if (cached != null) {
+            myRanges = cached;
+            return;
+          }
+        }
+
+        ComparisonPolicy comparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+        if (comparisonPolicy == null) {
+          comparisonPolicy = ComparisonPolicy.DEFAULT;
+        }
+        final TextCompareProcessor processor = new TextCompareProcessor(comparisonPolicy);
+        final ArrayList<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
+        myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());
+        for (LineFragment lineFragment : lineFragments) {
+          if (!lineFragment.isEqual()) {
+            final TextRange oldRange = lineFragment.getRange(FragmentSide.SIDE1);
+            final TextRange newRange = lineFragment.getRange(FragmentSide.SIDE2);
+            int beforeBegin = myOldDocument.getLineNumber(oldRange.getStartOffset());
+            int beforeEnd = myOldDocument.getLineNumber(correctRangeEnd(oldRange.getEndOffset(), myOldDocument));
+            int afterBegin = myDocument.getLineNumber(newRange.getStartOffset());
+            int afterEnd = myDocument.getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument));
+            if (oldRange.isEmpty()) {
+              beforeEnd = beforeBegin - 1;
+            }
+            if (newRange.isEmpty()) {
+              afterEnd = afterBegin - 1;
+            }
+            myRanges
+              .add(new BeforeAfter<TextRange>(new UnfairTextRange(beforeBegin, beforeEnd), new UnfairTextRange(afterBegin, afterEnd)));
+          }
+        }
+        cache
+          .put(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath), new ArrayList<BeforeAfter<TextRange>>(myRanges));
+      }
+      catch (VcsException e) {
+        myException = e;
+      }
+      catch (FilesTooBigForDiffException e) {
+        myException = new VcsException(e);
+      }
     }
     
     private int correctRangeEnd(final int end, final Document document) {

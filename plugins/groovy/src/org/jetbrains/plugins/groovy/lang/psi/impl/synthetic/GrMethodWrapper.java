@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,67 +16,25 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
 /**
  * @author Sergey Evdokimov
  */
 public class GrMethodWrapper extends GrLightMethodBuilder {
-
-  private static final PsiType TYPE_MARKER = new PsiType(PsiAnnotation.EMPTY_ARRAY) {
-    @NotNull
-    @Override
-    public String getPresentableText() {
-      return "?";
-    }
-
-    @NotNull
-    @Override
-    public String getCanonicalText() {
-      return "?";
-    }
-
-    @NotNull
-    @Override
-    public String getInternalCanonicalText() {
-      return "?";
-    }
-
+  private static final PsiType TYPE_MARKER = new GrPsiTypeStub() {
     @Override
     public boolean isValid() {
       return false;
     }
-
-    @Override
-    public boolean equalsToText(@NotNull @NonNls String text) {
-      return false;
-    }
-
-    @Override
-    public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public GlobalSearchScope getResolveScope() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public PsiType[] getSuperTypes() {
-      return EMPTY_ARRAY;
-    }
   };
 
-  private volatile boolean myNavigationElementInit;
-
   private final PsiMethod myWrappedMethod;
+  private volatile boolean myNavigationElementInit;
 
   private GrMethodWrapper(PsiMethod method) {
     super(method.getManager(), method.getName());

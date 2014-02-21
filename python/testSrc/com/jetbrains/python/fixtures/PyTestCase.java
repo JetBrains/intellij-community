@@ -41,6 +41,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -128,6 +129,15 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected static void assertNotParsed(PyFile file) {
     assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  }
+
+  /**
+   * @param name
+   * @return class by its name from file
+   */
+  @NotNull
+  protected PyClass getClassByName(@NotNull final String name) {
+    return myFixture.findElementByText("class " + name, PyClass.class);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {

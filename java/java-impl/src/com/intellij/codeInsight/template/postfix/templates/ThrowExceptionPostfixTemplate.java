@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
@@ -28,7 +29,8 @@ public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return getTopmostExpression(context) != null;
+    PsiExpression expression = getTopmostExpression(context);
+    return expression != null && PostfixTemplatesUtils.isThrowable(expression.getType());
   }
 
   @Override

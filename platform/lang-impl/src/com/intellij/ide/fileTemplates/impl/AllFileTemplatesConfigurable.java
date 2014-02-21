@@ -570,28 +570,37 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
   }
 
+  public void selectTemplatesTab() {
+    selectTab(TEMPLATES_TITLE);
+  }
+  
+  private boolean selectTab(String tabName) {
+    int idx = 0;
+    for (FileTemplateTab tab : myTabs) {
+      if (Comparing.strEqual(tab.getTitle(), tabName)) {
+        myCurrentTab = tab;
+        myTabbedPane.setSelectedIndex(idx);
+        return true;
+      }
+      idx++;
+    }
+    return false;
+  }
+
   @Override
   public void reset() {
     myEditor.reset();
     initLists();
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final String tabName = propertiesComponent.getValue(CURRENT_TAB);
-    int idx = 0;
-    for (FileTemplateTab tab : myTabs) {
-      if (Comparing.strEqual(tab.getTitle(), tabName)) {
-        myCurrentTab = tab;
-        myTabbedPane.setSelectedIndex(idx);
-        final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
-        final FileTemplate[] templates = myCurrentTab.getTemplates();
-        for (FileTemplate template : templates) {
-          if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
-            tab.selectTemplate(template);
-            break;
-          }
+    if (selectTab(tabName)) {
+      final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
+      for (FileTemplate template : myCurrentTab.getTemplates()) {
+        if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
+          myCurrentTab.selectTemplate(template);
+          break;
         }
-        break;
       }
-      idx++;
     }
     myModified = false;
   }

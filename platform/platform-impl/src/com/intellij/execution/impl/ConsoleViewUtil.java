@@ -62,7 +62,7 @@ public class ConsoleViewUtil {
     return editor;
   }
 
-  public static void setupConsoleEditor(final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -90,7 +90,8 @@ public class ConsoleViewUtil {
     });
   }
 
-  public static DelegateColorScheme updateConsoleColorScheme(EditorColorsScheme scheme) {
+  @NotNull
+  public static DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
       @NotNull
       @Override
