@@ -747,4 +747,27 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  protected void runSingleTest(Runnable testRunnable) throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          testRunnable.run();
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    };
+
+    invokeTestRunnable(runnable);
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+
+  }
+
 }
