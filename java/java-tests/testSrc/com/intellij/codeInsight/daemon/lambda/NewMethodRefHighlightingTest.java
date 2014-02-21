@@ -161,6 +161,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testEnsureTypeParametersAreNotModifiedDuringGroundTypeEvaluation() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

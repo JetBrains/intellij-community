@@ -161,6 +161,7 @@ public class FunctionalInterfaceParameterizationUtil {
     if (psiClass != null) {
       final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       final PsiType[] parameters = psiClassType.getParameters();
+      final PsiType[] newParameters = new PsiType[parameters.length];
 
       if (parameters.length != typeParameters.length) return null;
 
@@ -176,15 +177,17 @@ public class FunctionalInterfaceParameterizationUtil {
 
           final PsiType bound = ((PsiWildcardType)paramType).getBound();
           if (bound == null) {
-            parameters[i] = Bi;
+            newParameters[i] = Bi;
           } else if (((PsiWildcardType)paramType).isExtends()){
-            parameters[i] = GenericsUtil.getGreatestLowerBound(Bi, GenericsUtil.eliminateWildcards(bound, false));
+            newParameters[i] = GenericsUtil.getGreatestLowerBound(Bi, GenericsUtil.eliminateWildcards(bound, false));
           } else {
-            parameters[i] = GenericsUtil.eliminateWildcards(bound, false);
+            newParameters[i] = GenericsUtil.eliminateWildcards(bound, false);
           }
+        } else {
+          newParameters[i] = paramType;
         }
       }
-      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
+      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, newParameters);
     }
     return null;
   }
