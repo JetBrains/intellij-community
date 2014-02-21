@@ -232,7 +232,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
 
-  private static Object[] convertPathsToValues(TreePath[] selectionPaths) {
+  private static Object[] convertPathsToValues(@Nullable TreePath[] selectionPaths) {
     if (selectionPaths == null) return null;
     List<Object> result = new ArrayList<Object>();
     for (TreePath selectionPath : selectionPaths) {
