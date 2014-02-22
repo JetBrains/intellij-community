@@ -59,8 +59,8 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
+  public void paintComponent(Graphics g) {
+    super.paintComponent(g);
 
     if (myRefs != null) {
       int graphPadding = myGraphImage != null ? myGraphImage.getWidth() : 0;
