@@ -25,7 +25,7 @@ import java.util.List;
 public class DataPack {
 
   @NotNull private final RefsModel myRefsModel;
-  @NotNull private final GraphFacadeImpl myGraphFacade;
+  @NotNull private final GraphFacade myGraphFacade;
 
   @NotNull
   public static DataPack build(@NotNull List<? extends GraphCommit> commits,
@@ -59,12 +59,12 @@ public class DataPack {
         }
       }
     });
-    return new DataPack(graphModel, refsModel, printCellModel);
+    return new DataPack(refsModel, new GraphFacadeImpl(graphModel, printCellModel));
   }
 
-  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel) {
+  private DataPack(@NotNull RefsModel refsModel, @NotNull GraphFacade graphFacade) {
     myRefsModel = refsModel;
-    myGraphFacade = new GraphFacadeImpl(graphModel, printCellModel);
+    myGraphFacade = graphFacade;
   }
 
   @NotNull
