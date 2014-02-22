@@ -15,7 +15,6 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, Node> {
 
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
@@ -95,14 +91,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @NotNull
   @Override
   protected GraphCommitCell getCommitColumnCell(int rowIndex, @Nullable VcsShortCommitDetails details) {
-    GraphPrintCell graphPrintCell = myDataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
     String message = "";
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
       refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
     }
-    return new GraphCommitCell(graphPrintCell, message, refs);
+    return new GraphCommitCell(message, refs);
   }
 
   @NotNull

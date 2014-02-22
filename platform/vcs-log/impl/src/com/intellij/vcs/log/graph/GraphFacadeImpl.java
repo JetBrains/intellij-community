@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
@@ -36,9 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
 
 public class GraphFacadeImpl implements GraphFacade {
 
@@ -49,6 +54,9 @@ public class GraphFacadeImpl implements GraphFacade {
       return true;
     }
   };
+
+  // In case of diagonal edges, one node can be at most 3 "arrows" + 2 nodes at the left from another - that is enough for sure
+  private static final int IMAGE_WIDTH_RESERVE = 5 * WIDTH_NODE;
 
   @NotNull private final GraphModel myGraphModel;
   @NotNull private final GraphPrintCellModel myPrintCellModel;
@@ -62,9 +70,20 @@ public class GraphFacadeImpl implements GraphFacade {
     myGraphPainter = new SimpleGraphCellPainter();
   }
 
+  @NotNull
   @Override
-  public void paint(Graphics2D g, int visibleRow) {
-    throw new UnsupportedOperationException();
+  public PaintInfo paint(int visibleRow) {
+    GraphPrintCell cell = myPrintCellModel.getGraphPrintCell(visibleRow);
+    int imageWidth = calcImageWidth(cell);
+    int bufferWidth = imageWidth + IMAGE_WIDTH_RESERVE;
+    BufferedImage image = UIUtil.createImage(bufferWidth, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2 = image.createGraphics();
+    myGraphPainter.draw(g2, cell);
+    return new PaintInfoImpl(image, imageWidth);
+  }
+
+  private static int calcImageWidth(@NotNull GraphPrintCell cell) {
+    return cell.countCell() * WIDTH_NODE;
   }
 
   @Nullable
@@ -93,13 +112,14 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @Nullable
   private GraphAnswer handleMouseOver(MouseOverAction action) {
-    Node jumpToNode = arrowToNode(action.getRelativePoint(), action.getPrintCell());
+    GraphPrintCell printCell = myPrintCellModel.getGraphPrintCell(action.getRow());
+    Node jumpToNode = arrowToNode(action.getRelativePoint(), printCell);
     if (jumpToNode != null) {
       over(null);
       return new ChangeCursorAnswer(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
     else {
-      over(overCell(action.getRelativePoint(), action.getPrintCell()));
+      over(overCell(action.getRelativePoint(), printCell));
       return new ChangeCursorAnswer(Cursor.getDefaultCursor());
     }
   }
@@ -110,7 +130,8 @@ public class GraphFacadeImpl implements GraphFacade {
       return handleRowSelection(action.getRow());
     }
     else {
-      return handleMouseClick(action.getRow(), action.getRelativePoint(), action.getPrintCell());
+      GraphPrintCell printCell = myPrintCellModel.getGraphPrintCell(action.getRow());
+      return handleMouseClick(action.getRow(), action.getRelativePoint(), printCell);
     }
   }
 
@@ -327,6 +348,28 @@ public class GraphFacadeImpl implements GraphFacade {
     @Override
     public GraphActionRequest getActionRequest() {
       return new ChangeCursorActionRequest(myCursor);
+    }
+  }
+
+  private static class PaintInfoImpl implements PaintInfo {
+
+    private final Image myImage;
+    private final int myWidth;
+
+    public PaintInfoImpl(Image image, int width) {
+      myImage = image;
+      myWidth = width;
+    }
+
+    @NotNull
+    @Override
+    public Image getImage() {
+      return myImage;
+    }
+
+    @Override
+    public int getWidth() {
+      return myWidth;
     }
   }
 }

@@ -169,7 +169,7 @@ public class VcsLogUI {
 
   public void click(int rowIndex) {
     DataPack dataPack = myLogDataHolder.getDataPack();
-    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null, null));
+    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
     updateUI();
   }
 

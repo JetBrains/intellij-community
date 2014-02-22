@@ -19,23 +19,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class MouseOverAction implements GraphAction {
+public interface PaintInfo {
 
-  private final int myVisibleRow;
-  @NotNull private final Point myRelativePoint;
-
-  public MouseOverAction(int visibleRow, @NotNull Point relativePoint) {
-    myVisibleRow = visibleRow;
-    myRelativePoint = relativePoint;
-  }
-
-  public int getRow() {
-    return myVisibleRow;
-  }
-
+  /**
+   * Returns the image to actually paint.
+   */
   @NotNull
-  public Point getRelativePoint() {
-    return myRelativePoint;
-  }
+  Image getImage();
+
+  /**
+   * Returns the "interesting" width of the painted image, i.e. the width which the text in the table should be offset by. <br/>
+   * It can be smaller than the width of {@link #getImage() the image}, because we allow the text to cover part of the graph
+   * (some diagonal edges, etc.)
+   */
+  int getWidth();
 
 }

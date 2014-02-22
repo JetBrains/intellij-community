@@ -22,8 +22,6 @@ import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
-import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
@@ -66,8 +64,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myLogDataHolder = logDataHolder;
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(new SimpleGraphCellPainter(), logDataHolder, myUI.getColorManager()));
-    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder.getProject()));
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder,
+                                                                        logDataHolder.getDataPack().getGraphFacade()));
+    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -182,19 +181,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @Nullable
-  public GraphPrintCell getGraphPrintCellForRow(TableModel model, int rowIndex) {
-    if (rowIndex >= model.getRowCount()) {
-      return null;
-    }
-    Object commitValue = model.getValueAt(rowIndex, AbstractVcsLogTableModel.COMMIT_COLUMN);
-    if (commitValue instanceof GraphCommitCell) {
-      GraphCommitCell commitCell = (GraphCommitCell)commitValue;
-      return commitCell.getPrintCell();
-    }
-    return null;
-  }
-
-  @Nullable
   public List<Change> getSelectedChanges() {
     TableModel model = getModel();
     if (!(model instanceof AbstractVcsLogTableModel)) {
@@ -262,7 +248,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         performAction(e, new PairFunction<Integer, Point, GraphAction>() {
           @Override
           public GraphAction fun(Integer row, Point point) {
-            return new ClickGraphAction(row, point, getGraphPrintCellForRow(getModel(), row));
+            return new ClickGraphAction(row, point);
           }
         });
       }
@@ -277,7 +263,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         performAction(e, new PairFunction<Integer, Point, GraphAction>() {
           @Override
           public GraphAction fun(Integer row, Point point) {
-            return new MouseOverAction(row, point, getGraphPrintCellForRow(getModel(), row));
+            return new MouseOverAction(row, point);
           }
         });
       }
@@ -335,8 +321,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
 
-    private static final Logger LOG = Logger.getInstance(RootCellRenderer.class);
-
     @NotNull private final VcsLogUI myUi;
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
@@ -369,10 +353,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      Object commit = getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
-      if (commit instanceof GraphCommitCell) {
-        setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
-      }
+      setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
       return rendererComponent;
     }
 

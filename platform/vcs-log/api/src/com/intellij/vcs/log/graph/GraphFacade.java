@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,9 +30,10 @@ import java.util.List;
 public interface GraphFacade {
 
   /**
-   * Paints the given row in the given Graphics.
+   * Paints the given row.
    */
-  void paint(Graphics2D g, int visibleRow);
+  @NotNull
+  PaintInfo paint(int visibleRow);
 
   /**
    * Performs some user action on the graph, which can be a click, hover, drag, changing view parameters, etc. <br/>
