@@ -22,21 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author erokhins
- */
 public class DataPack {
 
-  @NotNull private final GraphModel myGraphModel;
   @NotNull private final RefsModel myRefsModel;
-  @NotNull private final GraphPrintCellModel myPrintCellModel;
-  private final NotNullFunction<Integer, Hash> myHashGetter;
-  private final NotNullFunction<Hash, Integer> myIndexGetter;
   @NotNull private final GraphFacadeImpl myGraphFacade;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends GraphCommit> commits, @NotNull Collection<VcsRef> allRefs, @NotNull ProgressIndicator indicator,
-                               NotNullFunction<Integer, Hash> hashGetter, NotNullFunction<Hash, Integer> indexGetter) {
+  public static DataPack build(@NotNull List<? extends GraphCommit> commits,
+                               @NotNull Collection<VcsRef> allRefs,
+                               @NotNull ProgressIndicator indicator,
+                               @NotNull NotNullFunction<Hash, Integer> indexGetter) {
     indicator.setText("Building graph...");
 
     MutableGraph graph = GraphBuilder.build(commits, allRefs);
@@ -64,16 +59,11 @@ public class DataPack {
         }
       }
     });
-    return new DataPack(graphModel, refsModel, printCellModel, hashGetter, indexGetter);
+    return new DataPack(graphModel, refsModel, printCellModel);
   }
 
-  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel,
-                   NotNullFunction<Integer, Hash> hashGetter, NotNullFunction<Hash, Integer> indexGetter) {
-    myGraphModel = graphModel;
+  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel) {
     myRefsModel = refsModel;
-    myPrintCellModel = printCellModel;
-    myHashGetter = hashGetter;
-    myIndexGetter = indexGetter;
     myGraphFacade = new GraphFacadeImpl(graphModel, printCellModel);
   }
 
@@ -87,13 +77,4 @@ public class DataPack {
     return myRefsModel;
   }
 
-  @NotNull
-  public GraphModel getGraphModel() {
-    return myGraphModel;
-  }
-
-  @NotNull
-  public GraphPrintCellModel getPrintCellModel() {
-    return myPrintCellModel;
-  }
 }
