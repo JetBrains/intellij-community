@@ -70,4 +70,26 @@ public class NodeImpl implements Node {
   public int getLayoutIndex() {
     return myLayoutIndex;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof NodeImpl)) return false;
+
+    NodeImpl node = (NodeImpl)o;
+
+    if (myLayoutIndex != node.myLayoutIndex) return false;
+    if (myVisibleNodeIndex != node.myVisibleNodeIndex) return false;
+    if (myType != node.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myVisibleNodeIndex;
+    result = 31 * result + myType.hashCode();
+    result = 31 * result + myLayoutIndex;
+    return result;
+  }
 }

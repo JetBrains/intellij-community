@@ -54,4 +54,28 @@ public class EdgeImpl implements Edge {
   public int getLayoutIndex() {
     return myLayoutIndex;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof EdgeImpl)) return false;
+
+    EdgeImpl edge = (EdgeImpl)o;
+
+    if (myDownVisibleIndex != edge.myDownVisibleIndex) return false;
+    if (myLayoutIndex != edge.myLayoutIndex) return false;
+    if (myUpVisibleIndex != edge.myUpVisibleIndex) return false;
+    if (myType != edge.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myUpVisibleIndex;
+    result = 31 * result + myDownVisibleIndex;
+    result = 31 * result + myType.hashCode();
+    result = 31 * result + myLayoutIndex;
+    return result;
+  }
 }
