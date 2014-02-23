@@ -154,6 +154,7 @@
 		<ul>
 		<li>0.8.2
 				<ol>
+				    <li>Added support for "topic" annotation value of all @Log annotations (Lombok >= 1.12.5)</li>
 				    <li>Added validation of static fields/methods of @Delegate annotation (@Delegate is legal only on instance fields or no-argument instance methods)</li>
 				    <li>Fixed #31: Prevent errors with invalid identifiers for builderClassName in @Builder annotation</li>
 				</ol>
