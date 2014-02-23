@@ -226,6 +226,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       }
     }));
 
-    return "sys.path.extend([" + path + "])";
+    return "sys.path = [" + path + "] + sys.path";
   }
 }
