@@ -154,7 +154,7 @@
 		<ul>
 		<li>0.8.2
 				<ol>
-				    <li>...</li>
+				    <li>Fixed #31: Prevent errors with invalid identifiers for builderClassName in @Builder annotation</li>
 				</ol>
 			</li>
 		<li>0.8.1

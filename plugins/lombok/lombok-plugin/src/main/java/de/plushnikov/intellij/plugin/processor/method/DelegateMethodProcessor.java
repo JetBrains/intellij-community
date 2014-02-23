@@ -29,7 +29,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
     }
 
     final PsiType returnType = psiMethod.getReturnType();
-    result &= null != returnType && handler.validate(returnType, psiAnnotation, builder);
+    result &= null != returnType && handler.validate(psiMethod, returnType, psiAnnotation, builder);
 
     return result;
   }

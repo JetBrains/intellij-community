@@ -41,11 +41,16 @@ import java.util.List;
  */
 public class DelegateHandler {
 
-  public boolean validate(@NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
-    boolean result;
+  public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+
+    if (psiModifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
+      builder.addError("@Delegate is legal only on instance fields or no-argument instance methods.");
+      result = false;
+    }
 
     final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiType);
-    result = validateTypes(types, builder);
+    result &= validateTypes(types, builder);
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
     result &= validateTypes(excludes, builder);
@@ -213,15 +218,13 @@ public class DelegateHandler {
       paramString.append(generatedParameterName).append(',');
     }
 
-    final boolean isStatic = psiElement.hasModifierProperty(PsiModifier.STATIC);
     if (paramString.length() > 0) {
       paramString.deleteCharAt(paramString.length() - 1);
     }
     final boolean isMethodCall = psiElement instanceof PsiMethod;
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(
-        String.format("%s%s.%s%s.%s(%s);",
+        String.format("%sthis.%s%s.%s(%s);",
             PsiType.VOID.equals(returnType) ? "" : "return ",
-            isStatic ? psiClass.getName() : "this",
             psiElement.getName(),
             isMethodCall ? "()" : "",
             psiMethod.getName(),

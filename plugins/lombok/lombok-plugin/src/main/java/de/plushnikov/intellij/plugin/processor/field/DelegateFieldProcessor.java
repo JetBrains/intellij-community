@@ -29,7 +29,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final PsiType psiFieldType = psiField.getType();
-    return handler.validate(psiFieldType, psiAnnotation, builder);
+    return handler.validate(psiField, psiFieldType, psiAnnotation, builder);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

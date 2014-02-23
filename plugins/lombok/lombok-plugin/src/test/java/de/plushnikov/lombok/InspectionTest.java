@@ -36,4 +36,8 @@ public class InspectionTest extends InspectionTestCase {
   public void testDelegateOnMethodWithParameter() throws Exception {
     doTest();
   }
+
+  public void testDelegateOnStaticFieldOrMethod() throws Exception {
+    doTest();
+  }
 }
