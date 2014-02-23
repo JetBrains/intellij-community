@@ -16,6 +16,6 @@ public class Log4j2Class {
   }
 
   public static void main(String[] args) {
-    new Log4jClass().doSomething();
+    new Log4j2Class().doSomething();
   }
 }

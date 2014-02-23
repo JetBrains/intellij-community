@@ -3,14 +3,17 @@ package de.plushnikov.lombok;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -64,5 +67,19 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
     VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
     myFixture.configureFromExistingVirtualFile(virtualFile);
     return myFixture.getFile();
+  }
+
+  protected void checkResultByFile(String expectedFile) throws IOException {
+    try {
+      myFixture.checkResultByFile(expectedFile, true);
+    } catch (ComparisonFailure ex) {
+      String actualFileText = myFixture.getFile().getText();
+      actualFileText = actualFileText.replace("java.lang.", "");
+
+      final String path = getTestDataPath() + "/" + expectedFile;
+      String expectedFileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path)));
+
+      assertEquals(expectedFileText.replaceAll("\\s+", ""), actualFileText.replaceAll("\\s+", ""));
+    }
   }
 }

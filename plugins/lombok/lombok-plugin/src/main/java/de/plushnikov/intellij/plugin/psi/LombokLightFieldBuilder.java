@@ -91,4 +91,26 @@ public class LombokLightFieldBuilder extends LightFieldBuilder {
   public void checkDelete() throws IncorrectOperationException {
     // simple do nothing
   }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (another instanceof LombokLightFieldBuilder) {
+      final LombokLightFieldBuilder anotherLightField = (LombokLightFieldBuilder) another;
+
+      boolean stillEquivalent = getName().equals(anotherLightField.getName()) &&
+          getType().equals(anotherLightField.getType());
+
+      if (stillEquivalent) {
+        final PsiClass containingClass = getContainingClass();
+        final PsiClass anotherContainingClass = anotherLightField.getContainingClass();
+
+        stillEquivalent = (null == containingClass && null == anotherContainingClass) ||
+            (null != containingClass && containingClass.isEquivalentTo(anotherContainingClass));
+      }
+
+      return stillEquivalent;
+    } else {
+      return super.isEquivalentTo(another);
+    }
+  }
 }
