@@ -1,13 +1,14 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
+import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.graph.GraphFacadeImpl;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class DataPack {
 
@@ -31,7 +33,9 @@ public class DataPack {
   public static DataPack build(@NotNull List<? extends GraphCommit> commits,
                                @NotNull Collection<VcsRef> allRefs,
                                @NotNull ProgressIndicator indicator,
-                               @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+                               @NotNull NotNullFunction<Hash, Integer> indexGetter,
+                               @NotNull NotNullFunction<Integer, Hash> hashGetter, 
+                               @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     indicator.setText("Building graph...");
 
     MutableGraph graph = GraphBuilder.build(commits, allRefs);
@@ -59,7 +63,17 @@ public class DataPack {
         }
       }
     });
-    return new DataPack(refsModel, new GraphFacadeImpl(graphModel, printCellModel));
+    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(logProviders));
+    return new DataPack(refsModel, new GraphFacadeImpl(graphModel, printCellModel, colorManager));
+  }
+
+  @NotNull
+  private static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    Map<VirtualFile, VcsLogRefManager> map = ContainerUtil.newHashMap();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
+      map.put(entry.getKey(), entry.getValue().getReferenceManager());
+    }
+    return map;
   }
 
   private DataPack(@NotNull RefsModel refsModel, @NotNull GraphFacade graphFacade) {

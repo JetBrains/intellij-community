@@ -342,7 +342,8 @@ public class VcsLogDataHolder implements Disposable {
 //        }
 
         List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-        DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator, myIndexGetter);
+        DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator,
+                                               myIndexGetter, myHashGetter, myLogProviders);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
         invokeAndWait(new Runnable() {
@@ -401,7 +402,8 @@ public class VcsLogDataHolder implements Disposable {
     List<? extends TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
 
     List<? extends TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
-    DataPack dataPack = DataPack.build(convertToGraphCommits(logToBuild), collectAllRefs(refsByRoot), indicator, myIndexGetter);
+    DataPack dataPack = DataPack.build(convertToGraphCommits(logToBuild), collectAllRefs(refsByRoot), indicator,
+                                       myIndexGetter, myHashGetter, myLogProviders);
 
     myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, true);
 
@@ -436,7 +438,8 @@ public class VcsLogDataHolder implements Disposable {
     // even if the full log was already loaded (and possibly presented to the user),
     // build only the data that was retrieved from the VCS:
     // if it is not one of the initial refreshes, then it is filtering, and then the DataPack will change anyway.
-    DataPack dataPack = DataPack.build(convertToGraphCommits(compoundLog), collectAllRefs(refsByRoot), indicator, myIndexGetter);
+    DataPack dataPack = DataPack.build(convertToGraphCommits(compoundLog), collectAllRefs(refsByRoot), indicator,
+                                       myIndexGetter, myHashGetter, myLogProviders);
 
     if (myLogData != null && myLogData.isFullLogReady()) {
       // reuse the skeleton, since it didn't change, because it is not a refresh

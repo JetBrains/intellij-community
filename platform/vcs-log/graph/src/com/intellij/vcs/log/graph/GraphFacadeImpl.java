@@ -60,13 +60,16 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @NotNull private final GraphModel myGraphModel;
   @NotNull private final GraphPrintCellModel myPrintCellModel;
+  @NotNull private final GraphColorManager myColorManager;
   @NotNull private final SimpleGraphCellPainter myGraphPainter;
 
   @Nullable private GraphElement prevGraphElement;
 
-  public GraphFacadeImpl(@NotNull GraphModel graphModel, @NotNull GraphPrintCellModel printCellModel) {
+  public GraphFacadeImpl(@NotNull GraphModel graphModel, @NotNull GraphPrintCellModel printCellModel,
+                         @NotNull GraphColorManager colorManager) {
     myGraphModel = graphModel;
     myPrintCellModel = printCellModel;
+    myColorManager = colorManager;
     myGraphPainter = new SimpleGraphCellPainter();
   }
 
