@@ -50,5 +50,5 @@ public interface FileManager extends Disposable {
   List<PsiFile> getAllCachedFiles();
 
   @NotNull
-  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean physical);
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled);
 }

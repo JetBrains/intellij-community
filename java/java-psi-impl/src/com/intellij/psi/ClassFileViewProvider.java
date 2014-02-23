@@ -31,8 +31,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     super(manager, file);
   }
 
-  public ClassFileViewProvider(@NotNull final PsiManager manager, @NotNull final VirtualFile virtualFile, final boolean physical) {
-    super(manager, virtualFile, physical);
+  public ClassFileViewProvider(@NotNull final PsiManager manager, @NotNull final VirtualFile virtualFile, final boolean eventSystemEnabled) {
+    super(manager, virtualFile, eventSystemEnabled);
   }
 
   @Override

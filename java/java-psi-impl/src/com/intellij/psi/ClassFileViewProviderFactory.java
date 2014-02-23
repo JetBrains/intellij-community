@@ -29,20 +29,20 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
  */
 public class ClassFileViewProviderFactory implements FileViewProviderFactory {
   @Override
-  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, boolean physical) {
+  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, boolean eventSystemEnabled) {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof Full) {
-      return ((Full)decompiler).createFileViewProvider(file, manager, physical);
+      return ((Full)decompiler).createFileViewProvider(file, manager, eventSystemEnabled);
     }
 
     for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
       Language lang = processor.obtainLanguageForFile(file);
       if (lang != null) {
         FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-        return factory.createFileViewProvider(file, language, manager, physical);
+        return factory.createFileViewProvider(file, language, manager, eventSystemEnabled);
       }
     }
 
-    return new ClassFileViewProvider(manager, file, physical);
+    return new ClassFileViewProvider(manager, file, eventSystemEnabled);
   }
 }
