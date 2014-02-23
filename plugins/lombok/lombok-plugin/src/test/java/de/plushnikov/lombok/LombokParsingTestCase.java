@@ -10,6 +10,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -33,6 +34,10 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
 
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
   private static final Collection<String> MODIFIERS_TO_COMPARE = Collections2.filter(Arrays.asList(PsiModifier.MODIFIERS), Predicates.not(Predicates.equalTo(PsiModifier.DEFAULT)));
+
+  protected boolean shouldCompareInitializers() {
+    return true;
+  }
 
   protected boolean shouldCompareAnnotations() {
     return false;
@@ -109,12 +114,13 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     for (PsiField afterField : afterClassFields) {
       boolean compared = false;
       final PsiModifierList afterFieldModifierList = afterField.getModifierList();
-      for (PsiField beeforeField : beforeClassFields) {
-        if (afterField.getName().equals(beeforeField.getName())) {
-          final PsiModifierList beforeFieldModifierList = beeforeField.getModifierList();
+      for (PsiField beforeField : beforeClassFields) {
+        if (afterField.getName().equals(beforeField.getName())) {
+          final PsiModifierList beforeFieldModifierList = beforeField.getModifierList();
 
           compareModifiers(beforeFieldModifierList, afterFieldModifierList);
-          compareType(beeforeField.getType(), afterField.getType(), afterField);
+          compareType(beforeField.getType(), afterField.getType(), afterField);
+          compareInitializers(beforeField.getInitializer(), afterField.getInitializer());
           compared = true;
         }
       }
@@ -122,11 +128,19 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     }
   }
 
+  private void compareInitializers(PsiExpression beforeInitializer, PsiExpression afterInitializer) {
+    if (shouldCompareInitializers()) {
+      String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
+      String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
+      assertEquals(String.format("Initializers are not equals "), afterInitializerText, beforeInitializerText);
+    }
+  }
+
   private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
     if (null != beforeType && null != afterType) {
-      final String theirsCanonicalText = stripJavaLang(afterType.getCanonicalText());
-      final String intellijCanonicalText = stripJavaLang(beforeType.getCanonicalText());
-      assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), theirsCanonicalText, intellijCanonicalText);
+      final String afterText = stripJavaLang(afterType.getCanonicalText());
+      final String beforeText = stripJavaLang(beforeType.getCanonicalText());
+      assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), afterText, beforeText);
     }
   }
 

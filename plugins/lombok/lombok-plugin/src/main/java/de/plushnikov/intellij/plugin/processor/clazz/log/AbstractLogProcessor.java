@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +33,13 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   private final static String loggerName = "log";
   private final String loggerType;
   private final String loggerInitializer;
+  private final String loggerCategory;
 
-  protected AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer) {
+  protected AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
     super(supportedAnnotationClass, PsiField.class);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
+    this.loggerCategory = loggerCategory;
   }
 
   public static String getLoggerName() {
@@ -64,7 +68,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     target.add(createLoggerField(psiClass, psiAnnotation));
   }
 
-  private LombokLightFieldBuilder createLoggerField(PsiClass psiClass, PsiAnnotation psiAnnotation) {
+  private LombokLightFieldBuilder createLoggerField(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final Project project = psiClass.getProject();
     final PsiManager manager = psiClass.getContainingFile().getManager();
 
@@ -75,11 +79,22 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
         .withModifier(PsiModifier.FINAL).withModifier(PsiModifier.STATIC).withModifier(PsiModifier.PRIVATE)
         .withNavigationElement(psiAnnotation);
 
-    final String classQualifiedName = psiClass.getQualifiedName();
-    final String className = null != classQualifiedName ? classQualifiedName : psiClass.getName();
-    PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, className), psiClass);
+    final String loggerInitializerParameter = createLoggerInitializeParameter(psiClass, psiAnnotation);
+    final PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, loggerInitializerParameter), psiClass);
     loggerField.setInitializer(initializer);
     return loggerField;
+  }
+
+  @NotNull
+  private String createLoggerInitializeParameter(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final String loggerInitializerParameter;
+    final String topic = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "topic", String.class);
+    if (StringUtil.isEmptyOrSpaces(topic)) {
+      loggerInitializerParameter = String.format(loggerCategory, psiClass.getName());
+    } else {
+      loggerInitializerParameter = '"' + topic + '"';
+    }
+    return loggerInitializerParameter;
   }
 
   protected boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
