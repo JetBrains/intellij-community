@@ -64,10 +64,20 @@ public abstract class StubIndex {
     return get(indexKey, key, project, scope);
   }
 
-  public abstract <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+  @Deprecated
+  public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                 @NotNull Key key,
                                                                 @NotNull Project project,
                                                                 GlobalSearchScope scope,
+                                                                @NotNull Processor<? super Psi> processor) {
+    return processElements(indexKey, key, project, scope, (Class<Psi>)PsiElement.class, processor);
+  }
+
+  public abstract <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                @NotNull Key key,
+                                                                @NotNull Project project,
+                                                                GlobalSearchScope scope,
+                                                                Class<Psi> requiredClass,
                                                                 @NotNull Processor<? super Psi> processor);
 
   public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
@@ -75,6 +85,16 @@ public abstract class StubIndex {
                                                                 @NotNull Project project,
                                                                 GlobalSearchScope scope,
                                                                 IdFilter idFilter,
+                                                                @NotNull Processor<? super Psi> processor) {
+    return process(indexKey, key, project, scope, processor);
+  }
+
+  public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                @NotNull Key key,
+                                                                @NotNull Project project,
+                                                                GlobalSearchScope scope,
+                                                                IdFilter idFilter,
+                                                                Class<Psi> requiredClass,
                                                                 @NotNull Processor<? super Psi> processor) {
     return process(indexKey, key, project, scope, processor);
   }
