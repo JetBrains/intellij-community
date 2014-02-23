@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -50,9 +52,22 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
    * Validation process is the same, but in case it fails, errors where added twice.
    * There is a @param shouldAddErrors to avoid this duplication.
    */
-  protected boolean validateInternal(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, boolean shouldAddErrors) {
-    return validateAnnotationOnRightType(psiClass, builder, shouldAddErrors)
+  protected boolean validateInternal(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
+    return validateBuilderClassName(psiAnnotation, builder, shouldAddErrors) &&
+        validateAnnotationOnRightType(psiClass, builder, shouldAddErrors)
         && validateExistingInnerClass(psiClass, psiAnnotation, builder, shouldAddErrors);
+  }
+
+  protected boolean validateBuilderClassName(PsiAnnotation psiAnnotation, ProblemBuilder builder, boolean shouldAddErrors) {
+    final String builderClassName = BuilderUtil.getBuilderClassName(psiAnnotation);
+    if (StringUtil.isNotEmpty(builderClassName) &&
+        !JavaPsiFacade.getInstance(psiAnnotation.getProject()).getNameHelper().isIdentifier(builderClassName)) {
+      if (shouldAddErrors) {
+        builder.addError("%s ist not a valid identifier", builderClassName);
+      }
+      return false;
+    }
+    return true;
   }
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
@@ -70,7 +85,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
     if (innerClassByName != null) {
       if (shouldAddErrors) {
-        builder.addError("Not generated '%s' class: A class with same name already exists. This feature is not implemented and it's not planned.", innerClassSimpleName);
+        builder.addError("Not generated '%s' class: A class with same name already exists.", innerClassSimpleName);
       }
       return false;
     }

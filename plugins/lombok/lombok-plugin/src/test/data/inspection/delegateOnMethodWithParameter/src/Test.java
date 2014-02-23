@@ -1,5 +1,3 @@
-import java.lang.Integer;
-
 public class Example<T> {
   @lombok.Delegate
   private Integer calcDelegatorInteger() {

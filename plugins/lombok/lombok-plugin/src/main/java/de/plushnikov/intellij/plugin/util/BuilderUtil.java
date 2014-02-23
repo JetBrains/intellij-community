@@ -29,11 +29,11 @@ public class BuilderUtil {
   }
 
   public static String createBuilderClassNameWithGenerics(@NotNull PsiAnnotation psiAnnotation, @Nullable PsiType psiType) {
-    return createBuilderClassNameWithGenerics(psiAnnotation, psiType != null ?  psiType.getPresentableText() : PsiType.VOID.getBoxedTypeName());
+    return createBuilderClassNameWithGenerics(psiAnnotation, psiType != null ? psiType.getPresentableText() : PsiType.VOID.getBoxedTypeName());
   }
 
   public static String createBuilderClassNameWithGenerics(@NotNull PsiAnnotation psiAnnotation, @NotNull String type) {
-    final String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
+    final String builderClassName = getBuilderClassName(psiAnnotation);
     if (StringUtils.isNotBlank(builderClassName)) {
       return builderClassName;
     }
@@ -43,6 +43,10 @@ public class BuilderUtil {
       return StringUtils.capitalize(type.substring(0, indexForSuffix) + BUILDER_CLASS_NAME + type.substring(indexForSuffix, type.length()));
     }
     return StringUtils.capitalize(type) + BUILDER_CLASS_NAME;
+  }
+
+  public static String getBuilderClassName(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
   }
 
   @NotNull
