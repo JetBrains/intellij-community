@@ -32,6 +32,9 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Date;
 
+import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0;
+import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0_ALPHA;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 1/15/13
@@ -69,9 +72,9 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
 
   public void testVersionDiscovery() throws Exception {
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
-    assertEquals("2.0", myRepository.discoverRestApiVersion().getVersionName());
+    assertEquals(REST_2_0, myRepository.discoverApiVersion().getType());
     myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
-    assertEquals("2.0.alpha1", myRepository.discoverRestApiVersion().getVersionName());
+    assertEquals(REST_2_0_ALPHA, myRepository.discoverApiVersion().getType());
   }
 
   public void testJqlQuery() throws Exception {

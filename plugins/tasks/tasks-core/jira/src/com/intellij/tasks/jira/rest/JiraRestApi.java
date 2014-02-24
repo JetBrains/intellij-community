@@ -95,11 +95,6 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   protected abstract JiraIssue parseIssue(String response);
 
   @Override
-  public String toString() {
-    return String.format("JiraRestAPI(%s)", getVersionName());
-  }
-
-  @Override
   public void setTaskState(Task task, TaskState state) throws Exception {
     String requestBody = getRequestForStateTransition(state);
     LOG.debug(String.format("Transition: %s -> %s, request: %s", task.getState(), state, requestBody));
@@ -109,12 +104,6 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     PostMethod method = new PostMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
     method.setRequestEntity(createJsonEntity(requestBody));
     myRepository.executeMethod(method);
-  }
-
-  @NotNull
-  @Override
-  public final ApiType getType() {
-    return ApiType.REST;
   }
 
   @Nullable

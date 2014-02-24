@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskState;
-import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.api2.model.JiraIssueApi2;
@@ -32,11 +31,6 @@ public class JiraRestApi2 extends JiraRestApi {
 
   public JiraRestApi2(JiraRepository repository) {
     super(repository);
-  }
-
-  @Override
-  public JiraRemoteApi cloneFor(@NotNull JiraRepository repository) {
-    return new JiraRestApi2(repository);
   }
 
   @NotNull
@@ -102,7 +96,7 @@ public class JiraRestApi2 extends JiraRestApi {
 
   @NotNull
   @Override
-  public String getVersionName() {
-    return "2.0";
+  public ApiType getType() {
+    return ApiType.REST_2_0;
   }
 }
