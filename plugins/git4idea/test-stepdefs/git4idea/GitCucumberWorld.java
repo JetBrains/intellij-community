@@ -32,7 +32,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
@@ -42,9 +41,9 @@ import cucumber.runtime.ScenarioResult;
 import git4idea.commands.Git;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
-import git4idea.test.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
+import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -190,7 +189,7 @@ public class GitCucumberWorld {
     waitForPendingTasks();
     nullifyStaticFields();
     if (result.isFailed()) {
-      AbstractJunitVcsTestCase.dumpLogToStdout(getStartTestMarker());
+      TestLoggerFactory.dumpLogToStdout(getStartTestMarker());
     }
     edt(new ThrowableRunnable<Exception>() {
       @Override
