@@ -25,10 +25,10 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
   public boolean NOTIFY_CAUGHT   = true;
   public boolean NOTIFY_UNCAUGHT = true;
 
-  @Attribute("class_name")
+  @Attribute("class")
   public String myQualifiedName;
 
-  @Attribute("package_name")
+  @Attribute("package")
   public String myPackageName;
 
   public JavaExceptionBreakpointProperties(String qualifiedName, String packageName) {
