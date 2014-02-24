@@ -757,7 +757,12 @@ public class BreakpointManager {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size());
 
-      for (XBreakpoint<?> xBreakpoint : getXBreakpointManager().getAllBreakpoints()) {
+      XBreakpoint<?>[] xBreakpoints = ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
+        public XBreakpoint<?>[] compute() {
+          return getXBreakpointManager().getAllBreakpoints();
+        }
+      });
+      for (XBreakpoint<?> xBreakpoint : xBreakpoints) {
         if (isJavaType(xBreakpoint)) {
           Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
           if (breakpoint == null) {
