@@ -70,6 +70,13 @@ public class PatienceIntLCSTest extends TestCase {
                 new int[]{0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
   }
 
+  public void testBug1() throws FilesTooBigForDiffException {
+    BitSet[] change = buildChange(new int[]{2, 3, 4, 6, 7, 8, 9, 11, 12, 4, 6, 11, 15},
+                                  new int[]{2, 3, 6, 7, 8, 9, 6, 11, 12, 4, 11, 15, 6});
+    checkChange(change, new int[]{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+                new int[]{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0});
+  }
+
   public void testInnerChunks1() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0}, new int[]{1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1});
     checkChange(change, new int[]{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1}, new int[]{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1});
