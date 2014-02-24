@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.string;
 
+import com.intellij.openapi.diff.LineTokenizerBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -376,84 +377,44 @@ public class DiffString implements CharSequence {
     return new LineTokenizer(this).execute();
   }
 
-  public static class LineTokenizer {
+  public static class LineTokenizer extends LineTokenizerBase<DiffString> {
     @NotNull private final DiffString myText;
-
-    private int myIndex;
-    @Nullable private String myLineSeparator = null;
 
     public LineTokenizer(@NotNull DiffString text) {
       myText = text;
-      myIndex = 0;
     }
 
     @NotNull
     public DiffString[] execute() {
-      List<DiffString> lines = new ArrayList<DiffString>();
-      while (notAtEnd()) {
-        int begin = myIndex;
-        skipToEOL();
-        int endIndex = myIndex;
-        boolean appendNewLine = false;
-
-        if (notAtEnd() && isAtEOL()) {
-          if (myText.data(endIndex) == '\n') {
-            endIndex++;
-          }
-          else {
-            appendNewLine = true;
-          }
-          skipEOL();
-        }
-
-        DiffString line = myText.substring(begin, endIndex);
-        if (appendNewLine) {
-          line = line.append('\n');
-        }
-        lines.add(line);
-      }
+      ArrayList<DiffString> lines = new ArrayList<DiffString>();
+      doExecute(lines);
       return ContainerUtil.toArray(lines, new DiffString[lines.size()]);
     }
 
-    private void skipEOL() {
-      int eolStart = myIndex;
-      boolean nFound = false;
-      boolean rFound = false;
-      while (notAtEnd()) {
-        boolean n = myText.data(myIndex) == '\n';
-        boolean r = myText.data(myIndex) == '\r';
-        if (!n && !r) {
-          break;
-        }
-        if ((nFound && n) || (rFound && r)) {
-          break;
-        }
-        nFound |= n;
-        rFound |= r;
-        myIndex++;
+    @Override
+    protected void addLine(List<DiffString> lines, int start, int end, boolean appendNewLine) {
+      if (appendNewLine) {
+        lines.add(myText.substring(start, end).append('\n'));
       }
-      if (myLineSeparator == null) {
-        myLineSeparator = myText.substring(eolStart, myIndex).toString();
+      else {
+        lines.add(myText.substring(start, end));
       }
     }
 
-    private void skipToEOL() {
-      while (notAtEnd() && !isAtEOL()) {
-        myIndex++;
-      }
+    @Override
+    protected char charAt(int index) {
+      return myText.data(index);
     }
 
-    private boolean notAtEnd() {
-      return myIndex < myText.length();
+    @Override
+    protected int length() {
+      return myText.length();
     }
 
-    private boolean isAtEOL() {
-      return myText.data(myIndex) == '\r' || myText.data(myIndex) == '\n';
-    }
-
-    @Nullable
-    public String getLineSeparator() {
-      return myLineSeparator;
+    @NotNull
+    @Override
+    protected String substring(int start, int end) {
+      return myText.substring(start, end).toString();
     }
   }
 }
