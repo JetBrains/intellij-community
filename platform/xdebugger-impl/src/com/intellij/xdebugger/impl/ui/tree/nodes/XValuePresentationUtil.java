@@ -124,6 +124,11 @@ public class XValuePresentationUtil {
       myBuilder.append(symbol);
     }
 
+    @Override
+    public void renderValue(@NotNull String value, @Nullable SimpleTextAttributes attributes) {
+      renderValue(value);
+    }
+
     public String getText() {
       return myBuilder.toString();
     }

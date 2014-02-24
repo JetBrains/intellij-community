@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,11 @@ class XValueTextRendererImpl extends XValueTextRendererBase {
   @Override
   public void renderValue(@NotNull String value) {
     XValuePresentationUtil.renderValue(value, myText, SimpleTextAttributes.REGULAR_ATTRIBUTES, -1, null);
+  }
+
+  @Override
+  public void renderValue(@NotNull String value, @Nullable SimpleTextAttributes attributes) {
+    myText.append(value, ObjectUtils.notNull(attributes, SimpleTextAttributes.REGULAR_ATTRIBUTES));
   }
 
   @Override
