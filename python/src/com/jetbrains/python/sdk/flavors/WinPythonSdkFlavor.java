@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.jetbrains.python.PythonHelpersLocator;
 
 import java.io.File;
 import java.util.Collection;
@@ -39,6 +40,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   public Collection<String> suggestHomePaths() {
     Set<String> candidates = new TreeSet<String>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
+    candidates.add(PythonHelpersLocator.getHelpersRoot().getParent());
     return candidates;
   }
 
