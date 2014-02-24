@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.render.CommitCell;
@@ -54,18 +55,22 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull private final VcsLogUI myUI;
   private final VcsLogDataHolder myLogDataHolder;
+  private final GraphCommitCellRender myGraphCommitCellRender;
 
   private boolean myColumnsSizeInitialized = false;
   private volatile boolean myRepaintFreezed;
 
-  public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
+  @NotNull private DataPack myDataPack;
+
+  public VcsLogGraphTable(@NotNull VcsLogUI UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull DataPack initialDataPack) {
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
+    myDataPack = initialDataPack;
+    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myDataPack.getGraphFacade());
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder,
-                                                                        logDataHolder.getDataPack().getGraphFacade()));
+    setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
     setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -231,6 +236,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     return true;
   }
 
+  public void updateDataPack(@NotNull DataPack dataPack) {
+    myDataPack = dataPack;
+    myGraphCommitCellRender.updateGraphFacade(dataPack.getGraphFacade());
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final TableLinkMouseListener myLinkListener;
 
@@ -272,7 +282,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     private void performAction(@NotNull MouseEvent e, @NotNull PairFunction<Integer, Point, GraphAction> actionConstructor) {
       int row = PositionUtil.getRowIndex(e.getPoint());
       Point point = calcPoint4Graph(e.getPoint());
-      GraphFacade graphFacade = myLogDataHolder.getDataPack().getGraphFacade();
+      GraphFacade graphFacade = myDataPack.getGraphFacade();
       GraphAnswer answer = graphFacade.performAction(actionConstructor.fun(row, point));
       handleAnswer(answer);
     }

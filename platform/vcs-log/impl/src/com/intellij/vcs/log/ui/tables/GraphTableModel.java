@@ -30,9 +30,9 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder) {
+  public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder) {
+    myDataPack = dataPack;
     myDataHolder = dataHolder;
-    myDataPack = dataHolder.getDataPack();
   }
 
   @Override

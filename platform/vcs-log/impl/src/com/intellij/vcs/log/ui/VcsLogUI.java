@@ -1,9 +1,11 @@
 package com.intellij.vcs.log.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,10 +14,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogFilterer;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.ClickGraphAction;
 import com.intellij.vcs.log.graph.LinearBranchesExpansionAction;
 import com.intellij.vcs.log.graph.LongEdgesAction;
@@ -45,26 +44,27 @@ public class VcsLogUI {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
 
+  @NotNull private DataPack myDataPack;
+
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
+                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
-    myUiProperties = uiProperties;
+    myDataPack = initialDataPack;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
     myLog = new VcsLogImpl(myLogDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog);
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog, initialDataPack);
+    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
       @Override
-      public void run() {
-        applyFiltersAndUpdateUi();
+      public void refresh(@NotNull DataPack dataPack) {
+        applyFiltersAndUpdateUi(dataPack);
       }
     });
-    applyFiltersAndUpdateUi();
+    applyFiltersAndUpdateUi(initialDataPack);
   }
 
   @NotNull
@@ -140,7 +140,7 @@ public class VcsLogUI {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        myLogDataHolder.getDataPack().getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
+        myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
         updateUI();
         jumpToRow(0);
       }
@@ -151,7 +151,7 @@ public class VcsLogUI {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        myLogDataHolder.getDataPack().getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
+        myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
         updateUI();
         jumpToRow(0);
       }
@@ -159,17 +159,16 @@ public class VcsLogUI {
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
-    myLogDataHolder.getDataPack().getGraphFacade().performAction(LongEdgesAction.valueOf(visibility));
+    myDataPack.getGraphFacade().performAction(LongEdgesAction.valueOf(visibility));
     updateUI();
   }
 
   public boolean areLongEdgesHidden() {
-    return myLogDataHolder.getDataPack().getGraphFacade().getInfoProvider().areLongEdgesHidden();
+    return myDataPack.getGraphFacade().getInfoProvider().areLongEdgesHidden();
   }
 
   public void click(int rowIndex) {
-    DataPack dataPack = myLogDataHolder.getDataPack();
-    dataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
+    myDataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
     updateUI();
   }
 
@@ -248,12 +247,30 @@ public class VcsLogUI {
     return myFilterer;
   }
 
-  public void applyFiltersAndUpdateUi() {
+  private void applyFiltersAndUpdateUi(@NotNull final DataPack dataPack) {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
-        myFilterer.applyFiltersAndUpdateUi(collectFilters());
+        final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, collectFilters());
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myDataPack = dataPack;
+            setModel(newModel);
+            myMainFrame.updateDataPack(myDataPack);
+            updateUI();
+
+            if (newModel.getRowCount() == 0) { // getValueAt won't be called for empty model => need to explicitly request to load more
+              newModel.requestToLoadMore(EmptyRunnable.INSTANCE);
+            }
+          }
+        });
       }
     });
+  }
+
+  public void applyFiltersAndUpdateUi() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    applyFiltersAndUpdateUi(myDataPack);
   }
 
   @NotNull
@@ -285,5 +302,11 @@ public class VcsLogUI {
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
+  }
+
+  @NotNull
+  public DataPack getDataPack() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myDataPack;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -36,9 +37,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author erokhins
- */
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
@@ -56,20 +54,21 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   private final JComponent myToolbar;
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log) {
+                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
+                   @NotNull DataPack initialDataPack) {
     // collect info
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
     myProject = project;
     myUiProperties = uiProperties;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUI, logDataHolder, uiProperties);
+    myFilterUi = new VcsLogClassicFilterUi(myUI, logDataHolder, uiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder);
-    myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
+    myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder, initialDataPack);
+    myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI, initialDataPack.getRefsModel());
     myBranchesPanel.setVisible(settings.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager());
+    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     final ChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
@@ -109,6 +108,17 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         changesBrowserSplitter.dispose();
       }
     });
+  }
+
+  /**
+   * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
+   * Components may want to update their fields and/or rebuild.
+   * @param dataPack new data pack.
+   */
+  public void updateDataPack(@NotNull DataPack dataPack) {
+    myFilterUi.updateDataPack(dataPack);
+    myDetailsPanel.updateDataPack(dataPack);
+    myGraphTable.updateDataPack(dataPack);
   }
 
   private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {

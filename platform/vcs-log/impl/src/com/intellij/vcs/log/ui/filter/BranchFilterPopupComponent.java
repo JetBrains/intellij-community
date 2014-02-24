@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -32,9 +33,16 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
 
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataHolder dataHolder) {
+  @NotNull private RefsModel myRefsModel;
+
+  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataHolder dataHolder, @NotNull RefsModel refsModel) {
     super(filterUi, "Branch");
     myDataHolder = dataHolder;
+    myRefsModel = refsModel;
+  }
+
+  void updateRefsModel(@NotNull RefsModel refsModel) {
+    myRefsModel = refsModel;
   }
 
   @Override
@@ -44,7 +52,7 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
     actionGroup.add(createAllAction());
 
     Groups filteredGroups = new Groups();
-    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
+    Collection<VcsRef> allRefs = myRefsModel.getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
@@ -126,7 +134,7 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
   @Override
   protected VcsLogBranchFilter getFilter() {
     String value = getValue();
-    Collection<VcsRef> allBranches = myDataHolder.getDataPack().getRefsModel().getBranches();
+    Collection<VcsRef> allBranches = myRefsModel.getBranches();
     return value == ALL ? null : new VcsLogBranchFilterImpl(allBranches, Collections.singletonList(value));
   }
 

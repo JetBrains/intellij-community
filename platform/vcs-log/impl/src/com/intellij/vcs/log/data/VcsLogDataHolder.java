@@ -46,16 +46,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to refresh this data by
  * {@link VcsLogProvider#subscribeToRootRefreshEvents(Collection, VcsLogRefresher) events from the VCS}.</p>
- * <p>If refresh is in progress, {@link #getDataPack()} returns the previous data pack (possibly not actual anymore).
- *    When refresh completes, the data pack instance is updated. Refreshes are chained.</p>
+ * <p>When refresh is completes, a new {@link DataPack} object is generated, and all UI is updated accordingly.</p>
  *
  * <p><b>Thread-safety:</b> the class is thread-safe:
  *   <ul>
  *     <li>All write-operations made to the log and data pack are made sequentially, from the same background queue;</li>
  *     <li>Once a refresh request is received, we read logs and refs from all providers, join refresh data, join repositories,
  *         and build the new data pack sequentially in a single thread. After that we substitute the instance of the LogData object.</li>
- *     <li>Whilst we are in the middle of this refresh process, anyone who requests the data pack (and possibly the log if this would
- *         be available in the future), will get the consistent previous version of it.</li>
  *   </ul></p>
  *
  * <p><b>Initialization:</b><ul>
@@ -87,7 +84,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VcsLogDataHolder implements Disposable {
 
-  public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
+  public static final Topic<VcsLogRefreshListener> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", VcsLogRefreshListener.class);
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
@@ -209,7 +206,7 @@ public class VcsLogDataHolder implements Disposable {
     }
   }
 
-  public void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+  public void initialize(@NotNull final PairConsumer<VcsLogDataHolder, DataPack> onInitialized) {
     // complete refresh => other scheduled refreshes are not interesting
     // TODO: interrupt the current task as well instead of waiting for it to finish, since the result is invalid anyway
     myDataLoaderQueue.clear();
@@ -225,7 +222,7 @@ public class VcsLogDataHolder implements Disposable {
             myEntireLogLoadWaiter.countDown(); // make sure to release any potential waiters of the previous latch
             myEntireLogLoadWaiter = new CountDownLatch(1);
 
-            onInitialized.consume(VcsLogDataHolder.this);
+            onInitialized.consume(VcsLogDataHolder.this, dataPack);
             loadAllLog(); // after first part is loaded and shown to the user, start loading the whole log in background
           }
         });
@@ -342,14 +339,14 @@ public class VcsLogDataHolder implements Disposable {
 //        }
 
         List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-        DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator,
+        final DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator,
                                                myIndexGetter, myHashGetter, myLogProviders);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
         invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            notifyAboutDataRefresh();
+            notifyAboutDataRefresh(fullDataPack);
             onSuccess.run();
           }
         });
@@ -664,14 +661,14 @@ public class VcsLogDataHolder implements Disposable {
     });
   }
 
-  private void refresh(@NotNull final Runnable onSuccess) {
+  private void refresh(@NotNull final Consumer<DataPack> onSuccess) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         Consumer<DataPack> success = new Consumer<DataPack>() {
           @Override
           public void consume(DataPack dataPack) {
-            onSuccess.run();
+            onSuccess.consume(dataPack);
           }
         };
 
@@ -690,10 +687,10 @@ public class VcsLogDataHolder implements Disposable {
    * It fairly retrieves the data from the VCS and rebuilds the whole log.
    */
   public void refreshCompletely() {
-    initialize(new Consumer<VcsLogDataHolder>() {
+    initialize(new PairConsumer<VcsLogDataHolder, DataPack>() {
       @Override
-      public void consume(VcsLogDataHolder holder) {
-        notifyAboutDataRefresh();
+      public void consume(VcsLogDataHolder holder, DataPack dataPack) {
+        notifyAboutDataRefresh(dataPack);
       }
     });
   }
@@ -704,10 +701,10 @@ public class VcsLogDataHolder implements Disposable {
    */
   public void refresh(@NotNull VirtualFile root) {
     // TODO refresh only the given root, not all roots
-    refresh(new Runnable() {
+    refresh(new Consumer<DataPack>() {
       @Override
-      public void run() {
-        notifyAboutDataRefresh();
+      public void consume(@NotNull DataPack dataPack) {
+        notifyAboutDataRefresh(dataPack);
       }
     });
   }
@@ -720,19 +717,14 @@ public class VcsLogDataHolder implements Disposable {
     refresh(root);
   }
 
-  @NotNull
-  public DataPack getDataPack() {
-    return myLogData.getDataPack();
-  }
-
   @Nullable
   public VcsFullCommitDetails getTopCommitDetails(@NotNull Hash hash) {
     return myTopCommitsDetailsCache.get(hash);
   }
 
-  private void notifyAboutDataRefresh() {
+  private void notifyAboutDataRefresh(DataPack dataPack) {
     if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+      myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).refresh(dataPack);
     }
   }
 

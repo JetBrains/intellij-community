@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.PrintParameters;
@@ -54,10 +55,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager) {
+  @NotNull private DataPack myDataPack;
+
+  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager,
+               @NotNull DataPack initialDataPack) {
     super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
+    myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(colorManager);
     myDataPanel = new DataPanel(logDataHolder.getProject());
@@ -88,6 +93,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     setBackground(UIUtil.getTableBackground());
     showMessage("No commits selected");
+  }
+
+  void updateDataPack(@NotNull DataPack dataPack) {
+    myDataPack = dataPack;
   }
 
   @Override
@@ -136,7 +145,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
+    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
     return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
   }
 

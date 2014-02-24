@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,8 +35,8 @@ public class VcsLogFilterer {
     myUI = ui;
   }
 
-  public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
-    DataPack dataPack = myLogDataHolder.getDataPack();
+  @NotNull
+  public AbstractVcsLogTableModel applyFiltersAndUpdateUi(@NotNull DataPack dataPack, @NotNull VcsLogFilterCollection filters) {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
 
     // it is important to apply graph filters first:
@@ -45,43 +44,30 @@ public class VcsLogFilterer {
     // (e.g. won't be able to find out if a commit belongs to the branch selected by user).
 
     // hide invisible nodes from the graph
-    applyGraphFilters(filters.getBranchFilter());
+    applyGraphFilters(dataPack, filters.getBranchFilter());
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
-      List<VcsFullCommitDetails> filteredCommits = filterByDetails(detailsFilters);
-      model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), LoadMoreStage.INITIAL);
+      List<VcsFullCommitDetails> filteredCommits = filterByDetails(dataPack, detailsFilters);
+      model = new NoGraphTableModel(dataPack, myUI, filteredCommits, LoadMoreStage.INITIAL);
     }
     else {
-      model = new GraphTableModel(myLogDataHolder);
+      model = new GraphTableModel(dataPack, myLogDataHolder);
     }
 
-    updateUi(model);
+    return model;
   }
 
-  private void updateUi(final AbstractVcsLogTableModel model) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myUI.setModel(model);
-        myUI.updateUI();
-
-        if (model.getRowCount() == 0) {
-          model.requestToLoadMore(EmptyRunnable.INSTANCE);
-        }
-      }
-    });
-  }
-
-  public void requestVcs(@NotNull VcsLogFilterCollection filters, final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
+  public void requestVcs(@NotNull final DataPack dataPack, @NotNull VcsLogFilterCollection filters,
+                         @NotNull final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int maxCount = loadMoreStage == LoadMoreStage.INITIAL ? LOAD_MORE_COMMITS_FIRST_STEP_LIMIT : -1;
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
-        myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), newLoadMoreStage));
+        myUI.setModel(new NoGraphTableModel(dataPack, myUI, details, newLoadMoreStage));
         myUI.updateUI();
         onSuccess.run();
       }
@@ -104,20 +90,20 @@ public class VcsLogFilterer {
     return newLoadMoreStage;
   }
 
-  private void applyGraphFilters(@Nullable final VcsLogBranchFilter branchFilter) {
+  private void applyGraphFilters(@NotNull final DataPack dataPack, @Nullable final VcsLogBranchFilter branchFilter) {
     myUI.getTable().executeWithoutRepaint(new Runnable() {
       @Override
       public void run() {
-        myLogDataHolder.getDataPack().getGraphFacade().setVisibleBranches(branchFilter != null ? branchFilter.getMatchingHeads() : null);
+        dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? branchFilter.getMatchingHeads() : null);
       }
     });
   }
 
   @NotNull
-  private List<VcsFullCommitDetails> filterByDetails(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<VcsFullCommitDetails> filterByDetails(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(myLogDataHolder.getDataPack().getGraphFacade());
+    List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade());
     for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
       int commitIndex = visibleCommits.get(i);
       final VcsFullCommitDetails details = getDetailsFromCache(commitIndex);

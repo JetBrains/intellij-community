@@ -8,8 +8,8 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
-import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -25,17 +25,17 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
 
+  @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogUI myUi;
   @NotNull private final List<VcsFullCommitDetails> myCommits;
-  @NotNull private final RefsModel myRefsModel;
   @NotNull private final LoadMoreStage myLoadMoreStage;
   @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
 
-  public NoGraphTableModel(@NotNull VcsLogUI UI, @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel,
+  public NoGraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogUI UI, @NotNull List<VcsFullCommitDetails> commits,
                            @NotNull LoadMoreStage loadMoreStage) {
+    myDataPack = dataPack;
     myUi = UI;
     myCommits = commits;
-    myRefsModel = refsModel;
     myLoadMoreStage = loadMoreStage;
   }
 
@@ -65,7 +65,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
     if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
         && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
       myUi.getTable().setPaintBusy(true);
-      myUi.getFilterer().requestVcs(myUi.collectFilters(), myLoadMoreStage, onLoaded);
+      myUi.getFilterer().requestVcs(myDataPack, myUi.collectFilters(), myLoadMoreStage, onLoaded);
     }
   }
 
@@ -104,7 +104,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
     Collection<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       subject = details.getSubject();
-      refs = myRefsModel.refsToCommit(details.getHash());
+      refs = myDataPack.getRefsModel().refsToCommit(details.getHash());
     }
     return new CommitCell(subject, refs);
   }

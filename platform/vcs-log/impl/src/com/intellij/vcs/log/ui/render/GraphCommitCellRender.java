@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
-  @NotNull private final GraphFacade myGraphFacade;
+  @NotNull private GraphFacade myGraphFacade;
 
   public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager,
                                @NotNull VcsLogDataHolder dataHolder, @NotNull GraphFacade graphFacade) {
@@ -36,6 +36,10 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   @Override
   protected PaintInfo getGraphImage(int row) {
     return myGraphFacade.paint(row);
+  }
+
+  public void updateGraphFacade(@NotNull GraphFacade graphFacade) {
+    myGraphFacade = graphFacade;
   }
 
 }
