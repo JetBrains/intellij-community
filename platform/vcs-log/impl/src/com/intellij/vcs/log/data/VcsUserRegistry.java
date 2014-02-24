@@ -15,9 +15,11 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsUserImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -28,15 +30,17 @@ public class VcsUserRegistry {
 
   private final Interner<VcsUser> myUserMap = new Interner<VcsUser>();
 
-  public VcsUser createUser(String name, String email) {
+  @NotNull
+  public VcsUser createUser(@NotNull String name, @NotNull String email) {
     return myUserMap.intern(new VcsUserImpl(name, email));
   }
 
-  public void addUser(VcsUser user) {
+  public void addUser(@NotNull VcsUser user) {
     myUserMap.intern(user);
   }
 
+  @NotNull
   public Set<VcsUser> getUsers() {
-    return myUserMap.getValues();
+    return ContainerUtil.newHashSet(myUserMap.getValues());
   }
 }
