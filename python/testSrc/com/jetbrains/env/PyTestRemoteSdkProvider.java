@@ -11,10 +11,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remotesdk.RemoteInterpreterException;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyTestTask;
-import com.jetbrains.python.remote.PyRemoteInterpreterManagerImpl;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,8 @@ public class PyTestRemoteSdkProvider {
         public Sdk load(String key) throws Exception {
           return createSdk(key);
         }
-      });
+      }
+    );
 
   public Sdk getSdk(Project project, String sdkPath) throws ExecutionException {
     myProject = project;
@@ -60,7 +61,7 @@ public class PyTestRemoteSdkProvider {
 
   private Sdk createSdk(String interpreterPath) throws RemoteInterpreterException {
     try {
-      PyRemoteSdkAdditionalData data = createRemoteSdkData(interpreterPath);
+      PyRemoteSdkAdditionalData2 data = createRemoteSdkData(interpreterPath);
 
       final Sdk sdk = myInterpreterManager.createRemoteSdk(myProject, data, null, Lists.<Sdk>newArrayList());
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -77,14 +78,28 @@ public class PyTestRemoteSdkProvider {
     }
   }
 
-  private PyRemoteSdkAdditionalData createRemoteSdkData(String path) throws IOException {
-    PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(path);
+  private static PyRemoteSdkCredentialsHolder getTestSdkCredentials(String path) {
+    PyRemoteSdkCredentialsHolder data = new PyRemoteSdkCredentialsHolder();
     data.setHost("localhost");
     data.setPort(22);
     data.setUserName(getUserName());
     data.setPassword(getPassword());
-    data.setHelpersPath(getHelpersPath(data));
+
+    data.setInterpreterPath(path);
+    try {
+      data.setHelpersPath(getTempHelpersPath(data));
+    }
+    catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
     return data;
+  }
+
+  private static PyRemoteSdkAdditionalData2 createRemoteSdkData(final String path) throws IOException {
+    PyRemoteSdkAdditionalData2 res = new PyRemoteSdkAdditionalData2(path);
+    res.setSshCredentials(getTestSdkCredentials(path));
+    return res;
+
   }
 
   public static boolean canRunRemoteSdk() {
@@ -99,11 +114,11 @@ public class PyTestRemoteSdkProvider {
     return !StringUtil.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvSufficiencyTest.IS_UNDER_TEAMCITY;
   }
 
-  private static String getHelpersPath(PyRemoteSdkAdditionalData data) throws IOException {
+  private static String getTempHelpersPath(PyRemoteSdkCredentials data) throws IOException {
     final File dir = new File("/tmp");
 
     File tmpDir = FileUtil.createTempDirectory(dir, "pycharm_helpers_", "_" + Math.abs(
-      Hashing.md5().hashString(data.getFullInterpreterPath()).asInt()), true);
+      Hashing.md5().hashString(data.getInterpreterPath()).asInt()), true);
     return tmpDir.getPath();
   }
 
