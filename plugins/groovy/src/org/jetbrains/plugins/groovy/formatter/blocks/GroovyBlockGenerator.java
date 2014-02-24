@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -328,8 +329,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private Wrap getChildWrap(ASTNode childNode) {
-    final Wrap wrap = myWrappingProcessor.getChildWrap(childNode);
-    return wrap;
+    return myWrappingProcessor.getChildWrap(childNode);
   }
 
   @NotNull
@@ -337,7 +337,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
-    if (indentLabelBlocks && (myNode.getElementType() == OPEN_BLOCK || myNode.getElementType() == CLOSABLE_BLOCK || myNode.getElementType() == CONSTRUCTOR_BODY)) {
+    if (indentLabelBlocks && isCodeBlock()) {
       List<ASTNode> flattenChildren = flattenChildren(children);
       calculateAlignments(flattenChildren, classLevel);
       for (int i = 0; i < flattenChildren.size(); i++) {
@@ -366,6 +366,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
     return subBlocks;
+  }
+
+  private boolean isCodeBlock() {
+    IElementType type = myNode.getElementType();
+    return type == OPEN_BLOCK ||
+           type == CLOSABLE_BLOCK ||
+           type == CONSTRUCTOR_BODY ||
+           type == GroovyParserDefinition.GROOVY_FILE;
   }
 
   private static List<ASTNode> flattenChildren(List<ASTNode> children) {
