@@ -642,7 +642,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     @Override
     public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
-      return new PluginsTableRenderer(pluginDescriptor);
+      return new PluginsTableRenderer(pluginDescriptor, false);
     }
 
     @Override
