@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ public class PsiMatchers {
   private PsiMatchers() {
   }
 
-  public static PsiMatcherExpression hasName(final String name) {
+  @NotNull
+  public static PsiMatcherExpression hasName(@NotNull final String name) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -39,7 +40,8 @@ public class PsiMatchers {
     };
   }
 
-  public static PsiMatcherExpression hasText(final String text) {
+  @NotNull
+  public static PsiMatcherExpression hasText(@NotNull final String text) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -49,6 +51,7 @@ public class PsiMatchers {
     };
   }
 
+  @NotNull
   public static PsiMatcherExpression hasText(@NotNull final String... texts) {
     return new PsiMatcherExpression() {
       @Override
@@ -59,7 +62,8 @@ public class PsiMatchers {
     };
   }
 
-  public static PsiMatcherExpression hasClass(final Class aClass) {
+  @NotNull
+  public static PsiMatcherExpression hasClass(@NotNull final Class<?> aClass) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -69,11 +73,12 @@ public class PsiMatchers {
     };
   }
 
-  public static PsiMatcherExpression hasClass(final Class... classes) {
+  @NotNull
+  public static PsiMatcherExpression hasClass(@NotNull final Class... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
-        for (Class aClass : classes) {
+        for (Class<?> aClass : classes) {
           if (aClass.isAssignableFrom(element.getClass())) return Boolean.TRUE;
         }
         return Boolean.FALSE;

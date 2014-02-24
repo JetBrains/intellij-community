@@ -2580,9 +2580,9 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref) {
+  static HighlightInfo checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     if (ref.isQualified() && isInsidePackageStatement(ref)) {
-      VirtualFile file = ref.getContainingFile().getVirtualFile();
+      VirtualFile file = containingFile.getVirtualFile();
       if (file != null) {
         Module module = ProjectFileIndex.SERVICE.getInstance(ref.getProject()).getModuleForFile(file);
         if (module != null) {
