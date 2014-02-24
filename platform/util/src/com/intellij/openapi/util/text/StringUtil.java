@@ -2286,7 +2286,7 @@ public class StringUtil extends StringUtilRt {
     return naturalCompare(string1, string2, false);
   }
 
-  public static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
+  private static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
     //noinspection StringEquality
     if (string1 == string2) {
       return 0;
