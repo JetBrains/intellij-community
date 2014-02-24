@@ -1,7 +1,5 @@
 package com.intellij.coverage;
 
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -109,13 +107,9 @@ public class PackageAnnotator {
     }
     if (!filtered) return;
 
+    final GlobalSearchScope scope = suite.getSearchScope(myProject);
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Module[]>() {
       public Module[] compute() {
-        final RunConfigurationBase configuration = suite.getRunConfiguration();
-        if (configuration instanceof ModuleBasedConfiguration) {
-          final Module[] mods = ((ModuleBasedConfiguration)configuration).getModules();
-          if (mods.length > 0) return mods;
-        }
         return ModuleManager.getInstance(myProject).getModules();
       }
     });
@@ -125,6 +119,7 @@ public class PackageAnnotator {
     Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     for (final Module module : modules) {
+      if (!scope.isSearchInModuleContent(module)) continue;
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
       final VirtualFile output = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
         @Nullable
