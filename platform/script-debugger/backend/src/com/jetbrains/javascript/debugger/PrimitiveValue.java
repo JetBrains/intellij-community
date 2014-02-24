@@ -1,9 +1,11 @@
 package com.jetbrains.javascript.debugger;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class PrimitiveValue extends ValueBase {
   private final String valueString;
 
-  protected PrimitiveValue(ValueType type, String valueString) {
+  protected PrimitiveValue(@NotNull ValueType type, String valueString) {
     super(type);
 
     this.valueString = valueString;

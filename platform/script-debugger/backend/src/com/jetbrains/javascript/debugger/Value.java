@@ -5,6 +5,7 @@
 package com.jetbrains.javascript.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * can be loaded by {@link #reloadHeavyValue} method.
  */
 public interface Value extends EvaluateContextAdditionalParameter {
+  @NotNull
   ValueType getType();
 
   /**
