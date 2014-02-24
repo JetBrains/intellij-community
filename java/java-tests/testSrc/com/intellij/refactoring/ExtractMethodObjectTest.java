@@ -7,6 +7,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
@@ -119,5 +120,10 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
 
   public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
     doTest();
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
   }
 }
