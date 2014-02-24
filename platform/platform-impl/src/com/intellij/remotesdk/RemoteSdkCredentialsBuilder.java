@@ -21,15 +21,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author traff
  */
-public class RemoteSdkDataBuilder {
+public class RemoteSdkCredentialsBuilder {
   private String myInterpreterPath = null;
   private String myHelpersPath = null;
   private RemoteCredentials myRemoteCredentials = null;
   private String myHelpersDefaultDirName = ".idea_helpers";
 
 
-  public RemoteSdkData build() {
-    RemoteSdkData result = new RemoteSdkDataHolder(myHelpersDefaultDirName);
+  public RemoteSdkCredentials build() {
+    RemoteSdkCredentials result = new RemoteSdkCredentialsHolder(myHelpersDefaultDirName);
 
     if (myRemoteCredentials != null) {
       copyCredentials(myRemoteCredentials, result);
@@ -47,7 +47,7 @@ public class RemoteSdkDataBuilder {
   }
 
 
-  public static void copyRemoteSdkData(@NotNull RemoteSdkData data, @NotNull RemoteSdkData copyTo) {
+  public static void copyRemoteSdkCredentials(@NotNull RemoteSdkCredentials data, @NotNull RemoteSdkCredentials copyTo) {
     copyCredentials(data, copyTo);
 
     copyTo.setInterpreterPath(data.getInterpreterPath());
@@ -72,12 +72,12 @@ public class RemoteSdkDataBuilder {
     copyTo.setStorePassphrase(data.isStorePassphrase());
   }
 
-  public RemoteSdkDataBuilder withCredentials(@Nullable RemoteCredentials remoteCredentials) {
+  public RemoteSdkCredentialsBuilder withCredentials(@Nullable RemoteCredentials remoteCredentials) {
     myRemoteCredentials = remoteCredentials;
     return this;
   }
 
-  public RemoteSdkDataBuilder withInterpreterPath(String interpreterPath) {
+  public RemoteSdkCredentialsBuilder withInterpreterPath(String interpreterPath) {
     myInterpreterPath = interpreterPath;
     return this;
   }

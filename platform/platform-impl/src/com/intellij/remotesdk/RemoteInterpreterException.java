@@ -42,4 +42,8 @@ public class RemoteInterpreterException extends ExecutionException {
       return super.getMessage();
     }
   }
+
+  public static RemoteInterpreterException cantObtainRemoteCredentials(Throwable e) {
+    return new RemoteInterpreterException("Cant obtain remote credentials", e);
+  }
 }

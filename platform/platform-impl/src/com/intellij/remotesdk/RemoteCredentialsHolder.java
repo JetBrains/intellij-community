@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author michael.golubev
  */
-public class RemoteCredentialsHolder implements RemoteCredentials {
+public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   public static final String HOST = "HOST";
   public static final String PORT = "PORT";
@@ -202,5 +202,18 @@ public class RemoteCredentialsHolder implements RemoteCredentials {
       myPassphrase = null;
       myStorePassphrase = false;
     }
+  }
+
+  public void copyTo(RemoteSdkCredentials to) {
+    to.setHost(getHost());
+    to.setPort(getPort());
+    to.setAnonymous(isAnonymous());
+    to.setUserName(getUserName());
+    to.setPassword(getPassword());
+    to.setUseKeyPair(isUseKeyPair());
+    to.setPrivateKeyFile(getPrivateKeyFile());
+    to.setKnownHostsFile(getKnownHostsFile());
+    to.setStorePassword(isStorePassword());
+    to.setStorePassphrase(isStorePassphrase());
   }
 }

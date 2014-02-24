@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkCredentials;
 
 /**
  * @author yole
  */
-public interface PyRemoteSdkData extends RemoteSdkData {
-  String getSkeletonsPath();
+public interface PyRemoteSdkCredentials extends RemoteSdkCredentials, PySkeletonsPathAware {
+
 }

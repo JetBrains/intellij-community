@@ -50,7 +50,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.remotesdk.RemoteFile;
-import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkCredentials;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -752,10 +752,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteSdkData) {
-      final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
-      if (!StringUtil.isEmpty(remoteSdkData.getHelpersPath())) {
-        helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
+    if (sdkData instanceof RemoteSdkCredentials) {
+      final RemoteSdkCredentials remoteSdkCredentials = (RemoteSdkCredentials)sdkData;
+      if (!StringUtil.isEmpty(remoteSdkCredentials.getHelpersPath())) {
+        helperPath = new RemoteFile(remoteSdkCredentials.getHelpersPath(),
                                     helper).getPath();
       }
       else {
@@ -778,8 +778,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
     }
-    if (sdkData instanceof RemoteSdkData) { //remote interpreter
-      final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
+    if (sdkData instanceof RemoteSdkCredentials) { //remote interpreter
+      final RemoteSdkCredentials remoteSdkCredentials = (RemoteSdkCredentials)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
@@ -793,11 +793,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }));
         try {
           if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
+            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
           }
           ProcessOutput processOutput;
           do {
-            processOutput = manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+            processOutput = manager.runRemoteProcess(null, remoteSdkCredentials, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
             if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
               continue;
             }
