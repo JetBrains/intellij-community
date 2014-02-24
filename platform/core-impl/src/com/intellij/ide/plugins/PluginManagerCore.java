@@ -117,7 +117,7 @@ public class PluginManagerCore {
     return ourDisabledPlugins;
   }
 
-  private static boolean isBrokenPlugin(IdeaPluginDescriptor descriptor) {
+  public static boolean isBrokenPlugin(IdeaPluginDescriptor descriptor) {
     return getBrokenPluginVersions().get(descriptor.getPluginId().getIdString()).contains(descriptor.getVersion());
   }
 
