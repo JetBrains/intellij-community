@@ -2286,7 +2286,7 @@ public class StringUtil extends StringUtilRt {
     return naturalCompare(string1, string2, false);
   }
 
-  private static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
+  public static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
     //noinspection StringEquality
     if (string1 == string2) {
       return 0;
@@ -2635,7 +2635,7 @@ public class StringUtil extends StringUtilRt {
    * i.e. when java.util.regex.Pattern match goes out of control.
    */
   public abstract static class BombedCharSequence implements CharSequence {
-    private CharSequence delegate;
+    private final CharSequence delegate;
     private int i = 0;
 
     public BombedCharSequence(@NotNull CharSequence sequence) {
