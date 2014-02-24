@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-
-import javax.swing.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -45,9 +45,6 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent event) {
     final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     final Presentation presentation = event.getPresentation();
-    presentation.setText (myOrientation == SwingConstants.VERTICAL
-                          ? IdeBundle.message("action.split.vertically")
-                          : IdeBundle.message("action.split.horizontally"));
     if (project == null) {
       presentation.setEnabled(false);
       return;
