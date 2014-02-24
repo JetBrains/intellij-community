@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -33,6 +34,7 @@ class Reindexer {
     return new int[][]{discarded1, discard(discarded1, ints2, 1)};
   }
 
+  @TestOnly
   void idInit(int length1, int length2) {
     myOriginalLengths[0] = length1;
     myOriginalLengths[1] = length2;
@@ -47,7 +49,8 @@ class Reindexer {
     }
   }
 
-  public int restoreIndex(int index, int array) {
+  @TestOnly
+  int restoreIndex(int index, int array) {
     return myOldIndecies[array][index];
   }
 
