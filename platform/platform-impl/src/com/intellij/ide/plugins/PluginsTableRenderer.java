@@ -48,7 +48,12 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   public PluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
 
-    final Font smallFont = UIUtil.getLabelFont(SystemInfo.isMac ? UIUtil.FontSize.MINI : UIUtil.FontSize.SMALL);
+    final Font smallFont;
+    if (SystemInfo.isMac) {
+      smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
+    } else {
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 11f));
+    }
     myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
@@ -69,7 +74,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
       final Color fg = UIUtil.getTableForeground(isSelected);
       final Color bg = UIUtil.getTableBackground(isSelected);
-      final Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._200);
+      final Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._120);
       myName.setForeground(fg);
       myStatus.setForeground(grayedFg);
       myStatus.setIcon(AllIcons.Nodes.Plugin);
