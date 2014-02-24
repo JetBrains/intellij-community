@@ -80,6 +80,10 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   public void testJqlQuery() throws Exception {
     myRepository.setSearchQuery("assignee = currentUser() AND (summary ~ 'foo' or resolution = Fixed)");
     assertEquals(2, myRepository.getIssues("", 50, 0).length);
+
+    // test that user part of query is prepended to existing one
+    myRepository.setSearchQuery("assignee = currentUser() order by updated");
+    assertEquals(1, myRepository.getIssues("foo", 50, 0).length);
   }
 
   /**

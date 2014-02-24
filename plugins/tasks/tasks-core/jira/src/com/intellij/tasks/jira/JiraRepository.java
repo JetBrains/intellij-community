@@ -81,7 +81,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     ensureApiVersionDiscovered();
     String jqlQuery = mySearchQuery;
     if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-      jqlQuery += String.format(" and summary ~ '%s'", query);
+      jqlQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
     }
     else if (StringUtil.isNotEmpty(query)) {
       jqlQuery = String.format("summary ~ '%s'", query);
