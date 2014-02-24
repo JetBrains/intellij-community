@@ -60,6 +60,9 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   }
 
   protected int toVisibleIndex(int nodeIndex) {
+    if (nodeIndex == myVisibleToReal.longSize()) {
+      return Edge.NOT_LOAD_NODE;
+    }
     return myVisibleToReal.getShortIndex(nodeIndex);
   }
 
@@ -87,6 +90,9 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   }
 
   private int getEdgeLayoutIndex(int upNodeIndex, int downNodeIndex) {
+    if (downNodeIndex == myVisibleToReal.longSize()) {
+      return 1; // i.e. edge to not load commit
+    }
     int upNodeLayoutIndex = myLayout.getLayoutIndex(upNodeIndex);
     int downNodeLayoutIndex = myLayout.getLayoutIndex(downNodeIndex);
     return Math.max(upNodeLayoutIndex, downNodeLayoutIndex);

@@ -18,7 +18,6 @@ package com.intellij.vcs.log.newgraph.render.cell;
 
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
@@ -95,7 +94,9 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
       public Integer fun(Edge edge) {
         Integer position = toPosition.get(edge);
         if (position == null) {
-          position = toPosition.get(myGraph.getNode(edge.getDownNodeVisibleIndex()));
+          int downNodeVisibleIndex = edge.getDownNodeVisibleIndex();
+          if (downNodeVisibleIndex != Edge.NOT_LOAD_NODE)
+            position = toPosition.get(myGraph.getNode(downNodeVisibleIndex));
         }
 
         if (position == null) {
