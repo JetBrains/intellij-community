@@ -236,7 +236,6 @@ public class PluginHeaderPanel {
       public void actionPerformed(ActionEvent e) {
         switch (myActionId) {
           case UPDATE:
-            break;
           case INSTALL:
             new ActionInstallPlugin(myManager.getAvailable(), myManager.getInstalled()).install(new Runnable() {
               @Override
