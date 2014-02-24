@@ -63,7 +63,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myProject = project;
     myUiProperties = uiProperties;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUI);
+    myFilterUi = new VcsLogClassicFilterUi(myUI, logDataHolder, uiProperties);
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder);

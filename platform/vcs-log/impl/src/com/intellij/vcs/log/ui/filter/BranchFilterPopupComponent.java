@@ -21,8 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +30,11 @@ import java.util.*;
 
 class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter> {
 
-  @NotNull private final VcsLogUI myUi;
+  @NotNull private final VcsLogDataHolder myDataHolder;
 
-  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogUI ui) {
+  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataHolder dataHolder) {
     super(filterUi, "Branch");
-    myUi = ui;
+    myDataHolder = dataHolder;
   }
 
   @Override
@@ -44,11 +44,11 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
     actionGroup.add(createAllAction());
 
     Groups filteredGroups = new Groups();
-    Collection<VcsRef> allRefs = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
+    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
-      VcsLogProvider provider = myUi.getLogDataHolder().getLogProvider(root);
+      VcsLogProvider provider = myDataHolder.getLogProvider(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
       List<RefGroup> refGroups = refManager.group(refs);
 
@@ -126,7 +126,7 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
   @Override
   protected VcsLogBranchFilter getFilter() {
     String value = getValue();
-    Collection<VcsRef> allBranches = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
+    Collection<VcsRef> allBranches = myDataHolder.getDataPack().getRefsModel().getBranches();
     return value == ALL ? null : new VcsLogBranchFilterImpl(allBranches, Collections.singletonList(value));
   }
 

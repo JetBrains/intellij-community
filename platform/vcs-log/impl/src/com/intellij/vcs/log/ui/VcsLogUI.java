@@ -248,11 +248,6 @@ public class VcsLogUI {
     return myFilterer;
   }
 
-  @NotNull
-  public VcsLogDataHolder getLogDataHolder() {
-    return myLogDataHolder;
-  }
-
   public void applyFiltersAndUpdateUi() {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
@@ -268,11 +263,6 @@ public class VcsLogUI {
 
   public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
-  }
-
-  @NotNull
-  public VcsLogUiProperties getUiProperties() {
-    return myUiProperties;
   }
 
   @NotNull
