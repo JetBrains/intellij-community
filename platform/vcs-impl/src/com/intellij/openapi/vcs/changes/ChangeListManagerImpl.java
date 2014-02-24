@@ -579,8 +579,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes, boolean wasEverythingDirty) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
+    Getter<Boolean> disposedGetter = new Getter<Boolean>() {
+      @Override
+      public Boolean get() {
+        return myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
+      }
+    };
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-      dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
+      dataHolder.getComposite(), disposedGetter, myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
       myUpdateChangesProgressIndicator.checkCanceled();
