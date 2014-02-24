@@ -83,6 +83,13 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
           }
         }
 
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+          if (thisAccessExpr != null && expression.getMethodExpression().getQualifierExpression() == null) {
+            replacements.put(expression, psiElementFactory.createExpressionFromText(thisAccessExpr.getText() + "." + expression.getText(), expression));
+          }
+        }
       });
       for (PsiElement psiElement : replacements.keySet()) {
         psiElement.replace(replacements.get(psiElement));
