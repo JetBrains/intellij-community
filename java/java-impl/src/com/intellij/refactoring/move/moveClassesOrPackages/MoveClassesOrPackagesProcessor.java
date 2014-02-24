@@ -48,7 +48,6 @@ import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
@@ -542,6 +541,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           MoveClassesOrPackagesUtil.finishMoveClass((PsiClass)element);
         }
       }
+
+      CommonMoveUtil.postprocessUsages(usages);
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
     }

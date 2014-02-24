@@ -33,6 +33,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -188,6 +189,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       }
 
       retargetUsages(usages, oldToNewMap);
+
+      CommonMoveUtil.postprocessUsages(usages);
 
       // Perform CVS "add", "remove" commands on moved files.
 

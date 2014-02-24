@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.move.MoveUsagesPostprocessor;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -61,5 +62,11 @@ public class CommonMoveUtil {
       }
     }
     return nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+  }
+
+  public static void postprocessUsages(UsageInfo[] usages) {
+    for (MoveUsagesPostprocessor postprocessor : MoveUsagesPostprocessor.EP_NAME.getExtensions()) {
+      postprocessor.postprocessUsages(usages);
+    }
   }
 }

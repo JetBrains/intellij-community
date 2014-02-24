@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
+import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -247,6 +248,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         reference.bindToElement(method);
       }
       VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), method, myNewVisibility);
+
+      CommonMoveUtil.postprocessUsages(usages);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

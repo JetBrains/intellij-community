@@ -35,6 +35,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
@@ -273,6 +274,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       else {
         ChangeContextUtil.decodeContextInfo(newClass, null, null);
       }
+
+      CommonMoveUtil.postprocessUsages(usages);
 
       PsiFile targetFile = newClass.getContainingFile();
       OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, targetFile.getVirtualFile(), newClass.getTextOffset());

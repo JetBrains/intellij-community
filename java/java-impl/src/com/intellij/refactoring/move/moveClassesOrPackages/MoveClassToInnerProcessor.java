@@ -167,6 +167,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
           element.delete();
         }
       }
+
+      CommonMoveUtil.postprocessUsages(usages);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

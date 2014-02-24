@@ -203,6 +203,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveMembers.MoveMemberHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="refactoring.moveUsagesPostprocessor" interface="com.intellij.refactoring.move.MoveUsagesPostprocessor"/>
+
     <extensionPoint name="testGenerator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
