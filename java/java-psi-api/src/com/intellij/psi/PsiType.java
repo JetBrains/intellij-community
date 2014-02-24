@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,21 +73,22 @@ public abstract class PsiType implements PsiAnnotationOwner {
   }
 
   /**
-   * @return text of the type that can be presented to a user (non-qualified references, with annotations).
+   * Returns text of the type that can be presented to a user (references normally non-qualified).
    */
   @NonNls
   @NotNull
   public abstract String getPresentableText();
 
   /**
-   * @return text of the type (fully-qualified references, no annotations).
+   * Returns canonical representation of the type (all references fully-qualified).
    */
   @NonNls
   @NotNull
   public abstract String getCanonicalText();
 
   /**
-   * @return text of the type (fully-qualified references, with annotations).
+   * Return canonical text of the type with some internal details added for presentational purposes. Use with care.
+   * todo[r.sh] merge with getPresentableText()
    */
   @NonNls
   @NotNull
