@@ -24,4 +24,6 @@ public interface Scope {
 
   @NotNull
   AsyncResult<List<? extends Variable>> getVariables();
+
+  boolean isGlobal();
 }

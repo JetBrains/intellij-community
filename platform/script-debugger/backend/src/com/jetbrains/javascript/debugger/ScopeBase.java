@@ -21,4 +21,9 @@ public abstract class ScopeBase implements Scope {
   public Type getType() {
     return type;
   }
+
+  @Override
+  public final boolean isGlobal() {
+    return type == Type.GLOBAL || type == Type.LIBRARY;
+  }
 }
