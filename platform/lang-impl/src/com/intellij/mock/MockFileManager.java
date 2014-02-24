@@ -42,8 +42,8 @@ public class MockFileManager implements FileManager {
 
   @Override
   @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean physical) {
-    return new SingleRootFileViewProvider(myManager, file, physical);
+  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean eventSystemEnabled) {
+    return new SingleRootFileViewProvider(myManager, file, eventSystemEnabled);
   }
 
   public MockFileManager(final PsiManagerEx manager) {

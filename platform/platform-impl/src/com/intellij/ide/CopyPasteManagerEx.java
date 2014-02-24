@@ -58,17 +58,17 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public void addContentChangedListener(ContentChangedListener listener) {
+  public void addContentChangedListener(@NotNull ContentChangedListener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addContentChangedListener(final ContentChangedListener listener, Disposable parentDisposable) {
+  public void addContentChangedListener(@NotNull final ContentChangedListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeContentChangedListener(ContentChangedListener listener) {
+  public void removeContentChangedListener(@NotNull ContentChangedListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -256,6 +256,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
+  @NotNull
   @Override
   public Transferable[] getAllContents() {
     String clipString = getContents(DataFlavor.stringFlavor);

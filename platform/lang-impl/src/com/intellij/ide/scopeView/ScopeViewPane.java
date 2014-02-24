@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -252,6 +251,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return myViewPanel != null ? myViewPanel.getData(dataId) : null;
   }
 
+  @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     final ActionCallback callback = myViewPanel.getActionCallback();

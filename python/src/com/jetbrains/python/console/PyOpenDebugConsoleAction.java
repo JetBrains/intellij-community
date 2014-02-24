@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -53,6 +52,7 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {

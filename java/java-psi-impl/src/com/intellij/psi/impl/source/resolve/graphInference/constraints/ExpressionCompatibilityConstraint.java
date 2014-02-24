@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -78,9 +77,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiCallExpression) {
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
       if (argumentList != null) {
-        final Pair<PsiMethod,PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(argumentList);
-        final JavaResolveResult resolveResult = pair == null ? ((PsiCallExpression)myExpression).resolveMethodGenerics() : null;
-        final PsiMethod method = pair != null ? pair.first : (PsiMethod)resolveResult.getElement();
+        final JavaResolveResult resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
+        final PsiMethod method = (PsiMethod)resolveResult.getElement();
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
         if (method != null && !method.isConstructor()) {
@@ -105,21 +103,18 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.addCapturedVariable(typeParam);
           }
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          if (pair == null) {
-            if (method != null) {
-              //typeParams are already included
-              final Collection<PsiTypeParameter> params = session.getTypeParams();
-              InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(), myExpression.getManager(), myExpression);
-              final PsiExpression[] args = argumentList.getExpressions();
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
-              callSession.initExpressionConstraints(parameters, args, myExpression, method);
-              callSession.registerConstraints(returnType, myT);
-              if (callSession.repeatInferencePhases(true)) {
-                session.liftBounds(callSession.getInferenceVariables());
-              }
+          if (method != null) {
+            //typeParams are already included
+            final Collection<PsiTypeParameter> params = session.getTypeParams();
+            InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
+                                                                                                                                                                  : PsiSubstitutor.EMPTY, myExpression.getManager(), myExpression);
+            final PsiExpression[] args = argumentList.getExpressions();
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            callSession.initExpressionConstraints(parameters, args, myExpression, method);
+            callSession.registerConstraints(returnType, myT);
+            if (callSession.repeatInferencePhases(true)) {
+              session.liftBounds(callSession.getInferenceVariables());
             }
-          } else {
-            substitutor = pair.second;
           }
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)

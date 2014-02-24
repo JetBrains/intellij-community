@@ -259,7 +259,9 @@ public class InferenceSession {
               LOG.assertTrue(method != null);
               final PsiExpression[] newArgs = argumentList.getExpressions();
               final PsiParameter[] newParams = method.getParameterList().getParameters();
-              collectAdditionalConstraints(newParams, newArgs, method, ((MethodCandidateInfo)result).getSiteSubstitutor(), additionalConstraints);
+              if (newParams.length > 0) {
+                collectAdditionalConstraints(newParams, newArgs, method, ((MethodCandidateInfo)result).getSiteSubstitutor(), additionalConstraints);
+              }
             }
           }
         }
@@ -1087,8 +1089,8 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      LOG.assertTrue(sParameters.length == tParameters.length);
       if (session != null) {
+        LOG.assertTrue(sParameters.length == tParameters.length);
         for (int i = 0; i < tParameters.length; i++) {
           session.addConstraint(new TypeEqualityConstraint(tSubstitutor.substitute(tParameters[i].getType()),
                                                            sSubstitutor.substitute(sParameters[i].getType())));
@@ -1104,15 +1106,15 @@ public class InferenceSession {
         return false;
       }
 
-      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
-      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
+      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
 
       if (sPrimitive ^ tPrimitive) {
         final PsiMember member = ((PsiMethodReferenceExpression)arg).getPotentiallyApplicableMember();
         LOG.assertTrue(member != null);
         if (member instanceof PsiMethod) {
           final PsiType methodReturnType = ((PsiMethod)member).getReturnType();
-          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType ||
+          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType && methodReturnType != PsiType.VOID ||
               tPrimitive && methodReturnType instanceof PsiClassType) {
             return true;
           }

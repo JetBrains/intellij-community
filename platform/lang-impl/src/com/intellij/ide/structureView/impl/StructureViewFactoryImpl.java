@@ -106,8 +106,9 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
+  @NotNull
   @Override
-  public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
+  public Collection<StructureViewExtension> getAllExtensions(@NotNull Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
       MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map = myExtensions.getValue();
@@ -154,7 +155,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   @Override
-  public void runWhenInitialized(Runnable runnable) {
+  public void runWhenInitialized(@NotNull Runnable runnable) {
     if (myStructureViewWrapperImpl != null) {
       runnable.run();
     }
@@ -163,14 +164,20 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
-  @Override
-  public StructureView createStructureView(final FileEditor fileEditor, final StructureViewModel treeModel, final Project project) {
-    return new StructureViewComponent(fileEditor, treeModel, project);
-  }
-
+  @NotNull
   @Override
   public StructureView createStructureView(final FileEditor fileEditor,
-                                           final StructureViewModel treeModel, final Project project, final boolean showRootNode) {
+                                           @NotNull final StructureViewModel treeModel,
+                                           @NotNull final Project project) {
+    return createStructureView(fileEditor, treeModel, project, true);
+  }
+
+  @NotNull
+  @Override
+  public StructureView createStructureView(final FileEditor fileEditor,
+                                           @NotNull StructureViewModel treeModel,
+                                           @NotNull Project project,
+                                           final boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
   }
 }

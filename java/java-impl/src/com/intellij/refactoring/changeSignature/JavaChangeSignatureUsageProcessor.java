@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -884,7 +885,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static class ConflictSearcher {
     private final JavaChangeInfo myChangeInfo;
 
-    private ConflictSearcher(JavaChangeInfo changeInfo) {
+    private ConflictSearcher(@NotNull JavaChangeInfo changeInfo) {
       this.myChangeInfo = changeInfo;
     }
 
@@ -901,6 +902,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           LOG.error(e);
         }
       }
+      
+      checkContract(conflictDescriptions, myChangeInfo.getMethod());
 
       for (UsageInfo usageInfo : usagesSet) {
         final PsiElement element = usageInfo.getElement();
@@ -914,12 +917,20 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
           }
+
+          checkContract(conflictDescriptions, method);
         } else if (element instanceof PsiMethodReferenceExpression) {
           conflictDescriptions.putValue(element, "Changed method is used in method reference");
         }
       }
 
       return conflictDescriptions;
+    }
+
+    private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
+      if (ControlFlowAnalyzer.findContractAnnotation(method) != null) {
+        conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
+      }
     }
 
     private boolean needToChangeCalls() {
@@ -964,9 +975,6 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     private void addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
       String newMethodName = myChangeInfo.getNewName();
-      if (!(myChangeInfo instanceof JavaChangeInfo)) {
-        return;
-      }
       try {
         PsiMethod prototype;
         final PsiMethod method = myChangeInfo.getMethod();

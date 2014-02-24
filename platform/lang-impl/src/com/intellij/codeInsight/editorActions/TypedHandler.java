@@ -33,10 +33,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -48,6 +45,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -582,13 +580,35 @@ public class TypedHandler extends TypedActionHandlerBase {
 
       final FileType fileType = file.getFileType();
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
-      final boolean isBrace = braceMatcher.isLBraceToken(iterator, chars, fileType) || braceMatcher.isRBraceToken(iterator, chars, fileType);
+      boolean rBraceToken = braceMatcher.isRBraceToken(iterator, chars, fileType);
+      final boolean isBrace = braceMatcher.isLBraceToken(iterator, chars, fileType) || rBraceToken;
+      int lBraceOffset = -1;
+
+      if (Registry.is("typing.rbrace.reformats.block") &&
+          rBraceToken &&
+          braceMatcher.isStructuralBrace(iterator, chars, fileType) && offset > 0) {
+        lBraceOffset = BraceMatchingUtil.findLeftLParen(
+          highlighter.createIterator(offset - 1),
+          braceMatcher.getOppositeBraceTokenType(iterator.getTokenType()),
+          editor.getDocument().getCharsSequence(),
+          fileType
+        );
+      }
       if (element.getNode() != null && isBrace) {
+        final int finalLBraceOffset = lBraceOffset;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run(){
             try{
-              int newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+              int newOffset;
+              if (finalLBraceOffset != -1) {
+                RangeMarker marker = document.createRangeMarker(offset, offset + 1);
+                CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
+                newOffset = marker.getStartOffset();
+              } else {
+                newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+              }
+
               editor.getCaretModel().moveToOffset(newOffset + 1);
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               editor.getSelectionModel().removeSelection();

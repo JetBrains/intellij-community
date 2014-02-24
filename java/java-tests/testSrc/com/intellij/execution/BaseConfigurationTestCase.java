@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -5,7 +20,9 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.execution.junit.JUnitConfigurationProducer;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -25,6 +42,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TempFiles;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +82,7 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     ModuleRootModificationUtil.addModuleLibrary(module, mockJUnit.getUrl());
     ModuleRootModificationUtil.setModuleSdk(module, ModuleRootManager.getInstance(myModule).getSdk());
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    VirtualFile testCase = mockJUnit.findChild("junit").findChild("framework").findChild("TestCase.java");
+    VirtualFile testCase = mockJUnit.findFileByRelativePath("junit/framework/TestCase.java");
     assertNotNull(testCase);
     assertTrue(scope.contains(testCase));
     Module missingModule = createTempModule();
@@ -139,37 +157,39 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     return JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, scope);
   }
 
-  protected JUnitConfiguration createJUnitConfiguration(final PsiElement psiElement,
-                                                        final Class producerClass,
-                                                        final MapDataContext dataContext) {
+  protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
+                                                        @NotNull Class<? extends JUnitConfigurationProducer> producerClass,
+                                                        @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
     assert producer != null;
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+    assertNotNull(fromContext);
     return (JUnitConfiguration)fromContext.getConfiguration();
   }
 
-  protected final <T extends RunConfiguration> T createConfiguration(PsiElement psiElement) {
-    return (T)createConfiguration(psiElement, new MapDataContext());
+  protected final <T extends RunConfiguration> T createConfiguration(@NotNull PsiElement psiElement) {
+    return createConfiguration(psiElement, new MapDataContext());
   }
 
-  protected <T extends RunConfiguration> T createConfiguration(PsiElement psiElement, MapDataContext dataContext) {
+  protected <T extends RunConfiguration> T createConfiguration(@NotNull PsiElement psiElement, @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
-    return settings == null ? null : (T)settings.getConfiguration();
+    @SuppressWarnings("unchecked") T configuration = settings == null ? null : (T)settings.getConfiguration();
+    return configuration;
   }
 
-  public ConfigurationContext createContext(PsiElement psiClass) {
+  public ConfigurationContext createContext(@NotNull PsiElement psiClass) {
     MapDataContext dataContext = new MapDataContext();
     return createContext(psiClass, dataContext);
   }
 
-  public ConfigurationContext createContext(PsiElement psiClass, MapDataContext dataContext) {
-    dataContext.put(DataConstants.PROJECT, myProject);
-    if (dataContext.getData(DataConstants.MODULE) == null) {
-      dataContext.put(DataConstants.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
+  public ConfigurationContext createContext(@NotNull PsiElement psiClass, @NotNull MapDataContext dataContext) {
+    dataContext.put(CommonDataKeys.PROJECT, myProject);
+    if (LangDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
     }
-    dataContext.put(Location.LOCATION, PsiLocation.fromPsiElement(psiClass));
+    dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
     return ConfigurationContext.getFromContext(dataContext);
   }
 

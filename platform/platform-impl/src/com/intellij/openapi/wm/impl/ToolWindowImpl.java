@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
   }
 
+  @NotNull
   @Override
   public ActionCallback getReady(@NotNull final Object requestor) {
     final ActionCallback result = new ActionCallback();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +43,8 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     myProject = project;
   }
 
-  public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
+  @NotNull
+  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof ResourceBundleNode) return children;
 
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<AbstractTreeNode>>() {

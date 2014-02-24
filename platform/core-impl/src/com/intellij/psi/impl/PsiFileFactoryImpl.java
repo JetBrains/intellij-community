@@ -51,8 +51,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                    long modificationStamp, final boolean physical) {
-    return createFileFromText(name, fileType, text, modificationStamp, physical, true);
+                                    long modificationStamp, final boolean eventSystemEnabled) {
+    return createFileFromText(name, fileType, text, modificationStamp, eventSystemEnabled, true);
   }
 
   @Override
@@ -61,22 +61,22 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean physical, boolean markAsCopy) {
-    return createFileFromText(name, language, text, physical, markAsCopy, false);
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean eventSystemEnabled, boolean markAsCopy) {
+    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
   }
 
   @Override
   public PsiFile createFileFromText(@NotNull String name,
                                     @NotNull Language language,
                                     @NotNull CharSequence text,
-                                    boolean physical,
+                                    boolean eventSystemEnabled,
                                     boolean markAsCopy,
                                     boolean noSizeLimit) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }
-    return trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
+    return trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
   }
 
   @Override
@@ -85,17 +85,17 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     @NotNull FileType fileType,
                                     @NotNull CharSequence text,
                                     long modificationStamp,
-                                    final boolean physical,
+                                    final boolean eventSystemEnabled,
                                     boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     if(fileType instanceof LanguageFileType){
       final Language language =
           LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
-      final PsiFile file = trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
+      final PsiFile file = trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
       if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
-      new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      new SingleRootFileViewProvider(myManager, virtualFile, eventSystemEnabled);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
     if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
     return plainTextFile;

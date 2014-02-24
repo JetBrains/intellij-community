@@ -8,9 +8,9 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
 
     {
-        bar(new I() {
+        bar(new I<Object>() {
             @Override
-            public Object foo(Y x) {
+            public Object foo(Y<Object> x) {
                 <selection>return x;</selection>
             }
         });

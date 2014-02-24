@@ -1,6 +1,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
@@ -10,7 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.UUID;
 
-final class ConfigurableWebBrowser extends WebBrowserBase {
+final class ConfigurableWebBrowser extends WebBrowser {
+  private final UUID id;
+  @NotNull private BrowserFamily family;
+  @NotNull private String name;
   private boolean active;
   private String path;
 
@@ -31,7 +35,9 @@ final class ConfigurableWebBrowser extends WebBrowserBase {
                                 @Nullable String path,
                                 boolean active,
                                 @Nullable BrowserSpecificSettings specificSettings) {
-    super(id, family, name);
+    this.id = id;
+    this.family = family;
+    this.name = name;
 
     this.path = StringUtil.nullize(path);
     this.active = active;
@@ -119,5 +125,34 @@ final class ConfigurableWebBrowser extends WebBrowserBase {
   @Override
   public int hashCode() {
     return getId().hashCode();
+  }
+
+  @Override
+  @NotNull
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  @NotNull
+  public final UUID getId() {
+    return id;
+  }
+
+  @Override
+  @NotNull
+  public BrowserFamily getFamily() {
+    return family;
+  }
+
+  @Override
+  @NotNull
+  public String getBrowserNotFoundMessage() {
+    return IdeBundle.message("error.0.browser.path.not.specified", getName());
+  }
+
+  @Override
+  public String toString() {
+    return getName() + " (" + getPath() + ")";
   }
 }

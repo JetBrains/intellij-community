@@ -350,6 +350,8 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
+                        serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
@@ -1464,7 +1466,7 @@
     <projectTemplate projectType="JAVA_MODULE" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
     <refactoring.elementListenerProvider implementation="com.intellij.codeInspection.ex.AdditionalAnnotationsRefactoringElementListener"/>
-    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
+    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
   </extensions>

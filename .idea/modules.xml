@@ -193,6 +193,11 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/xslt-debugger-engine.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/xslt-debugger-engine.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" filepath="$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" group="java"/>
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" group="xml" />
     </modules>
   </component>
 </project>

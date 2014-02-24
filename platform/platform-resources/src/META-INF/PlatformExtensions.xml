@@ -288,6 +288,8 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
+    <lang.lineWrapStrategy language="TEXT" implementationClass="com.intellij.openapi.editor.TextLineWrapPositionStrategy"/>
+
     <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>

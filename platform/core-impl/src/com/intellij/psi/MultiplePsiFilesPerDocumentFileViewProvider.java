@@ -42,8 +42,8 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   private final ConcurrentMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
 
-  public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean physical) {
-    super(manager, virtualFile, physical, Language.ANY);
+  public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean eventSystemEnabled) {
+    super(manager, virtualFile, eventSystemEnabled, Language.ANY);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.lang.java;
 
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
+  @NotNull
   @Override
-  public PsiElement[] getAnonymousElements(PsiElement parent) {
+  public PsiElement[] getAnonymousElements(@NotNull PsiElement parent) {
     if (suite(parent)) {
       if (parent instanceof PsiCompiledElement) {
         parent = parent.getNavigationElement();

@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.text;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -137,22 +138,24 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static boolean assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
-    if ((end > newFileText.length() || start > end) && ApplicationManager.getApplication().isInternal()) {
-      String newTextBefore = newFileText.subSequence(0, start).toString();
-      String oldTextBefore = file.getText().subSequence(0, start).toString();
+    if (end > newFileText.length() || start > end) {
       String message = "IOOBE: type=" + elementType +
+                       "; file=" + file +
+                       "; file.class=" + file.getClass() +
                        "; start=" + start +
                        "; end=" + end +
-                       "; oldText=" + node.getText() +
-                       "; newText=" + newFileText.subSequence(start, newFileText.length()) +
                        "; length=" + node.getTextLength();
+      String newTextBefore = newFileText.subSequence(0, start).toString();
+      String oldTextBefore = file.getText().subSequence(0, start).toString();
       if (oldTextBefore.equals(newTextBefore)) {
         message += "; oldTextBefore==newTextBefore";
-      } else {
-        message += "; oldTextBefore=" + oldTextBefore +
-                   "; newTextBefore=" + newTextBefore;
       }
-      LOG.error(message);
+      LOG.error(message,
+                new Attachment(file.getName() + "_oldText.txt", node.getText()),
+                new Attachment(file.getName() + "_newText.txt", node.getText()),
+                new Attachment(file.getName() + "_oldTextBefore.txt", oldTextBefore),
+                new Attachment(file.getName() + "_newTextBefore.txt", newTextBefore)
+      );
       return false;
     }
     return true;

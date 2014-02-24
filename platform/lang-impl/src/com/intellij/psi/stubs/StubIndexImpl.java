@@ -219,20 +219,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+  public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                        @NotNull Key key,
                                                        @NotNull Project project,
                                                        GlobalSearchScope scope,
+                                                       Class<Psi> requiredClass,
                                                        @NotNull Processor<? super Psi> processor) {
-    return process(indexKey, key, project, scope, null, processor);
+    return processElements(indexKey, key, project, scope, null, requiredClass, processor);
   }
 
   @Override
-  public <Key, Psi extends PsiElement> boolean process(@NotNull final StubIndexKey<Key, Psi> indexKey,
+  public <Key, Psi extends PsiElement> boolean processElements(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                        @NotNull final Key key,
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
+                                                       final Class<Psi> requiredClass,
                                                        @NotNull final Processor<? super Psi> processor) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
@@ -259,7 +261,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             if (file == null || scope != null && !scope.contains(file)) {
               return true;
             }
-            return myStubProcessingHelper.processStubsInFile(project, file, value, processor);
+            return myStubProcessingHelper.processStubsInFile(project, file, value, processor, requiredClass);
           }
 
         });

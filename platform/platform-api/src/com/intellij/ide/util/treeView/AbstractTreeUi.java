@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -717,8 +717,9 @@ public class AbstractTreeUi {
     Runnable update = new Runnable() {
       @Override
       public void run() {
-        if (getElementFromDescriptor(rootDescriptor.get()) != null) {
-          createMapping(getElementFromDescriptor(rootDescriptor.get()), getRootNode());
+        Object fromDescriptor = getElementFromDescriptor(rootDescriptor.get());
+        if (fromDescriptor != null) {
+          createMapping(fromDescriptor, getRootNode());
         }
 
 
@@ -3070,8 +3071,9 @@ public class AbstractTreeUi {
           public void run() {
             if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
               removeMapping(oldElement, childNode, newElement.get());
-              if (newElement.get() != null) {
-                createMapping(newElement.get(), childNode);
+              Object newE = newElement.get();
+              if (newE != null) {
+                createMapping(newE, childNode);
               }
               NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
               if (parentDescriptor != null) {
@@ -3660,7 +3662,9 @@ public class AbstractTreeUi {
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (descriptor == null) return;
     final Object element = getElementFromDescriptor(descriptor);
-    removeMapping(element, node, null);
+    if (element != null) {
+      removeMapping(element, node, null);
+    }
     myAutoExpandRoots.remove(element);
     node.setUserObject(null);
     node.removeAllChildren();
@@ -4565,7 +4569,7 @@ public class AbstractTreeUi {
     myUpdaterState = null;
   }
 
-  private void createMapping(Object element, DefaultMutableTreeNode node) {
+  private void createMapping(@NotNull Object element, DefaultMutableTreeNode node) {
     element = TreeAnchorizer.getService().createAnchor(element);
     if (!myElementToNodeMap.containsKey(element)) {
       myElementToNodeMap.put(element, node);
@@ -4585,7 +4589,7 @@ public class AbstractTreeUi {
     }
   }
 
-  private void removeMapping(Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
+  private void removeMapping(@NotNull Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
     element = TreeAnchorizer.getService().createAnchor(element);
     final Object value = myElementToNodeMap.get(element);
     if (value != null) {

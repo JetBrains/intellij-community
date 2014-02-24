@@ -116,15 +116,11 @@ public class Alarm implements Disposable {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
       final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
       final MessageBusConnection connection = bus.connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           connection.disconnect();
           addRequest(request, delay);
-        }
-
-        @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
         }
       });
     } else {

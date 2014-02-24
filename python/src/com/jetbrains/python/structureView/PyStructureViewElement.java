@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -120,6 +121,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return name != null ? name.hashCode() : 0;
   }
 
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     final Collection<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>();
     for (PyElement e : getElementChildren(myElement)) {
@@ -232,6 +234,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return false;
   }
 
+  @NotNull
   @Override
   public ItemPresentation getPresentation() {
     return new ColoredItemPresentation() {

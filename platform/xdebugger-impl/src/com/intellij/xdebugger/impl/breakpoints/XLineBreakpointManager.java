@@ -38,7 +38,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -80,6 +83,7 @@ public class XLineBreakpointManager {
       final MyDependentBreakpointListener myDependentBreakpointListener = new MyDependentBreakpointListener();
       myDependentBreakpointManager.addListener(myDependentBreakpointListener);
       Disposer.register(project, new Disposable() {
+        @Override
         public void dispose() {
           myDependentBreakpointManager.removeListener(myDependentBreakpointListener);
         }
@@ -127,6 +131,7 @@ public class XLineBreakpointManager {
     if (myProject.isDefault()) return;
 
     Runnable runnable = new DumbAwareRunnable() {
+      @Override
       public void run() {
         for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
           breakpoint.updateUI();
@@ -177,7 +182,8 @@ public class XLineBreakpointManager {
 
   private void removeBreakpoints(final List<? extends XBreakpoint<?>> toRemove) {
     new WriteAction() {
-      protected void run(final Result result) {
+      @Override
+      protected void run(@NotNull final Result result) {
         for (XBreakpoint<?> breakpoint : toRemove) {
           XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
         }
@@ -201,6 +207,7 @@ public class XLineBreakpointManager {
 
   public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
     myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
+      @Override
       public void run() {
         breakpoint.updateUI();
       }
@@ -209,6 +216,7 @@ public class XLineBreakpointManager {
 
   public void queueAllBreakpointsUpdate() {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
+      @Override
       public void run() {
         for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
           breakpoint.updateUI();
@@ -218,11 +226,13 @@ public class XLineBreakpointManager {
   }
 
   private class MyDocumentListener extends DocumentAdapter {
+    @Override
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
       if (breakpoints != null && !breakpoints.isEmpty()) {
         myBreakpointsUpdateQueue.queue(new Update(document) {
+          @Override
           public void run() {
             updateBreakpoints(document);
           }
@@ -232,6 +242,7 @@ public class XLineBreakpointManager {
   }
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
+    @Override
     public void mouseClicked(final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
@@ -245,12 +256,14 @@ public class XLineBreakpointManager {
       }
 
       PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
+        @Override
         public void run() {
           final int line = editor.xyToLogicalPosition(mouseEvent.getPoint()).line;
           final Document document = editor.getDocument();
           final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
           if (line >= 0 && line < document.getLineCount() && file != null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
 
@@ -274,10 +287,12 @@ public class XLineBreakpointManager {
   }
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
+    @Override
     public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
       queueBreakpointUpdate(slave);
     }
 
+    @Override
     public void dependencyCleared(final XBreakpoint<?> breakpoint) {
       queueBreakpointUpdate(breakpoint);
     }

@@ -160,23 +160,24 @@ public class SheetController {
 
     sheetPanel.add(headerLabel);
 
-    JEditorPane textArea = new JEditorPane();
+    JEditorPane messageTextPane = new JEditorPane();
 
-    textArea.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    textArea.setFont(regularFont);
-    textArea.setEditable(false);
+    messageTextPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+    messageTextPane.setFont(regularFont);
+    messageTextPane.setEditable(false);
 
-    textArea.setContentType("text/html");
-    textArea.setSize(250, Short.MAX_VALUE);
-    textArea.setText(message);
-    messageArea.setSize(250, textArea.getPreferredSize().height);
-    textArea.setSize(messageArea);
+    messageTextPane.setContentType("text/html");
+    messageTextPane.setSize(250, Short.MAX_VALUE);
+    messageTextPane.setText(message);
+    messageArea.setSize(250, messageTextPane.getPreferredSize().height);
+    messageTextPane.setSize(messageArea);
 
-    textArea.setOpaque(false);
+    messageTextPane.setOpaque(false);
+    messageTextPane.setFocusable(false);
 
-    sheetPanel.add(textArea);
+    sheetPanel.add(messageTextPane);
 
-    textArea.repaint();
+    messageTextPane.repaint();
 
 
     SHEET_HEIGHT = 20 + headerLabel.getPreferredSize().height + 10 + messageArea.height + 10 + 70;
@@ -187,8 +188,10 @@ public class SheetController {
     ico.setLocation(20, 20);
     sheetPanel.add(ico);
     headerLabel.setLocation(120, 20);
-    textArea.setLocation(120, 20 + headerLabel.getPreferredSize().height + 10);
+    messageTextPane.setLocation(120, 20 + headerLabel.getPreferredSize().height + 10);
     layoutWithAbsoluteLayout(buttons, sheetPanel);
+
+    sheetPanel.setFocusCycleRoot(true);
 
     return sheetPanel;
   }
@@ -266,8 +269,6 @@ public class SheetController {
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
     final BufferedImage image = UIUtil.createImage(SHEET_WIDTH, SHEET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-
-
 
     mySheetPanel.paint(image.createGraphics());
     myOffScreenFrame.dispose();

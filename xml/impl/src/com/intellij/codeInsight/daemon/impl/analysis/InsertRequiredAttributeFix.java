@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,20 +37,20 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 18-Nov-2005
  */
-public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
-  private final XmlTag myTag;
+public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private final String myAttrName;
   private final String[] myValues;
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
   public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
-    myTag = tag;
+    super(tag);
     myAttrName = attrName;
     myValues = values;
   }
@@ -65,29 +63,18 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
   @Override
   @NotNull
-  public String getName() {
-    return getText();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    invoke(project, null, myTag.getContainingFile());
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTag.isValid();
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") final Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    XmlTag myTag = (XmlTag)startElement;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
 
     final XmlElementDescriptor descriptor = myTag.getDescriptor();
