@@ -17,9 +17,9 @@ package com.intellij.vcs.log.newgraph.render;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.graph.PaintInfo;
+import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
-import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
+import com.intellij.vcs.log.newgraph.render.cell.AbstractGraphCellGenerator;
 import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
 import com.intellij.vcs.log.newgraph.render.cell.GraphCellGeneratorImpl;
 import org.jetbrains.annotations.NotNull;
@@ -36,17 +36,11 @@ public class GraphRender {
   private final GraphCellGeneratorImpl myCellGenerator;
 
   @NotNull
-  private final ThickHoverController myHoverController;
-
-  @NotNull
   private final GraphCellPainter myCellPainter;
 
-  public GraphRender(@NotNull MutableGraph mutableGraph,
-                     @NotNull ThickHoverController hoverController,
-                     @NotNull ElementColorManager colorManager) {
-    myHoverController = hoverController;
+  public GraphRender(@NotNull MutableGraph mutableGraph, @NotNull ElementColorManager colorManager) {
     myCellGenerator = new GraphCellGeneratorImpl(mutableGraph);
-    myCellPainter = new SimpleGraphCellPainter(myHoverController, colorManager);
+    myCellPainter = new SimpleGraphCellPainter(mutableGraph.getThickHoverController(), colorManager);
   }
 
   @NotNull
@@ -59,6 +53,28 @@ public class GraphRender {
     myCellPainter.draw(g2, graphCell);
 
     return new PaintInfoImpl(image, imageAndBufferImageWidth.getFirst());
+  }
+
+  public boolean isShowLongEdges() {
+    return myCellGenerator.isShowLongEdges();
+  }
+
+  public void setShowLongEdges(boolean longEdgesHidden) {
+    myCellGenerator.setShowLongEdges(longEdgesHidden);
+  }
+
+  public void invalidate() {
+    myCellGenerator.invalidate();
+  }
+
+  @NotNull
+  public AbstractGraphCellGenerator getCellGenerator() {
+    return myCellGenerator;
+  }
+
+  @NotNull
+  public GraphCellPainter getCellPainter() {
+    return myCellPainter;
   }
 
   @NotNull
@@ -85,14 +101,6 @@ public class GraphRender {
       maxElementsCount = Math.max(maxElementsCount, myCellGenerator.getGraphCell(visibleRowIndex + 1).getCountElements());
     }
     return WIDTH_NODE * maxElementsCount;
-  }
-
-  public boolean isShowLongEdges() {
-    return myCellGenerator.isShowLongEdges();
-  }
-
-  public void setShowLongEdges(boolean longEdgesHidden) {
-    myCellGenerator.setShowLongEdges(longEdgesHidden);
   }
 
   private static class PaintInfoImpl implements PaintInfo {

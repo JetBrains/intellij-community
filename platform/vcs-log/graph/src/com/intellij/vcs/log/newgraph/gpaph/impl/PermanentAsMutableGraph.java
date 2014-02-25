@@ -26,13 +26,21 @@ import java.util.List;
 
 public class PermanentAsMutableGraph extends AbstractMutableGraph<PermanentAsMutableGraph.GraphWithElementsInfoImpl> {
 
+  private final ThickHoverControllerTest myThickHoverController = new ThickHoverControllerTest();
+
   public PermanentAsMutableGraph(@NotNull PermanentGraph graph, @NotNull PermanentGraphLayout layout) {
     super(new IDIntToInt(graph.nodesCount()), new GraphWithElementsInfoImpl(graph), layout);
   }
 
   @Override
   public void performAction(@NotNull InternalGraphAction action) {
-    // do nothing
+    myThickHoverController.performAction(action);
+  }
+
+  @NotNull
+  @Override
+  public ThickHoverController getThickHoverController() {
+    return myThickHoverController;
   }
 
   protected static class GraphWithElementsInfoImpl implements GraphWithElementsInfo {

@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph.gpaph;
+package com.intellij.vcs.log.newgraph.gpaph.actions;
 
-import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
+import org.jetbrains.annotations.Nullable;
 
-public interface MutableGraph {
-  int getCountVisibleNodes();
-
-  @NotNull
-  Node getNode(int visibleNodeIndex);
-
-  int getIndexInPermanentGraph(int visibleNodeIndex);
-
-  void performAction(@NotNull InternalGraphAction action);
-
-  @NotNull
-  ThickHoverController getThickHoverController();
+public class ClickInternalGraphAction extends InternalGraphActionWithSomeInfo<GraphElement> {
+  public ClickInternalGraphAction(@Nullable GraphElement graphElement) {
+    super(graphElement);
+  }
 }

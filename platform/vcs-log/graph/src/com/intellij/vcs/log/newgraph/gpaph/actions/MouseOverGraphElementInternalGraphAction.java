@@ -18,8 +18,8 @@ package com.intellij.vcs.log.newgraph.gpaph.actions;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import org.jetbrains.annotations.Nullable;
 
-public class ClickGraphAction extends GraphActionWithSomeInfo<GraphElement> {
-  public ClickGraphAction(@Nullable GraphElement graphElement) {
+public class MouseOverGraphElementInternalGraphAction extends InternalGraphActionWithSomeInfo<GraphElement> {
+  public MouseOverGraphElementInternalGraphAction(@Nullable GraphElement graphElement) {
     super(graphElement);
   }
 }

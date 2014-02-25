@@ -18,7 +18,7 @@ package com.intellij.vcs.log.newgraph.gpaph.impl;
 
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
-import com.intellij.vcs.log.newgraph.gpaph.actions.HoverGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +39,9 @@ public class ThickHoverControllerTest implements ThickHoverController {
     return element.equals(hoverElement);
   }
 
-  @Override
   public void performAction(@NotNull InternalGraphAction action) {
-    if (action instanceof HoverGraphAction) {
-      hoverElement = ((HoverGraphAction)action).getInfo();
+    if (action instanceof MouseOverGraphElementInternalGraphAction) {
+      hoverElement = ((MouseOverGraphElementInternalGraphAction)action).getInfo();
     }
   }
 }

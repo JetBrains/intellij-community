@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.vcs.log.newgraph.gpaph.actions;
 
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.Nullable;
 
-public class GraphActionWithSomeInfo<I> implements InternalGraphAction {
-  @Nullable
-  private final I info;
-
-  public GraphActionWithSomeInfo(@Nullable I info) {
-    this.info = info;
-  }
-
-  @Nullable
-  public I getInfo() {
-    return info;
+public class MouseOverArrowInternalGraphAction extends InternalGraphActionWithSomeInfo<SpecialRowElement> {
+  public MouseOverArrowInternalGraphAction(@Nullable SpecialRowElement info) {
+    super(info);
   }
 }

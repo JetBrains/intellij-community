@@ -26,7 +26,6 @@ import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.impl.PermanentAsMutableGraph;
-import com.intellij.vcs.log.newgraph.gpaph.impl.ThickHoverControllerTest;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphLayoutBuilder;
@@ -89,12 +88,9 @@ public class GraphFacadeImpl implements GraphFacade {
         }
       }
     };
-    GraphRender graphRender = new GraphRender(mutableGraph, new ThickHoverControllerTest(), elementColorManager);
-    return new GraphFacadeImpl(colorManager, flags, permanentGraph, graphLayout, mutableGraph, graphRender);
+    GraphRender graphRender = new GraphRender(mutableGraph, elementColorManager);
+    return new GraphFacadeImpl(flags, permanentGraph, graphLayout, mutableGraph, graphRender);
   }
-
-  @NotNull
-  private final GraphColorManager myColorManager;
 
   @NotNull
   private final GraphFlags myGraphFlags;
@@ -107,19 +103,25 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @NotNull
   private final MutableGraph myMutableGraph;
+
   @NotNull
   private final GraphRender myGraphRender;
 
-  public GraphFacadeImpl(@NotNull GraphColorManager colorManager, @NotNull GraphFlags graphFlags, @NotNull PermanentGraph permanentGraph,
+  @NotNull
+  private final GraphActionDispatcher myActionDispatcher;
+
+  public GraphFacadeImpl(@NotNull GraphFlags graphFlags,
+                         @NotNull PermanentGraph permanentGraph,
                          @NotNull PermanentGraphLayout permanentGraphLayout,
                          @NotNull MutableGraph mutableGraph,
                          @NotNull GraphRender graphRender) {
-    myColorManager = colorManager;
     myGraphFlags = graphFlags;
     myPermanentGraph = permanentGraph;
     myPermanentGraphLayout = permanentGraphLayout;
     myMutableGraph = mutableGraph;
     myGraphRender = graphRender;
+
+    myActionDispatcher = new GraphActionDispatcher(permanentGraph, mutableGraph, graphRender);
   }
 
   @NotNull
@@ -131,10 +133,7 @@ public class GraphFacadeImpl implements GraphFacade {
   @Nullable
   @Override
   public GraphAnswer performAction(@NotNull GraphAction action) {
-    if (action instanceof LongEdgesAction) {
-      myGraphRender.setShowLongEdges(((LongEdgesAction)action).shouldShowLongEdges());
-    }
-    return null;
+    return myActionDispatcher.performAction(action);
   }
 
   @NotNull

@@ -15,11 +15,18 @@
  */
 package com.intellij.vcs.log.newgraph.gpaph.actions;
 
-import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import org.jetbrains.annotations.Nullable;
 
-public class HoverGraphAction extends GraphActionWithSomeInfo<GraphElement> {
-  public HoverGraphAction(@Nullable GraphElement graphElement) {
-    super(graphElement);
+public class InternalGraphActionWithSomeInfo<I> implements InternalGraphAction {
+  @Nullable
+  private final I info;
+
+  public InternalGraphActionWithSomeInfo(@Nullable I info) {
+    this.info = info;
+  }
+
+  @Nullable
+  public I getInfo() {
+    return info;
   }
 }
