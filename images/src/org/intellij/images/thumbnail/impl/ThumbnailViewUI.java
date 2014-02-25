@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -523,7 +523,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class VFSListener extends VirtualFileAdapter {
-        public void contentsChanged(VirtualFileEvent event) {
+        public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
                 int index = ((DefaultListModel) list.getModel()).indexOf(file);
@@ -534,7 +534,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
-        public void fileDeleted(VirtualFileEvent event) {
+        public void fileDeleted(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             VirtualFile root = thumbnailView.getRoot();
             if (root != null && VfsUtil.isAncestor(file, root, false)) {
@@ -545,15 +545,15 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
-        public void propertyChanged(VirtualFilePropertyEvent event) {
+        public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
             refresh();
         }
 
-        public void fileCreated(VirtualFileEvent event) {
+        public void fileCreated(@NotNull VirtualFileEvent event) {
             refresh();
         }
 
-        public void fileMoved(VirtualFileMoveEvent event) {
+        public void fileMoved(@NotNull VirtualFileMoveEvent event) {
             refresh();
         }
     }

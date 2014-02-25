@@ -106,6 +106,7 @@ public class AboutDialog extends JDialog {
       }
 
       public void windowLostFocus(WindowEvent e) {
+        if (e.getOppositeWindow() == null) return;
         long eventTime = System.currentTimeMillis();
         if (eventTime - showTime.get() > delta && e.getOppositeWindow() != e.getWindow()) {
           dispose();
@@ -254,6 +255,9 @@ public class AboutDialog extends JDialog {
       UIUtil.applyRenderingHints(g);
 
       Font labelFont = UIUtil.getLabelFont();
+      if (SystemInfo.isWindows) {
+        labelFont = new Font("Tahoma", Font.PLAIN, 12);
+      }
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(col);

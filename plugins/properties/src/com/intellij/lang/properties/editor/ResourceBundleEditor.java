@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,14 +364,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
     myVfsListener = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
           recreateEditorsPanel();
         }
       }
 
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         for (PropertiesFile file : myEditors.keySet()) {
           if (Comparing.equal(file.getVirtualFile(), event.getFile())) {
             recreateEditorsPanel();
@@ -381,7 +381,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
 
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
           if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
             recreateEditorsPanel();

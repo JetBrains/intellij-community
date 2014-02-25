@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -84,8 +83,12 @@ public class BooleanConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement().getParent();
+      if (!(element instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiNewExpression expression = (PsiNewExpression)element;
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;

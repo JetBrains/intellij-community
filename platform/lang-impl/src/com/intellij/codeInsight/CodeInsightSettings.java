@@ -111,6 +111,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
+  public boolean REFORMAT_BLOCK_ON_RBRACE = true;
 
   public int REFORMAT_ON_PASTE = INDENT_EACH_LINE;
   public static final int NO_REFORMAT = 1;

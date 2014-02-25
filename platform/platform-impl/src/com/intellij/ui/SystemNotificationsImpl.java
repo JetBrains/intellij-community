@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -33,65 +34,58 @@ import java.util.Set;
 @State(
   name = "SystemNotifications",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  }
 )
 public class SystemNotificationsImpl extends SystemNotifications implements PersistentStateComponent<SystemNotificationsImpl.State> {
+  public static class State {
+    public Set<String> NOTIFICATIONS = new HashSet<String>();
+  }
+
+  interface Notifier {
+    void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description);
+  }
+
+  private final Notifier myNotifier = getPlatformNotifier();
   private State myState = new State();
-  private boolean myGrowlDisabled = false;
 
-  public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (!areNotificationsEnabled() || ApplicationManager.getApplication().isActive()) return;
-
-    if (SystemInfo.isLinux && Registry.is("ide.linux.gtk.notifications.enabled") ) {
-      LibNotifyWrapper.showWithAppIcon(title, text);
-      return;
-    }
-
-    final MacNotifications notifications;
-    try {
-      notifications = getMacNotifications();
-    }
-    catch (Throwable e) {
-      myGrowlDisabled = true;
-      return;
-    }
-
-    myState.NOTIFICATIONS.add(notificationName);
-    notifications.notify(myState.NOTIFICATIONS, notificationName, title, text);
-  }
-
-  private static MacNotifications getMacNotifications() {
-    return SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled") ?
-                      MountainLionNotifications.getNotifications() : GrowlNotifications.getNotifications();
-  }
-
-  private boolean areNotificationsEnabled() {
-    boolean enabled = false;
-
-    if (SystemInfo.isMac) {
-      enabled = !(myGrowlDisabled || "true".equalsIgnoreCase(System.getProperty("growl.disable")));
-      if (!enabled) {
-        enabled = SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled");
-      }
-    } else {
-        enabled = SystemInfo.isLinux && Registry.is("ide.linux.gtk.notifications.enabled");
-    }
-
-    return enabled;
-  }
-
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(final State state) {
     myState = state;
   }
 
+  @Override
+  public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
+    if (myNotifier != null && !ApplicationManager.getApplication().isActive()) {
+      myState.NOTIFICATIONS.add(notificationName);
+      myNotifier.notify(myState.NOTIFICATIONS, notificationName, title, text);
+    }
+  }
 
-  public static class State {
-    public Set<String> NOTIFICATIONS = new HashSet<String>();
+  private static Notifier getPlatformNotifier() {
+    try {
+      if (SystemInfo.isMac) {
+        if (SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled")) {
+          return MountainLionNotifications.getInstance();
+        }
+        if (!Boolean.getBoolean("growl.disable")) {
+          return GrowlNotifications.getInstance();
+        }
+      }
+
+      if (SystemInfo.isXWindow && Registry.is("ide.libnotify.enabled") ) {
+        return LibNotifyWrapper.getInstance();
+      }
+    }
+    catch (Throwable t) {
+      Logger.getInstance(SystemNotifications.class).error(t);
+    }
+
+    return null;
   }
 }

@@ -1,15 +1,13 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.util.indexing.FileBasedIndex;
-
-import java.util.List;
 
 /**
  * Author: dmitrylomov
@@ -35,11 +33,9 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
 
 
   @Override
-  protected Object stubTreeAndIndexDoNotMatch(StubTree stubTree,
-                                            PsiFileWithStubSupport psiFile,
-                                            List<StubElement<?>> plained,
-                                            VirtualFile virtualFile,
-                                            StubTree stubTreeFromIndex) {
+  protected Object stubTreeAndIndexDoNotMatch(StubTree stubTree, PsiFileWithStubSupport psiFile) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), virtualFile);
     String details = "Please report the problem to JetBrains with the file attached";
     details += "\npsiFile" + psiFile;
     details += "\npsiFile.class" + psiFile.getClass();

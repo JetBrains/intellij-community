@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
@@ -26,7 +25,8 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,10 +204,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   public PsiInferenceHelper getInferenceHelper(LanguageLevel languageLevel) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myTestHelper != null ? myTestHelper : new PsiOldInferenceHelper(myManager);
+    if (ApplicationManager.getApplication().isUnitTestMode() && myTestHelper != null) {
+      return myTestHelper;
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Registry.is("enable.graph.inference", true)) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return new PsiGraphInferenceHelper(myManager);
     }
     return new PsiOldInferenceHelper(myManager);

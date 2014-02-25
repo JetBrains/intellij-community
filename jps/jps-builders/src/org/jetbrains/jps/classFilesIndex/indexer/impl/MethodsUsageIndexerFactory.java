@@ -22,9 +22,9 @@ import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexerFactory;
 /**
 * @author Dmitry Batkovich
 */
-public class MethodsUsageIndexerFactory implements ClassFileIndexerFactory<String, TObjectIntHashMap<MethodIncompleteSignature>> {
+public class MethodsUsageIndexerFactory implements ClassFileIndexerFactory<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> {
   @Override
-  public ClassFileIndexer<String, TObjectIntHashMap<MethodIncompleteSignature>> create() {
+  public ClassFileIndexer<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> create() {
     return new MethodsUsageIndexer();
   }
 }

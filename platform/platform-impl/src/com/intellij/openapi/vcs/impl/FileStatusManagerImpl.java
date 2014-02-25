@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,13 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       throw new AssertionError("Should not be called");
     }
 
+    @NotNull
     @Override
     public ColorKey getColorKey() {
       throw new AssertionError("Should not be called");
     }
 
+    @NotNull
     @Override
     public String getId() {
       throw new AssertionError("Should not be called");
@@ -175,7 +177,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   @Override
-  public void addFileStatusListener(final FileStatusListener listener, Disposable parentDisposable) {
+  public void addFileStatusListener(@NotNull final FileStatusListener listener, @NotNull Disposable parentDisposable) {
     addFileStatusListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -275,14 +277,14 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   @Override
-  public void removeFileStatusListener(FileStatusListener listener) {
+  public void removeFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.remove(listener);
   }
 
   @Override
-  public Color getNotChangedDirectoryColor(VirtualFile vf) {
+  public Color getNotChangedDirectoryColor(@NotNull VirtualFile vf) {
     final Color notChangedColor = FileStatus.NOT_CHANGED.getColor();
-    if (vf == null || !vf.isDirectory()) {
+    if (!vf.isDirectory()) {
       return notChangedColor;
     }
     final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);

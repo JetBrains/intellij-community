@@ -271,7 +271,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   @NotNull
-  public Collection<Caret> getAllCarets() {
+  public List<Caret> getAllCarets() {
     List<Caret> carets;
     synchronized (myCarets) {
       carets = new ArrayList<Caret>(myCarets);

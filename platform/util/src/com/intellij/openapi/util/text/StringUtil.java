@@ -2635,7 +2635,7 @@ public class StringUtil extends StringUtilRt {
    * i.e. when java.util.regex.Pattern match goes out of control.
    */
   public abstract static class BombedCharSequence implements CharSequence {
-    private CharSequence delegate;
+    private final CharSequence delegate;
     private int i = 0;
 
     public BombedCharSequence(@NotNull CharSequence sequence) {

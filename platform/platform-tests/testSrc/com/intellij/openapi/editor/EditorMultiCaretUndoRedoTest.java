@@ -21,14 +21,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
-import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {

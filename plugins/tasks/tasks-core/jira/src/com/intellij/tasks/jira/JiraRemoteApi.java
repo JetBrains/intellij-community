@@ -3,6 +3,9 @@ package com.intellij.tasks.jira;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskState;
+import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
+import com.intellij.tasks.jira.rest.api20alpha1.JiraRestApi20Alpha1;
+import com.intellij.tasks.jira.soap.JiraSoapApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,13 +23,6 @@ public abstract class JiraRemoteApi {
     myRepository = repository;
   }
 
-  /**
-   * Used to clone original repository in {@link TaskRepositoryConfigurable}
-   * @param repository new repository for which copy should be created
-   * @return new instance of this {@link JiraRemoteApi}
-   */
-  public abstract JiraRemoteApi cloneFor(@NotNull JiraRepository repository);
-
   @NotNull
   public abstract List<Task> findTasks(String jql, int max) throws Exception;
 
@@ -38,13 +34,52 @@ public abstract class JiraRemoteApi {
   public abstract void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception;
 
   @NotNull
-  public abstract String getVersionName();
+  public final String getVersionName() {
+    return getType().getVersionName();
+  }
+
+  @Override
+  public final String toString() {
+    return "JiraRemoteApi(" + getType().getVersionName() + ")";
+  }
 
   @NotNull
   public abstract ApiType getType();
 
   public enum ApiType {
-    SOAP,
-    REST
+    SOAP("SOAP") {
+      @NotNull
+      @Override
+      public JiraSoapApi createApi(@NotNull JiraRepository repository) {
+        return new JiraSoapApi(repository);
+      }
+    },
+    REST_2_0("REST 2.0") {
+      @NotNull
+      @Override
+      public JiraRestApi2 createApi(@NotNull JiraRepository repository) {
+        return new JiraRestApi2(repository);
+      }
+    },
+    REST_2_0_ALPHA("REST 2.0.alpha1") {
+      @NotNull
+      @Override
+      public JiraRestApi20Alpha1 createApi(@NotNull JiraRepository repository) {
+        return new JiraRestApi20Alpha1(repository);
+      }
+    };
+
+    ApiType(String versionName) {
+      myVersionName = versionName;
+    }
+    private String myVersionName;
+    @NotNull
+    public abstract JiraRemoteApi createApi(@NotNull JiraRepository repository);
+
+    @NotNull
+    public String getVersionName() {
+      return myVersionName;
+    }
+
   }
 }

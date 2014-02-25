@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,9 +112,9 @@ public abstract class ChooseItemAction extends EditorAction {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
-    if (liveTemplateLookup == null) {
-      // Lookup doesn't contain live templates. It means that 
-      // - there are no any live template:
+    if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
+      // Lookup doesn't contain sudden live templates. It means that 
+      // - there are no live template with given key:
       //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
       // - completion provider worked too long:
       //    in this case we should check custom templates that provides completion lookup.

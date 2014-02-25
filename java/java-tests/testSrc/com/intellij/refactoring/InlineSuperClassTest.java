@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 20-Aug-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -28,6 +23,10 @@ import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProc
 import com.intellij.refactoring.util.DocCommentPolicy;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author anna
+ * @since 20-Aug-2008
+ */
 public class InlineSuperClassTest extends MultiFileTestCase {
   @NotNull
   @Override
@@ -40,33 +39,55 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest() throws Exception {
-    doTest(false);
+  public void testInlineOneClass() { doTest(false, true); }
+  public void testInlineOneClassWithConflicts() { doTest(true, true); }
+  public void testAbstractOverrides() { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testSimpleGenerics() { doTest(); }
+  public void testConflictGenerics() { doTest(true, false); }
+  public void testImports() { doTest(); }
+  public void testGenerics() { doTest(); }
+  public void testNewExpr() { doTest(); }
+  public void testConflictConstructors() { doTest(true, false); }
+  public void testConflictMultipleConstructors() { doTest(true, false); }
+  public void testMultipleConstructors() { doTest(); }
+  public void testImplicitChildConstructor() { doTest(); }
+  public void testStaticMembers() { doTest(); }
+  public void testSuperReference() { doTest(); }
+  public void testInnerClassReference() { doTest(); }
+  public void testStaticImport() { doTest(); }
+  public void testNewArrayInitializerExpr() { doTest(); }
+  public void testNewArrayDimensionsExpr() { doTest(); }
+  public void testNewArrayComplexDimensionsExpr() { doTest(); }
+  public void testSuperConstructorWithReturnInside() { doTest(true, false); }
+  public void testSuperConstructorWithFieldInitialization() { doTest(); }
+  public void testSuperConstructorWithParam() { doTest(); }
+  public void testChildConstructorImplicitlyCallsSuper() { doTest(); }
+  public void testNoChildConstructorCallsSuperDefault() { doTest(); }
+  public void testReplaceGenericsInside() { doTest(); }
+  public void testMultipleSubclasses() { doTestMultipleSubclasses(); }
+  public void testMultipleSubstitutions() { doTestMultipleSubclasses(); }
+  public void testMultipleSubclassesInheritsOneBaseBase() { doTestMultipleSubclasses(); }
+  public void testInlineSuperclassExtendsList() { doTest(); }
+  public void testInterfaceHierarchyWithSubstitution() { doTest(); }
+
+  private void doTest() {
+    doTest(false, false);
   }
 
-  private void doTest(final boolean fail) throws Exception {
-    doTest(fail, false);
-  }
-
-  private void doTest(final boolean fail, final boolean inlineOne) throws Exception {
+  private void doTest(boolean fail, final boolean inlineOne) {
     try {
       doTest(new PerformAction() {
         @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
-
-          if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(myProject));
+          GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+          PsiClass aClass = myJavaFacade.findClass("Test", scope);
+          if (aClass == null) aClass = myJavaFacade.findClass("p.Test", scope);
           assertNotNull("Class Test not found", aClass);
-
-          PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
-
-          if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
+          PsiClass superClass = myJavaFacade.findClass("Super", scope);
+          if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
           assertNotNull("Class Super not found", superClass);
-
-          new InlineSuperClassRefactoringProcessor(getProject(), inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS, aClass).run();
-
-          //LocalFileSystem.getInstance().refresh(false);
-          //FileDocumentManager.getInstance().saveAllDocuments();
+          new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS, aClass).run();
         }
       });
     }
@@ -83,140 +104,17 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     }
   }
 
-  public void testInlineOneClass() throws Exception {
-    doTest(false, true);
-  }
-  
-  public void testInlineOneClassWithConflicts() throws Exception {
-    doTest(true, true);
-  }
-
-  public void testAbstractOverrides() throws Exception {
-    doTest();
-  }
-
-  public void testSimple() throws Exception {
-    doTest();
-  }
-
-  public void testSimpleGenerics() throws Exception {
-    doTest();
-  }
-
-  public void testConflictGenerics() throws Exception {
-    doTest(true);
-  }
-
-  public void testImports() throws Exception {
-    doTest();
-  }
-
-  public void testGenerics() throws Exception {
-    doTest();
-  }
-
-  public void testNewexpr() throws Exception {
-    doTest();
-  }
-
-  public void testConflictConstructors() throws Exception {
-    doTest(true);
-  }
-
-  public void testConflictMultipleConstructors() throws Exception {
-    doTest(true);
-  }
-
-  public void testMultipleConstructors() throws Exception {
-    doTest();
-  }
-
-  public void testImplicitChildConstructor() throws Exception {
-    doTest();
-  }
-
-  public void testStaticMembers() throws Exception {
-    doTest();
-  }
-
-  public void testSuperReference() throws Exception {
-    doTest();
-  }
-
-  public void testInnerclassReference() throws Exception {
-    doTest();
-  }
-
-  public void testStaticImport() throws Exception {
-    doTest();
-  }
-
-  public void testNewArrayInitializerExpr() throws Exception {
-    doTest();
-  }
-  
-  public void testNewArrayDimensionsExpr() throws Exception {
-    doTest();
-  }
-
-  public void testNewArrayComplexDimensionsExpr() throws Exception {
-    doTest();
-  }
-
-  public void testSuperConstructorWithReturnInside() throws Exception {
-    doTest(true);
-  }
-
-  public void testSuperConstructorWithFieldInitialization() throws Exception {
-     doTest();
-  }
-
-  public void testSuperConstructorWithParam() throws Exception {
-     doTest();
-  }
-
-  public void testChildConstructorImplicitlyCallsSuper() throws Exception {
-    doTest();
-  }
-
-  public void testNoChildConstructorCallsSuperDefault() throws Exception {
-    doTest();
-  }
-
-  public void testReplaceGenericsInside() throws Exception {
-    doTest();
-  }
-
-  public void testMultipleSubclasses() throws Exception {
-    doTestMultipleSubclasses();
-  }
-
-  public void testMultipleSubstitutions() throws Exception {
-    doTestMultipleSubclasses();
-  }
-
-  public void testMultipleSubclassesInheritsOneBaseBase() throws Exception {
-    doTestMultipleSubclasses();
-  }
-
-  public void testInlineSuperclassExtendsList() throws Exception {
-    doTest();
-  }
-
-  public void testInterfaceHierarchyWithSubstitution() throws Exception {
-    doTest();
-  }
-
-  private void doTestMultipleSubclasses() throws Exception {
+  private void doTestMultipleSubclasses() {
     doTest(new PerformAction() {
       @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
-        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
+        GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+        PsiClass superClass = myJavaFacade.findClass("Super", scope);
+        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
         assertNotNull("Class Super not found", superClass);
-        new InlineSuperClassRefactoringProcessor(getProject(), null, superClass, DocCommentPolicy.ASIS,
-                                                 myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject)),
-                                                 myJavaFacade.findClass("Test1", GlobalSearchScope.allScope(myProject))).run();
+        PsiClass target1 = myJavaFacade.findClass("Test", scope);
+        PsiClass target2 = myJavaFacade.findClass("Test1", scope);
+        new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS, target1, target2).run();
       }
     });
   }

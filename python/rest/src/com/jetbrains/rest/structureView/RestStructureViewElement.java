@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.rest.psi.RestElement;
 import com.jetbrains.rest.psi.RestTitle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,6 +57,7 @@ public class RestStructureViewElement implements StructureViewTreeElement {
     return myElement.canNavigateToSource();
   }
 
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     final Set<RestElement> childrenElements = new LinkedHashSet<RestElement>();
     myElement.acceptChildren(new PsiElementVisitor() {
@@ -77,6 +79,7 @@ public class RestStructureViewElement implements StructureViewTreeElement {
     return children;
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {

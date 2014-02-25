@@ -90,7 +90,7 @@ public class Comparing {
     }
   }
 
-  public static boolean strEqual(String arg1, String arg2){
+  public static boolean strEqual(@Nullable String arg1, @Nullable String arg2){
     return strEqual(arg1, arg2, true);
   }
 

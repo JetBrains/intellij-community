@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
       if (parameter.getTypeElement() == null) return false;
     }
     if (parameters.length == 0) return false;
-    final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, false);
+    final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, true);
     if (functionalInterfaceType != null) {
       final PsiElement lambdaParent = expression.getParent();
       if (lambdaParent instanceof PsiExpressionList) {
@@ -84,11 +85,12 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
 
           for (PsiTypeParameter parameter : typeParameters) {
             final PsiType psiType = substitutor.substitute(parameter);
-            if (psiType == null || LambdaUtil.dependsOnTypeParams(psiType, expression, parameter)) return false;
+            if (psiType == null || dependsOnTypeParams(psiType, expression, parameter)) return false;
           }
+          return functionalInterfaceType.isAssignableFrom(substitutor.substitute(method.getParameterList().getParameters()[idx].getType()));
         }
       }
-      else if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
+      if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
         return false;
       }
       return true;
@@ -121,5 +123,12 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
         .createExpressionFromText(text + "->{}", lambdaExpression);
       lambdaExpression.getParameterList().replace(expression.getParameterList());
     }
+  }
+
+  private static boolean dependsOnTypeParams(PsiType type,
+                                             PsiLambdaExpression expr,
+                                             PsiTypeParameter param2Check) {
+    return LambdaUtil.depends(type, new LambdaUtil.TypeParamsChecker(expr, PsiUtil
+      .resolveGenericsClassInType(LambdaUtil.getFunctionalInterfaceType(expr, false)).getElement()), param2Check);
   }
 }

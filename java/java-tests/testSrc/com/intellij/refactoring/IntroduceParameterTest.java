@@ -463,4 +463,9 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, null, parametersToRemove).run();
   }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
+  }
 }

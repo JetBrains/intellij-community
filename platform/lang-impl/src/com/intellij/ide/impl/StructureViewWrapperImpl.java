@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -74,6 +75,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private VirtualFile myFile;
 
   private StructureView myStructureView;
+  private FileEditor myFileEditor;
   private ModuleStructureComponent myModuleStructureComponent;
 
   private JPanel[] myPanels = new JPanel[0];
@@ -222,7 +224,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void run() {
         if (myStructureView != null) {
-          if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
+          if (!Comparing.equal(myFileEditor, fileEditor)) {
             myFile = file;
             rebuild();
           }
@@ -269,6 +271,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
       myStructureView = null;
+      myFileEditor = null;
     }
 
     if (myModuleStructureComponent != null) {
@@ -290,7 +293,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     }
 
-    String[] names = new String[] {""};
+    String[] names = {""};
     JComponent focusedComponent = null;
     if (file != null && file.isValid()) {
       if (file.isDirectory()) {
@@ -315,6 +318,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
             myStructureView = structureViewBuilder.createStructureView(editor, myProject);
+            myFileEditor = editor;
             Disposer.register(this, myStructureView);
             updateHeaderActions(myStructureView);
 
@@ -322,18 +326,17 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
               ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
             }
 
-            final StructureViewComposite.StructureViewDescriptor[] views;
-
             if (myStructureView instanceof StructureViewComposite) {
               final StructureViewComposite composite = (StructureViewComposite)myStructureView;
-              views = composite.getStructureViews();
+              final StructureViewComposite.StructureViewDescriptor[] views = composite.getStructureViews();
               myPanels = new JPanel[views.length];
               names = new String[views.length];
               for (int i = 0; i < myPanels.length; i++) {
                 myPanels[i] = createContentPanel(views[i].structureView.getComponent());
                 names[i] = views[i].title;
               }
-            } else {
+            }
+            else {
               createSinglePanel(myStructureView.getComponent());
             }
             focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent()) : null;
@@ -393,15 +396,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   @Nullable
-  private FileEditor createTempFileEditor(VirtualFile file) {
+  private FileEditor createTempFileEditor(@NotNull VirtualFile file) {
     if (file.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return null;
 
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
-    for (FileEditorProvider provider : providers) {
-      return provider.createEditor(myProject, file);
-    }
-    return null;
+    return providers.length == 0 ? null : providers[0].createEditor(myProject, file);
   }
 
 

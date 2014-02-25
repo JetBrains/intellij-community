@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.testFramework.PlatformLangTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class DummyFileSystemTest extends PlatformLangTestCase {
   private DummyFileSystem fs;
@@ -42,12 +43,12 @@ public class DummyFileSystemTest extends PlatformLangTestCase {
     final VirtualFileEvent[] events = new VirtualFileEvent[2];
     fs.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void fileDeleted(VirtualFileEvent e) {
+      public void fileDeleted(@NotNull VirtualFileEvent e) {
         events[0] = e;
       }
 
       @Override
-      public void beforeFileDeletion(VirtualFileEvent e) {
+      public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
         events[1] = e;
       }
     });

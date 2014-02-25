@@ -219,6 +219,8 @@ public class SearchResults implements DocumentListener {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
+          Project project = getProject();
+          if (myDisposed || project != null && project.isDisposed()) return;
           int[] starts = new int[0];
           int[] ends = new int[0];
           try {

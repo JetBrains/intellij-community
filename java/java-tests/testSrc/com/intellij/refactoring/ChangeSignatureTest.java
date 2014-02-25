@@ -42,6 +42,15 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
   }
 
+  public void testWarnAboutContract() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) {
+    }
+  }
+
   public void testGenericTypes() throws Exception {
     doTest(null, null, "T", new GenParams() {
       @Override

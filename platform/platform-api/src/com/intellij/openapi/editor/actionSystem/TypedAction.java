@@ -51,7 +51,7 @@ public class TypedAction {
 
   private static class Handler implements TypedActionHandler {
     @Override
-    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, char charTyped, @NotNull DataContext dataContext) {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
@@ -64,7 +64,18 @@ public class TypedAction {
       try {
         final String str = String.valueOf(charTyped);
         CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
+
+        if (editor.getCaretModel().getAllCarets().size() == 1) { // temporary fix for completion - going forward we shouldn't use this check
+          EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
+        }
+        else {
+          editor.getCaretModel().runForEachCaret(new CaretAction() {
+            @Override
+            public void perform(Caret caret) {
+              EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
+            }
+          });
+        }
       }
       catch (ReadOnlyFragmentModificationException e) {
         EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
@@ -127,22 +138,17 @@ public class TypedAction {
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
         @Override
         public void run() {
-          myEditor.getCaretModel().runForEachCaret(new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              Document doc = myEditor.getDocument();
-              doc.startGuardedBlockChecking();
-              try {
-                getHandler().execute(myEditor, myCharTyped, myDataContext);
-              }
-              catch (ReadOnlyFragmentModificationException e) {
-                EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-              }
-              finally {
-                doc.stopGuardedBlockChecking();
-              }
-            }
-          });
+          Document doc = myEditor.getDocument();
+          doc.startGuardedBlockChecking();
+          try {
+            getHandler().execute(myEditor, myCharTyped, myDataContext);
+          }
+          catch (ReadOnlyFragmentModificationException e) {
+            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+          }
+          finally {
+            doc.stopGuardedBlockChecking();
+          }
         }
       });
     }

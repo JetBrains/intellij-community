@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -34,7 +35,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   protected PropertiesGroupingStructureViewComponent(Project project,
                                                   FileEditor editor,
                                                   PropertiesGroupingStructureViewModel structureViewModel) {
-    super(editor, structureViewModel, project);
+    super(editor, structureViewModel, project, true);
     showToolbar();
   }
 
@@ -45,17 +46,16 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   }
 
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
-    // separator -> presentable text
-    private final Map<String,String> myPredefinedSeparators = new LinkedHashMap<String, String>();
+    private final Set<String> myPredefinedSeparators = new LinkedHashSet<String>();
 
     public ChangeGroupSeparatorAction() {
       super("Group by: ", true);
-      myPredefinedSeparators.put(".", ".");
-      myPredefinedSeparators.put("_", "__");
-      myPredefinedSeparators.put("/", "/");
+      myPredefinedSeparators.add(".");
+      myPredefinedSeparators.add("_");
+      myPredefinedSeparators.add("/");
       String currentSeparator = getCurrentSeparator();
-      if (!myPredefinedSeparators.containsKey(currentSeparator)) {
-        myPredefinedSeparators.put(currentSeparator, currentSeparator);
+      if (!myPredefinedSeparators.contains(currentSeparator)) {
+        myPredefinedSeparators.add(currentSeparator);
       }
       refillActionGroup();
     }
@@ -63,7 +63,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     public final void update(AnActionEvent e) {
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
-      presentation.setText("Group by: " + myPredefinedSeparators.get(separator));
+      presentation.setText("Group by: " + separator, false);
     }
 
     private String getCurrentSeparator() {
@@ -72,11 +72,9 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private void refillActionGroup() {
       removeAll();
-      for (final String separator : myPredefinedSeparators.keySet()) {
+      for (final String separator : myPredefinedSeparators) {
         if (separator.equals(getCurrentSeparator())) continue;
-        String presentableText = myPredefinedSeparators.get(separator);
-        add(new AnAction(presentableText) {
-
+        AnAction action = new AnAction() {
           @Override
           public void actionPerformed(AnActionEvent e) {
             ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
@@ -84,7 +82,9 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
             refillActionGroup();
             rebuild();
           }
-        });
+        };
+        action.getTemplatePresentation().setText(separator, false);
+        add(action);
       }
       add(new SelectSeparatorAction());
     }
@@ -96,7 +96,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       }
 
       public final void actionPerformed(AnActionEvent e) {
-        String[] strings = myPredefinedSeparators.keySet().toArray(new String[myPredefinedSeparators.size()]);
+        String[] strings = ArrayUtil.toStringArray(myPredefinedSeparators);
         String current = getCurrentSeparator();
         String separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),
                                                              PropertiesBundle.message("select.property.separator.dialog.title"),
@@ -105,7 +105,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         if (separator == null) {
           return;
         }
-        myPredefinedSeparators.put(separator, separator);
+        myPredefinedSeparators.add(separator);
         refillActionGroup();
       }
     }

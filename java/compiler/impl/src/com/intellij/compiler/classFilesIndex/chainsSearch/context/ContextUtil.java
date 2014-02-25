@@ -119,7 +119,7 @@ public final class ContextUtil {
       }
     }
 
-    return create(method, target, contextVars, contextMethods, containingClassQNames, containingElement.getProject(),
+    return create(target, contextVars, contextMethods, containingClassQNames, containingElement.getProject(),
                   containingElement.getResolveScope(), excludedQNames);
   }
 
@@ -174,8 +174,7 @@ public final class ContextUtil {
   }
 
   @Nullable
-  private static ChainCompletionContext create(final PsiMethod contextMethod,
-                                               final TargetType target,
+  private static ChainCompletionContext create(final TargetType target,
                                                final List<PsiVariable> contextVars,
                                                final List<PsiMethod> contextMethods,
                                                final Set<String> containingClassQNames,
@@ -233,7 +232,7 @@ public final class ContextUtil {
         classQNameToVariable.putValue(qName, var);
       }
     }
-    return new ChainCompletionContext(contextMethod, target, containingClassQNames, classQNameToVariable, containingClassGetters,
+    return new ChainCompletionContext(target, containingClassQNames, classQNameToVariable, containingClassGetters,
                                       contextVarsGetters, stringVars, excludedQNames, project, resolveScope);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -574,11 +574,11 @@ public class CodeCompletionHandlerBase {
 
   }
 
-  private static CompletionAssertions.WatchingInsertionContext insertItemHonorBlockSelection(CompletionProgressIndicator indicator,
-                                                                        LookupElement item,
-                                                                        char completionChar,
-                                                                        List<LookupElement> items,
-                                                                        CompletionLookupArranger.StatisticsUpdate update) {
+  private static CompletionAssertions.WatchingInsertionContext insertItemHonorBlockSelection(final CompletionProgressIndicator indicator,
+                                                                        final LookupElement item,
+                                                                        final char completionChar,
+                                                                        final List<LookupElement> items,
+                                                                        final CompletionLookupArranger.StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = editor.getCaretModel().getOffset();
@@ -586,6 +586,7 @@ public class CodeCompletionHandlerBase {
     if (idEndOffset < 0) {
       idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
     }
+    final int idEndOffsetDelta = idEndOffset - caretOffset;
 
     CompletionAssertions.WatchingInsertionContext context = null;
     if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {
@@ -622,7 +623,19 @@ public class CodeCompletionHandlerBase {
       }
 
     } else {
-      context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idEndOffset);
+      final Ref<CompletionAssertions.WatchingInsertionContext> contextRef = new Ref<CompletionAssertions.WatchingInsertionContext>();
+      final Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update, editor,
+                                                                                    caret.getOffset(), caret.getOffset() + idEndOffsetDelta);
+          if (caret == primaryCaret) {
+            contextRef.set(currentContext);
+          }
+        }
+      });
+      context = contextRef.get();
     }
     return context;
   }

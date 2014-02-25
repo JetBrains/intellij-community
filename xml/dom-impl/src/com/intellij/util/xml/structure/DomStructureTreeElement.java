@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,12 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @NotNull
   public TreeElement[] getChildren() {
     if (!myElement.isValid()) return EMPTY_ARRAY;
     final ArrayList<TreeElement> result = new ArrayList<TreeElement>();

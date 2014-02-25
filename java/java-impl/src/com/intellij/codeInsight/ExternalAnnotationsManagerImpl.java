@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -777,27 +777,27 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
 
     @Override
-    public void contentsChanged(VirtualFileEvent event) {
+    public void contentsChanged(@NotNull VirtualFileEvent event) {
       processEvent(event);
     }
 
     @Override
-    public void fileCreated(VirtualFileEvent event) {
+    public void fileCreated(@NotNull VirtualFileEvent event) {
       processEvent(event);
     }
 
     @Override
-    public void fileDeleted(VirtualFileEvent event) {
+    public void fileDeleted(@NotNull VirtualFileEvent event) {
       processEvent(event);
     }
 
     @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       processEvent(event);
     }
 
     @Override
-    public void fileCopied(VirtualFileCopyEvent event) {
+    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
       processEvent(event);
     }
   }

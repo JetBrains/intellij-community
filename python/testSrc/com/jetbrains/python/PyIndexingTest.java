@@ -36,9 +36,9 @@ public class PyIndexingTest extends PyTestCase {
 
   public void testModuleNameIndex() {
     final Collection<String> modules = PyModuleNameIndex.getAllKeys(myFixture.getProject());
-    assertContainsElements(modules, "foo");
-    assertContainsElements(modules, "bar");
+    assertContainsElements(modules, "ModuleNameIndex_foo");
+    assertContainsElements(modules, "ModuleNameIndex_bar");
     assertDoesntContain(modules, "__init__");
-    assertDoesntContain(modules, "baz");
+    assertDoesntContain(modules, "ModuleNameIndex_baz");
   }
 }

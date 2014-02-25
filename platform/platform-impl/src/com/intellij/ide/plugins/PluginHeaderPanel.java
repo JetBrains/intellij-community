@@ -115,7 +115,13 @@ public class PluginHeaderPanel {
       myVersion.setText("Version: " + (version == null ? "N/A" : version));
       myUpdated.setVisible(false);
       if (!plugin.isBundled()) {
-        myActionId = ((IdeaPluginDescriptorImpl)plugin).isDeleted() ? ACTION_ID.RESTART : ACTION_ID.UNINSTALL;
+        if (((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+          myActionId = ACTION_ID.RESTART;
+        } else if (InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId())) {
+          myActionId = ACTION_ID.UPDATE;
+        } else {
+          myActionId = ACTION_ID.UNINSTALL;
+        }
       }
       if (myActionId == ACTION_ID.RESTART && myManager != null && !myManager.isRequireShutdown()) {
         myActionId = null;
@@ -167,7 +173,7 @@ public class PluginHeaderPanel {
 
       private Color getButtonForeground() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(Gray._0, Gray._20);
+          case UPDATE: return new JBColor(Gray._0, Gray._210);
           case INSTALL: return new JBColor(Gray._255, Gray._210);
           case UNINSTALL: return new JBColor(Gray._0, Gray._140);
           case RESTART:
@@ -179,7 +185,7 @@ public class PluginHeaderPanel {
 
       private Paint getBackgroundPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(new Color(209, 190, 114), new Color(132, 116, 66));
+          case UPDATE: return new JBColor(new Color(209, 190, 114), new Color(49, 98, 49));
           case INSTALL: return new JBColor(new Color(0x4DA864), new Color(49, 98, 49));
           case UNINSTALL: return UIUtil.isUnderDarcula()
                                  ? new GradientPaint(0, 0, UIManager.getColor("Button.darcula.color1"),
@@ -216,7 +222,7 @@ public class PluginHeaderPanel {
       @Override
       public Icon getIcon() {
         switch (myActionId) {
-          case UPDATE: return AllIcons.Actions.Refresh;
+          case UPDATE: return AllIcons.General.DownloadPlugin;
           case INSTALL: return  AllIcons.General.DownloadPlugin;
           case UNINSTALL: return AllIcons.Actions.Delete;
           case RESTART: return AllIcons.Actions.Restart;
@@ -230,7 +236,6 @@ public class PluginHeaderPanel {
       public void actionPerformed(ActionEvent e) {
         switch (myActionId) {
           case UPDATE:
-            break;
           case INSTALL:
             new ActionInstallPlugin(myManager.getAvailable(), myManager.getInstalled()).install(new Runnable() {
               @Override

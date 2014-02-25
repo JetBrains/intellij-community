@@ -19,7 +19,7 @@ import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletio
 import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -39,10 +39,11 @@ public class SearchInitializer {
     myContext = context;
     final int size = indexValues.size();
     myChains = new LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>>(size);
-    add(indexValues, MethodChainsSearchUtil.unionToHashSet(excludedParamsTypesQNames, targetQName));
+    add(indexValues, MethodChainsSearchUtil.joinToHashSet(excludedParamsTypesQNames, targetQName));
   }
 
-  private void add(final Collection<UsageIndexValue> indexValues, final Set<String> excludedParamsTypesQNames) {
+  private void add(final Collection<UsageIndexValue> indexValues,
+                   final Set<String> excludedParamsTypesQNames) {
     int bestOccurrences = -1;
     for (final UsageIndexValue indexValue : indexValues) {
       if (add(indexValue, excludedParamsTypesQNames)) {

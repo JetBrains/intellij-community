@@ -43,7 +43,7 @@ public class ContextRelevantStaticMethod {
         @Override
         public boolean execute(final int pos, final PsiVariable var) {
           ContextRelevantStaticMethod.this.parameters.put(pos, new VariableSubLookupElement(var));
-          return false;
+          return true;
         }
       });
     }

@@ -114,7 +114,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   @NotNull
-  public static Pair<String, Boolean> parseActionHint(@NotNull PsiFile file, @NotNull String contents, @NotNull @NonNls @RegExp String actionPattern) {
+  public static Pair<String, Boolean> parseActionHint(@NotNull PsiFile file,
+                                                      @NotNull String contents,
+                                                      @NotNull @NonNls @RegExp String actionPattern) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
@@ -198,6 +200,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return null;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase}
+   * to get separate tests for all data files in testData directory.
+   */
+  protected void doAllTests() {
+    doAllTests(createWrapper());
+  }
+
   public static void doAllTests(QuickFixTestCase testCase) {
     assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
@@ -210,7 +220,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
     });
 
-    if (files == null) {
+    if (files == null || files.length == 0) {
       fail("Test files not found in " + testDirPath);
     }
 
@@ -218,20 +228,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       final String testName = file.getName().substring(BEFORE_PREFIX.length());
       doTestFor(testName, testCase);
     }
-    assertTrue("Test files not found in "+testDirPath,files.length != 0);
   }
 
   protected void doSingleTest(String fileSuffix) {
     doTestFor(fileSuffix, createWrapper());
   }
 
-  /**
-   * @deprecated use com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase to get separate tests for all data files in 
-   * testData directory
-   */
-  protected void doAllTests() {
-    doAllTests(createWrapper());
-  }
   protected void doSingleTest(String fileSuffix, String testDataPath) {
     doTestFor(fileSuffix, createWrapper(testDataPath));
   }

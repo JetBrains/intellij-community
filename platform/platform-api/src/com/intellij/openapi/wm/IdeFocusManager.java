@@ -42,7 +42,7 @@ import java.awt.event.KeyEvent;
  *   comp.requestFocus();
  * </pre>
  *
- * This class is also responsible for delivering key events while focus tranferring is in progress.
+ * This class is also responsible for delivering key events while focus transferring is in progress.
  * <p>
  * <code>IdeFocusManager</code> instance can be received per project or the global instance. The preferred way is
  * to use instance <code>IdeFocusManager.getInstance(project)</code>. If no project instance is available, then

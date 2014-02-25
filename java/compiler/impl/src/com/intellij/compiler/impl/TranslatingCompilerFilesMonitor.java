@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1413,7 +1413,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private class MyVfsListener extends VirtualFileAdapter {
-    public void propertyChanged(final VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         final VirtualFile eventFile = event.getFile();
         final VirtualFile parent = event.getParent();
@@ -1459,23 +1459,23 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
 
-    public void contentsChanged(final VirtualFileEvent event) {
+    public void contentsChanged(@NotNull final VirtualFileEvent event) {
       markDirtyIfSource(event.getFile(), false);
     }
 
-    public void fileCreated(final VirtualFileEvent event) {
+    public void fileCreated(@NotNull final VirtualFileEvent event) {
       processNewFile(event.getFile(), true);
     }
 
-    public void fileCopied(final VirtualFileCopyEvent event) {
+    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
       processNewFile(event.getFile(), true);
     }
 
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       processNewFile(event.getFile(), true);
     }
 
-    public void beforeFileDeletion(final VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       if (myWatchedProjectsCount == 0) return;
       final VirtualFile eventFile = event.getFile();
       if ((LOG.isDebugEnabled() && eventFile.isDirectory()) || ourDebugMode) {
@@ -1573,7 +1573,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       notifyFilesDeleted(pathsToMark);
     }
 
-    public void beforeFileMovement(final VirtualFileMoveEvent event) {
+    public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
       markDirtyIfSource(event.getFile(), true);
     }
 

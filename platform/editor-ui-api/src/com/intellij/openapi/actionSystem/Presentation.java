@@ -118,7 +118,7 @@ public final class Presentation implements Cloneable {
     return myText;
   }
 
-  public void setText(String text, boolean mayContainMnemonic) {
+  public void setText(@Nullable String text, boolean mayContainMnemonic) {
     int oldMnemonic = myMnemonic;
     int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
     String oldText = myText;

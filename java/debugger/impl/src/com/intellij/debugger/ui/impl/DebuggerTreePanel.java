@@ -49,6 +49,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree = createTreeView();
 
     final PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
@@ -59,12 +60,14 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.addMouseListener(popupHandler);
 
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
+      @Override
       public Component getDefaultComponentImpl(Container focusCycleRoot) {
         return myTree;
       }
     });
 
     registerDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myTree.removeMouseListener(popupHandler);
       }
@@ -78,9 +81,11 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   protected abstract DebuggerTree createTreeView();
 
 
+  @Override
   protected void rebuild(int event) {
     myRebuildAlarm.cancelAllRequests();
     myRebuildAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         try {
           final DebuggerContextImpl context = getContext();
@@ -95,6 +100,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     }, 100, ModalityState.NON_MODAL);
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myRebuildAlarm);
     try {
@@ -121,13 +127,15 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.removeAllChildren();
   }
 
+  @Override
   public Object getData(String dataId) {
-    if (DebuggerTreePanel.DATA_KEY.is(dataId)) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     return null;
   }
 
+  @Override
   public void requestFocus() {
     getTree().requestFocus();
   }

@@ -84,7 +84,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return getId();
   }
 
   @Nls

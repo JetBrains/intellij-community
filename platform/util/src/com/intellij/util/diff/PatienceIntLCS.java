@@ -55,7 +55,7 @@ public class PatienceIntLCS {
       return;
     }
 
-    int startOffset = matchForward(0, 0);
+    int startOffset = matchForward(myStart1, myStart2);
     int start1 = myStart1 + startOffset;
     int start2 = myStart2 + startOffset;
 

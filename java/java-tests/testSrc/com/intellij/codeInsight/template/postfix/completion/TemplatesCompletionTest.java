@@ -143,6 +143,18 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     type("r");
     myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
   }
+  
+  public void testTabCompletionWithTemplatesInAutopopup() {
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    
+    configureByFile();
+    type(".");
+    myFixture.assertPreferredCompletionItems(0, "parents");
+
+    type("\t");
+    assertNull(getLookup());
+    checkResultByFile();
+  }
 
   @Override
   protected String getBasePath() {

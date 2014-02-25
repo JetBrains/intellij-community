@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -37,4 +38,8 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
     return "/codeInsight/daemonCodeAnalyzer/quickFix/explicit2diamond";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
+  }
 }

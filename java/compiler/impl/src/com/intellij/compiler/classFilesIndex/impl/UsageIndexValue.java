@@ -16,7 +16,8 @@
 package com.intellij.compiler.classFilesIndex.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+
+import java.util.Comparator;
 
 /**
  * @author Dmitry Batkovich
@@ -57,8 +58,26 @@ public class UsageIndexValue implements Comparable<UsageIndexValue> {
 
   @Override
   public int compareTo(@NotNull final UsageIndexValue that) {
-    final int sub = -myOccurrences + that.myOccurrences;
+    int sub = -myOccurrences + that.myOccurrences;
     if (sub != 0) return sub;
-    return MethodIncompleteSignature.COMPARATOR.compare(myMethodIncompleteSignature, that.myMethodIncompleteSignature);
+    sub = myMethodIncompleteSignature.getOwner().compareTo(that.myMethodIncompleteSignature.getOwner());
+    if (sub != 0) {
+      return sub;
+    }
+    sub = myMethodIncompleteSignature.getName().compareTo(that.myMethodIncompleteSignature.getName());
+    if (sub != 0) {
+      return sub;
+    }
+    sub = myMethodIncompleteSignature.getReturnType().compareTo(that.myMethodIncompleteSignature.getReturnType());
+    if (sub != 0) {
+      return sub;
+    }
+    if (myMethodIncompleteSignature.isStatic() && !that.myMethodIncompleteSignature.isStatic()) {
+      return 1;
+    }
+    if (that.myMethodIncompleteSignature.isStatic() && !myMethodIncompleteSignature.isStatic()) {
+      return -1;
+    }
+    return 0;
   }
 }

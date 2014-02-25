@@ -126,7 +126,7 @@ public class BuildDataManager implements StorageOwner {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
-    myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
+    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
   }
 
@@ -190,7 +190,7 @@ public class BuildDataManager implements StorageOwner {
             }
           }
           else {
-            FileUtil.delete(getMappingsRoot());
+            FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
           }
         }
       }
@@ -304,12 +304,12 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataPaths.getDataStorageRoot(), SRC_TO_FORM_STORAGE);
   }
 
-  private File getMappingsRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), MAPPINGS_STORAGE);
-  }
-
   public BuildDataPaths getDataPaths() {
     return myDataPaths;
+  }
+
+  public static File getMappingsRoot(final File dataStorageRoot) {
+    return new File(dataStorageRoot, MAPPINGS_STORAGE);
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {

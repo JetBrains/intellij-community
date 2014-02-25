@@ -54,6 +54,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     registerDisposable(disposable);
 
     getThreadsTree().addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && getThreadsTree().getSelectionCount() == 1) {
           DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl)getThreadsTree().getLastSelectedPathComponent();
@@ -68,6 +69,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     });
     add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
     stateManager.addListener(new DebuggerContextListener() {
+      @Override
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         if (DebuggerSession.EVENT_ATTACHED == event || DebuggerSession.EVENT_RESUME == event) {
           startLabelsUpdate();
@@ -86,6 +88,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
   private void startLabelsUpdate() {
     myUpdateLabelsAlarm.cancelAllRequests();
     myUpdateLabelsAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         boolean updateScheduled = false;
         try {
@@ -96,6 +99,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
               final DebugProcessImpl process = getContext().getDebugProcess();
               if (process != null) {
                 process.getManagerThread().invoke(new DebuggerCommandImpl() {
+                  @Override
                   protected void action() throws Exception {
                     try {
                       updateNodeLabels(root);
@@ -104,6 +108,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
                       reschedule();
                     }
                   }
+                  @Override
                   protected void commandCancelled() {
                     reschedule();
                   }
@@ -141,6 +146,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     for (int idx = 0; idx < childCount; idx++) {
       final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)from.getChildAt(idx);
       child.getDescriptor().updateRepresentation(null, new DescriptorLabelListener() {
+        @Override
         public void labelChanged() {
           child.labelChanged();
         }
@@ -149,15 +155,18 @@ public class ThreadsPanel extends DebuggerTreePanel{
     }
   }
   
+  @Override
   protected DebuggerTree createTreeView() {
     return new ThreadsDebuggerTree(getProject());
   }
 
+  @Override
   protected ActionPopupMenu createPopupMenu() {
     DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.THREADS_PANEL_POPUP);
     return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;

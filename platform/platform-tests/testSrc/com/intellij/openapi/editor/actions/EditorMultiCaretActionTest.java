@@ -21,7 +21,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -49,7 +48,7 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
       @Override
       protected void run(@NotNull Result<Void> result) throws Throwable {
         configureByFile(getBeforeFileName());
-        EditorScrollingFixture.setVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+        EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
         executeAction(getActionName());
         checkResultByFile(getAfterFileName());
       }

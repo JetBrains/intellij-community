@@ -17,11 +17,9 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -62,18 +60,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     super(JavaElementType.METHOD_REF_EXPRESSION);
   }
 
-  public static boolean onArrayType(PsiClass containingClass, MethodSignature signature) {
+  private static boolean arrayCreationSignature(MethodSignature signature) {
     if (arrayCompatibleSignature(signature.getParameterTypes(), new Function<PsiType[], PsiType>() {
       @Override
       public PsiType fun(PsiType[] types) {
         return types[0];
       }
     })) {
-      if (containingClass != null) {
-        final Project project = containingClass.getProject();
-        final LanguageLevel level = PsiUtil.getLanguageLevel(containingClass);
-        return containingClass == JavaPsiFacade.getElementFactory(project).getArrayClass(level);
-      }
+      return true;
     }
     return false;
   }
@@ -438,9 +432,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               substitutor = session.infer();
             }
             ClassCandidateInfo candidateInfo = null;
-            if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) &&
-                signature.getParameterTypes().length == 0 ||
-                onArrayType(containingClass, signature)) {
+            final boolean isArray = containingClass == JavaPsiFacade.getElementFactory(getProject()).getArrayClass(PsiUtil.getLanguageLevel(containingClass));
+            if (!isArray && (containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
+                isArray && arrayCreationSignature(signature)) {
               candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
             }
             return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};

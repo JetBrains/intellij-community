@@ -45,6 +45,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
@@ -601,14 +602,15 @@ public class XDebugSessionImpl implements XDebugSession {
     CustomizedBreakpointPresentation presentation;
     synchronized (myRegisteredBreakpoints) {
       presentation = myRegisteredBreakpoints.get(breakpoint);
-      if (presentation != null) {
-        presentation.setErrorMessage(errorMessage);
-        presentation.setIcon(icon);
+      if (presentation == null ||
+          (Comparing.equal(presentation.getIcon(), icon) && Comparing.strEqual(presentation.getErrorMessage(), errorMessage))) {
+        return;
       }
+
+      presentation.setErrorMessage(errorMessage);
+      presentation.setIcon(icon);
     }
-    if (presentation != null) {
-      myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
-    }
+    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
   }
 
   @Override

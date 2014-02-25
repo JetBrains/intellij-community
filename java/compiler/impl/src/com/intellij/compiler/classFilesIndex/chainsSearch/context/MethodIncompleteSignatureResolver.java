@@ -18,22 +18,21 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
+import org.jetbrains.jps.classFilesIndex.AsmUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
  */
 final class MethodIncompleteSignatureResolver {
-  private MethodIncompleteSignatureResolver() {}
+  private final Map<MethodIncompleteSignature, PsiMethod[]> myResolvedCache;
 
-  public static FactoryMap<MethodIncompleteSignature, PsiMethod[]> create(final JavaPsiFacade javaPsiFacade, final GlobalSearchScope scope) {
-    return new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
+  public MethodIncompleteSignatureResolver(final JavaPsiFacade javaPsiFacade, final GlobalSearchScope scope) {
+    myResolvedCache = new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
       @Nullable
       @Override
       protected PsiMethod[] create(final MethodIncompleteSignature signature) {
@@ -42,13 +41,18 @@ final class MethodIncompleteSignatureResolver {
     };
   }
 
+  @NotNull
+  public PsiMethod[] get(final MethodIncompleteSignature signature) {
+    return myResolvedCache.get(signature);
+  }
+
   private static PsiMethod[] resolveNotDeprecated(final MethodIncompleteSignature signature,
-                                                 final JavaPsiFacade javaPsiFacade,
-                                                 final GlobalSearchScope scope) {
+                                                  final JavaPsiFacade javaPsiFacade,
+                                                  final GlobalSearchScope scope) {
     if (MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(signature.getName())) {
       return PsiMethod.EMPTY_ARRAY;
     }
-    final PsiClass aClass = javaPsiFacade.findClass(signature.getOwner(), scope);
+    final PsiClass aClass = javaPsiFacade.findClass(AsmUtil.getQualifiedClassName(signature.getOwner()), scope);
     if (aClass == null) {
       return PsiMethod.EMPTY_ARRAY;
     }
@@ -70,7 +74,8 @@ final class MethodIncompleteSignatureResolver {
             if (qualifiedName.equals(signature.getReturnType())) {
               filtered.add(method);
             }
-          } else if (returnType.equalsToText(signature.getReturnType())) {
+          }
+          else if (returnType.equalsToText(signature.getReturnType())) {
             filtered.add(method);
           }
         }

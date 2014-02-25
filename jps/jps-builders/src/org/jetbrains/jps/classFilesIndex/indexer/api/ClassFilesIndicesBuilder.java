@@ -26,6 +26,7 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
@@ -74,7 +75,8 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
         else if (forcedRecompilation) {
           newIndicesCount++;
           myIndexWriters.add(indexWriter);
-        } else {
+        }
+        else {
           indexWriter.close(context);
         }
       }
@@ -110,8 +112,15 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
                                      final ClassWriter writer,
                                      final InstrumentationClassFinder finder) {
     final long ms = System.currentTimeMillis();
-    for (final ClassFilesIndexWriter index : myIndexWriters) {
-      index.update(compiled.getOutputFile().getPath(), reader);
+    String className = compiled.getClassName();
+    if (className == null) {
+      LOG.debug("class name is empty for " + compiled.getOutputFile().getAbsolutePath());
+    }
+    else {
+      className = className.replace('.', '/');
+      for (final ClassFilesIndexWriter index : myIndexWriters) {
+        index.update(className, reader);
+      }
     }
     myMs.addAndGet(System.currentTimeMillis() - ms);
     myFilesCount.incrementAndGet();

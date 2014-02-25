@@ -428,6 +428,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testLambdaExpr() throws Exception {
+    
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.Integer>"));
   }
 
@@ -436,7 +437,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testLambdaExprNotAccepted() throws Exception {
-    doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.String>"));
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<X>"));
   }
 
   public void testOneLineLambdaVoidCompatible() throws Exception {

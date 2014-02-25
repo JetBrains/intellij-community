@@ -180,12 +180,14 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   private static void setupBreadthFirstDependency(@NotNull ArrangementEntryDependencyInfo info) {
     Deque<ArrangementEntryDependencyInfo> toProcess = new ArrayDeque<ArrangementEntryDependencyInfo>();
     toProcess.add(info);
+    JavaElementArrangementEntry prev = info.getAnchorEntry();
     while (!toProcess.isEmpty()) {
       ArrangementEntryDependencyInfo current = toProcess.removeFirst();
       for (ArrangementEntryDependencyInfo dependencyInfo : current.getDependentEntriesInfos()) {
         JavaElementArrangementEntry dependencyMethod = dependencyInfo.getAnchorEntry();
         if (dependencyMethod.getDependencies() == null) {
-          dependencyMethod.addDependency(current.getAnchorEntry());
+          dependencyMethod.addDependency(prev);
+          prev = dependencyMethod;
         }
         toProcess.addLast(dependencyInfo);
       }

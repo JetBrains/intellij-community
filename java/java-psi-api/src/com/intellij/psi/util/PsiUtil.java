@@ -1065,11 +1065,11 @@ public final class PsiUtil extends PsiUtilCore {
     return className + "." + member.getName();
   }
 
-  static boolean checkSameExpression(PsiExpression templateExpr, final PsiExpression expression) {
+  static boolean checkSameExpression(PsiElement templateExpr, final PsiExpression expression) {
     return templateExpr.equals(skipParenthesizedExprDown(expression));
   }
 
-  public static boolean isCondition(PsiExpression expr, PsiElement parent) {
+  public static boolean isCondition(PsiElement expr, PsiElement parent) {
     if (parent instanceof PsiIfStatement) {
       if (checkSameExpression(expr, ((PsiIfStatement)parent).getCondition())) {
         return true;

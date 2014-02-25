@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -110,12 +111,12 @@ public class FileListeningTest extends IntegrationTestCase {
     final int[] log = new int[2];
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void beforePropertyChange(VirtualFilePropertyEvent e) {
+      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent e) {
         log[0] = getRevisionsFor(f).size();
       }
 
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent e) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
         log[1] = getRevisionsFor(f).size();
       }
     };
