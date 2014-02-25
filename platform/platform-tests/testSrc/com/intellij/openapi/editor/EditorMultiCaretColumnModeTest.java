@@ -180,6 +180,18 @@ public class EditorMultiCaretColumnModeTest extends LightPlatformCodeInsightTest
                       "line3");
   }
 
+  public void testSelectNextPrevWord() throws Exception {
+    init("aaa aaa<caret>\n" +
+         "bbbb bbbb");
+    executeAction("EditorDownWithSelection");
+    executeAction("EditorPreviousWordWithSelection");
+    checkResultByText("aaa <selection><caret>aaa</selection>\n" +
+                      "bbbb <selection><caret>bb</selection>bb");
+    executeAction("EditorNextWordWithSelection");
+    checkResultByText("aaa aaa<caret>\n" +
+                      "bbbb bb<selection>bb<caret></selection>");
+  }
+
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);
     ((EditorEx)myEditor).setColumnMode(true);
