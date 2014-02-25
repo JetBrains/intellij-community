@@ -45,11 +45,6 @@ public class JiraSoapApi extends JiraRemoteApi {
     super(repository);
   }
 
-  @Override
-  public JiraRemoteApi cloneFor(@NotNull JiraRepository repository) {
-    return new JiraSoapApi(repository);
-  }
-
   @NotNull
   @Override
   public List<Task> findTasks(String query, int max) throws Exception {
@@ -172,12 +167,6 @@ public class JiraSoapApi extends JiraRemoteApi {
       LOG.warn("Cannot get issue " + key + ": " + e.getMessage());
       return null;
     }
-  }
-
-  @NotNull
-  @Override
-  public String getVersionName() {
-    return "SOAP";
   }
 
   @NotNull
