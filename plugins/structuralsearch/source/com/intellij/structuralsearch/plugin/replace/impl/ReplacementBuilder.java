@@ -469,7 +469,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
     if (parameterizations!=null) {
       String name = parameter.getName();
-      String type = parameter.getTypeElement().getText();
+      String type = parameter.getType().getCanonicalText();
 
       if (StructuralSearchUtil.isTypedVariable(name)) {
         name = stripTypedVariableDecoration(name);
