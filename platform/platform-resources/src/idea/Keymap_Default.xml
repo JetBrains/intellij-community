@@ -930,7 +930,7 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
 
-  <action id="DatabaseView.PropertiesAction"><keyboard-shortcut first-keystroke="F4"/><keyboard-shortcut first-keystroke="ENTER"/></action>
+  <action id="DatabaseView.PropertiesAction" />
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>

@@ -756,6 +756,13 @@ public class ListUtils {
     assertStringItems("bar", "foo");
   }
 
+  public void testAddExplicitValueInAnnotation() throws Throwable {
+    configureByTestName()
+    assertStringItems("bar", "goo")
+    selectItem(myItems[0])
+    checkResult()
+  }
+
   public void testUnnecessaryMethodMerging() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("fofoo", "fofoo");

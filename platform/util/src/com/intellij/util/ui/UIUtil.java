@@ -2742,4 +2742,28 @@ public class UIUtil {
       catch (IllegalAccessException e) { LOG.debug(e); }
     }
   }
+
+  //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
+  public static String getDebugText(Component c) {
+    StringBuilder builder  = new StringBuilder();
+    getAllTextsRecursivelyImpl(c, builder);
+    return builder.toString();
+  }
+
+  private static void getAllTextsRecursivelyImpl(Component component, StringBuilder builder) {
+    String candidate = "";
+    int limit = builder.length() > 60 ? 20 : 40;
+    if (component instanceof JLabel) candidate = ((JLabel)component).getText();
+    if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
+    if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
+    if (StringUtil.isNotEmpty(candidate)) {
+      builder.append(candidate.length() > limit ? (candidate.substring(0, limit - 3) + "...") : candidate).append('|');
+    }
+    if (component instanceof Container) {
+      Component[] components = ((Container)component).getComponents();
+      for (Component child : components) {
+        getAllTextsRecursivelyImpl(child, builder);
+      }
+    }
+  }
 }

@@ -968,12 +968,14 @@ public class InferenceSession {
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
-    LOG.assertTrue(parameters1.length == parameters2.length);
+    if (!varargs) {
+      LOG.assertTrue(parameters1.length == parameters2.length);
+    }
 
     final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = siteSubstitutor2.substitute(parameters1[i].getType());
-      PsiType tType = siteSubstitutor2.substitute(parameters2[i].getType());
+      PsiType tType = siteSubstitutor2.substitute(getVarargParameterType(varargs, i, parameters2));
       if (session.isProperType(sType) && session.isProperType(tType)) {
         if (!TypeConversionUtil.isAssignable(tType, sType)) {
           return false;
@@ -991,11 +993,20 @@ public class InferenceSession {
 
     if (varargs) {
       PsiType sType = siteSubstitutor2.substitute(parameters1[paramsLength].getType());
-      PsiType tType = siteSubstitutor2.substitute(parameters2[paramsLength].getType());
+      PsiType tType = siteSubstitutor2.substitute(getVarargParameterType(true, paramsLength, parameters2));
       session.addConstraint(new StrictSubtypingConstraint(tType, sType));
     }
 
     return session.repeatInferencePhases(true);
+  }
+
+  public static PsiType getVarargParameterType(boolean varargs, int i, PsiParameter[] parameters2) {
+    if (varargs && i >= parameters2.length - 1) {
+      final PsiType lastParamType = parameters2[parameters2.length - 1].getType();
+      LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+      return ((PsiEllipsisType)lastParamType).getComponentType();
+    }
+    return parameters2[i].getType();
   }
 
   /**

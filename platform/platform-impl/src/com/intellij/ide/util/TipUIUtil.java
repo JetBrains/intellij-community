@@ -64,7 +64,7 @@ public class TipUIUtil {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
-      tip.myFileName = tipFileName;
+      tip.fileName = tipFileName;
     }
     openTipInBrowser(tip, browser);
   }
@@ -82,7 +82,7 @@ public class TipUIUtil {
       ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
                               ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
 
-      URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.getFileName());
+      URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
 
       if (url == null) {
         setCantReadText(browser, tip);
@@ -112,7 +112,7 @@ public class TipUIUtil {
       if (!plugin.isEmpty()) {
         product += " and " + plugin + " plugin";
       }
-      String message = IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.getFileName(), product);
+      String message = IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
       browser.read(new StringReader(message), null);
     }
     catch (IOException ignored) {

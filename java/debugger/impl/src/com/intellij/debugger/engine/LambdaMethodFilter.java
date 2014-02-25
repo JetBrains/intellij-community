@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 10/26/13
  */
 public class LambdaMethodFilter implements BreakpointStepMethodFilter{
-  private static final String LAMBDA_METHOD_PREFIX = "lambda$";
+  public static final String LAMBDA_METHOD_PREFIX = "lambda$";
   private final int myLambdaOrdinal;
   @Nullable
   private final SourcePosition myFirstStatementPosition;

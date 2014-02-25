@@ -614,7 +614,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     CaretModel caretModel = editor.getCaretModel();
     if (isWithSelection) {
-      if (editor.isColumnMode()) {
+      if (editor.isColumnMode() && !caretModel.supportsMultipleCarets()) {
         selectionModel.setBlockSelection(blockSelectionStart, caretModel.getLogicalPosition());
       }
       else {
