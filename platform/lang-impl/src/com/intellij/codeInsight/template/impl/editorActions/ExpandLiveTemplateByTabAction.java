@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 
 /**
  * @author peter
  */
 public class ExpandLiveTemplateByTabAction extends EditorAction {
   public ExpandLiveTemplateByTabAction() {
-    super(new EditorWriteActionHandler() {
+    super(new EditorWriteActionHandler(true) {
       @Override
       public void executeWriteAction(Editor editor, DataContext dataContext) {
         Project project = editor.getProject();
+        assert project != null;
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.TAB_CHAR);
       }
 

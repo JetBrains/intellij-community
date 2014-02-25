@@ -179,6 +179,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
                              final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
 
+    //noinspection unchecked
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
 
     if (listener != null) {
