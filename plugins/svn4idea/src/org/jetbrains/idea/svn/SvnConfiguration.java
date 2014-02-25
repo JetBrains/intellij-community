@@ -44,7 +44,9 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(
   name = "SvnConfiguration",
@@ -59,6 +61,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 
+  private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
+  private final static long CHANGELIST_SUPPORT = 124;
+  private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
+
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
   private final Project myProject;
 
@@ -71,7 +77,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
   private SvnAuthenticationManager myInteractiveManager;
-  private SvnSupportOptions mySupportOptions;
+  // TODO: This seems to be related to old svn versions and should be removed.
+  private Long mySupportedVersion;
   private boolean myCleanupRun;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
   private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
@@ -294,39 +301,25 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     this.FORCE_UPDATE = forceUpdate;
   }
 
-  public class SvnSupportOptions {
-    /**
-     * version of "support SVN in IDEA". for features tracking. should grow
-     */
-    private Long myVersion;
-
-    public SvnSupportOptions(final Long version) {
-      myVersion = version;
-      // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
-      if (myVersion == null || myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
-        myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
-      }
-    }
-
-    private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
-    private final static long CHANGELIST_SUPPORT = 124;
-    private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
-
-    public boolean changeListsSynchronized() {
-      return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
-    }
-
-    public void upgrade() {
-      myVersion = UPGRADE_TO_16_VERSION_ASKED;
-    }
+  private static Long fixSupportedVersion(final Long version) {
+    return version == null || version.longValue() < CHANGELIST_SUPPORT
+           ? UPGRADE_TO_15_VERSION_ASKED
+           : version;
   }
 
-  public SvnSupportOptions getSupportOptions(Project project) {
-    if (mySupportOptions == null) {
-      // used to be kept in SvnBranchConfigurationManager
-      mySupportOptions = new SvnSupportOptions(SvnBranchConfigurationManager.getInstance(project).getSupportValue());
+  public boolean changeListsSynchronized() {
+    ensureSupportedVersion();
+    return mySupportedVersion != null && mySupportedVersion >= CHANGELIST_SUPPORT;
+  }
+
+  public void upgrade() {
+    mySupportedVersion = UPGRADE_TO_16_VERSION_ASKED;
+  }
+
+  private void ensureSupportedVersion() {
+    if (mySupportedVersion == null) {
+      mySupportedVersion = fixSupportedVersion(SvnBranchConfigurationManager.getInstance(myProject).getSupportValue());
     }
-    return mySupportOptions;
   }
 
   public String getConfigurationDirectory() {
@@ -479,9 +472,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     final Element supportedVersion = element.getChild("supportedVersion");
     if (supportedVersion != null) {
       try {
-        mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText().trim()));
+        mySupportedVersion = fixSupportedVersion(Long.parseLong(supportedVersion.getText().trim()));
       } catch (NumberFormatException e) {
-        mySupportOptions = new SvnSupportOptions(null);
+        mySupportedVersion = fixSupportedVersion(null);
       }
     }
     final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
@@ -536,8 +529,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       element.addContent(new Element("keepLocks"));
     }
     element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
-    if (mySupportOptions != null) {
-      element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportOptions.myVersion)));
+    if (mySupportedVersion != null) {
+      element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportedVersion)));
     }
     element.setAttribute("maxAnnotateRevisions", String.valueOf(myMaxAnnotateRevisions));
     element.setAttribute("myUseAcceleration", String.valueOf(getUseAcceleration()));

@@ -394,12 +394,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       @Override
       public void processLoadedLists(final List<LocalChangeList> lists) {
         if (lists.isEmpty()) return;
-        SvnConfiguration.SvnSupportOptions supportOptions = null;
         try {
           ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
-          supportOptions = myConfiguration.getSupportOptions(myProject);
 
-          if (!supportOptions.changeListsSynchronized()) {
+          if (!myConfiguration.changeListsSynchronized()) {
             processChangeLists(lists);
           }
         }
@@ -407,9 +405,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           //
         }
         finally {
-          if (supportOptions != null) {
-            supportOptions.upgrade();
-          }
+          myConfiguration.upgrade();
         }
 
         connection.disconnect();
