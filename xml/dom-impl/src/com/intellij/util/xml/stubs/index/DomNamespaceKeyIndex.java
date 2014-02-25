@@ -46,18 +46,19 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
     final int virtualFileId = ((VirtualFileWithId)file).getId();
     CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<PsiFile>();
-    StubIndex.getInstance().process(
+    StubIndex.getInstance().processElements(
       KEY,
       namespaceKey,
       domFileElement.getFile().getProject(),
       GlobalSearchScope.fileScope(domFileElement.getFile()),
-       new IdFilter() {
-         @Override
-         public boolean containsFileId(int id) {
-           return id == virtualFileId;
-         }
-       },
-       processor
+      new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return id == virtualFileId;
+        }
+      },
+      PsiFile.class, 
+      processor
     );
     return processor.isFound();
   }
