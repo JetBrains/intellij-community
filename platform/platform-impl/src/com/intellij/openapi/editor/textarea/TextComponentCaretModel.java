@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -154,8 +153,8 @@ public class TextComponentCaretModel implements CaretModel {
 
   @NotNull
   @Override
-  public Collection<Caret> getAllCarets() {
-    return Collections.singleton(myCaret);
+  public List<Caret> getAllCarets() {
+    return Collections.singletonList(myCaret);
   }
 
   @Nullable

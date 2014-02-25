@@ -165,9 +165,9 @@ public class CaretModelWindow implements CaretModel {
 
   @NotNull
   @Override
-  public Collection<Caret> getAllCarets() {
-    Collection<Caret> hostCarets = myDelegate.getAllCarets();
-    Collection<Caret> carets = new ArrayList<Caret>(hostCarets.size());
+  public List<Caret> getAllCarets() {
+    List<Caret> hostCarets = myDelegate.getAllCarets();
+    List<Caret> carets = new ArrayList<Caret>(hostCarets.size());
     for (Caret hostCaret : hostCarets) {
       carets.add(createInjectedCaret(hostCaret));
     }
