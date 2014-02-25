@@ -15,12 +15,23 @@
  */
 package com.intellij.vcs.log.newgraph;
 
-/**
- * @author erokhins
- */
-public interface PermanentGraph extends SomeGraph {
-  int NOT_LOAD_COMMIT = Integer.MIN_VALUE;
+import org.jetbrains.annotations.NotNull;
 
-  // if nodeIndex == nodesCount(), returned NOT_LOAD_COMMIT
-  int getHashIndex(int nodeIndex);
+import java.util.List;
+
+public interface SomeGraph {
+  int nodesCount();
+
+  @NotNull
+  List<Integer> getUpNodes(int nodeIndex);
+
+  /**
+   *
+   * @param nodeIndex
+   * @return list adjacent nodes, which index > nodeIndex.
+   * If one of adjacent node wasn't load, it nodeIndex = nodesCount()
+   */
+  @NotNull
+  List<Integer> getDownNodes(int nodeIndex);
+
 }

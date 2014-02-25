@@ -13,14 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph;
+package com.intellij.vcs.log.newgraph.utils.impl;
 
-/**
- * @author erokhins
- */
-public interface PermanentGraph extends SomeGraph {
-  int NOT_LOAD_COMMIT = Integer.MIN_VALUE;
+import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
 
-  // if nodeIndex == nodesCount(), returned NOT_LOAD_COMMIT
-  int getHashIndex(int nodeIndex);
+public class IDIntToInt implements IntToIntMap {
+  private final int size;
+
+  public IDIntToInt(int size) {
+    this.size = size;
+  }
+
+  @Override
+  public int shortSize() {
+    return size;
+  }
+
+  @Override
+  public int longSize() {
+    return size;
+  }
+
+  @Override
+  public int getLongIndex(int shortIndex) {
+    return shortIndex;
+  }
+
+  @Override
+  public int getShortIndex(int longIndex) {
+    return longIndex;
+  }
 }

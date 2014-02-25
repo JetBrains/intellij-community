@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph;
+package com.intellij.vcs.log.newgraph.gpaph.actions;
 
-/**
- * @author erokhins
- */
-public interface PermanentGraph extends SomeGraph {
-  int NOT_LOAD_COMMIT = Integer.MIN_VALUE;
+import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
+import org.jetbrains.annotations.Nullable;
 
-  // if nodeIndex == nodesCount(), returned NOT_LOAD_COMMIT
-  int getHashIndex(int nodeIndex);
+public class ClickGraphAction extends GraphActionWithSomeInfo<GraphElement> {
+  public ClickGraphAction(@Nullable GraphElement graphElement) {
+    super(graphElement);
+  }
 }
