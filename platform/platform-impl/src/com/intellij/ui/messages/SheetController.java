@@ -70,14 +70,19 @@ public class SheetController {
 
     for (int i = 0; i < buttons.length; i++) {
       int titleIndex = buttonTitles.length - 1 - i;
-      buttons[i] = new JButton(buttonTitles[titleIndex]);
-      if (buttonTitles[titleIndex].equals(defaultButtonTitle)) {
+      String buttonTitle = buttonTitles[titleIndex];
+
+      buttons[i] = new JButton();
+
+      handleMnemonics(i, buttonTitle);
+
+      if (buttonTitle.equals(defaultButtonTitle)) {
         myDefaultButton = buttons[i];
       }
-      if (buttonTitles[titleIndex].equals(focusedButton)) {
+      if (buttonTitle.equals(focusedButton)) {
         myFocusedButton = buttons[i];
       }
-      if (buttonTitles[titleIndex].equals("Cancel")) {
+      if (buttonTitle.equals("Cancel")) {
         myResult = "Cancel";
       }
     }
@@ -87,6 +92,17 @@ public class SheetController {
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
+  }
+
+  private void handleMnemonics(int i, String buttonTitle) {
+    buttons[i].setName(buttonTitle);
+
+    if (buttonTitle.indexOf('&') != -1) {
+      buttons[i].setMnemonic(buttonTitle.charAt(buttonTitle.indexOf('&') + 1));
+      buttonTitle = buttonTitle.replace("&","");
+    }
+
+    buttons[i].setText(buttonTitle);
   }
 
   void requestFocus() {
@@ -103,7 +119,7 @@ public class SheetController {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JButton) {
-          myResult = ((JButton)e.getSource()).getText();
+          myResult = ((JButton)e.getSource()).getName();
         }
         mySheetMessage.startAnimation(false);
       }
