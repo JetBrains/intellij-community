@@ -35,7 +35,7 @@ import java.util.Collections;
  *
  * @author Ilya.Kazakevich
  */
-class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullUpView> implements PyPullUpPresenter {
+class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullUpView, PyPullUpInfoModel> implements PyPullUpPresenter {
   @NotNull
   private final Collection<PyClass> myParents;
 
@@ -89,6 +89,10 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
     return true;
   }
 
+  @Override
+  public void parentChanged() {
+    myModel.setSuperClass(myView.getSelectedParent());
+  }
 
   @NotNull
   @Override

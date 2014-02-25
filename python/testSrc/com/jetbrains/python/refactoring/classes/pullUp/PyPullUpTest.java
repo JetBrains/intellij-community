@@ -84,6 +84,11 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTest("Child", "#foo", "Parent");
   }
 
+  // Ensures than all fields are moved in correct order
+  public void testDependenciesOrder() {
+    doHelperTestSeveralMembers("Child", "Parent", "#CLASS_FIELD", "#ANOTHER_CLASS_FIELD", "#FIELD", ".foo", "#SOME_VAR", "#b", "#d", "#A_FIELD");
+  }
+
   public void testMultiFile() {   // PY-2810
     doMultiFileTest();
   }
@@ -142,8 +147,12 @@ public class PyPullUpTest extends PyClassRefactoringTest {
 
 
   private void doHelperTest(final String className, final String memberName, final String superClassName) {
+    doHelperTestSeveralMembers(className, superClassName, memberName);
+  }
+
+  private void doHelperTestSeveralMembers(@NotNull final String className, @NotNull final String superClassName, @NotNull final String... memberNames) {
     myFixture.configureByFile(getMultiFileBaseName() + ".py");
-    doPullUp(className, superClassName, memberName);
+    doPullUp(className, superClassName, false, memberNames);
     myFixture.checkResultByFile(getMultiFileBaseName() + ".after.py");
   }
 

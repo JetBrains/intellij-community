@@ -99,6 +99,7 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
     for (final PyClass parent : configInfo.getParents()) {
       myParentsComboBoxModel.addElement(parent);
     }
+    myPresenter.parentChanged();
     myParentsCombo.addItemListener(this);
   }
 
@@ -106,6 +107,7 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
   public void itemStateChanged(final ItemEvent e) {
     if (e.getStateChange() == ItemEvent.SELECTED) {
       myPyMemberSelectionPanel.redraw();
+      myPresenter.parentChanged();
     }
   }
 }

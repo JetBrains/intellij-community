@@ -60,19 +60,68 @@ public final class PyClassRefactoringUtil {
   /**
    * Copies class field declarations to some other place
    *
-   * @param assignmentStatement list of class fields
+   * @param assignmentStatements list of class fields
+   *                             @param dequalifyIfDeclaredInClass If not null method will check if field declared in this class.
+   *                                                               If declared -- qualifier will be removed.
+   *                                                               For example: MyClass.Foo will become Foo it this param is MyClass.
    * @return new (copied) fields
    */
   @NotNull
-  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatement,
-                                                                            @NotNull final PyStatementList superClassStatement) {
-    final List<PyAssignmentStatement> declations = new ArrayList<PyAssignmentStatement>(assignmentStatement.size());
-    for (final PyAssignmentStatement expression : assignmentStatement) {
-      final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)expression.copy();
-      declations.add((PyAssignmentStatement)PyUtil.addElementToStatementList(newDeclaration, superClassStatement, true));
+  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatements,
+                                                                            @NotNull final PyStatementList superClassStatement,
+                                                                            @Nullable final PyClass dequalifyIfDeclaredInClass) {
+    final List<PyAssignmentStatement> declarations = new ArrayList<PyAssignmentStatement>(assignmentStatements.size());
+    Collections.sort(declarations, PyDependenciesComparator.INSTANCE);
+
+
+    for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
+      final PyElement value = pyAssignmentStatement.getAssignedValue();
+      final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)pyAssignmentStatement.copy();
+
+      if (value instanceof PyReferenceExpression && dequalifyIfDeclaredInClass != null) {
+        final String newValue = getNewValueToAssign((PyReferenceExpression)value, dequalifyIfDeclaredInClass);
+
+        setNewAssigneeValue(newDeclaration, newValue);
+
+      }
+
+      declarations.add(PyUtil.addElementToStatementList(newDeclaration, superClassStatement));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
-    return declations;
+    return declarations;
+  }
+
+  /**
+   * Sets new value to assignment statement.
+   * @param assignmentStatement statement to change
+   * @param newValue new value
+   */
+  private static void setNewAssigneeValue(@NotNull final PyAssignmentStatement assignmentStatement, @NotNull final String newValue) {
+    final PyExpression oldValue = assignmentStatement.getAssignedValue();
+    final PyExpression newExpression =
+      PyElementGenerator.getInstance(assignmentStatement.getProject()).createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
+    if (oldValue != null) {
+      oldValue.replace(newExpression);
+    } else {
+      assignmentStatement.add(newExpression);
+    }
+  }
+
+  /**
+   * Checks if current value declared in provided class and removes class qualifier if true
+   * @param currentValue current value
+   * @param dequalifyIfDeclaredInClass  class to check
+   * @return value as string
+   */
+  @NotNull
+  private static String getNewValueToAssign(@NotNull final PyReferenceExpression currentValue, @NotNull final PyClass dequalifyIfDeclaredInClass) {
+    final PyExpression qualifier = currentValue.getQualifier();
+    if ((qualifier instanceof PyReferenceExpression) &&
+        ((PyReferenceExpression)qualifier).getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
+      final String name = currentValue.getName();
+      return ((name != null) ? name : currentValue.getText());
+    }
+    return currentValue.getText();
   }
 
   @NotNull

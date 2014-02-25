@@ -63,6 +63,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NonNls;
@@ -1285,6 +1286,36 @@ public class PyUtil {
     return instanceOf(element, toSkip) ? null : element;
   }
 
+  /**
+   * Adds element to statement list to the correct place according to its dependencies.
+   * @param element to insert
+   * @param statementList where element should be inserted
+   * @return inserted element
+   */
+  public static <T extends PyElement>T addElementToStatementList(@NotNull final T element,
+                                                     @NotNull final PyStatementList statementList) {
+    PsiElement before = null;
+    PsiElement after = null;
+    for (final PyStatement statement : statementList.getStatements()) {
+      if (PyDependenciesComparator.depends(element, statement)) {
+        after = statement;
+      }else if (PyDependenciesComparator.depends(statement, element)) {
+        before = statement;
+      }
+    }
+    final PsiElement result;
+    if (after != null) {
+
+      result = statementList.addAfter(element, after);
+    }else if (before != null) {
+      result = statementList.addBefore(element, before);
+    } else {
+      result = addElementToStatementList(element, statementList, true);
+    }
+    @SuppressWarnings("unchecked") // Inserted element can't have different type
+    final T resultCasted = (T)result;
+    return resultCasted;
+  }
 
   public static PsiElement addElementToStatementList(@NotNull PsiElement element,
                                                      @NotNull PyStatementList statementList,

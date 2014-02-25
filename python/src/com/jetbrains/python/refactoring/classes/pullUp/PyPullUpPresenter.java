@@ -27,4 +27,8 @@ import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPr
  */
 public interface PyPullUpPresenter extends MembersBasedPresenter {
 
+  /**
+   * To be called when user changed parent
+   */
+  void parentChanged();
 }
