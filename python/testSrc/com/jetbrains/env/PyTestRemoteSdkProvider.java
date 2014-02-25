@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remotesdk.RemoteInterpreterException;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.remote.*;
 
@@ -111,7 +112,7 @@ public class PyTestRemoteSdkProvider {
   }
 
   public static boolean shouldFailWhenCantRunRemote() {
-    return !StringUtil.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvSufficiencyTest.IS_UNDER_TEAMCITY;
+    return !StringUtil.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvTestCase.IS_UNDER_TEAMCITY;
   }
 
   private static String getTempHelpersPath(PyRemoteSdkCredentials data) throws IOException {
