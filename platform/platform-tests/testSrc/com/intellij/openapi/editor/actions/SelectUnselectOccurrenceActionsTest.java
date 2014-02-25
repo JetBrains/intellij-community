@@ -58,6 +58,10 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     checkResult("some <selection>t<caret>ext</selection>\n" +
                 "some texts\n" +
                 "another text here");
+    executeAction();
+    checkResult("some <selection>t<caret>ext</selection>\n" +
+                "some texts\n" +
+                "another <selection>t<caret>ext</selection> here");
     assertEquals(0, hintCount);
   }
 
@@ -67,34 +71,29 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
          "another text here");
     executeAction();
     checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "another <selection>t<caret>ext</selection> here");
+                "some <selection>t<caret>ext</selection>s\n" +
+                "another text here");
     assertEquals(0, hintCount);
   }
 
   public void testShowingHint() throws Exception {
     init("some <selection>t<caret>ext</selection>\n" +
-         "some texts\n" +
          "another <selection>t<caret>ext</selection> here");
     executeAction();
     assertEquals(1, hintCount);
     checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
                 "another <selection>t<caret>ext</selection> here");
     executeAction();
     assertEquals(1, hintCount);
     checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
                 "another <selection>t<caret>ext</selection> here");
   }
 
   public void testRevert() throws Exception {
     init("some <selection>t<caret>ext</selection>\n" +
-         "some texts\n" +
          "another <selection>t<caret>ext</selection> here");
     executeReverseAction();
     checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
                 "another text here");
     assertEquals(0, hintCount);
   }
@@ -138,21 +137,6 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     checkResult("some <selection>t<caret>ex</selection>t\n" +
                 "some <selection>t<caret>ex</selection>ts\n" +
                 "another <selection>t<caret>ex</selection>t here");
-    assertEquals(0, hintCount);
-  }
-
-  public void testWholeWordinessIsRememberedAtStart() throws Exception {
-    init("some <selection>text<caret></selection>s\n" +
-         "another text\n" +
-         "some other texts");
-    executeAction();
-    checkResult("some <selection>text<caret></selection>s\n" +
-                "another <selection>text<caret></selection>\n" +
-                "some other texts");
-    executeAction();
-    checkResult("some <selection>text<caret></selection>s\n" +
-                "another <selection>text<caret></selection>\n" +
-                "some other <selection>text<caret></selection>s");
     assertEquals(0, hintCount);
   }
 

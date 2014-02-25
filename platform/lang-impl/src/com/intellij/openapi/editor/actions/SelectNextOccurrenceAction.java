@@ -58,7 +58,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
                                                                           caret.getOffset(),
                                                                           SelectWordUtil.JAVA_IDENTIFIER_PART_CONDITION);
       boolean notFoundPreviously = getAndResetNotFoundStatus(editor);
-      Boolean wholeWordSearch = isWholeWordSearch(editor);
+      boolean wholeWordSearch = isWholeWordSearch(editor);
       if (caret.hasSelection()) {
         Project project = editor.getProject();
         String selectedText = caret.getSelectedText();
@@ -67,12 +67,6 @@ public class SelectNextOccurrenceAction extends EditorAction {
         }
         FindManager findManager = FindManager.getInstance(project);
 
-        if (wholeWordSearch == null) {
-          wholeWordSearch = wordSelectionRange != null
-                            && wordSelectionRange.getStartOffset() == caret.getSelectionStart()
-                            && wordSelectionRange.getEndOffset() == caret.getSelectionEnd();
-          setWholeWordSearch(editor, wholeWordSearch);
-        }
         FindModel model = new FindModel();
         model.setStringToFind(caret.getSelectedText());
         model.setCaseSensitive(true);
@@ -137,11 +131,12 @@ public class SelectNextOccurrenceAction extends EditorAction {
       editor.putUserData(NOT_FOUND, Boolean.TRUE);
     }
 
-    private static Boolean isWholeWordSearch(Editor editor) {
+    private static boolean isWholeWordSearch(Editor editor) {
       if (!isRepeatedActionInvocation()) {
         editor.putUserData(WHOLE_WORDS, null);
       }
-      return editor.getUserData(WHOLE_WORDS);
+      Boolean value = editor.getUserData(WHOLE_WORDS);
+      return value != null;
     }
 
     private static void setWholeWordSearch(Editor editor, boolean isWholeWordSearch) {
