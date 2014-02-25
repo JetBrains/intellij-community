@@ -2766,4 +2766,14 @@ public class UIUtil {
       }
     }
   }
+
+  public static boolean isAncestor(@NotNull Component ancestor, @Nullable Component descendant) {
+    while (descendant != null) {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = descendant.getParent();
+    }
+    return false;
+  }
 }
