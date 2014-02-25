@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,27 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.StreamApiMigrationInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixParameterizedTestCase {
+
+public class StreamApiMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
+  @NotNull
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new StreamApiMigrationInspection(),
+    };
+  }
+
   public void test() throws Exception { doAllTests(); }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantLambdaParameterType";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/streamApiMigration";
   }
 
   @Override

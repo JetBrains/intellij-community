@@ -28,13 +28,17 @@ import java.util.Set;
 
 public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extends PsiElement> {
   protected final C myClass;
-  private final C mySuperClass;
+  private C mySuperClass;
   private final Map<T, Set<T>> myDependencyGraph;
 
   public MemberDependenciesStorage(C aClass, C superClass) {
     myClass = aClass;
     mySuperClass = superClass;
     myDependencyGraph = new HashMap<T, Set<T>>();
+  }
+
+  public void setSuperClass(C superClass) {
+    mySuperClass = superClass;
   }
 
   @Nullable

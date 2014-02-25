@@ -675,7 +675,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  private static boolean isEffectivelyFinal(PsiVariable variable, PsiElement scope, PsiJavaCodeReferenceElement context) {
+  public static boolean isEffectivelyFinal(PsiVariable variable, PsiElement scope, PsiJavaCodeReferenceElement context) {
     boolean effectivelyFinal;
     if (variable instanceof PsiParameter) {
       effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));

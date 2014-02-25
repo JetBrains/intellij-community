@@ -18,9 +18,7 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Multimap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
@@ -29,6 +27,7 @@ import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +102,20 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     @NotNull final PyClass from,
     @NotNull final PyClass... to
   ) {
+    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<PyMemberInfo<PyElement>>(memberInfos);
+    Collections.sort(memberInfosSorted, new Comparator<PyMemberInfo<PyElement>>() {
+      @Override
+      public int compare(PyMemberInfo<PyElement> o1, PyMemberInfo<PyElement> o2) {
+        return PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember());
+      }
+    });
+
+    for (PyMemberInfo<PyElement> info : memberInfosSorted) {
+      TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, info.getMembersManager(), Collections.singleton(info), to);
+    }
+
+
+    /*//Move at once, sort
     final Multimap<MembersManager<PyElement>, PyMemberInfo<PyElement>> managerToMember = ArrayListMultimap.create();
     //Collect map (manager)->(list_of_memebers)
     for (final PyMemberInfo<PyElement> memberInfo : memberInfos) {
@@ -112,7 +125,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     for (final MembersManager<PyElement> membersManager : managerToMember.keySet()) {
       final Collection<PyMemberInfo<PyElement>> members = managerToMember.get(membersManager);
       TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, membersManager, members, to);
-    }
+    }*/
     PyClassRefactoringUtil.insertPassIfNeeded(from);
   }
 

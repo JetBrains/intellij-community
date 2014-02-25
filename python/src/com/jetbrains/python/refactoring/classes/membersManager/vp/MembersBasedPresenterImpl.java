@@ -19,9 +19,11 @@ import java.util.Collection;
  * or {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterWithPreviewImpl} instead
  *
  * @param <T> view for that presenter
+ * @param <M> Type of model {@link #myModel}
  * @author Ilya.Kazakevich
  */
-abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implements MembersBasedPresenter {
+abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
+  M extends MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> implements MembersBasedPresenter {
   @NotNull
   protected final T myView;
   @NotNull
@@ -32,18 +34,18 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>> implemen
    * Member model
    */
   @NotNull
-  protected final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myModel;
+  protected final M myModel;
 
   /**
    * @param view                  View for presenter
    * @param classUnderRefactoring class to be refactored
    * @param infoStorage           info storage
-   * @param model Member model (to be used for dependencies checking)
+   * @param model                 Member model (to be used for dependencies checking)
    */
   MembersBasedPresenterImpl(@NotNull final T view,
                             @NotNull final PyClass classUnderRefactoring,
                             @NotNull final PyMemberInfoStorage infoStorage,
-                            @NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
+                            @NotNull final M model) {
     myView = view;
     myClassUnderRefactoring = classUnderRefactoring;
     myStorage = infoStorage;
