@@ -15,34 +15,20 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.testFramework.EditorTestUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author cdr
  */
 public class EditorInfo {
   String newFileText = null;
-  public EditorTestUtil.CaretsState caretState;
+  public EditorTestUtil.CaretAndSelectionState caretState;
 
   public EditorInfo(final String fileText) {
-    new WriteCommandAction(null){
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
-      }
-    }.execute();
-  }
-
-  private void updateCaretAndSelection(final Document document) {
+    Document document = EditorFactory.getInstance().createDocument(fileText);
     caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document, false);
     newFileText = document.getText();
   }
@@ -52,33 +38,6 @@ public class EditorInfo {
   }
 
   public void applyToEditor(Editor editor) {
-    if (editor.getCaretModel().supportsMultipleCarets()) {
-      List<LogicalPosition> caretPositions = new ArrayList<LogicalPosition>();
-      List<Segment> selections = new ArrayList<Segment>();
-      for (EditorTestUtil.Caret caret : caretState.carets) {
-        LogicalPosition pos = null;
-        if (caret.offset != null) {
-          int caretLine = StringUtil.offsetToLineNumber(newFileText, caret.offset);
-          int caretCol = caret.offset - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-          pos = new LogicalPosition(caretLine, caretCol);
-        }
-        caretPositions.add(pos);
-        selections.add(caret.selection == null ? null : caret.selection);
-      }
-      editor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
-    }
-    else {
-      assert caretState.carets.size() == 1 : "Multiple carets are not supported by the model";
-      EditorTestUtil.Caret caret = caretState.carets.get(0);
-      if (caret.offset != null) {
-        int caretLine = StringUtil.offsetToLineNumber(newFileText, caret.offset);
-        int caretCol = caret.offset - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-        LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-      }
-      if (caret.selection != null) {
-        editor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
-      }
-    }
+    EditorTestUtil.setCaretsAndSelection(editor, caretState);
   }
 }

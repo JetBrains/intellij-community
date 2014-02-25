@@ -39,7 +39,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -421,46 +420,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void setupCursorAndSelection(@NotNull final Editor editor) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Document document = editor.getDocument();
-        EditorTestUtil.CaretsState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
-
-        final String newText = document.getText();
-
-        if (editor.getCaretModel().supportsMultipleCarets()) {
-          List<LogicalPosition> caretPositions = new ArrayList<LogicalPosition>();
-          List<Segment> selections = new ArrayList<Segment>();
-          for (EditorTestUtil.Caret caret : caretState.carets) {
-            LogicalPosition pos = null;
-            if (caret.offset != null) {
-              int caretLine = StringUtil.offsetToLineNumber(newText, caret.offset);
-              int caretCol = caret.offset - StringUtil.lineColToOffset(newText, caretLine, 0);
-              pos = new LogicalPosition(caretLine, caretCol);
-            }
-            caretPositions.add(pos);
-            selections.add(caret.selection == null ? null : caret.selection);
-          }
-          editor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
-        }
-        else {
-          assert caretState.carets.size() == 1 : "Multiple carets are not supported by the model";
-          EditorTestUtil.Caret caret = caretState.carets.get(0);
-          if (caret.offset != null) {
-            int caretLine = StringUtil.offsetToLineNumber(newText, caret.offset);
-            int caretCol = caret.offset - StringUtil.lineColToOffset(newText, caretLine, 0);
-            LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-            editor.getCaretModel().moveToLogicalPosition(pos);
-          }
-          if (caret.selection != null) {
-            editor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
-          }
-        }
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      }
-    });
+    Document document = editor.getDocument();
+    EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+    EditorTestUtil.setCaretsAndSelection(editor, caretState);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
   @Override
@@ -516,7 +479,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         String fileText = StringUtil.convertLineSeparators(ft);
         Document document = EditorFactory.getInstance().createDocument(fileText);
 
-        EditorTestUtil.CaretsState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+        EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
         String newFileText = document.getText();
         String newFileText1 = newFileText;
@@ -536,47 +499,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
         assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 
-        CaretModel caretModel = myEditor.getCaretModel();
-        List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
-        assertEquals("Unexpected number of carets", caretState.carets.size(), allCarets.size());
-        for (int i = 0; i < caretState.carets.size(); i++) {
-          String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
-          Caret currentCaret = allCarets.get(i);
-          LogicalPosition actualCaretPosition = currentCaret.getLogicalPosition();
-          EditorTestUtil.Caret expected = caretState.carets.get(i);
-          if (expected.offset != null) {
-            int caretLine = StringUtil.offsetToLineNumber(newFileText, expected.offset);
-            int caretCol = expected.offset - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-
-            assertEquals(caretDescription + "caretLine", caretLine + 1, actualCaretPosition.line + 1);
-            assertEquals(caretDescription + "caretColumn", caretCol + 1, actualCaretPosition.column + 1);
-          }
-          int actualSelectionStart = currentCaret.getSelectionStart();
-          int actualSelectionEnd = currentCaret.getSelectionEnd();
-          if (expected.selection != null) {
-            int selStartLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getStartOffset());
-            int selStartCol = expected.selection.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
-
-            int selEndLine = StringUtil.offsetToLineNumber(newFileText, expected.selection.getEndOffset());
-            int selEndCol = expected.selection.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
-
-            assertEquals(caretDescription + "selectionStartLine", selStartLine + 1,
-                         StringUtil.offsetToLineNumber(newFileText, actualSelectionStart) + 1);
-
-            assertEquals(caretDescription + "selectionStartCol", selStartCol + 1,
-                         actualSelectionStart - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
-
-            assertEquals(caretDescription + "selectionEndLine", selEndLine + 1,
-                         StringUtil.offsetToLineNumber(newFileText, actualSelectionEnd) + 1);
-
-            assertEquals(caretDescription + "selectionEndCol", selEndCol + 1,
-                         actualSelectionEnd - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
-          }
-          else {
-            assertFalse(caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
-                        currentCaret.hasSelection());
-          }
-        }
+        EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
       }
     }.execute();
   }

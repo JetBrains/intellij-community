@@ -376,6 +376,8 @@
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction" />
           <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically"/>
           <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally"/>
+          <action id="MoveTabRight" class="com.intellij.ide.actions.MoveTabRightAction"/>
+          <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
           <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
           <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
@@ -478,6 +480,8 @@
       <separator/>
       <reference ref="SplitVertically"/>
       <reference ref="SplitHorizontally"/>
+      <reference ref="MoveTabRight"/>
+      <reference ref="MoveTabDown"/>
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>

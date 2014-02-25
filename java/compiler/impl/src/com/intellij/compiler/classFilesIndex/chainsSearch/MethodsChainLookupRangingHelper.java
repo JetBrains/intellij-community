@@ -48,9 +48,10 @@ public class MethodsChainLookupRangingHelper {
 
   public static List<LookupElement> chainsToWeightableLookupElements(final List<MethodsChain> chains,
                                                                      final ChainCompletionContext context) {
+    final CachedRelevantStaticMethodSearcher staticMethodSearcher = new CachedRelevantStaticMethodSearcher(context);
     final List<LookupElement> lookupElements = new ArrayList<LookupElement>(chains.size());
     for (final MethodsChain chain : chains) {
-      final LookupElement lookupElement = chainToWeightableLookupElement(chain, context);
+      final LookupElement lookupElement = chainToWeightableLookupElement(chain, context, staticMethodSearcher);
       if (lookupElement != null) {
         lookupElements.add(lookupElement);
       }
@@ -60,7 +61,9 @@ public class MethodsChainLookupRangingHelper {
 
   @SuppressWarnings("ConstantConditions")
   @Nullable
-  private static LookupElement chainToWeightableLookupElement(final MethodsChain chain, final ChainCompletionContext context) {
+  private static LookupElement chainToWeightableLookupElement(final MethodsChain chain,
+                                                              final ChainCompletionContext context,
+                                                              final CachedRelevantStaticMethodSearcher staticMethodSearcher) {
     final int chainSize = chain.size();
     assert chainSize != 0;
     final int lastMethodWeight = chain.getChainWeight();
@@ -93,7 +96,8 @@ public class MethodsChainLookupRangingHelper {
         qualifierClass = null;
       }
 
-      final MethodProcResult procResult = processMethod(method, qualifierClass, context, lastMethodWeight, isHead, nullableNotNullManager);
+      final MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, staticMethodSearcher,
+                                                        nullableNotNullManager);
       if (procResult == null) {
         return null;
       }
@@ -125,9 +129,10 @@ public class MethodsChainLookupRangingHelper {
   @Nullable
   private static MethodProcResult processMethod(@NotNull final PsiMethod method,
                                                 @Nullable final PsiClass qualifierClass,
-                                                final ChainCompletionContext context,
-                                                final int weight,
                                                 final boolean isHeadMethod,
+                                                final int weight,
+                                                final ChainCompletionContext context,
+                                                final CachedRelevantStaticMethodSearcher staticMethodSearcher,
                                                 final NullableNotNullManager nullableNotNullManager) {
     int unreachableParametersCount = 0;
     int notMatchedStringVars = 0;
@@ -172,7 +177,7 @@ public class MethodsChainLookupRangingHelper {
           continue;
         }
         final ContextRelevantStaticMethod contextRelevantStaticMethod =
-          ContainerUtil.getFirstItem(context.getRelevantStaticMethods(typeQName, weight), null);
+          ContainerUtil.getFirstItem(staticMethodSearcher.getRelevantStaticMethods(typeQName, weight), null);
         if (contextRelevantStaticMethod != null) {
           //
           // In most cases it is not really relevant

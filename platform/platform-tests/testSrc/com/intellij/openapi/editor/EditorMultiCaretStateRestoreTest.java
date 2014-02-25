@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.HeavyFileEditorManagerTestCase;
@@ -26,7 +23,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTestCase {
   public void testRestoreState() throws Exception {
@@ -54,12 +50,7 @@ public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTest
 
   private static void verifyEditorState(Editor editor, String textWithMarkup) {
     final Document document = new DocumentImpl(textWithMarkup);
-    EditorTestUtil.CaretsState caretAndSelectionState = new WriteCommandAction<EditorTestUtil.CaretsState>(null) {
-      @Override
-      protected void run(@NotNull Result<EditorTestUtil.CaretsState> result) throws Throwable {
-        result.setResult(EditorTestUtil.extractCaretAndSelectionMarkers(document));
-      }
-    }.execute().getResultObject();
+    EditorTestUtil.CaretAndSelectionState caretAndSelectionState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
     assertEquals(document.getCharsSequence().toString(), editor.getDocument().getText());
     EditorTestUtil.verifyCaretAndSelectionState(editor, caretAndSelectionState);
   }

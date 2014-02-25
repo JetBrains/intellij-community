@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class XKeywordValuePresentation extends XValuePresentation {
   private final String myValue;
 
-  public XKeywordValuePresentation(String value) {
+  public XKeywordValuePresentation(@NotNull String value) {
     myValue = value;
   }
 

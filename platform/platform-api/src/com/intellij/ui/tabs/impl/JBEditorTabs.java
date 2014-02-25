@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -138,7 +141,14 @@ public class JBEditorTabs extends JBTabsImpl {
   @Override
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
     List<TabInfo> visibleInfos = getVisibleInfos();
-
+    if (isAlphabeticalMode()) {
+      Collections.sort(visibleInfos, new Comparator<TabInfo>() {
+        @Override
+        public int compare(TabInfo o1, TabInfo o2) {
+          return StringUtil.naturalCompare(o1.getText(), o2.getText());
+        }
+      });
+    }
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
 
     Insets insets = getTabsBorder().getEffectiveBorder();

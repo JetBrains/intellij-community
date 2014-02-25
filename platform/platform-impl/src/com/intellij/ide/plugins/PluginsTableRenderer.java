@@ -43,10 +43,13 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
   private JLabel myCategory;
   private JPanel myRightPanel;
+  private JPanel myBottomPanel;
+  private JPanel myInfoPanel;
   private final IdeaPluginDescriptor myPluginDescriptor;
 
-  public PluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor) {
+  public PluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor, boolean showFullInfo) {
     myPluginDescriptor = pluginDescriptor;
+    boolean myShowFullInfo = showFullInfo;
 
     final Font smallFont;
     if (SystemInfo.isMac) {
@@ -61,9 +64,14 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myStatus.setText("");
     myCategory.setText("");
     myLastUpdated.setFont(smallFont);
-    if (! (pluginDescriptor instanceof PluginNode)) {
+    if (!myShowFullInfo || !(pluginDescriptor instanceof PluginNode)) {
       myPanel.remove(myRightPanel);
     }
+
+    if (!myShowFullInfo) {
+      myInfoPanel.remove(myBottomPanel);
+    }
+
     myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4,3,4,3) : new EmptyBorder(2,3,2,3));
   }
 

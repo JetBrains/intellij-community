@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.List;
@@ -94,6 +95,9 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         if (!(myS instanceof PsiClassType)) return false;
         PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
         PsiClass SClass = SResult.getElement();
+        if (((PsiClassType)myT).isRaw()) {
+          return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
+        }
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(CClass, SClass, SResult.getSubstitutor()) : null;
         if (sSubstitutor != null) {

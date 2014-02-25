@@ -106,6 +106,7 @@ public class AboutDialog extends JDialog {
       }
 
       public void windowLostFocus(WindowEvent e) {
+        if (e.getOppositeWindow() == null) return;
         long eventTime = System.currentTimeMillis();
         if (eventTime - showTime.get() > delta && e.getOppositeWindow() != e.getWindow()) {
           dispose();

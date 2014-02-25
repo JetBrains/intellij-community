@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
+    <orderEntry type="module" module-name="jira" scope="TEST" />
   </component>
 </module>
 

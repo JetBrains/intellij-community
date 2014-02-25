@@ -31,16 +31,12 @@ import java.util.Set;
 public final class ChainCompletionStringUtil {
   private ChainCompletionStringUtil() {}
 
-  public static boolean isPrimitiveOrArray(final @Nullable String typeQName) {
-    return typeQName != null && (typeQName.endsWith("[]") || PRIMITIVES_NAMES.contains(typeQName));
-  }
-
   /**
    * CAUTION: isPrimitiveOrArrayOfPrimitives("java.lang.String") == true,
    *          isPrimitiveOrArrayOfPrimitives("java.lang.Object") == true
    *          isPrimitiveOrArrayOfPrimitives("java.lang.Class") == true
    */
-  public static boolean isPrimitiveOrArrayOfPrimitives(final String typeQName) {
+  public static boolean isPrimitiveOrArrayOfPrimitives(final @Nullable String typeQName) {
     if (typeQName == null) {
       return false;
     }
@@ -63,6 +59,7 @@ public final class ChainCompletionStringUtil {
   }
 
   private static final Set<String> PRIMITIVES_NAMES = new HashSet<String>();
+  private static final Set<String> PRIMITIVES_SHORT_NAMES = new HashSet<String>();
 
   static {
     fillPrimitivesNames(PsiType.BOOLEAN);
@@ -74,36 +71,22 @@ public final class ChainCompletionStringUtil {
     fillPrimitivesNames(PsiType.CHAR);
     fillPrimitivesNames(PsiType.BYTE);
     fillPrimitivesNames(PsiType.VOID);
-    PRIMITIVES_NAMES.add(CommonClassNames.JAVA_LANG_STRING);
-    PRIMITIVES_NAMES.add(CommonClassNames.JAVA_LANG_OBJECT);
-    PRIMITIVES_NAMES.add(CommonClassNames.JAVA_LANG_CLASS);
+
+    fillNonPrimitiveNames(CommonClassNames.JAVA_LANG_STRING);
+    fillNonPrimitiveNames(CommonClassNames.JAVA_LANG_OBJECT);
+    fillNonPrimitiveNames(CommonClassNames.JAVA_LANG_CLASS);
+  }
+
+  private static void fillNonPrimitiveNames(final String typeAsString) {
+    PRIMITIVES_NAMES.add(typeAsString);
+    PRIMITIVES_SHORT_NAMES.add(StringUtilRt.getShortName(typeAsString));
   }
 
   private static void fillPrimitivesNames(final PsiPrimitiveType type) {
     PRIMITIVES_NAMES.add(type.getBoxedTypeName());
     PRIMITIVES_NAMES.add(type.getCanonicalText());
-  }
 
-  private static final Set<String> PRIMITIVES_SHORT_NAMES = new HashSet<String>();
-
-  static {
-    fillPrimitivesShortNames(PsiType.BOOLEAN);
-    fillPrimitivesShortNames(PsiType.INT);
-    fillPrimitivesShortNames(PsiType.LONG);
-    fillPrimitivesShortNames(PsiType.DOUBLE);
-    fillPrimitivesShortNames(PsiType.FLOAT);
-    fillPrimitivesShortNames(PsiType.SHORT);
-    fillPrimitivesShortNames(PsiType.CHAR);
-    fillPrimitivesShortNames(PsiType.BYTE);
-    fillPrimitivesShortNames(PsiType.VOID);
-    PRIMITIVES_SHORT_NAMES.add(StringUtilRt.getShortName(CommonClassNames.JAVA_LANG_STRING));
-    PRIMITIVES_SHORT_NAMES.add(StringUtilRt.getShortName(CommonClassNames.JAVA_LANG_OBJECT));
-    PRIMITIVES_SHORT_NAMES.add(StringUtilRt.getShortName(CommonClassNames.JAVA_LANG_CLASS));
-  }
-
-  private static void fillPrimitivesShortNames(final PsiPrimitiveType type) {
     PRIMITIVES_SHORT_NAMES.add(StringUtilRt.getShortName(type.getBoxedTypeName()));
     PRIMITIVES_SHORT_NAMES.add(type.getCanonicalText());
   }
-
 }

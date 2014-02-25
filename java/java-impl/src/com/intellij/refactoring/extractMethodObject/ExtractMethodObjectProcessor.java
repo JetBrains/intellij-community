@@ -36,7 +36,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -469,12 +468,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiTypeParameter[] methodTypeParameters = getMethod().getTypeParameters();
     if (methodTypeParameters.length > 0) {
       List<String> typeSignature = new ArrayList<String>();
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getMethod().getProject()).getResolveHelper();
+      final PsiSubstitutor substitutor = methodCallExpression.resolveMethodGenerics().getSubstitutor();
       for (final PsiTypeParameter typeParameter : methodTypeParameters) {
-        final PsiType type = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, getMethod().getParameterList().getParameters(),
-                                                                           methodCallExpression.getArgumentList().getExpressions(),
-                                                                           PsiSubstitutor.EMPTY, methodCallExpression,
-                                                                           DefaultParameterTypeInferencePolicy.INSTANCE);
+        final PsiType type = substitutor.substitute(typeParameter);
         if (type == null || PsiType.NULL.equals(type)) {
           return "";
         }

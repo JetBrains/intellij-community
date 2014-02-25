@@ -27,8 +27,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -42,17 +41,14 @@ public final class ChainsSearcher {
   private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
   private static final double NEXT_METHOD_IN_CHAIN_RATIO = 1.5;
 
+  @NotNull
   public static List<MethodsChain> search(final int pathMaximalLength,
                                           final TargetType targetType,
                                           final Set<String> contextQNames,
                                           final int maxResultSize,
                                           final ChainCompletionContext context,
                                           final MethodsUsageIndexReader methodsUsageIndexReader) {
-    final SearchInitializer initializer =
-      createInitializer(targetType,
-                        context.getExcludedQNames(),
-                        methodsUsageIndexReader,
-                        context);
+    final SearchInitializer initializer = createInitializer(targetType, context.getExcludedQNames(), methodsUsageIndexReader, context);
     if (initializer == null) {
       return Collections.emptyList();
     }
@@ -70,7 +66,7 @@ public final class ChainsSearcher {
                                                      final Set<String> excludedParamsTypesQNames,
                                                      final MethodsUsageIndexReader methodsUsageIndexReader,
                                                      final ChainCompletionContext context) {
-    final TreeSet<UsageIndexValue> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
+    final SortedSet<UsageIndexValue> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
     return new SearchInitializer(methods, target.getClassQName(), excludedParamsTypesQNames, context);
   }
 
@@ -82,7 +78,7 @@ public final class ChainsSearcher {
                                            final int maxResultSize,
                                            final String targetQName,
                                            final ChainCompletionContext context) {
-    final Set<String> allExcludedNames = MethodChainsSearchUtil.unionToHashSet(context.getExcludedQNames(), targetQName);
+    final Set<String> allExcludedNames = MethodChainsSearchUtil.joinToHashSet(context.getExcludedQNames(), targetQName);
     final SearchInitializer.InitResult initResult = initializer.init(Collections.<String>emptySet());
 
     final Map<MethodIncompleteSignature, MethodsChain> knownDistance = initResult.getChains();
@@ -91,23 +87,21 @@ public final class ChainsSearcher {
 
     final LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>> q =
       new LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>(ContainerUtil.map(allInitialVertexes,
-                                                                                                   new Function<WeightAware<MethodIncompleteSignature>, WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>() {
-                                                                                                     @Override
-                                                                                                     public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
-                                                                                                       final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
-                                                                                                       final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
-                                                                                                       return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                                                                                                         new Pair<MethodIncompleteSignature, MethodsChain>(
-                                                                                                           underlying,
-                                                                                                           new MethodsChain(context.resolveNotDeprecated(underlying),
-                                                                                                                            methodIncompleteSignatureWeightAware.getWeight(),
-                                                                                                                            underlying.getOwner()
-                                                                                                           )
-                                                                                                         ),
-                                                                                                         methodIncompleteSignatureWeightAware.getWeight()
-                                                                                                       );
-                                                                                                     }
-                                                                                                   }
+                        new Function<WeightAware<MethodIncompleteSignature>, WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>() {
+                          @Override
+                          public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
+                            final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
+                            final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
+                            return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
+                              new Pair<MethodIncompleteSignature, MethodsChain>(
+                                underlying,
+                                new MethodsChain(context.resolveNotDeprecated(underlying),
+                                                 methodIncompleteSignatureWeightAware.getWeight(),
+                                                 underlying.getOwner())),
+                              methodIncompleteSignatureWeightAware.getWeight()
+                            );
+                          }
+                        }
       ));
 
     int maxWeight = 0;

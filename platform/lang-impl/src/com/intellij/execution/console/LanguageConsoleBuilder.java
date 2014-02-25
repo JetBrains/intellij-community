@@ -338,7 +338,7 @@ public final class LanguageConsoleBuilder {
           int startDocLine = document.getLineNumber(event.getOffset());
           int endDocLine = document.getLineNumber(event.getOffset() + event.getNewLength());
           if (event.getOldLength() > event.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(event.getOldFragment(), '\n') != -1) {
-            updateGutterSize(0, Integer.MAX_VALUE);
+            updateGutterSize(startDocLine, endDocLine);
           }
         }
         else if (event.getOldLength() > 0) {
@@ -349,23 +349,25 @@ public final class LanguageConsoleBuilder {
       private void documentCleared() {
         gutterSizeUpdater = null;
 
+        lineEndGutter.documentCleared();
+
         assert gutterContentProvider != null;
         gutterContentProvider.documentCleared(getHistoryViewer());
       }
 
       @Override
-      public void updateStarted(@NotNull Document doc) {
+      public void updateStarted(@NotNull Document document) {
       }
 
       @Override
-      public void updateFinished(@NotNull Document doc) {
+      public void updateFinished(@NotNull Document document) {
         if (getDocument().getTextLength() == 0) {
           documentCleared();
         }
         else {
           addLineSeparatorPainterIfNeed();
+          updateGutterSize(0, Integer.MAX_VALUE);
         }
-        updateGutterSize(0, Integer.MAX_VALUE);
       }
 
       private void updateGutterSize(int start, int end) {
