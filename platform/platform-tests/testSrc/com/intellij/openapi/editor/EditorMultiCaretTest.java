@@ -17,14 +17,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
-import com.intellij.testFramework.fixtures.EditorScrollingFixture;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -79,7 +73,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
 
     mouse().alt().pressAt(1, 6);
     checkResultByText("line\n" +
@@ -117,7 +111,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorScrollingFixture.setVisibleSize(myEditor, 1000, 1000);
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
 
     mouse().middle().pressAt(1, 17);
     checkResultByText("line\n" +

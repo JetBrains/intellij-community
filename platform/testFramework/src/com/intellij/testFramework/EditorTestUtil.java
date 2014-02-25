@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
@@ -37,6 +39,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -184,6 +187,11 @@ public class EditorTestUtil {
     });
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
+  }
+
+  public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
+    Dimension size = new Dimension(widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), heightInChars * editor.getLineHeight());
+    ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
   }
 
   /**
