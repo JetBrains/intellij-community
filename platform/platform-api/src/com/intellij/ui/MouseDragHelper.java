@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   private final JComponent myDragComponent;
 
-  private Point myPressPointScreen;
+  protected Point myPressPointScreen;
   private Point myPressPointComponent;
 
   private boolean myDraggingNow;
@@ -131,7 +131,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     boolean wasDragging = myDraggingNow;
-    myPressPointScreen = null;
     myDraggingNow = false;
     myDragJustStarted = false;
 
@@ -144,6 +143,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
       finally {
+        myPressPointScreen = null;
         resetDragState();
         e.consume();
         if (myDetachPostponed) {
