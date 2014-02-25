@@ -48,6 +48,7 @@ public class TipAndTrickBean extends AbstractExtensionPointBean {
   public String toString() {
     return "TipAndTrickBean{" +
            "fileName='" + fileName + '\'' +
+           ", plugin='" + getPluginDescriptor().getPluginId() + '\'' +
            '}';
   }
 }
