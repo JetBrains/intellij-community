@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.newgraph.render;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.graph.PaintInfo;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
@@ -50,18 +51,40 @@ public class GraphRender {
 
   @NotNull
   public PaintInfo paint(int visibleRowIndex) {
-    GraphCell graphCell = myCellGenerator.getGraphCell(visibleRowIndex);
-
-    int imageWidth = calcImageWidth(graphCell);
-    int bufferWidth = imageWidth + 40;
-    BufferedImage image = UIUtil.createImage(bufferWidth, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
+    Pair<Integer, Integer> imageAndBufferImageWidth = getImageAndBufferImageWidth(visibleRowIndex);
+    BufferedImage image = UIUtil.createImage(imageAndBufferImageWidth.getSecond(), HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
+
+    GraphCell graphCell = myCellGenerator.getGraphCell(visibleRowIndex);
     myCellPainter.draw(g2, graphCell);
-    return new PaintInfoImpl(image, imageWidth);
+
+    return new PaintInfoImpl(image, imageAndBufferImageWidth.getFirst());
   }
 
-  private static int calcImageWidth(@NotNull GraphCell cell) {
-    return cell.getCountElements() * WIDTH_NODE;
+  @NotNull
+  private Pair<Integer, Integer> getImageAndBufferImageWidth(int visibleRowIndex) {
+    int imageWidth = calcImageWidth(visibleRowIndex);
+    int bufferWidth = calcMaxImageWith(visibleRowIndex);
+
+    if (bufferWidth > imageWidth + 30) {
+      imageWidth += (bufferWidth - imageWidth) / 4;
+    }
+    return new Pair<Integer, Integer>(imageWidth, bufferWidth);
+  }
+
+  private int calcImageWidth(int visibleRowIndex) {
+    return myCellGenerator.getGraphCell(visibleRowIndex).getCountElements() * WIDTH_NODE;
+  }
+
+  private int calcMaxImageWith(int visibleRowIndex) {
+    int maxElementsCount = myCellGenerator.getGraphCell(visibleRowIndex).getCountElements();
+    if (visibleRowIndex > 0) {
+      maxElementsCount = Math.max(maxElementsCount, myCellGenerator.getGraphCell(visibleRowIndex - 1).getCountElements());
+    }
+    if (visibleRowIndex < myCellGenerator.getCountVisibleRow() - 1) {
+      maxElementsCount = Math.max(maxElementsCount, myCellGenerator.getGraphCell(visibleRowIndex + 1).getCountElements());
+    }
+    return WIDTH_NODE * maxElementsCount;
   }
 
   public boolean isShowLongEdges() {
