@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphFacade;
+import com.intellij.vcs.log.newgraph.facade.GraphFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DataPack {
+  private static final boolean USE_NEW_FACADE = true;
+
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final GraphFacade myGraphFacade;
@@ -28,8 +31,12 @@ public class DataPack {
     indicator.setText("Building graph...");
     final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(logProviders));
-    GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
-    return new DataPack(refsModel, graphFacade);
+    if (USE_NEW_FACADE) {
+      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits));
+    } else {
+      GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
+      return new DataPack(refsModel, graphFacade);
+    }
   }
 
   @NotNull

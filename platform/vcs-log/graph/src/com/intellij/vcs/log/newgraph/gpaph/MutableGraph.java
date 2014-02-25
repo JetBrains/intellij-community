@@ -24,5 +24,7 @@ public interface MutableGraph {
   @NotNull
   Node getNode(int visibleNodeIndex);
 
+  int getIndexInPermanentGraph(int visibleNodeIndex);
+
   void performAction(@NotNull InternalGraphAction action);
 }

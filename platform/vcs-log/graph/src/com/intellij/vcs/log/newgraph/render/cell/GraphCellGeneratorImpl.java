@@ -41,7 +41,7 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
 
   private boolean showLongEdges = false;
 
-  protected GraphCellGeneratorImpl(@NotNull MutableGraph graph) {
+  public GraphCellGeneratorImpl(@NotNull MutableGraph graph) {
     super(graph);
     myEdgesInRow = new EdgesInRow(graph);
   }

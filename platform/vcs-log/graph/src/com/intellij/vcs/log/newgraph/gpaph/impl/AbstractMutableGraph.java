@@ -59,6 +59,11 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
     return new NodeImpl(visibleNodeIndex, nodeType, upEdges, downEdges, nodeLayoutIndex);
   }
 
+  @Override
+  public int getIndexInPermanentGraph(int visibleNodeIndex) {
+    return toNodeIndex(visibleNodeIndex);
+  }
+
   protected int toVisibleIndex(int nodeIndex) {
     if (nodeIndex == myVisibleToReal.longSize()) {
       return Edge.NOT_LOAD_NODE;
