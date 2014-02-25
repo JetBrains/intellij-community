@@ -64,13 +64,9 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     int oldAnnotationsWidth = maxAnnotationWidth;
     computeMaxAnnotationWidth(start, end);
     if (oldAnnotationsWidth != maxAnnotationWidth || myLastPreferredHeight != editor.getPreferredHeight()) {
-      fireResized();
+      processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
     }
     repaint();
-  }
-
-  private void fireResized() {
-    processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 
   private void computeMaxAnnotationWidth(int start, int end) {
@@ -195,5 +191,9 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
   private int getLineAtPoint(@NotNull Point clickPoint) {
     return editor.yPositionToLogicalLine(clickPoint.y);
+  }
+
+  public void documentCleared() {
+    maxAnnotationWidth = 0;
   }
 }
