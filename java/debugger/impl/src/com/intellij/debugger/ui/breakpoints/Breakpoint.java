@@ -244,12 +244,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           buf.append(getEventMessage(event));
           buf.append("\n");
         }
-        final TextWithImports expressionToEvaluate = getLogMessage();
-        if (myXBreakpoint.getLogExpression() != null && !expressionToEvaluate.getText().isEmpty()) {
+        if (isLogExpressionEnabled()) {
           if(!debugProcess.isAttached()) {
             return;
           }
-  
+
+          final TextWithImports expressionToEvaluate = getLogMessage();
           try {
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
               @Override
@@ -479,7 +479,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected boolean isLogExpressionEnabled() {
-    return myXBreakpoint.getLogExpression() != null;
+    String expression = myXBreakpoint.getLogExpression();
+    if (expression == null || expression.isEmpty()) {
+      return false;
+    }
+    return !getLogMessage().isEmpty();
   }
 
   @Override
@@ -588,7 +592,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected boolean isConditionEnabled() {
-    return myXBreakpoint.getCondition() != null && !myXBreakpoint.getCondition().isEmpty();
+    String condition = myXBreakpoint.getCondition();
+    if (condition == null || condition.isEmpty()) {
+      return false;
+    }
+    return !getCondition().isEmpty();
   }
 
   public void setCondition(String condition) {
