@@ -55,13 +55,13 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
 
       @Override
       protected void configure(AbstractPythonRunConfiguration config) {
-        String target = "mysite.SimpleTest";
+        String target = "myapp.SimpleTest";
         try {
           final PyPackage django = ((PyPackageManagerImpl)PyPackageManager.getInstance(config.getSdk())).findPackage("django");
           if (django != null) {
             final List<String> version = StringUtil.split(django.getVersion(), ".");
             if (Integer.parseInt(version.get(1)) >= 6)
-              target = "mysite.tests.SimpleTest";
+              target = "myapp.tests.SimpleTest";
           }
         }
         catch (PyExternalProcessException ignored) {
