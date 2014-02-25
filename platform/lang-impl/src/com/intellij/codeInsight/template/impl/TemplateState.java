@@ -34,8 +34,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.MultipleCaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -83,7 +85,8 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged = false;
 
-  private CommandAdapter myCommandListener;
+  @Nullable private CommandAdapter myCommandListener;
+  @Nullable private MultipleCaretListener myCaretListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentAdapter myEditorDocumentListener;
@@ -116,9 +119,9 @@ public class TemplateState implements Disposable {
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
-          myDocumentChangesTerminateTemplate = myCurrentSegmentNumber >= 0 &&
+          myDocumentChangesTerminateTemplate = (myCurrentSegmentNumber >= 0 &&
                                                (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
-                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
+                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber)));
         }
         started = true;
       }
@@ -143,14 +146,41 @@ public class TemplateState implements Disposable {
       }
     };
 
+    myCaretListener = new MultipleCaretListener() {
+      @Override
+      public void caretAdded(CaretEvent e) {
+        if (isMultiCaretMode()) {
+          finishTemplateEditing(false);
+        }
+      }
+
+      @Override
+      public void caretRemoved(CaretEvent e) {
+        if (isMultiCaretMode()) {
+          finishTemplateEditing(false);
+        }
+      }
+
+      @Override
+      public void caretPositionChanged(CaretEvent e) {}
+    };
+
+    if (myEditor != null) {
+      myEditor.getCaretModel().addCaretListener(myCaretListener);
+    }
     myDocument.addDocumentListener(myEditorDocumentListener, this);
     CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+  }
+
+  private boolean isMultiCaretMode() {
+    return myEditor != null && myEditor.getCaretModel().supportsMultipleCarets() && myEditor.getCaretModel().getAllCarets().size() > 1;
   }
 
   @Override
   public synchronized void dispose() {
     myEditorDocumentListener = null;
     myCommandListener = null;
+    myCaretListener = null;
 
     myProcessor = null;
 
@@ -360,7 +390,10 @@ public class TemplateState implements Disposable {
           initListeners();
           focusCurrentExpression();
           currentVariableChanged(-1);
-        }
+          if (isMultiCaretMode()) {
+            finishTemplateEditing(false);
+          }
+        } 
       }
     });
   }
@@ -619,7 +652,7 @@ public class TemplateState implements Disposable {
             if (segmentNumber < 0) continue;
             Expression expression = myTemplate.getExpressionAt(i);
             Expression defaultValue = myTemplate.getDefaultValueAt(i);
-            String oldValue = getVariableValue(variableName).getText();
+            String oldValue = getVariableValueText(variableName);
             recalcSegment(segmentNumber, isQuick, expression, defaultValue);
             final TextResult value = getVariableValue(variableName);
             assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
@@ -640,7 +673,7 @@ public class TemplateState implements Disposable {
                 selectionCalculated = true;
               }
               if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
-              String newValue = getVariableValue(variableName).getText();
+              String newValue = getVariableValueText(variableName);
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);
               replaceString(newValue, start, end, i);
@@ -653,6 +686,12 @@ public class TemplateState implements Disposable {
         while (!calcedSegments.isEmpty() && maxAttempts >= 0);
       }
     });
+  }
+
+  @NotNull
+  private String getVariableValueText(String variableName) {
+    TextResult value = getVariableValue(variableName);
+    return value != null ? value.getText() : "";
   }
 
   private void recalcSegment(int segmentNumber, boolean isQuick, Expression expressionNode, Expression defaultValue) {
@@ -801,6 +840,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public <T> T getProperty(Key<T> key) {
+        //noinspection unchecked
         return (T)myProperties.get(key);
       }
 
@@ -813,7 +853,11 @@ public class TemplateState implements Disposable {
 
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getEditor().getDocument());
+        Editor editor = getEditor();
+        if (editor == null) {
+          return null;
+        }
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
       }
     };
@@ -861,6 +905,10 @@ public class TemplateState implements Disposable {
       if (!myTemplate.isSelectionTemplate() && !myTemplate.isInline()) { //do not move caret to the end of range for selection templates
         offset = myTemplateRange.getEndOffset();
       }
+    }
+
+    if (isMultiCaretMode() && getCurrentVariableNumber() > -1) {
+      offset = -1; //do not move caret in multicaret mode if at least one tab had been made already
     }
 
     if (offset >= 0) {
