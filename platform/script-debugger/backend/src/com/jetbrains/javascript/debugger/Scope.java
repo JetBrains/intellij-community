@@ -14,6 +14,9 @@ public interface Scope {
     CLOSURE,
     CATCH,
     LIBRARY,
+    CLASS,
+    INSTANCE,
+    OBJECT,
     UNKNOWN
   }
 
