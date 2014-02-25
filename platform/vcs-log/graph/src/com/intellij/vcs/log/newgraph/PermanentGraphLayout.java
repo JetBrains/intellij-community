@@ -24,4 +24,9 @@ public interface PermanentGraphLayout {
 
   int getLayoutIndex(int nodeIndex);
   int getOneOfHeadNodeIndex(int nodeIndex);
+
+  int getHeadNodeIndex(int layoutIndex);
+
+  // return layout index head node
+  int getStartLayout(int layoutIndex);
 }

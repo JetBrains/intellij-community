@@ -41,10 +41,12 @@ public class GraphRender {
   @NotNull
   private final GraphCellPainter myCellPainter;
 
-  public GraphRender(@NotNull MutableGraph mutableGraph, @NotNull ThickHoverController hoverController) {
+  public GraphRender(@NotNull MutableGraph mutableGraph,
+                     @NotNull ThickHoverController hoverController,
+                     @NotNull ElementColorManager colorManager) {
     myHoverController = hoverController;
     myCellGenerator = new GraphCellGeneratorImpl(mutableGraph);
-    myCellPainter = new SimpleGraphCellPainter(myHoverController);
+    myCellPainter = new SimpleGraphCellPainter(myHoverController, colorManager);
   }
 
   @NotNull

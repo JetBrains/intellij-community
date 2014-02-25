@@ -43,10 +43,16 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private final Stroke selectHide = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
   private Graphics2D g2;
+
+  @NotNull
   private final ThickHoverController myThickHoverController;
 
-  public SimpleGraphCellPainter(ThickHoverController thickHoverController) {
+  @NotNull
+  private final ElementColorManager myColorManager;
+
+  public SimpleGraphCellPainter(@NotNull ThickHoverController thickHoverController, @NotNull ElementColorManager colorManager) {
     myThickHoverController = thickHoverController;
+    myColorManager = colorManager;
   }
 
   private void paintUpLine(int from, int to, Color color) {
@@ -164,13 +170,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return edge.getType() == Edge.Type.USUAL;
   }
 
+  @NotNull
+  private JBColor getColor(@NotNull GraphElement element) {
+    return myColorManager.getColor(element);
+  }
+
   @Override
   public void draw(@NotNull Graphics2D g2, @NotNull GraphCell row) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     for (final ShortEdge shortEdge : row.getUpEdges()) {
       Edge edge = shortEdge.getEdge();
-      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
+      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
         @Override
         public void print(Color color) {
           paintUpLine(shortEdge.getDownPosition(), shortEdge.getUpPosition(), color);
@@ -179,7 +190,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
     for (final ShortEdge shortEdge : row.getDownEdges()) {
       Edge edge = shortEdge.getEdge();
-      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
+      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
         @Override
         public void print(Color color) {
           paintDownLine(shortEdge.getUpPosition(), shortEdge.getDownPosition(), color);
@@ -196,15 +207,15 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           Node node = (Node) element;
           if (isSelected(node)) {
             paintCircle(rowElement.getPosition(), MARK_COLOR, true);
-            paintCircle(rowElement.getPosition(), ColorGenerator.getColor(node), false);
+            paintCircle(rowElement.getPosition(), getColor(node), false);
           } else {
-            paintCircle(rowElement.getPosition(), ColorGenerator.getColor(node), isMarked(node));
+            paintCircle(rowElement.getPosition(), getColor(node), isMarked(node));
           }
           break;
         case UP_ARROW:
           assert element instanceof Edge;
           edge = (Edge) element;
-          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
+          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
               paintShow(rowElement.getPosition(), color);
@@ -214,7 +225,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case DOWN_ARROW:
           assert element instanceof Edge;
           edge = (Edge) element;
-          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
+          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
               paintHide(rowElement.getPosition(), color);

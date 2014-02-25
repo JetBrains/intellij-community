@@ -32,7 +32,7 @@ public class DataPack {
     final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(logProviders));
     if (USE_NEW_FACADE) {
-      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits));
+      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, colorManager));
     } else {
       GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
       return new DataPack(refsModel, graphFacade);

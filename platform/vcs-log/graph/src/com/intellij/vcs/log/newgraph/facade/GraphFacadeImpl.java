@@ -17,17 +17,20 @@
 package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.impl.PermanentAsMutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.impl.ThickHoverControllerTest;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphLayoutBuilder;
+import com.intellij.vcs.log.newgraph.render.ElementColorManager;
 import com.intellij.vcs.log.newgraph.render.GraphRender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,16 +39,23 @@ import java.util.*;
 
 public class GraphFacadeImpl implements GraphFacade {
   @NotNull
-  public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits) {
+  public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits, @NotNull final GraphColorManager colorManager) {
     long ms;
     ms = System.currentTimeMillis();
     GraphFlags flags = new GraphFlags(commits.size());
-    PermanentGraphImpl permanentGraph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    final PermanentGraphImpl permanentGraph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
     System.out.println("PermanentGraph:" + (System.currentTimeMillis() - ms));
 
 
     ms = System.currentTimeMillis();
-    PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(permanentGraph);
+    final PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(permanentGraph, new Comparator<Integer>() {
+      @Override
+      public int compare(@NotNull Integer o1, @NotNull Integer o2) {
+        int hashIndex1 = permanentGraph.getHashIndex(o1);
+        int hashIndex2 = permanentGraph.getHashIndex(o2);
+        return colorManager.compareHeads(hashIndex1, hashIndex2);
+      }
+    });
     System.out.println("LayoutModel:" + (System.currentTimeMillis() - ms));
 
 
@@ -65,9 +75,26 @@ public class GraphFacadeImpl implements GraphFacade {
     System.out.println("graph walk:" + (System.currentTimeMillis() - ms));
 
     PermanentAsMutableGraph mutableGraph = new PermanentAsMutableGraph(permanentGraph, graphLayout);
-    GraphRender graphRender = new GraphRender(mutableGraph, new ThickHoverControllerTest());
-    return new GraphFacadeImpl(flags, permanentGraph, graphLayout, mutableGraph, graphRender);
+    ElementColorManager elementColorManager = new ElementColorManager() {
+      @NotNull
+      @Override
+      public JBColor getColor(@NotNull GraphElement element) {
+        int headNodeIndex = graphLayout.getHeadNodeIndex(element.getLayoutIndex());
+        int headHashIndex = permanentGraph.getHashIndex(headNodeIndex);
+        int baseLayoutIndex = graphLayout.getStartLayout(element.getLayoutIndex());
+        if (baseLayoutIndex == element.getLayoutIndex()) {
+          return colorManager.getColorOfBranch(headHashIndex);
+        } else {
+          return colorManager.getColorOfFragment(headHashIndex, element.getLayoutIndex());
+        }
+      }
+    };
+    GraphRender graphRender = new GraphRender(mutableGraph, new ThickHoverControllerTest(), elementColorManager);
+    return new GraphFacadeImpl(colorManager, flags, permanentGraph, graphLayout, mutableGraph, graphRender);
   }
+
+  @NotNull
+  private final GraphColorManager myColorManager;
 
   @NotNull
   private final GraphFlags myGraphFlags;
@@ -83,10 +110,11 @@ public class GraphFacadeImpl implements GraphFacade {
   @NotNull
   private final GraphRender myGraphRender;
 
-  public GraphFacadeImpl(@NotNull GraphFlags graphFlags, @NotNull PermanentGraph permanentGraph,
+  public GraphFacadeImpl(@NotNull GraphColorManager colorManager, @NotNull GraphFlags graphFlags, @NotNull PermanentGraph permanentGraph,
                          @NotNull PermanentGraphLayout permanentGraphLayout,
                          @NotNull MutableGraph mutableGraph,
                          @NotNull GraphRender graphRender) {
+    myColorManager = colorManager;
     myGraphFlags = graphFlags;
     myPermanentGraph = permanentGraph;
     myPermanentGraphLayout = permanentGraphLayout;

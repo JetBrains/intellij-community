@@ -132,7 +132,15 @@ public class PermanentGraphLayoutBuilder {
 
     @Override
     public int getOneOfHeadNodeIndex(int nodeIndex) {
-      int layoutIndex = getLayoutIndex(nodeIndex);
+      return getHeadNodeIndex(getLayoutIndex(nodeIndex));
+    }
+
+    @Override
+    public int getHeadNodeIndex(int layoutIndex) {
+      return myHeadNodeIndex.get(getHeadOrder(layoutIndex));
+    }
+
+    private int getHeadOrder(int layoutIndex) {
       int a = 0;
       int b = myStartLayoutIndexForHead.length - 1;
       while (b > a) {
@@ -142,7 +150,12 @@ public class PermanentGraphLayoutBuilder {
         else
           b = middle - 1;
       }
-      return myHeadNodeIndex.get(a);
+      return a;
+    }
+
+    @Override
+    public int getStartLayout(int layoutIndex) {
+      return myStartLayoutIndexForHead[getHeadOrder(layoutIndex)];
     }
   }
 }

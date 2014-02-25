@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.vcs.log.newgraph.render;
 
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+/**
+ * @author erokhins
+ */
+public interface ElementColorManager {
 
-public class ColorGenerator {
-
-  public static Color getColor(@NotNull GraphElement graphElement) {
-    return JBColor.BLACK;
-  }
+  @NotNull
+  JBColor getColor(@NotNull GraphElement element);
 }
