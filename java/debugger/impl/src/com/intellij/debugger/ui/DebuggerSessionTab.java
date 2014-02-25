@@ -32,7 +32,6 @@ import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
@@ -81,13 +80,13 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private DebugUIEnvironment myDebugUIEnvironment;
+  private final DebugUIEnvironment myDebugUIEnvironment;
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
 
   public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
-                            @NotNull DebuggerSession debuggerSession) throws ExecutionException {
+                            @NotNull DebuggerSession debuggerSession) {
     super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
     myDebuggerSession = debuggerSession;
     myDebugUIEnvironment = environment;
@@ -264,8 +263,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (myConsole instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)myConsole).createConsoleActions();
-      for (AnAction goaction : actions) {
-        consoleActions.add(goaction);
+      for (AnAction goAction : actions) {
+        consoleActions.add(goAction);
       }
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
@@ -429,7 +428,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   @Nullable
   @Override
   protected RunProfile getRunProfile() {
-    return myDebugUIEnvironment != null ? myDebugUIEnvironment.getRunProfile() : null;
+    return myDebugUIEnvironment.getRunProfile();
   }
 
   private void attractFramesOnPause(final int event) {
@@ -461,9 +460,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-    final Icon icon = null;
     final String id = createThreadDumpContentId();
-    final Content content = myUi.createContent(id, panel, id, icon, null);
+    final Content content = myUi.createContent(id, panel, id, null, null);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     myUi.addContent(content);
