@@ -247,57 +247,57 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private static class LoggingListener implements VirtualFileListener {
     @Override
-    public void propertyChanged(VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
       LOG.debug("propertyChanged: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
                 ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void contentsChanged(VirtualFileEvent event) {
+    public void contentsChanged(@NotNull VirtualFileEvent event) {
       LOG.debug("contentsChanged: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void fileCreated(VirtualFileEvent event) {
+    public void fileCreated(@NotNull VirtualFileEvent event) {
       LOG.debug("fileCreated: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void fileDeleted(VirtualFileEvent event) {
+    public void fileDeleted(@NotNull VirtualFileEvent event) {
       LOG.debug("fileDeleted: file = " + event.getFile() + ", parent = " + event.getParent() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       LOG.debug("fileMoved: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void fileCopied(VirtualFileCopyEvent event) {
+    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
       LOG.debug("fileCopied: file = " + event.getFile() + "originalFile = " + event.getOriginalFile() +
                 ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void beforeContentsChange(VirtualFileEvent event) {
+    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
       LOG.debug("beforeContentsChange: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void beforePropertyChange(VirtualFilePropertyEvent event) {
+    public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
       LOG.debug("beforePropertyChange: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
                 ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
     }
 
     @Override
-    public void beforeFileDeletion(VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
       LOG.debug("beforeFileDeletion: file = " + event.getFile() + ", requestor = " + event.getRequestor());
       LOG.assertTrue(event.getFile().isValid());
     }
 
     @Override
-    public void beforeFileMovement(VirtualFileMoveEvent event) {
+    public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
       LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }

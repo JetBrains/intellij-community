@@ -58,7 +58,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     final boolean [] fileWasDeleted = new boolean[]{false};
     final VirtualFileAdapter fileAdapter = new VirtualFileAdapter() {
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         fileWasDeleted[0] = !event.getFile().isDirectory();
       }
     };

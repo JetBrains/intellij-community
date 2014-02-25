@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
 
       @Override
-      public void contentsChanged(VirtualFileEvent event) {
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (event.getFileName().endsWith(".gdsl")) {
           disableFile(event.getFile(), MODIFIED);
         }

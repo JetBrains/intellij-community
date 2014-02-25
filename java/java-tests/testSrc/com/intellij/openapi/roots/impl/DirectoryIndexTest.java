@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -501,7 +502,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     final List<VirtualFile> created = new ArrayList<VirtualFile>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         VirtualFile file = e.getFile();
         checkInfoNull(file);
         created.add(file);
@@ -562,7 +563,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());
 
         VirtualFile file = e.getFile();

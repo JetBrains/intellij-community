@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
     }
   }
 
-  public static void fireAfter(VirtualFileListener adapted, final VFileEvent event) {
+  public static void fireAfter(@NotNull VirtualFileListener adapted, @NotNull VFileEvent event) {
     if (event instanceof VFileContentChangeEvent) {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
@@ -95,7 +95,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
     }
   }
 
-  public static void fireBefore(VirtualFileListener adapted, final VFileEvent event) {
+  public static void fireBefore(@NotNull VirtualFileListener adapted, @NotNull VFileEvent event) {
     if (event instanceof VFileContentChangeEvent) {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
