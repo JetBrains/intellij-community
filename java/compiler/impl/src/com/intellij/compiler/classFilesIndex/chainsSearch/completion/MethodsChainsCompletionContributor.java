@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.*;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 
 /**
@@ -49,8 +50,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
-    final ElementPattern<PsiElement> pattern =
-      or(CompletionContributorPatternUtil.patternForMethodParameter(), CompletionContributorPatternUtil.patternForVariableAssignment());
+    final ElementPattern<PsiElement> pattern = or(patternForMethodParameter(), patternForVariableAssignment());
     extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(final @NotNull CompletionParameters parameters,
@@ -107,8 +107,12 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         final Processor<TargetType> consumer = new Processor<TargetType>() {
           @Override
           public boolean process(final TargetType targetType) {
-            for (final MethodsChain chain : searchChains(targetType, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE,
-                                                         completionContext, methodsUsageIndexReader)) {
+            for (final MethodsChain chain : searchChains(targetType,
+                                                         contextRelevantTypes,
+                                                         MAX_SEARCH_RESULT_SIZE,
+                                                         MAX_CHAIN_SIZE,
+                                                         completionContext,
+                                                         methodsUsageIndexReader)) {
               boolean insert = true;
               for (final MethodsChain baseChain : searchResult) {
                 final MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());

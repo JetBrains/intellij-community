@@ -20,14 +20,14 @@ import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexReaderBase
 import com.intellij.openapi.project.Project;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexerFactory;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import org.jetbrains.jps.classFilesIndex.indexer.impl.EnumeratedMethodIncompleteSignature;
 import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodsUsageIndexerFactory;
 import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodsUsageIndexer;
 
 /**
  * @author Dmitry Batkovich
  */
-public class MethodsUsageIndexConfigure extends ClassFilesIndexConfigure<String, TObjectIntHashMap<MethodIncompleteSignature>> {
+public class MethodsUsageIndexConfigure extends ClassFilesIndexConfigure<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> {
 
   public static final MethodsUsageIndexConfigure INSTANCE = new MethodsUsageIndexConfigure();
 
@@ -38,7 +38,7 @@ public class MethodsUsageIndexConfigure extends ClassFilesIndexConfigure<String,
 
   @Override
   public int getIndexVersion() {
-    return 0;
+    return 1;
   }
 
   @Override
@@ -47,7 +47,7 @@ public class MethodsUsageIndexConfigure extends ClassFilesIndexConfigure<String,
   }
 
   @Override
-  public ClassFilesIndexReaderBase<String, TObjectIntHashMap<MethodIncompleteSignature>> createIndexReader(final Project project) {
+  public ClassFilesIndexReaderBase<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> createIndexReader(final Project project) {
     return new MethodsUsageIndexReader(project, getIndexCanonicalName(), getIndexVersion());
   }
 }

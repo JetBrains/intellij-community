@@ -79,16 +79,15 @@ public class ClassFilesIndexFeaturesHolder extends AbstractProjectComponent {
     return state == FeatureState.AVAILABLE;
   }
 
-  public synchronized void visitEnabledConfigures(final Processor<ClassFilesIndexConfigure> availableConfiguresVisitor,
-                                                  final Processor<ClassFilesIndexConfigure> notAvailableConfiguresVisitor) {
+  public synchronized void visitConfigures(final ConfigureVisitor visitor) {
     for (final ClassFilesIndexConfigure configure : myEnabledIndexReaders.keySet()) {
-      availableConfiguresVisitor.process(configure);
+      visitor.visit(configure, true);
     }
     for (final ClassFilesIndexFeature feature : ClassFilesIndexFeature.values()) {
       if (feature.isEnabled() && !myEnabledFeatures.containsKey(feature)) {
         for (final ClassFilesIndexConfigure configure : feature.getRequiredIndicesConfigures()) {
           if (!myEnabledIndexReaders.containsKey(configure)) {
-            notAvailableConfiguresVisitor.process(configure);
+            visitor.visit(configure, false);
           }
         }
       }

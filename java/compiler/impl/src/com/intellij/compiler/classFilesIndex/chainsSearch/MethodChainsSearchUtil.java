@@ -83,7 +83,7 @@ public final class MethodChainsSearchUtil {
     return false;
   }
 
-  public static <T> HashSet<T> unionToHashSet(final Collection<T> collection, final T... items) {
+  public static <T> HashSet<T> joinToHashSet(final Collection<T> collection, final T... items) {
     final HashSet<T> result = new HashSet<T>();
     result.addAll(collection);
     Collections.addAll(result, items);

@@ -16,11 +16,13 @@
 package org.jetbrains.jps.classFilesIndex.indexer.impl;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.*;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.classFilesIndex.AsmUtil;
 import org.jetbrains.jps.classFilesIndex.TObjectIntHashMapExternalizer;
 import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexer;
@@ -31,7 +33,7 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHashMap<MethodIncompleteSignature>> {
+public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> {
   public static final String METHODS_USAGE_INDEX_CANONICAL_NAME = "MethodsUsageIndex";
 
   public MethodsUsageIndexer() {
@@ -40,21 +42,30 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
 
   @NotNull
   @Override
-  public Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map(final ClassReader inputData) {
-    final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map =
-      new HashMap<String, TObjectIntHashMap<MethodIncompleteSignature>>();
+  public Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map(final ClassReader inputData, final Mappings mappings) {
+    final Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map =
+      new HashMap<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>>();
     final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM4) {
       @Override
       public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
         final Type returnType = Type.getReturnType(desc);
-        if (MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(name) ||
-            AsmUtil.isPrimitiveOrArrayOfPrimitives(returnType.getDescriptor())) {
+        if (AsmUtil.isPrimitiveOrArrayOfPrimitives(returnType.getDescriptor()) || "<init>".equals(name)) {
           return;
         }
         final boolean isStatic = opcode == Opcodes.INVOKESTATIC;
         final String returnClassName = returnType.getInternalName();
         if (!owner.equals(returnClassName) || isStatic) {
-          addToIndex(map, returnClassName, new MethodIncompleteSignature(owner, returnClassName, name, isStatic));
+          final EnumeratedMethodIncompleteSignature mi =
+            new EnumeratedMethodIncompleteSignature(mappings.getName(owner), mappings.getName(name), isStatic);
+          final int enumeratedClassName = mappings.getName(returnClassName);
+          TObjectIntHashMap<EnumeratedMethodIncompleteSignature> occurrences = map.get(enumeratedClassName);
+          if (occurrences == null) {
+            occurrences = new TObjectIntHashMap<EnumeratedMethodIncompleteSignature>();
+            map.put(enumeratedClassName, occurrences);
+          }
+          if (!occurrences.increment(mi)) {
+            occurrences.put(mi, 1);
+          }
         }
       }
     };
@@ -72,26 +83,12 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
   }
 
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
+  public KeyDescriptor<Integer> getKeyDescriptor() {
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @Override
-  public DataExternalizer<TObjectIntHashMap<MethodIncompleteSignature>> getDataExternalizer() {
-    return new TObjectIntHashMapExternalizer<MethodIncompleteSignature>(MethodIncompleteSignature.createDataExternalizer());
-  }
-
-  private static void addToIndex(final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map,
-                                 final String internalClassName,
-                                 final MethodIncompleteSignature mi) {
-    final String className = AsmUtil.getQualifiedClassName(internalClassName);
-    TObjectIntHashMap<MethodIncompleteSignature> occurrences = map.get(className);
-    if (occurrences == null) {
-      occurrences = new TObjectIntHashMap<MethodIncompleteSignature>();
-      map.put(className, occurrences);
-    }
-    if (!occurrences.increment(mi)) {
-      occurrences.put(mi, 1);
-    }
+  public DataExternalizer<TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> getDataExternalizer() {
+    return new TObjectIntHashMapExternalizer<EnumeratedMethodIncompleteSignature>(EnumeratedMethodIncompleteSignature.createDataExternalizer());
   }
 }

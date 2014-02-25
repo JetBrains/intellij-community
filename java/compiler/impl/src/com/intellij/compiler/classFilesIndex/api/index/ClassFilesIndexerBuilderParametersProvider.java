@@ -39,31 +39,18 @@ public class ClassFilesIndexerBuilderParametersProvider extends BuildProcessPara
   @Override
   public List<String> getVMArguments() {
     final List<String> args = new ArrayList<String>();
-    myIndicesHolder.visitEnabledConfigures(
-      new Processor<ClassFilesIndexConfigure>() {
+    myIndicesHolder.visitConfigures(new ConfigureVisitor() {
       @Override
-      public boolean process(final ClassFilesIndexConfigure availableConfigure) {
-        final String className = availableConfigure.getIndexerBuilderClass().getCanonicalName();
+      public void visit(ClassFilesIndexConfigure<?, ?> configure, boolean isAvailable) {
+        final String className = configure.getIndexerBuilderClass().getCanonicalName();
         args.add(className);
-        return true;
-      }
-    }, new Processor<ClassFilesIndexConfigure>() {
-        @Override
-        public boolean process(final ClassFilesIndexConfigure notAvailableConfigure) {
-          final String className = notAvailableConfigure.getIndexerBuilderClass().getCanonicalName();
-          args.add(className);
-          notAvailableConfigure.prepareToIndexing(myIndicesHolder.getProject());
-          return true;
+        if (!isAvailable) {
+          configure.prepareToIndexing(myIndicesHolder.getProject());
         }
       }
-    );
-    if (args.size() != 0) {
-      final String serializedArgs = StringUtil.join(args, ";");
-      return Collections.singletonList("-D" + ClassFilesIndicesBuilder.PROPERTY_NAME + "=" + serializedArgs);
-    }
-    else {
-      return Collections.emptyList();
-    }
+    });
+    return args.size() != 0
+           ? Collections.singletonList("-D" + ClassFilesIndicesBuilder.PROPERTY_NAME + "=" + StringUtil.join(args, ";"))
+           : Collections.<String>emptyList();
   }
-
 }

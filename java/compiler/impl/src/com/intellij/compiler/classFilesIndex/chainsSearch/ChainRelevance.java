@@ -49,11 +49,6 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   }
 
   @TestOnly
-  public boolean hasCallingVariableInContext() {
-    return myHasCallingVariableInContext;
-  }
-
-  @TestOnly
   public int getChainSize() {
     return myChainSize;
   }
@@ -71,11 +66,6 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   @TestOnly
   public int getNotMatchedStringVars() {
     return myNotMatchedStringVars;
-  }
-
-  @TestOnly
-  public boolean isFirstMethodStatic() {
-    return myFirstMethodStatic;
   }
 
   @Override
