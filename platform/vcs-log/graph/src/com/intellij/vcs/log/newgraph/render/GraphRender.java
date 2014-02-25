@@ -30,7 +30,6 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
 
 public class GraphRender {
-  private boolean longEdgesHidden = true;
 
   @NotNull
   private final GraphCellGeneratorImpl myCellGenerator;
@@ -65,13 +64,12 @@ public class GraphRender {
     return cell.getCountElements() * WIDTH_NODE;
   }
 
-  public boolean areLongEdgesHidden() {
-    return longEdgesHidden;
+  public boolean isShowLongEdges() {
+    return myCellGenerator.isShowLongEdges();
   }
 
-  public void setLongEdgesHidden(boolean longEdgesHidden) {
-    this.longEdgesHidden = longEdgesHidden;
-    myCellGenerator.setShowLongEdges(!longEdgesHidden);
+  public void setShowLongEdges(boolean longEdgesHidden) {
+    myCellGenerator.setShowLongEdges(longEdgesHidden);
   }
 
   private static class PaintInfoImpl implements PaintInfo {

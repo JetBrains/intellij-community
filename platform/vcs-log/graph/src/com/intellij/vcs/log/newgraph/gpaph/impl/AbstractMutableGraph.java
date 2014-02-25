@@ -96,7 +96,7 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
 
   private int getEdgeLayoutIndex(int upNodeIndex, int downNodeIndex) {
     if (downNodeIndex == myVisibleToReal.longSize()) {
-      return 1; // i.e. edge to not load commit
+      return myLayout.getLayoutIndex(upNodeIndex); // i.e. edge to not load commit
     }
     int upNodeLayoutIndex = myLayout.getLayoutIndex(upNodeIndex);
     int downNodeLayoutIndex = myLayout.getLayoutIndex(downNodeIndex);

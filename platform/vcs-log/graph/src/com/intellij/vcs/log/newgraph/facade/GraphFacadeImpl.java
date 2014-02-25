@@ -131,6 +131,9 @@ public class GraphFacadeImpl implements GraphFacade {
   @Nullable
   @Override
   public GraphAnswer performAction(@NotNull GraphAction action) {
+    if (action instanceof LongEdgesAction) {
+      myGraphRender.setShowLongEdges(((LongEdgesAction)action).shouldShowLongEdges());
+    }
     return null;
   }
 
@@ -184,7 +187,7 @@ public class GraphFacadeImpl implements GraphFacade {
 
       @Override
       public boolean areLongEdgesHidden() {
-        return myGraphRender.areLongEdgesHidden();
+        return !myGraphRender.isShowLongEdges();
       }
     };
   }

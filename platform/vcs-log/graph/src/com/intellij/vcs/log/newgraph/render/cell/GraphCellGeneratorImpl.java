@@ -28,12 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
-  private static final int LONG_EDGE = 30;
-  private static final int LONG_EDGE_ARROW = 1;
+  private static final int LONG_EDGE_SIZE = 30;
+  private static final int LONG_EDGE_PART_SIZE = 1;
 
-  private static final int VERY_LONG_EDGE = 1000;
-  private static final int VERY_LONG_EDGE_ARROW = 250;
-  private static final int CACHE_SIZE = 1000;
+  private static final int VERY_LONG_EDGE_SIZE = 1000;
+  private static final int VERY_LONG_EDGE_PART_SIZE = 250;
+  private static final int CACHE_SIZE = 100;
+  private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
 
   protected final EdgesInRow myEdgesInRow;
@@ -120,19 +121,48 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
       }
       if (element instanceof Edge) {
         Edge edge = (Edge) element;
-        if (visibleRowIndex - edge.getUpNodeVisibleIndex() == getLongEdgeArrow())
-          result.add(new SpecialRowElement(edge, position, SpecialRowElement.Type.DOWN_ARROW));
+        int edgeSize = edge.getDownNodeVisibleIndex() - edge.getUpNodeVisibleIndex();
+        int upOffset = visibleRowIndex - edge.getUpNodeVisibleIndex();
+        int downOffset = edge.getDownNodeVisibleIndex() - visibleRowIndex;
 
-        if (edge.getDownNodeVisibleIndex() - visibleRowIndex == getLongEdgeArrow())
-          result.add(new SpecialRowElement(edge, position, SpecialRowElement.Type.UP_ARROW));
+        if (edgeSize >= LONG_EDGE_SIZE) {
+          if (!showLongEdges) {
+            addArrowIfNeeded(result, position, edge, upOffset, downOffset, LONG_EDGE_PART_SIZE);
+          } else {
+            if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES)
+              addArrowIfNeeded(result, position, edge, upOffset, downOffset, LONG_EDGE_PART_SIZE);
+
+            if (edgeSize >= VERY_LONG_EDGE_SIZE)
+              addArrowIfNeeded(result, position, edge, upOffset, downOffset, VERY_LONG_EDGE_PART_SIZE);
+          }
+        }
+
       }
       position++;
     }
     return result;
   }
 
+  private static void addArrowIfNeeded(List<SpecialRowElement> result,
+                                       int position,
+                                       Edge edge,
+                                       int upOffset,
+                                       int downOffset,
+                                       int edgePartSize) {
+    if (upOffset == edgePartSize)
+      result.add(new SpecialRowElement(edge, position, SpecialRowElement.Type.DOWN_ARROW));
+
+    if (downOffset == edgePartSize)
+      result.add(new SpecialRowElement(edge, position, SpecialRowElement.Type.UP_ARROW));
+  }
+
+  public boolean isShowLongEdges() {
+    return showLongEdges;
+  }
+
   public void setShowLongEdges(boolean showLongEdges) {
     this.showLongEdges = showLongEdges;
+    invalidate();
   }
 
   public void invalidate() {
@@ -140,29 +170,27 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
     cache.clear();
   }
 
-  private int getLongEdge() {
-    if (showLongEdges) {
-      return VERY_LONG_EDGE;
-    } else {
-      return LONG_EDGE;
-    }
+  private int getLongEdgeSize() {
+    if (showLongEdges)
+      return VERY_LONG_EDGE_SIZE;
+    else
+      return LONG_EDGE_SIZE;
   }
 
-  private int getLongEdgeArrow() {
-    if (showLongEdges) {
-      return VERY_LONG_EDGE_ARROW;
-    } else {
-      return LONG_EDGE_ARROW;
-    }
+  private int getEdgeShowPartSize() {
+    if (showLongEdges)
+      return VERY_LONG_EDGE_PART_SIZE;
+    else
+      return LONG_EDGE_PART_SIZE;
   }
 
   private boolean edgeIsVisibleInRow(@NotNull Edge edge, int visibleRowIndex) {
     int edgeSize = edge.getDownNodeVisibleIndex() - edge.getUpNodeVisibleIndex();
-    if (edgeSize < getLongEdge()) {
+    if (edgeSize < getLongEdgeSize()) {
       return true;
     } else {
-      return visibleRowIndex - edge.getUpNodeVisibleIndex() <= getLongEdgeArrow()
-             || edge.getDownNodeVisibleIndex() - visibleRowIndex <= getLongEdgeArrow();
+      return visibleRowIndex - edge.getUpNodeVisibleIndex() <= getEdgeShowPartSize()
+             || edge.getDownNodeVisibleIndex() - visibleRowIndex <= getEdgeShowPartSize();
     }
   }
 
@@ -184,7 +212,26 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
     Collections.sort(result, new Comparator<GraphElement>() {
       @Override
       public int compare(@NotNull GraphElement o1, @NotNull GraphElement o2) {
-        return Double.compare(o1.getLayoutIndex(), o2.getLayoutIndex());
+        int layoutIndex1 = o1.getLayoutIndex();
+        int layoutIndex2 = o2.getLayoutIndex();
+        if (layoutIndex1 != layoutIndex2)
+          return layoutIndex1 - layoutIndex2;
+
+        if (o1 instanceof Node)
+          return 1;
+
+        if (o2 instanceof Node)
+          return -1;
+
+        if (o1 instanceof Edge && o2 instanceof Edge) {
+          Edge edge1 = (Edge)o1;
+          Edge edge2 = (Edge)o2;
+          if (edge1.getUpNodeVisibleIndex() != edge2.getUpNodeVisibleIndex())
+            return edge1.getUpNodeVisibleIndex() - edge2.getUpNodeVisibleIndex();
+          else
+            return edge2.getDownNodeVisibleIndex() - edge1.getDownNodeVisibleIndex();
+        }
+        return 0;
       }
     });
 
