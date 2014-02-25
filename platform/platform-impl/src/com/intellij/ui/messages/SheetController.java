@@ -170,14 +170,25 @@ public class SheetController {
     };
 
 
-    JLabel headerLabel = new JLabel(title);
+    JEditorPane headerLabel = new JEditorPane();
 
+
+
+    headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     headerLabel.setFont(boldFont);
+    headerLabel.setEditable(false);
 
-    headerLabel.repaint();
-    headerLabel.setSize(headerLabel.getPreferredSize());
+    headerLabel.setContentType("text/html");
+    headerLabel.setSize(250, Short.MAX_VALUE);
+    headerLabel.setText(title);
+    headerLabel.setSize(250, headerLabel.getPreferredSize().height);
+
+    headerLabel.setOpaque(false);
+    headerLabel.setFocusable(false);
 
     sheetPanel.add(headerLabel);
+
+    headerLabel.repaint();
 
     JEditorPane messageTextPane = new JEditorPane();
 
