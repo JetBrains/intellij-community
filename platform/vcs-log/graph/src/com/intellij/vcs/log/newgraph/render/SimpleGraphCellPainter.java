@@ -16,15 +16,14 @@
 package com.intellij.vcs.log.newgraph.render;
 
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.graph.elements.Edge;
-import com.intellij.vcs.log.graph.elements.GraphElement;
-import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graph.render.ColorGenerator;
-import com.intellij.vcs.log.graph.render.PositionUtil;
 import com.intellij.vcs.log.graph.render.PrintParameters;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.printmodel.ShortEdge;
-import com.intellij.vcs.log.printmodel.SpecialPrintElement;
+import com.intellij.vcs.log.newgraph.gpaph.Edge;
+import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
+import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
+import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
+import com.intellij.vcs.log.newgraph.render.cell.ShortEdge;
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,12 +37,17 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
 
-  private Graphics2D g2;
-
   private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke hide = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
   private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke selectHide = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+
+  private Graphics2D g2;
+  private final ThickHoverController myThickHoverController;
+
+  public SimpleGraphCellPainter(ThickHoverController thickHoverController) {
+    myThickHoverController = thickHoverController;
+  }
 
   private void paintUpLine(int from, int to, Color color) {
     int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
@@ -148,60 +152,72 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
 
+  private boolean isSelected(@NotNull GraphElement graphElement) {
+    return myThickHoverController.isThick(graphElement);
+  }
+
+  private boolean isMarked(@NotNull GraphElement graphElement) {
+    return myThickHoverController.isHover(graphElement);
+  }
+
+  private static boolean isUsual(@NotNull Edge edge) {
+    return edge.getType() == Edge.Type.USUAL;
+  }
 
   @Override
   public void draw(@NotNull Graphics2D g2, @NotNull GraphCell row) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    for (final ShortEdge edge : row.getUpEdges()) {
-      drawLogic(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()), new LitePrinter() {
+    for (final ShortEdge shortEdge : row.getUpEdges()) {
+      Edge edge = shortEdge.getEdge();
+      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
         @Override
         public void print(Color color) {
-          paintUpLine(edge.getDownPosition(), edge.getUpPosition(), color);
+          paintUpLine(shortEdge.getDownPosition(), shortEdge.getUpPosition(), color);
         }
       });
     }
-    for (final ShortEdge edge : row.getDownEdges()) {
-      drawLogic(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()), new LitePrinter() {
+    for (final ShortEdge shortEdge : row.getDownEdges()) {
+      Edge edge = shortEdge.getEdge();
+      drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
         @Override
         public void print(Color color) {
-          paintDownLine(edge.getUpPosition(), edge.getDownPosition(), color);
+          paintDownLine(shortEdge.getUpPosition(), shortEdge.getDownPosition(), color);
         }
       });
 
     }
-    for (final SpecialPrintElement printElement : row.getSpecialPrintElements()) {
+    for (final SpecialRowElement rowElement : row.getSpecialRowElements()) {
+      GraphElement element = rowElement.getElement();
       final Edge edge;
-      switch (printElement.getType()) {
-        case COMMIT_NODE:
-          Node node = printElement.getGraphElement().getNode();
-          assert node != null;
-          if (printElement.isSelected()) {
-            paintCircle(printElement.getPosition(), MARK_COLOR, true);
-            paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), false);
+      switch (rowElement.getType()) {
+        case NODE:
+          assert element instanceof Node;
+          Node node = (Node) element;
+          if (isSelected(node)) {
+            paintCircle(rowElement.getPosition(), MARK_COLOR, true);
+            paintCircle(rowElement.getPosition(), ColorGenerator.getColor(node), false);
           } else {
-            paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isMarked());
+            paintCircle(rowElement.getPosition(), ColorGenerator.getColor(node), isMarked(node));
           }
           break;
         case UP_ARROW:
-          edge = printElement.getGraphElement().getEdge();
-          assert edge != null;
-          drawLogic(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL, ColorGenerator.getColor(
-            edge.getBranch()), new LitePrinter() {
+          assert element instanceof Edge;
+          edge = (Edge) element;
+          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
-              paintShow(printElement.getPosition(), color);
+              paintShow(rowElement.getPosition(), color);
             }
           });
           break;
         case DOWN_ARROW:
-          edge = printElement.getGraphElement().getEdge();
-          assert edge != null;
-          drawLogic(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL, ColorGenerator.getColor(
-            edge.getBranch()), new LitePrinter() {
+          assert element instanceof Edge;
+          edge = (Edge) element;
+          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), ColorGenerator.getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
-              paintHide(printElement.getPosition(), color);
+              paintHide(rowElement.getPosition(), color);
             }
           });
           break;
@@ -210,35 +226,24 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       }
     }
 
-    for (final SpecialPrintElement printElement : row.getSpecialPrintElements()) {
-      if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE && printElement.getDragAndDropSelect() != 0) {
-        Node node = printElement.getGraphElement().getNode();
-        assert node != null;
-        if (printElement.getDragAndDropSelect() > 0) {
-          paintAbove(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()));
-        } else {
-          paintBelow(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()));
-        }
-      }
-    }
   }
 
   @Nullable
   @Override
-  public GraphElement mouseOver(@NotNull GraphPrintCell row, int x, int y) {
-    for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
-      if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
+  public GraphElement mouseOver(@NotNull GraphCell graphCell, int x, int y) {
+    for (SpecialRowElement printElement : graphCell.getSpecialRowElements()) {
+      if (printElement.getType() == SpecialRowElement.Type.NODE) {
         if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
-          return printElement.getGraphElement();
+          return printElement.getElement();
         }
       }
     }
-    for (ShortEdge edge : row.getUpEdges()) {
+    for (ShortEdge edge : graphCell.getUpEdges()) {
       if (PositionUtil.overUpEdge(edge, x, y)) {
         return edge.getEdge();
       }
     }
-    for (ShortEdge edge : row.getDownEdges()) {
+    for (ShortEdge edge : graphCell.getDownEdges()) {
       if (PositionUtil.overDownEdge(edge, x, y)) {
         return edge.getEdge();
       }
@@ -249,11 +254,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Nullable
   @Override
-  public SpecialPrintElement mouseOverArrow(@NotNull GraphPrintCell row, int x, int y) {
-    for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
-      if (printElement.getType() != SpecialPrintElement.Type.COMMIT_NODE) {
-        if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
-          return printElement;
+  public SpecialRowElement mouseOverArrow(@NotNull GraphCell graphCell, int x, int y) {
+    for (SpecialRowElement rowElement : graphCell.getSpecialRowElements()) {
+      if (rowElement.getType() != SpecialRowElement.Type.NODE) {
+        if (PositionUtil.overNode(rowElement.getPosition(), x, y)) {
+          return rowElement;
         }
       }
     }

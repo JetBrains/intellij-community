@@ -15,10 +15,11 @@
  */
 package com.intellij.vcs.log.newgraph.render;
 
-import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.printmodel.ShortEdge;
-import com.intellij.vcs.log.printmodel.SpecialPrintElement;
+import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
+import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
+import com.intellij.vcs.log.newgraph.render.cell.ShortEdge;
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,14 +67,14 @@ public class PositionUtil {
   }
 
   @Nullable
-  public static Node getNode(@Nullable GraphPrintCell cell) {
+  public static Node getNode(@Nullable GraphCell cell) {
     if (cell == null) {
       return null;
     }
-    for (SpecialPrintElement element : cell.getSpecialPrintElements()) {
-      Node node = element.getGraphElement().getNode();
-      if (node != null) {
-        return node;
+    for (SpecialRowElement element : cell.getSpecialRowElements()) {
+      GraphElement graphElement = element.getElement();
+      if (graphElement instanceof Node) {
+        return (Node) graphElement;
       }
     }
     return null;
