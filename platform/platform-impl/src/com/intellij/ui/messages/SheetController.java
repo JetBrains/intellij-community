@@ -48,6 +48,8 @@ public class SheetController {
   public int SHEET_WIDTH = 400;
   public int SHEET_HEIGHT = 150;
 
+  private Icon myIcon = AllIcons.Logo_welcomeScreen;
+
   private String myResult;
   private JPanel mySheetPanel;
   private SheetMessage mySheetMessage;
@@ -62,6 +64,9 @@ public class SheetController {
                   final String defaultButtonTitle,
                   final DialogWrapper.DoNotAskOption doNotAskOption,
                   final String focusedButton) {
+    if (icon != null) {
+      myIcon = icon;
+    }
     myDoNotAskOption = doNotAskOption;
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
@@ -160,7 +165,7 @@ public class SheetController {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        AllIcons.Logo_welcomeScreen.paintIcon(this, g, 0, 0);
+        myIcon.paintIcon(this, g, 0, 0);
       }
     };
 
