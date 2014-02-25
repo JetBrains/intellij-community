@@ -211,8 +211,8 @@ public abstract class BreakpointPropertiesPanel {
     final ItemListener suspendPolicyChangeListener = new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
-        final BreakpointDefaults defaults = getBreakpointManager(myProject).getBreakpointDefaults(breakpointCategory);
-        myMakeDefaultButton.setEnabled(!defaults.getSuspendPolicy().equals(getSelectedSuspendPolicy()) || defaults.isConditionEnabled() != myConditionCheckbox.isSelected());
+        //final BreakpointDefaults defaults = getBreakpointManager(myProject).getBreakpointDefaults(breakpointCategory);
+        //myMakeDefaultButton.setEnabled(!defaults.getSuspendPolicy().equals(getSelectedSuspendPolicy()) || defaults.isConditionEnabled() != myConditionCheckbox.isSelected());
       }
     };
 
@@ -429,13 +429,13 @@ public abstract class BreakpointPropertiesPanel {
   }
 
   private void updateSuspendPolicyRbFont() {
-    final String defPolicy = getBreakpointManager(myProject).getBreakpointDefaults(myBreakpointCategory).getSuspendPolicy();
+    //final String defPolicy = getBreakpointManager(myProject).getBreakpointDefaults(myBreakpointCategory).getSuspendPolicy();
     
     final Font font = myRbSuspendAll.getFont().deriveFont(Font.PLAIN);
     final Font boldFont = font.deriveFont(Font.BOLD);
     
-    myRbSuspendAll.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
-    myRbSuspendThread.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
+    //myRbSuspendAll.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
+    //myRbSuspendThread.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
   }
 
   protected ClassFilter createClassConditionFilter() {

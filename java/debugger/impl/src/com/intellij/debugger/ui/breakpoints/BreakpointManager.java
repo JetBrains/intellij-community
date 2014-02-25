@@ -54,6 +54,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.breakpoints.BreakpointState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import com.sun.jdi.InternalException;
@@ -85,7 +86,7 @@ public class BreakpointManager {
   private final Map<XBreakpoint, Breakpoint> myBreakpoints = new HashMap<XBreakpoint, Breakpoint>(); // breakpoints storage, access should be synchronized
   @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
-  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new LinkedHashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
+  //private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new LinkedHashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
 
   private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
 
@@ -190,17 +191,34 @@ public class BreakpointManager {
     });
   }
 
-  @NotNull
-  public BreakpointDefaults getBreakpointDefaults(Key<? extends Breakpoint> category) {
-    BreakpointDefaults defaults = myBreakpointDefaults.get(category);
-    if (defaults == null) {
-      defaults = new BreakpointDefaults();
-    }
-    return defaults;
-  }
+  //@NotNull
+  //public BreakpointDefaults getBreakpointDefaults(Key<? extends Breakpoint> category) {
+  //  BreakpointDefaults defaults = myBreakpointDefaults.get(category);
+  //  if (defaults == null) {
+  //    defaults = new BreakpointDefaults();
+  //  }
+  //  return defaults;
+  //}
 
   public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {
-    myBreakpointDefaults.put(category, defaults);
+    Class typeCls = null;
+    if (LineBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaLineBreakpointType.class;
+    }
+    else if (MethodBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaMethodBreakpointType.class;
+    }
+    else if (FieldBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaFieldBreakpointType.class;
+    }
+    else if (ExceptionBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaExceptionBreakpointType.class;
+    }
+    if (typeCls != null) {
+      XBreakpointType<XBreakpoint<?>, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
+      BreakpointState.setDefaultSuspendPolicy(type.getId(), Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
+    }
+    //myBreakpointDefaults.put(category, defaults);
   }
 
 
@@ -421,6 +439,10 @@ public class BreakpointManager {
             if (group.getName().equals(RULES_GROUP_NAME)) {
               continue;
             }
+            // skip already converted
+            if (group.getAttribute(CONVERTED_PARAM) != null) {
+              continue;
+            }
             final String categoryName = group.getName();
             final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
             final String defaultPolicy = group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME);
@@ -433,10 +455,6 @@ public class BreakpointManager {
               //final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
               //if (factory != null) {
                 for (Element breakpointNode : group.getChildren("breakpoint")) {
-                  // skip already converted
-                  if (breakpointNode.getAttribute(CONVERTED_PARAM) != null) {
-                    continue;
-                  }
                   //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
                   Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
                   breakpoint.readExternal(breakpointNode);
@@ -624,20 +642,10 @@ public class BreakpointManager {
   public void writeExternal(@NotNull final Element parentNode) {
     // restore old breakpoints
     for (Element group : myOriginalBreakpointsNodes) {
+      if (group.getAttribute(CONVERTED_PARAM) == null) {
+        group.setAttribute(CONVERTED_PARAM, "true");
+      }
       group.detach();
-      for (Element breakpoint : group.getChildren("breakpoint")) {
-        if (breakpoint.getAttribute(CONVERTED_PARAM) == null) {
-          breakpoint.setAttribute(CONVERTED_PARAM, "true");
-        }
-      }
-      if (RULES_GROUP_NAME.equals(group.getName())) {
-        List<Element> rules = group.getChildren("rule");
-        for (Element rule : rules) {
-          if (rule.getAttribute(CONVERTED_PARAM) == null) {
-            rule.setAttribute(CONVERTED_PARAM, "true");
-          }
-        }
-      }
     }
 
     parentNode.addContent(myOriginalBreakpointsNodes);

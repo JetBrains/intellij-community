@@ -562,7 +562,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  private static SuspendPolicy transformSuspendPolicy(String policy) {
+  static SuspendPolicy transformSuspendPolicy(String policy) {
     if (DebuggerSettings.SUSPEND_ALL.equals(policy)) {
       return SuspendPolicy.ALL;
     } else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
