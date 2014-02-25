@@ -243,7 +243,7 @@ class DragHelper extends MouseDragHelper {
     if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
       Point p = new Point(event.getPoint());
       p = SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
-      if (myTabs.getVisibleRect().contains(p) && myPressPointScreen.distance(new RelativePoint(event).getScreenPoint()) > 15) {
+      if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
         final int answer = Messages.showOkCancelDialog(myTabs,
                                                        IdeBundle.message("alphabetical.mode.is.on.warning"),
                                                        IdeBundle.message("title.warning"),

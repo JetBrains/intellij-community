@@ -37,7 +37,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   private final JComponent myDragComponent;
 
-  protected Point myPressPointScreen;
+  private Point myPressPointScreen;
+  protected Point myPressedOnScreenPoint;
   private Point myPressPointComponent;
 
   private boolean myDraggingNow;
@@ -114,6 +115,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (!canStartDragging(e)) return;
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
+    myPressedOnScreenPoint = new Point(myPressPointScreen);
     myPressPointComponent = e.getPoint();
     processMousePressed(e);
 
@@ -131,6 +133,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     boolean wasDragging = myDraggingNow;
+    myPressPointScreen = null;
     myDraggingNow = false;
     myDragJustStarted = false;
 
@@ -143,7 +146,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
       finally {
-        myPressPointScreen = null;
+        myPressedOnScreenPoint = null;
         resetDragState();
         e.consume();
         if (myDetachPostponed) {
