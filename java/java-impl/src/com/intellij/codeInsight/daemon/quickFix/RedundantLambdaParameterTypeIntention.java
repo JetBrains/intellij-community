@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
@@ -64,7 +65,8 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
       if (lambdaParent instanceof PsiExpressionList) {
         final PsiElement gParent = lambdaParent.getParent();
         if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length == 0) {
-          final PsiMethod method = ((PsiCallExpression)gParent).resolveMethod();
+          final JavaResolveResult resolveResult = ((PsiCallExpression)gParent).resolveMethodGenerics();
+          final PsiMethod method = (PsiMethod)resolveResult.getElement();
           if (method == null) return false;
           final int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)lambdaParent, expression);
           if (idx < 0) return false;
@@ -80,7 +82,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
               }
             }, ", ") + ") -> {}", expression);
           final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
-            .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, PsiSubstitutor.EMPTY,
+            .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
                                 gParent, DefaultParameterTypeInferencePolicy.INSTANCE);
 
           for (PsiTypeParameter parameter : typeParameters) {
