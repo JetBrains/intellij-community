@@ -475,7 +475,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           }
           else {
             caret = new CaretImpl(myEditor);
-            caret.moveToLogicalPosition(caretPosition, false, null, false);
+            if (caretPosition != null) {
+              caret.moveToLogicalPosition(caretPosition, false, null, false);
+            }
             synchronized (myCarets) {
               myCarets.add(caret);
             }
