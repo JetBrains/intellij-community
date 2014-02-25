@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -87,7 +88,7 @@ public class EditorEmptyTextPainter {
 
   protected void appendToolWindow(UIUtil.TextPainter painter, String action, String toolWindowId, EditorsSplitters splitters) {
     if (!isToolwindowVisible(splitters, toolWindowId)) {
-      String activateActionId = "Activate" + toolWindowId + "ToolWindow";
+      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindowId);
       appendAction(painter, action, getActionShortcutText(activateActionId));
     }
   }

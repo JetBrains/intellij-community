@@ -115,7 +115,7 @@ public class LambdaUtil {
            context instanceof PsiExpressionList ||
            context instanceof PsiParenthesizedExpression ||
            context instanceof PsiArrayInitializerExpression ||
-           context instanceof PsiConditionalExpression;
+           context instanceof PsiConditionalExpression && PsiTreeUtil.getParentOfType(context, PsiTypeCastExpression.class) == null;
   }
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {

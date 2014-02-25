@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.plugins;
+package com.intellij.ide.actions;
 
-import javax.swing.table.TableCellRenderer;
+import javax.swing.*;
 
 /**
- * @author anna
  * @author Konstantin Bulenkov
  */
-class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
-  public AvailablePluginColumnInfo(AvailablePluginsTableModel model) {
-    super(PluginManagerColumnInfo.COLUMN_NAME, model);
-  }
-
-  @Override
-  public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
-    return new PluginsTableRenderer(pluginDescriptor, true);
+public class MoveTabDownAction extends SplitAction {
+  protected MoveTabDownAction() {
+    super(SwingConstants.HORIZONTAL, true);
   }
 }

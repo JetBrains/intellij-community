@@ -395,7 +395,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                 parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 PsiElement psiElement = annotation;
-                if (!annotation.isPhysical()) {
+                if (annotation == null || !annotation.isPhysical()) {
                   psiElement = parameters[i].getNameIdentifier();
                   if (psiElement == null) continue;
                 }

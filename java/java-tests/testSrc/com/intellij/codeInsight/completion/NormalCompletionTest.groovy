@@ -1384,6 +1384,18 @@ class Foo {{
     doMultiCaretTest()
   }
 
+  public void testFinishWithEqualsWhenMultipleCaretsAreEnabled() {
+    EditorTestUtil.enableMultipleCarets()
+    try {
+      configureByFile("SpacesAroundEq.java");
+      type('=');
+      checkResultByFile("SpacesAroundEq_after.java");
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets()
+    }
+  }
+
   public void "test complete lowercase class name"() {
     myFixture.addClass("package foo; public class myClass {}")
     myFixture.configureByText "a.java", """
