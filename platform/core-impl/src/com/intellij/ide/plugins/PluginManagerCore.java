@@ -955,7 +955,7 @@ public class PluginManagerCore {
 
   static boolean shouldSkipPlugin(final IdeaPluginDescriptor descriptor, IdeaPluginDescriptor[] loaded) {
     final String idString = descriptor.getPluginId().getIdString();
-    if (idString.equals(CORE_PLUGIN_ID)) {
+    if (CORE_PLUGIN_ID.equals(idString)) {
       return false;
     }
 
