@@ -87,8 +87,6 @@ public class SheetController {
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
-
-
   }
 
   void requestFocus() {
@@ -107,7 +105,7 @@ public class SheetController {
         if (e.getSource() instanceof JButton) {
           myResult = ((JButton)e.getSource()).getText();
         }
-        mySheetMessage.startAnimation();
+        mySheetMessage.startAnimation(false);
       }
     };
 
