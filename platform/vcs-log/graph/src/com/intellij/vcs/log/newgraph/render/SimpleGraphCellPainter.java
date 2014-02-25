@@ -146,13 +146,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void drawLogic(boolean selected, boolean marked, boolean isUsual, Color usualColor, LitePrinter printer) {
-    if (selected) {
+    if (marked) {
       setStroke(isUsual, true);
       printer.print(MARK_COLOR);
       setStroke(isUsual, false);
       printer.print(usualColor);
     } else {
-      setStroke(isUsual, marked);
+      setStroke(isUsual, selected);
       printer.print(usualColor);
     }
   }
@@ -173,6 +173,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @NotNull
   private JBColor getColor(@NotNull GraphElement element) {
     return myColorManager.getColor(element);
+  }
+
+  private boolean isMarked(@NotNull SpecialRowElement specialRowElement) {
+    return myThickHoverController.isHover(specialRowElement);
   }
 
   @Override
@@ -215,7 +219,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case UP_ARROW:
           assert element instanceof Edge;
           edge = (Edge) element;
-          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
+          drawLogic(isSelected(edge), isMarked(rowElement), isUsual(edge), getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
               paintShow(rowElement.getPosition(), color);
@@ -225,7 +229,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case DOWN_ARROW:
           assert element instanceof Edge;
           edge = (Edge) element;
-          drawLogic(isSelected(edge), isMarked(edge), isUsual(edge), getColor(edge), new LitePrinter() {
+          drawLogic(isSelected(edge), isMarked(rowElement), isUsual(edge), getColor(edge), new LitePrinter() {
             @Override
             public void print(Color color) {
               paintHide(rowElement.getPosition(), color);

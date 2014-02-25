@@ -16,33 +16,25 @@
 
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
-import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
+import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverArrowInternalGraphAction;
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ThickHoverControllerTest extends AbstractThickHoverController {
-
+public abstract class AbstractThickHoverController implements ThickHoverController {
   @Nullable
-  private GraphElement hoverElement = null;
-
+  private SpecialRowElement mySpecialRowElement = null;
 
   @Override
-  public boolean isThick(@NotNull GraphElement element) {
-    return false;
+  public boolean isHover(@NotNull SpecialRowElement specialRowElement) {
+    return specialRowElement.equals(mySpecialRowElement);
   }
 
-  @Override
-  public boolean isHover(@NotNull GraphElement element) {
-    return element.equals(hoverElement);
-  }
-
-  @Override
   public void performAction(@NotNull InternalGraphAction action) {
-    super.performAction(action);
-    if (action instanceof MouseOverGraphElementInternalGraphAction) {
-      hoverElement = ((MouseOverGraphElementInternalGraphAction)action).getInfo();
+    if (action instanceof MouseOverArrowInternalGraphAction) {
+      mySpecialRowElement = ((MouseOverArrowInternalGraphAction)action).getInfo();
     }
   }
 }

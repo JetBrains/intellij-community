@@ -15,10 +15,13 @@
  */
 package com.intellij.vcs.log.newgraph.gpaph;
 
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface ThickHoverController {
 
   boolean isThick(@NotNull GraphElement element);
   boolean isHover(@NotNull GraphElement element);
+
+  boolean isHover(@NotNull SpecialRowElement specialRowElement);
 }

@@ -47,6 +47,27 @@ public class SpecialRowElement {
     return myType;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SpecialRowElement)) return false;
+
+    SpecialRowElement element = (SpecialRowElement)o;
+
+    if (myPosition != element.myPosition) return false;
+    if (!myElement.equals(element.myElement)) return false;
+    if (myType != element.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myElement.hashCode();
+    result = 31 * result + myPosition;
+    result = 31 * result + myType.hashCode();
+    return result;
+  }
 
   public enum Type {
     NODE,
