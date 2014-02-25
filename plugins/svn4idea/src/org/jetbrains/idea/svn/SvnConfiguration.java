@@ -19,13 +19,9 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -44,7 +40,9 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(
   name = "SvnConfiguration",
@@ -55,48 +53,26 @@ import java.util.*;
     )
   }
 )
-public class SvnConfiguration implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
+public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
+
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 
-  public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
-  private final Project myProject;
+  private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
+  private final static long CHANGELIST_SUPPORT = 124;
+  private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
-  private String myConfigurationDirectory;
-  private boolean myIsUseDefaultConfiguration;
-  private boolean myIsUseDefaultProxy;
+  private final Project myProject;
+  private SvnConfigurationState myState;
+
   private ISVNOptions myOptions;
-  private boolean myIsKeepLocks;
-  private boolean myAutoUpdateAfterCommit;
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
   private SvnAuthenticationManager myInteractiveManager;
-  private SvnSupportOptions mySupportOptions;
-  private boolean myCleanupRun;
-  private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
-  private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
-  public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
-  public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   // TODO: update depth is not stored in configuration as SVNDepth has wrong type for DefaultJDOMExternalizer
   // TODO: check if it should be stored
   public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
-
-  public boolean MERGE_DRY_RUN = false;
-  public boolean MERGE_DIFF_USE_ANCESTRY = true;
-  public boolean UPDATE_LOCK_ON_DEMAND = false;
-  public boolean IGNORE_SPACES_IN_MERGE = false;
-  public boolean CHECK_NESTED_FOR_QUICK_MERGE = false;
-  public boolean IGNORE_SPACES_IN_ANNOTATE = true;
-  public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
-  public boolean FORCE_UPDATE = false;
-  public boolean IGNORE_EXTERNALS = false;
-  public Boolean TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
-  public SSLProtocols SSL_PROTOCOLS = (SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") || SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.8")) ?
-    SSLProtocols.all : SSLProtocols.sslv3;
-
-  public UseAcceleration myUseAcceleration = UseAcceleration.nothing;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
@@ -108,25 +84,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public Element getState() {
-    Element element = new Element("state");
-    try {
-      writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return element;
+  public SvnConfigurationState getState() {
+    return myState;
   }
 
   @Override
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+  public void loadState(SvnConfigurationState state) {
+    myState = state;
   }
 
   public long getHttpTimeout() {
@@ -167,27 +131,27 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public void setIgnoreSpacesInAnnotate(final boolean value) {
-    final boolean changed = IGNORE_SPACES_IN_ANNOTATE != value;
-    IGNORE_SPACES_IN_ANNOTATE = value;
+    final boolean changed = myState.IGNORE_SPACES_IN_ANNOTATE != value;
+    myState.IGNORE_SPACES_IN_ANNOTATE = value;
     if (changed) {
       getProject().getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
   }
 
   public long getSshConnectionTimeout() {
-    return mySSHConnectionTimeout;
+    return myState.sshConnectionTimeout;
   }
 
   public void setSshConnectionTimeout(long sshConnectionTimeout) {
-    mySSHConnectionTimeout = sshConnectionTimeout;
+    myState.sshConnectionTimeout = sshConnectionTimeout;
   }
 
   public long getSshReadTimeout() {
-    return mySSHReadTimeout;
+    return myState.sshReadTimeout;
   }
 
   public void setSshReadTimeout(long sshReadTimeout) {
-    mySSHReadTimeout = sshReadTimeout;
+    myState.sshReadTimeout = sshReadTimeout;
   }
 
   public Project getProject() {
@@ -195,19 +159,19 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public Boolean isKeepNewFilesAsIsForTreeConflictMerge() {
-    return TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
+    return myState.keepNewFilesAsIsForTreeConflictMerge;
   }
 
   public void setKeepNewFilesAsIsForTreeConflictMerge(Boolean keepNewFilesAsIsForTreeConflictMerge) {
-    this.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = keepNewFilesAsIsForTreeConflictMerge;
+    myState.keepNewFilesAsIsForTreeConflictMerge = keepNewFilesAsIsForTreeConflictMerge;
   }
 
   public SSLProtocols getSslProtocols() {
-    return SSL_PROTOCOLS;
+    return myState.sslProtocols;
   }
 
   public void setSslProtocols(SSLProtocols sslProtocols) {
-    this.SSL_PROTOCOLS = sslProtocols;
+    myState.sslProtocols = sslProtocols;
   }
 
   public SVNDepth getUpdateDepth() {
@@ -219,125 +183,111 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public UseAcceleration getUseAcceleration() {
-    return myUseAcceleration;
+    return myState.accelerationType;
   }
 
   public void setUseAcceleration(UseAcceleration useAcceleration) {
-    myUseAcceleration = useAcceleration;
+    myState.accelerationType = useAcceleration;
   }
 
   public boolean isIgnoreExternals() {
-    return IGNORE_EXTERNALS;
+    return myState.IGNORE_EXTERNALS;
   }
 
   public void setIgnoreExternals(boolean ignoreExternals) {
-    this.IGNORE_EXTERNALS = ignoreExternals;
+    myState.IGNORE_EXTERNALS = ignoreExternals;
   }
 
   public boolean isMergeDryRun() {
-    return MERGE_DRY_RUN;
+    return myState.MERGE_DRY_RUN;
   }
 
   public void setMergeDryRun(boolean mergeDryRun) {
-    this.MERGE_DRY_RUN = mergeDryRun;
+    myState.MERGE_DRY_RUN = mergeDryRun;
   }
 
   public boolean isMergeDiffUseAncestry() {
-    return MERGE_DIFF_USE_ANCESTRY;
+    return myState.MERGE_DIFF_USE_ANCESTRY;
   }
 
   public void setMergeDiffUseAncestry(boolean mergeDiffUseAncestry) {
-    this.MERGE_DIFF_USE_ANCESTRY = mergeDiffUseAncestry;
+    myState.MERGE_DIFF_USE_ANCESTRY = mergeDiffUseAncestry;
   }
 
   public boolean isUpdateLockOnDemand() {
-    return UPDATE_LOCK_ON_DEMAND;
+    return myState.UPDATE_LOCK_ON_DEMAND;
   }
 
   public void setUpdateLockOnDemand(boolean updateLockOnDemand) {
-    this.UPDATE_LOCK_ON_DEMAND = updateLockOnDemand;
+    myState.UPDATE_LOCK_ON_DEMAND = updateLockOnDemand;
   }
 
   public boolean isIgnoreSpacesInMerge() {
-    return IGNORE_SPACES_IN_MERGE;
+    return myState.IGNORE_SPACES_IN_MERGE;
   }
 
   public void setIgnoreSpacesInMerge(boolean ignoreSpacesInMerge) {
-    this.IGNORE_SPACES_IN_MERGE = ignoreSpacesInMerge;
+    myState.IGNORE_SPACES_IN_MERGE = ignoreSpacesInMerge;
   }
 
   public boolean isCheckNestedForQuickMerge() {
-    return CHECK_NESTED_FOR_QUICK_MERGE;
+    return myState.CHECK_NESTED_FOR_QUICK_MERGE;
   }
 
   public void setCheckNestedForQuickMerge(boolean checkNestedForQuickMerge) {
-    this.CHECK_NESTED_FOR_QUICK_MERGE = checkNestedForQuickMerge;
+    myState.CHECK_NESTED_FOR_QUICK_MERGE = checkNestedForQuickMerge;
   }
 
   public boolean isIgnoreSpacesInAnnotate() {
-    return IGNORE_SPACES_IN_ANNOTATE;
+    return myState.IGNORE_SPACES_IN_ANNOTATE;
   }
 
   public boolean isShowMergeSourcesInAnnotate() {
-    return SHOW_MERGE_SOURCES_IN_ANNOTATE;
+    return myState.SHOW_MERGE_SOURCES_IN_ANNOTATE;
   }
 
   public void setShowMergeSourcesInAnnotate(boolean showMergeSourcesInAnnotate) {
-    this.SHOW_MERGE_SOURCES_IN_ANNOTATE = showMergeSourcesInAnnotate;
+    myState.SHOW_MERGE_SOURCES_IN_ANNOTATE = showMergeSourcesInAnnotate;
   }
 
   public boolean isForceUpdate() {
-    return FORCE_UPDATE;
+    return myState.FORCE_UPDATE;
   }
 
   public void setForceUpdate(boolean forceUpdate) {
-    this.FORCE_UPDATE = forceUpdate;
+    myState.FORCE_UPDATE = forceUpdate;
   }
 
-  public class SvnSupportOptions {
-    /**
-     * version of "support SVN in IDEA". for features tracking. should grow
-     */
-    private Long myVersion;
-
-    public SvnSupportOptions(final Long version) {
-      myVersion = version;
-      // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
-      if (myVersion == null || myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
-        myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
-      }
-    }
-
-    private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
-    private final static long CHANGELIST_SUPPORT = 124;
-    private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
-
-    public boolean changeListsSynchronized() {
-      return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
-    }
-
-    public void upgrade() {
-      myVersion = UPGRADE_TO_16_VERSION_ASKED;
-    }
+  private static Long fixSupportedVersion(final Long version) {
+    return version == null || version.longValue() < CHANGELIST_SUPPORT
+           ? UPGRADE_TO_15_VERSION_ASKED
+           : version;
   }
 
-  public SvnSupportOptions getSupportOptions(Project project) {
-    if (mySupportOptions == null) {
-      // used to be kept in SvnBranchConfigurationManager
-      mySupportOptions = new SvnSupportOptions(SvnBranchConfigurationManager.getInstance(project).getSupportValue());
+  public boolean changeListsSynchronized() {
+    ensureSupportedVersion();
+    return myState.supportedVersion != null && myState.supportedVersion >= CHANGELIST_SUPPORT;
+  }
+
+  public void upgrade() {
+    myState.supportedVersion = UPGRADE_TO_16_VERSION_ASKED;
+  }
+
+  private void ensureSupportedVersion() {
+    if (myState.supportedVersion == null) {
+      myState.supportedVersion = fixSupportedVersion(SvnBranchConfigurationManager.getInstance(myProject).getSupportValue());
     }
-    return mySupportOptions;
   }
 
   public String getConfigurationDirectory() {
-    if (myConfigurationDirectory == null || isUseDefaultConfiguation()) {
-      myConfigurationDirectory = IdeaSubversionConfigurationDirectory.getPath();
+    if (myState.directory.path == null || isUseDefaultConfiguation()) {
+      myState.directory.path = IdeaSubversionConfigurationDirectory.getPath();
     }
-    return myConfigurationDirectory;
+    return myState.directory.path;
   }
 
   public boolean isUseDefaultConfiguation() {
-    return myIsUseDefaultConfiguration;
+    return myState.directory.useDefault;
   }
 
   public void setConfigurationDirParameters(final boolean newUseDefault, final String newConfigurationDirectory) {
@@ -362,7 +312,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   private void setConfigurationDirectory(String path) {
-    myConfigurationDirectory = path;
+    myState.directory.path = path;
     File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
   }
@@ -377,7 +327,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   private void setUseDefaultConfiguation(boolean useDefault) {
-    myIsUseDefaultConfiguration = useDefault;
+    myState.directory.useDefault = useDefault;
   }
 
   public ISVNOptions getOptions(Project project) {
@@ -452,126 +402,28 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     userManager.set(new SvnServerFileManagerImpl(myConfigFile));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    Element configurationDirectory = element.getChild("configuration");
-    if (configurationDirectory != null) {
-      myConfigurationDirectory = configurationDirectory.getText();
-      Attribute defaultAttr = configurationDirectory.getAttribute("useDefault");
-      try {
-        myIsUseDefaultConfiguration = defaultAttr != null && defaultAttr.getBooleanValue();
-      }
-      catch (DataConversionException e) {
-        myIsUseDefaultConfiguration = false;
-      }
-    }
-    else {
-      myIsUseDefaultConfiguration = true;
-    }
-    myIsKeepLocks = element.getChild("keepLocks") != null;
-    final Element useProxy = element.getChild("myIsUseDefaultProxy");
-    if (useProxy == null) {
-      myIsUseDefaultProxy = false;
-    } else {
-      myIsUseDefaultProxy = Boolean.parseBoolean(useProxy.getText());
-    }
-    final Element supportedVersion = element.getChild("supportedVersion");
-    if (supportedVersion != null) {
-      try {
-        mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText().trim()));
-      } catch (NumberFormatException e) {
-        mySupportOptions = new SvnSupportOptions(null);
-      }
-    }
-    final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
-    if (maxAnnotateRevisions != null) {
-      try {
-        myMaxAnnotateRevisions = maxAnnotateRevisions.getIntValue();
-      }
-      catch (DataConversionException e) {
-        //
-      }
-      final Attribute acceleration = element.getAttribute("myUseAcceleration");
-      if (acceleration != null) {
-        try {
-          setUseAcceleration(UseAcceleration.valueOf(acceleration.getValue()));
-        } catch (IllegalArgumentException e) {
-          //
-        }
-      }
-    }
-    final Attribute autoUpdateAfterCommit = element.getAttribute("myAutoUpdateAfterCommit");
-    if (autoUpdateAfterCommit != null) {
-      myAutoUpdateAfterCommit = Boolean.parseBoolean(autoUpdateAfterCommit.getValue());
-    }
-    final Attribute cleanupRun = element.getAttribute(CLEANUP_ON_START_RUN);
-    if (cleanupRun != null) {
-      myCleanupRun = Boolean.parseBoolean(cleanupRun.getValue());
-    }
-    final Attribute treeConflictMergeNewFilesPlace = element.getAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE");
-    final Attribute protocols = element.getAttribute("SSL_PROTOCOLS");
-    if (protocols != null) {
-      try {
-        setSslProtocols(SSLProtocols.valueOf(protocols.getValue()));
-      } catch (IllegalArgumentException e) {
-        //
-      }
-    }
-    if (treeConflictMergeNewFilesPlace != null) {
-      setKeepNewFilesAsIsForTreeConflictMerge(Boolean.parseBoolean(treeConflictMergeNewFilesPlace.getValue()));
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    if (myConfigurationDirectory != null) {
-      Element configurationDirectory = new Element("configuration");
-      configurationDirectory.setText(myConfigurationDirectory);
-      configurationDirectory.setAttribute("useDefault", myIsUseDefaultConfiguration ? "true" : "false");
-      element.addContent(configurationDirectory);
-    }
-    if (myIsKeepLocks) {
-      element.addContent(new Element("keepLocks"));
-    }
-    element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
-    if (mySupportOptions != null) {
-      element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportOptions.myVersion)));
-    }
-    element.setAttribute("maxAnnotateRevisions", String.valueOf(myMaxAnnotateRevisions));
-    element.setAttribute("myUseAcceleration", String.valueOf(getUseAcceleration()));
-    element.setAttribute("myAutoUpdateAfterCommit", String.valueOf(myAutoUpdateAfterCommit));
-    element.setAttribute(CLEANUP_ON_START_RUN, String.valueOf(myCleanupRun));
-    element.setAttribute("SSL_PROTOCOLS", getSslProtocols().name());
-    if (isKeepNewFilesAsIsForTreeConflictMerge() != null) {
-      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", String.valueOf(
-        isKeepNewFilesAsIsForTreeConflictMerge()));
-    }
-  }
-
   public boolean isAutoUpdateAfterCommit() {
-    return myAutoUpdateAfterCommit;
+    return myState.autoUpdateAfterCommit;
   }
 
   public void setAutoUpdateAfterCommit(boolean autoUpdateAfterCommit) {
-    myAutoUpdateAfterCommit = autoUpdateAfterCommit;
+    myState.autoUpdateAfterCommit = autoUpdateAfterCommit;
   }
 
   public boolean isKeepLocks() {
-    return myIsKeepLocks;
+    return myState.keepLocks;
   }
 
   public void setKeepLocks(boolean keepLocks) {
-    myIsKeepLocks = keepLocks;
+    myState.keepLocks = keepLocks;
   }
 
   public boolean isIsUseDefaultProxy() {
-    return myIsUseDefaultProxy;
+    return myState.useDefaultProxy;
   }
 
   public void setIsUseDefaultProxy(final boolean isUseDefaultProxy) {
-    myIsUseDefaultProxy = isUseDefaultProxy;
+    myState.useDefaultProxy = isUseDefaultProxy;
   }
 
   // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
@@ -629,11 +481,11 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
 
   public int getMaxAnnotateRevisions() {
-    return myMaxAnnotateRevisions;
+    return myState.maxAnnotateRevisions;
   }
 
   public void setMaxAnnotateRevisions(int maxAnnotateRevisions) {
-    myMaxAnnotateRevisions = maxAnnotateRevisions;
+    myState.maxAnnotateRevisions = maxAnnotateRevisions;
   }
 
   public enum UseAcceleration {
@@ -642,11 +494,11 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public boolean isCleanupRun() {
-    return myCleanupRun;
+    return myState.cleanupOnStartRun;
   }
 
   public void setCleanupRun(boolean cleanupRun) {
-    myCleanupRun = cleanupRun;
+    myState.cleanupOnStartRun = cleanupRun;
   }
 
   public enum SSLProtocols {
