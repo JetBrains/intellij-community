@@ -83,20 +83,23 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
           if (LambdaUtil.isFunctionalType(baseClassType)) {
-            final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && aClass.getFields().length == 0) {
-              final PsiCodeBlock body = methods[0].getBody();
-              if (body != null) {
-                final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(methods[0], aClass);
-                body.accept(checker);
-                if (!checker.hasForbiddenRefs()) {
-                  PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
-                  for (PsiLocalVariable local : checker.getLocals()) {
-                    final String localName = local.getName();
-                    if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
+            final PsiElement lambdaContext = aClass.getParent().getParent();
+            if (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) {
+              final PsiMethod[] methods = aClass.getMethods();
+              if (methods.length == 1 && aClass.getFields().length == 0) {
+                final PsiCodeBlock body = methods[0].getBody();
+                if (body != null) {
+                  final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(methods[0], aClass);
+                  body.accept(checker);
+                  if (!checker.hasForbiddenRefs()) {
+                    PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
+                    for (PsiLocalVariable local : checker.getLocals()) {
+                      final String localName = local.getName();
+                      if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
+                    }
+                    holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
                   }
-                  holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
                 }
               }
             }
