@@ -16,7 +16,6 @@ public interface Scope {
     LIBRARY,
     CLASS,
     INSTANCE,
-    OBJECT,
     UNKNOWN
   }
 
