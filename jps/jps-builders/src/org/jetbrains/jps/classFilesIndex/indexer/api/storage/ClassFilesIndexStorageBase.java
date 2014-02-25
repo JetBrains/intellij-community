@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.classFilesIndex.indexer.api;
+package org.jetbrains.jps.classFilesIndex.indexer.api.storage;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Dmitry Batkovich
- *         <p/>
- *         synchronization only on write actions
  */
-public class ClassFilesIndexStorage<K, V> {
+public class ClassFilesIndexStorageBase<K, V> {
   private static final String INDEX_FILE_NAME = "index";
   private static final int INITIAL_INDEX_SIZE = 16 * 1024;
   private static final int CACHE_QUEUES_SIZE = 16 * 1024;
@@ -48,11 +44,12 @@ public class ClassFilesIndexStorage<K, V> {
   private final File myIndexFile;
   private final KeyDescriptor<K> myKeyDescriptor;
   private final DataExternalizer<V> myValueExternalizer;
-  private final Lock myWriteLock = new ReentrantLock();
   private PersistentHashMap<K, CompiledDataValueContainer<V>> myMap;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private SLRUCache<K, CompiledDataValueContainer<V>> myCache;
 
-  public ClassFilesIndexStorage(final File indexDir, final KeyDescriptor<K> keyDescriptor, final DataExternalizer<V> valueExternalizer)
+  protected final Lock myWriteLock = new ReentrantLock();
+  protected SLRUCache<K, CompiledDataValueContainer<V>> myCache;
+
+  public ClassFilesIndexStorageBase(final File indexDir, final KeyDescriptor<K> keyDescriptor, final DataExternalizer<V> valueExternalizer)
     throws IOException {
     myIndexFile = getIndexFile(indexDir);
     myKeyDescriptor = keyDescriptor;
@@ -90,21 +87,6 @@ public class ClassFilesIndexStorage<K, V> {
         }
       }
     };
-  }
-
-  public Collection<V> getData(final K key) {
-    return myCache.get(key).getValues();
-  }
-
-  public void putData(final K key, final V value, final String inputId) {
-    try {
-      myWriteLock.lock();
-      final CompiledDataValueContainer<V> container = myCache.get(key);
-      container.putValue(inputId, value);
-    }
-    finally {
-      myWriteLock.unlock();
-    }
   }
 
   public void delete() throws IOException {
@@ -150,22 +132,22 @@ public class ClassFilesIndexStorage<K, V> {
   }
 
   public static class CompiledDataValueContainer<V> {
-    private final THashMap<String, V> myUnderlying;
+    private final TIntObjectHashMap<V> myUnderlying;
 
-    private CompiledDataValueContainer(final THashMap<String, V> map) {
+    private CompiledDataValueContainer(final TIntObjectHashMap<V> map) {
       myUnderlying = map;
     }
 
     private CompiledDataValueContainer() {
-      this(new THashMap<String, V>());
+      this(new TIntObjectHashMap<V>());
     }
 
-    private void putValue(final String inputId, final V value) {
+    public void putValue(final Integer inputId, final V value) {
       myUnderlying.put(inputId, value);
     }
 
     public Collection<V> getValues() {
-      return myUnderlying.values();
+      return ContainerUtil.list((V[])myUnderlying.getValues());
     }
 
   }
@@ -179,24 +161,37 @@ public class ClassFilesIndexStorage<K, V> {
   }
 
   private static <V> DataExternalizer<CompiledDataValueContainer<V>> createValueContainerExternalizer(final DataExternalizer<V> valueExternalizer) {
-    final DataExternalizer<String> stringDataExternalizer = new EnumeratorStringDescriptor();
     return new DataExternalizer<CompiledDataValueContainer<V>>() {
       @Override
       public void save(final DataOutput out, final CompiledDataValueContainer<V> value) throws IOException {
-        final THashMap<String, V> underlying = value.myUnderlying;
+        final TIntObjectHashMap<V> underlying = value.myUnderlying;
         out.writeInt(underlying.size());
-        for (final Map.Entry<String, V> entry : underlying.entrySet()) {
-          stringDataExternalizer.save(out, entry.getKey());
-          valueExternalizer.save(out, entry.getValue());
+        final IOException[] ioException = {null};
+        underlying.forEachEntry(new TIntObjectProcedure<V>() {
+          @Override
+          public boolean execute(final int k, final V v) {
+            try {
+              EnumeratorIntegerDescriptor.INSTANCE.save(out, k);
+              valueExternalizer.save(out, v);
+              return true;
+            }
+            catch (final IOException e) {
+              ioException[0] = e;
+              return false;
+            }
+          }
+        });
+        if (ioException[0] != null) {
+          throw ioException[0];
         }
       }
 
       @Override
       public CompiledDataValueContainer<V> read(final DataInput in) throws IOException {
-        final THashMap<String, V> map = new THashMap<String, V>();
+        final TIntObjectHashMap<V> map = new TIntObjectHashMap<V>();
         final int size = in.readInt();
         for (int i = 0; i < size; i++) {
-          map.put(stringDataExternalizer.read(in), valueExternalizer.read(in));
+          map.put(EnumeratorIntegerDescriptor.INSTANCE.read(in), valueExternalizer.read(in));
         }
         return new CompiledDataValueContainer<V>(map);
       }

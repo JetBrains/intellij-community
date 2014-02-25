@@ -231,7 +231,7 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  public static LookupElement objectToLookupItem(Object object) {
+  public static LookupElement objectToLookupItem(@NotNull Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;

@@ -125,7 +125,7 @@ public final class LanguageConsoleBuilder {
     return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
   }
 
-  public LanguageConsoleBuilder historyAnnotation(@Nullable GutterContentProvider value) {
+  public LanguageConsoleBuilder gutterContentProvider(@Nullable GutterContentProvider value) {
     gutterContentProvider = value;
     return this;
   }
@@ -147,11 +147,14 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory, oneLineInput);
+    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory);
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
+    }
+    if (oneLineInput) {
+      console.getConsoleEditor().setOneLineMode(true);
     }
     console.initComponents();
     return consoleView;
@@ -184,18 +187,18 @@ public final class LanguageConsoleBuilder {
     public GutteredLanguageConsole(@NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory,
-                                   boolean oneLineInput) {
+                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
       super(project, language.getDisplayName() + " Console", language, false);
 
       setShowSeparatorLine(false);
 
-      if (oneLineInput) {
-        getConsoleEditor().setOneLineMode(true);
-      }
-
       this.gutterContentProvider = gutterContentProvider;
       this.psiFileFactory = psiFileFactory;
+    }
+
+    @Override
+    boolean isHistoryViewerForceAdditionalColumnsUsage() {
+      return gutterContentProvider == null;
     }
 
     @NotNull
@@ -290,7 +293,7 @@ public final class LanguageConsoleBuilder {
       private final ConsoleIconGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 
-      private Runnable gutterSizeUpdater;
+      private Task gutterSizeUpdater;
       private RangeHighlighterEx lineSeparatorPainter;
 
       public GutterUpdateScheduler(@NotNull ConsoleIconGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
@@ -335,7 +338,7 @@ public final class LanguageConsoleBuilder {
           int startDocLine = document.getLineNumber(event.getOffset());
           int endDocLine = document.getLineNumber(event.getOffset() + event.getNewLength());
           if (event.getOldLength() > event.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(event.getOldFragment(), '\n') != -1) {
-            updateGutterSize();
+            updateGutterSize(startDocLine, endDocLine);
           }
         }
         else if (event.getOldLength() > 0) {
@@ -344,41 +347,57 @@ public final class LanguageConsoleBuilder {
       }
 
       private void documentCleared() {
+        gutterSizeUpdater = null;
+
+        lineEndGutter.documentCleared();
+
         assert gutterContentProvider != null;
         gutterContentProvider.documentCleared(getHistoryViewer());
       }
 
       @Override
-      public void updateStarted(@NotNull Document doc) {
+      public void updateStarted(@NotNull Document document) {
       }
 
       @Override
-      public void updateFinished(@NotNull Document doc) {
+      public void updateFinished(@NotNull Document document) {
         if (getDocument().getTextLength() == 0) {
           documentCleared();
         }
         else {
           addLineSeparatorPainterIfNeed();
+          updateGutterSize(0, Integer.MAX_VALUE);
         }
-        updateGutterSize();
       }
 
-      private void updateGutterSize() {
+      private void updateGutterSize(int start, int end) {
         if (gutterSizeUpdater != null) {
+          gutterSizeUpdater.start = Math.min(start, gutterSizeUpdater.start);
+          gutterSizeUpdater.end = Math.max(end, gutterSizeUpdater.end);
           return;
         }
 
-        gutterSizeUpdater = new Runnable() {
-          @Override
-          public void run() {
-            if (!getHistoryViewer().isDisposed()) {
-              lineStartGutter.updateSize();
-              lineEndGutter.updateSize();
-            }
-            gutterSizeUpdater = null;
-          }
-        };
+        gutterSizeUpdater = new Task(start, end);
         SwingUtilities.invokeLater(gutterSizeUpdater);
+      }
+
+      private final class Task implements Runnable {
+        private int start;
+        private int end;
+
+        public Task(int start, int end) {
+          this.start = start;
+          this.end = end;
+        }
+
+        @Override
+        public void run() {
+          if (!getHistoryViewer().isDisposed()) {
+            lineStartGutter.updateSize();
+            lineEndGutter.updateSize(start, end);
+          }
+          gutterSizeUpdater = null;
+        }
       }
     }
 

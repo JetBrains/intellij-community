@@ -20,6 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.classFilesIndex.indexer.api.storage.ClassFilesIndexStorageBase;
+import org.jetbrains.jps.classFilesIndex.indexer.api.storage.ClassFilesIndexStorageWriter;
 import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.File;
@@ -36,26 +39,31 @@ public class ClassFilesIndexWriter<K, V> {
 
   private final ClassFileIndexer<K, V> myIndexer;
   private final boolean myEmpty;
-  protected final ClassFilesIndexStorage<K, V> myIndex;
+  private final Mappings myMappings;
+  private final ClassFilesIndexStorageWriter<K, V> myIndex;
 
   protected ClassFilesIndexWriter(final ClassFileIndexer<K, V> indexer, final CompileContext compileContext) {
     myIndexer = indexer;
     final File storageDir = getIndexRoot(compileContext);
     final Set<String> containingFileNames = listFiles(storageDir);
-    if (!containingFileNames.contains("version") || !containingFileNames.contains("state")) {
+    if (!containingFileNames.contains("version") || !containingFileNames.contains(IndexState.STATE_FILE_NAME)) {
       throw new IllegalStateException("version or state file for index " + indexer.getIndexCanonicalName() + " not found in " + storageDir.getAbsolutePath());
     }
-    ClassFilesIndexStorage<K, V> index = null;
+    ClassFilesIndexStorageWriter<K, V> index = null;
     IOException exception = null;
     LOG.debug("start open... " + indexer.getIndexCanonicalName());
+    myMappings = compileContext.getProjectDescriptor().dataManager.getMappings();
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        index = new ClassFilesIndexStorage<K, V>(storageDir, myIndexer.getKeyDescriptor(), myIndexer.getDataExternalizer());
+        index = new ClassFilesIndexStorageWriter<K, V>(storageDir,
+                                                       myIndexer.getKeyDescriptor(),
+                                                       myIndexer.getDataExternalizer(),
+                                                       myMappings);
         break;
       }
       catch (final IOException e) {
         exception = e;
-        PersistentHashMap.deleteFilesStartingWith(ClassFilesIndexStorage.getIndexFile(storageDir));
+        PersistentHashMap.deleteFilesStartingWith(ClassFilesIndexStorageBase.getIndexFile(storageDir));
       }
     }
     LOG.debug("opened " + indexer.getIndexCanonicalName());
@@ -74,7 +82,7 @@ public class ClassFilesIndexWriter<K, V> {
 
   private File getIndexRoot(final CompileContext compileContext) {
     final File rootFile = compileContext.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    return ClassFilesIndexStorage.getIndexDir(myIndexer.getIndexCanonicalName(), rootFile);
+    return ClassFilesIndexStorageBase.getIndexDir(myIndexer.getIndexCanonicalName(), rootFile);
   }
 
   public final boolean isEmpty() {
@@ -92,7 +100,7 @@ public class ClassFilesIndexWriter<K, V> {
   }
 
   public final void update(final String id, final ClassReader inputData) {
-    for (final Map.Entry<K, V> e : myIndexer.map(inputData).entrySet()) {
+    for (final Map.Entry<K, V> e : myIndexer.map(inputData, myMappings).entrySet()) {
       myIndex.putData(e.getKey(), e.getValue(), id);
     }
   }

@@ -74,7 +74,6 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -86,7 +85,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -122,10 +120,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Dmitry Avdeev
@@ -1054,7 +1048,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       protected void run(Result result) throws Throwable {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
-        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), getHostFile().getText());
+        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
       }
     }.execute();
   }
@@ -1307,7 +1301,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
 
         VfsUtil.saveText(vFile, text);
-        configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
+        configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
       }
     }.execute();
     return myFile;
@@ -1340,7 +1334,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private PsiFile configureByFileInner(final VirtualFile copy) {
-    return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy, getProject()));
+    return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy));
   }
 
   private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
@@ -1360,32 +1354,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                   copy.getPath() +
                                   ", use copyFileToProject(..) method for this file instead of configureByFile(..)";
 
-        if (myEditor.getCaretModel().supportsMultipleCarets()) {
-          List<LogicalPosition> caretPositions = new ArrayList<LogicalPosition>();
-          List<Segment> selections = new ArrayList<Segment>();
-          for (EditorTestUtil.Caret caret : loader.caretState.carets) {
-            caretPositions.add(caret.offset == null ? null : myEditor.offsetToLogicalPosition(caret.offset));
-            selections.add(caret.selection == null ? null : caret.selection);
-          }
-          myEditor.getCaretModel().setCaretsAndSelections(caretPositions, selections);
-        }
-        else {
-          assert loader.caretState.carets.size() == 1 : "Multiple carets are not supported by the model";
-          EditorTestUtil.Caret caret = loader.caretState.carets.get(0);
-          int offset = caret.offset != null ? caret.offset : 0;
-          myEditor.getCaretModel().moveToOffset(offset);
-
-          if (caret.selection != null) {
-           myEditor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
-          }
-          else {
-            myEditor.getSelectionModel().removeSelection();
-          }
-        }
-        if (loader.caretState.blockSelection != null) {
-          myEditor.getSelectionModel().setBlockSelection(myEditor.offsetToLogicalPosition(loader.caretState.blockSelection.getStartOffset()),
-                                                         myEditor.offsetToLogicalPosition(loader.caretState.blockSelection.getEndOffset()));
-        }
+        EditorTestUtil.setCaretsAndSelection(myEditor, loader.caretState);
 
         Module module = getModule();
         if (module != null) {
@@ -1647,14 +1616,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   static class SelectionAndCaretMarkupLoader {
     final String filePath;
     final String newFileText;
-    final EditorTestUtil.CaretsState caretState;
+    final EditorTestUtil.CaretAndSelectionState caretState;
 
-    static SelectionAndCaretMarkupLoader fromFile(String path, Project project, String charset) throws IOException {
-      return new SelectionAndCaretMarkupLoader(
-        project, StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), path);
+    static SelectionAndCaretMarkupLoader fromFile(String path, String charset) throws IOException {
+      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), path);
     }
 
-    static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) {
+    static SelectionAndCaretMarkupLoader fromFile(VirtualFile file) {
       final String text;
       try {
         text = VfsUtilCore.loadText(file);
@@ -1662,24 +1630,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return new SelectionAndCaretMarkupLoader(project, StringUtil.convertLineSeparators(text), file.getPath());
+      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(text), file.getPath());
     }
 
-    static SelectionAndCaretMarkupLoader fromText(String text, Project project) {
-      return new SelectionAndCaretMarkupLoader(project, text, null);
+    static SelectionAndCaretMarkupLoader fromText(String text) {
+      return new SelectionAndCaretMarkupLoader(text, null);
     }
 
-    private SelectionAndCaretMarkupLoader(Project project, String fileText, String filePath) {
+    private SelectionAndCaretMarkupLoader(String fileText, String filePath) {
       this.filePath = filePath;
       final Document document = EditorFactory.getInstance().createDocument(fileText);
-
-      caretState = new WriteCommandAction<EditorTestUtil.CaretsState>(project) {
-        @Override
-        protected void run(@NotNull Result<EditorTestUtil.CaretsState> result) throws Exception {
-          result.setResult(EditorTestUtil.extractCaretAndSelectionMarkers(document));
-        }
-      }.execute().getResultObject();
-
+      caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
       newFileText = document.getText();
     }
   }
@@ -1702,7 +1663,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     VirtualFile virtualFile = originalFile.getVirtualFile();
     String charset = virtualFile == null? null : virtualFile.getCharset().name();
-    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, getProject(), charset), fileText);
+    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, charset), fileText);
 
   }
 
@@ -1743,89 +1704,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
 
-    boolean hasChecks = false;
-    for (int i = 0; i < loader.caretState.carets.size(); i++) {
-      EditorTestUtil.Caret expected = loader.caretState.carets.get(i);
-      if (expected.offset != null || expected.selection != null) {
-        hasChecks = true;
-        break;
-      }
-    }
-    if (!hasChecks) {
-      return; // nothing to check, so we skip caret/selection assertions
-    }
-    CaretModel caretModel = editor.getCaretModel();
-    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
-    assertEquals("Unexpected number of carets", loader.caretState.carets.size(), allCarets.size());
-    for (int i = 0; i < loader.caretState.carets.size(); i++) {
-      EditorTestUtil.Caret expected = loader.caretState.carets.get(i);
-      String caretDescription = loader.caretState.carets.size() == 1 ? "" : "(" + (i + 1) + "/" + loader.caretState.carets.size() + ") ";
-      if (expected.offset != null) {
-        final int tabSize = CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE;
-
-        int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, expected.offset);
-        int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText, StringUtil.lineColToOffset(loader.newFileText, caretLine, 0), expected.offset, tabSize);
-
-        final int actualLine = allCarets.get(i).getLogicalPosition().line;
-        final int actualCol = allCarets.get(i).getLogicalPosition().column;
-        boolean caretPositionEquals = caretLine == actualLine && caretCol == actualCol;
-        assertTrue("Caret" + caretDescription + " position in " + expectedFile + " differs. Expected " + genCaretPositionPresentation(caretLine, caretCol)
-                   + ". Actual " + genCaretPositionPresentation(actualLine, actualCol), caretPositionEquals);
-      }
-
-      if (expected.selection != null) {
-        int selStartLine = StringUtil.offsetToLineNumber(loader.newFileText, expected.selection.getStartOffset());
-        int selStartCol = expected.selection.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0);
-
-        int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, expected.selection.getEndOffset());
-        int selEndCol = expected.selection.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
-
-        int selectionStart;
-        int selectionEnd;
-        if (editor.getSelectionModel().hasBlockSelection()) {
-          int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
-          int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
-          selectionStart = starts[starts.length-1];
-          selectionEnd = ends[ends.length-1];
-        }
-        else {
-          selectionStart = allCarets.get(i).getSelectionStart();
-          selectionEnd = allCarets.get(i).getSelectionEnd();
-        }
-
-        final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, selectionStart);
-        final int selStartColActual = selectionStart - StringUtil.lineColToOffset(loader.newFileText, selStartLineActual, 0);
-
-        final int selEndLineActual = StringUtil.offsetToLineNumber(loader.newFileText, selectionEnd);
-        final int selEndColActual = selectionEnd - StringUtil.lineColToOffset(loader.newFileText, selEndLineActual, 0);
-
-        final boolean selectionEquals = selStartCol == selStartColActual &&
-                                        selStartLine == selStartLineActual &&
-                                        selEndCol == selEndColActual &&
-                                        selEndLine == selEndLineActual;
-        assertTrue(caretDescription + "selection in " + expectedFile + " differs. Expected " + genSelectionPresentation(selStartLine, selStartCol, selEndLine, selEndCol) +
-                   ". Actual " + genSelectionPresentation(selStartLineActual, selStartColActual, selEndLineActual, selEndColActual),
-                   selectionEquals
-        );
-      }
-      else if (editor != null) {
-        assertFalse(caretDescription + "has no selection in " + expectedFile, editor.getSelectionModel().hasSelection());
-      }
-    }
-  }
-
-  private static String genCaretPositionPresentation(int line, int col) {
-    line++;
-    col++;
-    return "(" + line + ", " + col + ")";
-  }
-
-  private static String genSelectionPresentation(int startLine, int startCol, int endLine, int endCol) {
-    startCol++;
-    startLine++;
-    endCol++;
-    endLine++;
-    return "(" + startLine + ", " + startCol + ")-(" + endLine + ", " + endCol + ")";
+    EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState);
   }
 
   private String stripTrailingSpaces(String actualText) {

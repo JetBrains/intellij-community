@@ -305,7 +305,7 @@ public class DaemonListeners implements Disposable {
     actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
     virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
           stopDaemonAndRestartAllFiles();

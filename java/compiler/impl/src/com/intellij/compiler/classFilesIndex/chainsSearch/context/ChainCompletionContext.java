@@ -21,11 +21,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -33,33 +32,26 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class ChainCompletionContext {
-  private final NotNullLazyValue<String> myContextMethodName = new NotNullLazyValue<String>() {
-    @NotNull
-    @Override
-    protected String compute() {
-      return myContextMethod.getName();
-    }
-  };
-  private final PsiMethod myContextMethod;
   private final TargetType myTarget;
   private final Set<String> myContainingClassQNames;
   private final MultiMap<String, PsiVariable> myContextVars;
   private final MultiMap<String, PsiMethod> myContainingClassGetters;
   private final MultiMap<String, ContextRelevantVariableGetter> myContextVarsGetters;
   private final Map<String, PsiVariable> myStringVars;
-  private final CachedRelevantStaticMethodSearcher myStaticMethodSearcher;
   private final Set<String> myExcludedQNames;
   private final GlobalSearchScope myResolveScope;
   private final Project myProject;
   private final PsiManager myPsiManager;
-  private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myNotDeprecatedMethodsResolver;
+  private final MethodIncompleteSignatureResolver myNotDeprecatedMethodsResolver;
 
   private final NotNullLazyValue<Set<String>> contextTypesQNames = new NotNullLazyValue<Set<String>>() {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
     protected Set<String> compute() {
-      return unionToHashSet(myContainingClassQNames, myContextVars.keySet(), myContainingClassGetters.keySet(),
+      return unionToHashSet(myContainingClassQNames,
+                            myContextVars.keySet(),
+                            myContainingClassGetters.keySet(),
                             myContextVarsGetters.keySet());
     }
   };
@@ -68,8 +60,7 @@ public class ChainCompletionContext {
     return myExcludedQNames;
   }
 
-  ChainCompletionContext(final PsiMethod contextMethod,
-                         final TargetType target,
+  ChainCompletionContext(final TargetType target,
                          final Set<String> containingClassQNames,
                          final MultiMap<String, PsiVariable> contextVars,
                          final MultiMap<String, PsiMethod> containingClassGetters,
@@ -78,7 +69,6 @@ public class ChainCompletionContext {
                          final Set<String> excludedQNames,
                          final Project project,
                          final GlobalSearchScope resolveScope) {
-    myContextMethod = contextMethod;
     myTarget = target;
     myContainingClassQNames = containingClassQNames;
     myContextVars = contextVars;
@@ -89,16 +79,7 @@ public class ChainCompletionContext {
     myResolveScope = resolveScope;
     myProject = project;
     myPsiManager = PsiManager.getInstance(project);
-    myNotDeprecatedMethodsResolver = MethodIncompleteSignatureResolver.create(JavaPsiFacade.getInstance(project), resolveScope);
-    myStaticMethodSearcher = new CachedRelevantStaticMethodSearcher(project, resolveScope);
-  }
-
-  public PsiMethod getContextMethod() {
-    return myContextMethod;
-  }
-
-  public String getContextMethodName() {
-    return myContextMethodName.getValue();
+    myNotDeprecatedMethodsResolver = new MethodIncompleteSignatureResolver(JavaPsiFacade.getInstance(project), resolveScope);
   }
 
   public TargetType getTarget() {
@@ -128,10 +109,6 @@ public class ChainCompletionContext {
 
   public Collection<PsiMethod> getContainingClassMethods(final String typeQName) {
     return myContainingClassGetters.get(typeQName);
-  }
-
-  public Collection<ContextRelevantStaticMethod> getRelevantStaticMethods(final String typeQName, final int weight) {
-    return myStaticMethodSearcher.getRelevantStaticMethods(typeQName, weight, this);
   }
 
   public Collection<ContextRelevantVariableGetter> getRelevantVariablesGetters(final String typeQName) {

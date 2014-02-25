@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,12 +152,12 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     system.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void contentsChanged(final VirtualFileEvent event) {
+      public void contentsChanged(@NotNull final VirtualFileEvent event) {
         onFileContentChanged(event);
       }
 
       @Override
-      public void fileCreated(final VirtualFileEvent event) {
+      public void fileCreated(@NotNull final VirtualFileEvent event) {
         VirtualFile file = event.getFile();
 
         if (event.getRequestor() == null && isFileUnder(file, myVFSBaseDir) && !myInsideSave) {
@@ -173,7 +173,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
 
       @Override
-      public void fileDeleted(final VirtualFileEvent event) {
+      public void fileDeleted(@NotNull final VirtualFileEvent event) {
         VirtualFile parent = event.getParent();
 
         if (event.getRequestor() == null && parent != null && parent.equals(myVFSBaseDir) && !myInsideSave) {

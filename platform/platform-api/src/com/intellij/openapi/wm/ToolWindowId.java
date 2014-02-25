@@ -37,4 +37,5 @@ public interface ToolWindowId {
   String DUPLICATES = UIBundle.message("tool.window.name.module.duplicates");
   String DOCUMENTATION = UIBundle.message("tool.window.name.documentation");
   String TASKS = UIBundle.message("tool.window.name.tasks");
+  String DATABASE_VIEW = UIBundle.message("tool.window.name.database");
 }

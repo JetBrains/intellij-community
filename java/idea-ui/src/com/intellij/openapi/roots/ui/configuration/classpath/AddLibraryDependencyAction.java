@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -72,7 +73,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   }
 
   private boolean hasLibraries() {
-    final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
+    final Predicate<Library> condition = getNotAddedSuitableLibrariesCondition();
     for (LibraryTable table : ChooseLibrariesFromTablesDialog.getLibraryTables(myClasspathPanel.getProject(), true)) {
       final LibrariesModifiableModel model = myContext.myLevel2Providers.get(table.getTableLevel());
       if (model != null) {
@@ -84,6 +85,11 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       }
     }
     return false;
+  }
+
+  private Predicate<Library> getNotAddedSuitableLibrariesCondition() {
+    ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
+    return LibraryEditingUtil.getNotAddedSuitableLibrariesCondition(myClasspathPanel.getRootModel(), facetsConfigurator);
   }
 
   @Override
@@ -125,9 +131,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     @Override
     @NotNull
     public List<Library> chooseElements() {
-      final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
-                                                                                               condition);
+                                                                                               getNotAddedSuitableLibrariesCondition());
       dialog.show();
       return dialog.getSelectedLibraries();
     }

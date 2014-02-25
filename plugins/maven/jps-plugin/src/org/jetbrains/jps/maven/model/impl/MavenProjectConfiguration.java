@@ -179,7 +179,7 @@ public class MavenProjectConfiguration {
 
       for (Iterator<Object> itr = res.keySet().iterator(); itr.hasNext(); ) {
         final String propertyName = itr.next().toString();
-        if (propertyName.startsWith("idea.")) {
+        if (propertyName.startsWith("idea.") || propertyName.startsWith("jps.")) {
           itr.remove();
         }
       }

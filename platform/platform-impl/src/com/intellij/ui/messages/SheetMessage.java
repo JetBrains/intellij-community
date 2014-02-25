@@ -17,6 +17,7 @@ package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -27,15 +28,12 @@ import java.awt.event.*;
 /**
  * Created by Denis Fokin
  */
-public class SheetMessage  implements ActionListener {
+public class SheetMessage {
   private JDialog myWindow;
   private Window myParent;
   private SheetController myController;
-  private Timer myAnimator = new Timer(5,this);
 
-  private boolean myShouldEnlarge = true;
-
-  private final static int SHEET_ANIMATION_STEP = 1;
+  private final static int TIME_TO_SHOW_SHEET = 250;
 
   private Image staticImage;
   private int imageHeight;
@@ -49,9 +47,12 @@ public class SheetMessage  implements ActionListener {
                       final String focusedButton,
                       final String defaultButton)
   {
-    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
-    myAnimator.setInitialDelay(0);
-
+    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL) {
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+      }
+    };
 
     myParent = owner;
 
@@ -65,7 +66,7 @@ public class SheetMessage  implements ActionListener {
     myWindow.setFocusableWindowState(true);
     myWindow.setFocusable(true);
 
-    startAnimation();
+    startAnimation(true);
     myWindow.setSize(myController.SHEET_WIDTH, myController.SHEET_HEIGHT);
     myWindow.setVisible(true);
     setPositionRelativeToParent();
@@ -79,7 +80,7 @@ public class SheetMessage  implements ActionListener {
     return myController.getResult();
   }
 
-  void startAnimation () {
+  void startAnimation (final boolean enlarge) {
     staticImage = myController.getStaticImage();
     JPanel staticPanel = new JPanel() {
       @Override
@@ -101,31 +102,34 @@ public class SheetMessage  implements ActionListener {
     staticPanel.setOpaque(false);
     staticPanel.setSize(myController.SHEET_WIDTH,myController.SHEET_HEIGHT);
     myWindow.setContentPane(staticPanel);
-    myAnimator.start();
-  }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
+    Animator myAnimator = new Animator("Roll Down Sheet Animator", myController.SHEET_HEIGHT ,
+                                       TIME_TO_SHOW_SHEET, false) {
+      @Override
+      public void paintNow(int frame, int totalFrames, int cycle) {
+        setPositionRelativeToParent();
+        float percentage = (float)frame/(float)totalFrames;
+        imageHeight = enlarge ? (int)(((float)myController.SHEET_HEIGHT) * percentage):
+                      (int)(myController.SHEET_HEIGHT - percentage * myController.SHEET_HEIGHT);
+        myWindow.repaint();
+      }
 
-    imageHeight = (myShouldEnlarge) ? imageHeight + SHEET_ANIMATION_STEP
-                                         : imageHeight - SHEET_ANIMATION_STEP;
+      @Override
+      protected void paintCycleEnd() {
+        setPositionRelativeToParent();
+        if (enlarge) {
+          imageHeight = myController.SHEET_HEIGHT;
+          staticImage = null;
+          myWindow.setContentPane(myController.getPanel(myWindow));
+          myController.requestFocus();
+        } else {
+          myWindow.dispose();
+        }
+      }
+    };
 
-    setPositionRelativeToParent();
-    if (imageHeight > myController.SHEET_HEIGHT) {
-      myAnimator.stop();
-      imageHeight = myController.SHEET_HEIGHT;
-      staticImage = null;
-      myWindow.setContentPane(myController.getPanel(myWindow));
-      myController.requestFocus();
-      myShouldEnlarge = false;
-    }
+    myAnimator.resume();
 
-    if (imageHeight < 0) {
-      myAnimator.stop();
-      myWindow.dispose();
-    }
-
-    myWindow.repaint();
   }
 
   private void setPositionRelativeToParent () {

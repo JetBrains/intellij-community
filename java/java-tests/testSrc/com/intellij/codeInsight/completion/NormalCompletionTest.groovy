@@ -756,6 +756,13 @@ public class ListUtils {
     assertStringItems("bar", "foo");
   }
 
+  public void testAddExplicitValueInAnnotation() throws Throwable {
+    configureByTestName()
+    assertStringItems("bar", "goo")
+    selectItem(myItems[0])
+    checkResult()
+  }
+
   public void testUnnecessaryMethodMerging() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("fofoo", "fofoo");
@@ -1382,6 +1389,18 @@ class Foo {{
 
   public void testMulticaretMethodWithParen() {
     doMultiCaretTest()
+  }
+
+  public void testFinishWithEqualsWhenMultipleCaretsAreEnabled() {
+    EditorTestUtil.enableMultipleCarets()
+    try {
+      configureByFile("SpacesAroundEq.java");
+      type('=');
+      checkResultByFile("SpacesAroundEq_after.java");
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets()
+    }
   }
 
   public void "test complete lowercase class name"() {

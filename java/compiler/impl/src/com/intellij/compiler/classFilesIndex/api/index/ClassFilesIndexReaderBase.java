@@ -23,8 +23,10 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFilesIndexStorage;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.classFilesIndex.indexer.api.IndexState;
+import org.jetbrains.jps.classFilesIndex.indexer.api.storage.ClassFilesIndexStorageBase;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,16 +36,19 @@ import java.io.IOException;
  */
 public abstract class ClassFilesIndexReaderBase<K, V> {
 
+  public static final String VERSION_FILE_NAME  = "version";
+
   private final static Logger LOG = Logger.getInstance(ClassFilesIndexReaderBase.class);
   @Nullable
-  protected final ClassFilesIndexStorage<K, V> myIndex;
-
+  protected final ClassFilesIndexStorageReader<K, V> myIndex;
+  @Nullable
+  protected final Mappings myMappings;
 
   public static boolean checkIndexAndRecreateIfNeed(final Project project, final int currentVersion, final String canonicalIndexName) {
     final File projectBuildSystemDirectory = BuildManager.getInstance().getProjectSystemDirectory(project);
     assert projectBuildSystemDirectory != null;
-    final File versionFile = new File(ClassFilesIndexStorage.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), "version");
-    final File indexDir = ClassFilesIndexStorage.getIndexDir(canonicalIndexName, projectBuildSystemDirectory);
+    final File versionFile = new File(ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), VERSION_FILE_NAME);
+    final File indexDir = ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory);
     if (versionFile.exists() &&
         !versionDiffers(projectBuildSystemDirectory, canonicalIndexName, currentVersion) &&
         IndexState.load(indexDir) == IndexState.EXIST) {
@@ -62,27 +67,35 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
                                       final int indexVersion,
                                       final Project project) {
     if (checkIndexAndRecreateIfNeed(project, indexVersion, canonicalIndexName)) {
-      ClassFilesIndexStorage<K, V> index = null;
+      ClassFilesIndexStorageReader<K, V> index = null;
       IOException exception = null;
       final File projectBuildSystemDirectory = BuildManager.getInstance().getProjectSystemDirectory(project);
-      final File indexDir = ClassFilesIndexStorage.getIndexDir(canonicalIndexName, projectBuildSystemDirectory);
+      final File indexDir = ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory);
       try {
-        index = new ClassFilesIndexStorage<K, V>(indexDir, keyDescriptor, valueExternalizer);
+        index = new ClassFilesIndexStorageReader<K, V>(indexDir, keyDescriptor, valueExternalizer);
       }
       catch (final IOException e) {
         exception = e;
-        PersistentHashMap.deleteFilesStartingWith(ClassFilesIndexStorage.getIndexFile(indexDir));
+        PersistentHashMap.deleteFilesStartingWith(ClassFilesIndexStorageBase.getIndexFile(indexDir));
       }
       if (exception != null) {
         recreateIndex(canonicalIndexName, indexVersion, projectBuildSystemDirectory, indexDir);
         myIndex = null;
+        myMappings = null;
       }
       else {
         myIndex = index;
+        try {
+          myMappings = new Mappings(BuildDataManager.getMappingsRoot(projectBuildSystemDirectory),false);
+        }
+        catch (final IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     else {
       myIndex = null;
+      myMappings = null;
     }
   }
 
@@ -94,8 +107,8 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
       FileUtil.delete(indexDir);
     }
     try {
-      FileUtil.writeToFile(new File(ClassFilesIndexStorage.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), "version"), String.valueOf(
-        indexVersion));
+      FileUtil.writeToFile(new File(ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), VERSION_FILE_NAME),
+                           String.valueOf(indexVersion));
     }
     catch (final IOException e) {
       throw new RuntimeException(e);
@@ -130,7 +143,7 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
   }
 
   private static File getVersionFile(final File projectBuildSystemDirectory, final String canonicalIndexName) {
-    return new File(ClassFilesIndexStorage.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), "version");
+    return new File(ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory), VERSION_FILE_NAME);
   }
 
   private static boolean versionDiffers(final File projectBuildSystemDirectory, final String canonicalIndexName, final int currentVersion) {

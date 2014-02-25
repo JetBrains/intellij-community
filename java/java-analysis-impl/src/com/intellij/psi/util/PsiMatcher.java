@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.psi.util;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
 
-import java.util.Set;
+public interface PsiMatcher {
+  PsiMatcher parent(PsiMatcherExpression e);
+  PsiMatcher firstChild(PsiMatcherExpression e);
+  PsiMatcher ancestor(PsiMatcherExpression e);
+  PsiMatcher descendant(PsiMatcherExpression e);
+  PsiMatcher dot(PsiMatcherExpression e);
 
-/**
- * @author Dennis.Ushakov
- */
-public interface MacNotifications {
-  void notify(Set<String> allNotifications, @NotNull String notificationName, String title, String description);
+  PsiElement getElement();
 }

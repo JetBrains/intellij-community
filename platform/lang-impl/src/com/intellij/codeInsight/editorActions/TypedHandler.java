@@ -45,7 +45,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -584,7 +583,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       final boolean isBrace = braceMatcher.isLBraceToken(iterator, chars, fileType) || rBraceToken;
       int lBraceOffset = -1;
 
-      if (Registry.is("typing.rbrace.reformats.block") &&
+      if (CodeInsightSettings.getInstance().REFORMAT_BLOCK_ON_RBRACE &&
           rBraceToken &&
           braceMatcher.isStructuralBrace(iterator, chars, fileType) && offset > 0) {
         lBraceOffset = BraceMatchingUtil.findLeftLParen(

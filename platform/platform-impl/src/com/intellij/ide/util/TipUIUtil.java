@@ -105,10 +105,15 @@ public class TipUIUtil {
     }
   }
 
-  private static void setCantReadText(JEditorPane browser, TipAndTrickBean missingFile) {
+  private static void setCantReadText(JEditorPane browser, TipAndTrickBean bean) {
     try {
-      browser.read(new StringReader(
-        IdeBundle.message("error.unable.to.read.tip.of.the.day", missingFile, ApplicationNamesInfo.getInstance().getFullProductName())), null);
+      String plugin = getPoweredByText(bean);
+      String product = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (!plugin.isEmpty()) {
+        product += " and " + plugin + " plugin";
+      }
+      String message = IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.getFileName(), product);
+      browser.read(new StringReader(message), null);
     }
     catch (IOException ignored) {
     }

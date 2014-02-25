@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -33,7 +34,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -87,7 +88,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void fileCreated(VirtualFileEvent event) {
+  public void fileCreated(@NotNull VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
     ApplicationManager.getApplication().runWriteAction(
@@ -124,7 +125,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent event) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
     VirtualFile parent = vFile.getParent();
@@ -159,7 +160,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void fileDeleted(final VirtualFileEvent event) {
+  public void fileDeleted(@NotNull final VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
     VirtualFile parent = event.getParent();
@@ -202,7 +203,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+  public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
     final VirtualFile vFile = event.getFile();
     final String propertyName = event.getPropertyName();
 
@@ -301,7 +302,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void propertyChanged(final VirtualFilePropertyEvent event) {
+  public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
     final String propertyName = event.getPropertyName();
     final VirtualFile vFile = event.getFile();
 
@@ -318,29 +319,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     final PsiDirectory parentDir = getCachedDirectory(parent);
 
     if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
-      FileViewProvider viewProvider = myFileManager.createFileViewProvider(vFile, true);
-      myFileManager.setViewProvider(vFile, viewProvider);
-      PsiFile newPsiFile = myManager.findFile(vFile);
-      if (newPsiFile == null) {
-        // psi file here can be null for any custom file with null parent
-        // that is currently open in a file editor, e.g. db table editor
-        //LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
-        return;
-      }
-      if (!viewProvider.isPhysical()) {
-        Document document = viewProvider.getDocument();
-        if (document != null) {
-          PsiDocumentManagerImpl.cachePsi(document, newPsiFile);
-        }
-      }
-      if (parentDir != null) {
-        PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-        treeEvent.setParent(parentDir);
-
-        treeEvent.setOldChild(oldPsiFile);
-        treeEvent.setNewChild(newPsiFile);
-        myManager.childReplaced(treeEvent);
-      }
+      forceReload(vFile, oldPsiFile, parentDir);
       return;
     }
 
@@ -450,8 +429,34 @@ public class PsiVFSListener extends VirtualFileAdapter {
     );
   }
 
+  private void forceReload(@NotNull VirtualFile vFile, PsiFile oldPsiFile, PsiDirectory parentDir) {
+    FileViewProvider viewProvider = myFileManager.createFileViewProvider(vFile, true);
+    myFileManager.setViewProvider(vFile, viewProvider);
+    PsiFile newPsiFile = myManager.findFile(vFile);
+    if (newPsiFile == null) {
+      // psi file here can be null for any custom file with null parent
+      // that is currently open in a file editor, e.g. db table editor
+      //LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
+      return;
+    }
+    if (!viewProvider.isPhysical()) {
+      Document document = viewProvider.getDocument();
+      if (document != null) {
+        PsiDocumentManagerBase.cachePsi(document, newPsiFile);
+      }
+    }
+    if (parentDir != null) {
+      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+      treeEvent.setParent(parentDir);
+
+      treeEvent.setOldChild(oldPsiFile);
+      treeEvent.setNewChild(newPsiFile);
+      myManager.childReplaced(treeEvent);
+    }
+  }
+
   @Override
-  public void beforeFileMovement(VirtualFileMoveEvent event) {
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
     final VirtualFile vFile = event.getFile();
 
     final PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
@@ -504,7 +509,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void fileMoved(VirtualFileMoveEvent event) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     final VirtualFile vFile = event.getFile();
 
     final PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
@@ -647,13 +652,16 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
     @Override
-    public void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
+    public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
       final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
       if (psiFile != null) {
         ApplicationManager.getApplication().runWriteAction(
           new ExternalChangeAction() {
             @Override
             public void run() {
+              if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
+                forceReload(file, psiFile, null);
+              }
               myFileManager.reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
             }
           }

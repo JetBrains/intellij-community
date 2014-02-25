@@ -176,8 +176,8 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       PsiParameter parameter = lambdaParameters[lambdaParamIdx];
       final PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement != null) {
-        final PsiType lambdaFormalType = typeElement.getType();
-        final PsiType methodParameterType = parameterTypes[lambdaParamIdx];
+        final PsiType lambdaFormalType = toArray(typeElement.getType());
+        final PsiType methodParameterType = toArray(parameterTypes[lambdaParamIdx]);
         if (!lambdaFormalType.equals(methodParameterType)) {
           return false;
         }
@@ -186,10 +186,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
 
     if (checkReturnType) {
       final String uniqueVarName = JavaCodeStyleManager.getInstance(getProject()).suggestUniqueVariableName("l", this, true);
-      String canonicalText = leftType.getCanonicalText();
-      if (leftType instanceof PsiEllipsisType) {
-        canonicalText = ((PsiEllipsisType)leftType).toArrayType().getCanonicalText();
-      }
+      final String canonicalText = toArray(leftType).getCanonicalText();
       final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(getProject())
         .createStatementFromText(canonicalText + " " + uniqueVarName + " = " + getText(), this);
       final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
@@ -200,5 +197,12 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
     return true;
+  }
+
+  private static PsiType toArray(PsiType paramType) {
+    if (paramType instanceof PsiEllipsisType) {
+      return ((PsiEllipsisType)paramType).toArrayType();
+    }
+    return paramType;
   }
 }

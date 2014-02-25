@@ -152,6 +152,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testNestedCalls1() throws Exception {
+    doTest();
+  }
+
+  public void testMostSpecificVarargsCase() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

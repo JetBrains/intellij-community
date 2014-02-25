@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework.fixtures;
+package com.intellij.psi.util;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.psi.PsiElement;
 
-import java.awt.*;
-
-public class EditorScrollingFixture {
-  public static void setVisibleSize(Editor editor, int widthInChars, int heightInChars) {
-    Dimension size = new Dimension(widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), heightInChars * editor.getLineHeight());
-    ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
-  }
+public interface PsiMatcherExpression {
+  Boolean match(PsiElement element);
 }

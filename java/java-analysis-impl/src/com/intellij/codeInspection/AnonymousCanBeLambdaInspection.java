@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -25,14 +26,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -78,75 +83,23 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
           if (LambdaUtil.isFunctionalType(baseClassType)) {
-            final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && aClass.getFields().length == 0) {
-              final PsiCodeBlock body = methods[0].getBody();
-              if (body != null) {
-                final boolean [] bodyContainsForbiddenRefs = new boolean[1];
-                final Set<PsiLocalVariable> locals = new HashSet<PsiLocalVariable>();
-                body.accept(new JavaRecursiveElementWalkingVisitor() {
-                  @Override
-                  public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
-                    if (bodyContainsForbiddenRefs[0]) return;
-                    super.visitMethodCallExpression(methodCallExpression);
-                    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-                    if (psiMethod == methods[0] ||
-                        psiMethod != null &&
-                        !methodCallExpression.getMethodExpression().isQualified() &&
-                        "getClass".equals(psiMethod.getName()) &&
-                        psiMethod.getParameterList().getParametersCount() == 0) {
-                      bodyContainsForbiddenRefs[0] = true;
+            final PsiElement lambdaContext = aClass.getParent().getParent();
+            if (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) {
+              final PsiMethod[] methods = aClass.getMethods();
+              if (methods.length == 1 && aClass.getFields().length == 0) {
+                final PsiCodeBlock body = methods[0].getBody();
+                if (body != null) {
+                  final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(methods[0], aClass);
+                  body.accept(checker);
+                  if (!checker.hasForbiddenRefs()) {
+                    PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
+                    for (PsiLocalVariable local : checker.getLocals()) {
+                      final String localName = local.getName();
+                      if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
                     }
+                    holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
                   }
-
-                  @Override
-                  public void visitThisExpression(PsiThisExpression expression) {
-                    if (bodyContainsForbiddenRefs[0]) return;
-                    if (expression.getQualifier() == null) {
-                      bodyContainsForbiddenRefs[0] = true;
-                    }
-                  }
-
-                  @Override
-                  public void visitSuperExpression(PsiSuperExpression expression) {
-                    if (bodyContainsForbiddenRefs[0]) return;
-                    if (expression.getQualifier() == null) {
-                      bodyContainsForbiddenRefs[0] = true;
-                    }
-                  }
-
-                  @Override
-                  public void visitLocalVariable(PsiLocalVariable variable) {
-                    if (bodyContainsForbiddenRefs[0]) return;
-                    super.visitLocalVariable(variable);
-                    locals.add(variable);
-                  }
-
-                  @Override
-                  public void visitReferenceExpression(PsiReferenceExpression expression) {
-                    if (bodyContainsForbiddenRefs[0]) return;
-                    super.visitReferenceExpression(expression);
-                    if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-                      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-                      if (field != null) {
-                        final PsiElement resolved = expression.resolve();
-                        if (resolved instanceof PsiField && 
-                            !((PsiField)resolved).hasInitializer() &&
-                            ((PsiField)resolved).getContainingClass() == field.getContainingClass()) {
-                          bodyContainsForbiddenRefs[0] = true;
-                        }
-                      }
-                    }
-                  }
-                });
-                if (!bodyContainsForbiddenRefs[0]) {
-                  PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
-                  for (PsiLocalVariable local : locals) {
-                    final String localName = local.getName();
-                    if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
-                  }
-                  holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
                 }
               }
             }
@@ -325,6 +278,112 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         parameterName = "";
       }
       return parameterType + parameterName;
+    }
+  }
+
+  private static class ForbiddenRefsChecker extends JavaRecursiveElementWalkingVisitor {
+    private boolean myBodyContainsForbiddenRefs;
+    private final Set<PsiLocalVariable> myLocals = ContainerUtilRt.newHashSet(5);
+
+    private final PsiMethod myMethod;
+    private final PsiAnonymousClass myAnonymClass;
+
+    public ForbiddenRefsChecker(PsiMethod method,
+                                PsiAnonymousClass aClass) {
+      myMethod = method;
+      myAnonymClass = aClass;
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+      if (myBodyContainsForbiddenRefs) return;
+
+      super.visitMethodCallExpression(methodCallExpression);
+      final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+      if (psiMethod == myMethod ||
+          psiMethod != null &&
+          !methodCallExpression.getMethodExpression().isQualified() &&
+          "getClass".equals(psiMethod.getName()) &&
+          psiMethod.getParameterList().getParametersCount() == 0) {
+        myBodyContainsForbiddenRefs = true;
+      }
+    }
+
+    @Override
+    public void visitThisExpression(PsiThisExpression expression) {
+      if (myBodyContainsForbiddenRefs) return;
+
+      if (expression.getQualifier() == null) {
+        myBodyContainsForbiddenRefs = true;
+      }
+    }
+
+    @Override
+    public void visitSuperExpression(PsiSuperExpression expression) {
+      if (myBodyContainsForbiddenRefs) return;
+
+      if (expression.getQualifier() == null) {
+        myBodyContainsForbiddenRefs = true;
+      }
+    }
+
+    @Override
+    public void visitLocalVariable(PsiLocalVariable variable) {
+      if (myBodyContainsForbiddenRefs) return;
+
+      super.visitLocalVariable(variable);
+      myLocals.add(variable);
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (myBodyContainsForbiddenRefs) return;
+
+      super.visitReferenceExpression(expression);
+      if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+        final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field != null) {
+          final PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiField && ((PsiField)resolved).getContainingClass() == field.getContainingClass()) {
+            final PsiExpression initializer = ((PsiField)resolved).getInitializer();
+            if (initializer == null ||
+                initializer.getTextOffset() > myAnonymClass.getTextOffset() && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+              myBodyContainsForbiddenRefs = true;
+            }
+          }
+        } else {
+          final PsiMethod method = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMethod.class);
+          if (method != null && method.isConstructor()) {
+            final PsiElement resolved = expression.resolve();
+            if (resolved instanceof PsiField && 
+                ((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL) &&
+                ((PsiField)resolved).getContainingClass() == method.getContainingClass()) {
+              try {
+                final PsiCodeBlock constructorBody = method.getBody();
+                if (constructorBody != null) {
+                  final ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(constructorBody);
+                  final int startOffset = flow.getStartOffset(myAnonymClass);
+                  final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
+                  if (!writtenVariables.contains(resolved)) {
+                    myBodyContainsForbiddenRefs = true;
+                  }
+                }
+              }
+              catch (AnalysisCanceledException e) {
+                myBodyContainsForbiddenRefs = true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    public boolean hasForbiddenRefs() {
+      return myBodyContainsForbiddenRefs;
+    }
+
+    public Set<PsiLocalVariable> getLocals() {
+      return myLocals;
     }
   }
 }

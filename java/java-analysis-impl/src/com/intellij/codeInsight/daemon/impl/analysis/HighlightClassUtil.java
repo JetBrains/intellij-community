@@ -30,7 +30,6 @@ import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -233,30 +232,30 @@ public class HighlightClassUtil {
     if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
     PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
-    HighlightInfo errorResult = null;
-    if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
-      String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
-      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
-        range(aClass, range.getStartOffset(), range.getEndOffset()).
-        descriptionAndTooltip(message).create();
-      PsiModifierList psiModifierList = aClass.getModifierList();
-      QuickFixAction.registerQuickFixAction(errorResult,
-                                            QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false));
-      PsiClass[] classes = file.getClasses();
-      if (classes.length > 1) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveClassToSeparateFileFix(aClass));
-      }
-      for (PsiClass otherClass : classes) {
-        if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
-            otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-            otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
-          return errorResult;
-        }
-      }
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
+    if (virtualFile == null || aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+      return null;
     }
+    String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
+    TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
+      range(aClass, range.getStartOffset(), range.getEndOffset()).
+      descriptionAndTooltip(message).create();
+    PsiModifierList psiModifierList = aClass.getModifierList();
+    QuickFixAction.registerQuickFixAction(errorResult,
+                                          QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false));
+    PsiClass[] classes = file.getClasses();
+    if (classes.length > 1) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveClassToSeparateFileFix(aClass));
+    }
+    for (PsiClass otherClass : classes) {
+      if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
+          otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+          otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+        return errorResult;
+      }
+    }
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
 
@@ -288,7 +287,7 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkStaticFieldDeclarationInInnerClass(PsiKeyword keyword) {
+  private static HighlightInfo checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     if (getEnclosingStaticClass(keyword, PsiField.class) == null) {
       return null;
     }
@@ -340,7 +339,7 @@ public class HighlightClassUtil {
     return result;
   }
 
-  private static PsiElement getEnclosingStaticClass(PsiKeyword keyword, Class<?> parentClass) {
+  private static PsiElement getEnclosingStaticClass(@NotNull PsiKeyword keyword, @NotNull Class<?> parentClass) {
     return new PsiMatcherImpl(keyword)
       .dot(PsiMatchers.hasText(PsiModifier.STATIC))
       .parent(PsiMatchers.hasClass(PsiModifierList.class))

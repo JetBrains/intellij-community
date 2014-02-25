@@ -42,6 +42,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -208,6 +209,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
+  
+  @NotNull public StatusText getEmptyText() {
+    return myTree.getEmptyText();
+  } 
 
   @Override
   public Object getData(String dataId) {

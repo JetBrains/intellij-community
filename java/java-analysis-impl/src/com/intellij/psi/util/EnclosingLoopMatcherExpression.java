@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 
-public class EnclosingLoopOrSwitchMatcherExpression implements PsiMatcherExpression {
-  public static final PsiMatcherExpression INSTANCE = new EnclosingLoopOrSwitchMatcherExpression();
+public class EnclosingLoopMatcherExpression implements PsiMatcherExpression {
+  public static final PsiMatcherExpression INSTANCE = new EnclosingLoopMatcherExpression();
 
   @Override
   public Boolean match(PsiElement element) {
@@ -30,7 +30,6 @@ public class EnclosingLoopOrSwitchMatcherExpression implements PsiMatcherExpress
     if (element instanceof PsiForeachStatement) return Boolean.TRUE;
     if (element instanceof PsiWhileStatement) return Boolean.TRUE;
     if (element instanceof PsiDoWhileStatement) return Boolean.TRUE;
-    if (element instanceof PsiSwitchStatement) return Boolean.TRUE;
     if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiLambdaExpression) return null;
     return Boolean.FALSE;
   }

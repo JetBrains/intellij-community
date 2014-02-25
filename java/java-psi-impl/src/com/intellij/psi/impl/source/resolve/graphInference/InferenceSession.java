@@ -49,6 +49,8 @@ public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
   public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
 
+  private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
+
   private final Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
 
@@ -286,6 +288,9 @@ public class InferenceSession {
 
     final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor);
     if (substitutor != null) {
+      if (myContext != null) {
+        myContext.putUserData(ERASED, myErased);
+      }
       mySiteSubstitutor = substitutor;
       for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
         final InferenceVariable variable = getInferenceVariable(parameter);
@@ -396,9 +401,6 @@ public class InferenceSession {
       myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutor.substitute(inferenceVariable.getParameter()), myContext)));
     } 
     else {
-      if (targetType instanceof PsiClassType && ((PsiClassType)targetType).isRaw()) {
-        setErased();
-      }
       if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
         final PsiClass psiClass = resolveResult.getElement();
@@ -419,7 +421,7 @@ public class InferenceSession {
           myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
-        myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : targetType, returnType));
+        myConstraints.add(new TypeCompatibilityConstraint(targetType, myErased ? TypeConversionUtil.erasure(returnType) : returnType));
       }
     }
   }
@@ -470,7 +472,7 @@ public class InferenceSession {
   }
 
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
-    if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
+    if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
       final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
         @Override
@@ -966,12 +968,14 @@ public class InferenceSession {
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
-    LOG.assertTrue(parameters1.length == parameters2.length);
+    if (!varargs) {
+      LOG.assertTrue(parameters1.length == parameters2.length);
+    }
 
     final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = siteSubstitutor2.substitute(parameters1[i].getType());
-      PsiType tType = siteSubstitutor2.substitute(parameters2[i].getType());
+      PsiType tType = siteSubstitutor2.substitute(getVarargParameterType(varargs, i, parameters2));
       if (session.isProperType(sType) && session.isProperType(tType)) {
         if (!TypeConversionUtil.isAssignable(tType, sType)) {
           return false;
@@ -989,11 +993,20 @@ public class InferenceSession {
 
     if (varargs) {
       PsiType sType = siteSubstitutor2.substitute(parameters1[paramsLength].getType());
-      PsiType tType = siteSubstitutor2.substitute(parameters2[paramsLength].getType());
+      PsiType tType = siteSubstitutor2.substitute(getVarargParameterType(true, paramsLength, parameters2));
       session.addConstraint(new StrictSubtypingConstraint(tType, sType));
     }
 
     return session.repeatInferencePhases(true);
+  }
+
+  public static PsiType getVarargParameterType(boolean varargs, int i, PsiParameter[] parameters2) {
+    if (varargs && i >= parameters2.length - 1) {
+      final PsiType lastParamType = parameters2[parameters2.length - 1].getType();
+      LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+      return ((PsiEllipsisType)lastParamType).getComponentType();
+    }
+    return parameters2[i].getType();
   }
 
   /**
@@ -1197,5 +1210,10 @@ public class InferenceSession {
         myInferenceVariables.put(parameter, variable);
       }
     }
+  }
+
+  public static boolean wasUncheckedConversionPerformed(PsiElement call) {
+    final Boolean erased = call.getUserData(ERASED);
+    return erased != null && erased.booleanValue();
   }
 }

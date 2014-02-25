@@ -26,10 +26,11 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveCaretDownWithSelectionAction extends EditorAction {
   public MoveCaretDownWithSelectionAction() {
@@ -37,17 +38,28 @@ public class MoveCaretDownWithSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    public Handler() {
-      super(true);
-    }
-
     @Override
-    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
-        caret.clone(false);
+    public void execute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (!editor.getCaretModel().supportsMultipleCarets()) {
+        editor.getCaretModel().moveCaretRelatively(0, 1, true, editor.isColumnMode(), true);
+        return;
+      }
+      if (editor.isColumnMode()) {
+        EditorActionUtil.cloneOrRemoveCaret(editor, caret == null ? editor.getCaretModel().getPrimaryCaret() : caret, false);
       }
       else {
-        editor.getCaretModel().moveCaretRelatively(0, 1, true, editor.isColumnMode(), true);
+        CaretAction caretAction = new CaretAction() {
+          @Override
+          public void perform(Caret caret) {
+            caret.moveCaretRelatively(0, 1, true, true);
+          }
+        };
+        if (caret == null) {
+          editor.getCaretModel().runForEachCaret(caretAction);
+        }
+        else {
+          caretAction.perform(caret);
+        }
       }
     }
   }

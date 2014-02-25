@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,14 +298,14 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
 
       commentedRange = getSelectedComments(text, prefix, suffix);
-      if (commentedRange == null) {
-        PsiElement comment = findCommentAtCaret();
-        if (comment != null) {
+    }
+    if (commentedRange == null) {
+      PsiElement comment = findCommentAtCaret();
+      if (comment != null) {
 
-          String commentText = comment.getText();
-          if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
-            commentedRange = comment.getTextRange();
-          }
+        String commentText = comment.getText();
+        if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
+          commentedRange = comment.getTextRange();
         }
       }
     }

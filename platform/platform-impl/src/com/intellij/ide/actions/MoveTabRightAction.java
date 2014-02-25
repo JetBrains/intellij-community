@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.util;
+package com.intellij.ide.actions;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
+import javax.swing.*;
 
-public class XmlMatchers {
-  public static PsiMatcherExpression hasTagValue(final String value) {
-    return new PsiMatcherExpression() {
-      @Override
-      public Boolean match(PsiElement element) {
-        if (element instanceof XmlTag && value.equals(((XmlTag) element).getValue().getTrimmedText())) return Boolean.TRUE;
-        return Boolean.FALSE;
-      }
-    };
+/**
+ * @author Konstantin Bulenkov
+ */
+public class MoveTabRightAction extends SplitAction {
+  protected MoveTabRightAction() {
+    super(SwingConstants.VERTICAL, true);
   }
 }

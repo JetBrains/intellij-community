@@ -141,10 +141,7 @@ class VirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    if (myFileInfo == null) {
-      return EMPTY_ARRAY;
-    }
-    throw new UnsupportedOperationException();
+    return EMPTY_ARRAY;
   }
 
   @Override

@@ -160,6 +160,14 @@ public class Mappings {
     }
   }
 
+  public String valueOf(final int name) {
+    return myContext.getValue(name);
+  }
+
+  public int getName(final String string) {
+    return myContext.get(string);
+  }
+
   public Mappings createDelta() {
     synchronized (myLock) {
       try {

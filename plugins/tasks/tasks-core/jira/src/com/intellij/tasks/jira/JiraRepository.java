@@ -61,7 +61,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     super(other);
     mySearchQuery = other.mySearchQuery;
     if (other.myApiVersion != null) {
-      myApiVersion = other.myApiVersion.cloneFor(this);
+      myApiVersion = other.myApiVersion.getType().createApi(this);
     }
   }
 
@@ -81,7 +81,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     ensureApiVersionDiscovered();
     String jqlQuery = mySearchQuery;
     if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-      jqlQuery += String.format(" and summary ~ '%s'", query);
+      jqlQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
     }
     else if (StringUtil.isNotEmpty(query)) {
       jqlQuery = String.format("summary ~ '%s'", query);
@@ -120,7 +120,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  public JiraRemoteApi discoverRestApiVersion() throws Exception {
+  public JiraRemoteApi discoverApiVersion() throws Exception {
     String responseBody;
     GetMethod method = new GetMethod(getRestUrl("serverInfo"));
     try {
@@ -149,7 +149,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   private void ensureApiVersionDiscovered() throws Exception {
     if (myApiVersion == null) {
-      myApiVersion = discoverRestApiVersion();
+      myApiVersion = discoverApiVersion();
     }
   }
 
@@ -228,7 +228,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     int features = super.getFeatures() | TIME_MANAGEMENT;
-    if (myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.REST) {
+    if (myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.REST_2_0) {
       return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
     }
     return features;
@@ -250,9 +250,26 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   public void setUrl(String url) {
     // reset remote API version, only if server URL was changed
-    if (!getUrl().equals(url)) {
+     if (!getUrl().equals(url)) {
       myApiVersion = null;
       super.setUrl(url);
+    }
+  }
+
+  /**
+   * Used to preserve discovered API version for the next initialization.
+   * @return
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @Nullable
+  public JiraRemoteApi.ApiType getApiType() {
+    return myApiVersion == null? null : myApiVersion.getType();
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setApiType(@Nullable JiraRemoteApi.ApiType type) {
+    if (type != null) {
+      myApiVersion = type.createApi(this);
     }
   }
 

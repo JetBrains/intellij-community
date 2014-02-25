@@ -259,7 +259,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
    */
   public static AnAction createConsoleExecAction(LanguageConsoleImpl languageConsole,
                                                  ProcessHandler processHandler,
-                                                 ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+                                                 @SuppressWarnings("deprecation") ConsoleExecuteActionHandler consoleExecuteActionHandler) {
     return ConsoleExecuteAction.createAction(languageConsole, consoleExecuteActionHandler);
   }
 

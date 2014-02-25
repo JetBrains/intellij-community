@@ -107,10 +107,10 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  private static boolean processScopeRootForAllClasses(@NotNull PsiElement scopeRoot, @NotNull final Processor<PsiClass> processor) {
+  private static boolean processScopeRootForAllClasses(@NotNull final PsiElement scopeRoot, @NotNull final Processor<PsiClass> processor) {
     final boolean[] stopped = {false};
 
-    JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
+    final JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!stopped[0]) {
@@ -137,7 +137,12 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         super.visitClass(aClass);
       }
     };
-    scopeRoot.accept(visitor);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        scopeRoot.accept(visitor);
+      }
+    });
 
     return !stopped[0];
   }

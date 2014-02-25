@@ -64,7 +64,9 @@ public abstract class StubIndex {
     return get(indexKey, key, project, scope);
   }
 
-  @Deprecated
+  /**
+   * @deprecated use processElements
+   */
   public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                 @NotNull Key key,
                                                                 @NotNull Project project,
@@ -80,6 +82,9 @@ public abstract class StubIndex {
                                                                 Class<Psi> requiredClass,
                                                                 @NotNull Processor<? super Psi> processor);
 
+  /**
+   * @deprecated use processElements
+   */
   public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                 @NotNull Key key,
                                                                 @NotNull Project project,

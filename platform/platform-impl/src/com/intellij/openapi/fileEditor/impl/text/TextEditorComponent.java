@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    */
   private final class MyVirtualFileListener extends VirtualFileAdapter{
     @Override
-    public void propertyChanged(final VirtualFilePropertyEvent e) {
+    public void propertyChanged(@NotNull final VirtualFilePropertyEvent e) {
       if(VirtualFile.PROP_NAME.equals(e.getPropertyName())){
         // File can be invalidated after file changes name (extension also
         // can changes). The editor should be removed if it's invalid.
@@ -355,7 +355,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     }
 
     @Override
-    public void contentsChanged(VirtualFileEvent event){
+    public void contentsChanged(@NotNull VirtualFileEvent event){
       if (event.isFromSave()){ // commit
         assertThread();
         VirtualFile file = event.getFile();

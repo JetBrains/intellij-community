@@ -148,8 +148,9 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
     GrSourceFilterScope filterScope = new GrSourceFilterScope(scope);
-    return StubIndex.getInstance().process(GrMethodNameIndex.KEY, name, myProject, filterScope, filter, processor) &&
-           StubIndex.getInstance().process(GrAnnotationMethodNameIndex.KEY, name, myProject, filterScope, filter, processor);
+    return StubIndex.getInstance().processElements(GrMethodNameIndex.KEY, name, myProject, filterScope, filter, GrMethod.class, processor) &&
+           StubIndex.getInstance().processElements(GrAnnotationMethodNameIndex.KEY, name, myProject, filterScope, filter,
+                                                   GrAnnotationMethod.class, processor);
   }
 
   @Override
@@ -203,7 +204,8 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
                                        @NotNull Processor<? super PsiField> processor,
                                        @NotNull GlobalSearchScope scope,
                                        @Nullable IdFilter filter) {
-    return StubIndex.getInstance().process(GrFieldNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope), filter, processor);
+    return StubIndex.getInstance().processElements(GrFieldNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope), filter,
+                                                   GrField.class, processor);
   }
 
   @Override

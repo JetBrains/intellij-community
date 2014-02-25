@@ -52,16 +52,17 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
 
     CommonProcessors.FindFirstProcessor<? super PsiFile> processor =
       new CommonProcessors.FindFirstProcessor<PsiFile>();
-    StubIndex.getInstance().process(KEY, clazzName,
-                                    domFileElement.getFile().getProject(),
-                                    GlobalSearchScope.fileScope(domFileElement.getFile()),
-                                    new IdFilter() {
-                                      @Override
-                                      public boolean containsFileId(int id) {
-                                        return id == virtualFileId;
-                                      }
-                                    },
-                                    processor
+    StubIndex.getInstance().processElements(KEY, clazzName,
+                                            domFileElement.getFile().getProject(),
+                                            GlobalSearchScope.fileScope(domFileElement.getFile()),
+                                            new IdFilter() {
+                                              @Override
+                                              public boolean containsFileId(int id) {
+                                                return id == virtualFileId;
+                                              }
+                                            },
+                                            PsiFile.class, 
+                                            processor
     );
 
     return processor.isFound();

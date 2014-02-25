@@ -38,10 +38,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -226,7 +223,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private Collection<File> filterCommittables(Collection<File> committables) throws SVNException {
-    final Set<File> childrenOfSomebody = new HashSet<File>();
+    final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
     new AbstractFilterChildren<File>() {
       @Override
       protected void sortAscending(List<File> list) {
@@ -235,29 +232,35 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
       @Override
       protected boolean isAncestor(File parent, File child) {
-        final boolean isAncestor = FileUtil.isAncestor(parent, child, false);
+        // strict here will ensure that for case insensitive file systems paths different only by case will not be treated as ancestors
+        // of each other which is what we need to perform renames from one case to another on Windows
+        final boolean isAncestor = FileUtil.isAncestor(parent, child, true);
         if (isAncestor) {
-          childrenOfSomebody.add(child);
+          childrenOfSomebody.add(child.getPath());
         }
         return isAncestor;
       }
     }.doFilter(new ArrayList<File>(committables));
     if (! childrenOfSomebody.isEmpty()) {
-      final HashSet<File> result = new HashSet<File>(committables);
-      result.removeAll(childrenOfSomebody);
-      final SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs);
-      for (File file : childrenOfSomebody) {
-        try {
-          final SVNStatus status = statusClient.doStatus(file, false);
-          if (status != null && ! SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
-              ! SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
-            result.add(file);
+      List<File> result = ContainerUtil.newArrayList();
+      SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs);
+
+      for (File file : committables) {
+        if (!childrenOfSomebody.contains(file.getPath())) {
+          result.add(file);
+        } else {
+          try {
+            final SVNStatus status = statusClient.doStatus(file, false);
+            if (status != null && ! SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
+                ! SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+              result.add(file);
+            }
           }
-        }
-        catch (SVNException e) {
-          // not versioned
-          LOG.info(e);
-          throw e;
+          catch (SVNException e) {
+            // not versioned
+            LOG.info(e);
+            throw e;
+          }
         }
       }
       return result;

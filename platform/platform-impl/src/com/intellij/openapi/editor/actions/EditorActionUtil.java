@@ -614,7 +614,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     CaretModel caretModel = editor.getCaretModel();
     if (isWithSelection) {
-      if (editor.isColumnMode()) {
+      if (editor.isColumnMode() && !caretModel.supportsMultipleCarets()) {
         selectionModel.setBlockSelection(blockSelectionStart, caretModel.getLogicalPosition());
       }
       else {
@@ -800,5 +800,27 @@ public class EditorActionUtil {
         }
       });
     }
+  }
+
+  /**
+   * Clones caret in a given direction if it's possible. If there already exists a caret at the given direction, removes the current caret.
+   *
+   * @param editor editor to perform operation in
+   * @param caret caret to work on
+   * @param above whether to clone the caret above or below
+   * @return <code>false</code> if the operation cannot be performed due to current caret being at the edge (top or bottom) of the document,
+   * and <code>true</code> otherwise
+   */
+  public static boolean cloneOrRemoveCaret(Editor editor, Caret caret, boolean above) {
+    if (above && caret.getLogicalPosition().line == 0) {
+      return false;
+    }
+    if (!above && caret.getLogicalPosition().line == editor.getDocument().getLineCount() - 1) {
+      return false;
+    }
+    if (caret.clone(above) == null) {
+      editor.getCaretModel().removeCaret(caret);
+    }
+    return true;
   }
 }

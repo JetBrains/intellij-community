@@ -28,12 +28,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.updateSettings.impl.*;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -133,6 +132,8 @@ public class PluginsAdvertiser implements StartupActivity {
 
           if (loadedPlugin != null && fromServerPluginDescription != null &&
               StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) continue;
+
+          if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
 
           final JsonElement ext = jsonObject.get("implementationName");
           final String extension = StringUtil.unquoteString(ext.toString());

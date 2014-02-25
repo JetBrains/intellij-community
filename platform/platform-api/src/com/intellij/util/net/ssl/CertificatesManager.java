@@ -197,7 +197,7 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
     Application app = ApplicationManager.getApplication();
     final CountDownLatch proceeded = new CountDownLatch(1);
     final AtomicBoolean accepted = new AtomicBoolean();
-    app.invokeLater(new Runnable() {
+    Runnable showDialog = new Runnable() {
       @Override
       public void run() {
         try {
@@ -211,7 +211,13 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
           proceeded.countDown();
         }
       }
-    }, ModalityState.any());
+    };
+    if (app.isDispatchThread()) {
+      showDialog.run();
+    }
+    else {
+      app.invokeLater(showDialog, ModalityState.any());
+    }
     try {
       proceeded.await();
     }
