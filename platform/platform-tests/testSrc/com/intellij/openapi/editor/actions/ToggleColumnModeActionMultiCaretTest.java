@@ -94,10 +94,10 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     doTestToggleOnOff("<caret>l<selection>ine1\n" +
                       "line<caret></selection>2",
 
-                      "<caret>l<selection>ine1\n" +
-                      "line<caret></selection>2",
+                      "l<selection>ine<caret></selection>1\n" +
+                      "l<selection>ine<caret></selection>2",
 
-                      "<selection>line1\n" +
+                      "l<selection>ine1\n" +
                       "line<caret></selection>2"
     );
   }
