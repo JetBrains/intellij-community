@@ -109,7 +109,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertOneElement(doCompletion());
   }
 
-  public void testInnerClasses() {
+  public void _testInnerClasses() {
     assertAdvisorLookupElementEquals("j.getEntry", 0, 8, 1, 0, assertOneElement(doCompletion()));
   }
 
