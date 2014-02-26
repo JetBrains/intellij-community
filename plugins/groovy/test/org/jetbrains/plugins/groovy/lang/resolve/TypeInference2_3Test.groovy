@@ -188,4 +188,21 @@ def foo() {
 ''', 'java.lang.String')
   }
 
+  void testSamInference7() {
+    doTest('''
+interface CustomCallable<T> {
+    T call()
+}
+
+class Thing {
+    static <T> T customType(CustomCallable<T> callable) {
+    }
+
+    static void run() {
+        customType { i<caret>t }
+    }
+}''', null)
+  }
+
+
 }
