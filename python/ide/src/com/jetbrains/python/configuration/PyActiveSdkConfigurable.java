@@ -184,8 +184,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
     final Dimension preferredSize = mySdkCombo.getPreferredSize();
-    notificationsComponent.setPreferredSize(new Dimension(500, preferredSize.height));
-
+    notificationsArea.hide();
     myDetailsButton = new FixedSizeButton();
     myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
     //noinspection SuspiciousNameCombination
@@ -211,7 +210,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.weightx = 0.0;
     myMainPanel.add(myDetailsButton, c);
 
-    c.insets = new Insets(2,2,2,2);
+    c.insets = new Insets(2,2,0,2);
     c.gridx = 0;
     c.gridy = 1;
     c.gridwidth = 3;
@@ -219,7 +218,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridx = 0;
     c.gridy = 2;
-    c.weighty = 0.5;
+    c.weighty = 1.;
     c.gridwidth = 3;
     c.gridheight = GridBagConstraints.RELATIVE;
     c.fill = GridBagConstraints.BOTH;
@@ -229,7 +228,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridx = 0;
     c.gridy = 3;
     c.gridwidth = 3;
-
+    c.weighty = 0.;
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.SOUTH;
 
