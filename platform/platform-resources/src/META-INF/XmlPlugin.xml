@@ -440,6 +440,7 @@
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlScriptLanguageInjector"/>
+    <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
