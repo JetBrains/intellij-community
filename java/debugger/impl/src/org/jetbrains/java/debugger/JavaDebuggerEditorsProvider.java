@@ -43,7 +43,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
       @Override
       public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
         TextWithImports text = myComboBox.getText();
-        final String condition = StringUtil.nullize(text.toExternalForm(), true);
+        final String condition = !text.getText().isEmpty() ? text.toExternalForm() : null;
         breakpoint.setCondition(condition);
         if (condition != null) {
           myComboBox.addRecent(text);
