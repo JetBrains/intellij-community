@@ -459,6 +459,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       myBreakpoints = breakpoints;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setDefaultBreakpoints(List<BreakpointState> defaultBreakpoints) {
       myDefaultBreakpoints = defaultBreakpoints;
     }
