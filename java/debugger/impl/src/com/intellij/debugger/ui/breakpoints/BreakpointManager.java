@@ -196,7 +196,7 @@ public class BreakpointManager {
           offset = editor.getDocument().getLineStartOffset(line);
         }
 
-        ExpandRegionAction.expandRegionAtCaret(myProject, editor);
+        ExpandRegionAction.expandRegionAtOffset(myProject, editor, offset);
 
         Breakpoint breakpoint = findBreakpoint(document, offset, null);
         if (breakpoint == null) {
