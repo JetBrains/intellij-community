@@ -16,9 +16,11 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -226,28 +228,26 @@ public class MergePanel2 implements DiffViewer {
   private void tryInitView() {
     if (!hasAllEditors()) return;
     if (myMergeList != null) return;
-    try {
-      myMergeList = MergeList.create(myData);
-      myMergeList.addListener(myDividersRepainter);
-      myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
-      Editor left = getEditor(0);
-      Editor base = getEditor(1);
-      Editor right = getEditor(2);
+    myMergeList = MergeList.create(myData);
+    myMergeList.addListener(myDividersRepainter);
+    myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
+    Editor left = getEditor(0);
+    Editor base = getEditor(1);
+    Editor right = getEditor(2);
 
-      myMergeList.setMarkups(left, base, right);
-      EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
-      myScrollSupport.install(sides);
-      for (int i = 0; i < myDividers.length; i++) {
-        myDividers[i].listenEditors(sides[i]);
-      }
-      if (myScrollToFirstDiff) {
-        myPanel.requestScrollEditors();
-      }
+    myMergeList.setMarkups(left, base, right);
+    EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
+    myScrollSupport.install(sides);
+    for (int i = 0; i < myDividers.length; i++) {
+      myDividers[i].listenEditors(sides[i]);
     }
-    catch (final FilesTooBigForDiffException e) {
+    if (myScrollToFirstDiff) {
+      myPanel.requestScrollEditors();
+    }
+    if (myMergeList.getErrorMessage() != null) {
       myPanel.insertTopComponent(new EditorNotificationPanel() {
         {
-          myLabel.setText(e.getMessage());
+          myLabel.setText(myMergeList.getErrorMessage());
         }
       });
     }

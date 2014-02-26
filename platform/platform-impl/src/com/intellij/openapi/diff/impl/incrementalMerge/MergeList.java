@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -60,10 +61,16 @@ public class MergeList implements UserDataHolder {
   @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
   @NotNull private final ChangeList myBaseToLeftChangeList;
   @NotNull private final ChangeList myBaseToRightChangeList;
+  @Nullable private final String myErrorMessage;
 
-  private MergeList(@Nullable Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
+  private MergeList(@Nullable Project project,
+                    @NotNull Document left,
+                    @NotNull Document base,
+                    @NotNull Document right,
+                    @Nullable String errorMessage) {
     myBaseToLeftChangeList = new ChangeList(base, left, project);
     myBaseToRightChangeList = new ChangeList(base, right, project);
+    myErrorMessage = errorMessage;
   }
 
   @NotNull
@@ -76,9 +83,9 @@ public class MergeList implements UserDataHolder {
     return myBaseToRightChangeList;
   }
 
-  public static MergeList create(@Nullable Project project, @NotNull Document left, @NotNull Document base,
-                                 @NotNull Document right) throws FilesTooBigForDiffException {
-    MergeList mergeList = new MergeList(project, left, base, right);
+  @NotNull
+  public static MergeList create(@Nullable Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
+    MergeList mergeList;
     String leftText = left.getText();
     String baseText = base.getText();
     String rightText = right.getText();
@@ -88,7 +95,15 @@ public class MergeList implements UserDataHolder {
       "\nRight\n", rightText
     };
     ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(data));
-    List<MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
+    List<MergeFragment> fragmentList;
+    try {
+      fragmentList = processText(leftText, baseText, rightText, logger);
+      mergeList = new MergeList(project, left, base, right, null);
+    }
+    catch (FilesTooBigForDiffException e) {
+      fragmentList = Collections.emptyList();
+      mergeList = new MergeList(project, left, base, right, e.getMessage());
+    }
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
@@ -129,8 +144,11 @@ public class MergeList implements UserDataHolder {
     return mergeList;
   }
 
-  private static List<MergeFragment> processText(String leftText, String baseText, String rightText,
-                                                              ContextLogger logger) throws FilesTooBigForDiffException {
+  @Nullable
+  private static List<MergeFragment> processText(@NotNull String leftText,
+                                                 @NotNull String baseText,
+                                                 @NotNull String rightText,
+                                                 @NotNull ContextLogger logger) throws FilesTooBigForDiffException {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
     int[] leftOffsets = {0, 0};
@@ -156,7 +174,7 @@ public class MergeList implements UserDataHolder {
     return builder.finish(leftText.length(), baseText.length(), rightText.length());
   }
 
-  private static void getEqualRanges(DiffFragment fragment, int[] leftOffsets, TextRange[] equalRanges) {
+  private static void getEqualRanges(@NotNull DiffFragment fragment, @NotNull int[] leftOffsets, @NotNull TextRange[] equalRanges) {
     int baseLength = getTextLength(fragment.getText1());
     int versionLength = getTextLength(fragment.getText2());
     if (fragment.isEqual()) {
@@ -170,11 +188,11 @@ public class MergeList implements UserDataHolder {
     leftOffsets[1] += versionLength;
   }
 
-  private static int getTextLength(String text1) {
+  private static int getTextLength(@Nullable String text1) {
     return text1 != null ? text1.length() : 0;
   }
 
-  public static MergeList create(DiffRequest data) throws FilesTooBigForDiffException {
+  public static MergeList create(@NotNull DiffRequest data) {
     DiffContent[] contents = data.getContents();
     return create(data.getProject(), contents[0].getDocument(), contents[1].getDocument(), contents[2].getDocument());
   }
@@ -200,7 +218,7 @@ public class MergeList implements UserDataHolder {
     myBaseToRightChangeList.removeListener(listener);
   }
 
-  private void addActions(final FragmentSide side) {
+  private void addActions(@NotNull final FragmentSide side) {
     ChangeList changeList = getChanges(side);
     final FragmentSide originalSide = BRANCH_SIDE;
     for (int i = 0; i < changeList.getCount(); i++) {
@@ -280,4 +298,8 @@ public class MergeList implements UserDataHolder {
     myBaseToRightChangeList.updateMarkup();
   }
 
+  @Nullable
+  public String getErrorMessage() {
+    return myErrorMessage;
+  }
 }
