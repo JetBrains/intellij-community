@@ -18,7 +18,9 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,15 +63,19 @@ public class Parsing {
     return false;
   }
 
-  protected boolean checkMatchesOrSkip(final IElementType token, final String message) {
-    if (myBuilder.getTokenType() == token) {
+  protected boolean parseIdentifierOrSkip() {
+    if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       myBuilder.advanceLexer();
       return true;
     }
-    PsiBuilder.Marker mark = myBuilder.mark();
-    myBuilder.advanceLexer();
-    mark.error(message);
-    return false;
+    else {
+      final PsiBuilder.Marker nameExpected = myBuilder.mark();
+      if (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+        myBuilder.advanceLexer();
+      }
+      nameExpected.error(PyBundle.message("PARSE.expected.identifier"));
+      return false;
+    }
   }
 
   protected void assertCurrentToken(final PyElementType tokenType) {
@@ -95,7 +101,7 @@ public class Parsing {
   protected boolean matchToken(final IElementType tokenType) {
     if (myBuilder.getTokenType() == tokenType) {
       myBuilder.advanceLexer();
-      return true;      
+      return true;
     }
     return false;
   }
