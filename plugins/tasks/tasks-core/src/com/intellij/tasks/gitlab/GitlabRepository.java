@@ -84,11 +84,6 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  public int hashCode() {
-    return myCurrentProject != null ? myCurrentProject.hashCode() : 0;
-  }
-
-  @Override
   public GitlabRepository clone() {
     return new GitlabRepository(this);
   }
