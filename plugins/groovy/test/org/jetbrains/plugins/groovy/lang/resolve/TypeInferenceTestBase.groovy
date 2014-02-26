@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -35,14 +36,14 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
   }
 
-  protected void doTest(@Language("Groovy") String text, String type) {
+  protected void doTest(@Language("Groovy") String text, @Nullable String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
     def actual = ref.type
     assertType(type, actual)
   }
 
-  protected void doExprTest(@Language("Groovy") String text, String expectedType) {
+  protected void doExprTest(@Language("Groovy") String text, @Nullable String expectedType) {
     GroovyFile file = myFixture.configureByText('_.groovy', text) as GroovyFile
     GrStatement lastStatement = file.statements.last()
     assertInstanceOf lastStatement, GrExpression
