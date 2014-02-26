@@ -8,7 +8,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +35,7 @@ import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDe
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
-  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.installDateDeserializer(new GsonBuilder()).create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
   public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {

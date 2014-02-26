@@ -16,7 +16,10 @@
 
 package com.intellij.tasks.impl;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -30,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -57,13 +59,10 @@ public class TaskUtil {
     "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
     "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
 
-  private static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<Date>() {
-    @Override
-    public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-      return parseDate(json.getAsString());
-    }
-  };
 
+  private TaskUtil() {
+    // empty
+  }
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -167,7 +166,7 @@ public class TaskUtil {
   }
 
   /**
-   * Print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
     if (logger.isDebugEnabled()) {
@@ -178,7 +177,7 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
     if (logger.isDebugEnabled()) {
@@ -192,7 +191,7 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
@@ -206,7 +205,7 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted Json to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull String json) {
     if (logger.isDebugEnabled()) {
@@ -220,8 +219,19 @@ public class TaskUtil {
     }
   }
 
-  public static GsonBuilder installDateDeserializer(GsonBuilder builder) {
-    return builder.registerTypeAdapter(Date.class, DATE_DESERIALIZER);
+  /**
+   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
+   */
+  public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull JsonElement json) {
+    if (logger.isDebugEnabled()) {
+      try {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        logger.debug("\n" + gson.toJson(json));
+      }
+      catch (JsonSyntaxException e) {
+        logger.debug("Malformed JSON\n" + json);
+      }
+    }
   }
 
   /**

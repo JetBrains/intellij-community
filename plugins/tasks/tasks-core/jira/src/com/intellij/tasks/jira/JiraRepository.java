@@ -13,6 +13,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraSoapApi;
 import com.intellij.util.ArrayUtil;
@@ -33,7 +34,7 @@ import java.io.InputStream;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
-  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.installDateDeserializer(new GsonBuilder()).create();
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
   // TODO: move to bundle
   public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
