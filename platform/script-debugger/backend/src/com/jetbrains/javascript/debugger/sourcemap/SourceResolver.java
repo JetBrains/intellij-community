@@ -1,5 +1,6 @@
 package com.jetbrains.javascript.debugger.sourcemap;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -9,7 +10,6 @@ import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.io.URLUtil;
-import com.jetbrains.javascript.debugger.JsFileUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +36,10 @@ public class SourceResolver {
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
     }
+  }
+
+  public static boolean isAbsolute(@NotNull String path) {
+    return !path.isEmpty() && (path.charAt(0) == '/' || (SystemInfo.isWindows && (path.length() > 2 && path.charAt(1) == ':')));
   }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
@@ -67,7 +71,7 @@ public class SourceResolver {
     }
 
     // browserify produces absolute path in the local filesystem
-    if (JsFileUtil.isAbsolute(path)) {
+    if (isAbsolute(path)) {
       VirtualFile file = LocalFileFinder.findFile(path);
       if (file != null) {
         if (absoluteLocalPathToSourceIndex == null) {
