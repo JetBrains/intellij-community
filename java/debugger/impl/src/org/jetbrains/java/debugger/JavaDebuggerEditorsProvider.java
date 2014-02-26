@@ -65,8 +65,8 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
     return new ExpressionComboBoxPanel(project, historyId, sourcePosition) {
       @Override
       public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
-        TextWithImports text = myComboBox.isEnabled() ? myComboBox.getText() : null;
-        breakpoint.setLogExpression(text != null ? text.toExternalForm() : null);
+        TextWithImports text = myComboBox.getText();
+        breakpoint.setLogExpression(myComboBox.isEnabled() && !text.getText().isEmpty() ? text.toExternalForm() : null);
         if (text != null) {
           myComboBox.addRecent(text);
         }
