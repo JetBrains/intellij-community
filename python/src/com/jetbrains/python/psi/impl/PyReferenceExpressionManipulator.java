@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,21 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
 public class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
-  public PyReferenceExpression handleContentChange(final PyReferenceExpression element, final TextRange range, final String newContent)
+  @Override
+  public PyReferenceExpression handleContentChange(@NotNull final PyReferenceExpression element, @NotNull final TextRange range, final String newContent)
     throws IncorrectOperationException {
     return null;
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(final PyReferenceExpression element) {
+  public TextRange getRangeInElement(@NotNull final PyReferenceExpression element) {
     final ASTNode nameElement = element.getNameElement();
     final int startOffset = nameElement != null ? nameElement.getStartOffset() : element.getTextRange().getEndOffset();
     return new TextRange(startOffset - element.getTextOffset(), element.getTextLength());

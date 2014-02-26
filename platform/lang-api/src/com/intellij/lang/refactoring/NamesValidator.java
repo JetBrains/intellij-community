@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Instances of NamesValidator are obtained from {@link com.intellij.lang.Language} instance.
@@ -30,7 +31,7 @@ public interface NamesValidator {
    * @param project the project in the context of which the check is done.
    * @return true if the string is a keyword, false otherwise.
    */
-  boolean isKeyword(String name, Project project);
+  boolean isKeyword(@NotNull String name, Project project);
 
   /**
    * Checks if the specified string is a valid identifier in the custom language.
@@ -38,5 +39,5 @@ public interface NamesValidator {
    * @param project the project in the context of which the check is done.
    * @return true if the string is a valid identifier, false otherwise.
    */
-  boolean isIdentifier(String name, Project project);
+  boolean isIdentifier(@NotNull String name, Project project);
 }

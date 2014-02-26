@@ -39,15 +39,23 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
   private final ComboBox myParentsCombo;
   @NotNull
   private final DefaultComboBoxModel myParentsComboBoxModel;
+  @NotNull
+  private final PyPullUpNothingToRefactorMessage myNothingToRefactorMessage;
 
   /**
    * @param project   project where refactoring takes place
    * @param presenter presenter for this view
    * @param clazz     class to refactor
+   * @param nothingToRefactorMessage class that displays message "nothing to refactor" when presenter calls {@link #showNothingToRefactor()}
    */
-  PyPullUpViewSwingImpl(@NotNull final Project project, @NotNull final PyPullUpPresenter presenter, @NotNull final PyClass clazz) {
+  PyPullUpViewSwingImpl(
+    @NotNull final Project project,
+    @NotNull final PyPullUpPresenter presenter,
+    @NotNull final PyClass clazz,
+    @NotNull final PyPullUpNothingToRefactorMessage nothingToRefactorMessage) {
     super(project, presenter, RefactoringBundle.message("members.to.be.pulled.up"), true);
     setTitle(PyPullUpHandler.REFACTORING_NAME);
+    myNothingToRefactorMessage = nothingToRefactorMessage;
 
     myParentsComboBoxModel = new DefaultComboBoxModel();
 
@@ -91,7 +99,10 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
     return (PyClass)myParentsComboBoxModel.getSelectedItem();
   }
 
-
+  @Override
+  public void showNothingToRefactor() {
+    myNothingToRefactorMessage.showNothingToRefactor();
+  }
 
   @Override
   public void configure(@NotNull final PyPullUpViewInitializationInfo configInfo) {

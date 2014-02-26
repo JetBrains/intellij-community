@@ -62,7 +62,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
   private final Project myProject;
-  private SvnConfigurationState myState;
+  private SvnConfigurationState myState = new SvnConfigurationState();
 
   private ISVNOptions myOptions;
   private SvnAuthenticationManager myAuthManager;

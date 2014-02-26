@@ -17,6 +17,7 @@ package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 
@@ -26,7 +27,7 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageEditor#setGridVisible
  */
-public final class ToggleGridAction extends ToggleAction {
+public final class ToggleGridAction extends ToggleAction implements DumbAware {
   public boolean isSelected(AnActionEvent e) {
     ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
     return editor != null && editor.isGridVisible();

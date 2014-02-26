@@ -224,6 +224,8 @@ public class UIUtil {
   }
 
   public static boolean isRetina() {
+    if (GraphicsEnvironment.isHeadless()) return false;
+
     //Temporary workaround for HiDPI on Windows/Linux
     if ("true".equalsIgnoreCase(System.getProperty("is.hidpi"))) {
       return true;

@@ -604,6 +604,7 @@ public class TypedHandler extends TypedActionHandlerBase {
                 RangeMarker marker = document.createRangeMarker(offset, offset + 1);
                 CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
                 newOffset = marker.getStartOffset();
+                marker.dispose();
               } else {
                 newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
               }

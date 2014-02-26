@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -24,12 +25,12 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public class GroovyNamesValidator implements NamesValidator {
   @Override
-  public boolean isKeyword(String name, Project project) {
+  public boolean isKeyword(@NotNull String name, Project project) {
     return GroovyRefactoringUtil.KEYWORDS.contains(name);
   }
 
   @Override
-  public boolean isIdentifier(String name, Project project) {
+  public boolean isIdentifier(@NotNull String name, Project project) {
     return GroovyRefactoringUtil.isCorrectReferenceName(name, project);
   }
 }

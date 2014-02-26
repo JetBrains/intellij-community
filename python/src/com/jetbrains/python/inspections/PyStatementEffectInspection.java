@@ -21,8 +21,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.DocStringUtil;
-import com.jetbrains.python.inspections.quickfix.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.psi.*;
@@ -66,6 +64,11 @@ public class PyStatementEffectInspection extends PyInspection {
         return;
       if (hasEffect(expression)) return;
 
+      // https://twitter.com/gvanrossum/status/112670605505077248
+      if (expression instanceof PyStringLiteralExpression) {
+        return;
+      }
+
       final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
       if (tryPart != null) {
         final PyStatementList statementList = tryPart.getStatementList();
@@ -76,9 +79,6 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      if (checkStringLiteral(expression)) {
-        return;
-      }
       if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
         registerProblem(expression, PyBundle.message("INSP.NAME.statement.message"));
       }
@@ -87,28 +87,12 @@ public class PyStatementEffectInspection extends PyInspection {
       }
     }
 
-    private boolean checkStringLiteral(PyExpression expression) {
-      if (expression instanceof PyStringLiteralExpression) {
-        PyDocStringOwner parent = PsiTreeUtil.getParentOfType(expression, PyFunction.class, PyClass.class);
-        if (parent != null && parent.getDocStringExpression() == null) {
-          registerProblem(expression, "Docstring seems to be misplaced",
-                      new StatementEffectDocstringQuickFix());
-          return true;
-        }
-      }
-      return false;
-    }
-
     private boolean hasEffect(@Nullable PyExpression expression) {
       if (expression == null) {
         return false;
       }
       if (expression instanceof PyCallExpression || expression instanceof PyYieldExpression) {
         return true;
-      }
-
-      if (expression instanceof PyStringLiteralExpression) {
-        if (DocStringUtil.isDocStringExpression(expression)) return true;
       }
       else if (expression instanceof PyListCompExpression) {
         if (hasEffect(((PyListCompExpression)expression).getResultExpression())) {

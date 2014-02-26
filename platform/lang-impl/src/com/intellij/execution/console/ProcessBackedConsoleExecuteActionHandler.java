@@ -75,6 +75,6 @@ public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecute
 
   @Override
   public boolean value(LanguageConsoleImpl console) {
-    return isProcessTerminated();
+    return !isProcessTerminated();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public interface ReferenceAdjuster {
-  ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode);
-  ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, Project project);
+  ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode);
+  ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project);
 
-  void processRange(ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode);
-  void processRange(ASTNode element, int startOffset, int endOffset, Project project);
+  void processRange(@NotNull ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode);
+  void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project);
 
   class Extension extends LanguageExtension<ReferenceAdjuster> {
     private static final Extension INSTANCE = new Extension();
@@ -37,7 +38,7 @@ public interface ReferenceAdjuster {
       super("com.intellij.codeStyle.ReferenceAdjuster");
     }
 
-    public static ReferenceAdjuster getReferenceAdjuster(Language language) {
+    public static ReferenceAdjuster getReferenceAdjuster(@NotNull Language language) {
       return INSTANCE.forLanguage(language);
     }
   }

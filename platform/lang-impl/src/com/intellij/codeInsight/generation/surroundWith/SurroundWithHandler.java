@@ -115,6 +115,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     element1 = file.findElementAt(startOffset);
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    assert element1 != null;
     final Language l = element1.getParent().getLanguage();
     List<SurroundDescriptor> surroundDescriptors = new ArrayList<SurroundDescriptor>();
 
@@ -288,7 +289,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     public void actionPerformed(AnActionEvent e) {
       new WriteCommandAction(myProject) {
         @Override
-        protected void run(Result result) throws Exception {
+        protected void run(@NotNull Result result) throws Exception {
           doSurround(myProject, myEditor, mySurrounder, myElements);
         }
       }.execute();

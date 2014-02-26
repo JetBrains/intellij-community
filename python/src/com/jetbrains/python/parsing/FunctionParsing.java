@@ -45,7 +45,7 @@ public class FunctionParsing extends Parsing {
 
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
-    checkMatchesOrSkip(PyTokenTypes.IDENTIFIER, message("PARSE.expected.func.name"));
+    parseIdentifierOrSkip();
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));

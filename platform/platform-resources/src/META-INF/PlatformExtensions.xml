@@ -257,6 +257,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
 
     <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>

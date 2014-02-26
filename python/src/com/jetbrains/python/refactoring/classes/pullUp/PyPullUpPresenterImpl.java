@@ -55,7 +55,22 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
   public void launch() {
     myView.configure(
       new PyPullUpViewInitializationInfo(myModel, myStorage.getClassMemberInfos(myClassUnderRefactoring), myParents));
-    myView.initAndShow();
+
+    // If there is no enabled member then only error should be displayed
+
+    boolean atLeastOneEnabled = false;
+    for (final PyMemberInfo<PyElement> info : myStorage.getClassMemberInfos(myClassUnderRefactoring)) {
+      if (myModel.isMemberEnabled(info)) {
+        atLeastOneEnabled = true;
+      }
+    }
+
+
+    if (atLeastOneEnabled) {
+      myView.initAndShow();
+    } else {
+      myView.showNothingToRefactor();
+    }
   }
 
   @Override

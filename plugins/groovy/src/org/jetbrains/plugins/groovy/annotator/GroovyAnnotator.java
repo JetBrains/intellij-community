@@ -33,11 +33,14 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -2061,7 +2064,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final String qName = typeDefinition.getQualifiedName();
     if (qName != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(typeDefinition.getProject());
-      final PsiClass[] classes = facade.findClasses(qName, typeDefinition.getResolveScope());
+      GlobalSearchScope scope = inferClassScopeForSearchingDuplicates(typeDefinition);
+      final PsiClass[] classes = facade.findClasses(qName, scope);
       if (classes.length > 1) {
         String packageName = getPackageName(typeDefinition);
 
@@ -2075,6 +2079,19 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         }
       }
     }
+  }
+
+  private static GlobalSearchScope inferClassScopeForSearchingDuplicates(GrTypeDefinition typeDefinition) {
+    GlobalSearchScope defaultScope = typeDefinition.getResolveScope();
+
+    PsiFile file = typeDefinition.getContainingFile();
+    if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(file);
+      if (module != null) {
+        return defaultScope.intersectWith(module.getModuleScope());
+      }
+    }
+    return defaultScope;
   }
 
   private static String getPackageName(GrTypeDefinition typeDefinition) {

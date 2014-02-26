@@ -51,25 +51,30 @@ public class RngCompactLanguage extends Language {
   }
 
   public static class MyCommenter implements Commenter {
+    @Override
     @Nullable
     public String getLineCommentPrefix() {
       return "#";
     }
 
+    @Override
     @Nullable
     public String getBlockCommentPrefix() {
       return null;
     }
 
+    @Override
     @Nullable
     public String getBlockCommentSuffix() {
       return null;
     }
 
+    @Override
     public String getCommentedBlockCommentPrefix() {
       return null;
     }
 
+    @Override
     public String getCommentedBlockCommentSuffix() {
       return null;
     }
@@ -78,6 +83,7 @@ public class RngCompactLanguage extends Language {
   public static class MyPairedBraceMatcher implements PairedBraceMatcher {
     private BracePair[] myBracePairs;
 
+    @Override
     public BracePair[] getPairs() {
       if (myBracePairs == null) {
         myBracePairs = new BracePair[]{
@@ -89,10 +95,12 @@ public class RngCompactLanguage extends Language {
       return myBracePairs;
     }
 
+    @Override
     public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
       return false;
     }
 
+    @Override
     public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
       // TODO
       return openingBraceOffset;
@@ -100,25 +108,30 @@ public class RngCompactLanguage extends Language {
   }
 
   public static class MyNamesValidator implements NamesValidator {
-    public boolean isKeyword(String name, Project project) {
+    @Override
+    public boolean isKeyword(@NotNull String name, Project project) {
       return RenameUtil.isKeyword(name);
     }
 
-    public boolean isIdentifier(String name, Project project) {
+    @Override
+    public boolean isIdentifier(@NotNull String name, Project project) {
       return RenameUtil.isIdentifier(name);
     }
   }
 
   public static class MyDocumentationProvider implements DocumentationProvider {
+    @Override
     @Nullable
     public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
       return null;
     }
 
+    @Override
     public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
       return null;
     }
 
+    @Override
     @Nullable
     public String generateDoc(PsiElement element, PsiElement originalElement) {
       if (element instanceof RncElement) {
@@ -143,11 +156,13 @@ public class RngCompactLanguage extends Language {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
       return null;
@@ -155,6 +170,7 @@ public class RngCompactLanguage extends Language {
   }
 
   public static class MySyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
+    @Override
     @NotNull
     protected SyntaxHighlighter createHighlighter() {
       return new RncHighlighter();

@@ -46,3 +46,34 @@ class Test {
 
 
 }
+
+class Test1 {
+  class ResolveResult {
+  }
+
+  class A {
+  }
+
+  class B extends A {
+  }
+
+  abstract class AbstractResolver<K, V> {
+  }
+
+  abstract class Resolver<K> extends AbstractResolver<K, ResolveResult[]> {
+  }
+
+  public <T extends B> ResolveResult[] resolveWithCaching(T ref, Resolver<T> resolver) {
+    return null;
+  }
+
+  public <TRef extends A, TResult> TResult resolveWithCaching(TRef ref, AbstractResolver<TRef, TResult> resolver) {
+    return null;
+  }
+
+  {
+    Resolver<B> resolver = null;
+    B b = null;
+    resolveWithCaching(b, resolver);
+  }
+}

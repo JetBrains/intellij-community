@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@ package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Default NamesValidator interface implementation. Uses java language keyword set and java language rules for identifier.
  */
 public class JavaNamesValidator implements NamesValidator {
-  public boolean isKeyword(String name, Project project) {
+  @Override
+  public boolean isKeyword(@NotNull String name, Project project) {
     return JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name);
   }
 
-  public boolean isIdentifier(String name, Project project) {
+  @Override
+  public boolean isIdentifier(@NotNull String name, Project project) {
     return JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name);
   }
 }

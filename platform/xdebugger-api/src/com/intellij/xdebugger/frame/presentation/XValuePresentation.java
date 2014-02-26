@@ -72,7 +72,7 @@ public abstract class XValuePresentation {
      */
     void renderKeywordValue(@NotNull String value);
 
-    void renderValue(@NotNull String value, @Nullable TextAttributesKey key);
+    void renderValue(@NotNull String value, @NotNull TextAttributesKey key);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string

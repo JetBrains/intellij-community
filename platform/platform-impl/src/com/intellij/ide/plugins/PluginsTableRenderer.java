@@ -131,7 +131,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
           if (!isSelected) {
             myName.setForeground(JBColor.RED);
           }
-          myName.setIcon(AllIcons.Nodes.Pluginobsolete);
+          myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         }
         //todo[kb] set proper icon
         //myStatus.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));

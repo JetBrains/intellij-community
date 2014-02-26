@@ -321,10 +321,21 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   @Override
   public void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage) {
-    final CustomizedBreakpointPresentation presentation = new CustomizedBreakpointPresentation();
+    XLineBreakpointImpl lineBreakpoint = (XLineBreakpointImpl)breakpoint;
+    CustomizedBreakpointPresentation presentation = lineBreakpoint.getCustomizedPresentation();
+    if (presentation == null) {
+      if (icon == null && errorMessage == null) {
+        return;
+      }
+      presentation = new CustomizedBreakpointPresentation();
+    }
+    else if (Comparing.equal(presentation.getIcon(), icon) && Comparing.strEqual(presentation.getErrorMessage(), errorMessage)) {
+      return;
+    }
+
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
-    ((XLineBreakpointImpl)breakpoint).setCustomizedPresentation(presentation);
+    lineBreakpoint.setCustomizedPresentation(presentation);
     myLineBreakpointManager.queueBreakpointUpdate(breakpoint);
   }
 
@@ -459,6 +470,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       myBreakpoints = breakpoints;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setDefaultBreakpoints(List<BreakpointState> defaultBreakpoints) {
       myDefaultBreakpoints = defaultBreakpoints;
     }

@@ -66,40 +66,48 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
-    if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) {
+    if (isNotValidLine(lineNumber)) {
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
-    // The rationale why we don't bind to the line start offset here is that following: suppose particular breakpoint is hit
-    // during debugging. We may want to type <enter> at the active line indent and highlighted string will be moved one line
-    // down as well then.
-    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
-
+    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
+  @Nullable
   public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
-    if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) return null;
+    if (isNotValidLine(lineNumber)) {
+      return null;
+    }
 
-    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
-
-    return addRangeHighlighterAndChangeAttributes(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true, null);
+    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    return addRangeHighlighter(PersistentRangeHighlighterImpl.create(this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, null, false), null);
   }
 
-  private static int getFirstNonspaceCharOffset(@NotNull Document doc, int lineNumber) {
-    int lineStart = doc.getLineStartOffset(lineNumber);
-    int lineEnd = doc.getLineEndOffset(lineNumber);
-    CharSequence text = doc.getCharsSequence();
-    int offset = lineStart;
-    for (int i = lineStart; i < lineEnd; i++) {
+  private boolean isNotValidLine(int lineNumber) {
+    return lineNumber >= getDocument().getLineCount() || lineNumber < 0;
+  }
+
+  // The rationale why we don't bind to the line start offset here is that following: suppose particular breakpoint is hit
+  // during debugging. We may want to type <enter> at the active line indent and highlighted string will be moved one line
+  // down as well then.
+  // IDEA-46403
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = document.getLineEndOffset(line);
+    return getFirstNonSpaceCharOffset(document, startOffset, endOffset);
+  }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int startOffset, int endOffset) {
+    CharSequence text = document.getImmutableCharSequence();
+    for (int i = startOffset; i < endOffset; i++) {
       char c = text.charAt(i);
       if (c != ' ' && c != '\t') {
-        offset = i;
-        break;
+        return i;
       }
     }
-    return offset;
+    return startOffset;
   }
 
   // NB: Can return invalid highlighters
@@ -125,15 +133,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeHighlighterEx highlighter = isPersistent
-                                     ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
-                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false,
-                                                                false);
+    return addRangeHighlighter(isPersistent
+                               ? PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributes, true)
+                               : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false,
+                                                          false), changeAttributesAction);
+  }
 
+  private RangeHighlighterEx addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter,
+                                                 @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
-      ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
+      highlighter.changeAttributesNoEvents(changeAttributesAction);
     }
     fireAfterAdded(highlighter);
     return highlighter;

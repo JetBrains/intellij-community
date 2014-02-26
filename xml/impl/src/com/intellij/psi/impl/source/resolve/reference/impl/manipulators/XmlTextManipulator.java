@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
  */
 public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
 
-  public XmlText handleContentChange(XmlText text, TextRange range, String newContent) throws IncorrectOperationException {
+  @Override
+  public XmlText handleContentChange(@NotNull XmlText text, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     final String newValue;
     final String value = text.getValue();
     if (range.equals(getRangeInElement(text))) {
@@ -52,7 +54,9 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
     return text;
   }
 
-  public TextRange getRangeInElement(final XmlText text) {
+  @Override
+  @NotNull
+  public TextRange getRangeInElement(@NotNull final XmlText text) {
     return getValueRange(text);
   }
 

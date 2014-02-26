@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.HtmlEmbeddedContentImpl;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -68,6 +69,9 @@ public class HTMLParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiElement createElement(ASTNode node) {
+    if (node.getElementType() == XmlElementType.HTML_EMBEDDED_CONTENT) {
+      return new HtmlEmbeddedContentImpl(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 

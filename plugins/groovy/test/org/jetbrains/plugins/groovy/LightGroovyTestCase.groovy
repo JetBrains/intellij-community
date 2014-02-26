@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+
 /**
  * @author peter
  */
@@ -247,7 +249,7 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
-  public static void assertType(String expected, PsiType actual) {
+  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
       assertNull(actual)
       return

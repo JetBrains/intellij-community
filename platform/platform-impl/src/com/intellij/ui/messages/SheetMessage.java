@@ -15,8 +15,10 @@
  */
 package com.intellij.ui.messages;
 
+import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 
@@ -37,6 +39,7 @@ public class SheetMessage {
 
   private Image staticImage;
   private int imageHeight;
+  private boolean restoreFullscreenButton;
 
   public SheetMessage(final Window owner,
                       final String title,
@@ -68,8 +71,20 @@ public class SheetMessage {
 
     startAnimation(true);
     myWindow.setSize(myController.SHEET_WIDTH, myController.SHEET_HEIGHT);
+    restoreFullscreenButton = couldBeInFullScreen();
+    if (restoreFullscreenButton) {
+      FullScreenUtilities.setWindowCanFullScreen(myParent, false);
+    }
     myWindow.setVisible(true);
     setPositionRelativeToParent();
+  }
+
+  private boolean couldBeInFullScreen() {
+    if (myParent instanceof JFrame) {
+      JRootPane rootPane = ((JFrame)myParent).getRootPane();
+      return rootPane.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) == null;
+    }
+    return false;
   }
 
   public boolean toBeShown() {
@@ -123,6 +138,9 @@ public class SheetMessage {
           myWindow.setContentPane(myController.getPanel(myWindow));
           myController.requestFocus();
         } else {
+          if (restoreFullscreenButton) {
+            FullScreenUtilities.setWindowCanFullScreen(myParent, true);
+          }
           myWindow.dispose();
         }
       }

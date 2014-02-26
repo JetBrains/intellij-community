@@ -44,12 +44,13 @@ import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
-  public JavaCoreApplicationEnvironment(Disposable parentDisposable) {
+  public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");

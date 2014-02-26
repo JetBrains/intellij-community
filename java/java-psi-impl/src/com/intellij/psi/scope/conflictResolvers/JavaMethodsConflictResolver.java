@@ -29,7 +29,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -37,7 +36,10 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -644,58 +646,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final PsiType[] types = PsiType.createArray(types1.length);
     for (int i = 0; i < types1.length; i++) {
       types[i] = siteSubstitutor1.substitute(types1[i]);
-      if (types[i] instanceof PsiClassType) {
-        final PsiClass aClass = ((PsiClassType)types[i]).resolve();
-        if (aClass instanceof PsiTypeParameter) {
-          final List<PsiType> resultBounds = new ArrayList<PsiType>();
-          for (PsiType bound : aClass.getExtendsListTypes()) {
-            bound = siteSubstitutor1.substitute(bound);
-            if (!dependsOnOtherTypeParams(bound, typeParameters1)) {
-              resultBounds.add(bound);
-            } else {
-              resultBounds.clear();
-              break;
-            }
-          }
-          if (!resultBounds.isEmpty()) {
-            types[i] = PsiIntersectionType.createIntersection(resultBounds);
-          }
-        }
-      }
     }
     return types;
-  }
-
-  private static boolean dependsOnOtherTypeParams(PsiType type, final PsiTypeParameter[] params) {
-    return type.accept(new PsiTypeVisitor<Boolean>(){
-      @Nullable
-      @Override
-      public Boolean visitClassType(PsiClassType classType) {
-        for (PsiType psiType : classType.getParameters()) {
-          if (psiType.accept(this)) return true;
-        }
-        return ArrayUtilRt.find(params, classType.resolve()) > -1;
-      }
-
-      @Nullable
-      @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-
-      @Nullable
-      @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        return bound != null && bound.accept(this);
-      }
-
-      @Nullable
-      @Override
-      public Boolean visitType(PsiType type) {
-        return false;
-      }
-    });
   }
 
   private static PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,
@@ -715,6 +667,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           type = TypeConversionUtil.erasure(type, substitutor);
         }
         substitutor = substitutor.put(typeParameter, type);
+      } else {
+        final PsiType type = substitutor.substitute(typeParameter);
+        if (type instanceof PsiClassType) {
+          final PsiClass aClass = ((PsiClassType)type).resolve();
+          if (aClass instanceof PsiTypeParameter) {
+            substitutor = substitutor.put(typeParameter, JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, siteSubstitutor));
+          }
+        }
       }
     }
     return substitutor;
