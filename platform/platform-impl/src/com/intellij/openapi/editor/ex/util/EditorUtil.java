@@ -40,11 +40,11 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 
-public class EditorUtil {
+public final class EditorUtil {
+  private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
-  private static final Logger LOG = Logger.getInstance("#" + EditorUtil.class.getName());
-
-  private EditorUtil() { }
+  private EditorUtil() {
+  }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     Document document = editor.getDocument();
@@ -191,7 +191,7 @@ public class EditorUtil {
     if (!filler.isEmpty()) {
       new WriteAction(){
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           editor.getDocument().insertString(offset, filler);
           editor.getCaretModel().moveToOffset(offset + filler.length());
         }
