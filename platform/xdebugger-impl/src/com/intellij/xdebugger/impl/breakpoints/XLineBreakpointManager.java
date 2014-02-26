@@ -271,7 +271,6 @@ public class XLineBreakpointManager {
               @Override
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
-
                   XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line, mouseEvent.isAltDown());
                 }
               }
