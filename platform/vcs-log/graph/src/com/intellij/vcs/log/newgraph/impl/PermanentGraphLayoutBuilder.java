@@ -18,6 +18,7 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public class PermanentGraphLayoutBuilder {
 
       int childWithoutLayoutIndex = -1;
       for (int childNodeIndex : myGraph.getDownNodes(currentNodeIndex)) {
-        if (childNodeIndex != myGraph.nodesCount() && myLayoutIndex[childNodeIndex] == 0) {
+        if (childNodeIndex != SomeGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
           childWithoutLayoutIndex = childNodeIndex;
           break;
         }

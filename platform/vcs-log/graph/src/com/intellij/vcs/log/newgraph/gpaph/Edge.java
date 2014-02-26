@@ -18,11 +18,10 @@ package com.intellij.vcs.log.newgraph.gpaph;
 import org.jetbrains.annotations.NotNull;
 
 public interface Edge extends GraphElement {
-  int NOT_LOAD_NODE = Integer.MAX_VALUE;
 
   int getUpNodeVisibleIndex();
 
-  // sometime may returned NOT_LOAD_NODE
+  // sometime may returned SomeGraph.NOT_LOAD_COMMIT
   int getDownNodeVisibleIndex();
 
   @NotNull

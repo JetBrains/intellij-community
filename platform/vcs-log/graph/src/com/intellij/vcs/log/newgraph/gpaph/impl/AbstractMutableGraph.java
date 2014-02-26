@@ -17,6 +17,7 @@ package com.intellij.vcs.log.newgraph.gpaph.impl;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
@@ -65,8 +66,8 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   }
 
   protected int toVisibleIndex(int nodeIndex) {
-    if (nodeIndex == myVisibleToReal.longSize()) {
-      return Edge.NOT_LOAD_NODE;
+    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT) {
+      return SomeGraph.NOT_LOAD_COMMIT;
     }
     return myVisibleToReal.getShortIndex(nodeIndex);
   }
@@ -95,7 +96,7 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   }
 
   private int getEdgeLayoutIndex(int upNodeIndex, int downNodeIndex) {
-    if (downNodeIndex == myVisibleToReal.longSize()) {
+    if (downNodeIndex == SomeGraph.NOT_LOAD_COMMIT) {
       return myLayout.getLayoutIndex(upNodeIndex); // i.e. edge to not load commit
     }
     int upNodeLayoutIndex = myLayout.getLayoutIndex(upNodeIndex);

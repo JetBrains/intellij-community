@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface SomeGraph {
+  int NOT_LOAD_COMMIT = Integer.MAX_VALUE;
+
   int nodesCount();
 
   @NotNull
@@ -29,7 +31,7 @@ public interface SomeGraph {
    *
    * @param nodeIndex
    * @return list adjacent nodes, which index > nodeIndex.
-   * If one of adjacent node wasn't load, it nodeIndex = nodesCount()
+   * If one of adjacent node wasn't load, it nodeIndex = NOT_LOAD_COMMIT
    */
   @NotNull
   List<Integer> getDownNodes(int nodeIndex);

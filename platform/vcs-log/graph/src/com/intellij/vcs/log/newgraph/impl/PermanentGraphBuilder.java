@@ -18,6 +18,7 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +98,7 @@ public class PermanentGraphBuilder {
   private void fixUnderdoneEdgeForNotLoadCommit(int upNodeIndex) {
     for (int edgeIndex = myNodeToEdgeIndex[upNodeIndex]; edgeIndex < myNodeToEdgeIndex[upNodeIndex + 1]; edgeIndex++) {
       if (myLongEdges[edgeIndex] == -1) {
-        myLongEdges[edgeIndex] = myNodesCount;
+        myLongEdges[edgeIndex] = SomeGraph.NOT_LOAD_COMMIT;
         return;
       }
     }
@@ -168,10 +169,5 @@ public class PermanentGraphBuilder {
 
     return new PermanentGraphImpl(mySimpleNodes, myNodeToHashIndex, myNodeToEdgeIndex, myLongEdges);
   }
-
-
-
-
-
 
 }
