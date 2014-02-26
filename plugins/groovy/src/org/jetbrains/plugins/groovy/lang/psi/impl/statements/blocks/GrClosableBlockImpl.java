@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                      @NotNull PsiScopeProcessor nonCodeProcessor,
                                      @NotNull ResolveState state,
                                      @NotNull PsiElement place) {
-    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegateToInfo(place, this);
+    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(place, this);
     if (info == null) {
       return null;
     }
