@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -76,6 +77,17 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   public void testDoStripModifiedOnCurrentLineIfCaretWouldNotJump() throws IOException {
     doTest("xxx\n   222<caret>    \nyyy",
            "xxx\n   222<caret>\nyyy");
+  }
+
+  public void testStrippingWithMultipleCarets() throws Exception {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      doTest("xxx\n   <caret>\nyyy<caret>  ",
+             "xxx\n   <caret>\nyyy<caret>");
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
   }
 
   public void testModifyAndAltTabAway() throws IOException {
