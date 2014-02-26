@@ -73,7 +73,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     // The rationale why we don't bind to the line start offset here is that following: suppose particular breakpoint is hit
     // during debugging. We may want to type <enter> at the active line indent and highlighted string will be moved one line
     // down as well then.
-    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
+    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
 
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
@@ -82,12 +82,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) return null;
 
-    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
+    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
 
     return addRangeHighlighterAndChangeAttributes(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true, null);
   }
 
-  private static int getFirstNonspaceCharOffset(@NotNull Document doc, int lineNumber) {
+  private static int getFirstNonSpaceCharOffset(@NotNull Document doc, int lineNumber) {
     int lineStart = doc.getLineStartOffset(lineNumber);
     int lineEnd = doc.getLineEndOffset(lineNumber);
     CharSequence text = doc.getCharsSequence();
