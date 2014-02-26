@@ -18,8 +18,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -43,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -53,7 +52,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -101,7 +99,7 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XBreakpoint<?>> toRemove = new ArrayList<XBreakpoint<?>>();
+          List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
           for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
             if (breakpoint.getFileUrl().equals(event.getFile().getUrl())) {
               toRemove.add(breakpoint);
@@ -164,12 +162,14 @@ public class XLineBreakpointManager {
     }
   }
 
-  private void updateBreakpoints(final Document document) {
+  private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
-    if (breakpoints == null) return;
+    if (breakpoints == null) {
+      return;
+    }
 
     TIntHashSet lines = new TIntHashSet();
-    final List<XBreakpoint<?>> toRemove = new ArrayList<XBreakpoint<?>>();
+    List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
       if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
@@ -181,20 +181,25 @@ public class XLineBreakpointManager {
   }
 
   private void removeBreakpoints(final List<? extends XBreakpoint<?>> toRemove) {
-    new WriteAction() {
+    if (toRemove.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
-      protected void run(@NotNull final Result result) {
+      public void run() {
         for (XBreakpoint<?> breakpoint : toRemove) {
           XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
         }
       }
-    }.execute();
+    });
   }
 
   public void breakpointChanged(final XLineBreakpointImpl breakpoint) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       breakpoint.updateUI();
-    } else {
+    }
+    else {
       queueBreakpointUpdate(breakpoint);
     }
   }
