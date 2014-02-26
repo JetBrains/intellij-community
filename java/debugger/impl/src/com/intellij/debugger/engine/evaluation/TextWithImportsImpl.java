@@ -72,7 +72,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     // when serialized into a tag special symbols are now kept as is
     // so our separator \r may be converted to \n or \r\n
     s = StringUtil.convertLineSeparators(s);
-    String[] split = s.split(String.valueOf('\n'));
+    String[] split = s.split("\n");
     return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
