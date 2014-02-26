@@ -25,12 +25,9 @@ import org.jetbrains.annotations.TestOnly;
 public class DiffFragment {
   public static DiffFragment[] EMPTY_ARRAY = new DiffFragment[0];
 
-  @Nullable private DiffString myText1;
-  @Nullable private DiffString myText2;
+  @Nullable private CharSequence myText1;
+  @Nullable private CharSequence myText2;
   private boolean myIsModified;
-
-  private DiffStringBuilder myBuilder1;
-  private DiffStringBuilder myBuilder2;
 
   @TestOnly
   public DiffFragment(@Nullable String text1, @Nullable String text2) {
@@ -62,58 +59,68 @@ public class DiffFragment {
 
   public void appendText1(@Nullable DiffString str) {
     if (str == null) return;
-    if (myBuilder1 != null) {
-      myText1 = null;
-      myBuilder1.append(str);
+    if (myText1 instanceof DiffStringBuilder) {
+      ((DiffStringBuilder)myText1).append(str);
       return;
     }
 
-    assert myText1 != null;
-    if (DiffString.canInplaceConcatenate(myText1, str)) {
-      myText1 = DiffString.concatenate(myText1, str);
+    if (myText1 instanceof DiffString) {
+      DiffString text1 = (DiffString)myText1;
+      if (DiffString.canInplaceConcatenate(text1, str)) {
+        myText1 = DiffString.concatenate(text1, str);
+      }
+      else {
+        DiffStringBuilder builder = new DiffStringBuilder(text1.length() + str.length());
+        builder.append(text1);
+        builder.append(str);
+        myText1 = builder;
+      }
       return;
     }
 
-    myBuilder1 = new DiffStringBuilder(myText1.length() + str.length());
-    myBuilder1.append(myText1);
-    myBuilder1.append(str);
-    myText1 = null;
+    throw new IllegalStateException("Bad DiffFragment: " + (myText1 != null ? myText1.getClass() : "null"));
   }
 
   public void appendText2(@Nullable DiffString str) {
     if (str == null) return;
-    if (myBuilder2 != null) {
-      myText2 = null;
-      myBuilder2.append(str);
+    if (myText2 instanceof DiffStringBuilder) {
+      ((DiffStringBuilder)myText2).append(str);
       return;
     }
 
-    assert myText2 != null;
-    if (DiffString.canInplaceConcatenate(myText2, str)) {
-      myText2 = DiffString.concatenate(myText2, str);
+    if (myText2 instanceof DiffString) {
+      DiffString text2 = (DiffString)myText2;
+      if (DiffString.canInplaceConcatenate(text2, str)) {
+        myText2 = DiffString.concatenate(text2, str);
+      }
+      else {
+        DiffStringBuilder builder = new DiffStringBuilder(text2.length() + str.length());
+        builder.append(text2);
+        builder.append(str);
+        myText2 = builder;
+      }
       return;
     }
 
-    myBuilder2 = new DiffStringBuilder(myText2.length() + str.length());
-    myBuilder2.append(myText2);
-    myBuilder2.append(str);
-    myText2 = null;
+    throw new IllegalStateException("Bad DiffFragment: " + (myText2 != null ? myText2.getClass() : "null"));
   }
 
   @Nullable
   public DiffString getText1() {
-    if (myBuilder1 == null) return myText1;
-    if (myText1 != null) return myText1;
-    myText1 = myBuilder1.toDiffString();
-    return myText1;
+    if (myText1 == null) return null;
+    if (myText1 instanceof DiffString) return (DiffString)myText1;
+    if (myText1 instanceof DiffStringBuilder) return ((DiffStringBuilder)myText1).toDiffString();
+
+    throw new IllegalStateException("Bad DiffFragment: " + myText1.getClass());
   }
 
   @Nullable
   public DiffString getText2() {
-    if (myBuilder2 == null) return myText2;
-    if (myText2 != null) return myText2;
-    myText2 = myBuilder2.toDiffString();
-    return myText2;
+    if (myText2 == null) return null;
+    if (myText2 instanceof DiffString) return (DiffString)myText2;
+    if (myText2 instanceof DiffStringBuilder) return ((DiffStringBuilder)myText2).toDiffString();
+
+    throw new IllegalStateException("Bad DiffFragment: " + myText2.getClass());
   }
 
   /**
@@ -121,14 +128,14 @@ public class DiffFragment {
    * @return true iff both texts are present and {@link #isModified()}
    */
   public boolean isChange() {
-    return (myText1 != null || myBuilder1 != null) && (myText2 != null || myBuilder2 != null) && isModified();
+    return (myText1 != null) && (myText2 != null) && isModified();
   }
 
   /**
    * @return true iff both texts are present and not {@link #isModified()}
    */
   public boolean isEqual() {
-    return (myText1 != null || myBuilder1 != null) && (myText2 != null || myBuilder2 != null) && !isModified();
+    return (myText1 != null) && (myText2 != null) && !isModified();
   }
 
   @TestOnly
@@ -143,6 +150,6 @@ public class DiffFragment {
   }
 
   public boolean isOneSide() {
-    return (myText1 == null && myBuilder1 == null) || (myText2 == null && myBuilder2 == null);
+    return (myText1 == null) || (myText2 == null);
   }
 }
