@@ -54,7 +54,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (!e.isPopupTrigger()) {
-          gutterContentProvider.doAction(getLineAtPoint(e.getPoint()), editor);
+          gutterContentProvider.doAction(EditorUtil.yPositionToLogicalLine(editor, e.getPoint()), editor);
         }
       }
     });
@@ -161,7 +161,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
   @Override
   public void mouseMoved(MouseEvent e) {
-    int line = getLineAtPoint(e.getPoint());
+    int line = EditorUtil.yPositionToLogicalLine(editor, e.getPoint());
     if (line == lastGutterToolTipLine) {
       return;
     }
@@ -187,10 +187,6 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
                                         TOOLTIP_GROUP,
                                         new HintHint(this, e.getPoint()).setAwtTooltip(true));
     }
-  }
-
-  private int getLineAtPoint(@NotNull Point clickPoint) {
-    return editor.yPositionToLogicalLine(clickPoint.y);
   }
 
   public void documentCleared() {

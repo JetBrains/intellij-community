@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
@@ -791,6 +792,19 @@ public final class EditorUtil {
     int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
     int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
     return TextRange.create(start, end);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
+    return yPositionToLogicalLine(editor, event.getY());
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull Point point) {
+    return yPositionToLogicalLine(editor, point.y);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
+    int line = y / editor.getLineHeight();
+    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 }
 
