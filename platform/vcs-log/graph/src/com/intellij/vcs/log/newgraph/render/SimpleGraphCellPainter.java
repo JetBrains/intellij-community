@@ -209,11 +209,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case NODE:
           assert element instanceof Node;
           Node node = (Node) element;
-          if (isSelected(node)) {
+          if (isMarked(node)) {
             paintCircle(rowElement.getPosition(), MARK_COLOR, true);
             paintCircle(rowElement.getPosition(), getColor(node), false);
           } else {
-            paintCircle(rowElement.getPosition(), getColor(node), isMarked(node));
+            paintCircle(rowElement.getPosition(), getColor(node), isSelected(node));
           }
           break;
         case UP_ARROW:
