@@ -809,10 +809,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.advanceLexer();
 
       final PsiBuilder.Marker marker = myBuilder.mark();
-      if (myBuilder.getTokenType() != PyTokenTypes.INDENT) {
-        myBuilder.error("Indent expected");
-      }
-      else {
+      final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
+      if (indentFound) {
         myBuilder.advanceLexer();
         if (myBuilder.eof()) {
           myBuilder.error("Indented block expected");
@@ -823,13 +821,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
       }
+      else {
+        myBuilder.error("Indent expected");
+      }
 
       marker.done(PyElementTypes.STATEMENT_LIST);
       marker.setCustomEdgeTokenBinders(LeadingCommentsBinder.INSTANCE, FollowingCommentBinder.INSTANCE);
       if (endMarker != null) {
         endMarker.done(elType);
       }
-      if (!myBuilder.eof()) {
+      if (indentFound && !myBuilder.eof()) {
         checkMatches(PyTokenTypes.DEDENT, "Dedent expected");
       }
       // NOTE: the following line advances the PsiBuilder lexer and thus
