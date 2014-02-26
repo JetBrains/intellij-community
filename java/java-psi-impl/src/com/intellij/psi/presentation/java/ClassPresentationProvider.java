@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,7 +33,7 @@ import javax.swing.*;
  */
 public class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
   @Override
-  public ItemPresentation getPresentation(final PsiClass psiClass) {
+  public ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class CoreApplicationEnvironment {
   protected final VirtualFileSystem myJarFileSystem;
   private final Disposable myParentDisposable;
 
-  public CoreApplicationEnvironment(Disposable parentDisposable) {
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
     Extensions.cleanRootArea(myParentDisposable);
 
@@ -127,18 +127,21 @@ public class CoreApplicationEnvironment {
     myApplication.registerService(JobLauncher.class, createJobLauncher());
   }
 
-  public <T> void registerApplicationService(Class<T> serviceInterface, T serviceImplementation) {
+  public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     myApplication.registerService(serviceInterface, serviceImplementation);
   }
 
+  @NotNull
   protected VirtualFilePointerManager createVirtualFilePointerManager() {
     return new CoreVirtualFilePointerManager();
   }
 
-  protected MockApplication createApplication(Disposable parentDisposable) {
+  @NotNull
+  protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
     return new MockApplicationEx(parentDisposable);
   }
 
+  @NotNull
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
@@ -215,6 +218,7 @@ public class CoreApplicationEnvironment {
     };
   }
 
+  @NotNull
   protected ProgressIndicatorProvider createProgressIndicatorProvider() {
     return new ProgressIndicatorProvider() {
       @Override
@@ -233,14 +237,17 @@ public class CoreApplicationEnvironment {
     };
   }
 
+  @NotNull
   protected VirtualFileSystem createJarFileSystem() {
     return new CoreJarFileSystem();
   }
 
+  @NotNull
   protected CoreLocalFileSystem createLocalFileSystem() {
     return new CoreLocalFileSystem();
   }
 
+  @NotNull
   public MockApplication getApplication() {
     return myApplication;
   }
@@ -280,7 +287,7 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
   }
 
-  public <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
+  public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
     instance.addExplicitExtension(fileType, object);
     Disposer.register(myParentDisposable, new Disposable() {
       @Override

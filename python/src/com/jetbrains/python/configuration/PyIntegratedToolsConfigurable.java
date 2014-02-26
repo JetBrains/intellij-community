@@ -21,6 +21,12 @@ import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -48,6 +54,7 @@ import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.templateLanguages.TemplatesService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
@@ -56,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,6 +85,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private JCheckBox analyzeDoctest;
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
+  private JComboBox myTemplateLanguage;
+  private TemplatesConfigurationsModel myTemplatesModel;
+  private TemplatesService myTemplatesService;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -96,6 +107,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
     myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
     myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
+    myTemplatesService = TemplatesService.getInstance(module);
   }
 
   @NotNull
@@ -186,6 +198,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myModel = new PythonTestConfigurationsModel(configurations,
                                                 TestRunnerService.getInstance(myModule).getProjectConfiguration(), myModule);
 
+    List<String> templateConfigurations = TemplatesService.getAllTemplateLanguages();
+    myTemplatesModel = new TemplatesConfigurationsModel(templateConfigurations, myTemplatesService);
+    //noinspection unchecked
+    myTemplateLanguage.setModel(myTemplatesModel);
     updateConfigurations();
     initErrorValidation();
     return myMainPanel;
@@ -215,6 +231,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
       return true;
     }
+    if (myTemplateLanguage.getSelectedItem() != myTemplatesModel.getTemplateLanguage()) {
+      return true;
+    }
     return false;
   }
 
@@ -223,6 +242,11 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
       DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
+    if (myTemplateLanguage.getSelectedItem() != myTemplatesModel.getTemplateLanguage()) {
+      myTemplatesModel.apply();
+      reparseFiles(Arrays.asList("html", "xml", "js")); //TODO: get from file extensions
+    }
+
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
       final List<VirtualFile> files = Lists.newArrayList();
       ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
@@ -242,25 +266,43 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     reSTService.setWorkdir(myWorkDir.getText());
     if (txtIsRst.isSelected() != reSTService.txtIsRst()) {
       reSTService.setTxtIsRst(txtIsRst.isSelected());
-      reparseRstFiles();
+      reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
     myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
-  public void reparseRstFiles() {
+  public void reparseFiles(final List<String> extensions) {
     final List<VirtualFile> filesToReparse = Lists.newArrayList();
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
-        if (!fileOrDir.isDirectory() && PlainTextFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
+        if (!fileOrDir.isDirectory() && extensions.contains(fileOrDir.getExtension())) {
           filesToReparse.add(fileOrDir);
         }
         return true;
       }
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx && editor.getProject() == myProject) {
+            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+            if (vFile != null) {
+              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, vFile);
+              ((EditorEx)editor).setHighlighter(highlighter);
+            }
+          }
+        }
+      }
+    });
+
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Override
@@ -273,6 +315,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
     myRequirementsPathField.setText(getRequirementsPath());
+    myTemplateLanguage.setSelectedItem(myTemplatesModel.getTemplateLanguage());
+    myTemplatesModel.reset();
+
   }
 
   @Override

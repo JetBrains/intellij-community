@@ -22,11 +22,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.PlatformContentEntriesConfigurable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 /**
  * @author yole
@@ -52,6 +50,6 @@ public class PythonContentEntriesConfigurable extends ModuleAwareProjectConfigur
   @NotNull
   @Override
   protected Configurable createModuleConfigurable(Module module) {
-    return new PlatformContentEntriesConfigurable(module, JavaSourceRootType.SOURCE);
+    return new PyContentEntriesModuleConfigurable(module);
   }
 }

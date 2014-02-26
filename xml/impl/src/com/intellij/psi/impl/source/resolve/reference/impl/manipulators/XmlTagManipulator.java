@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
 
-  public XmlTag handleContentChange(XmlTag tag, TextRange range, String newContent) throws IncorrectOperationException {
+  @Override
+  public XmlTag handleContentChange(@NotNull XmlTag tag, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     
     final StringBuilder replacement = new StringBuilder( tag.getValue().getText() );
     final int valueOffset = tag.getValue().getTextRange().getStartOffset() - tag.getTextOffset();
@@ -42,7 +43,9 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
     return tag;
   }
 
-  public TextRange getRangeInElement(final XmlTag tag) {
+  @Override
+  @NotNull
+  public TextRange getRangeInElement(@NotNull final XmlTag tag) {
     if (tag.getSubTags().length > 0) {
       // Text range in tag with subtags is not supported, return empty range, consider making this function nullable.
       return TextRange.EMPTY_RANGE;

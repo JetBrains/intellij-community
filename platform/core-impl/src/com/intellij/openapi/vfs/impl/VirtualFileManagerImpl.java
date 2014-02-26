@@ -42,8 +42,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
     new KeyedExtensionCollector<VirtualFileSystem, String>("com.intellij.virtualFileSystem") {
+      @NotNull
       @Override
-      protected String keyToString(String key) {
+      protected String keyToString(@NotNull String key) {
         return key;
       }
     };

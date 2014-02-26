@@ -17,7 +17,6 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.JavaSuppressionUtil;
-import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -92,10 +91,12 @@ public class SuppressionAnnotationInspectionBase extends BaseInspection {
       @NonNls final String text = reference.getText();
       if ("SuppressWarnings".equals(text) ||
           BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(text)) {
-        final Collection<String> ids =
-          JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)annotation.getParent());
-        if (!myAllowedSuppressions.containsAll(ids)) {
-          registerError(annotation, annotation);
+        final PsiElement annotationParent = annotation.getParent();
+        if (annotationParent instanceof PsiModifierList) {
+          final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)annotationParent);
+          if (!myAllowedSuppressions.containsAll(ids)) {
+            registerError(annotation, annotation);
+          }
         }
       }
     }

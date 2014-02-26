@@ -30,11 +30,14 @@ public class HTMLParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(final IElementType root, final PsiBuilder builder) {
+    parseWithoutBuildingTree(root, builder);
+    return builder.getTreeBuilt();
+  }
+
+  public static void parseWithoutBuildingTree(IElementType root, PsiBuilder builder) {
     builder.enforceCommentTokens(TokenSet.EMPTY);
     final PsiBuilder.Marker file = builder.mark();
     new HtmlParsing(builder).parseDocument();
     file.done(root);
-    return builder.getTreeBuilt();
   }
-
 }

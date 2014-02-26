@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines whether or not some elements can be indented when a user selects a fragment of text and invokes "indent" action (normally by
@@ -31,5 +32,5 @@ public interface IndentStrategy {
    * @param element The element to check.
    * @return True if the element can change its indentation, false if the indentation must be preserved.
    */
-  boolean canIndent(PsiElement element);
+  boolean canIndent(@NotNull PsiElement element);
 }

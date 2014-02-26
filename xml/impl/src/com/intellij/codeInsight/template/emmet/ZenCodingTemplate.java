@@ -34,9 +34,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -318,7 +316,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             case KeyEvent.VK_ENTER:
               final String abbreviation = field.getText();
               if (validateTemplateKey(field, balloon, abbreviation, callback)) {
-                doWrap(selection, abbreviation, callback);
+                doWrap(abbreviation, callback);
                 PropertiesComponent.getInstance().setValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, abbreviation);
                 field.addCurrentTextToHistory();
                 balloon.hide(true);
@@ -402,24 +400,32 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
 
-  public static void doWrap(final String selection, final String abbreviation, final CustomTemplateCallback callback) {
+  public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
           public void run() {
-            callback.fixInitialState(true);
-            ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
-            assert node != null;
-            PsiElement context = callback.getContext();
-            ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
-            List<ZenCodingFilter> filters = getFilters(node, context);
+            callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
+              public void perform(Caret caret) {
+                callback.fixInitialState(true);
+                String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
+                if (selectedText != null) {
+                  String selection = selectedText.trim();
+                  ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
+                  assert node != null;
+                  PsiElement context = callback.getContext();
+                  ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
+                  List<ZenCodingFilter> filters = getFilters(node, context);
 
-            EditorModificationUtil.deleteSelectedText(callback.getEditor());
-            PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+                  EditorModificationUtil.deleteSelectedText(callback.getEditor());
+                  PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
 
-            expand(node, generator, filters, selection, callback, true);
+                  expand(node, generator, filters, selection, callback, true);
+                }
+              }
+            });
           }
         }, CodeInsightBundle.message("insert.code.template.command"), null);
       }

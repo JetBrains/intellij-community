@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,9 +39,10 @@ public interface ElementManipulator<T extends PsiElement> {
    * @return changed element
    * @throws IncorrectOperationException if something goes wrong
    */
-  T handleContentChange(T element, TextRange range, String newContent) throws IncorrectOperationException;
+  T handleContentChange(@NotNull T element, @NotNull TextRange range, String newContent) throws IncorrectOperationException;
 
-  T handleContentChange(T element, String newContent) throws IncorrectOperationException;
+  T handleContentChange(@NotNull T element, String newContent) throws IncorrectOperationException;
 
-  TextRange getRangeInElement(T element);
+  @NotNull
+  TextRange getRangeInElement(@NotNull T element);
 }

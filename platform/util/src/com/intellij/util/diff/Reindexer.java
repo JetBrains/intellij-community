@@ -82,7 +82,7 @@ class Reindexer {
     BitSet changes1;
     BitSet changes2;
 
-    if (myDiscardedLengths[0] == myOriginalLengths[0] && myDiscardedLengths[0] == myOriginalLengths[0]) {
+    if (myDiscardedLengths[0] == myOriginalLengths[0] && myDiscardedLengths[1] == myOriginalLengths[1]) {
       changes1 = discardedChanges[0];
       changes2 = discardedChanges[1];
     }

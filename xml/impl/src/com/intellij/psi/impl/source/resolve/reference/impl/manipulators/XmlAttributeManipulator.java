@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -33,7 +34,8 @@ public class XmlAttributeManipulator extends AbstractElementManipulator<XmlAttri
 
   private static final Logger LOG = Logger.getInstance(XmlAttributeManipulator.class);
 
-  public XmlAttribute handleContentChange(XmlAttribute attribute, TextRange range, String newContent) throws IncorrectOperationException {
+  @Override
+  public XmlAttribute handleContentChange(@NotNull XmlAttribute attribute, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String attr = attribute.getText();
     ASTNode astNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
     assert astNode != null;
@@ -66,7 +68,9 @@ public class XmlAttributeManipulator extends AbstractElementManipulator<XmlAttri
     return attribute;
   }
 
-  public TextRange getRangeInElement(final XmlAttribute attribute) {
+  @Override
+  @NotNull
+  public TextRange getRangeInElement(@NotNull final XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value == null) return TextRange.from(0, 0);
     TextRange range = attribute.getValueTextRange();

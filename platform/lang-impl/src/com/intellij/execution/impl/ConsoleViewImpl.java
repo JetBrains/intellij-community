@@ -16,6 +16,7 @@
 
 package com.intellij.execution.impl;
 
+import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.execution.ConsoleFolding;
@@ -91,6 +92,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
+  private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
+
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
 
   static {
@@ -107,7 +110,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ConsoleState myState;
 
-  private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final Alarm mySpareTimeAlarm = new Alarm(this);
   @Nullable
   private final Alarm myHeavyAlarm;
   private       int   myHeavyUpdateTicket;
@@ -554,10 +557,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       s = pair.first;
       myContentSize += s.length() - pair.second;
 
-      if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
-        if (contentType == ConsoleViewContentType.USER_INPUT) {
-          flushDeferredUserInput();
-        }
+      if (contentType == ConsoleViewContentType.USER_INPUT && NEW_LINE_MATCHER.indexIn(s) >= 0) {
+        flushDeferredUserInput();
       }
       if (myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
@@ -1559,7 +1560,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     synchronized (consoleView.LOCK) {
       if (consoleView.myTokens.isEmpty()) return;
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
-      if (info.contentType != ConsoleViewContentType.USER_INPUT && !textToUse.contains("\n")) {
+      if (info.contentType != ConsoleViewContentType.USER_INPUT && !StringUtil.containsChar(textToUse, '\n')) {
         consoleView.print(textToUse, ConsoleViewContentType.USER_INPUT);
         consoleView.flushDeferredText();
         editor.getCaretModel().moveToOffset(document.getTextLength());

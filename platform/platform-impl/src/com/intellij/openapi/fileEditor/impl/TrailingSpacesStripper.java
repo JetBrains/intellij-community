@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -36,11 +33,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
@@ -129,18 +126,21 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
 
-    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
-
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
 
     String stripTrailingSpaces = settings.getStripTrailingSpaces();
     final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-
     final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-    if (!inChangedLinesOnly || !doStrip || isVirtualSpaceEnabled) caretLine = -1;
 
-    ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLine);
+    List<Integer> caretLines = new ArrayList<Integer>();
+    if (activeEditor != null && inChangedLinesOnly && doStrip && !isVirtualSpaceEnabled) {
+      List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
+      for (Caret caret : carets) {
+        caretLines.add(caret.getLogicalPosition().line);
+      }
+    }
+    ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
 
   public static boolean stripIfNotCurrentLine(Document document, boolean inChangedLinesOnly) {
@@ -157,16 +157,43 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
 
-    VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
-    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
-    int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
+    boolean markAsNeedsStrippingLater;
 
-    final Project project = activeEditor == null ? null : activeEditor.getProject();
-    boolean markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
-                                                                                     caretLine, caretOffset);
+    if (activeEditor != null && activeEditor.getCaretModel().supportsMultipleCarets()) {
+      List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
+      List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
+      List<Integer> caretOffsets = new ArrayList<Integer>(carets.size());
+      for (Caret caret : carets) {
+        visualCarets.add(caret.getVisualPosition());
+        caretOffsets.add(caret.getOffset());
+      }
 
-    if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
-      activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
+      markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor.getProject(), inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
+
+      if (!ShutDownTracker.isShutdownHookRunning()) {
+        final Iterator<VisualPosition> visualCaretIterator = visualCarets.iterator();
+        activeEditor.getCaretModel().runForEachCaret(new CaretAction() {
+          @Override
+          public void perform(Caret caret) {
+            if (visualCaretIterator.hasNext()) {
+              caret.moveToVisualPosition(visualCaretIterator.next());
+            }
+          }
+        });
+      }
+    }
+    else {
+      VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
+      int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
+      int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
+
+      final Project project = activeEditor == null ? null : activeEditor.getProject();
+      markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
+                                                                               caretLine, caretOffset);
+
+      if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
+        activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
+      }
     }
     return !markAsNeedsStrippingLater;
   }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlScriptContentProvider;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -178,7 +180,10 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
-    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType != null ? mimeType.trim() : null);
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType.trim());
+    if (instancesByMimeType.isEmpty() && mimeType.contains("template")) {
+      instancesByMimeType = Collections.<Language>singletonList(HTMLLanguage.INSTANCE);
+    }
     for (Language language : instancesByMimeType) {
       HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);
       if (scriptContentProvider != null) {

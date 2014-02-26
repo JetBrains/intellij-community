@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,8 +254,9 @@ public abstract class CompletionContributor {
       super("com.intellij.completion.contributor");
     }
 
+    @NotNull
     @Override
-    protected List<CompletionContributor> buildExtensions(String stringKey, Language key) {
+    protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
       final THashSet<String> allowed = new THashSet<String>();
       while (key != null) {
         allowed.add(keyToString(key));
@@ -265,8 +266,9 @@ public abstract class CompletionContributor {
       return buildExtensions(allowed);
     }
 
+    @NotNull
     @Override
-    protected String keyToString(Language key) {
+    protected String keyToString(@NotNull Language key) {
       return key.getID();
     }
   }
