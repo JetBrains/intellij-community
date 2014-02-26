@@ -1,7 +1,8 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
+import com.google.common.collect.FluentIterable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,6 +36,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     {PyNames.PROPERTY, PyNames.CLASSMETHOD, PyNames.STATICMETHOD};
 
   public static final String ABC_META_PACKAGE = "abc";
+  private static final NoPropertiesPredicate NO_PROPERTIES = new NoPropertiesPredicate();
 
   MethodsManager() {
     super(PyFunction.class);
@@ -62,8 +64,8 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   @NotNull
   @Override
-  protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.<PyElement>newArrayList(filterNameless(Arrays.asList(pyClass.getMethods())));
+  protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
+    return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<PyFunction>()).filter(NO_PROPERTIES).toList();
   }
 
   @Override
@@ -279,6 +281,16 @@ class MethodsManager extends MembersManager<PyFunction> {
           }
         }
       }
+    }
+  }
+
+  /**
+   * Filter out property setters and getters
+   */
+  private static class NoPropertiesPredicate implements Predicate<PyFunction> {
+    @Override
+    public boolean apply(@NotNull PyFunction input) {
+      return input.getProperty() == null;
     }
   }
 }

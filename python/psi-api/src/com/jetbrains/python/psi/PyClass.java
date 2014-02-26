@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a class declaration in source.
@@ -111,6 +112,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   @NotNull
   PyFunction[] getMethods();
+
+  /**
+   * Get class properties.
+   * @return Map [property_name] = [{@link com.jetbrains.python.psi.Property}]
+   */
+  @NotNull
+  Map<String, Property> getProperties();
 
   /**
    * Finds a method with given name.

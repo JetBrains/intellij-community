@@ -84,7 +84,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   @SuppressWarnings({"unchecked", "rawtypes"}) //We check type at runtime
   private static Collection<PyMemberInfo<PyElement>> transformSafely(@NotNull final PyClass pyClass,
                                                                      @NotNull final MembersManager<?> manager) {
-    final List<PyElement> membersCouldBeMoved = manager.getMembersCouldBeMoved(pyClass);
+    final List<? extends PyElement> membersCouldBeMoved = manager.getMembersCouldBeMoved(pyClass);
     manager.checkElementTypes((Iterable)membersCouldBeMoved);
     return (Collection<PyMemberInfo<PyElement>>)Collections2.transform(membersCouldBeMoved, (Function)manager);
   }
@@ -195,23 +195,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @return list of members
    */
   @NotNull
-  protected abstract List<PyElement> getMembersCouldBeMoved(@NotNull PyClass pyClass);
+  protected abstract List<? extends PyElement> getMembersCouldBeMoved(@NotNull PyClass pyClass);
 
-
-  /**
-   * Filters out named elements (ones that subclasses {@link com.intellij.psi.PsiNamedElement}) and {@link com.jetbrains.python.psi.PyElement})
-   * that are null or has null name.
-   * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name.
-   * note: we should probably throw exceptions in such cases and display "refactoring not available" window in handler)
-   *
-   * @param elementsToFilter collection of elements to filter
-   * @param <T>              element type
-   * @return collection of T with out of nulls and elemens whos {@link com.intellij.psi.PsiNamedElement#getName()}  returns null
-   */
-  @NotNull
-  protected static <T extends PsiNamedElement & PyElement> Collection<T> filterNameless(@NotNull final Collection<T> elementsToFilter) {
-    return Collections2.filter(elementsToFilter, new NamelessFilter<T>());
-  }
 
   /**
    * Returns list of elements that may require reference storing aid from {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#rememberNamedReferences(com.intellij.psi.PsiElement, String...)}
@@ -354,13 +339,6 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     @Override
     public T apply(@NotNull final PyMemberInfo<T> input) {
       return input.getMember();
-    }
-  }
-
-  private static class NamelessFilter<T extends PyElement & PsiNamedElement> extends NotNullPredicate<T> {
-    @Override
-    public boolean applyNotNull(@NotNull final T input) {
-      return input.getName() != null;
     }
   }
 
