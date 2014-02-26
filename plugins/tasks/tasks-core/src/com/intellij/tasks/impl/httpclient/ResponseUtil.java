@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.impl.TaskUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.util.EntityUtils;
 
@@ -51,7 +50,11 @@ public class ResponseUtil {
     }
 
     @Override
-    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+    public T handleResponse(HttpResponse response) throws IOException {
+      int statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode >= 400 && statusCode < 500) {
+        return null;
+      }
       if (LOG.isDebugEnabled()) {
         String content = getResponseContentAsString(response);
         TaskUtil.prettyFormatJsonToLog(LOG, content);
@@ -70,7 +73,7 @@ public class ResponseUtil {
     }
 
     @Override
-    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+    public List<T> handleResponse(HttpResponse response) throws IOException {
       if (LOG.isDebugEnabled()) {
         String content = getResponseContentAsString(response);
         TaskUtil.prettyFormatJsonToLog(LOG, content);
