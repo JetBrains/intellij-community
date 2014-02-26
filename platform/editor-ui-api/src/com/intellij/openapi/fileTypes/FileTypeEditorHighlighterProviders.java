@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ public class FileTypeEditorHighlighterProviders extends FileTypeExtension<Editor
     super("com.intellij.editorHighlighterProvider");
   }
 
+  @NotNull
   @Override
-  protected List<EditorHighlighterProvider> buildExtensions(String stringKey, final FileType key) {
+  protected List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, @NotNull final FileType key) {
     List<EditorHighlighterProvider> fromEP = super.buildExtensions(stringKey, key);
     if (fromEP.isEmpty()) {
       EditorHighlighterProvider defaultProvider = new EditorHighlighterProvider() {

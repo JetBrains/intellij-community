@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getLocalName() {
@@ -59,56 +60,69 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
     return getOriginal().getNameElement();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getNamespace() {
     return getOriginal().getNamespace();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getNamespacePrefix() {
     return getOriginal().getNamespacePrefix();
   }
 
+  @Override
   public XmlTag getParent() {
     return (XmlTag)super.getParent();
   }
 
+  @Override
   public String getValue() {
     return getOriginal().getValue();
   }
 
+  @Override
   public String getDisplayValue() {
     return getOriginal().getDisplayValue();
   }
 
+  @Override
   public int physicalToDisplay(int offset) {
     return getOriginal().physicalToDisplay(offset);
   }
 
+  @Override
   public int displayToPhysical(int offset) {
     return getOriginal().displayToPhysical(offset);
   }
 
+  @NotNull
+  @Override
   public TextRange getValueTextRange() {
     return getOriginal().getValueTextRange();
   }
 
+  @Override
   public boolean isNamespaceDeclaration() {
     return getOriginal().isNamespaceDeclaration();
   }
 
+  @Override
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     return getOriginal().getDescriptor();
   }
 
+  @Override
   @Nullable
   public XmlAttributeValue getValueElement() {
     return getOriginal().getValueElement();
   }
 
+  @Override
   public void setValue(String value) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }

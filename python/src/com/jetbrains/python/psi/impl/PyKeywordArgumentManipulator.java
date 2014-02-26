@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,14 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyKeywordArgumentManipulator extends AbstractElementManipulator<PyKeywordArgument> {
   @Override
-  public PyKeywordArgument handleContentChange(PyKeywordArgument element, TextRange range, String newContent) throws IncorrectOperationException {
+  public PyKeywordArgument handleContentChange(@NotNull PyKeywordArgument element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     final ASTNode keywordNode = element.getKeywordNode();
     if (keywordNode != null && keywordNode.getTextRange().shiftRight(-element.getTextRange().getStartOffset()).equals(range)) {
       final LanguageLevel langLevel = LanguageLevel.forElement(element);

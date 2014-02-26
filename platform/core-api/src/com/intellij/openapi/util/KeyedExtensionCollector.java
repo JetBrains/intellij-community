@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class KeyedExtensionCollector<T, KeyT> {
   private ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener;
   private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public KeyedExtensionCollector(@NonNls String epName) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName) {
     myEpName = epName;
     lock = new String("lock for KeyedExtensionCollector " + epName);
     resetAreaListener();
@@ -67,7 +67,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  public void addExplicitExtension(KeyT key, T t) {
+  public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
       final String skey = keyToString(key);
       List<T> list = myExplicitExtensions.get(skey);
@@ -83,7 +83,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  public void removeExplicitExtension(KeyT key, T t) {
+  public void removeExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
       final String skey = keyToString(key);
       List<T> list = myExplicitExtensions.get(skey);
@@ -97,7 +97,8 @@ public class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  protected String keyToString(KeyT key) {
+  @NotNull
+  protected String keyToString(@NotNull KeyT key) {
     return key.toString();
   }
 
@@ -105,7 +106,7 @@ public class KeyedExtensionCollector<T, KeyT> {
    * @see #findSingle(Object)
    */
   @NotNull
-  public List<T> forKey(KeyT key) {
+  public List<T> forKey(@NotNull KeyT key) {
     final String stringKey = keyToString(key);
     List<T> cache = myCache.get(stringKey);
     if (cache != null) return cache;
@@ -115,16 +116,18 @@ public class KeyedExtensionCollector<T, KeyT> {
     return cache;
   }
 
-  public T findSingle(KeyT key) {
+  public T findSingle(@NotNull KeyT key) {
     List<T> list = forKey(key);
     return list.isEmpty() ? null : list.get(0);
   }
 
-  protected List<T> buildExtensions(final String stringKey, final KeyT key) {
+  @NotNull
+  protected List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
     return buildExtensions(Collections.singleton(stringKey));
   }
 
-  protected final List<T> buildExtensions(Set<String> keys) {
+  @NotNull
+  protected final List<T> buildExtensions(@NotNull Set<String> keys) {
     synchronized (lock) {
       List<T> result = null;
       for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
@@ -175,10 +178,11 @@ public class KeyedExtensionCollector<T, KeyT> {
 
   @Nullable
   private ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
-    if (myPoint == null) {
+    ExtensionPoint<KeyedLazyInstance<T>> point = myPoint;
+    if (point == null) {
       if (Extensions.getRootArea().hasExtensionPoint(myEpName)) {
         ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
-        myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
+        myPoint = point = Extensions.getRootArea().getExtensionPoint(typesafe);
         myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
           @Override
           public void extensionAdded(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
@@ -214,10 +218,10 @@ public class KeyedExtensionCollector<T, KeyT> {
           }
         };
 
-        myPoint.addExtensionPointListener(myListener);
+        point.addExtensionPointListener(myListener);
       }
     }
-    return myPoint;
+    return point;
   }
 
   public boolean hasAnyExtensions() {
