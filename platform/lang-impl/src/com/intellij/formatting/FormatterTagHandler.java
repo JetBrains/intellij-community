@@ -48,9 +48,11 @@ public class FormatterTagHandler {
         !StringUtil.isEmpty(mySettings.FORMATTER_OFF_TAG) &&
         block instanceof ASTBlock) {
       ASTNode node = ((ASTBlock)block).getNode();
-      PsiElement element = node.getPsi();
-      if (element != null && element instanceof PsiComment) {
-        return getFormatterTag((PsiComment)element);
+      if (node != null) {
+        PsiElement element = node.getPsi();
+        if (element != null && element instanceof PsiComment) {
+          return getFormatterTag((PsiComment)element);
+        }
       }
     }
     return FormatterTag.NONE;
