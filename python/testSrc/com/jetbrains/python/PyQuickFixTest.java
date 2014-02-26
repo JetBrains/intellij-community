@@ -240,16 +240,6 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.statement.effect"), true, true);
   }
 
-  public void testStatementEffectPrint() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      doInspectionTest("StatementEffectPrint.py", PyStatementEffectInspection.class,
-                          PyBundle.message("QFIX.statement.effect"), true, true);
-    } finally {
-      setLanguageLevel(LanguageLevel.getDefault());
-    }
-  }
-
   public void testStatementEffectIntroduceVariable() {  // PY-1265
     doInspectionTest("StatementEffectIntroduceVariable.py", PyStatementEffectInspection.class,
                           PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
@@ -344,11 +334,6 @@ public class PyQuickFixTest extends PyTestCase {
   public void testAddParameter() {
     doInspectionTest("AddParameter.py", PyUnresolvedReferencesInspection.class,
                      PyBundle.message("QFIX.unresolved.reference.add.param.$0", "test"), true, true);
-  }
-
-  public void testMoveDocstring() {                      //PY-4398
-    doInspectionTest("MoveDocstring.py", PyStatementEffectInspection.class,
-                     PyBundle.message("QFIX.statement.effect.move.docstring"), true, true);
   }
 
   public void testRenameUnresolvedReference() {                      //PY-6595
