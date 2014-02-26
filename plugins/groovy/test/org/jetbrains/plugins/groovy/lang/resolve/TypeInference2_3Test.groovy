@@ -137,7 +137,6 @@ class Thing {
 ''', 'java.lang.Integer')
   }
 
-
   void testSamInference4() {
     doTest('''
 interface Action<T> {
@@ -154,4 +153,39 @@ def foo() {
 
 ''', 'java.lang.String')
   }
+
+  void testSamInference5() {
+    doTest('''
+interface Action<T> {
+    void execute(T t)
+}
+
+public <T> void exec(T t, Action<T> f) {
+}
+
+
+def foo() {
+    exec('foo') {i<caret>t.toUpperCase() }
+}
+
+''', 'java.lang.String')
+  }
+
+  void testSamInference6() {
+    doTest('''
+interface Action<T> {
+    void execute(T t)
+}
+
+public <T> void exec(T t, Action<T> f) {
+}
+
+
+def foo() {
+    exec('foo') {print i<caret>t.toUpperCase() }
+}
+
+''', 'java.lang.String')
+  }
+
 }

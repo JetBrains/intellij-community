@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
@@ -69,12 +67,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   public PsiType getTypeGroovy() {
     assert isValid();
 
-    return RecursionManager.doPreventingRecursion(this, false, new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return TypeInferenceHelper.getCurrentContext().getExpressionType(ClosureSyntheticParameter.this, TYPES_CALCULATOR);
-      }
-    });
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   @Nullable

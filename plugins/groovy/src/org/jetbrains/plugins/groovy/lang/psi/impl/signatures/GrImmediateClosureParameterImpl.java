@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.types;
+package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -26,22 +27,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 /**
  * @author Maxim.Medvedev
  */
-public class GrClosureParameterImpl implements GrClosureParameter {
+public class GrImmediateClosureParameterImpl implements GrClosureParameter {
   @Nullable final PsiType myType;
   @Nullable private final String myName;
   final boolean myOptional;
   @Nullable final GrExpression myDefaultInitializer;
 
-  public GrClosureParameterImpl(@Nullable PsiType type, @Nullable String name, boolean optional, GrExpression defaultInitializer) {
+  public GrImmediateClosureParameterImpl(@Nullable PsiType type, @Nullable String name, boolean optional, GrExpression defaultInitializer) {
     myType = type;
     myName = name;
     myOptional = optional;
     myDefaultInitializer = optional ? defaultInitializer : null;
   }
 
-  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
+  public GrImmediateClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
     this(substitutor.substitute(getParameterType(parameter)), getParameterName(parameter), isParameterOptional(parameter), getDefaultInitializer(parameter));
   }
+
+  @NotNull
+  public static GrImmediateClosureParameterImpl createErasedParameter(@NotNull PsiParameter param) {
+    PsiType type = TypeConversionUtil.erasure(param.getType());
+    return new GrImmediateClosureParameterImpl(type, getParameterName(param), isParameterOptional(param), getDefaultInitializer(param));
+  }
+
 
   @Nullable
   private static PsiType getParameterType(@NotNull PsiParameter parameter) {
@@ -70,7 +78,6 @@ public class GrClosureParameterImpl implements GrClosureParameter {
       return param.getName();
     }
   }
-
 
   @Nullable
   public PsiType getType() {
