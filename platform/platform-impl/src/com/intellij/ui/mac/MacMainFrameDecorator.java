@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,8 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
-            if (myFrame == null/*|| ORACLE_BUG_ID_8003173*/) return;
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
             enterFullscreen();
             myFrame.validate();
           }
