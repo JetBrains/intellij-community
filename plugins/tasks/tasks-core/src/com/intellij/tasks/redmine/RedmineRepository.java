@@ -63,12 +63,54 @@ public class RedmineRepository extends BaseRepositoryImpl {
 
   @Override
   public void testConnection() throws Exception {
-    getIssues("", 10, 0);
+    getIssues("", 0, 1, true);
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    List<Element> children = getIssues(query, max);
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    String url = "/projects/" + myProjectId + "/issues.xml?";
+    final boolean hasKey = !StringUtil.isEmpty(myAPIKey) && !isUseHttpAuthentication();
+    if (hasKey) {
+      url +="key=" + myAPIKey;
+    }
+    if (hasKey) url += "&";
+    //url += "offset=" + offset + "&limit=" + limit + "&status_id=" + (withClosed ? "*" : "open");
+    // getting only open id's
+    url += encodeUrl("fields[]") + "=status_id&"  +
+    encodeUrl("operators[status_id]") + "=o&" +
+    encodeUrl("values[status_id][]") + "=1";
+    final boolean hasQuery = !StringUtil.isEmpty(query);
+    if (hasQuery) {
+      url += "&" + encodeUrl("fields[]") + "=subject&" +
+             encodeUrl("operators[subject]") + "=" + encodeUrl("~") + "&" +
+             encodeUrl("values[subject][]") + "=" + encodeUrl(query);
+    }
+    int max = offset + limit;
+    if (max >= 0) {
+      url += "&per_page=" + encodeUrl(String.valueOf(max));
+    }
+    HttpMethod method = doREST(url, false);
+    final String response = method.getResponseBodyAsString();
+    final Reader stream = new StringReader(response);
+    final InputSource source = new InputSource(stream);
+    source.setEncoding("UTF-8");
+    Element element;
+    try {
+      element = new SAXBuilder(false).build(source).getRootElement();
+      TaskUtil.prettyFormatXmlToLog(LOG, element);
+    } catch (Throwable t) {
+      LOG.error("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode(), t, response);
+      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
+                          "\n" + response);
+    }
+
+    if (!"issues".equals(element.getName())) {
+      LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
+      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
+                          "\n" + element.getText());
+    }
+
+    List<Element> children = element.getChildren("issue");
 
     final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
       public Task fun(Element o) {
@@ -88,8 +130,9 @@ public class RedmineRepository extends BaseRepositoryImpl {
     if (summary == null) {
       return null;
     }
-    final Element status = element.getChild("status");
-    final boolean isClosed = status == null || "Closed".equals(status.getAttributeValue("name"));
+    final Element statusElement = element.getChild("status");
+    String statusName = statusElement == null ? "" : StringUtil.notNullize(statusElement.getAttributeValue("name"));
+    final boolean isClosed = statusName.equals("Closed") || statusName.equals("Resolved");
     final String description = element.getChildText("description");
     final Ref<Date> updated = new Ref<Date>();
     final Ref<Date> created = new Ref<Date>();
@@ -196,49 +239,6 @@ public class RedmineRepository extends BaseRepositoryImpl {
   @Override
   public boolean isConfigured() {
     return super.isConfigured() && !StringUtil.isEmpty(myProjectId);
-  }
-
-  private List<Element> getIssues(@Nullable String query, int max) throws Exception {
-    String url = "/projects/" + myProjectId + "/issues.xml?";
-    final boolean hasKey = !StringUtil.isEmpty(myAPIKey) && !isUseHttpAuthentication();
-    if (hasKey) {
-      url +="key=" + myAPIKey;
-    }
-    if (hasKey) url += "&";
-    // getting only open id's
-    url += encodeUrl("fields[]") + "=status_id&"  + 
-           encodeUrl("operators[status_id]") + "=o&" +
-           encodeUrl("values[status_id][]") + "=1";
-    final boolean hasQuery = !StringUtil.isEmpty(query);
-    if (hasQuery) {
-      url += "&" + encodeUrl("fields[]") + "=subject&" +
-             encodeUrl("operators[subject]") + "=" + encodeUrl("~") + "&" + 
-             encodeUrl("values[subject][]") + "=" + encodeUrl(query);
-    }
-    if (max >= 0) {
-      url += "&per_page=" + encodeUrl(String.valueOf(max));
-    }
-    HttpMethod method = doREST(url, false);
-    final String response = method.getResponseBodyAsString();
-    final Reader stream = new StringReader(response);
-    final InputSource source = new InputSource(stream);
-    source.setEncoding("UTF-8");
-    Element element;
-    try {
-      element = new SAXBuilder(false).build(source).getRootElement();
-    } catch (Throwable t) {
-      LOG.error("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode(), t, response);
-      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                          "\n" + response);
-    }
-
-    if (!"issues".equals(element.getName())) {
-      LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
-      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                          "\n" + element.getText());
-    }
-
-    return element.getChildren("issue");
   }
 
   private HttpMethod doREST(String request, boolean post) throws Exception {
