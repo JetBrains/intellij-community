@@ -2,20 +2,19 @@ package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,37 +26,22 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
 
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogUI myUi;
-  @NotNull private final List<VcsFullCommitDetails> myCommits;
+  @NotNull private final List<Pair<Hash, VirtualFile>> myCommitsWithRoots;
   @NotNull private final LoadMoreStage myLoadMoreStage;
   @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
 
-  public NoGraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogUI UI, @NotNull List<VcsFullCommitDetails> commits,
-                           @NotNull LoadMoreStage loadMoreStage) {
+  public NoGraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI UI,
+                           @NotNull List<Pair<Hash, VirtualFile>> commitsWithRoots, @NotNull LoadMoreStage loadMoreStage) {
+    super(logDataHolder);
     myDataPack = dataPack;
     myUi = UI;
-    myCommits = commits;
+    myCommitsWithRoots = commitsWithRoots;
     myLoadMoreStage = loadMoreStage;
   }
 
   @Override
   public int getRowCount() {
-    return myCommits.size();
-  }
-
-  @Nullable
-  @Override
-  protected VcsShortCommitDetails getShortDetails(int rowIndex) {
-    return getFullCommitDetails(rowIndex);
-  }
-
-  @Nullable
-  @Override
-  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
-    VcsFullCommitDetails commits = myCommits.get(rowIndex);
-    if (commits == null) {
-      LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
-    }
-    return commits;
+    return myCommitsWithRoots.size();
   }
 
   @Override
@@ -74,25 +58,15 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
     return myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
   }
 
-  @Nullable
-  @Override
-  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
-    List<Change> changes = new ArrayList<Change>();
-    for (int selectedRow : selectedRows) {
-      changes.addAll(myCommits.get(selectedRow).getChanges());
-    }
-    return changes;
-  }
-
   @NotNull
   @Override
   public VirtualFile getRoot(int rowIndex) {
-    VcsFullCommitDetails commit = myCommits.get(rowIndex);
+    Pair<Hash, VirtualFile> commit = myCommitsWithRoots.get(rowIndex);
     if (commit != null) {
-      return commit.getRoot();
+      return commit.getSecond();
     }
     else {
-      LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
+      LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommitsWithRoots.toString()));
       return FAKE_ROOT;
     }
   }
@@ -118,14 +92,13 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   @Nullable
   @Override
   public Hash getHashAtRow(int row) {
-    return myCommits.get(row).getHash();
+    return myCommitsWithRoots.get(row).getFirst();
   }
 
   @Override
   public int getRowOfCommit(@NotNull Hash hash) {
-    for (int i = 0; i < myCommits.size(); i++) {
-      VcsFullCommitDetails commit = myCommits.get(i);
-      if (commit.getHash().equals(hash)) {
+    for (int i = 0; i < myCommitsWithRoots.size(); i++) {
+      if (hash.equals(myCommitsWithRoots.get(i).getFirst())) {
         return i;
       }
     }
@@ -135,9 +108,9 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   @Override
   public int getRowOfCommitByPartOfHash(@NotNull String hash) {
     String lowercaseHash = hash.toLowerCase();
-    for (int i = 0; i < myCommits.size(); i++) {
-      VcsFullCommitDetails commit = myCommits.get(i);
-      if (commit.getHash().toString().toLowerCase().startsWith(lowercaseHash)) {
+    for (int i = 0; i < myCommitsWithRoots.size(); i++) {
+      Hash commit = myCommitsWithRoots.get(i).getFirst();
+      if (commit.toString().toLowerCase().startsWith(lowercaseHash)) {
         return i;
       }
     }

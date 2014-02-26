@@ -512,9 +512,10 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
+  public static List<TimedVcsCommit> readCommits(@NotNull final Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull final Consumer<VcsUser> userRegistry,
+                                                 @NotNull List<String> parameters) throws VcsException {
     final int COMMIT_BUFFER = 1000;
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
@@ -525,6 +526,7 @@ public class GitHistoryUtils {
     h.addParameters(LOG_ALL);
     h.addParameters("--full-history", "--sparse");
     h.addParameters("--date-order");
+    h.addParameters(parameters);
     h.endOptions();
 
     final List<TimedVcsCommit> commits = ContainerUtil.newArrayList();

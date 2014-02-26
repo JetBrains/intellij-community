@@ -2,15 +2,12 @@ package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
@@ -18,7 +15,6 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +27,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @NotNull private final VcsLogDataHolder myDataHolder;
 
   public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder) {
+    super(dataHolder);
     myDataPack = dataPack;
     myDataHolder = dataHolder;
   }
@@ -38,18 +35,6 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @Override
   public int getRowCount() {
     return myDataPack.getGraphFacade().getVisibleCommitCount();
-  }
-
-  @Nullable
-  @Override
-  protected VcsShortCommitDetails getShortDetails(int rowIndex) {
-    return myDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
-  }
-
-  @Nullable
-  @Override
-  public VcsFullCommitDetails getFullCommitDetails(int row) {
-    return myDataHolder.getCommitDetailsGetter().getCommitData(row, this);
   }
 
   @Override
@@ -60,20 +45,6 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @Override
   public boolean canRequestMore() {
     return !myDataHolder.isFullLogShowing();
-  }
-
-  @Nullable
-  @Override
-  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
-    List<Change> changes = new ArrayList<Change>();
-    for (int row : selectedRows) {
-      VcsFullCommitDetails commitData = myDataHolder.getCommitDetailsGetter().getCommitData(row, this);
-      if (commitData == null || commitData instanceof LoadingDetails) {
-        return null;
-      }
-      changes.addAll(commitData.getChanges());
-    }
-    return changes;
   }
 
   @NotNull

@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,6 +34,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -481,50 +481,40 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   public void getFilteredDetailsFromTheVcs(@NotNull final VcsLogFilterCollection filterCollection, 
-                                           @NotNull final Consumer<List<VcsFullCommitDetails>> success,
+                                           @NotNull final Consumer<List<Pair<Hash, VirtualFile>>> success,
                                            final int maxCount) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
-        final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          VirtualFile root = entry.getKey();
+          final VirtualFile root = entry.getKey();
 
           if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()) {
             // there is a structure filter, but it doesn't match this root
             continue;
           }
 
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(root, filterCollection, maxCount);
-          logs.add(getCommitsFromDetails(details));
-          for (VcsFullCommitDetails detail : details) {
-            allDetails.put(detail.getHash(), detail);
-          }
+          List<CommitWithRoot> details = ContainerUtil.map(entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount),
+                                                           new Function<TimedVcsCommit, CommitWithRoot>() {
+                                                             @Override
+                                                             public CommitWithRoot fun(TimedVcsCommit timedVcsCommit) {
+                                                               return new CommitWithRoot(root, timedVcsCommit.getHash(),
+                                                                                         timedVcsCommit.getParents(),
+                                                                                         timedVcsCommit.getTime());
+                                                             }
+                                                           });
+          logs.add(details);
         }
 
         final List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
 
-        final List<VcsFullCommitDetails> list = ContainerUtil.mapNotNull(compoundLog, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
+        final List<Pair<Hash, VirtualFile>> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Pair<Hash, VirtualFile>>() {
           @Override
-          public VcsFullCommitDetails fun(TimedVcsCommit commit) {
-            VcsFullCommitDetails detail = allDetails.get(commit.getHash());
-            if (detail == null) {
-              String message = "Details not stored for commit " + commit;
-              if (LOG.isDebugEnabled()) {
-                LOG.error(message, new Attachment("filtered_details", allDetails.toString()),
-                                   new Attachment("compound_log", compoundLog.toString()));
-              }
-              else {
-                LOG.error(message);
-              }
-            }
-            return detail;
+          public Pair<Hash, VirtualFile> fun(TimedVcsCommit timedVcsCommit) {
+            return Pair.create(timedVcsCommit.getHash(), ((CommitWithRoot)timedVcsCommit).myRoot);
           }
         });
-
-        myDetailsGetter.saveInCache(list);
-        myMiniDetailsGetter.saveInCache(list);
 
         invokeAndWait(new Runnable() {
           @Override
@@ -534,6 +524,16 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Looking for more results...");
+  }
+
+  private static class CommitWithRoot extends TimedVcsCommitImpl {
+
+    @NotNull private final VirtualFile myRoot;
+
+    public CommitWithRoot(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
+      super(hash, parents, timeStamp);
+      myRoot = root;
+    }
   }
 
   @NotNull

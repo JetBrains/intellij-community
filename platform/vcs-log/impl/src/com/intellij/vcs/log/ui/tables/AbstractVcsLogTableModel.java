@@ -8,11 +8,14 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,16 +35,26 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
 
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
+
+  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder) {
+    myLogDataHolder = logDataHolder;
+  }
+
   @Override
   public final int getColumnCount() {
     return COLUMN_COUNT;
   }
 
   @Nullable
-  protected abstract VcsShortCommitDetails getShortDetails(int rowIndex);
+  protected VcsShortCommitDetails getShortDetails(int rowIndex) {
+    return myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
+  }
 
   @Nullable
-  public abstract VcsFullCommitDetails getFullCommitDetails(int row);
+  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
+    return myLogDataHolder.getCommitDetailsGetter().getCommitData(rowIndex, this);
+  }
 
   @NotNull
   @Override
@@ -93,7 +106,17 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
    * @return Changes selected in all rows, or null if this data is not ready yet.
    */
   @Nullable
-  public abstract List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows);
+  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
+    List<Change> changes = new ArrayList<Change>();
+    for (int row : selectedRows) {
+      VcsFullCommitDetails commitData = getFullCommitDetails(row);
+      if (commitData == null || commitData instanceof LoadingDetails) {
+        return null;
+      }
+      changes.addAll(commitData.getChanges());
+    }
+    return changes;
+  }
 
   @NotNull
   public abstract VirtualFile getRoot(int rowIndex);

@@ -87,7 +87,7 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
+    return GitHistoryUtils.readCommits(myProject, root, userRegistry, Collections.<String>emptyList());
   }
 
   @NotNull
@@ -178,9 +178,9 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull VcsLogFilterCollection filterCollection,
-                                                                 int maxCount) throws VcsException {
+  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
+                                             @NotNull VcsLogFilterCollection filterCollection,
+                                             int maxCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
@@ -240,7 +240,7 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
+    return GitHistoryUtils.readCommits(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
   }
 
   @Nullable

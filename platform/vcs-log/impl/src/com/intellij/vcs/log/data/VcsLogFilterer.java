@@ -3,14 +3,13 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogBranchFilter;
-import com.intellij.vcs.log.VcsLogDetailsFilter;
-import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -49,8 +48,8 @@ public class VcsLogFilterer {
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
-      List<VcsFullCommitDetails> filteredCommits = filterByDetails(dataPack, detailsFilters);
-      model = new NoGraphTableModel(dataPack, myUI, filteredCommits, LoadMoreStage.INITIAL);
+      List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
+      model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, filteredCommits, LoadMoreStage.INITIAL);
     }
     else {
       model = new GraphTableModel(dataPack, myLogDataHolder);
@@ -63,11 +62,11 @@ public class VcsLogFilterer {
                          @NotNull final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int maxCount = loadMoreStage == LoadMoreStage.INITIAL ? LOAD_MORE_COMMITS_FIRST_STEP_LIMIT : -1;
-    myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
+    myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<Pair<Hash, VirtualFile>>>() {
       @Override
-      public void consume(List<VcsFullCommitDetails> details) {
+      public void consume(List<Pair<Hash, VirtualFile>> details) {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
-        myUI.setModel(new NoGraphTableModel(dataPack, myUI, details, newLoadMoreStage));
+        myUI.setModel(new NoGraphTableModel(dataPack, myLogDataHolder, myUI, details, newLoadMoreStage));
         myUI.updateUI();
         onSuccess.run();
       }
@@ -100,8 +99,8 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private List<VcsFullCommitDetails> filterByDetails(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+  private List<Pair<Hash, VirtualFile>> filterByDetails(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    List<Pair<Hash, VirtualFile>> result = ContainerUtil.newArrayList();
     int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
     List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade());
     for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
@@ -125,7 +124,7 @@ public class VcsLogFilterer {
         }
       });
       if (allFiltersMatch) {
-        result.add(details);
+        result.add(Pair.create(details.getHash(), details.getRoot()));
       }
     }
     return result;
