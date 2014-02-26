@@ -115,7 +115,7 @@ public class ChangeList {
     DiffString[] versionLines = DiffUtil.convertToLines(version.getText());
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
     final ArrayList<Change> result = new ArrayList<Change>();
-    new DiffFragmemntsEnumerator(fragments) {
+    new DiffFragmentsEnumerator(fragments) {
       protected void process(DiffFragment fragment) {
         if (fragment.isEqual()) return;
         Context context = getContext();
@@ -131,11 +131,11 @@ public class ChangeList {
     return myChanges.get(index);
   }
 
-  private abstract static class DiffFragmemntsEnumerator {
+  private abstract static class DiffFragmentsEnumerator {
     private final DiffFragment[] myFragments;
     private final Context myContext;
 
-    private DiffFragmemntsEnumerator(DiffFragment[] fragments) {
+    private DiffFragmentsEnumerator(DiffFragment[] fragments) {
       myContext = new Context();
       myFragments = fragments;
     }
