@@ -451,6 +451,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testBlockWithoutColon() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

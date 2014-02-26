@@ -631,6 +631,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.advanceLexer();
       return true;
     }
+    else if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.error("Colon expected");
+      return true;
+    }
     final PsiBuilder.Marker marker = myBuilder.mark();
     while (!atAnyOfTokens(null, PyTokenTypes.DEDENT, PyTokenTypes.STATEMENT_BREAK, PyTokenTypes.COLON)) {
       myBuilder.advanceLexer();
