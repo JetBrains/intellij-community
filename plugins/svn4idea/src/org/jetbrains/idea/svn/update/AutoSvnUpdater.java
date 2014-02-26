@@ -69,11 +69,14 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     configuration17.setUpdateDepth(SVNDepth.INFINITY);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     for (FilePath root : myRoots) {
-      final UpdateRootInfo info = configuration17.getUpdateRootInfo(root.getIOFile(), vcs);
-      info.setRevision(SVNRevision.HEAD);
-      info.setUpdateToRevision(false);
+      configureUpdateRootInfo(root, configuration17.getUpdateRootInfo(root.getIOFile(), vcs));
     }
     super.actionPerformed(context);
+  }
+
+  protected void configureUpdateRootInfo(@NotNull FilePath root, @NotNull UpdateRootInfo info) {
+    info.setRevision(SVNRevision.HEAD);
+    info.setUpdateToRevision(false);
   }
 
   @Override

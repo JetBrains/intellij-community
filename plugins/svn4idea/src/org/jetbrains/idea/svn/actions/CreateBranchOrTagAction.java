@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
@@ -37,6 +38,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
+import org.jetbrains.idea.svn.update.AutoSvnUpdater;
+import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -124,6 +127,13 @@ public class CreateBranchOrTagAction extends BasicAction {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
       if (!exception.isNull()) {
         throw new VcsException(exception.get());
+      }
+
+      if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
+        SingleRootSwitcher switcher =
+          new SingleRootSwitcher(project, VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl.toDecodedString());
+
+        AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
       }
     }
   }
