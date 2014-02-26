@@ -31,4 +31,9 @@ public interface PyPullUpView extends MembersBasedView<PyPullUpViewInitializatio
    */
   @NotNull
   PyClass getSelectedParent();
+
+  /**
+   * Display "nothing to refactor" message.
+   */
+  void showNothingToRefactor();
 }

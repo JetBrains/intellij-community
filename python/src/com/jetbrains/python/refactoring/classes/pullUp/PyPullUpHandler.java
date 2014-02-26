@@ -17,8 +17,6 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
@@ -39,14 +37,10 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
                                 @NotNull final PyMemberInfoStorage infoStorage,
                                 @NotNull final Editor editor) {
     //TODO: Move to vp (presenter) as well
+    final PyPullUpNothingToRefactorMessage nothingToRefactor = new PyPullUpNothingToRefactorMessage(project, editor, classUnderRefactoring);
 
-    if (PyAncestorsUtils.getAncestorsUnderUserControl(classUnderRefactoring).isEmpty() ||
-        infoStorage.getClassMemberInfos(classUnderRefactoring).isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle
-                                            .message("refactoring.pull.up.error.cannot.perform.refactoring.no.base.classes",
-                                                     classUnderRefactoring.getName()), RefactoringBundle.message("pull.members.up.title"),
-                                          "members.pull.up"
-      );
+    if (PyAncestorsUtils.getAncestorsUnderUserControl(classUnderRefactoring).isEmpty()) {
+      nothingToRefactor.showNothingToRefactor();
       return;
     }
 
@@ -62,12 +56,12 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
                                         @NotNull
                                         @Override
                                         public PyPullUpView createView(@NotNull final PyPullUpPresenter presenter) {
-                                          return new PyPullUpViewSwingImpl(project, presenter, classUnderRefactoring);
+                                          return new PyPullUpViewSwingImpl(project, presenter, classUnderRefactoring, nothingToRefactor);
                                         }
                                       }
       );
-
   }
+
 
   @Override
   protected String getTitle() {

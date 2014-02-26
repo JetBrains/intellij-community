@@ -47,7 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -545,8 +545,8 @@ public class TypesUtil {
 
       if (signature1 instanceof GrClosureSignature && signature2 instanceof GrClosureSignature) {
         if (((GrClosureSignature)signature1).getParameterCount() == ((GrClosureSignature)signature2).getParameterCount()) {
-          final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
-                                                                                         ((GrClosureSignature)signature2), manager);
+          final GrClosureSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
+                                                                                                  ((GrClosureSignature)signature2), manager);
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());

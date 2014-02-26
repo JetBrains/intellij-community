@@ -836,7 +836,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         return LocalQuickFix.EMPTY_ARRAY;
       }
 
-      final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignature(signature);
+      final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
 
       List<Pair<Integer, PsiType>> allErrors = new ArrayList<Pair<Integer, PsiType>>();
       for (GrClosureSignature closureSignature : signatures) {

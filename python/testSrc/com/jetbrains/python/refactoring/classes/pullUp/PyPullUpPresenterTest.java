@@ -37,7 +37,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    */
   public void testParentsOrder() throws Exception {
     final PyPullUpPresenter sut = configureByClass("Child");
-
+    configureParent();
     myMocksControl.replay();
 
     sut.launch();
@@ -59,6 +59,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    */
   public void testConflicts() throws Exception {
     final PyPullUpPresenterImpl sut = configureByClass("ChildWithConflicts");
+    configureParent();
     final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
 
     final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = new Capture<MultiMap<PyClass, PyMemberInfo<?>>>();
@@ -123,7 +124,6 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
     ensureCorrectMembersForHugeChild(true);
   }
 
-
   /**
    * Checks members for class HugeChild
    *
@@ -147,6 +147,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
                           new PyPresenterTestMemberEntry("bad_method()", true, false, true));
     compareMembers(memberNamesAndStatus, matcher);
   }
+
 
   /**
    * Launches presenter and returns members it displayed to user
@@ -195,5 +196,12 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
     final PyClass childClass = getClassByName(name);
     final PyMemberInfoStorage storage = new PyMemberInfoStorage(childClass);
     return new PyPullUpPresenterImpl(myView, storage, childClass);
+  }
+
+  /**
+   * Makes view to return class "Parent" as selected parent
+   */
+  private void configureParent() {
+    EasyMock.expect(myView.getSelectedParent()).andReturn(getClassByName("Parent")).anyTimes();
   }
 }

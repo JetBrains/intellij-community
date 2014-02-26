@@ -42,7 +42,7 @@ public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
   private volatile PsiType[] myTypeArgs = null;
 
-  private GrClosureType(@NotNull LanguageLevel languageLevel,
+  private GrClosureType(LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature closureSignature,
@@ -52,7 +52,7 @@ public class GrClosureType extends GrLiteralClassType {
     if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
   }
 
-  private GrClosureType(@NotNull LanguageLevel level,
+  private GrClosureType(LanguageLevel level,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature signature,

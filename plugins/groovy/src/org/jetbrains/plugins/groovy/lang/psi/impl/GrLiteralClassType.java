@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   protected final JavaPsiFacade myFacade;
   private final GroovyPsiManager myGroovyPsiManager;
 
-  public GrLiteralClassType(@NotNull LanguageLevel languageLevel, @NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
+  public GrLiteralClassType(LanguageLevel languageLevel, @NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     super(languageLevel);
     myScope = scope;
     myFacade = facade;

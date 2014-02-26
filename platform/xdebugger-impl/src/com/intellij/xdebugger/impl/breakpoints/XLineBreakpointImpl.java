@@ -149,7 +149,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (mySourcePosition == null) {
       new ReadAction() {
         @Override
-        protected void run(final Result result) {
+        protected void run(@NotNull Result result) {
           mySourcePosition = XDebuggerUtil.getInstance().createPosition(getFile(), getLine());
         }
       }.execute();
@@ -201,8 +201,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
-      Document document = myHighlighter.getDocument();
-      setLine(document.getLineNumber(myHighlighter.getStartOffset()));
+      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()));
     }
   }
 
