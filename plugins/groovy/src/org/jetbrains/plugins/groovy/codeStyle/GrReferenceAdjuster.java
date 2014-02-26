@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,25 +63,25 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
   }
 
   @Override
-  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
+  public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
     final TextRange range = element.getTextRange();
     process(element.getPsi(), range.getStartOffset(), range.getEndOffset(), addImports, incompleteCode, useFqInJavadoc, useFqInCode);
     return element;
   }
 
   @Override
-  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
+  public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
     final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
     return process(element, addImports, incompleteCode, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
 
   @Override
-  public void processRange(ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
+  public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
     process(element.getPsi(), startOffset, endOffset, true, true, useFqInJavadoc, useFqInCode);
   }
 
   @Override
-  public void processRange(ASTNode element, int startOffset, int endOffset, Project project) {
+  public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
     final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
     processRange(element, startOffset, endOffset, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }

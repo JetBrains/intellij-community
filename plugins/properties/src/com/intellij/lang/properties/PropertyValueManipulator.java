@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -26,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class PropertyValueManipulator extends AbstractElementManipulator<PropertyValueImpl>{
   @Override
-  public PropertyValueImpl handleContentChange(PropertyValueImpl element, TextRange range, String newContent)
+  public PropertyValueImpl handleContentChange(@NotNull PropertyValueImpl element, @NotNull TextRange range, String newContent)
     throws IncorrectOperationException {
     final String oldText = element.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());

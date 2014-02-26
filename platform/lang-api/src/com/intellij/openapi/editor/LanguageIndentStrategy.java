@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ public class LanguageIndentStrategy extends LanguageExtension<IndentStrategy> {
     super(EP_NAME, DEFAULT_INDENT_STRATEGY);
   }
 
-  public static @NotNull IndentStrategy getIndentStrategy(@Nullable PsiFile file) {
+  @NotNull
+  public static IndentStrategy getIndentStrategy(@Nullable PsiFile file) {
     if (file != null) {
       Language language = file.getLanguage();
       IndentStrategy strategy = INSTANCE.forLanguage(language);
@@ -52,7 +53,7 @@ public class LanguageIndentStrategy extends LanguageExtension<IndentStrategy> {
 
   private static class DefaultIndentStrategy implements IndentStrategy {
     @Override
-    public boolean canIndent(PsiElement element) {
+    public boolean canIndent(@NotNull PsiElement element) {
       return true;
     }
   }

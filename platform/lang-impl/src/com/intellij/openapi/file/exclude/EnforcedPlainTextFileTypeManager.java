@@ -17,9 +17,6 @@ package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -28,49 +25,51 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.WeakList;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Maintains a list of files marked as plain text in a local environment (configuration). Every time a project is loaded/open, it reads
- * files marked as plain text from a project into local environment (configuration). User actions (mark/unmark as plain text) are
- * synchronized between local and project configurations.
+ * Retrieves plain text file type from open projects' configurations.
  *
  * @author Rustam Vishnyakov
  */
-@State(name = "EnforcedPlainTextFileTypeManager", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/plainTextFiles.xml")})
-public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager implements ProjectManagerListener {
-  private final Collection<Project> myProcessedProjects = new WeakList<Project>();
-  private boolean myNeedsSync = true;
+public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
+  private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = new ConcurrentHashMap<Project, Collection<VirtualFile>>();
+  private final Ref<Boolean> mySetsInitialized = new Ref<Boolean>(false);
 
   public EnforcedPlainTextFileTypeManager() {
     ProjectManager.getInstance().addProjectManagerListener(this);
   }
 
   public boolean isMarkedAsPlainText(VirtualFile file) {
-    if (myNeedsSync) {
-      myNeedsSync = !syncWithOpenProjects();
-    }
-    return containsFile(file);
-  }
-
-  private boolean syncWithOpenProjects() {
-    boolean success = true;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      if (!myProcessedProjects.contains(openProject)) {
-        if (!syncWithProject(openProject)) success = false;
+    if (file.isDirectory()) return false;
+    synchronized (mySetsInitialized) {
+      if (!mySetsInitialized.get()) {
+        initPlainTextFileSets();
+        mySetsInitialized.set(true);
       }
     }
-    return success;
+    for (Project project : myPlainTextFileSets.keySet()) {
+      Collection<VirtualFile> projectSet = myPlainTextFileSets.get(project);
+      if (projectSet != null && projectSet.contains(file)) return true;
+    }
+    return false;
+  }
+
+  private void initPlainTextFileSets() {
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project openProject : openProjects) {
+      addProjectPlainTextFiles(openProject);
+    }
   }
 
   public static boolean isApplicableFor(@NotNull VirtualFile file) {
@@ -80,25 +79,20 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
   }
 
   public void markAsPlainText(VirtualFile... files) {
-    List<VirtualFile> filesToSync = new ArrayList<VirtualFile>();
-    for (VirtualFile file : files) {
-      if (addFile(file)) {
-        filesToSync.add(file);
-        FileBasedIndex.getInstance().requestReindex(file);
-      }
-    }
-    fireRootsChanged(filesToSync, true);
+    setPlainTextStatus(true, files);
   }
 
-  public void unmarkPlainText(VirtualFile... files) {
+  public void resetOriginalFileType(VirtualFile... files) {
+    setPlainTextStatus(false, files);
+  }
+
+  public void setPlainTextStatus(boolean isPlainText, VirtualFile... files) {
     List<VirtualFile> filesToSync = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      if (removeFile(file)) {
-        filesToSync.add(file);
-        FileBasedIndex.getInstance().requestReindex(file);
-      }
+      filesToSync.add(file);
+      FileBasedIndex.getInstance().requestReindex(file);
     }
-    fireRootsChanged(filesToSync, false);
+    fireRootsChanged(filesToSync, isPlainText);
   }
 
   private static void fireRootsChanged(final Collection<VirtualFile> files, final boolean isAdded) {
@@ -133,7 +127,7 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
 
   @Override
   public void projectOpened(Project project) {
-    syncWithProject(project);
+    addProjectPlainTextFiles(project);
   }
 
   @Override
@@ -143,27 +137,19 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
 
   @Override
   public void projectClosed(Project project) {
-    myProcessedProjects.remove(project);
+    myPlainTextFileSets.remove(project);
   }
 
   @Override
   public void projectClosing(Project project) {
   }
 
-  private boolean syncWithProject(Project project) {
-    if (project.isDisposed()) return false;
-    ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
-    if (projectPlainTextFileTypeManager == null) return true;
-    for (VirtualFile file : projectPlainTextFileTypeManager.getFiles()) {
-      addFile(file);
-    }
-    if (!DirectoryIndex.getInstance(project).isInitialized()) return false;
-    for (VirtualFile file : getFiles()) {
-      if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-        projectPlainTextFileTypeManager.addFile(file);
+  private void addProjectPlainTextFiles(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+      if (projectPlainTextFileTypeManager != null) {
+        myPlainTextFileSets.put(project, projectPlainTextFileTypeManager.getFiles());
       }
     }
-    myProcessedProjects.add(project);
-    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.List;
 
 public class JavaReferenceAdjuster implements ReferenceAdjuster {
   @Override
-  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
+  public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
     IElementType elementType = element.getElementType();
     if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
       IElementType parentType = element.getTreeParent().getElementType();
@@ -124,7 +124,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   }
 
   @Override
-  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
+  public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     return process(element, addImports, incompleteCode, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
@@ -155,7 +155,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   }
 
   @Override
-  public void processRange(ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
+  public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
     List<ASTNode> array = new ArrayList<ASTNode>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for (ASTNode ref : array) {
@@ -166,7 +166,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   }
 
   @Override
-  public void processRange(ASTNode element, int startOffset, int endOffset, Project project) {
+  public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     processRange(element, startOffset, endOffset, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
@@ -206,6 +206,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
   }
 
+  @NotNull
   private static ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
     @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReferenceElement reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);

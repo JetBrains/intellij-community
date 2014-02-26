@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ public class ReferenceProviderType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ReferenceProviderType");
   private static final KeyedExtensionCollector<PsiReferenceProvider,ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
+    @NotNull
     @Override
-    protected String keyToString(final ReferenceProviderType key) {
+    protected String keyToString(@NotNull final ReferenceProviderType key) {
       return key.myId;
     }
   };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -28,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 public class XmlProcessingInstructionManipulator extends AbstractElementManipulator<XmlProcessingInstruction> {
 
   @Override
-  public XmlProcessingInstruction handleContentChange(XmlProcessingInstruction element, TextRange range, String newContent) throws IncorrectOperationException {
+  public XmlProcessingInstruction handleContentChange(@NotNull XmlProcessingInstruction element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     return XmlAttributeValueManipulator.handleContentChange(element, range, newContent, XmlTokenType.XML_TAG_CHARACTERS);
   }
 }

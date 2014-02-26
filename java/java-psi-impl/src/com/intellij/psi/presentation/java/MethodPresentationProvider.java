@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.intellij.psi.presentation.java;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class MethodPresentationProvider implements ItemPresentationProvider<PsiMethod> {
   @Override
-  public ItemPresentation getPresentation(PsiMethod item) {
+  public ItemPresentation getPresentation(@NotNull PsiMethod item) {
     return JavaPresentationUtil.getMethodPresentation(item);
   }
 }

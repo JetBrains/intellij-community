@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -126,6 +127,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       private AnAction getEditSourceAction() {
         AnAction editSourceAction = new EditSourceAction();
         editSourceAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+        editSourceAction.getTemplatePresentation().setText(ActionsBundle.actionText("EditSource"));
+        editSourceAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
+        editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel, DiffPanelImpl.this);
         return editSourceAction;
       }
     };
@@ -202,9 +206,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private void registerActions() {
-    // EditSourceAction is not enabled in modal context, so we need to register it here explicitly
-    new EditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel, this);
-
     //control+tab switches editors
     new AnAction(){
       @Override

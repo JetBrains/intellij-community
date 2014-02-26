@@ -173,12 +173,15 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
-    actionGroup.add(Separator.getInstance());
-    actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
+
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction("Sort Installed First"));
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
+    }
+    else {
+      actionGroup.add(new SortByStatusAction("Sort Installed First"));
+      actionGroup.add(Separator.getInstance());
+      actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
     }
     return actionGroup;
   }

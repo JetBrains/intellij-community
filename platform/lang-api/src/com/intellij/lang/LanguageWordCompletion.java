@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class LanguageWordCompletion extends LanguageExtension<WordCompletionElementFilter> {
   public static final LanguageWordCompletion INSTANCE = new LanguageWordCompletion();
@@ -28,7 +29,7 @@ public class LanguageWordCompletion extends LanguageExtension<WordCompletionElem
     super("com.intellij.codeInsight.wordCompletionFilter", new DefaultWordCompletionFilter());
   }
 
-  public boolean isEnabledIn(IElementType type) {
+  public boolean isEnabledIn(@NotNull IElementType type) {
     return forLanguage(type.getLanguage()).isWordCompletionEnabledIn(type);
   }
 }

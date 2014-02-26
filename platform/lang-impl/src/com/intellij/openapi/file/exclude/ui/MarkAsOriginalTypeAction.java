@@ -42,7 +42,7 @@ public class MarkAsOriginalTypeAction extends AnAction {
     }
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     assert typeManager != null;
-    typeManager.unmarkPlainText(filesToUnmark.toArray(new VirtualFile[filesToUnmark.size()]));
+    typeManager.resetOriginalFileType(filesToUnmark.toArray(new VirtualFile[filesToUnmark.size()]));
   }
 
   @Override
