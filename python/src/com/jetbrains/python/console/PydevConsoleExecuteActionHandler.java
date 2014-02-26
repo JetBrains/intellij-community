@@ -137,13 +137,12 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
 
     // multiline strings handling
     if (myInMultilineStringState != null) {
-      if (PyConsoleUtil.isDoubleQuoteMultilineStarts(line)) {
+      if (PyConsoleUtil.isDoubleQuoteMultilineStarts(line) || PyConsoleUtil.isSingleQuoteMultilineStarts(line)) {
         myInMultilineStringState = null;
         // restore language
         console.setLanguage(PythonLanguage.getInstance());
         console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
-      }
-      else {
+      } else {
         return;
       }
     }
