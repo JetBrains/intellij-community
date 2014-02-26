@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -41,7 +40,7 @@ public abstract class XValueTextRendererBase implements XValuePresentation.XValu
   }
 
   @Override
-  public final void renderValue(@NotNull String value, @Nullable TextAttributesKey key) {
+  public final void renderValue(@NotNull String value, @NotNull TextAttributesKey key) {
     renderRawValue(value, key);
   }
 
