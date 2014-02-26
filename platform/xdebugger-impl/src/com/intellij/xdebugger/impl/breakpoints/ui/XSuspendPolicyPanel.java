@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.BreakpointState;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -89,7 +89,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
       @Override
       public void actionPerformed(ActionEvent e) {
         SuspendPolicy suspendPolicy = getSelectedSuspendPolicy();
-        BreakpointState.setDefaultSuspendPolicy(myBreakpointType.getId(), suspendPolicy);
+        ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).setSuspendPolicy(suspendPolicy);
         updateSuspendPolicyFont();
         if (SuspendPolicy.THREAD == suspendPolicy) {
           mySuspendThread.requestFocus();
@@ -103,11 +103,11 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   }
 
   private void updateMakeDefaultEnableState() {
-    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().equals(BreakpointState.getDefaultSuspendPolicy(myBreakpointType.getId())));
+    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().equals(((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy()));
   }
 
   private void updateSuspendPolicyFont() {
-    SuspendPolicy defaultPolicy = BreakpointState.getDefaultSuspendPolicy(myBreakpointType.getId());
+    SuspendPolicy defaultPolicy = ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
     Font font = mySuspendAll.getFont().deriveFont(Font.PLAIN);
     Font boldFont = font.deriveFont(Font.BOLD);
 

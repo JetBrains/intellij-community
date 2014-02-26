@@ -216,7 +216,7 @@ public class BreakpointManager {
     }
     if (typeCls != null) {
       XBreakpointType<XBreakpoint<?>, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
-      BreakpointState.setDefaultSuspendPolicy(type.getId(), Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
+      ((XBreakpointManagerImpl)getXBreakpointManager()).getBreakpointDefaults(type).setSuspendPolicy(Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
     }
     //myBreakpointDefaults.put(category, defaults);
   }

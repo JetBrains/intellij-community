@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -49,7 +48,6 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myEnabled = enabled;
     myTypeId = typeId;
     myTimeStamp = timeStamp;
-    mySuspendPolicy = getDefaultSuspendPolicy(myTypeId); // apply default
   }
 
   @Attribute("enabled")
@@ -145,16 +143,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myTimeStamp = timeStamp;
   }
 
-  public static SuspendPolicy getDefaultSuspendPolicy(String typeId) {
-    String defaultPolicy = PropertiesComponent.getInstance().getValue(getDefaultSuspendPolicyKey(typeId));
-    return defaultPolicy != null ? SuspendPolicy.valueOf(defaultPolicy) : SuspendPolicy.ALL;
-  }
-
-  public static void setDefaultSuspendPolicy(String typeId, SuspendPolicy suspendPolicy) {
-    PropertiesComponent.getInstance().setValue(getDefaultSuspendPolicyKey(typeId), suspendPolicy.name());
-  }
-
-  private static String getDefaultSuspendPolicyKey(String typeId) {
-    return "debugger.suspend.policy-" + typeId;
+  void applyDefaults(BreakpointState state) {
+    state.mySuspendPolicy = mySuspendPolicy;
   }
 }
