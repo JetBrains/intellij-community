@@ -1,10 +1,12 @@
-PyFile:IncompleteFor.py
+PyFile:EmptyBlockInFunctionBeforeFunction.py
   PyFunction('foo')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
     PsiElement(Py:IDENTIFIER)('foo')
     PyParameterList
       PsiElement(Py:LPAR)('(')
+      PyNamedParameter('xs')
+        PsiElement(Py:IDENTIFIER)('xs')
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace('\n    ')
@@ -13,19 +15,18 @@ PyFile:IncompleteFor.py
         PyForPart
           PsiElement(Py:FOR_KEYWORD)('for')
           PsiWhiteSpace(' ')
-          PyTargetExpression: item
-            PsiElement(Py:IDENTIFIER)('item')
+          PyTargetExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
           PsiWhiteSpace(' ')
           PsiElement(Py:IN_KEYWORD)('in')
           PsiWhiteSpace(' ')
-          PyReferenceExpression: ba
-            PsiElement(Py:IDENTIFIER)('ba')
-          PsiErrorElement:Colon expected
-            <empty list>
+          PyReferenceExpression: xs
+            PsiElement(Py:IDENTIFIER)('xs')
+          PsiElement(Py:COLON)(':')
           PyStatementList
             PsiErrorElement:Indent expected
               <empty list>
-  PsiWhiteSpace('\n\n')
+  PsiWhiteSpace('\n\n\n')
   PyFunction('bar')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
