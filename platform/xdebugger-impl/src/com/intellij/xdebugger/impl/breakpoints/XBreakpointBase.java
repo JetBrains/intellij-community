@@ -348,6 +348,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myCustomizedPresentation != null ? myCustomizedPresentation.getErrorMessage() : null;
   }
 
+  CustomizedBreakpointPresentation getCustomizedPresentation() {
+    return myCustomizedPresentation;
+  }
+
   public void setCustomizedPresentation(CustomizedBreakpointPresentation presentation) {
     myCustomizedPresentation = presentation;
   }
