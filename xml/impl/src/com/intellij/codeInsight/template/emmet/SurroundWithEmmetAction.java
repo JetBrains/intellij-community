@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,16 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 public class SurroundWithEmmetAction extends BaseCodeInsightAction {
   public SurroundWithEmmetAction() {
@@ -56,19 +54,9 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
         selectionModel.selectLineAtCaret();
       }
 
-      final Document document = editor.getDocument();
-      final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile != null) {
-        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFile);
-      }
-
-      String selection = editor.getSelectionModel().getSelectedText();
-
-      final ZenCodingTemplate template = new ZenCodingTemplate();
-      if (selection != null && template.isApplicable(file, editor.getCaretModel().getOffset(), true)) {
-        selection = selection.trim();
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        template.wrap(selection, new CustomTemplateCallback(editor, file, true));
+      ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
+      if (emmetCustomTemplate != null) {
+        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, Collections.<Character>emptySet()).actionPerformed(null);
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HintManager.getInstance().showErrorHint(editor, "Cannot invoke Surround with Emmet in the current context");
