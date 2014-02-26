@@ -176,7 +176,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private boolean isMarked(@NotNull SpecialRowElement specialRowElement) {
-    return myThickHoverController.isHover(specialRowElement);
+    return myThickHoverController.isHover(specialRowElement) || myThickHoverController.isHover(specialRowElement.getElement());
   }
 
   @Override

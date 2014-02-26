@@ -18,16 +18,34 @@ package com.intellij.vcs.log.newgraph.gpaph.impl;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.newgraph.gpaph.Edge;
-import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
-import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
-import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.newgraph.gpaph.*;
 import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> implements MutableGraph {
+
+  @Nullable
+  public static Edge containedCollapsedEdge(@NotNull GraphElement element) {
+    if (element instanceof Edge) {
+      Edge edge = (Edge)element;
+      if (edge.getType() == Edge.Type.HIDE_FRAGMENT)
+        return edge;
+
+    } else {
+      Node node = (Node)element;
+      for (Edge upEdge : node.getUpEdges())
+        if (upEdge.getType() == Edge.Type.HIDE_FRAGMENT) return upEdge;
+
+      for (Edge downEdge : node.getDownEdges())
+        if (downEdge.getType() == Edge.Type.HIDE_FRAGMENT) return downEdge;
+    }
+
+    return null;
+  }
+
   @NotNull
   protected final IntToIntMap myVisibleToReal;
 
@@ -66,13 +84,14 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   }
 
   protected int toVisibleIndex(int nodeIndex) {
-    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT) {
+    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT)
       return SomeGraph.NOT_LOAD_COMMIT;
-    }
     return myVisibleToReal.getShortIndex(nodeIndex);
   }
 
   protected int toNodeIndex(int visibleNodeIndex) {
+    if (visibleNodeIndex == SomeGraph.NOT_LOAD_COMMIT)
+      return SomeGraph.NOT_LOAD_COMMIT;
     return myVisibleToReal.getLongIndex(visibleNodeIndex);
   }
 

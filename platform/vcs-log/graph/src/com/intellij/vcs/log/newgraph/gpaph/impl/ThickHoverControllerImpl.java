@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.SomeGraph;
@@ -26,6 +27,8 @@ import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.RowClickInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
+import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.newgraph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
@@ -42,47 +45,60 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   private final MutableGraph myMutableGraph;
 
   @NotNull
+  private final FragmentGenerator myFragmentGenerator;
+
+  @NotNull
   private final Set<Integer> hoverNodes = new HashSet<Integer>(); // contains visibleIndex
 
   @NotNull
-  private final Flags thickFlags;
+  private final Flags myThickFlags;
 
   @NotNull
   private final DfsUtil myDfsUtil;
 
   public ThickHoverControllerImpl(@NotNull PermanentGraph permanentGraph,
-                                  @NotNull MutableGraph mutableGraph,
-                                  @NotNull Flags thickFlags,
+                                  @NotNull MutableGraph mutableGraph, @NotNull FragmentGenerator fragmentGenerator, @NotNull Flags thickFlags,
                                   @NotNull DfsUtil dfsUtil) {
     myPermanentGraph = permanentGraph;
     myMutableGraph = mutableGraph;
-    this.thickFlags = thickFlags;
+    myFragmentGenerator = fragmentGenerator;
+    myThickFlags = thickFlags;
     myDfsUtil = dfsUtil;
   }
 
   @Override
   public boolean isThick(@NotNull GraphElement element) {
-    return isOn(element, thickFlags);
+    return isOn(element, new Function<Integer, Boolean>() {
+      @Override
+      public Boolean fun(Integer integer) {
+        return myThickFlags.get(myMutableGraph.getIndexInPermanentGraph(integer));
+      }
+    });
   }
 
   @Override
   public boolean isHover(@NotNull GraphElement element) {
-    return false;
+    return isOn(element, new Function<Integer, Boolean>() {
+      @Override
+      public Boolean fun(Integer integer) {
+        return hoverNodes.contains(integer);
+      }
+    });
   }
 
-  private boolean isOn(@NotNull GraphElement element, @NotNull Flags flags) {
+  private static boolean isOn(@NotNull GraphElement element, @NotNull Function<Integer, Boolean> visibleNodeIndexToOn) {
     if (element instanceof Node)
-      return flags.get(myMutableGraph.getIndexInPermanentGraph(((Node)element).getVisibleNodeIndex()));
+      return visibleNodeIndexToOn.fun(((Node)element).getVisibleNodeIndex());
 
     if (element instanceof Edge) {
       Edge edge = (Edge) element;
-      int realUpNodeIndex = myMutableGraph.getIndexInPermanentGraph(edge.getUpNodeVisibleIndex());
-      int realDownNodeIndex = myMutableGraph.getIndexInPermanentGraph(edge.getDownNodeVisibleIndex());
+      int visibleUpNodeIndex = edge.getUpNodeVisibleIndex();
+      int visibleDownNodeIndex = edge.getDownNodeVisibleIndex();
 
-      if (realDownNodeIndex == SomeGraph.NOT_LOAD_COMMIT)
-        return flags.get(realUpNodeIndex);
+      if (visibleDownNodeIndex == SomeGraph.NOT_LOAD_COMMIT)
+        return visibleNodeIndexToOn.fun(visibleUpNodeIndex);
       else
-        return flags.get(realUpNodeIndex) && flags.get(realDownNodeIndex);
+        return visibleNodeIndexToOn.fun(visibleUpNodeIndex) && visibleNodeIndexToOn.fun(visibleDownNodeIndex);
     }
 
     return false;
@@ -92,11 +108,11 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   public void performAction(@NotNull InternalGraphAction action) {
     super.performAction(action);
     if (action instanceof RowClickInternalGraphAction) {
-      setAllValues(thickFlags, false);
+      setAllValues(myThickFlags, false);
       Integer visibleNodeIndex = ((RowClickInternalGraphAction)action).getInfo();
       if (visibleNodeIndex != null) {
         int realRowIndex = myMutableGraph.getIndexInPermanentGraph(visibleNodeIndex);
-        enableAllRelativeNodes(thickFlags, realRowIndex);
+        enableAllRelativeNodes(myThickFlags, realRowIndex);
       }
     }
 
@@ -138,6 +154,31 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   }
 
   private void hoverFragment(@NotNull GraphElement graphElement) {
+    Edge collapsedEdge = AbstractMutableGraph.containedCollapsedEdge(graphElement);
+    if (collapsedEdge != null) {
+      hoverNodes.add(collapsedEdge.getUpNodeVisibleIndex());
+      hoverNodes.add(collapsedEdge.getDownNodeVisibleIndex());
+      return;
+    }
+
+    GraphFragment fragment = myFragmentGenerator.getPartLongFragment(graphElement);
+    if (fragment == null)
+      return;
+
+    hoverNodes.add(fragment.upVisibleNodeIndex);
+    hoverNodes.add(fragment.downVisibleNodeIndex);
+
+    myDfsUtil.nodeDfsIterator(fragment.upVisibleNodeIndex, new DfsUtil.NextNode() {
+      @Override
+      public int fun(int currentNode) {
+        for (Edge downEdge : myMutableGraph.getNode(currentNode).getDownEdges()) {
+          int downNode = downEdge.getDownNodeVisibleIndex();
+          if (hoverNodes.add(downNode))
+            return downNode;
+        }
+        return DfsUtil.NextNode.NODE_NOT_FOUND;
+      }
+    });
 
   }
 }
