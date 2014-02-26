@@ -22,7 +22,8 @@ import java.util.List;
 
 public abstract class LineTokenizerBase<T> {
   private int myIndex = 0;
-  @Nullable private String myLineSeparator = null;
+  private int myLineSeparatorStart = -1;
+  private int myLineSeparatorEnd = -1;
 
   protected abstract void addLine(List<T> lines, int start, int end, boolean appendNewLine);
 
@@ -71,14 +72,16 @@ public abstract class LineTokenizerBase<T> {
       rFound |= r;
       myIndex++;
     }
-    if (myLineSeparator == null) {
-      myLineSeparator = substring(eolStart, myIndex);
+    if (myLineSeparatorStart == -1) {
+      myLineSeparatorStart = eolStart;
+      myLineSeparatorEnd = myIndex;
     }
   }
 
   @Nullable
   public String getLineSeparator() {
-    return myLineSeparator;
+    if (myLineSeparatorStart == -1) return null;
+    return substring(myLineSeparatorStart, myLineSeparatorEnd);
   }
 
   private void skipToEOL() {
