@@ -59,7 +59,7 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.GRAY);
   public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
-  public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListForeground());
+  public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
   public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
     new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
@@ -74,7 +74,7 @@ public final class SimpleTextAttributes {
   private final int myStyle;
 
   /**
-   * @param style   style of the text fragment.
+   * @param style   style of the text fragment.                                       5
    * @param fgColor color of the text fragment. <code>color</code> can be
    *                <code>null</code>. In that case <code>SimpleColoredComponent</code> will
    *                use its foreground to paint the text fragment.

@@ -54,7 +54,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkCredentials;
 import com.intellij.remotesdk.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -302,7 +302,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
-    RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
+    RemoteSdkCredentials data = (RemoteSdkCredentials)mySdk.getSdkAdditionalData();
     assert data != null;
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);

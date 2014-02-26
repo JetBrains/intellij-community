@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
 import org.jetbrains.annotations.Nullable;
@@ -238,12 +238,12 @@ class DragHelper extends MouseDragHelper {
 
     endDrag(willDragOutStart);
 
-    final int place = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+    final JBTabsPosition position = myTabs.getTabsPosition();
 
-    if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && place != SwingConstants.TOP && place != SwingConstants.BOTTOM) {
-      final Point p = new Point(event.getPoint());
-      SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
-      if (myTabs.getVisibleRect().contains(p)) {
+    if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
+      Point p = new Point(event.getPoint());
+      p = SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
+      if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
         final int answer = Messages.showOkCancelDialog(myTabs,
                                                        IdeBundle.message("alphabetical.mode.is.on.warning"),
                                                        IdeBundle.message("title.warning"),

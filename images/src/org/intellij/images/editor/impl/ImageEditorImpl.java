@@ -158,7 +158,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         disposed = true;
     }
 
-    public void propertyChanged(VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         super.propertyChanged(event);
         if (file.equals(event.getFile())) {
             // Change document
@@ -177,7 +177,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         }
     }
 
-    public void contentsChanged(VirtualFileEvent event) {
+    public void contentsChanged(@NotNull VirtualFileEvent event) {
         super.contentsChanged(event);
         if (file.equals(event.getFile())) {
             // Change document

@@ -35,7 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.LocationNameFieldsBinding;
-import com.intellij.remotesdk.RemoteSdkDataHolder;
+import com.intellij.remotesdk.RemoteSdkCredentialsHolder;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
@@ -119,7 +119,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       Iterables.removeIf(allSdks, new Predicate<Sdk>() {
         @Override
         public boolean apply(Sdk s) {
-          return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkDataHolder.isRemoteSdk(s.getHomePath());
+          return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath());
         }
       });
       List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);

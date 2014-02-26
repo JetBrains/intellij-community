@@ -27,33 +27,43 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 
+import java.util.List;
+
 public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final EditorEx editor = getEditor(e);
-    if (editor.getCaretModel().supportsMultipleCarets()) {
-      editor.setColumnMode(state);
-      return;
-    }
     final SelectionModel selectionModel = editor.getSelectionModel();
+    final CaretModel caretModel = editor.getCaretModel();
     if (state) {
+      caretModel.removeSecondaryCarets();
       boolean hasSelection = selectionModel.hasSelection();
       int selStart = selectionModel.getSelectionStart();
       int selEnd = selectionModel.getSelectionEnd();
-      final CaretModel caretModel = editor.getCaretModel();
-      LogicalPosition blockStart = selStart == caretModel.getOffset()
+      LogicalPosition blockStart, blockEnd;
+      if (caretModel.supportsMultipleCarets()) {
+        LogicalPosition logicalSelStart = editor.offsetToLogicalPosition(selStart);
+        LogicalPosition logicalSelEnd = editor.offsetToLogicalPosition(selEnd);
+        int caretOffset = caretModel.getOffset();
+        blockStart = selStart == caretOffset ? logicalSelEnd : logicalSelStart;
+        blockEnd = selStart == caretOffset ? logicalSelStart : logicalSelEnd;
+      }
+      else {
+        blockStart = selStart == caretModel.getOffset()
+                                     ? caretModel.getLogicalPosition()
+                                     : editor.offsetToLogicalPosition(selStart);
+        blockEnd = selEnd == caretModel.getOffset()
                                    ? caretModel.getLogicalPosition()
-                                   : editor.offsetToLogicalPosition(selStart);
-      LogicalPosition blockEnd = selEnd == caretModel.getOffset()
-                                 ? caretModel.getLogicalPosition()
-                                 : editor.offsetToLogicalPosition(selEnd);
+                                   : editor.offsetToLogicalPosition(selEnd);
+      }
       editor.setColumnMode(true);
       if (hasSelection) {
         selectionModel.setBlockSelection(blockStart, blockEnd);
@@ -63,14 +73,29 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
       }
     }
     else {
-      final boolean hasSelection = selectionModel.hasBlockSelection();
+      boolean hasSelection = selectionModel.hasBlockSelection();
       final LogicalPosition blockStart = selectionModel.getBlockStart();
       final LogicalPosition blockEnd = selectionModel.getBlockEnd();
 
       int selStart = hasSelection && blockStart != null ? editor.logicalPositionToOffset(blockStart) : 0;
       int selEnd = hasSelection && blockEnd != null ? editor.logicalPositionToOffset(blockEnd) : 0;
 
+      if (caretModel.supportsMultipleCarets()) {
+        hasSelection = true;
+        List<Caret> allCarets = caretModel.getAllCarets();
+        Caret fromCaret = allCarets.get(0);
+        Caret toCaret = allCarets.get(allCarets.size() - 1);
+        if (fromCaret == caretModel.getPrimaryCaret()) {
+          Caret tmp = fromCaret;
+          fromCaret = toCaret;
+          toCaret = tmp;
+        }
+        selStart = fromCaret.getLeadSelectionOffset();
+        selEnd = toCaret.getSelectionStart() == toCaret.getLeadSelectionOffset() ? toCaret.getSelectionEnd() : toCaret.getSelectionStart();
+      }
+
       editor.setColumnMode(false);
+      caretModel.removeSecondaryCarets();
       if (hasSelection) {
         selectionModel.setSelection(selStart, selEnd);
       }

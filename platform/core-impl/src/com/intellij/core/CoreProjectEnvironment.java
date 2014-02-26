@@ -41,6 +41,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.messages.impl.MessageBusImpl;
+import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 public class CoreProjectEnvironment {
   private final Disposable myParentDisposable;
@@ -54,7 +56,7 @@ public class CoreProjectEnvironment {
   public CoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
     myEnvironment = applicationEnvironment;
-    myProject = new MockProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
+    myProject = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
     preregisterServices();
 
@@ -82,6 +84,10 @@ public class CoreProjectEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+  }
+
+  protected MockProject createProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
+    return new MockProject(parent, parentDisposable);
   }
 
   protected ProjectScopeBuilder createProjectScopeBuilder() {

@@ -682,6 +682,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
   }
 
+  boolean isHistoryViewerForceAdditionalColumnsUsage() {
+    return true;
+  }
+
   private class MyLayout extends AbstractLayoutManager {
     @Override
     public Dimension preferredLayoutSize(final Container parent) {
@@ -713,9 +717,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       // deal with width
       final int width = Math.max(editorSize.width, historySize.width);
       newEditorSize.width = width + editor.getScrollPane().getHorizontalScrollBar().getHeight();
-      history.getSoftWrapModel().forceAdditionalColumnsUsage();
-      editor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, editor));
-      history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
+      if (isHistoryViewerForceAdditionalColumnsUsage()) {
+        history.getSoftWrapModel().forceAdditionalColumnsUsage();
+        editor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, editor));
+        history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
+      }
 
       // deal with height
       if (historySize.width == 0) {

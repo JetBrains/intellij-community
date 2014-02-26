@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -93,6 +90,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
+  private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
 
@@ -513,7 +511,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void reloadFiles(final VirtualFile... files) {
+  public void reloadFiles(@NotNull final VirtualFile... files) {
     for (VirtualFile file : files) {
       if (file.exists()) {
         final Document doc = getCachedDocument(file);
@@ -547,7 +545,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void propertyChanged(VirtualFilePropertyEvent event) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final Document document = getCachedDocument(file);
@@ -576,18 +574,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private static boolean isBinaryWithDecompiler(VirtualFile file) {
+  private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
     final FileType ft = file.getFileType();
     return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
   }
 
-  private static boolean isBinaryWithoutDecompiler(VirtualFile file) {
+  private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
   @Override
-  public void contentsChanged(VirtualFileEvent event) {
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
     if (event.isFromSave()) return;
     final VirtualFile file = event.getFile();
     final Document document = getCachedDocument(file);
@@ -716,11 +714,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void fileCreated(VirtualFileEvent event) {
+  public void fileCreated(@NotNull VirtualFileEvent event) {
   }
 
   @Override
-  public void fileDeleted(VirtualFileEvent event) {
+  public void fileDeleted(@NotNull VirtualFileEvent event) {
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
@@ -728,24 +726,37 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void fileMoved(VirtualFileMoveEvent event) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
   }
 
   @Override
-  public void fileCopied(VirtualFileCopyEvent event) {
+  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
     fileCreated(event);
   }
 
   @Override
-  public void beforePropertyChange(VirtualFilePropertyEvent event) {
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
   }
 
   @Override
-  public void beforeContentsChange(VirtualFileEvent event) {
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+    VirtualFile virtualFile = event.getFile();
+    if (virtualFile.getFileType() == UnknownFileType.INSTANCE && virtualFile.getLength() == 0) {
+      virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
+    }
+  }
+
+  public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.getUserData(MUST_RECOMPUTE_FILE_TYPE) != null) {
+      FileTypeRegistry.getInstance().detectFileTypeFromContent(virtualFile);
+      virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, null);
+      return true;
+    }
+    return false;
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent event) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
     /*
     if (!event.isFromRefresh()) {
       VirtualFile file = event.getFile();
@@ -768,7 +779,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void beforeFileMovement(VirtualFileMoveEvent event) {
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
   }
 
   @Override
@@ -818,14 +829,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @NotNull
-  protected FileDocumentManagerListener[] getListeners() {
+  private static FileDocumentManagerListener[] getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensions();
   }
 
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      for (IOException exception : failures.values()) {
-        throw new RuntimeException(exception);
+      IOException ioException = failures.isEmpty() ? null : failures.values().iterator().next();
+      if (ioException != null) {
+        throw new RuntimeException(ioException);
       }
       return;
     }

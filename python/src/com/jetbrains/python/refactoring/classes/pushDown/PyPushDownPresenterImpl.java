@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Ilya.Kazakevich
  */
-public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPushDownView> implements PyPushDownPresenter {
+public class PyPushDownPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPushDownView, MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> implements PyPushDownPresenter {
   @NotNull
   private final Project myProject;
 

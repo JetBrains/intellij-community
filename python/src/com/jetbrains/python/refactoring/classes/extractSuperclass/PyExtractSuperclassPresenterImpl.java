@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
@@ -27,7 +28,8 @@ import java.util.Collections;
 /**
  * @author Ilya.Kazakevich
  */
-class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView>
+class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView,
+  MemberInfoModel<PyElement, PyMemberInfo<PyElement>>>
   implements PyExtractSuperclassPresenter {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
 

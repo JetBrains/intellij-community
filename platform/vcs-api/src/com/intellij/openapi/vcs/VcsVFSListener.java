@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -313,14 +314,14 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract boolean isDirectoryVersioningSupported();
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
-    public void fileCreated(final VirtualFileEvent event) {
+    public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       if (isUnderMyVcs(file)) {
         VcsVFSListener.this.fileAdded(event, file);
       }
     }
 
-    public void fileCopied(final VirtualFileCopyEvent event) {
+    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
       if (isEventIgnored(event, true) || myChangeListManager.isIgnoredFile(event.getFile())) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOriginalFile());
       if (oldVcs == myVcs) {
@@ -335,7 +336,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void beforeFileDeletion(final VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
       if (isEventIgnored(event, true)) {
         return;
@@ -356,7 +357,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void beforeFileMovement(final VirtualFileMoveEvent event) {
+    public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
       if (isEventIgnored(event, true)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
@@ -368,7 +369,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void fileMoved(final VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
       if (isEventIgnored(event, true)) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
       if (oldVcs != myVcs) {
@@ -376,7 +377,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+    public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
@@ -393,7 +394,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void beforeContentsChange(VirtualFileEvent event) {
+    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       assert !file.isDirectory();
       if (isUnderMyVcs(file)) {

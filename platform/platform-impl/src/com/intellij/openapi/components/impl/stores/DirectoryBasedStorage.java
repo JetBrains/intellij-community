@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,19 +72,19 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         @Override
-        public void contentsChanged(final VirtualFileEvent event) {
+        public void contentsChanged(@NotNull final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         @Override
-        public void fileDeleted(final VirtualFileEvent event) {
+        public void fileDeleted(@NotNull final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         @Override
-        public void fileCreated(final VirtualFileEvent event) {
+        public void fileCreated(@NotNull final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }

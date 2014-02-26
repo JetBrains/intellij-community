@@ -14,10 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * To "preview" button would be displayed
  *
  * @param <T> view for this presenter
+ * @param <M> Type of model
  * @author Ilya.Kazakevich
  */
 
-public abstract class MembersBasedPresenterNoPreviewImpl<T extends MembersBasedView<?>> extends MembersBasedPresenterImpl<T> {
+public abstract class MembersBasedPresenterNoPreviewImpl<T extends MembersBasedView<?>,
+  M extends MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> extends MembersBasedPresenterImpl<T, M> {
   /**
    * @param view                  view for this presenter
    * @param classUnderRefactoring class to refactor
@@ -27,7 +29,7 @@ public abstract class MembersBasedPresenterNoPreviewImpl<T extends MembersBasedV
   protected MembersBasedPresenterNoPreviewImpl(@NotNull final T view,
                                                @NotNull final PyClass classUnderRefactoring,
                                                @NotNull final PyMemberInfoStorage infoStorage,
-                                               @NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model) {
+                                               @NotNull final M model) {
     super(view, classUnderRefactoring, infoStorage, model);
   }
 

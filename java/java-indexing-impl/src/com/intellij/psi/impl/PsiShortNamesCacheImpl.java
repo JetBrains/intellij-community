@@ -147,8 +147,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     final List<PsiMethod> methods = new SmartList<PsiMethod>();
-    StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiMethod>(methods){
-      @Override
+    StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, PsiMethod.class, new
+                                            CommonProcessors.CollectProcessor < PsiMethod > (methods){
+    @Override
       public boolean process(PsiMethod method) {
         return methods.size() != maxCount && super.process(method);
       }
@@ -163,7 +164,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiMethod> processor) {
-    return StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, processor);
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, PsiMethod.class, processor);
   }
 
   @Override
@@ -181,8 +182,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @NotNull
   public PsiField[] getFieldsByNameIfNotMoreThan(@NotNull String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     final List<PsiField> methods = new SmartList<PsiField>();
-    StubIndex.getInstance().process(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiField>(methods){
-      @Override
+    StubIndex.getInstance().processElements(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, PsiField.class, new
+                                            CommonProcessors.CollectProcessor < PsiField > (methods){
+    @Override
       public boolean process(PsiField method) {
         return methods.size() != maxCount && super.process(method);
       }
@@ -220,7 +222,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
                                        @NotNull Processor<? super PsiField> processor,
                                        @NotNull GlobalSearchScope scope,
                                        @Nullable IdFilter filter) {
-    return StubIndex.getInstance().process(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), new JavaSourceFilterScope(scope), filter, processor);
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), new JavaSourceFilterScope(scope),
+                                                   filter, PsiField.class, processor);
   }
 
   @Override
@@ -228,7 +231,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
                                         @NotNull Processor<? super PsiMethod> processor,
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
-    return StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), new JavaSourceFilterScope(scope), filter, processor);
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(),
+                                                   new JavaSourceFilterScope(scope), filter, PsiMethod.class, processor);
   }
 
   @Override
@@ -236,7 +240,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
                                         @NotNull Processor<? super PsiClass> processor,
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
-    return StubIndex.getInstance().process(JavaStubIndexKeys.CLASS_SHORT_NAMES, name, myManager.getProject(), new JavaSourceFilterScope(scope), filter, processor);
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, name, myManager.getProject(),
+                                                   new JavaSourceFilterScope(scope), filter, PsiClass.class, processor);
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {

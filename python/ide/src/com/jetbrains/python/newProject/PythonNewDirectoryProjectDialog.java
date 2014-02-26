@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.NewDirectoryProjectDialog;
-import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkCredentials;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -169,7 +169,7 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
         if (PythonSdkType.isRemote(getSdk())) {
           PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
           assert manager != null;
-          return manager.showRemoteProjectSettingsDialog(baseDir, (RemoteSdkData)getSdk().getSdkAdditionalData());
+          return manager.showRemoteProjectSettingsDialog(baseDir, (RemoteSdkCredentials)getSdk().getSdkAdditionalData());
         }
         else {
           return new PyNewProjectSettings();
@@ -185,7 +185,7 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
           PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
           assert manager != null;
           manager.createDeployment(project, baseDir, (RemoteProjectSettings)settings,
-                                   (RemoteSdkData)getSdk().getSdkAdditionalData());
+                                   (RemoteSdkCredentials)getSdk().getSdkAdditionalData());
         }
         else if (settings instanceof PyNewProjectSettings) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {

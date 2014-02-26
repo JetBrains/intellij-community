@@ -29,27 +29,27 @@ public class TipAndTrickBean extends AbstractExtensionPointBean {
   public static final ExtensionPointName<TipAndTrickBean> EP_NAME = ExtensionPointName.create("com.intellij.tipAndTrick");
 
   @Attribute("file")
-  public String myFileName;
+  public String fileName;
 
   @Attribute("feature-id")
-  public String myFeatureId;
-
-  public String getFileName() {
-    return myFileName;
-  }
-
-  public String getFeatureId() {
-    return myFeatureId;
-  }
+  public String featureId;
 
   @Nullable
   public static TipAndTrickBean findByFileName(String tipFileName) {
     for (TipAndTrickBean tip : Extensions.getExtensions(EP_NAME)) {
-      if (Comparing.equal(tipFileName, tip.getFileName())) {
+      if (Comparing.equal(tipFileName, tip.fileName)) {
         return tip;
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "TipAndTrickBean{" +
+           "fileName='" + fileName + '\'' +
+           ", plugin='" + getPluginDescriptor().getPluginId() + '\'' +
+           '}';
   }
 }
 

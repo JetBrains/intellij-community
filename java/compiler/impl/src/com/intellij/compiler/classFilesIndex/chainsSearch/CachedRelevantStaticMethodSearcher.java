@@ -25,7 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -35,24 +35,18 @@ import java.util.*;
 public class CachedRelevantStaticMethodSearcher {
   private final HashMap<MethodIncompleteSignature, PsiMethod> myCachedResolveResults = new HashMap<MethodIncompleteSignature, PsiMethod>();
   private final MethodsUsageIndexReader myIndexReader;
-  private final JavaPsiFacade myJavaPsiFacade;
-  private final GlobalSearchScope myAllScope;
-  private final GlobalSearchScope myResolveScope;
+  private final ChainCompletionContext myCompletionContext;
 
-  public CachedRelevantStaticMethodSearcher(final Project project, final GlobalSearchScope resolveScope) {
-    myIndexReader = MethodsUsageIndexReader.getInstance(project);
-    myJavaPsiFacade = JavaPsiFacade.getInstance(project);
-    myAllScope = GlobalSearchScope.allScope(project);
-    myResolveScope = resolveScope;
+  public CachedRelevantStaticMethodSearcher(final ChainCompletionContext completionContext) {
+    myIndexReader = MethodsUsageIndexReader.getInstance(completionContext.getProject());
+    myCompletionContext = completionContext;
   }
 
   @NotNull
-  public List<ContextRelevantStaticMethod> getRelevantStaticMethods(final String resultQualifiedClassName,
-                                                                    final int minOccurrence,
-                                                                    final ChainCompletionContext completionContext) {
+  public List<ContextRelevantStaticMethod> getRelevantStaticMethods(final String resultQualifiedClassName, final int minOccurrence) {
     if (resultQualifiedClassName == null ||
         ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(resultQualifiedClassName) ||
-        completionContext.getTarget().equals(resultQualifiedClassName)) {
+        myCompletionContext.getTarget().getClassQName().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
     final TreeSet<UsageIndexValue> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
@@ -66,9 +60,9 @@ public class CachedRelevantStaticMethodSearcher {
           method = myCachedResolveResults.get(methodInvocation);
         }
         else {
-          final PsiMethod[] methods = completionContext.resolveNotDeprecated(methodInvocation);
+          final PsiMethod[] methods = myCompletionContext.resolveNotDeprecated(methodInvocation);
           method = MethodChainsSearchUtil
-            .getMethodWithMinNotPrimitiveParameters(methods, Collections.singleton(completionContext.getTarget().getClassQName()));
+            .getMethodWithMinNotPrimitiveParameters(methods, Collections.singleton(myCompletionContext.getTarget().getClassQName()));
           myCachedResolveResults.put(methodInvocation, method);
           if (method == null) {
             return Collections.emptyList();
@@ -78,9 +72,9 @@ public class CachedRelevantStaticMethodSearcher {
           return Collections.emptyList();
         }
         if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
-          if (isMethodValid(method, completionContext, resultQualifiedClassName)) {
+          if (isMethodValid(method, myCompletionContext, resultQualifiedClassName)) {
             occurrences += indexValue.getOccurrences();
-            if (myResolveScope.contains(method.getContainingFile().getVirtualFile())) {
+            if (myCompletionContext.getResolveScope().contains(method.getContainingFile().getVirtualFile())) {
               relevantMethods.add(new ContextRelevantStaticMethod(method, null));
             }
             if (occurrences >= minOccurrence) {
@@ -109,7 +103,7 @@ public class CachedRelevantStaticMethodSearcher {
     if (method == null) return false;
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
       final PsiType type = parameter.getType();
-      final String shortClassName = typeAsString(type);
+      final String shortClassName = typeAsShortString(type);
       if (targetTypeShortName.equals(shortClassName)) return false;
       if (!ChainCompletionStringUtil.isShortNamePrimitiveOrArrayOfPrimitives(shortClassName) &&
           !completionContext.contains(type.getCanonicalText())) {
@@ -119,15 +113,14 @@ public class CachedRelevantStaticMethodSearcher {
     return true;
   }
 
-
   @Nullable
-  public static String typeAsString(final PsiType type) {
+  public static String typeAsShortString(final PsiType type) {
     if (type instanceof PsiClassType)
       return ((PsiClassType) type).getClassName();
     else if (type instanceof PsiPrimitiveType)
       return type.getCanonicalText();
     else if (type instanceof PsiArrayType) {
-      final String componentTypeAsString = typeAsString(((PsiArrayType) type).getComponentType());
+      final String componentTypeAsString = typeAsShortString(((PsiArrayType)type).getComponentType());
       if (componentTypeAsString == null) return null;
       return String.format("%s[]", componentTypeAsString);
     }

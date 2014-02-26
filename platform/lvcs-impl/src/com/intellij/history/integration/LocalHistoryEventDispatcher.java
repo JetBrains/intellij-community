@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
@@ -81,7 +82,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void fileCreated(VirtualFileEvent e) {
+  public void fileCreated(@NotNull VirtualFileEvent e) {
     beginChangeSet();
     createRecursively(e.getFile());
     endChangeSet(null);
@@ -99,7 +100,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void beforeContentsChange(VirtualFileEvent e) {
+  public void beforeContentsChange(@NotNull VirtualFileEvent e) {
     if (!areContentChangesVersioned(e)) return;
     VirtualFile f = e.getFile();
 
@@ -110,7 +111,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void beforePropertyChange(VirtualFilePropertyEvent e) {
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent e) {
     if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
       VirtualFile f = e.getFile();
       f.putUserData(WAS_VERSIONED_KEY, myGateway.isVersioned(f));
@@ -118,7 +119,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void propertyChanged(VirtualFilePropertyEvent e) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
     if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
       VirtualFile f = e.getFile();
 
@@ -142,13 +143,13 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void beforeFileMovement(VirtualFileMoveEvent e) {
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent e) {
     VirtualFile f = e.getFile();
     f.putUserData(WAS_VERSIONED_KEY, myGateway.isVersioned(f));
   }
 
   @Override
-  public void fileMoved(VirtualFileMoveEvent e) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent e) {
     VirtualFile f = e.getFile();
 
     boolean isVersioned = myGateway.isVersioned(f);
@@ -162,7 +163,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent e) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
     VirtualFile f = e.getFile();
     Entry entry = myGateway.createEntryForDeletion(f);
     if (entry != null) {

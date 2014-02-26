@@ -28,7 +28,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remotesdk.RemoteInterpreterException;
-import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkCredentials;
 import com.intellij.remotesdk.RemoteSshProcess;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
@@ -52,14 +52,14 @@ public abstract class PythonRemoteInterpreterManager {
     "Remote interpreter can't be executed. Please enable the Remote Hosts Access plugin.";
 
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkData data,
+                                                    @NotNull PyRemoteSdkCredentials data,
                                                     @NotNull GeneralCommandLine commandLine,
                                                     @Nullable
                                                     PathMappingSettings mappingSettings)
     throws RemoteInterpreterException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
-                                                           @NotNull PyRemoteSdkData data,
+                                                           @NotNull PyRemoteSdkCredentials data,
                                                            @NotNull GeneralCommandLine commandLine,
                                                            @Nullable
                                                            PathMappingSettings mappingSettings)
@@ -70,7 +70,7 @@ public abstract class PythonRemoteInterpreterManager {
 
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
-                                                 RemoteSdkData data,
+                                                 RemoteSdkCredentials data,
                                                  String[] command,
                                                  @Nullable String workingDir,
                                                  boolean askForSudo)
@@ -78,7 +78,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   @NotNull
   public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
-                                                         @NotNull RemoteSdkData data,
+                                                         @NotNull RemoteSdkCredentials data,
                                                          @NotNull GeneralCommandLine commandLine, boolean allocatePty)
     throws RemoteInterpreterException;
 
@@ -89,18 +89,18 @@ public abstract class PythonRemoteInterpreterManager {
                                                                     @NotNull Sdk sdk,
                                                                     String path);
 
-  public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkData data, String path);
+  public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkCredentials data, String path);
 
   @Nullable
-  public abstract RemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir, RemoteSdkData data);
+  public abstract RemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir, RemoteSdkCredentials data);
 
   public abstract void createDeployment(Project project,
                                         VirtualFile projectDir,
                                         RemoteProjectSettings settings,
-                                        RemoteSdkData data);
+                                        RemoteSdkCredentials data);
 
   public abstract void copyFromRemote(@NotNull Project project,
-                                      RemoteSdkData data,
+                                      RemoteSdkCredentials data,
                                       List<PathMappingSettings.PathMapping> mappings);
 
   @Nullable
@@ -127,7 +127,7 @@ public abstract class PythonRemoteInterpreterManager {
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
   }
 
-  public static void addHelpersMapping(@NotNull RemoteSdkData data, @Nullable PathMappingSettings newMappingSettings) {
+  public static void addHelpersMapping(@NotNull RemoteSdkCredentials data, @Nullable PathMappingSettings newMappingSettings) {
     if (newMappingSettings == null) {
       newMappingSettings = new PathMappingSettings();
     }
@@ -135,7 +135,7 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkData data,
+                                                    @NotNull PyRemoteSdkCredentials data,
                                                     @Nullable PathMappingSettings mappingSettings);
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);

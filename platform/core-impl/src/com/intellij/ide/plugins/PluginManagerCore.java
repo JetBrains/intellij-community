@@ -117,7 +117,7 @@ public class PluginManagerCore {
     return ourDisabledPlugins;
   }
 
-  private static boolean isBrokenPlugin(IdeaPluginDescriptor descriptor) {
+  public static boolean isBrokenPlugin(IdeaPluginDescriptor descriptor) {
     return getBrokenPluginVersions().get(descriptor.getPluginId().getIdString()).contains(descriptor.getVersion());
   }
 
@@ -955,7 +955,7 @@ public class PluginManagerCore {
 
   static boolean shouldSkipPlugin(final IdeaPluginDescriptor descriptor, IdeaPluginDescriptor[] loaded) {
     final String idString = descriptor.getPluginId().getIdString();
-    if (idString.equals(CORE_PLUGIN_ID)) {
+    if (CORE_PLUGIN_ID.equals(idString)) {
       return false;
     }
 

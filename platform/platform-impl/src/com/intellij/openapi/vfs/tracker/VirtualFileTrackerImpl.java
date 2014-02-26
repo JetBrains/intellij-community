@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
   public VirtualFileTrackerImpl(VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
-      public void propertyChanged(final VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -48,7 +48,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void contentsChanged(final VirtualFileEvent event) {
+      public void contentsChanged(@NotNull final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -58,7 +58,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void fileCreated(final VirtualFileEvent event) {
+      public void fileCreated(@NotNull final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
                                              
@@ -68,7 +68,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void fileDeleted(final VirtualFileEvent event) {
+      public void fileDeleted(@NotNull final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -78,7 +78,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void fileMoved(final VirtualFileMoveEvent event) {
+      public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -88,7 +88,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void fileCopied(final VirtualFileCopyEvent event) {
+      public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -98,7 +98,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+      public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -108,7 +108,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void beforeContentsChange(final VirtualFileEvent event) {
+      public void beforeContentsChange(@NotNull final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -118,7 +118,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void beforeFileDeletion(final VirtualFileEvent event) {
+      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 
@@ -128,7 +128,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       }
 
       @Override
-      public void beforeFileMovement(final VirtualFileMoveEvent event) {
+      public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
 

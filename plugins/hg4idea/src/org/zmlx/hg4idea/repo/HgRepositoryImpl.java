@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,6 +43,8 @@ import java.util.Set;
  */
 
 public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
+
+  private static final Logger LOG = Logger.getInstance(HgRepositoryImpl.class);
 
   @NotNull private final HgRepositoryReader myReader;
   @NotNull private final VirtualFile myHgDir;
@@ -159,15 +162,16 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     // Then blinking and do not work properly;
     if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
-      myOpenedBranches = updateOpenedBranches();
+      HgCommandResult branchCommandResult = new HgTagBranchCommand(getProject(), getRoot()).collectBranches();
+      if (branchCommandResult == null || branchCommandResult.getExitValue() != 0) {
+        LOG.warn("Could not collect hg opened branches."); // hg executable is not valid
+        myOpenedBranches = myInfo.getBranches().keySet();
+      }
+      else {
+        myOpenedBranches = HgTagBranchCommand.collectNames(branchCommandResult);
+      }
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
-  }
-
-  @NotNull
-  private Set<String> updateOpenedBranches() {
-    HgCommandResult branchCommandResult = new HgTagBranchCommand(getProject(), getRoot()).collectBranches();
-    return HgTagBranchCommand.collectNames(branchCommandResult);
   }
 
   @NotNull

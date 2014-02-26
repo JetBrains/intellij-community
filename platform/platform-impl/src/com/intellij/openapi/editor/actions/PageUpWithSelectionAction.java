@@ -25,32 +25,44 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PageUpWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
-    public Handler() {
-      super(true);
-    }
-
     @Override
-    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
+    public void execute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (!editor.getCaretModel().supportsMultipleCarets()) {
+        EditorActionUtil.moveCaretPageUp(editor, true);
+        return;
+      }
+      if (editor.isColumnMode()) {
         int lines = editor.getScrollingModel().getVisibleArea().height / editor.getLineHeight();
-        Caret currentCaret = caret;
+        Caret currentCaret = caret == null ? editor.getCaretModel().getPrimaryCaret() : caret;
         for (int i = 0; i < lines; i++) {
-          currentCaret = currentCaret.clone(true);
-          if (currentCaret == null) {
+          if (!EditorActionUtil.cloneOrRemoveCaret(editor, currentCaret, true)) {
             break;
           }
+          currentCaret = editor.getCaretModel().getPrimaryCaret();
         }
       }
       else {
-        EditorActionUtil.moveCaretPageUp(editor, true);
+        if (caret == null) {
+          editor.getCaretModel().runForEachCaret(new CaretAction() {
+            @Override
+            public void perform(Caret caret) {
+              EditorActionUtil.moveCaretPageUp(editor, true);
+            }
+          });
+        }
+        else {
+          // assuming caret is equal to CaretModel.getCurrentCaret()
+          EditorActionUtil.moveCaretPageUp(editor, true);
+        }
       }
     }
   }

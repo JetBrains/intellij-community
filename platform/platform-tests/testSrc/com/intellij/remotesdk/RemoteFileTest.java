@@ -22,10 +22,10 @@ import junit.framework.TestCase;
  */
 public class RemoteFileTest extends TestCase {
   public void testExtractPathFromFullRemotePath() {
-    assertEquals("/home/user", RemoteSdkDataHolder.getInterpreterPathFromFullPath("ssh://user@server:8080/home/user"));
-    assertEquals("C:\\Windows", RemoteSdkDataHolder.getInterpreterPathFromFullPath("ssh://user@server:8080C:\\Windows"));
-    assertEquals("/home/a@b", RemoteSdkDataHolder.getInterpreterPathFromFullPath("ssh://a@b@server:8080/home/a@b"));
-    assertEquals("/home/a/b", RemoteSdkDataHolder.getInterpreterPathFromFullPath("ssh://a/b@server:8080/home/a/b"));
+    assertEquals("/home/user", RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath("ssh://user@server:8080/home/user"));
+    assertEquals("C:\\Windows", RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath("ssh://user@server:8080C:\\Windows"));
+    assertEquals("/home/a@b", RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath("ssh://a@b@server:8080/home/a@b"));
+    assertEquals("/home/a/b", RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath("ssh://a/b@server:8080/home/a/b"));
   }
 
   public void testIsWindowsPath() {

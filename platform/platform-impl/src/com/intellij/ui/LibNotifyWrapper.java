@@ -15,53 +15,63 @@
  */
 package com.intellij.ui;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.messages.MessageBusConnection;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Denis Fokin
  */
-public class LibNotifyWrapper {
+class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
+  private static LibNotifyWrapper ourInstance;
 
-  private final static String message = "Looks like you have run 32-bit Java on a 64-bit version of OS " +
-                                "or just have not installed appropriate libnotify.so library";
-
-  private static boolean available = true;
-
-  static{
-    UrlClassLoader.loadPlatformLibrary("notifywrapper");
-  }
-
-  native private static void showNotification(final String title, final String description, final String iconPath);
-
-  public static void show(final String title, final String description, final String iconPath) {
-    if (! available) return;
-    try {
-      showNotification(title, description, iconPath);
-    } catch (UnsatisfiedLinkError ule) {
-      available = false;
-      NotificationGroup.balloonGroup("Linux configuration messages");
-      Notifications.Bus.notify(
-        new Notification("Linux configuration messages",
-                         "Notification library has not been installed",
-                         message, NotificationType.INFORMATION)
-      );
+  public static synchronized LibNotifyWrapper getInstance() {
+    if (ourInstance == null) {
+      ourInstance = new LibNotifyWrapper();
     }
+    return ourInstance;
   }
 
-  /**
-   * Shows a libnotify notification with an icon from the ide bin directory.
-   * If there is no such icon a default information icon is shown.
-   * @param title notification title
-   * @param description notification description
-   */
-  public static void showWithAppIcon(final String title, final String description) {
-    String iconPath = AppUIUtil.findIcon(PathManager.getBinPath());
-    show(title, description, (iconPath == null) ? "dialog-information" : iconPath);
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface LibNotify extends Library {
+    int notify_init(String appName);
+    void notify_uninit();
+    Pointer notify_notification_new(String summary, String body, String icon);
+    int notify_notification_show(Pointer notification, Pointer error);
   }
 
+  private final LibNotify myLibNotify;
+
+  private LibNotifyWrapper() {
+    myLibNotify = (LibNotify)Native.loadLibrary("notify", LibNotify.class);
+
+    String appName = ApplicationNamesInfo.getInstance().getProductName();
+    if (myLibNotify.notify_init(appName) == 0) {
+      throw new IllegalStateException("notify_init failed");
+    }
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appClosing() {
+        myLibNotify.notify_uninit();
+      }
+    });
+  }
+
+  @Override
+  public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
+    String icon = AppUIUtil.findIcon(PathManager.getBinPath());
+    if (icon == null) icon = "dialog-information";
+    Pointer notification = myLibNotify.notify_notification_new(title, description, icon);
+    myLibNotify.notify_notification_show(notification, null);
+  }
 }

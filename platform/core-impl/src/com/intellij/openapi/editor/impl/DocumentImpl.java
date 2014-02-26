@@ -47,9 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -196,6 +194,92 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     finally {
       if (caretMarker != null) caretMarker.dispose();
+    }
+    return markAsNeedsStrippingLater;
+  }
+
+  /**
+   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
+   */
+  public boolean stripTrailingSpaces(@Nullable final Project project,
+                                     boolean inChangedLinesOnly,
+                                     boolean virtualSpaceEnabled,
+                                     @NotNull List<Integer> caretOffsets) {
+    if (!isStripTrailingSpacesEnabled) {
+      return true;
+    }
+
+    boolean markAsNeedsStrippingLater = false;
+    CharSequence text = myText;
+    Map<Integer, List<RangeMarker>> caretMarkers = new HashMap<Integer, List<RangeMarker>>(caretOffsets.size());
+    try {
+      if (!virtualSpaceEnabled) {
+        for (Integer caretOffset : caretOffsets) {
+          if (caretOffset == null || caretOffset < 0 || caretOffset > getTextLength()) {
+            continue;
+          }
+          Integer line = getLineNumber(caretOffset);
+          List<RangeMarker> markers = caretMarkers.get(line);
+          if (markers == null) {
+            markers = new ArrayList<RangeMarker>();
+            caretMarkers.put(line, markers);
+          }
+          RangeMarker marker = createRangeMarker(caretOffset, caretOffset);
+          markers.add(marker);
+        }
+      }
+      lineLoop:
+      for (int line = 0; line < myLineSet.getLineCount(); line++) {
+        if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
+        int whiteSpaceStart = -1;
+        final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
+        int lineStart = myLineSet.getLineStart(line);
+        for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
+          char c = text.charAt(offset);
+          if (c != ' ' && c != '\t') {
+            break;
+          }
+          whiteSpaceStart = offset;
+        }
+        if (whiteSpaceStart == -1) continue;
+        if (!virtualSpaceEnabled) {
+          List<RangeMarker> markers = caretMarkers.get(line);
+          if (markers != null) {
+            for (RangeMarker marker : markers) {
+              if (marker.getStartOffset() >= 0 && whiteSpaceStart < marker.getStartOffset()) {
+                // mark this as a document that needs stripping later
+                // otherwise the caret would jump madly
+                markAsNeedsStrippingLater = true;
+                continue lineLoop;
+              }
+            }
+          }
+        }
+        final int finalStart = whiteSpaceStart;
+        // document must be unblocked by now. If not, some Save handler attempted to modify PSI
+        // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
+        DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(DocumentImpl.this, project) {
+          @Override
+          public void run() {
+            deleteString(finalStart, lineEnd);
+          }
+        });
+        text = myText;
+      }
+    }
+    finally {
+      for (List<RangeMarker> markerList : caretMarkers.values()) {
+        if (markerList != null) {
+          for (RangeMarker marker : markerList) {
+            try {
+              marker.dispose();
+            }
+            catch (Exception e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
     }
     return markAsNeedsStrippingLater;
   }
@@ -563,11 +647,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myLineSet.clearModificationFlags();
   }
 
-  public void clearLineModificationFlagsExcept(int caretLine) {
-    boolean wasModified = caretLine >= 0 && caretLine < myLineSet.getLineCount() && myLineSet.isModified(caretLine);
+  public void clearLineModificationFlagsExcept(@NotNull List<Integer> caretLines) {
+    List<Integer> modifiedLines = new ArrayList<Integer>(caretLines.size());
+    for (Integer line : caretLines) {
+      if (line != null && line >= 0 && line < myLineSet.getLineCount() && myLineSet.isModified(line)) {
+        modifiedLines.add(line);
+      }
+    }
     clearLineModificationFlags();
-    if (wasModified) {
-      myLineSet.setModified(caretLine);
+    for (Integer line : modifiedLines) {
+      myLineSet.setModified(line);
     }
   }
 

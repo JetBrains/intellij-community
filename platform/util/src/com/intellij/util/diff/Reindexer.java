@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -33,6 +34,7 @@ class Reindexer {
     return new int[][]{discarded1, discard(discarded1, ints2, 1)};
   }
 
+  @TestOnly
   void idInit(int length1, int length2) {
     myOriginalLengths[0] = length1;
     myOriginalLengths[1] = length2;
@@ -41,12 +43,14 @@ class Reindexer {
     for (int j = 0; j < 2; j++) {
       int originalLength = myOriginalLengths[j];
       myOldIndecies[j] = new int[originalLength];
-      for (int i = 0; i < originalLength; i++)
+      for (int i = 0; i < originalLength; i++) {
         myOldIndecies[j][i] = i;
+      }
     }
   }
 
-  public int restoreIndex(int index, int array) {
+  @TestOnly
+  int restoreIndex(int index, int array) {
     return myOldIndecies[array][index];
   }
 
@@ -75,50 +79,58 @@ class Reindexer {
   }
 
   public void reindex(BitSet[] discardedChanges, LCSBuilder builder) {
-    BitSet changes1 = new BitSet(myOriginalLengths[0]);
-    BitSet changes2 = new BitSet(myOriginalLengths[1]);
+    BitSet changes1;
+    BitSet changes2;
+
+    if (myDiscardedLengths[0] == myOriginalLengths[0] && myDiscardedLengths[1] == myOriginalLengths[1]) {
+      changes1 = discardedChanges[0];
+      changes2 = discardedChanges[1];
+    }
+    else {
+      changes1 = new BitSet(myOriginalLengths[0]);
+      changes2 = new BitSet(myOriginalLengths[1]);
+      int x = 0;
+      int y = 0;
+      while (x < myDiscardedLengths[0] || y < myDiscardedLengths[1]) {
+        if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0].get(x) && !discardedChanges[1].get(y)) {
+          x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
+          y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
+          continue;
+        }
+        if (discardedChanges[0].get(x)) {
+          changes1.set(getOriginal(myOldIndecies[0], x));
+          x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
+          continue;
+        }
+        if (discardedChanges[1].get(y)) {
+          changes2.set(getOriginal(myOldIndecies[1], y));
+          y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
+          continue;
+        }
+      }
+      if (myDiscardedLengths[0] == 0) {
+        changes1.set(0, myOriginalLengths[0]);
+      }
+      else {
+        changes1.set(0, myOldIndecies[0][0]);
+      }
+      if (myDiscardedLengths[1] == 0) {
+        changes2.set(0, myOriginalLengths[1]);
+      }
+      else {
+        changes2.set(0, myOldIndecies[1][0]);
+      }
+    }
 
     int x = 0;
     int y = 0;
-    while (x < myDiscardedLengths[0] || y < myDiscardedLengths[1]) {
-      if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0].get(x) && !discardedChanges[1].get(y)) {
-        x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
-        y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
-        continue;
-      }
-      if (discardedChanges[0].get(x)) {
-        changes1.set(getOriginal(myOldIndecies[0], x));
-        x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
-        continue;
-      }
-      if (discardedChanges[1].get(y)) {
-        changes2.set(getOriginal(myOldIndecies[1], y));
-        y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
-        continue;
-      }
-    }
-    if (myDiscardedLengths[0] == 0) {
-      changes1.set(0, myOriginalLengths[0]);
-    }
-    else {
-      changes1.set(0, myOldIndecies[0][0]);
-    }
-    if (myDiscardedLengths[1] == 0) {
-      changes2.set(0, myOriginalLengths[1]);
-    }
-    else {
-      changes2.set(0, myOldIndecies[1][0]);
-    }
-
-    x = 0;
-    y = 0;
     while (x < myOriginalLengths[0] && y < myOriginalLengths[1]) {
       int startX = x;
       while (x < myOriginalLengths[0] && y < myOriginalLengths[1] && !changes1.get(x) && !changes2.get(y)) {
         x++;
         y++;
       }
-      if (x> startX) builder.addEqual(x - startX);
+      if (x > startX) builder.addEqual(x - startX);
       int dx = 0;
       int dy = 0;
       while (x < myOriginalLengths[0] && changes1.get(x)) {

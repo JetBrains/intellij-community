@@ -188,7 +188,10 @@ public class RequestHint {
           final Method method = location.method();
           if (method != null) {
             if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-              return myDepth;
+              // step into lambda methods
+              if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+                return myDepth;
+              }
             }
           }
         }

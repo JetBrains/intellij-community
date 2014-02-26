@@ -4,7 +4,6 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskState;
-import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.JiraRestTask;
@@ -28,11 +27,6 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
 
   public JiraRestApi20Alpha1(JiraRepository repository) {
     super(repository);
-  }
-
-  @Override
-  public JiraRemoteApi cloneFor(@NotNull JiraRepository repository) {
-    return new JiraRestApi20Alpha1(repository);
   }
 
   @Override
@@ -83,7 +77,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
 
   @NotNull
   @Override
-  public String getVersionName() {
-    return "2.0.alpha1";
+  public ApiType getType() {
+    return ApiType.REST_2_0_ALPHA;
   }
 }

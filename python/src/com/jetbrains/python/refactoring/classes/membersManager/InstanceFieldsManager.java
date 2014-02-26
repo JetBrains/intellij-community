@@ -67,7 +67,7 @@ class InstanceFieldsManager extends FieldsManager {
       toInitMethod = createInitMethod(to);
     }
     final PyStatementList statementList = toInitMethod.getStatementList();
-    return PyClassRefactoringUtil.copyFieldDeclarationToStatement(members, statementList);
+    return PyClassRefactoringUtil.copyFieldDeclarationToStatement(members, statementList, null);
   }
 
   /**

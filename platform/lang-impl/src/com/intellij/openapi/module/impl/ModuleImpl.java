@@ -340,7 +340,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
-    public void propertyChanged(VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
       if (!isModuleAdded) return;
       final Object requestor = event.getRequestor();
       if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
@@ -379,7 +379,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
 
     @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       final VirtualFile oldParent = event.getOldParent();
       final VirtualFile newParent = event.getNewParent();
       final String dirName = event.getFileName();

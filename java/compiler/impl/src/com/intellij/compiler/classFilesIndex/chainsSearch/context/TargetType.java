@@ -18,6 +18,7 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.asm4.Type;
 
 import java.util.Collections;
 import java.util.List;

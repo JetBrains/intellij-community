@@ -94,7 +94,9 @@ public class GithubApiUtil {
                                       @Nullable String requestBody,
                                       @NotNull Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
-    LOG.assertTrue(!EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode(), "Network operation in EDT");
+    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.warn("Network operation in EDT");
+    }
 
     HttpMethod method = null;
     try {

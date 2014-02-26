@@ -478,12 +478,12 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
     VirtualFileAdapter listener = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         stressRead(pointer);
       }
 
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         stressRead(pointer);
       }
     };

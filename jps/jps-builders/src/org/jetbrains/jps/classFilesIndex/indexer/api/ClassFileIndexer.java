@@ -19,6 +19,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public abstract class ClassFileIndexer<K, V> {
   }
 
   @NotNull
-  public abstract Map<K, V> map(ClassReader inputData);
+  public abstract Map<K, V> map(ClassReader inputData, Mappings mappings);
 
   public abstract KeyDescriptor<K> getKeyDescriptor();
 

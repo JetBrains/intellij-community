@@ -173,7 +173,9 @@ public class TemplateState implements Disposable {
   private void setCurrentVariableNumber(int variableNumber) {
     myCurrentVariableNumber = variableNumber;
     final boolean isFinished = isFinished();
-    ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(isFinished);
+    if (myDocument != null) {
+      ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(isFinished);
+    }
     myCurrentSegmentNumber = isFinished ? -1 : getCurrentSegmentNumber();
   }
 

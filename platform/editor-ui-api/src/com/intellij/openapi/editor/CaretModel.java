@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Segment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -186,7 +185,7 @@ public interface CaretModel {
    * Returns all carets currently existing in the document, ordered by their position in the document.
    */
   @NotNull
-  Collection<Caret> getAllCarets();
+  List<Caret> getAllCarets();
 
   /**
    * Returns a caret at the given position in the document, or <code>null</code>, if there's no caret there.

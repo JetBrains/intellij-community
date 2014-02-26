@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -80,14 +81,14 @@ public class PushedFilePropertiesUpdater {
 
         connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
           @Override
-          public void fileCreated(final VirtualFileEvent event) {
+          public void fileCreated(@NotNull final VirtualFileEvent event) {
             final VirtualFile file = event.getFile();
             final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
             pushRecursively(file, project, pushers);
           }
 
           @Override
-          public void fileMoved(final VirtualFileMoveEvent event) {
+          public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
             final VirtualFile file = event.getFile();
             final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
             for (FilePropertyPusher pusher : pushers) {

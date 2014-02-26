@@ -59,6 +59,9 @@ public abstract class EditorMacro extends Macro {
     return null;
   }
 
+  /**
+   * @return 1-based column index where tabs are treated as single characters. External tools don't know about IDEA's tab size.
+   */
   protected static String getColumnNumber(Editor editor, LogicalPosition pos) {
     if (EditorUtil.inVirtualSpace(editor, pos)) {
       return String.valueOf(pos.column + 1);

@@ -28,12 +28,11 @@ public enum IndexState {
   NOT_EXIST,
   EXIST;
 
-  private static final String STATE_FILE_NAME = "state";
+  public static final String STATE_FILE_NAME = "state";
 
   public void save(final File indexDir) {
-    final File indexStateFile = new File(indexDir, STATE_FILE_NAME);
     try {
-      FileUtil.writeToFile(indexStateFile, String.valueOf(this));
+      FileUtil.writeToFile(new File(indexDir, STATE_FILE_NAME), name());
     }
     catch (final IOException e) {
       throw new RuntimeException(e);
@@ -47,13 +46,7 @@ public enum IndexState {
         NOT_EXIST.save(indexDir);
         return NOT_EXIST;
       }
-      final String fileString = FileUtil.loadFile(indexStateFile);
-      for (final IndexState indexState : values()) {
-        if (String.valueOf(indexState).equals(fileString)) {
-          return indexState;
-        }
-      }
-      throw new RuntimeException("Invalid state: " + fileString);
+      return Enum.valueOf(IndexState.class, FileUtil.loadFile(indexStateFile));
     }
     catch (final IOException e) {
       throw new RuntimeException(e);

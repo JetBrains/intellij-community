@@ -624,11 +624,13 @@ public class CodeCompletionHandlerBase {
 
     } else {
       final Ref<CompletionAssertions.WatchingInsertionContext> contextRef = new Ref<CompletionAssertions.WatchingInsertionContext>();
+      final Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update, editor, caret.getOffset(), caret.getOffset() + idEndOffsetDelta);
-          if (caret.getVisualPosition().equals(editor.getCaretModel().getPrimaryCaret().getVisualPosition())) {
+          CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update, editor,
+                                                                                    caret.getOffset(), caret.getOffset() + idEndOffsetDelta);
+          if (caret == primaryCaret) {
             contextRef.set(currentContext);
           }
         }

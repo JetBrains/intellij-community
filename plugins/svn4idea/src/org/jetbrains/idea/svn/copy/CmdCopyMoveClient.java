@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.copy;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,10 +30,12 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    // TODO: for now use dst as target, as if using source - then process will be started in the source folder and folder will be locked
-    // TODO: And if resolving working directory to some other folder (i.e. project root) => errors in parsing (info, status) occur, as
-    // TODO: base directory passed to parser do not correspond to working directory, but svn outputs relative paths
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(dst), isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
+    // Use idea home directory for directory renames which differ only by character case on case insensitive file systems - otherwise that
+    // directory being renamed will be blocked by svn process
+    File workingDirectory =
+      isMove && !SystemInfo.isFileSystemCaseSensitive && FileUtil.filesEqual(src, dst) ? CommandUtil.getHomeDirectory() : null;
+    CommandUtil
+      .execute(myVcs, SvnTarget.fromFile(dst), workingDirectory, isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
   }
 
   @Override

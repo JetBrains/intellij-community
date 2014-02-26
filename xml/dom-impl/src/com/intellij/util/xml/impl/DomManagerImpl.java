@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,17 +126,17 @@ public final class DomManagerImpl extends DomManager {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
           private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
 
-          public void contentsChanged(VirtualFileEvent event) {
+          public void contentsChanged(@NotNull VirtualFileEvent event) {
             if (event.isFromSave()) return;
 
             processVfsChange(event.getFile());
           }
 
-          public void fileCreated(VirtualFileEvent event) {
+          public void fileCreated(@NotNull VirtualFileEvent event) {
             processVfsChange(event.getFile());
           }
 
-          public void beforeFileDeletion(final VirtualFileEvent event) {
+          public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
             if (!myProject.isDisposed()) {
               beforeFileDeletion(event.getFile());
             }
@@ -158,7 +158,7 @@ public final class DomManagerImpl extends DomManager {
             }
           }
 
-          public void fileDeleted(VirtualFileEvent event) {
+          public void fileDeleted(@NotNull VirtualFileEvent event) {
             if (!myDeletionEvents.isEmpty()) {
               if (!myProject.isDisposed()) {
                 for (DomEvent domEvent : myDeletionEvents) {
@@ -169,7 +169,7 @@ public final class DomManagerImpl extends DomManager {
             }
           }
 
-          public void propertyChanged(VirtualFilePropertyEvent event) {
+          public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
             final VirtualFile file = event.getFile();
             if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
               processVfsChange(file);

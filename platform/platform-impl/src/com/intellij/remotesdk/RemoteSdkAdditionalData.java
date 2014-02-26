@@ -5,6 +5,6 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 /**
  * @author traff
  */
-public interface RemoteSdkAdditionalData extends RemoteSdkData, SdkAdditionalData {
+public interface RemoteSdkAdditionalData extends RemoteSdkCredentials, SdkAdditionalData {
   void completeInitialization();
 }

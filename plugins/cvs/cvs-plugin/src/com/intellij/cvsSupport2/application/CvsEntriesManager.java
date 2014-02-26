@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,15 +101,15 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     }
   }
 
-  public void beforePropertyChange(VirtualFilePropertyEvent event) {
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     processEvent(event);
   }
 
-  public void beforeContentsChange(VirtualFileEvent event) {
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
-  public void contentsChanged(VirtualFileEvent event) {
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
     fireStatusChanged(event.getFile());
   }
 
@@ -150,15 +150,15 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return getInfoFor(parent).getIgnoreFilter();
   }
 
-  public void beforeFileDeletion(VirtualFileEvent event) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
-  public void beforeFileMovement(VirtualFileMoveEvent event) {
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
     processEvent(event);
   }
 
-  public void fileCreated(VirtualFileEvent event) {
+  public void fileCreated(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 

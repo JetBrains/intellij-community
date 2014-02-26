@@ -60,20 +60,16 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     });
   }
 
-  public void updateSize() {
+  public void updateSize(int start, int end) {
     int oldAnnotationsWidth = maxAnnotationWidth;
-    computeMaxAnnotationWidth();
+    computeMaxAnnotationWidth(start, end);
     if (oldAnnotationsWidth != maxAnnotationWidth || myLastPreferredHeight != editor.getPreferredHeight()) {
-      fireResized();
+      processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
     }
     repaint();
   }
 
-  private void fireResized() {
-    processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
-  }
-
-  private void computeMaxAnnotationWidth() {
+  private void computeMaxAnnotationWidth(int start, int end) {
     gutterContentProvider.beforeUiComponentUpdate(editor);
 
     if (!gutterContentProvider.hasText()) {
@@ -82,10 +78,10 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     }
 
     FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
-    int lineCount = editor.getDocument().getLineCount();
+    int lineCount = Math.min(end, editor.getDocument().getLineCount());
     int gutterSize = 0;
-    for (int i = 0; i < lineCount; i++) {
-      String text = gutterContentProvider.getText(i, editor);
+    for (int line = start; line < lineCount; line++) {
+      String text = gutterContentProvider.getText(line, editor);
       if (text != null) {
         gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(text));
       }
@@ -94,7 +90,9 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     if (gutterSize != 0) {
       gutterSize += lineEndInset;
     }
-    maxAnnotationWidth = gutterSize;
+    maxAnnotationWidth = Math.max(gutterSize, maxAnnotationWidth);
+
+    editor.getSettings().setAdditionalColumnsCount(1 + (maxAnnotationWidth / EditorUtil.getSpaceWidth(Font.PLAIN, editor)));
   }
 
   @Override
@@ -193,5 +191,9 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
   private int getLineAtPoint(@NotNull Point clickPoint) {
     return editor.yPositionToLogicalLine(clickPoint.y);
+  }
+
+  public void documentCleared() {
+    maxAnnotationWidth = 0;
   }
 }

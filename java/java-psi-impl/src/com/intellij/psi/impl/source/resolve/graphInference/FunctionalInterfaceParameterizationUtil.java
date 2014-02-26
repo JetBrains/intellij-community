@@ -123,11 +123,11 @@ public class FunctionalInterfaceParameterizationUtil {
         return parameterization;
       }
 
-      if (!parameterization.isAssignableFrom(psiClassType)) {
+      if (!psiClassType.isAssignableFrom(parameterization)) {
         return null;
       }
 
-      return getNonWildcardParameterization(parameterization);
+      return getNonWildcardParameterization((PsiClassType)psiClassType);
     }
     return null;
   }
@@ -173,7 +173,9 @@ public class FunctionalInterfaceParameterizationUtil {
           final PsiClassType Bi = extendsListTypes.length > 0 ? extendsListTypes[0]
                                                               : PsiType.getJavaLangObject(psiClass.getManager(),
                                                                                           GlobalSearchScope.allScope(psiClass.getProject()));
-          if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) return null;
+          if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) {
+            return null;
+          }
 
           final PsiType bound = ((PsiWildcardType)paramType).getBound();
           if (bound == null) {

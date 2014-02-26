@@ -28,6 +28,6 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
   @Override
   public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
-    return new PluginsTableRenderer(pluginDescriptor);
+    return new PluginsTableRenderer(pluginDescriptor, true);
   }
 }
