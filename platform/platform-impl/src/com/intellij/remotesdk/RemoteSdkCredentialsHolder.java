@@ -118,12 +118,17 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   @Override
   public String getFullInterpreterPath() {
-    return myRemoteSdkProperties.getFullInterpreterPath();
+    return constructSshCredentialsSdkFullPath(this);
   }
 
   @Override
   public void setSdkId(String sdkId) {
     myRemoteSdkProperties.setSdkId(sdkId);
+  }
+
+  @Override
+  public String getSdkId() {
+    return myRemoteSdkProperties.getSdkId();
   }
 
   @Override

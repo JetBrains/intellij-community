@@ -15,16 +15,27 @@
  */
 package com.intellij.remotesdk2;
 
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author traff
- */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
-  T getRemoteSdkCredentials() throws InterruptedException;
-  
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
+* @author traff
+*/
+public class VagrantBasedCredentialsHolder {
+  private String myVagrantFolder;
 
-  Object getRemoteSdkDataKey();
+  public VagrantBasedCredentialsHolder() {
+  }
+
+  public VagrantBasedCredentialsHolder(@NotNull String folder) {
+    myVagrantFolder = folder;
+  }
+
+  public void setVagrantFolder(String vagrantFolder) {
+    myVagrantFolder = vagrantFolder;
+  }
+
+  @NotNull
+  public String getVagrantFolder() {
+    return myVagrantFolder;
+  }
 }

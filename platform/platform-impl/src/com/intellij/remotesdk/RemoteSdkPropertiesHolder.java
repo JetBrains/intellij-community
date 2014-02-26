@@ -93,13 +93,12 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myHelpersVersionChecked = helpersVersionChecked;
   }
 
-  @Override
-  public String getFullInterpreterPath() {
-    return mySdkId;
-  }
-
   public void setSdkId(String sdkId) {
     mySdkId = sdkId;
+  }
+
+  public String getSdkId() {
+    return mySdkId;
   }
 
   @Override
@@ -113,7 +112,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
   }
 
-  public void copyTo(RemoteSdkPropertiesHolder copy) {
+  public void copyTo(RemoteSdkProperties copy) {
     copy.setInterpreterPath(getInterpreterPath());
     copy.setHelpersPath(getHelpersPath());
     copy.setHelpersVersionChecked(isHelpersVersionChecked());

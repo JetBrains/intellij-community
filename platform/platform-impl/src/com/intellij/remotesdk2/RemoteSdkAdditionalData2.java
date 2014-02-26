@@ -33,6 +33,8 @@ public interface RemoteSdkAdditionalData2<T extends RemoteSdkCredentials>
 
   String getFullInterpreterPath();
 
+  void setVagrantConnectionType(VagrantBasedCredentialsHolder vagrantBasedCredentials);
+
   /**
    * This method switches to use of ssh-credentials based data
    * @param credentials credentials that specify connection
