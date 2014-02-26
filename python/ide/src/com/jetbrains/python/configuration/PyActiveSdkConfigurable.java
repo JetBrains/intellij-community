@@ -16,7 +16,6 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -26,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -36,6 +36,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.NullableConsumer;
@@ -87,7 +89,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private void initContent() {
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-    myInterpreterList.setSdkCombo(mySdkCombo);
 
     myProjectSdksModel = myInterpreterList.getModel();
     mySdkModelListener = new MySdkModelListener(this);
@@ -259,18 +260,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
+    Sdk newSdk = item;
     if (item instanceof PyDetectedSdk) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
         @Override
-        public void run() {
-          final Sdk sdk = SdkConfigurationUtil.createAndAddSDK(item.getName(), PythonSdkType.getInstance());
-          myProjectSdksModel.removeSdk(item);
-          myProjectSdksModel.addSdk(sdk);
-          updateSdkList(true);
-          mySdkCombo.setSelectedItem(sdk);
-          setSdk(sdk);
+        public VirtualFile compute() {
+          return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
         }
-      }, ModalityState.any());
+      });
+      newSdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
+      if (newSdk != null) {
+        myProjectSdksModel.addSdk(newSdk);
+        mySdkCombo.setSelectedItem(newSdk);
+        myProjectSdksModel.apply();
+      }
     }
     else {
       final Sdk sdk = myProjectSdksModel.findSdk(item);
@@ -285,7 +288,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     final Sdk prevSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    final Sdk selectedSdk = setSdk(item);
+    final Sdk selectedSdk = setSdk(newSdk);
 
     // update string literals if different LanguageLevel was selected
     if (prevSdk != null && selectedSdk != null) {
@@ -413,7 +416,15 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     @Override
     public void sdkAdded(Sdk sdk) {
+      final Object item = myConfigurable.mySdkCombo.getSelectedItem();
+
       myConfigurable.resetSdkList();
+
+      if (item instanceof PyDetectedSdk) {
+        final String path = ((PyDetectedSdk)item).getHomePath();
+        if (path != null && path.equals(sdk.getHomePath()))
+          myConfigurable.mySdkCombo.setSelectedItem(sdk);
+      }
     }
 
     @Override
