@@ -2,7 +2,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
@@ -44,14 +43,12 @@ import java.util.List;
 
 import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 
-/**
- * @author erokhins
- */
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
-  private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
   private static final int ROOT_INDICATOR_WIDTH = 5;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
+  private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
+  private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
   @NotNull private final VcsLogUI myUI;
   private final VcsLogDataHolder myLogDataHolder;
@@ -120,7 +117,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         column.setPreferredWidth(Short.MAX_VALUE);
       }
       else if (i == AbstractVcsLogTableModel.AUTHOR_COLUMN) { // detect author with the longest name
-        int contentWidth = calcMaxContentColumnWidth(i, 1000);
+        // to avoid querying the last row (it would lead to full graph loading)
+        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount() - MAX_ROWS_TO_CALC_OFFSET);
+        if (maxRowsToCheck < 0) { // but if the log is small, check all of them
+          maxRowsToCheck = getRowCount();
+        }
+        int contentWidth = calcMaxContentColumnWidth(i, maxRowsToCheck);
         column.setMinWidth(Math.min(contentWidth, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
         column.setWidth(column.getMinWidth());
       }
@@ -134,7 +136,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private int calcMaxContentColumnWidth(int columnIndex, int maxRowsToCheck) {
     int maxWidth = 0;
-    for (int row = 0; row < maxRowsToCheck && row < getRowCount(); row++) {
+    for (int row = 0; row < maxRowsToCheck; row++) {
       TableCellRenderer renderer = getCellRenderer(row, columnIndex);
       Component comp = prepareRenderer(renderer, row, columnIndex);
       maxWidth = Math.max(comp.getPreferredSize().width, maxWidth);
