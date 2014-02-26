@@ -1,4 +1,4 @@
-package com.intellij.tasks.httpclient;
+package com.intellij.tasks.impl.httpclient;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;

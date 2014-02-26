@@ -1,4 +1,4 @@
-package com.intellij.tasks.httpclient;
+package com.intellij.tasks.impl.httpclient;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

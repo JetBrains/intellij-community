@@ -8,8 +8,8 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
 
 /**
  * @author Mikhail Golubev
