@@ -26,13 +26,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +72,14 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       return;
     }
 
-    ExpandRegionAction.expandRegionAtCaret(project, event.getData(CommonDataKeys.EDITOR));
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    ExpandRegionAction.expandRegionAtCaret(project, editor);
 
     Document document = place.getDocument();
     int line = document.getLineNumber(place.getOffset());
+    if (editor != null && editor.getCaretModel().getVisualPosition().line != line) {
+      editor.getCaretModel().moveToOffset(place.getOffset());
+    }
 
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
     if (debugManager == null) {
@@ -100,28 +105,59 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     }
   }
 
+  private static boolean containsOnlyDeclarations(int line, Document document, PsiFile file) {
+    int lineStart = document.getLineStartOffset(line);
+    int lineEnd = document.getLineEndOffset(line);
+    PsiElement start = file.findElementAt(lineStart);
+    PsiElement end = file.findElementAt(lineEnd - 1);
+    if (start == null || end == null) return false;
+
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(start, end);
+    for (PsiElement element : PsiTreeUtil.findChildrenOfAnyType(commonParent, PsiStatement.class, PsiExpression.class)) {
+      if (new TextRange(lineStart, lineEnd).contains(element.getTextRange().getStartOffset())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Nullable
   private static PlaceInDocument getPlace(@NotNull final Project project, AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }
-    if (editor != null) {
-      final Document document = editor.getDocument();
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file != null) {
-        final Editor editor1 = editor;
-        return new PlaceInDocument() {
-          public Document getDocument() {
-            return document;
-          }
-
-          public int getOffset() {
-            return editor1.getCaretModel().getOffset();
-          }
-        };
-      }
+    if (editor == null) {
+      return null;
     }
-    return null;
+    
+    final Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) {
+      return null;
+    }
+
+    // if several lines are merged into one visual line (using folding), try to find the most appropriate of those lines
+    int visualLine = editor.getCaretModel().getVisualPosition().getLine();
+    int visibleOffset = editor.getCaretModel().getOffset();
+    while (editor.offsetToVisualPosition(visibleOffset).line == visualLine) {
+      int line = document.getLineNumber(visibleOffset);
+      if (!containsOnlyDeclarations(line, document, file)) {
+        return new PlaceInDocument(document, visibleOffset);
+      }
+      int lineEndOffset = document.getLineEndOffset(line);
+      FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(lineEndOffset);
+      if (region != null) {
+        int foldEnd = region.getEndOffset();
+        if (foldEnd > lineEndOffset) {
+          visibleOffset = foldEnd;
+          continue;
+        }
+      }
+      visibleOffset = lineEndOffset + 1;
+    }
+
+    return new PlaceInDocument(document, editor.getCaretModel().getOffset());
   }
 }
