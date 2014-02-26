@@ -59,4 +59,8 @@ public class GraphFlags {
   public Flags getSimpleNodeFlags() {
     return getFlags(0);
   }
+
+  public Flags getThickFlags() {
+    return getFlags(2);
+  }
 }

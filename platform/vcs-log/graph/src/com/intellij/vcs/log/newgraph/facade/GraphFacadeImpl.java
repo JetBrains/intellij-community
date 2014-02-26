@@ -75,7 +75,7 @@ public class GraphFacadeImpl implements GraphFacade {
     }
     System.out.println("graph walk:" + (System.currentTimeMillis() - ms));
 
-    PermanentAsMutableGraph mutableGraph = new PermanentAsMutableGraph(permanentGraph, graphLayout);
+    PermanentAsMutableGraph mutableGraph = new PermanentAsMutableGraph(permanentGraph, graphLayout, flags.getThickFlags(), dfsUtil);
     ElementColorManager elementColorManager = new ElementColorManager() {
       @NotNull
       @Override
