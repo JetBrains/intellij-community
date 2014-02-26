@@ -19,6 +19,7 @@ package com.intellij.vcs.log.newgraph.impl;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.SomeGraph;
+import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,17 +30,9 @@ import java.util.List;
 public class PermanentGraphLayoutBuilder {
 
   @NotNull
-  public static PermanentGraphLayout build(@NotNull PermanentGraph graph) {
-    return build(graph, new Comparator<Integer>() {
-      @Override
-      public int compare(Integer o1, Integer o2) {
-        return 0;
-      }
-    });
-  }
-
-  @NotNull
-  public static PermanentGraphLayout build(@NotNull PermanentGraph graph, @NotNull Comparator<Integer> compareTwoHeaderNodeIndex) {
+  public static PermanentGraphLayout build(@NotNull DfsUtil dfsUtil,
+                                           @NotNull PermanentGraph graph,
+                                           @NotNull Comparator<Integer> compareTwoHeaderNodeIndex) {
     List<Integer> heads = new ArrayList<Integer>();
     for (int i = 0; i < graph.nodesCount(); i++) {
       if (graph.getUpNodes(i).size() == 0) {
@@ -47,7 +40,7 @@ public class PermanentGraphLayoutBuilder {
       }
     }
     Collections.sort(heads, compareTwoHeaderNodeIndex);
-    PermanentGraphLayoutBuilder builder = new PermanentGraphLayoutBuilder(graph, heads);
+    PermanentGraphLayoutBuilder builder = new PermanentGraphLayoutBuilder(graph, heads, dfsUtil);
     return builder.build();
   }
 
@@ -57,46 +50,46 @@ public class PermanentGraphLayoutBuilder {
   private final List<Integer> myHeadNodeIndex;
   private final int[] myStartLayoutIndexForHead;
 
-  private final int[] stackForDFS;
+  private final DfsUtil myDfsUtil;
 
   private int currentLayoutIndex = 1;
 
-  private PermanentGraphLayoutBuilder(PermanentGraph graph, List<Integer> headNodeIndex) {
+  private PermanentGraphLayoutBuilder(PermanentGraph graph, List<Integer> headNodeIndex, DfsUtil dfsUtil) {
     myGraph = graph;
+    myDfsUtil = dfsUtil;
     myLayoutIndex = new int[graph.nodesCount()];
 
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = new int[headNodeIndex.size()];
 
-    stackForDFS = new int[myGraph.nodesCount()];
   }
 
   private void dfs(int nodeIndex) {
-    int stackIndex = 0;
-    stackForDFS[0] = nodeIndex;
-    while (stackIndex >= 0) {
-      int currentNodeIndex = stackForDFS[stackIndex];
-      boolean firstVisit = myLayoutIndex[currentNodeIndex] == 0;
-      if (firstVisit)
-        myLayoutIndex[currentNodeIndex] = currentLayoutIndex;
+    myDfsUtil.nodeDfsIterator(nodeIndex, new DfsUtil.NextNode() {
+      @Override
+      public int fun(int currentNode) {
+        boolean firstVisit = myLayoutIndex[currentNode] == 0;
+        if (firstVisit)
+          myLayoutIndex[currentNode] = currentLayoutIndex;
 
-      int childWithoutLayoutIndex = -1;
-      for (int childNodeIndex : myGraph.getDownNodes(currentNodeIndex)) {
-        if (childNodeIndex != SomeGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
-          childWithoutLayoutIndex = childNodeIndex;
-          break;
+        int childWithoutLayoutIndex = -1;
+        for (int childNodeIndex : myGraph.getDownNodes(currentNode)) {
+          if (childNodeIndex != SomeGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
+            childWithoutLayoutIndex = childNodeIndex;
+            break;
+          }
+        }
+
+        if (childWithoutLayoutIndex == -1) {
+          if (firstVisit)
+            currentLayoutIndex++;
+
+          return DfsUtil.NextNode.NODE_NOT_FOUND;
+        } else {
+          return childWithoutLayoutIndex;
         }
       }
-
-      if (childWithoutLayoutIndex == -1) {
-        stackIndex--;
-        if (firstVisit)
-          currentLayoutIndex++;
-      } else {
-        stackIndex++;
-        stackForDFS[stackIndex] = childWithoutLayoutIndex;
-      }
-    }
+    });
   }
 
   @NotNull

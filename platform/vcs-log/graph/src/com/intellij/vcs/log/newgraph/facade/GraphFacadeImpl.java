@@ -31,6 +31,7 @@ import com.intellij.vcs.log.newgraph.impl.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphLayoutBuilder;
 import com.intellij.vcs.log.newgraph.render.ElementColorManager;
 import com.intellij.vcs.log.newgraph.render.GraphRender;
+import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,9 +46,10 @@ public class GraphFacadeImpl implements GraphFacade {
     final PermanentGraphImpl permanentGraph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
     System.out.println("PermanentGraph:" + (System.currentTimeMillis() - ms));
 
+    DfsUtil dfsUtil = new DfsUtil(commits.size());
 
     ms = System.currentTimeMillis();
-    final PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(permanentGraph, new Comparator<Integer>() {
+    final PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, permanentGraph, new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
         int hashIndex1 = permanentGraph.getHashIndex(o1);

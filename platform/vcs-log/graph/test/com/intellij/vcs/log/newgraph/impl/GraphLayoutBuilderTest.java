@@ -21,6 +21,7 @@ import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -43,7 +44,8 @@ public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
     GraphFlags flags = new GraphFlags(commits.size());
     final PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
 
-    PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(graph, new Comparator<Integer>() {
+    DfsUtil dfsUtil = new DfsUtil(commits.size());
+    PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, graph, new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
         Integer hashIndex1 = graph.getHashIndex(o1);
