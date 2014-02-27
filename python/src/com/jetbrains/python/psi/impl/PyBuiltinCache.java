@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -343,5 +340,19 @@ public class PyBuiltinCache {
     }
     // files are singletons, no need to compare URIs
     return the_file == myBuiltinsFile || the_file == myExceptionsFile;
+  }
+
+  public static boolean isInBuiltins(@NotNull PyExpression expression) {
+    if (expression instanceof PyQualifiedExpression && (((PyQualifiedExpression)expression).isQualified())) {
+      return false;
+    }
+    PsiReference reference = expression.getReference();
+    if (reference != null) {
+      PsiElement resolved = reference.resolve();
+      if (resolved != null && getInstance(expression).isBuiltin(resolved)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
