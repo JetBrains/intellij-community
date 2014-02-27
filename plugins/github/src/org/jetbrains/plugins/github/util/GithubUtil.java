@@ -224,6 +224,12 @@ public class GithubUtil {
           throw new GithubOperationCanceledException("Can't get two factor authentication code");
         }
 
+        GithubSettings settings = GithubSettings.getInstance();
+        if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
+            StringUtil.equalsIgnoreCase(settings.getLogin(), oldAuth.getBasicAuth().getLogin())) {
+          settings.setValidGitAuth(false);
+        }
+
         return oldAuth.copyWithTwoFactorCode(codeRef.get());
       }
     });

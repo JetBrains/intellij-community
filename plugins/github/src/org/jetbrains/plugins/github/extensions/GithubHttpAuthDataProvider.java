@@ -37,6 +37,9 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
     }
 
     GithubSettings settings = GithubSettings.getInstance();
+    if (!settings.isValidGitAuth()) {
+      return null;
+    }
 
     String host1 = GithubUrlUtil.getHostFromUrl(settings.getHost());
     String host2 = GithubUrlUtil.getHostFromUrl(url);
