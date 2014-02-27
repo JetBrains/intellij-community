@@ -120,6 +120,10 @@ public abstract class Property<T extends PropertiesContainer> {
     return false;
   }
 
+  public boolean closeEditorDuringRefresh() {
+    return false;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Presentation
