@@ -5,6 +5,17 @@
   <vendor>JetBrains</vendor>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
   <category>VCS Integration</category>
+  <description>
+      <![CDATA[
+      Allows working with CVS version control system.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>When CVS is not enabled, it is still possible to browse, check out sources from and import into the available CVS repositories.</li>
+        <li>When CVS is enabled, the CVS node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+   </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.vcs</depends>
