@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.openapi.editor.LazyRangeMarkerFactory"/>
+  </extensions>
+</idea-plugin>

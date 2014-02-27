@@ -17,6 +17,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/EditorExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
                         serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManager"/>

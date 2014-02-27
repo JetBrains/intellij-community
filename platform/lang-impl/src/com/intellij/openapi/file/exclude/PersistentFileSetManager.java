@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -36,7 +37,7 @@ public class PersistentFileSetManager implements PersistentStateComponent<Elemen
   private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   
   protected boolean addFile(VirtualFile file) {
-    if (file.isDirectory()) return false;
+    if (file instanceof StubVirtualFile || file.isDirectory()) return false;
     myFiles.add(file);
     return true;
   }

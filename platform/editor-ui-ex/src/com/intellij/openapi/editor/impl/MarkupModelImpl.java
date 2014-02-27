@@ -82,7 +82,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
 
     int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
-    return addRangeHighlighter(PersistentRangeHighlighterImpl.create(this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, null, false), null);
+    return addRangeHighlighter(PersistentRangeHighlighterImpl.create(this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributes, false), null);
   }
 
   private boolean isNotValidLine(int lineNumber) {
