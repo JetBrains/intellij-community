@@ -406,8 +406,9 @@ public class GenericsHighlightUtil {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && aClass.isInterface() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
       HierarchicalMethodSignature sig = method.getHierarchicalMethodSignature();
       for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
-        final PsiClass containingClass = methodSignature.getMethod().getContainingClass();
-        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        final PsiMethod objectMethod = methodSignature.getMethod();
+        final PsiClass containingClass = objectMethod.getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) && objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("Default method '" + sig.getName() + "' overrides a member of 'java.lang.Object'")
             .range(methodIdentifier)
