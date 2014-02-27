@@ -18,13 +18,12 @@ package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.ClickGraphAction;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
-import com.intellij.vcs.log.newgraph.gpaph.actions.*;
-import com.intellij.vcs.log.newgraph.render.GraphRender;
+import com.intellij.vcs.log.newgraph.gpaph.actions.ClickInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverArrowInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.RowClickInternalGraphAction;
 import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
 import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
@@ -33,20 +32,18 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class GraphActionDispatcher {
-  private final PermanentGraph myPermanentGraph;
-  private final MutableGraph myMutableGraph;
-  private final GraphRender myGraphRender;
-
-  public GraphActionDispatcher(PermanentGraph permanentGraph, MutableGraph mutableGraph, GraphRender graphRender) {
-    myPermanentGraph = permanentGraph;
-    myMutableGraph = mutableGraph;
-    myGraphRender = graphRender;
+  
+  @NotNull
+  private final GraphData myGraphData;
+  
+  public GraphActionDispatcher(@NotNull GraphData graphData) {
+    myGraphData = graphData;
   }
 
   @Nullable
   public GraphAnswer performAction(@NotNull GraphAction action) {
     if (action instanceof LongEdgesAction) {
-      myGraphRender.setShowLongEdges(((LongEdgesAction)action).shouldShowLongEdges());
+      myGraphData.getGraphRender().setShowLongEdges(((LongEdgesAction)action).shouldShowLongEdges());
     }
 
     if (action instanceof MouseOverAction) {
@@ -62,7 +59,7 @@ public class GraphActionDispatcher {
 
   @Nullable
   private GraphAnswer clickToRow(int visibleRowIndex) {
-    myMutableGraph.performAction(new RowClickInternalGraphAction(visibleRowIndex));
+    myGraphData.getMutableGraph().performAction(new RowClickInternalGraphAction(visibleRowIndex));
     return null;
   }
 
@@ -84,8 +81,11 @@ public class GraphActionDispatcher {
         toRow = edge.getUpNodeVisibleIndex();
       return new JumpToRowAnswer(toRow);
     } else {
-      myMutableGraph.performAction(new ClickInternalGraphAction(arrowOrGraphElement.second));
-      myGraphRender.invalidate();
+      int toRow = myGraphData.getMutableGraph().performAction(new ClickInternalGraphAction(arrowOrGraphElement.second));
+      myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
+      myGraphData.getGraphRender().invalidate();
+      if (toRow != -1)
+        return new JumpToRowAnswer(toRow);
       return null; // TODO
     }
   }
@@ -94,12 +94,12 @@ public class GraphActionDispatcher {
   private GraphAnswer mouseOverAction(@NotNull MouseOverAction action) {
     Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(action.getRow(), action.getRelativePoint());
     if (arrowOrGraphElement.first != null) {
-      myMutableGraph.performAction(new MouseOverGraphElementInternalGraphAction(null));
-      myMutableGraph.performAction(new MouseOverArrowInternalGraphAction(arrowOrGraphElement.first));
+      myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
+      myGraphData.getMutableGraph().performAction(new MouseOverArrowInternalGraphAction(arrowOrGraphElement.first));
       return ChangeCursorAnswer.HAND_CURSOR;
     } else {
-      myMutableGraph.performAction(new MouseOverArrowInternalGraphAction(null));
-      myMutableGraph.performAction(new MouseOverGraphElementInternalGraphAction(arrowOrGraphElement.second));
+      myGraphData.getMutableGraph().performAction(new MouseOverArrowInternalGraphAction(null));
+      myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(arrowOrGraphElement.second));
       return ChangeCursorAnswer.DEFAULT_CURSOR;
     }
   }
@@ -107,10 +107,10 @@ public class GraphActionDispatcher {
 
   @NotNull
   private Pair<SpecialRowElement, GraphElement> getOverArrowOrGraphElement(int visibleRowIndex, @NotNull Point point) {
-    GraphCell graphCell = myGraphRender.getCellGenerator().getGraphCell(visibleRowIndex);
+    GraphCell graphCell = myGraphData.getGraphRender().getCellGenerator().getGraphCell(visibleRowIndex);
 
-    SpecialRowElement overArrow = myGraphRender.getCellPainter().mouseOverArrow(graphCell, point.x, point.y);
-    GraphElement overElement = myGraphRender.getCellPainter().mouseOver(graphCell, point.x, point.y);
+    SpecialRowElement overArrow = myGraphData.getGraphRender().getCellPainter().mouseOverArrow(graphCell, point.x, point.y);
+    GraphElement overElement = myGraphData.getGraphRender().getCellPainter().mouseOver(graphCell, point.x, point.y);
     return new Pair<SpecialRowElement, GraphElement>(overArrow, overElement);
   }
 

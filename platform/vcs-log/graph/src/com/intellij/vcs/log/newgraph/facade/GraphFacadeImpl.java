@@ -21,16 +21,12 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.GraphFlags;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
-import com.intellij.vcs.log.newgraph.gpaph.impl.PermanentAsMutableGraph;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.impl.PermanentGraphLayoutBuilder;
 import com.intellij.vcs.log.newgraph.render.ElementColorManager;
-import com.intellij.vcs.log.newgraph.render.GraphRender;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +71,6 @@ public class GraphFacadeImpl implements GraphFacade {
     }
     System.out.println("graph walk:" + (System.currentTimeMillis() - ms));
 
-    PermanentAsMutableGraph mutableGraph = new PermanentAsMutableGraph(permanentGraph, graphLayout, flags.getThickFlags(), dfsUtil);
     ElementColorManager elementColorManager = new ElementColorManager() {
       @NotNull
       @Override
@@ -90,46 +85,25 @@ public class GraphFacadeImpl implements GraphFacade {
         }
       }
     };
-    GraphRender graphRender = new GraphRender(mutableGraph, elementColorManager);
-    return new GraphFacadeImpl(flags, permanentGraph, graphLayout, mutableGraph, graphRender);
+    GraphData graphData = new GraphData(flags, permanentGraph, graphLayout, elementColorManager, dfsUtil);
+    return new GraphFacadeImpl(graphData);
   }
 
   @NotNull
-  private final GraphFlags myGraphFlags;
-
-  @NotNull
-  private final PermanentGraph myPermanentGraph;
-
-  @NotNull
-  private final PermanentGraphLayout myPermanentGraphLayout;
-
-  @NotNull
-  private final MutableGraph myMutableGraph;
-
-  @NotNull
-  private final GraphRender myGraphRender;
+  private final GraphData myGraphData;
 
   @NotNull
   private final GraphActionDispatcher myActionDispatcher;
 
-  public GraphFacadeImpl(@NotNull GraphFlags graphFlags,
-                         @NotNull PermanentGraph permanentGraph,
-                         @NotNull PermanentGraphLayout permanentGraphLayout,
-                         @NotNull MutableGraph mutableGraph,
-                         @NotNull GraphRender graphRender) {
-    myGraphFlags = graphFlags;
-    myPermanentGraph = permanentGraph;
-    myPermanentGraphLayout = permanentGraphLayout;
-    myMutableGraph = mutableGraph;
-    myGraphRender = graphRender;
-
-    myActionDispatcher = new GraphActionDispatcher(permanentGraph, mutableGraph, graphRender);
+  public GraphFacadeImpl(@NotNull GraphData graphData) {
+    myGraphData = graphData;
+    myActionDispatcher = new GraphActionDispatcher(graphData);
   }
 
   @NotNull
   @Override
   public PaintInfo paint(int visibleRow) {
-    return myGraphRender.paint(visibleRow);
+    return myGraphData.getGraphRender().paint(visibleRow);
   }
 
   @Nullable
@@ -146,23 +120,23 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @Override
   public int getCommitAtRow(int visibleRow) {
-    int indexInPermanentGraph = myMutableGraph.getIndexInPermanentGraph(visibleRow);
-    return myPermanentGraph.getHashIndex(indexInPermanentGraph);
+    int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
+    return myGraphData.getPermanentGraph().getHashIndex(indexInPermanentGraph);
   }
 
   @Override
   public int getVisibleCommitCount() {
-    return myMutableGraph.getCountVisibleNodes();
+    return myGraphData.getMutableGraph().getCountVisibleNodes();
   }
 
   @Override
   public void setVisibleBranches(@Nullable Collection<Integer> heads) {
-
+    myGraphData.setVisibleBranches(heads);
   }
 
   @Override
   public void setFilter(@NotNull Condition<Integer> visibilityPredicate) {
-
+    myGraphData.setFilter(visibilityPredicate);
   }
 
   @NotNull
@@ -176,19 +150,19 @@ public class GraphFacadeImpl implements GraphFacade {
 
       @Override
       public RowInfo getRowInfo(int visibleRow) {
-        int indexInPermanentGraph = myMutableGraph.getIndexInPermanentGraph(visibleRow);
-        final int oneOfHeadNodeIndex = myPermanentGraphLayout.getOneOfHeadNodeIndex(indexInPermanentGraph);
+        int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
+        final int oneOfHeadNodeIndex = myGraphData.getPermanentGraphLayout().getOneOfHeadNodeIndex(indexInPermanentGraph);
         return new RowInfo() {
           @Override
           public int getOneOfHeads() {
-            return myPermanentGraph.getHashIndex(oneOfHeadNodeIndex);
+            return myGraphData.getPermanentGraph().getHashIndex(oneOfHeadNodeIndex);
           }
         };
       }
 
       @Override
       public boolean areLongEdgesHidden() {
-        return !myGraphRender.isShowLongEdges();
+        return !myGraphData.getGraphRender().isShowLongEdges();
       }
     };
   }

@@ -26,7 +26,7 @@ public interface MutableGraph {
 
   int getIndexInPermanentGraph(int visibleNodeIndex);
 
-  void performAction(@NotNull InternalGraphAction action);
+  int performAction(@NotNull InternalGraphAction action);
 
   @NotNull
   ThickHoverController getThickHoverController();

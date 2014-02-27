@@ -51,8 +51,12 @@ public class GraphFlags {
     };
   }
 
-  public Flags getHideNodesFlags() {
+  public Flags getVisibleNodes() {
     return getFlags(1);
+  }
+
+  public Flags getVisibleNodesInBranches() {
+    return getFlags(3);
   }
 
   // From node k exist only one edge to k + 1

@@ -31,6 +31,7 @@ import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -57,7 +58,9 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   private final DfsUtil myDfsUtil;
 
   public ThickHoverControllerImpl(@NotNull PermanentGraph permanentGraph,
-                                  @NotNull MutableGraph mutableGraph, @NotNull FragmentGenerator fragmentGenerator, @NotNull Flags thickFlags,
+                                  @NotNull MutableGraph mutableGraph,
+                                  @NotNull FragmentGenerator fragmentGenerator,
+                                  @NotNull Flags thickFlags,
                                   @NotNull DfsUtil dfsUtil) {
     myPermanentGraph = permanentGraph;
     myMutableGraph = mutableGraph;
@@ -124,11 +127,16 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
     }
   }
 
-  private void enableAllRelativeNodes(@NotNull final Flags flags, int rowIndex) {
+  private void enableAllRelativeNodes(@NotNull final Flags flags, final int rowIndex) {
     flags.set(rowIndex, true);
+
+
     myDfsUtil.nodeDfsIterator(rowIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
+        if (Math.abs(rowIndex - currentNode) > 5000)
+          return NODE_NOT_FOUND;
+
         for (int downNode : myPermanentGraph.getDownNodes(currentNode)) {
           if (downNode != SomeGraph.NOT_LOAD_COMMIT && !flags.get(downNode)) {
             flags.set(downNode, true);
@@ -142,6 +150,9 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
     myDfsUtil.nodeDfsIterator(rowIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
+        if (Math.abs(rowIndex - currentNode) > 5000)
+          return NODE_NOT_FOUND;
+
         for (int upNode : myPermanentGraph.getUpNodes(currentNode)) {
           if (!flags.get(upNode)) {
             flags.set(upNode, true);

@@ -68,7 +68,7 @@ public class GraphFlagsTest {
     }
 
     private void testVisibleFlags() {
-      assertEquals(myVisibleFlags, flagsToStr(myGraphFlags.getHideNodesFlags()));
+      assertEquals(myVisibleFlags, flagsToStr(myGraphFlags.getVisibleNodes()));
     }
 
     private void testEdgesFlags() {
@@ -77,7 +77,7 @@ public class GraphFlagsTest {
 
     public void newVisibleFlags(String visibleFlags) {
       myVisibleFlags = visibleFlags;
-      setFlags(myGraphFlags.getHideNodesFlags(), visibleFlags);
+      setFlags(myGraphFlags.getVisibleNodes(), visibleFlags);
 
       testAll();
     }

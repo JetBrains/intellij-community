@@ -45,8 +45,9 @@ public class PermanentAsMutableGraph extends AbstractMutableGraph<PermanentAsMut
   }
 
   @Override
-  public void performAction(@NotNull InternalGraphAction action) {
+  public int performAction(@NotNull InternalGraphAction action) {
     myThickHoverController.performAction(action);
+    return -1;
   }
 
   @NotNull
