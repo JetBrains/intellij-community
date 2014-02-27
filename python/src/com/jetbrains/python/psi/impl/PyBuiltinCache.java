@@ -27,10 +27,7 @@ import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -337,7 +334,7 @@ public class PyBuiltinCache {
    * @param target an element to check.
    * @return true iff target is inside the __builtins__.py
    */
-  public boolean hasInBuiltins(@Nullable PsiElement target) {
+  public boolean isBuiltin(@Nullable PsiElement target) {
     if (target == null) return false;
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();

@@ -99,7 +99,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
       PsiReference reference = callee.getReference();
       if (reference != null) {
         PsiElement resolved = reference.resolve();
-        if (resolved != null && PyBuiltinCache.getInstance(callee).hasInBuiltins(resolved)) {
+        if (resolved != null && PyBuiltinCache.getInstance(callee).isBuiltin(resolved)) {
           return true;
         }
       }

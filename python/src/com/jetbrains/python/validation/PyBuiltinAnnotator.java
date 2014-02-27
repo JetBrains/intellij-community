@@ -40,7 +40,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
       // things like len()
       ResolveResult[] resolved = node.getReference().multiResolve(false); // constructors, etc may give multiple results...
       if (resolved.length > 0) {
-        if (PyBuiltinCache.getInstance(node).hasInBuiltins(resolved[0].getElement())) { // ...but we only care about the default resolution
+        if (PyBuiltinCache.getInstance(node).isBuiltin(resolved[0].getElement())) { // ...but we only care about the default resolution
           Annotation ann;
           PsiElement parent = node.getParent();
           if (parent instanceof PyDecorator) {

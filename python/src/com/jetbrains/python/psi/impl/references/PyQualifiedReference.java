@@ -212,7 +212,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         PyExpression callee = ((PyCallExpression)qualifier).getCallee();
         if (callee instanceof PyReferenceExpression && PyNames.SUPER.equals(callee.getName())) {
           PsiElement target = ((PyReferenceExpression)callee).getReference().resolve();
-          if (target != null && PyBuiltinCache.getInstance(qualifier).hasInBuiltins(target)) return false; // super() of unresolved type
+          if (target != null && PyBuiltinCache.getInstance(qualifier).isBuiltin(target)) return false; // super() of unresolved type
         }
       }
     }

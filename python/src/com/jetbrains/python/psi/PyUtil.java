@@ -1138,7 +1138,7 @@ public class PyUtil {
       if (reference == null) return false;
       PsiElement resolved = reference.resolve();
       PyBuiltinCache cache = PyBuiltinCache.getInstance(node);
-      if (resolved != null && cache.hasInBuiltins(resolved)) {
+      if (resolved != null && cache.isBuiltin(resolved)) {
         PyExpression[] args = node.getArguments();
         if (args.length > 0) {
           String firstArg = args[0].getText();
