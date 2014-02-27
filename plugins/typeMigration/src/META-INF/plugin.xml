@@ -1,7 +1,16 @@
 <idea-plugin>
   <name>Type Migration</name>
   <description>
-    This plugin adds the type migration refactoring.
+      <![CDATA[
+      This plugin adds the type migration refactoring.
+      The following features are available:
+      <ul>
+      <li>Dedicated Refactoring Dialog. (Refactor | Type Migration)</li>
+      <li>Ability to review type migration results. (Refactor | Migration | Preview)</li>
+      <li>Ability to automatically change a member type or data flow dependent type entries.</li>
+      <li>Ability to convert variable or method return type between arrays and collections.</li>
+      </ul>
+      ]]>
   </description>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
