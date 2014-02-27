@@ -730,7 +730,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return candidate;
   }
 
-  public static void assertStatement(@NotNull PsiElement anchor, @NotNull PsiElement scope) {
+  public static void assertStatement(@Nullable PsiElement anchor, @NotNull PsiElement scope) {
     if (!(anchor instanceof GrStatement)) {
       LogMessageEx.error(LOG, "cannot find anchor for variable", scope.getText());
     }
