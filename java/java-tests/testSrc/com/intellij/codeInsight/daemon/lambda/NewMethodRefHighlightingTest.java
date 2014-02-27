@@ -177,6 +177,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testStaticNonStaticReferenceTypeAmbiguity() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
