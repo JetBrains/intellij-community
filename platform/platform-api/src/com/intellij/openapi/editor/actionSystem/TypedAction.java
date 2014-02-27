@@ -64,18 +64,7 @@ public class TypedAction {
       try {
         final String str = String.valueOf(charTyped);
         CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-
-        if (editor.getCaretModel().getAllCarets().size() == 1) { // temporary fix for completion - going forward we shouldn't use this check
-          EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
-        }
-        else {
-          editor.getCaretModel().runForEachCaret(new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
-            }
-          });
-        }
+        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {
         EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);

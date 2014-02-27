@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -49,6 +50,15 @@ public class EditorModificationUtil {
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        deleteSelectedText(editor);
+      }
+    });
   }
 
   public static void deleteBlockSelection(Editor editor) {
@@ -81,11 +91,15 @@ public class EditorModificationUtil {
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
 
-  public static void insertStringAtCaret(Editor editor, String s) {
+  public static void insertStringAtCaret(Editor editor, @NotNull String s) {
     insertStringAtCaret(editor, s, false, true);
   }
 
-  public static int insertStringAtCaret(Editor editor, String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, toMoveCaret, s.length());
+  }
+
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
@@ -120,7 +134,7 @@ public class EditorModificationUtil {
       document.replaceString(oldOffset, Math.min(endOffset, oldOffset + s.length()), s);
     }
 
-    int offset = oldOffset + s.length();
+    int offset = oldOffset + filler.length() + caretShift;
     if (toMoveCaret){
       editor.getCaretModel().moveToOffset(offset, true);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -363,6 +377,62 @@ public class EditorModificationUtil {
     else {
       insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
     }
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, toProcessOverwriteMode, str.length());
+  }
+
+  /**
+   * Inserts given string at each caret's position. Effective caret shift will be equal to <code>caretShift</code> for each caret.
+   */
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode, final int caretShift)
+    throws ReadOnlyFragmentModificationException
+  {
+    Document doc = editor.getDocument();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasBlockSelection()) {
+      RangeMarker guard = selectionModel.getBlockSelectionGuard();
+      if (guard != null) {
+        DocumentEvent evt = new MockDocumentEvent(doc, editor.getCaretModel().getOffset());
+        ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+      }
+      else {
+        final LogicalPosition start = selectionModel.getBlockStart();
+        final LogicalPosition end = selectionModel.getBlockEnd();
+        assert start != null;
+        assert end != null;
+
+        int column = Math.min(start.column, end.column);
+        int startLine = Math.min(start.line, end.line);
+        int endLine = Math.max(start.line, end.line);
+        deleteBlockSelection(editor);
+        for (int i = startLine; i <= endLine; i++) {
+          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
+          insertStringAtCaret(editor, str, toProcessOverwriteMode, true, caretShift);
+        }
+        selectionModel.setBlockSelection(new LogicalPosition(startLine, column + str.length()),
+                                         new LogicalPosition(endLine, column + str.length()));
+      }
+    }
+    else {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          insertStringAtCaret(editor, str, toProcessOverwriteMode, true, caretShift);
+        }
+      });
+    }
+  }
+
+  public static void moveAllCaretsRelatively(@NotNull Editor editor, final int caretShift) {
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        caret.moveToOffset(caret.getOffset() + caretShift);
+      }
+    });
   }
 
   /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */

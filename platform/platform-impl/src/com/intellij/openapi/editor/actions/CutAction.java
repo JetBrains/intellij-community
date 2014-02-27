@@ -53,12 +53,7 @@ public class CutAction extends EditorAction {
         });
       }
       editor.getSelectionModel().copySelectionToClipboard();
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          EditorModificationUtil.deleteSelectedText(editor);
-        }
-      });
+      EditorModificationUtil.deleteSelectedTextForAllCarets(editor);
     }
   }
 }
