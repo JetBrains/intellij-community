@@ -116,13 +116,13 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     myProject = project;
     init();
     setTitle("Create Virtual Environment");
+    Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(Sdk s) {
+        return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath());
+      }
+    });
     if (suggestedBaseSdk == null && allSdks.size() > 0) {
-      Iterables.removeIf(allSdks, new Predicate<Sdk>() {
-        @Override
-        public boolean apply(Sdk s) {
-          return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath());
-        }
-      });
       List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
       Collections.sort(sortedSdks, new PreferredSdkComparator());
       suggestedBaseSdk = sortedSdks.get(0);
