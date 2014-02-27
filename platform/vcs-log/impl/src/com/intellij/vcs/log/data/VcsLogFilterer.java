@@ -53,11 +53,7 @@ public class VcsLogFilterer {
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
-    if (!detailsFilters.isEmpty() && !USE_NEW_GRAPH_FOR_FILTERING) {
-      List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
-      model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, filteredCommits, LoadMoreStage.INITIAL);
-    }
-    else {
+    if (USE_NEW_GRAPH_FOR_FILTERING) {
       if (!detailsFilters.isEmpty()) {
         List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
         Condition<Integer> filter = getFilterFromCommits(filteredCommits);
@@ -68,7 +64,15 @@ public class VcsLogFilterer {
       }
       model = new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
     }
-
+    else {
+      if (!detailsFilters.isEmpty()) {
+        List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
+        model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, filteredCommits, LoadMoreStage.INITIAL);
+      }
+      else {
+        model = new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
+      }
+    }
     return model;
   }
 
