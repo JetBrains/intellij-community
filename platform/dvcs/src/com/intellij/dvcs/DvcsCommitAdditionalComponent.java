@@ -175,7 +175,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   }
 
   @NotNull
-  protected abstract Set<VirtualFile> getVcsRoots(Collection<FilePath> files);
+  protected abstract Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files);
 
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;

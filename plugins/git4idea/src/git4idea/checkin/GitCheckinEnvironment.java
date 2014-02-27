@@ -649,7 +649,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     @NotNull
-    protected Set<VirtualFile> getVcsRoots(Collection<FilePath> filePaths) {
+    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
       return GitUtil.gitRoots(filePaths);
     }
 
@@ -675,12 +675,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return NewGitUsersComponent.getInstance(project).get();
     }
 
+    @Override
     public void refresh() {
       super.refresh();
       myAuthor.setSelectedItem("");
       reset();
     }
 
+    @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
@@ -695,6 +697,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myNextCommitAuthorDate = myAuthorDate;
     }
 
+    @Override
     public void restoreState() {
       refresh();
     }
