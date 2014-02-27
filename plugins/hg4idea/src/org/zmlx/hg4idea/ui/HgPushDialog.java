@@ -51,6 +51,8 @@ public class HgPushDialog extends DialogWrapper {
   private JComboBox branchComboBox;
   private EditorComboBox myRepositoryURL;
   private JCheckBox newBranchCheckBox;
+  private JComboBox myBookmarkComboBox;
+  private JCheckBox myBookmarkCheckBox;
   private String myCurrentRepositoryUrl;
 
   public HgPushDialog(Project project, Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
@@ -67,6 +69,7 @@ public class HgPushDialog extends DialogWrapper {
     final UpdatingListener updatingListener = new UpdatingListener();
     revisionCbx.addChangeListener(updatingListener);
     branchCheckBox.addChangeListener(updatingListener);
+    myBookmarkCheckBox.addChangeListener(updatingListener);
     revisionTxt.getDocument().addDocumentListener(updatingListener);
 
     setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
@@ -125,6 +128,11 @@ public class HgPushDialog extends DialogWrapper {
     return branchCheckBox.isSelected() ? (String)branchComboBox.getSelectedItem() : null;
   }
 
+  @Nullable
+  public String getBookmarkName() {
+    return myBookmarkCheckBox.isSelected() ? (String)myBookmarkComboBox.getSelectedItem() : null;
+  }
+
   public boolean isForce() {
     return forceCheckBox.isSelected();
   }
@@ -165,7 +173,9 @@ public class HgPushDialog extends DialogWrapper {
 
   private void updateComboBoxes(HgRepository repo) {
     final Collection<String> branches = repo.getOpenedBranches();
+    final Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repo.getBookmarks());
     branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+    myBookmarkComboBox.setModel(new DefaultComboBoxModel(bookmarkNames.toArray()));
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
@@ -180,6 +190,7 @@ public class HgPushDialog extends DialogWrapper {
     revisionTxt.setEnabled(revisionCbx.isSelected());
     branchComboBox.setEnabled(branchCheckBox.isSelected());
     newBranchCheckBox.setEnabled(branchCheckBox.isSelected());
+    myBookmarkComboBox.setEnabled(myBookmarkCheckBox.isSelected());
   }
 
   private boolean validateOptions() {

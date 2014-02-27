@@ -34,6 +34,7 @@ public class HgPushCommand {
   private String myRevision;
   private boolean myForce;
   private String myBranchName;
+  private String myBookmarkName;
   private boolean myIsNewBranch;
 
   public HgPushCommand(Project project, @NotNull VirtualFile repo, String destination) {
@@ -50,12 +51,16 @@ public class HgPushCommand {
     myForce = force;
   }
 
-  public void setBranchName(String branch) {
-    myBranchName = branch;
+  public void setBranchName(String branchName) {
+    myBranchName = branchName;
   }
 
   public void setIsNewBranch(boolean isNewBranch) {
     myIsNewBranch = isNewBranch;
+  }
+
+  public void setBookmarkName(String bookmark) {
+    myBookmarkName = bookmark;
   }
 
   public void execute(final HgCommandResultHandler resultHandler) {
@@ -72,6 +77,10 @@ public class HgPushCommand {
         arguments.add("-b");
         arguments.add(myBranchName);
       }
+    }
+    if (!StringUtil.isEmptyOrSpaces(myBookmarkName)) {
+      arguments.add("-B");
+      arguments.add(myBookmarkName);
     }
     if (myForce) {
       arguments.add("-f");
