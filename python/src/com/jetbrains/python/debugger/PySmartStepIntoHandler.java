@@ -49,6 +49,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     myProcess = process;
   }
 
+  @Override
   @NotNull
   public List<PySmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
     final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
@@ -57,6 +58,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
 
     final int line = position.getLine();
     XDebuggerUtil.getInstance().iterateLine(mySession.getProject(), document, line, new Processor<PsiElement>() {
+      @Override
       public boolean process(PsiElement psiElement) {
         addVariants(document, line, psiElement, variants, visitedCalls);
         return true;
@@ -67,10 +69,11 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   }
 
   @Override
-  public void startStepInto(PySmartStepIntoVariant smartStepIntoVariant) {
+  public void startStepInto(@NotNull PySmartStepIntoVariant smartStepIntoVariant) {
     myProcess.startSmartStepInto(smartStepIntoVariant.getFunctionName());
   }
 
+  @Override
   public String getPopupTitle(@NotNull XSourcePosition position) {
     return PyBundle.message("debug.popup.title.step.into.function");
   }
