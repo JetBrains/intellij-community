@@ -123,7 +123,7 @@ public class LazyRangeMarkerFactory {
     }
 
     @Nullable
-    private RangeMarker getOrCreateDelegate() {
+    protected final RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
         if (document == null) {
@@ -218,6 +218,18 @@ public class LazyRangeMarkerFactory {
       int offset = calculateOffset(myProject, file, document, myLine, myColumn);
 
       return document.createRangeMarker(offset, offset);
+    }
+
+    @Override
+    public int getStartOffset() {
+      getOrCreateDelegate();
+      return super.getStartOffset();
+    }
+
+    @Override
+    public int getEndOffset() {
+      getOrCreateDelegate();
+      return super.getEndOffset();
     }
   }
 
