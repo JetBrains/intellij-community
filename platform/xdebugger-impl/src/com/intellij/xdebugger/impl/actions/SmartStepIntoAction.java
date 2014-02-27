@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class SmartStepIntoAction extends XDebuggerActionBase {
+final class SmartStepIntoAction extends XDebuggerActionBase {
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
