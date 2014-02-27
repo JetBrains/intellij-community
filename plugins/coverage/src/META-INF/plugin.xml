@@ -5,9 +5,18 @@
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="j2ee-plugin.xml">com.intellij.javaee</depends>
-  <description>This plugin supports gathering coverage information and presenting it right in the editor as well as in the project view.
-    It is also possible to generate standalone HTML reports for external use.
-  </description>
+  <description>
+      <![CDATA[
+     This plugin supports gathering coverage information and presenting it right in
+     the editor and in the Project view.
+        The following features are available:
+        <ul>
+        <li>Coverage tab in the run/debug configurations.</li>
+        <li>Run with coverage command.</li>
+        <li>Ability to generate standalone HTML reports for external use.</li>
+        </ul>
+      ]]>
+   </description>
   <vendor>JetBrains</vendor>
 
   <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
