@@ -137,8 +137,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
       })
       .addExtraAction(new ToggleVirtualEnvFilterButton())
-      .addExtraAction(new ShowPathButton())
-      .addExtraAction(new GenerateSkeletonsButton());
+      .addExtraAction(new ShowPathButton());
 
     decorator.setPreferredSize(new Dimension(600, 500));
     myMainPanel = decorator.createPanel();
@@ -452,38 +451,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       dialog.setTitle("Interpreter Paths");
       dialog.show();
       updateOkButton();
-    }
-  }
-
-  private class GenerateSkeletonsButton extends AnActionButton implements DumbAware {
-    public GenerateSkeletonsButton() {
-      super("Generate skeletons for the selected interpreter", PythonIcons.Python.Skeleton);
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return (getSelectedSdk() instanceof PyDetectedSdk);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      final Sdk sdk = getSelectedSdk();
-      if (sdk instanceof PyDetectedSdk) {
-        try {
-          myProjectSdksModel.apply();
-        }
-        catch (ConfigurationException ignored) {
-        }
-
-        final Sdk addedSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdk.getHomeDirectory(),
-                                                          PythonSdkType.getInstance(), true,
-                                                           null, null);
-        myProjectSdksModel.addSdk(addedSdk);
-        myProjectSdksModel.removeSdk(sdk);
-        refreshSdkList();
-        mySdkList.setSelectedValue(addedSdk, true);
-        updateOkButton();
-      }
     }
   }
 }
