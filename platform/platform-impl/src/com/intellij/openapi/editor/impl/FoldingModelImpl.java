@@ -212,17 +212,20 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myIsBatchFoldingProcessing = true;
     myFoldTree.myCachedLastIndex = -1;
-    operation.run();
-    myFoldTree.myCachedLastIndex = -1;
+    try {
+      operation.run();
+    } finally {
+      myFoldTree.myCachedLastIndex = -1;
 
-    if (!oldBatchFlag) {
-      if (myFoldRegionsProcessed) {
-        notifyBatchFoldingProcessingDone(moveCaret);
-        myFoldRegionsProcessed = false;
+      if (!oldBatchFlag) {
+        if (myFoldRegionsProcessed) {
+          notifyBatchFoldingProcessingDone(moveCaret);
+          myFoldRegionsProcessed = false;
+        }
+        myIsBatchFoldingProcessing = false;
       }
-      myIsBatchFoldingProcessing = false;
+      myDoNotCollapseCaret = oldDontCollapseCaret;
     }
-    myDoNotCollapseCaret = oldDontCollapseCaret;
   }
 
   @Override
