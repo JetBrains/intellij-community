@@ -349,6 +349,13 @@
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="meta shift G"/>
     </action>
+    
+    <action id="SelectNextOccurrence">
+      <keyboard-shortcut first-keystroke="control G"/>
+    </action>
+    <action id="UnselectLastOccurrence">
+      <keyboard-shortcut first-keystroke="control shift G"/>
+    </action>
 
     <action id="Run">
       <keyboard-shortcut first-keystroke="control R"/>
