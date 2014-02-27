@@ -33,6 +33,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -75,7 +76,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     return service != null ? service.getSdk() : null;
   }
 
-  public void updateNotifications(@NotNull final Sdk selectedSdk) {
+  public void updateNotifications(@Nullable final Sdk selectedSdk) {
+    if (selectedSdk == null) {
+      myNotificationArea.hide();
+      return;
+    }
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override

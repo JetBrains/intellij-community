@@ -99,8 +99,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       public void actionPerformed(ActionEvent e) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
         myPackagesPanel.updatePackages(selectedSdk != null ? new PyPackageManagementService(myProject, selectedSdk) : null);
-        if (selectedSdk != null)
-          myPackagesPanel.updateNotifications(selectedSdk);
+        myPackagesPanel.updateNotifications(selectedSdk);
       }
     });
     myDetailsCallback = new NullableConsumer<Sdk>() {
@@ -148,6 +147,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                                       updateSdkList(false);
                                                       mySdkCombo.getModel().setSelectedItem(sdk);
                                                       myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
+                                                      myPackagesPanel.updateNotifications(sdk);
                                                     }
                                                   }
                                             );
