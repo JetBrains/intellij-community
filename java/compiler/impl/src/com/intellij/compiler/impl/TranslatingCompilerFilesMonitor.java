@@ -1616,6 +1616,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
+      if (ourDebugMode) {
+        System.out.println("MyVfsListener.processNewFile");
+        System.out.println("file = [" + file + "], notifyServer = [" + notifyServer + "]");
+        System.out.println("myWatchedProjectsCount = " + myWatchedProjectsCount);
+      }
       if (myWatchedProjectsCount == 0) return;
       final Ref<Boolean> isInContent = Ref.create(false);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
