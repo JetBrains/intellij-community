@@ -17,7 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -36,13 +36,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-public class LazyRangeMarkerFactory {
-  private final Project myProject;
+public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
-    myProject = project;
-
+    super(project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -73,7 +71,7 @@ public class LazyRangeMarkerFactory {
   }
 
   public static LazyRangeMarkerFactory getInstance(Project project) {
-    return ServiceManager.getService(project, LazyRangeMarkerFactory.class);
+    return project.getComponent(LazyRangeMarkerFactory.class);
   }
 
   @NotNull
@@ -94,7 +92,8 @@ public class LazyRangeMarkerFactory {
     return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
       @Override
       public RangeMarker compute() {
-        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+        FileDocumentManager fdm = FileDocumentManager.getInstance();
+        final Document document = fdm.getCachedDocument(file);
         if (document != null) {
           final int offset = calculateOffset(myProject, file, document, line, column);
           return document.createRangeMarker(offset, offset, persistent);
