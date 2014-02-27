@@ -8,15 +8,19 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @param <CommitColumnClass> commit column class
@@ -36,9 +40,19 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull protected final VcsLogUI myUi;
+  @NotNull protected final DataPack myDataPack;
+  @NotNull private final LoadMoreStage myLoadMoreStage;
 
-  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder) {
+  @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
+
+
+  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui, @NotNull DataPack dataPack,
+                                     @NotNull LoadMoreStage loadMoreStage) {
     myLogDataHolder = logDataHolder;
+    myUi = ui;
+    myDataPack = dataPack;
+    myLoadMoreStage = loadMoreStage;
   }
 
   @Override
@@ -54,6 +68,18 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   @Nullable
   public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
     return myLogDataHolder.getCommitDetailsGetter().getCommitData(rowIndex, this);
+  }
+
+  /**
+   * Requests the proper data provider to load more data from the log & recreate the model.
+   * @param onLoaded will be called upon task completion on the EDT.
+   */
+  public void requestToLoadMore(@NotNull Runnable onLoaded) {
+    if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
+        && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
+      myUi.getTable().setPaintBusy(true);
+      myUi.getFilterer().requestVcs(myDataPack, myUi.collectFilters(), myLoadMoreStage, onLoaded);
+    }
   }
 
   @NotNull
@@ -89,15 +115,11 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   }
 
   /**
-   * Requests the proper data provider to load more data from the log & recreate the model.
-   * @param onLoaded will be called upon task completion on the EDT.
-   */
-  public abstract void requestToLoadMore(@NotNull Runnable onLoaded);
-
-  /**
    * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
    */
-  public abstract boolean canRequestMore();
+  public boolean canRequestMore() {
+    return !myUi.collectFilters().isEmpty() && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
+  }
 
   /**
    * Returns Changes for commits at selected rows.<br/>

@@ -3,10 +3,12 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 public class VcsLogFilterer {
 
@@ -28,6 +31,9 @@ public class VcsLogFilterer {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUI myUI;
+
+  // TODO remove after new Graph supports filtering
+  private static final boolean USE_NEW_GRAPH_FOR_FILTERING = false;
 
   public VcsLogFilterer(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui) {
     myLogDataHolder = logDataHolder;
@@ -47,15 +53,38 @@ public class VcsLogFilterer {
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
-    if (!detailsFilters.isEmpty()) {
+    if (!detailsFilters.isEmpty() && !USE_NEW_GRAPH_FOR_FILTERING) {
       List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
       model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, filteredCommits, LoadMoreStage.INITIAL);
     }
     else {
-      model = new GraphTableModel(dataPack, myLogDataHolder);
+      if (!detailsFilters.isEmpty()) {
+        List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
+        Condition<Integer> filter = getFilterFromCommits(filteredCommits);
+        dataPack.getGraphFacade().setFilter(filter);
+      }
+      else {
+        dataPack.getGraphFacade().setFilter(Conditions.<Integer>alwaysTrue());
+      }
+      model = new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
     }
 
     return model;
+  }
+
+  private Condition<Integer> getFilterFromCommits(List<Pair<Hash, VirtualFile>> filteredCommits) {
+    final Set<Integer> commitSet = ContainerUtil.map2Set(filteredCommits, new Function<Pair<Hash, VirtualFile>, Integer>() {
+      @Override
+      public Integer fun(Pair<Hash, VirtualFile> pair) {
+        return myLogDataHolder.putHash(pair.getFirst());
+      }
+    });
+    return new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return commitSet.contains(integer);
+      }
+    };
   }
 
   public void requestVcs(@NotNull final DataPack dataPack, @NotNull VcsLogFilterCollection filters,
@@ -66,7 +95,15 @@ public class VcsLogFilterer {
       @Override
       public void consume(List<Pair<Hash, VirtualFile>> details) {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
-        myUI.setModel(new NoGraphTableModel(dataPack, myLogDataHolder, myUI, details, newLoadMoreStage));
+        AbstractVcsLogTableModel model;
+        if (!USE_NEW_GRAPH_FOR_FILTERING) {
+          model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, details, newLoadMoreStage);
+        }
+        else {
+          dataPack.getGraphFacade().setFilter(getFilterFromCommits(details));
+          model = new GraphTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
+        }
+        myUI.setModel(model);
         myUI.updateUI();
         onSuccess.run();
       }

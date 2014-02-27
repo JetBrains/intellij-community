@@ -8,10 +8,12 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +28,9 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder) {
-    super(dataHolder);
+  public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI,
+                         @NotNull LoadMoreStage loadMoreStage) {
+    super(dataHolder, UI, dataPack, loadMoreStage);
     myDataPack = dataPack;
     myDataHolder = dataHolder;
   }
@@ -39,12 +42,17 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
 
   @Override
   public void requestToLoadMore(@NotNull Runnable onLoaded) {
-    myDataHolder.showFullLog(onLoaded);
+    if (!myDataHolder.isFullLogShowing()) {
+      myDataHolder.showFullLog(onLoaded);
+    }
+    else if (!myUi.collectFilters().isEmpty()) {
+      super.requestToLoadMore(onLoaded);
+    }
   }
 
   @Override
   public boolean canRequestMore() {
-    return !myDataHolder.isFullLogShowing();
+    return !myDataHolder.isFullLogShowing() || super.canRequestMore();
   }
 
   @NotNull

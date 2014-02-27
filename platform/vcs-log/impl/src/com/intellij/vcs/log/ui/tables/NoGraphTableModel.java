@@ -18,44 +18,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash> {
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
 
-  @NotNull private final DataPack myDataPack;
-  @NotNull private final VcsLogUI myUi;
   @NotNull private final List<Pair<Hash, VirtualFile>> myCommitsWithRoots;
-  @NotNull private final LoadMoreStage myLoadMoreStage;
-  @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
 
-  public NoGraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI UI,
+  public NoGraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui,
                            @NotNull List<Pair<Hash, VirtualFile>> commitsWithRoots, @NotNull LoadMoreStage loadMoreStage) {
-    super(logDataHolder);
-    myDataPack = dataPack;
-    myUi = UI;
+    super(logDataHolder, ui, dataPack, loadMoreStage);
     myCommitsWithRoots = commitsWithRoots;
-    myLoadMoreStage = loadMoreStage;
   }
 
   @Override
   public int getRowCount() {
     return myCommitsWithRoots.size();
-  }
-
-  @Override
-  public void requestToLoadMore(@NotNull Runnable onLoaded) {
-    if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
-        && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
-      myUi.getTable().setPaintBusy(true);
-      myUi.getFilterer().requestVcs(myDataPack, myUi.collectFilters(), myLoadMoreStage, onLoaded);
-    }
-  }
-
-  @Override
-  public boolean canRequestMore() {
-    return myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
   }
 
   @NotNull
