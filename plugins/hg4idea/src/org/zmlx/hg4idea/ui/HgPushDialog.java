@@ -24,10 +24,9 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -38,7 +37,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.List;
 
 public class HgPushDialog extends DialogWrapper {
 
@@ -55,7 +53,7 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox newBranchCheckBox;
   private String myCurrentRepositoryUrl;
 
-  public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches, @Nullable VirtualFile selectedRepo) {
+  public HgPushDialog(Project project, Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     super(project, false);
     myProject = project;
 
@@ -75,9 +73,15 @@ public class HgPushDialog extends DialogWrapper {
     setOKButtonText("Push");
     init();
 
+    setRoots(repos, selectedRepo);
+  }
+
+  private void setRoots(@NotNull Collection<HgRepository> repos,
+                        @Nullable HgRepository selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
-    updateBranchComboBox(branches);
+    HgRepository repo = hgRepositorySelectorComponent.getRepository();
+    updateComboBoxes(repo);
     updateRepository();
   }
 
@@ -101,10 +105,12 @@ public class HgPushDialog extends DialogWrapper {
     }
   }
 
-  public VirtualFile getRepository() {
+  @NotNull
+  public HgRepository getRepository() {
     return hgRepositorySelectorComponent.getRepository();
   }
 
+  @NotNull
   public String getTarget() {
     return myCurrentRepositoryUrl;
   }
@@ -115,8 +121,8 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   @Nullable
-  public HgTagBranch getBranch() {
-    return branchCheckBox.isSelected() ? (HgTagBranch) branchComboBox.getSelectedItem() : null;
+  public String getBranch() {
+    return branchCheckBox.isSelected() ? (String)branchComboBox.getSelectedItem() : null;
   }
 
   public boolean isForce() {
@@ -124,8 +130,8 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public boolean isNewBranch() {
-      return newBranchCheckBox.isSelected();
-    }
+    return newBranchCheckBox.isSelected();
+  }
 
   protected JComponent createCenterPanel() {
     return contentPanel;
@@ -140,22 +146,26 @@ public class HgPushDialog extends DialogWrapper {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-        final String defaultPath = HgUtil.getRepositoryDefaultPushPath(myProject, repo);
-        final List<HgTagBranch> branches = HgPusher.getBranches(myProject, repo);
+        final HgRepository repo = hgRepositorySelectorComponent.getRepository();
+        final String defaultPath = HgUtil.getRepositoryDefaultPushPath(repo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            addPathsFromHgrc(repo);
+            addPathsFromHgrc(repo.getRoot());
             if (defaultPath != null) {
               updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
               myCurrentRepositoryUrl = defaultPath;
             }
-            updateBranchComboBox(branches);
+            updateComboBoxes(repo);
           }
         }, ModalityState.stateForComponent(getRootPane()));
       }
     });
+  }
+
+  private void updateComboBoxes(HgRepository repo) {
+    final Collection<String> branches = repo.getOpenedBranches();
+    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
@@ -163,10 +173,6 @@ public class HgPushDialog extends DialogWrapper {
       myRepositoryURL.setText(defaultPath);
       update();
     }
-  }
-
-  private void updateBranchComboBox(@NotNull List<HgTagBranch> branches) {
-    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
   }
 
   private void update() {
@@ -213,5 +219,4 @@ public class HgPushDialog extends DialogWrapper {
       update();
     }
   }
-
 }

@@ -16,34 +16,18 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
-
-/**
- * @author Nadya Zabrodina
- */
 
 public class HgBranchesAction extends HgAbstractGlobalAction {
 
   @Override
-  protected void execute(@NotNull Project project, @NotNull Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo) {
-    HgRepository repository = null;
+  protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
     if (selectedRepo != null) {
-      repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(selectedRepo);
-    }
-    else {
-      VirtualFile selectedRoot = HgUtil.getRootForSelectedFile(project);
-      if (selectedRoot != null) {
-        repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(selectedRoot);
-      }
-    }
-    if (repository != null) {
-      HgBranchPopup.getInstance(project, repository).asListPopup().showInFocusCenter();
+      HgBranchPopup.getInstance(project, selectedRepo).asListPopup().showInFocusCenter();
     }
   }
 }

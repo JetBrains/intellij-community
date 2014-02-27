@@ -298,14 +298,14 @@ public class HgBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         final UpdatedFiles updatedFiles = UpdatedFiles.create();
         final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
-        hgMergeCommand.setBranch(myBranchName);
+        hgMergeCommand.setRevision(myBranchName);
         final HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
         new Task.Backgroundable(myProject, "Merging changes...") {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try {
               new HgHeadMerger(myProject, hgMergeCommand)
-                .merge(mySelectedRepository.getRoot(), updatedFiles, HgRevisionNumber.NULL_REVISION_NUMBER);
+                .merge(mySelectedRepository.getRoot());
               new HgConflictResolver(myProject, updatedFiles).resolve(mySelectedRepository.getRoot());
             }
 

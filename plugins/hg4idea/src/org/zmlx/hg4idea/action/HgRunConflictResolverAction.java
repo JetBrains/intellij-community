@@ -15,11 +15,11 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
 
 import java.util.Collection;
@@ -27,13 +27,13 @@ import java.util.Collection;
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
   @Override
-  public void execute(@NotNull final Project project, @NotNull Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
-    final VirtualFile repository;
-    if (repos.size() > 1) {
-      repository = letUserSelectRepository(repos, project, selectedRepo);
+  public void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+    final HgRepository repository;
+    if (repositories.size() > 1) {
+      repository = letUserSelectRepository(project, repositories, selectedRepo);
     }
-    else if (repos.size() == 1) {
-      repository = repos.iterator().next();
+    else if (repositories.size() == 1) {
+      repository = repositories.iterator().next();
     }
     else {
       repository = null;
@@ -43,17 +43,18 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          new HgConflictResolver(project).resolve(repository);
-          markDirtyAndHandleErrors(project, repository);
+          new HgConflictResolver(project).resolve(repository.getRoot());
+          markDirtyAndHandleErrors(project, repository.getRoot());
         }
       }.queue();
     }
   }
 
 
-  private static VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project, @Nullable VirtualFile selectedRepo) {
-    HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
-    dialog.setRoots(repos, selectedRepo);
+  @Nullable
+  private static HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
+                                                      @Nullable HgRepository selectedRepo) {
+    HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project, repositories, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       return dialog.getRepository();
