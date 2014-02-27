@@ -19,7 +19,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.impl.actions.*;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
@@ -116,6 +119,6 @@ public abstract class DebuggerSupport {
         return support;
       }
     }
-    return null;
+    throw new IllegalStateException();
   }
 }
