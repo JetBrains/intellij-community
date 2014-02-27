@@ -55,9 +55,12 @@ public class TaskUtil {
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
-    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                  // date
-    "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
-    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date
+    "(?:[ T]" +
+    "(\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +              // optional time and milliseconds
+    "(?:\\s?" +
+    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info, if time is also present
+    ")?)?");
 
 
   private TaskUtil() {
