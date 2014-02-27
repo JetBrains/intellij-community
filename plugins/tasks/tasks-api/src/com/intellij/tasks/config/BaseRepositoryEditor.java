@@ -208,7 +208,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     comboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
-        doApply();
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          doApply();
+        }
       }
     });
   }

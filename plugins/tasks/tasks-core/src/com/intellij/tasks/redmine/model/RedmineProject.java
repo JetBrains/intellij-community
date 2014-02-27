@@ -5,6 +5,7 @@ import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -61,9 +62,17 @@ public class RedmineProject {
     return name;
   }
 
-  @NotNull
+  @Nullable
   public String getIdentifier() {
     return identifier;
+  }
+
+  /**
+   * For serialization purposes only
+   */
+  @Attribute("identifier")
+  public void setIdentifier(@NotNull String identifier) {
+    this.identifier = identifier;
   }
 
   @NotNull

@@ -1,7 +1,6 @@
 package com.intellij.tasks.redmine;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,12 +33,6 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.ProjectsWr
 public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
-
-  // Type tokens
-  private static final TypeToken<List<RedmineProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<RedmineProject>>() {
-  };
-  private static final TypeToken<List<RedmineIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<RedmineIssue>>() {
-  };
 
   public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
     @NotNull
@@ -121,10 +114,11 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     if (StringUtil.isNotEmpty(query)) {
       builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
     }
+    // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
       builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
     }
-    if (useApiKeyAuthentication()) {
+    if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
     }
     HttpClient client = getHttpClient();
@@ -134,7 +128,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public List<RedmineProject> fetchProjects() throws Exception {
     URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
-    if (useApiKeyAuthentication()) {
+    if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
     }
     HttpClient client = getHttpClient();
@@ -161,7 +155,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     myAPIKey = APIKey;
   }
 
-  private boolean useApiKeyAuthentication() {
+  private boolean isUseApiKeyAuthentication() {
     return !StringUtil.isEmptyOrSpaces(myAPIKey) && !isUseHttpAuthentication();
   }
 
@@ -172,6 +166,21 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
       name += "/projects/" + myCurrentProject.getIdentifier();
     }
     return name;
+  }
+
+  @Override
+  public boolean isConfigured() {
+    if (!super.isConfigured()) return false;
+    if (isUseHttpAuthentication()) {
+      return StringUtil.isNotEmpty(myPassword);
+    }
+    return !StringUtil.isEmptyOrSpaces(myAPIKey);
+  }
+
+  @Nullable
+  @Override
+  public String extractId(String taskName) {
+    return taskName;
   }
 
   @Override

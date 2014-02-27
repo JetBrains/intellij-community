@@ -19,7 +19,7 @@ class NullCheckingFactory implements TypeAdapterFactory {
 
   @Override
   public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
-    if (type.getRawType().getAnnotation(RestModel.class) != null) {
+    if (type.getRawType().getAnnotation(RestModel.class) == null) {
       return null;
     }
     final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, type);
@@ -37,7 +37,7 @@ class NullCheckingFactory implements TypeAdapterFactory {
             try {
               field.setAccessible(true);
               if (field.get(stub) == null) {
-                throw new IllegalArgumentException(String.format("Field '%s' is mandatory, but omitted", field.getName()));
+                throw new IllegalArgumentException(String.format("Field '%s' is mandatory, but missing in response", field.getName()));
               }
             }
             catch (IllegalAccessException e) {
