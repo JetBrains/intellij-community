@@ -1,3 +1,16 @@
+import java.util.List;
+
+class Main0 {
+  <T> List<T> foo(T t){
+    return null;
+  }
+
+  {
+    foo(foo(""));
+  }
+}
+
+
 class Main {
     static <T> T foo(T t) { return null; }
 
@@ -14,6 +27,6 @@ class Main1 {
   static <B> B bar(B t) { return null;}
 
   static {
-    long l = foo(bar(1));
+    //long l = foo(bar(1));
   }
 }

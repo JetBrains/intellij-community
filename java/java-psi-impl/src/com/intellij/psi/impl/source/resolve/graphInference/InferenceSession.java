@@ -208,7 +208,7 @@ public class InferenceSession {
                                     PsiMethod parentMethod) {
     if (!repeatInferencePhases(true)) {
       //inferred result would be checked as candidate won't be applicable
-      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor, false);
+      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor);
     }
 
     if (parentMethod != null) {
@@ -294,7 +294,7 @@ public class InferenceSession {
         }
       }
     } else {
-      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor, false);
+      return resolveSubset(myInferenceVariables.values(), mySiteSubstitutor);
     }
 
     return prepareSubstitution();
@@ -386,7 +386,7 @@ public class InferenceSession {
   public void registerConstraints(PsiType returnType, PsiType targetType) {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
-      final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor, true);
+      final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
       myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutor.substitute(inferenceVariable.getParameter()), myContext)));
     } 
     else {
@@ -529,12 +529,13 @@ public class InferenceSession {
       }
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
-      return getParameterType(parameters, args, i, PsiResolveHelper.ourGraphGuard.doPreventingRecursion(argumentList.getParent(), false, new Computable<PsiSubstitutor>() {
-        @Override
-        public PsiSubstitutor compute() {
-          return result.getSubstitutor();
-        }
-      }));
+      return getParameterType(parameters, args, i, PsiResolveHelper.ourGraphGuard.doPreventingRecursion(argumentList.getParent(), false,
+                                                                                                        new Computable<PsiSubstitutor>() {
+                                                                                                          @Override
+                                                                                                          public PsiSubstitutor compute() {
+                                                                                                            return result.getSubstitutor();
+                                                                                                          }
+                                                                                                        }));
     }
     return null;
   }
@@ -657,7 +658,7 @@ public class InferenceSession {
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
-        final PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, true);
+        final PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
         if (firstSubstitutor != null) {
           substitutor = firstSubstitutor;
           allVars.removeAll(vars);
@@ -668,7 +669,7 @@ public class InferenceSession {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
       for (InferenceVariable var : vars) {
         final PsiTypeParameter parameter = var.getParameter();
-        final PsiTypeParameter copy = elementFactory.createTypeParameterFromText(parameter.getName(), null);
+        final PsiTypeParameter copy = elementFactory.createTypeParameterFromText("z" + parameter.getName(), null);
         final PsiType lub = getLowerBound(var, substitutor);
         final PsiType glb = getUpperBound(var, substitutor);
         final InferenceVariable zVariable = new InferenceVariable(copy);
@@ -681,6 +682,8 @@ public class InferenceSession {
           zVariable.addBound(lub, InferenceBound.LOWER);
         }
         myInferenceVariables.put(copy, zVariable);
+        allVars.add(zVariable);
+        var.addBound(elementFactory.createType(copy), InferenceBound.EQ);
       }
       myIncorporationPhase.forgetCaptures(vars);
       if (!myIncorporationPhase.incorporate()) {
@@ -699,7 +702,7 @@ public class InferenceSession {
     }, substitutor);
   }
 
-  private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor, boolean checkResult) {
+  private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
       final PsiTypeParameter typeParameter = var.getParameter();
@@ -718,7 +721,7 @@ public class InferenceSession {
       }
     }
 
-    return checkResult ? myIncorporationPhase.checkIncorporated(substitutor, vars) : substitutor;
+    return substitutor;
   }
 
   private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
@@ -809,7 +812,7 @@ public class InferenceSession {
       }
 
       //resolve input variables
-      PsiSubstitutor substitutor = resolveSubset(varsToResolve, mySiteSubstitutor, true);
+      PsiSubstitutor substitutor = resolveSubset(varsToResolve, mySiteSubstitutor);
 
       if (substitutor == null) {
         return false;

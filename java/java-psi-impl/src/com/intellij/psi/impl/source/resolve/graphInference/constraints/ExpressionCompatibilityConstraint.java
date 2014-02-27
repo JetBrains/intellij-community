@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -99,14 +100,28 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         if (typeParams != null) {
 
-          for (PsiTypeParameter typeParam : typeParams) {
-            session.addCapturedVariable(typeParam);
-          }
+          session.initBounds(typeParams);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          //typeParams are already included
-          final Collection<PsiTypeParameter> params = session.getTypeParams();
-          InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
-                                                                                                                                                                : PsiSubstitutor.EMPTY, myExpression.getManager(), myExpression);
+          final HashSet<InferenceVariable> variables = new HashSet<InferenceVariable>();
+          session.collectDependencies(returnType, variables);
+          final PsiTypeParameter[] params = new PsiTypeParameter[typeParams.length];
+          for (int i = 0; i < typeParams.length; i++) {
+            if (variables.contains(session.getInferenceVariable(typeParams[i]))) {
+              params[i] = JavaPsiFacade.getElementFactory(myExpression.getProject()).createTypeParameterFromText("copyOf" + myExpression.hashCode() + typeParams[i].getName(), null);
+              substitutor = substitutor.put(typeParams[i], JavaPsiFacade.getElementFactory(myExpression.getProject()).createType(params[i]));
+            }
+            else {
+              params[i] = typeParams[i];
+            }
+          }
+          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+          for (PsiTypeParameter typeParameter : siteSubstitutor.getSubstitutionMap().keySet()) {
+            substitutor = substitutor.put(typeParameter, substitutor.substitute(siteSubstitutor.substitute(typeParameter)));
+          }
+
+          final Collection<PsiTypeParameter> params1 = session.getTypeParams();
+          final InferenceSession callSession = new InferenceSession(params1.toArray(new PsiTypeParameter[params1.size()]), substitutor, myExpression.getManager(), myExpression);
+          callSession.initBounds(params);
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();

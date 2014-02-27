@@ -28,7 +28,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  public void _testNestedCallsSameMethod() throws Exception {
+  public void testNestedCallsSameMethod() throws Exception {
     doTest();
   }
 
