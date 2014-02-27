@@ -101,7 +101,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         if (typeParams != null) {
 
-          final HashSet<PsiTypeParameter> oldBounds = new HashSet<>(session.getTypeParams());
+          final HashSet<PsiTypeParameter> oldBounds = new HashSet<PsiTypeParameter>(session.getTypeParams());
           final boolean sameMethodCall = session.initBounds(typeParams);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final HashSet<InferenceVariable> variables = new HashSet<InferenceVariable>();
