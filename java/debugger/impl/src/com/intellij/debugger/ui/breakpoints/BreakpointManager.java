@@ -153,18 +153,14 @@ public class BreakpointManager {
 
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint xBreakpoint) {
-        if (isJavaType(xBreakpoint)) {
-          onBreakpointRemoved(xBreakpoint);
-        }
+        onBreakpointRemoved(xBreakpoint);
       }
 
       @Override
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
-        if (isJavaType(xBreakpoint)) {
-          Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
-          if (breakpoint != null) {
-            fireBreakpointChanged(breakpoint);
-          }
+        Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
+        if (breakpoint != null) {
+          fireBreakpointChanged(breakpoint);
         }
       }
     });
@@ -597,16 +593,14 @@ public class BreakpointManager {
   public synchronized void addBreakpoint(Breakpoint breakpoint) {
     myBreakpoints.put(breakpoint.myXBreakpoint, breakpoint);
     myBreakpointsListForIteration = null;
+    breakpoint.updateUI();
+    RequestManagerImpl.createRequests(breakpoint);
     myDispatcher.getMulticaster().breakpointsChanged();
   }
 
   private synchronized void onBreakpointAdded(XBreakpoint xBreakpoint) {
     Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
-    myBreakpoints.put(xBreakpoint, breakpoint);
-    myBreakpointsListForIteration = null;
-    breakpoint.updateUI();
-    RequestManagerImpl.createRequests(breakpoint);
-    myDispatcher.getMulticaster().breakpointsChanged();
+    addBreakpoint(breakpoint);
   }
 
   public void removeBreakpoint(@Nullable final Breakpoint breakpoint) {
