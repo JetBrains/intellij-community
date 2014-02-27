@@ -72,9 +72,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private boolean myShowOtherProjectVirtualenvs = true;
   private final Module myModule;
   private NullableConsumer<Sdk> myShowMoreCallback;
+  private SdkModel.Listener myListener;
 
   public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
-    super(project);
+    super(project, true);
     myModule = null;
 
     setTitle("Project Interpreters");
@@ -84,6 +85,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myProjectSdksModel = myInterpreterList.getModel();
     init();
     updateOkButton();
+  }
+
+  @Override
+  protected void dispose() {
+    myInterpreterList.disposeModel();
+    myProjectSdksModel.removeListener(myListener);
+    super.dispose();
   }
 
   public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback) {
@@ -141,7 +149,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void addListeners() {
-    myProjectSdksModel.addListener(new SdkModel.Listener() {
+    myListener = new SdkModel.Listener() {
       @Override
       public void sdkAdded(Sdk sdk) {
       }
@@ -158,7 +166,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       @Override
       public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       }
-    });
+    };
+    myProjectSdksModel.addListener(myListener);
     mySdkList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent event) {
         updateOkButton();
