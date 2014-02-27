@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -46,8 +45,7 @@ public class ExtractParameterAsLocalVariableFix
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiReferenceExpression parameterReference =
       (PsiReferenceExpression)descriptor.getPsiElement();
     final PsiElement target = parameterReference.resolve();
@@ -78,6 +76,10 @@ public class ExtractParameterAsLocalVariableFix
       else {
         body = forBody;
       }
+    }
+    else if (declarationScope instanceof PsiLambdaExpression) {
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
+      body = lambdaExpression.getBody();
     }
     else {
       return;
@@ -125,15 +127,16 @@ public class ExtractParameterAsLocalVariableFix
         replaceVariableName(child, firstReference,
                             variableName, parameterName, buffer);
     }
+    if (body instanceof PsiExpression) { // expression lambda
+      buffer.insert(0, "return ");
+      buffer.append(';');
+    }
     final String replacementText;
     if (newDeclarationCreated) {
       replacementText = "{" + buffer + '}';
     }
     else {
-      final PsiType type = parameterReference.getType();
-      if (type == null) {
-        return;
-      }
+      final PsiType type = parameter.getType();
       final String className = type.getCanonicalText();
       replacementText = '{' + className + ' ' + variableName + " = " +
                         parameterName + ';' + buffer + '}';
@@ -141,8 +144,7 @@ public class ExtractParameterAsLocalVariableFix
     final PsiElementFactory elementFactory =
       JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiCodeBlock block =
-      elementFactory.createCodeBlockFromText(
-        replacementText, null);
+      elementFactory.createCodeBlockFromText(replacementText, declarationScope);
     body.replace(block);
     codeStyleManager.reformat(declarationScope);
   }
