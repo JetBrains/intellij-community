@@ -2,6 +2,7 @@ package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -397,6 +398,9 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.setPaintBusy(false);
     myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
     updateUninstallUpgrade();
+    // Action button presentations won't be updated if no events occur (e.g. mouse isn't moving, keys aren't being pressed).
+    // In that case emulating activity will help:
+    ActivityTracker.getInstance().inc();
   }
 
   public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
