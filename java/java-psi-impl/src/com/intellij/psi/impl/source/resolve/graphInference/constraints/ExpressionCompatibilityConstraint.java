@@ -26,6 +26,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -100,7 +101,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         if (typeParams != null) {
 
-          session.initBounds(typeParams);
+          final HashSet<PsiTypeParameter> oldBounds = new HashSet<>(session.getTypeParams());
+          final boolean sameMethodCall = session.initBounds(typeParams);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final HashSet<InferenceVariable> variables = new HashSet<InferenceVariable>();
           session.collectDependencies(returnType, variables);
@@ -129,7 +131,16 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           }
           callSession.registerConstraints(returnType, myT);
           if (callSession.repeatInferencePhases(true)) {
-            session.liftBounds(callSession.getInferenceVariables());
+            final Collection<InferenceVariable> inferenceVariables = callSession.getInferenceVariables();
+            if (sameMethodCall) {
+              for (Iterator<InferenceVariable> iterator = inferenceVariables.iterator(); iterator.hasNext(); ) {
+                InferenceVariable variable = iterator.next();
+                if (oldBounds.contains(variable.getParameter())) {
+                  iterator.remove();
+                }
+              }
+            }
+            session.liftBounds(inferenceVariables);
           }
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)

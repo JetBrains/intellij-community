@@ -111,7 +111,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
         final PsiMethod method;
         if (((PsiMethodReferenceExpression)myExpression).isExact()) {
-          final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).resolve();
+          final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).getPotentiallyApplicableMember();
           if (resolve instanceof PsiMethod) {
             method = (PsiMethod)resolve;
           } else {

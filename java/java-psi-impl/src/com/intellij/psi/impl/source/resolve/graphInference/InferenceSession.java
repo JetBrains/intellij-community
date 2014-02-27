@@ -335,9 +335,13 @@ public class InferenceSession {
     return false;
   }
 
-  public void initBounds(PsiTypeParameter... typeParameters) {
+  public boolean initBounds(PsiTypeParameter... typeParameters) {
+    boolean sameMethodCall = false;
     for (PsiTypeParameter parameter : typeParameters) {
-      if (myInferenceVariables.containsKey(parameter)) continue;
+      if (myInferenceVariables.containsKey(parameter)) {
+        sameMethodCall = true;
+        continue;
+      }
       InferenceVariable variable = new InferenceVariable(parameter);
       boolean added = false;
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
@@ -354,6 +358,7 @@ public class InferenceSession {
       }
       myInferenceVariables.put(parameter, variable);
     }
+    return sameMethodCall;
   }
   
   public void addCapturedVariable(PsiTypeParameter param) {
