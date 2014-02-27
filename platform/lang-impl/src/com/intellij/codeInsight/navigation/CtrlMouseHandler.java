@@ -138,17 +138,20 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       BrowseMode browseMode = getBrowseMode(modifiers);
 
       if (browseMode != BrowseMode.None) {
-        if (myTooltipProvider != null) {
-          if (browseMode != myTooltipProvider.getBrowseMode()) {
+        TooltipProvider tooltipProvider = myTooltipProvider;
+        if (tooltipProvider != null) {
+          if (browseMode != tooltipProvider.getBrowseMode()) {
             disposeHighlighter();
           }
           myStoredModifiers = modifiers;
+          cancelPreviousTooltip();
+          myTooltipProvider = new TooltipProvider(tooltipProvider.myEditor, tooltipProvider.myPosition);
           myTooltipProvider.execute(browseMode);
         }
       }
       else {
         disposeHighlighter();
-        myTooltipProvider = null;
+        cancelPreviousTooltip();
       }
     }
   };
@@ -157,7 +160,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent e) {
       disposeHighlighter();
-      myTooltipProvider = null;
+      cancelPreviousTooltip();
     }
   };
 
@@ -165,7 +168,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       disposeHighlighter();
-      myTooltipProvider = null;
+      cancelPreviousTooltip();
     }
   };
 
@@ -173,7 +176,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     public void mouseReleased(EditorMouseEvent e) {
       disposeHighlighter();
-      myTooltipProvider = null;
+      cancelPreviousTooltip();
     }
   };
 
@@ -211,13 +214,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myStoredModifiers = mouseEvent.getModifiers();
       BrowseMode browseMode = getBrowseMode(myStoredModifiers);
 
-      if (myTooltipProvider != null) {
-        myTooltipProvider.dispose();
-      }
+      cancelPreviousTooltip();
 
       if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
         disposeHighlighter();
-        myTooltipProvider = null;
         return;
       }
 
@@ -225,6 +225,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myTooltipProvider.execute(browseMode);
     }
   };
+
+  private void cancelPreviousTooltip() {
+    if (myTooltipProvider != null) {
+      myTooltipProvider.dispose();
+      myTooltipProvider = null;
+    }
+  }
 
   @NotNull private final Alarm myDocAlarm;
 

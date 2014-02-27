@@ -133,7 +133,7 @@ public class ConsoleViewUtil {
     };
   }
 
-  public static boolean isConsoleViewEditor(Editor editor) {
+  public static boolean isConsoleViewEditor(@NotNull Editor editor) {
     return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
   }
 

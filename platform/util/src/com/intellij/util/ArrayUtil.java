@@ -441,6 +441,10 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(src, obj);
   }
 
+  public static <T> int find(@NotNull final T[] src, final T obj) {
+    return ArrayUtilRt.find(src, obj);
+  }
+
   public static boolean startsWith(@NotNull byte[] array, @NotNull byte[] prefix) {
     if (array == prefix) {
       return true;

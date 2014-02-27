@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsAdapter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -71,12 +73,9 @@ public class XLineBreakpointManager {
     myStartupManager = (StartupManagerEx)startupManager;
 
     if (!myProject.isDefault()) {
-      DocumentAdapter documentListener = new MyDocumentListener();
-      EditorMouseAdapter editorMouseListener = new MyEditorMouseListener();
-
       EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-      editorEventMulticaster.addDocumentListener(documentListener,project);
-      editorEventMulticaster.addEditorMouseListener(editorMouseListener, project);
+      editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
+      editorEventMulticaster.addEditorMouseListener(new MyEditorMouseListener(), project);
 
       final MyDependentBreakpointListener myDependentBreakpointListener = new MyDependentBreakpointListener();
       myDependentBreakpointManager.addListener(myDependentBreakpointListener);
@@ -248,7 +247,7 @@ public class XLineBreakpointManager {
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()
@@ -256,6 +255,7 @@ public class XLineBreakpointManager {
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
           || e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA
+          || ConsoleViewUtil.isConsoleViewEditor(editor)
           ||!isFromMyProject(editor)) {
         return;
       }
@@ -263,7 +263,7 @@ public class XLineBreakpointManager {
       PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
         @Override
         public void run() {
-          final int line = editor.xyToLogicalPosition(mouseEvent.getPoint()).line;
+          final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
           final Document document = editor.getDocument();
           final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
           if (line >= 0 && line < document.getLineCount() && file != null) {
@@ -281,7 +281,11 @@ public class XLineBreakpointManager {
     }
   }
 
-  private boolean isFromMyProject(Editor editor) {
+  private boolean isFromMyProject(@NotNull Editor editor) {
+    if (myProject == editor.getProject()) {
+      return true;
+    }
+
     for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
       if (fileEditor instanceof TextEditor && ((TextEditor)fileEditor).getEditor().equals(editor)) {
         return true;

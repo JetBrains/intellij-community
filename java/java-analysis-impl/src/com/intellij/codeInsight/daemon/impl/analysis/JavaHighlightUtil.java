@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -26,8 +27,8 @@ import java.util.List;
 
 public class JavaHighlightUtil {
   public static boolean isSerializable(@NotNull PsiClass aClass) {
-    PsiManager manager = aClass.getManager();
-    PsiClass serializableClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
+    Project project = aClass.getManager().getProject();
+    PsiClass serializableClass = JavaPsiFacade.getInstance(project).findClass("java.io.Serializable", aClass.getResolveScope());
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
@@ -70,18 +71,13 @@ public class JavaHighlightUtil {
 
   @NotNull
   public static String formatType(@Nullable PsiType type) {
-    if (type == null) return PsiKeyword.NULL;
-    String text = type.getInternalCanonicalText();
-    return text == null ? PsiKeyword.NULL : text;
+    return type == null ? PsiKeyword.NULL : type.getInternalCanonicalText();
   }
 
   @Nullable
-  private static PsiType getArrayInitializerType(@NotNull final PsiArrayInitializerExpression element) {
-    final PsiType typeCheckResult = sameType(element.getInitializers());
-    if (typeCheckResult != null) {
-      return typeCheckResult.createArrayType();
-    }
-    return null;
+  private static PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {
+    PsiType typeCheckResult = sameType(element.getInitializers());
+    return typeCheckResult != null ? typeCheckResult.createArrayType() : null;
   }
 
   @Nullable

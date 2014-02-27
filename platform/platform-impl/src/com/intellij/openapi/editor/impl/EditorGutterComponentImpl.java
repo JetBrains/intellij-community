@@ -1118,7 +1118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (toolTip != null && !toolTip.isEmpty()) {
       final Ref<Point> t = new Ref<Point>(e.getPoint());
-      int line = myEditor.yPositionToLogicalLine(e.getY());
+      int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
       ArrayList<GutterMark> row = myLineToGutterRenderers.get(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
@@ -1182,7 +1182,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getLineNumAtPoint(final Point clickPoint) {
-    return myEditor.yPositionToLogicalLine(clickPoint.y);
+    return EditorUtil.yPositionToLogicalLine(myEditor, clickPoint);
   }
 
   @Nullable
@@ -1346,7 +1346,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       actionGroup.add(new CloseAnnotationsAction());
       final List<AnAction> addActions = new ArrayList<AnAction>();
       final Point p = e.getPoint();
-      int line = myEditor.yPositionToLogicalLine((int)p.getY());
+      int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
       //if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
@@ -1405,7 +1405,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int convertPointToLineNumber(final Point p) {
-    int line = myEditor.yPositionToLogicalLine((int)p.getY());
+    int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
 
     if (line >= myEditor.getDocument().getLineCount()) return -1;
     int startOffset = myEditor.getDocument().getLineStartOffset(line);

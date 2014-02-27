@@ -691,7 +691,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
+    String actionName = String.format(
+      "%s (%s)", action instanceof ActionStub? ((ActionStub)action).getClassName() : action.getClass().getName(),
+      action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action));
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
