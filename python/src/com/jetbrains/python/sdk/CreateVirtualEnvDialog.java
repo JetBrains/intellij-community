@@ -31,6 +31,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +92,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       final String name =
         SdkConfigurationUtil.createUniqueSdkName(PythonSdkType.getInstance(), sdkHome.getPath(), allSdks);
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
-      sdk.setHomePath(sdkHome.getPath());
+      sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
       callback.virtualEnvCreated(sdk, associateWithProject);
       PythonSdkType.setupSdkPaths(sdk, myProject, null);
     }

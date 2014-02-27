@@ -66,7 +66,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       }
       File f = new File(pathEntry, exeName);
       if (f.exists()) {
-        candidates.add(FileUtil.toSystemIndependentName(f.getPath()));
+        candidates.add(FileUtil.toSystemDependentName(f.getPath()));
       }
     }
   }
@@ -81,7 +81,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       for (VirtualFile dir : rootVDir.getChildren()) {
         if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);
-          if (python_exe != null) candidates.add(FileUtil.toSystemIndependentName(python_exe.getPath()));
+          if (python_exe != null) candidates.add(FileUtil.toSystemDependentName(python_exe.getPath()));
         }
       }
     }
