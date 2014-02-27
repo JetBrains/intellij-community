@@ -227,13 +227,19 @@ public class JavaResolveUtil {
 
   public static void substituteResults(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
-      PsiType[] parameters = ref.getTypeParameters();
       for (int i = 0; i < result.length; i++) {
         CandidateInfo resolveResult = (CandidateInfo)result[i];
         PsiElement resultElement = resolveResult.getElement();
         if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-          PsiSubstitutor substitutor = resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters);
-          result[i] = new CandidateInfo(resolveResult, substitutor);
+          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+          result[i] = new CandidateInfo(resolveResult, substitutor) {
+            @NotNull
+            @Override
+            public PsiSubstitutor getSubstitutor() {
+              final PsiType[] parameters = ref.getTypeParameters();
+              return super.getSubstitutor().putAll((PsiClass)resultElement, parameters);
+            }
+          };
         }
       }
     }

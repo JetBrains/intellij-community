@@ -103,18 +103,18 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.addCapturedVariable(typeParam);
           }
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+          //typeParams are already included
+          final Collection<PsiTypeParameter> params = session.getTypeParams();
+          InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
+                                                                                                                                                                : PsiSubstitutor.EMPTY, myExpression.getManager(), myExpression);
           if (method != null) {
-            //typeParams are already included
-            final Collection<PsiTypeParameter> params = session.getTypeParams();
-            InferenceSession callSession = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
-                                                                                                                                                                  : PsiSubstitutor.EMPTY, myExpression.getManager(), myExpression);
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             callSession.initExpressionConstraints(parameters, args, myExpression, method);
-            callSession.registerConstraints(returnType, myT);
-            if (callSession.repeatInferencePhases(true)) {
-              session.liftBounds(callSession.getInferenceVariables());
-            }
+          }
+          callSession.registerConstraints(returnType, myT);
+          if (callSession.repeatInferencePhases(true)) {
+            session.liftBounds(callSession.getInferenceVariables());
           }
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)

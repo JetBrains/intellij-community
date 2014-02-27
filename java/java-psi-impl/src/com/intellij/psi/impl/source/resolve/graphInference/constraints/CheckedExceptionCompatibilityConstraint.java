@@ -48,17 +48,6 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
-    if (myExpression instanceof PsiCallExpression) {
-      final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
-      if (argumentList != null) {
-        for (PsiExpression expression : argumentList.getExpressions()) {
-          if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
-            //todo additional constraints [JDK-8033488]
-          }
-        }
-      }
-      return true;
-    }
     if (myExpression instanceof PsiParenthesizedExpression) {
       constraints.add(new CheckedExceptionCompatibilityConstraint(((PsiParenthesizedExpression)myExpression).getExpression(), myT));
       return true;
