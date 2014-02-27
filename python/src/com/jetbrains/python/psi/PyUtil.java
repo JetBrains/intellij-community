@@ -857,7 +857,10 @@ public class PyUtil {
    *
    * @param elt starting point of search.
    * @return 'class' or 'def' element, or null if not found.
+   *
+   * @deprecated Use {@link ScopeUtil#getScopeOwner} instead.
    */
+  @Deprecated
   @Nullable
   public static PsiElement getConcealingParent(PsiElement elt) {
     if (elt == null || elt instanceof PsiFile) {

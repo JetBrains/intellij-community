@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -74,7 +75,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     final LanguageLevel languageLevel = LanguageLevel.forElement(node);
     if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
       // things like __len__: foo.__len__ or class Foo: ... __len__ = my_len_impl
-      if (node.isQualified() || PyUtil.getConcealingParent(node) instanceof PyClass) {
+      if (node.isQualified() || ScopeUtil.getScopeOwner(node) instanceof PyClass) {
         final ASTNode astNode = node.getNode();
         if (astNode != null) {
           final ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
