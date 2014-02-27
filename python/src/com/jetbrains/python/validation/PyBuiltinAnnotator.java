@@ -18,7 +18,6 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -37,23 +36,18 @@ public class PyBuiltinAnnotator extends PyAnnotator {
   public void visitPyReferenceExpression(PyReferenceExpression node) {
     final String name = node.getName();
     if (name == null) return;
-    if (!highlightAsAttribute(node, name) && !node.isQualified()) {
-      // things like len()
-      final ResolveResult[] resolved = node.getReference().multiResolve(false); // constructors, etc may give multiple results...
-      if (resolved.length > 0) {
-        if (PyBuiltinCache.getInstance(node).isBuiltin(resolved[0].getElement())) { // ...but we only care about the default resolution
-          final Annotation ann;
-          final PsiElement parent = node.getParent();
-          if (parent instanceof PyDecorator) {
-            // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
-            ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
-          }
-          else {
-            ann = getHolder().createInfoAnnotation(node, null);
-          }
-          ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
-        }
+    final boolean highlightedAsAttribute = highlightAsAttribute(node, name);
+    if (!highlightedAsAttribute && PyBuiltinCache.isInBuiltins(node)) {
+      final Annotation ann;
+      final PsiElement parent = node.getParent();
+      if (parent instanceof PyDecorator) {
+        // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
+        ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
       }
+      else {
+        ann = getHolder().createInfoAnnotation(node, null);
+      }
+      ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 
