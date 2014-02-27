@@ -777,9 +777,10 @@ public class BreakpointManager {
             breakpoint = createJavaBreakpoint(xBreakpoint);
             myBreakpoints.put(xBreakpoint, breakpoint);
           }
-          myBreakpointsListForIteration.add(breakpoint);
         }
       }
+
+      myBreakpointsListForIteration.addAll(myBreakpoints.values());
     }
     return myBreakpointsListForIteration;
   }
