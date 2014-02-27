@@ -639,6 +639,14 @@ public abstract class UsefulTestCase extends TestCase {
     String actualText = StringUtil.convertLineSeparators(actual.trim());
     Assert.assertEquals(expectedText, actualText);
   }
+  
+  public static void assertExists(File file){
+    assertTrue("File should exists " + file, file.exists());
+  }
+
+  public static void assertDoesntExist(File file){
+    assertFalse("File should not exists " + file, file.exists());
+  }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
