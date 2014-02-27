@@ -499,6 +499,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                         final PsiClass pClass = pResult.getElement();
                         final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil.getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
                         if (receiverSubstitutor != null) {
+                          if (!method.hasTypeParameters() && signature.getParameterTypes().length == 1) return receiverSubstitutor;
                           psiSubstitutor = receiverSubstitutor;
                         }
                       }
