@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -43,7 +42,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -258,7 +256,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
             new NullableConsumer<Sdk>() {
               @Override
               public void consume(Sdk sdk) {
-                addCreatedSdk(sdk, false);
+                addCreatedSdk(sdk, true);
               }
             });
   }
