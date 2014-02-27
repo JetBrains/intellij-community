@@ -20,7 +20,6 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -217,7 +216,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
-    new File(PathManager.systemPath, "compile-server/server.log").delete()
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.runBare()
   }
 
@@ -240,7 +239,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def logText = ideaLog.text
       println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
     }
-    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"
       println makeLog.text
