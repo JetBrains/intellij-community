@@ -177,7 +177,13 @@ public class PyBuiltinCache {
   @Nullable
   public PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
-      return myBuiltinsFile.getElementNamed(name);
+      final PsiElement element = myBuiltinsFile.getElementNamed(name);
+      if (element != null) {
+        return element;
+      }
+    }
+    if (myExceptionsFile != null) {
+      return myExceptionsFile.getElementNamed(name);
     }
     return null;
   }
@@ -346,11 +352,15 @@ public class PyBuiltinCache {
     if (expression instanceof PyQualifiedExpression && (((PyQualifiedExpression)expression).isQualified())) {
       return false;
     }
+    final String name = expression.getName();
     PsiReference reference = expression.getReference();
-    if (reference != null) {
-      PsiElement resolved = reference.resolve();
-      if (resolved != null && getInstance(expression).isBuiltin(resolved)) {
-        return true;
+    if (reference != null && name != null) {
+      final PyBuiltinCache cache = getInstance(expression);
+      if (cache.getByName(name) != null) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved != null && cache.isBuiltin(resolved)) {
+          return true;
+        }
       }
     }
     return false;
