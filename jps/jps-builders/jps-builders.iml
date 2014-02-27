@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
   </component>
 </module>
 
