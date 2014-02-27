@@ -89,7 +89,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
-    myInterpreterList.disposeModel();
     myProjectSdksModel.removeListener(myListener);
     super.dispose();
   }
