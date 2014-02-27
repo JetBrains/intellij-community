@@ -225,11 +225,11 @@ public class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
+  public static void substituteResults(final @NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
       for (int i = 0; i < result.length; i++) {
-        CandidateInfo resolveResult = (CandidateInfo)result[i];
-        PsiElement resultElement = resolveResult.getElement();
+        final CandidateInfo resolveResult = (CandidateInfo)result[i];
+        final PsiElement resultElement = resolveResult.getElement();
         if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
           PsiSubstitutor substitutor = resolveResult.getSubstitutor();
           result[i] = new CandidateInfo(resolveResult, substitutor) {
