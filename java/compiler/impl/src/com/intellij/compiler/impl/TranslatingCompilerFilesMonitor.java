@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
-  private static final boolean ourDebugMode = false;
+  public static boolean ourDebugMode = false;
 
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);

@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -39,6 +40,12 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    TranslatingCompilerFilesMonitor.ourDebugMode = false
+    super.tearDown()
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -128,6 +135,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
+    TranslatingCompilerFilesMonitor.ourDebugMode = true
+
     myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "  static IFoo f\n" +
@@ -725,11 +734,11 @@ public class Main {
     ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
 
     def messages = make()
-    assert messages 
+    assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
-    
+
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {
