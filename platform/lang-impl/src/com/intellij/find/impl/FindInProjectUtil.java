@@ -43,10 +43,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -55,6 +52,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -156,33 +154,17 @@ public class FindInProjectUtil {
     return virtualFile == null ? null : psiManager.findDirectory(virtualFile);
   }
 
-  private static void addFilesUnderDirectory(@NotNull PsiDirectory directory,
-                                             @NotNull Collection<PsiFile> fileList,
-                                             boolean isRecursive,
-                                             @Nullable Pattern fileMaskRegExp) {
-    final PsiElement[] children = directory.getChildren();
-
-    for (PsiElement child : children) {
-      if (child instanceof PsiFile &&
-          (fileMaskRegExp == null ||
-           fileMaskRegExp.matcher(((PsiFile)child).getName()).matches()
-          )
-        ) {
-        PsiFile file = (PsiFile)child;
-        PsiFile sourceFile = (PsiFile)file.getNavigationElement();
-        if (sourceFile != null) file = sourceFile;
-        fileList.add(file);
-      }
-      else if (isRecursive && child instanceof PsiDirectory) {
-        addFilesUnderDirectory((PsiDirectory)child, fileList, isRecursive, fileMaskRegExp);
-      }
-    }
-  }
-
-  @Nullable
-  private static Pattern createFileMaskRegExp(@NotNull FindModel findModel) {
+  @NotNull
+  private static Condition<VirtualFile> createFileMaskRegExp(@NotNull FindModel findModel) {
     final String filter = findModel.getFileFilter();
-    return createFileMaskRegExp(filter);
+    final Pattern pattern = createFileMaskRegExp(filter);
+    //noinspection unchecked
+    return pattern == null ? Condition.TRUE : new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return file != null && pattern.matcher(file.getName()).matches();
+      }
+    };
   }
 
   @Nullable
@@ -210,7 +192,6 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
-                                boolean showWarnings,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -341,85 +322,72 @@ public class FindInProjectUtil {
                                 ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(module).getFileIndex();
 
-    if (psiDirectory == null || findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile())) {
-      final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
-      // optimization
-      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module, fileIndex);
-      final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
+    final Condition<VirtualFile> fileMask = createFileMaskRegExp(findModel);
+    // optimization
+    Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMask, module, fileIndex);
+    final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
 
-      final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(findModel);
+    final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(findModel);
 
-      SearchScope customScope = findModel.getCustomScope();
-      final GlobalSearchScope globalCustomScope = toGlobal(project, customScope);
+    SearchScope customScope = findModel.getCustomScope();
+    final GlobalSearchScope globalCustomScope = toGlobal(project, customScope);
 
-      class EnumContentIterator implements ContentIterator {
-        final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>(filesForFastWordSearch);
-        final PsiManager psiManager = PsiManager.getInstance(project);
+    class EnumContentIterator implements ContentIterator {
+      final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>(filesForFastWordSearch);
+      final PsiManager psiManager = PsiManager.getInstance(project);
 
-        @Override
-        public boolean processFile(@NotNull VirtualFile virtualFile) {
-          ProgressManager.checkCanceled();
-          if (virtualFile.isDirectory() ||
-              (fileMaskRegExp != null && !fileMaskRegExp.matcher(virtualFile.getName()).matches()) ||
-              (globalCustomScope != null && !globalCustomScope.contains(virtualFile))) {
-            return true;
-          }
-          
-          if (useIdIndex && isCoveredByIdIndex(virtualFile)) {
-            return true;
-          }
-
-          PsiFile psiFile = findFile(psiManager, virtualFile);
-          if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
-            myFiles.add(psiFile);
-          }
+      @Override
+      public boolean processFile(@NotNull VirtualFile virtualFile) {
+        ProgressManager.checkCanceled();
+        if (virtualFile.isDirectory() ||
+            !fileMask.value(virtualFile) ||
+            (globalCustomScope != null && !globalCustomScope.contains(virtualFile))) {
           return true;
         }
 
-        @NotNull
-        private Collection<PsiFile> getFiles() {
-          return myFiles;
+        if (useIdIndex && isCoveredByIdIndex(virtualFile)) {
+          return true;
         }
+
+        PsiFile psiFile = findFile(psiManager, virtualFile);
+        if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+          PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
+          if (sourceFile != null) psiFile = sourceFile;
+          myFiles.add(psiFile);
+        }
+        return true;
       }
 
-      EnumContentIterator iterator = new EnumContentIterator();
-
-      if (customScope instanceof LocalSearchScope) {
-        for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
-          iterator.processFile(file);
-        }
+      @NotNull
+      private Collection<PsiFile> getFiles() {
+        return myFiles;
       }
-
-      if (psiDirectory == null) {
-        boolean success = fileIndex.iterateContent(iterator);
-        if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
-          final VirtualFile[] librarySources = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-            @Override
-            public VirtualFile[] compute() {
-              OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
-              return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
-            }
-          });
-          iterateAll(librarySources, globalCustomScope, iterator);
-        }
-      }
-      else {
-        fileIndex.iterateContentUnderDirectory(psiDirectory.getVirtualFile(), iterator);
-      }
-      return iterator.getFiles();
     }
-    if (psiDirectory.isValid()) {
-      final Collection<PsiFile> fileList = new THashSet<PsiFile>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          addFilesUnderDirectory(psiDirectory, fileList, findModel.isWithSubdirectories(), createFileMaskRegExp(findModel));
-        }
-      });
 
-      return fileList;
+    EnumContentIterator iterator = new EnumContentIterator();
+
+    if (customScope instanceof LocalSearchScope) {
+      for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
+        iterator.processFile(file);
+      }
     }
-    return Collections.emptyList();
+    else if (psiDirectory != null) {
+      fileIndex.iterateContentUnderDirectory(psiDirectory.getVirtualFile(), iterator);
+    }
+    else {
+      boolean success = fileIndex.iterateContent(iterator);
+      if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
+        final VirtualFile[] librarySources = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+          @Override
+          public VirtualFile[] compute() {
+            OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
+            return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
+          }
+        });
+        iterateAll(librarySources, globalCustomScope, iterator);
+      }
+    }
+    return iterator.getFiles();
   }
 
   private static boolean isCoveredByIdIndex(VirtualFile file) {
@@ -471,7 +439,7 @@ public class FindInProjectUtil {
   private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(@NotNull final FindModel findModel,
                                                                               @NotNull final Project project,
                                                                               @Nullable final PsiDirectory psiDirectory,
-                                                                              final Pattern fileMaskRegExp,
+                                                                              @NotNull final Condition<VirtualFile> fileMask,
                                                                               @Nullable final Module module,
                                                                               @NotNull FileIndex fileIndex) {
     if (DumbService.getInstance(project).isDumb()) {
@@ -510,10 +478,11 @@ public class FindInProjectUtil {
         FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
 
         for (VirtualFile hit : hits) {
-          resultFiles.add(findFile(pm, hit));
+          if (fileMask.value(hit)) {
+            resultFiles.add(findFile(pm, hit));
+          }
         }
 
-        filterMaskedFiles(resultFiles, fileMaskRegExp);
         if (resultFiles.isEmpty()) return new Pair<Boolean, Collection<PsiFile>>(true, resultFiles);
       }
     }
@@ -524,39 +493,23 @@ public class FindInProjectUtil {
 
     fast |= findModel.isWholeWordsOnly() && stringToFind.indexOf('$') < 0;
 
-    List<String> words = StringUtil.getWordsInStringLongestFirst(stringToFind);
-
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
-
-      PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-      if (files.length == 0) {
-        resultFiles.clear();
-        break;
+    PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
+    helper.processFilesWithText(scope, UsageSearchContext.ANY, findModel.isCaseSensitive(), stringToFind, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile file) {
+        if (fileMask.value(file)) {
+          ContainerUtil.addIfNotNull(resultFiles, findFile(pm, file));
+        }
+        return true;
       }
-
-      final List<PsiFile> psiFiles = Arrays.asList(files);
-
-      if (i == 0 && keys.isEmpty()) {
-        resultFiles.addAll(psiFiles);
-      }
-      else {
-        resultFiles.retainAll(psiFiles);
-      }
-
-      filterMaskedFiles(resultFiles, fileMaskRegExp);
-      if (resultFiles.isEmpty()) break;
-    }
+    });
 
     if (stringToFind.isEmpty()) {
       fileIndex.iterateContent(new ContentIterator() {
         @Override
         public boolean processFile(VirtualFile file) {
-          if (!file.isDirectory() && fileMaskRegExp.matcher(file.getName()).matches()) {
-            PsiFile psiFile = findFile(pm, file);
-            if (psiFile != null) {
-              resultFiles.add(psiFile);
-            }
+          if (!file.isDirectory() && fileMask.value(file)) {
+            ContainerUtil.addIfNotNull(resultFiles, findFile(pm, file));
           }
           return true;
         }
@@ -564,25 +517,14 @@ public class FindInProjectUtil {
     }
     else {
       // in case our word splitting is incorrect
-      PsiFile[] allWordsFiles =
-        cacheManager.getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-      ContainerUtil.addAll(resultFiles, allWordsFiles);
-
-      filterMaskedFiles(resultFiles, fileMaskRegExp);
-    }
-
-    return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
-  }
-
-  private static void filterMaskedFiles(@NotNull final Set<PsiFile> resultFiles, @Nullable final Pattern fileMaskRegExp) {
-    if (fileMaskRegExp != null) {
-      for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
-        PsiFile file = iterator.next();
-        if (!fileMaskRegExp.matcher(file.getName()).matches()) {
-          iterator.remove();
+      for (PsiFile file : cacheManager.getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, findModel.isCaseSensitive())) {
+        if (fileMask.value(file.getVirtualFile())) {
+          resultFiles.add(file);
         }
       }
     }
+
+    return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
 
   private static boolean canOptimizeForFastWordSearch(@NotNull final FindModel findModel) {
