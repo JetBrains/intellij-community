@@ -58,10 +58,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +121,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull LightVirtualFile lightFile, boolean initComponents) {
+    this(project, title, lightFile, initComponents, null);
+  }
+
+  LanguageConsoleImpl(@NotNull Project project,
+                      @NotNull String title,
+                      @NotNull LightVirtualFile lightFile,
+                      boolean initComponents,
+                      @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
     myProject = project;
     myTitle = title;
     myVirtualFile = lightFile;
@@ -131,7 +136,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
     assert myEditorDocument != null;
-    myFile = createFile(myVirtualFile, myEditorDocument, myProject);
+    myFile = psiFileFactory == null ? createFile(myVirtualFile, myEditorDocument, myProject) : psiFileFactory.fun(myVirtualFile, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
