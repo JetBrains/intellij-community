@@ -76,6 +76,8 @@ class FindInProjectTask {
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
+  private final Set<PsiFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private boolean myWarningShown;
 
   FindInProjectTask(@NotNull final FindModel findModel,
                     @NotNull final Project project,
@@ -93,8 +95,8 @@ class FindInProjectTask {
       }
     });
     myFileIndex = myModule == null ?
-                                ProjectRootManager.getInstance(project).getFileIndex() :
-                                ModuleRootManager.getInstance(myModule).getFileIndex();
+                  ProjectRootManager.getInstance(project).getFileIndex() :
+                  ModuleRootManager.getInstance(myModule).getFileIndex();
 
     final String filter = findModel.getFileFilter();
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
@@ -112,59 +114,29 @@ class FindInProjectTask {
   }
 
   public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
-    final Collection<PsiFile> psiFiles = getFilesToSearchIn();
     try {
-      final Set<PsiFile> largeFiles = new THashSet<PsiFile>();
+      myProgress.setIndeterminate(true);
+      myProgress.setText("Scanning indexed files...");
+      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch();
+      final Set<PsiFile> filesForFastWordSearch = ContainerUtil.newLinkedHashSet(fastWords.getSecond());
+      myProgress.setIndeterminate(false);
 
-      int i = 0;
-      long totalFilesSize = 0;
-      int count = 0;
-      final boolean[] warningShown = {false};
+      searchInFiles(consumer, processPresentation, filesForFastWordSearch);
 
-      for (final PsiFile psiFile : psiFiles) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        final int index = i++;
-        if (virtualFile == null) continue;
+      myProgress.setIndeterminate(true);
+      myProgress.setText("Scanning non-indexed files...");
+      final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(myFindModel);
+      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, useIdIndex);
+      myProgress.setIndeterminate(false);
 
-        long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
-        if (fileLength == -1) continue; // Binary or invalid
-
-        if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) && !Registry.is("find.search.in.project.files")) continue;
-
-        if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-          largeFiles.add(psiFile);
-          continue;
-        }
-
-        myProgress.checkCanceled();
-        myProgress.setFraction((double)index / psiFiles.size());
-        String text = FindBundle.message("find.searching.for.string.in.file.progress",
-                                         myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
-        myProgress.setText(text);
-        myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
-
-        int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, consumer);
-
-        count += countInFile;
-        if (countInFile > 0) {
-          totalFilesSize += fileLength;
-          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown[0]) {
-            warningShown[0] = true;
-            String message = FindBundle.message("find.excessive.total.size.prompt",
-                                                UsageViewManagerImpl.presentableSize(totalFilesSize),
-                                                ApplicationNamesInfo.getInstance().getProductName());
-            UsageLimitUtil.showAndCancelIfAborted(myProject, message, processPresentation.getUsageViewPresentation());
-          }
-        }
-      }
-
-
-      if (!largeFiles.isEmpty()) {
-        processPresentation.setLargeFilesWereNotScanned(largeFiles);
-      }
+      searchInFiles(consumer, processPresentation, otherFiles);
     }
     catch (ProcessCanceledException e) {
       // fine
+    }
+
+    if (!myLargeFiles.isEmpty()) {
+      processPresentation.setLargeFilesWereNotScanned(myLargeFiles);
     }
 
     if (!myProgress.isCanceled()) {
@@ -172,19 +144,56 @@ class FindInProjectTask {
     }
   }
 
+  private void searchInFiles(Processor<UsageInfo> consumer, FindUsagesProcessPresentation processPresentation, Collection<PsiFile> psiFiles) {
+    int i = 0;
+    long totalFilesSize = 0;
+    int count = 0;
+
+    for (final PsiFile psiFile : psiFiles) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      final int index = i++;
+      if (virtualFile == null) continue;
+
+      long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
+      if (fileLength == -1) continue; // Binary or invalid
+
+      if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) && !Registry.is("find.search.in.project.files")) continue;
+
+      if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
+        myLargeFiles.add(psiFile);
+        continue;
+      }
+
+      myProgress.checkCanceled();
+      myProgress.setFraction((double)index / psiFiles.size());
+      String text = FindBundle.message("find.searching.for.string.in.file.progress",
+                                       myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
+      myProgress.setText(text);
+      myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
+
+      int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, consumer);
+
+      count += countInFile;
+      if (countInFile > 0) {
+        totalFilesSize += fileLength;
+        if (totalFilesSize > FILES_SIZE_LIMIT && !myWarningShown) {
+          myWarningShown = true;
+          String message = FindBundle.message("find.excessive.total.size.prompt",
+                                              UsageViewManagerImpl.presentableSize(totalFilesSize),
+                                              ApplicationNamesInfo.getInstance().getProductName());
+          UsageLimitUtil.showAndCancelIfAborted(myProject, message, processPresentation.getUsageViewPresentation());
+        }
+      }
+    }
+  }
+
   @NotNull
-  private Collection<PsiFile> getFilesToSearchIn() {
-    // optimization
-    Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch();
-    final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
-
-    final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(myFindModel);
-
+  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
 
     class EnumContentIterator implements ContentIterator {
-      final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>(filesForFastWordSearch);
+      final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -197,12 +206,12 @@ class FindInProjectTask {
               return;
             }
 
-            if (useIdIndex && isCoveredByIdIndex(virtualFile)) {
+            if (skipIndexed && isCoveredByIdIndex(virtualFile)) {
               return;
             }
 
             PsiFile psiFile = myPsiManager.findFile(virtualFile);
-            if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+            if (psiFile != null && !(psiFile instanceof PsiBinaryFile) && !alreadySearched.contains(psiFile)) {
               PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
               if (sourceFile != null) psiFile = sourceFile;
               myFiles.add(psiFile);
