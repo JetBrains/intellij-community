@@ -81,7 +81,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
                   long id = object.uniqueID();
                   InstanceFilter[] instanceFilters = new InstanceFilter[] { InstanceFilter.create(Long.toString(id))};
                   fieldBreakpoint.setInstanceFilters(instanceFilters);
-                  fieldBreakpoint.INSTANCE_FILTERS_ENABLED = true;
+                  fieldBreakpoint.setInstanceFiltersEnabled(true);
                 }
               }
             }

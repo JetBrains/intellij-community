@@ -18,7 +18,24 @@
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
   <vendor>JetBrains</vendor>
-  <description>Gradle integration</description>
+  <description>
+      <![CDATA[
+      <a href="http://www.gradle.org">Gradle</a> is a build and automation system. Gradle can automate the building, testing, publishing, deployment and etc.
+      of software packages or other types of projects. The Gradle versions 1.8 to 1.11 are supported.
+      This plugin provides Gradle integration.
+      The following features are available:
+      <ul>
+      <li>Ability to deduce Gradle home from the environment variables or configure Gradle home in a product.</li>
+      <li>Ability to create a new Gradle project or import the existing project with Gradle models.</li>
+      <li>Ability to edit .gradle files. The initial coding assistance is the same as for Groovy.</li>
+      <li>Dedicated Gradle tool window.</li>
+      <li>Ability to synchronize structures of Gradle and product's projects.</li>
+      <li>Running Gradle scripts with the Groovy run/debug configuration.</li>
+      <li>Ability to use Gradle wrapper and auto-import.</li>
+      </ul>
+
+      ]]>
+  </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>

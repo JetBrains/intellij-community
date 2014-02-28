@@ -190,6 +190,8 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
+    <projectService serviceImplementation="com.intellij.openapi.editor.LazyRangeMarkerFactory"/>
+
     <!-- General -->
     <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
@@ -257,6 +259,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
 
     <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>

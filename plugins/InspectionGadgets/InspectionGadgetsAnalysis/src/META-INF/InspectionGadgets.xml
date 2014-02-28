@@ -2489,6 +2489,9 @@
     <localInspection language="JAVA" suppressId="LockAcquiredButNotSafelyReleased" shortName="SafeLock" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="safe.lock.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.threading.SafeLockInspection"/>
+    <localInspection language="JAVA" suppressId="SharedThreadLocalRandom" shortName="SharedThreadLocalRandom" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="shared.thread.local.random.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.threading.SharedThreadLocalRandomInspection"/>
     <localInspection language="JAVA" shortName="SignalWithoutCorrespondingAwait" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="signal.without.corresponding.await.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
@@ -2640,6 +2643,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
+    <localInspection language="JAVA" suppressId="LambdaParameterHidesMemberVariable" shortName="LambdaParameterHidingMemberVariable"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="lambda.parameter.hides.member.variable.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.visibility.LambdaParameterHidingMemberVariableInspection"/>
   </extensions>
 
   <application-components>

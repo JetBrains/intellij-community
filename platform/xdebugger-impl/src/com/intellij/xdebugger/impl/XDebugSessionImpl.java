@@ -780,7 +780,7 @@ public class XDebugSessionImpl implements XDebugSession {
       myBreakpointsDisabled = false;
       new ReadAction() {
         @Override
-        protected void run(final Result result) {
+        protected void run(@NotNull Result result) {
           processAllBreakpoints(true, false);
         }
       }.execute();

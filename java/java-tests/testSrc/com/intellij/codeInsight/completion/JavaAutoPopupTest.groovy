@@ -52,6 +52,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
@@ -1139,6 +1140,56 @@ class Foo {{
   toString();
   toString()<caret>;
 }}'''
+  }
+
+  public void testMulticaret() {
+    doTestMulticaret """
+class Foo {{
+  <selection>t<caret></selection>x;
+  <selection>t<caret></selection>x;
+}}""", '\n', '''
+class Foo {{
+  toString()<caret>x;
+  toString()<caret>x;
+}}'''
+  }
+
+  public void testMulticaretTab() {
+    doTestMulticaret """
+class Foo {{
+  <selection>t<caret></selection>x;
+  <selection>t<caret></selection>x;
+}}""", '\t', '''
+class Foo {{
+  toString()<caret>;
+  toString()<caret>;
+}}'''
+  }
+
+  public void testMulticaretBackspace() {
+    doTestMulticaret """
+class Foo {{
+  <selection>t<caret></selection>;
+  <selection>t<caret></selection>;
+}}""", '\b\t', '''
+class Foo {{
+  toString()<caret>;
+  toString()<caret>;
+}}'''
+  }
+
+  private doTestMulticaret(final String textBefore, final String toType, final String textAfter) {
+    EditorTestUtil.enableMultipleCarets()
+    try {
+      myFixture.configureByText "a.java", textBefore
+      type 'toStr'
+      assert lookup
+      type toType
+      myFixture.checkResult textAfter
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets()
+    }
   }
 
   private doTestBlockSelection(final String textBefore, final String toType, final String textAfter) {

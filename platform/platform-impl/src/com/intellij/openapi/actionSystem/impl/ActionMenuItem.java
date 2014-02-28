@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,6 +292,9 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     else {
       if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
         Icon icon = myPresentation.getIcon();
+        if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
+          icon = new PoppedIcon(icon, 16, 16);
+        }
         setIcon(icon);
         if (myPresentation.getDisabledIcon() != null) {
           setDisabledIcon(myPresentation.getDisabledIcon());

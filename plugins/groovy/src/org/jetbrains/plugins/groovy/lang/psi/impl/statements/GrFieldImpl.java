@@ -240,7 +240,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Nullable
-  public Icon getIcon(int flags) {
+  @Override
+  protected Icon getElementIcon(@IconFlags int flags) {
     Icon superIcon = JetgroovyIcons.Groovy.Field;
     if (!isProperty()) return superIcon;
     LayeredIcon rowIcon = new LayeredIcon(2);

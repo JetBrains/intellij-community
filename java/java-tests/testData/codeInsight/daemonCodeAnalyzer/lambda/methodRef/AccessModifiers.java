@@ -29,7 +29,7 @@ class AlienTest {
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i2 = MyTest::foo;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i3 = MyTest::bar;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IIntInt'">IIntInt i4 = MyTest::bar;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i5 = MyTest::baz;</error>
+        IInt i5 = <error descr="Non-static method cannot be referenced from a static context">MyTest::baz</error>;
         IInt i6 = <error descr="'foo(int)' is not public in 'MyTest.Foo'. Cannot be accessed from outside package">MyTest.foo::foo</error>;
         IInt i7 = MyTest.<error descr="'MyTest.Foo' has private access in 'MyTest'">Foo</error>::foo;
     }

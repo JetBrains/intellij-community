@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ public class FileNameCache {
 
   public static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
-    cacheData(name, idx);
+    cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
   }
 
   @NotNull
-  private static IntObjectLinkedMap.MapEntry<Object> cacheData(String name, int id) {
+  private static IntObjectLinkedMap.MapEntry<Object> cacheData(String name, int id, int stripe) {
     if (name == null) {
       ourNames.markCorrupted();
       throw new RuntimeException("VFS name enumerator corrupted");
@@ -55,7 +55,6 @@ public class FileNameCache {
 
     Object rawName = convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    final int stripe = calcStripeIdFromNameId(id);
     synchronized (ourNameCache[stripe]) {
       return ourNameCache[stripe].cacheEntry(entry);
     }
@@ -99,7 +98,7 @@ public class FileNameCache {
       }
     }
 
-    return cacheData(FSRecords.getNameByNameId(id), id);
+    return cacheData(FSRecords.getNameByNameId(id), id, stripe);
   }
 
   @NotNull

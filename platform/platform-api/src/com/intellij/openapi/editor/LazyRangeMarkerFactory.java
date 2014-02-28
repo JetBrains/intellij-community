@@ -17,7 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -36,11 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-public class LazyRangeMarkerFactory extends AbstractProjectComponent {
+public class LazyRangeMarkerFactory {
+  private final Project myProject;
   private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
-    super(project);
+    myProject = project;
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -71,7 +73,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   public static LazyRangeMarkerFactory getInstance(Project project) {
-    return project.getComponent(LazyRangeMarkerFactory.class);
+    return ServiceManager.getService(project, LazyRangeMarkerFactory.class);
   }
 
   @NotNull
@@ -92,8 +94,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
       @Override
       public RangeMarker compute() {
-        FileDocumentManager fdm = FileDocumentManager.getInstance();
-        final Document document = fdm.getCachedDocument(file);
+        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document != null) {
           final int offset = calculateOffset(myProject, file, document, line, column);
           return document.createRangeMarker(offset, offset, persistent);
@@ -122,7 +123,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     }
 
     @Nullable
-    private RangeMarker getOrCreateDelegate() {
+    protected final RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
         if (document == null) {
@@ -217,6 +218,18 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       int offset = calculateOffset(myProject, file, document, myLine, myColumn);
 
       return document.createRangeMarker(offset, offset);
+    }
+
+    @Override
+    public int getStartOffset() {
+      getOrCreateDelegate();
+      return super.getStartOffset();
+    }
+
+    @Override
+    public int getEndOffset() {
+      getOrCreateDelegate();
+      return super.getEndOffset();
     }
   }
 

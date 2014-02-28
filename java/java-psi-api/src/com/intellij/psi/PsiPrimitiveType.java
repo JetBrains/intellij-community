@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,22 @@ import java.util.Map;
  * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType {
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
+
   private final String myName;
 
-  public PsiPrimitiveType(@NonNls @NotNull String name, PsiAnnotation[] annotations) {
-    super(annotations);
-    myName = name;
-  }
-
-  @NonNls
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
-  @NonNls
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
-  //registering ctor
   PsiPrimitiveType(@NonNls @NotNull String name, @NonNls String boxedName) {
     this(name, PsiAnnotation.EMPTY_ARRAY);
     if (boxedName != null) {
       ourQNameToUnboxed.put(boxedName, this);
       ourUnboxedToQName.put(this, boxedName);
     }
+  }
+
+  public PsiPrimitiveType(@NonNls @NotNull String name, @NotNull PsiAnnotation[] annotations) {
+    super(annotations);
+    myName = name;
   }
 
   @NotNull

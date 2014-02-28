@@ -326,6 +326,9 @@ public class EditorTestUtil {
       if (caret.selection != null) {
         editor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
       }
+      else {
+        editor.getSelectionModel().removeSelection();
+      }
     }
     if (caretsState.blockSelection != null) {
       editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),

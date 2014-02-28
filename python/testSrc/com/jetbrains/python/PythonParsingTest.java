@@ -447,6 +447,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON33);
   }
 
+  public void testEmptyBlockInFunctionBeforeFunction() {
+    doTest();
+  }
+
+  public void testBlockWithoutColon() {
+    doTest();
+  }
+
+  public void testSingleDefBeforeFunction() {
+    doTest();
+  }
+
+  public void testSingleClassBeforeFunction() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

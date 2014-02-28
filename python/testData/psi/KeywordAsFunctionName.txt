@@ -2,7 +2,7 @@ PyFile:KeywordAsFunctionName.py
   PyFunction('null')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
-    PsiErrorElement:function name expected
+    PsiErrorElement:Identifier expected
       PsiElement(Py:FROM_KEYWORD)('from')
     PyParameterList
       PsiElement(Py:LPAR)('(')

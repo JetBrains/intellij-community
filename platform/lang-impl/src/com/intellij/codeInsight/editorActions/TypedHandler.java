@@ -135,10 +135,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     PsiFile file;
 
-    if (project == null
-        || editor.isColumnMode()
-        || editor.getCaretModel().getAllCarets().size() > 1
-        || (file = PsiUtilBase.getPsiFileInEditor(editor, project)) == null) {
+    if (project == null || editor.isColumnMode() || (file = PsiUtilBase.getPsiFileInEditor(editor, project)) == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, charTyped, dataContext);
       }
@@ -174,13 +171,13 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     if (!editor.isInsertMode()){
-      myOriginalHandler.execute(originalEditor, charTyped, dataContext);
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(originalEditor, charTyped, dataContext);
+      }
       return;
     }
 
-    if (editor.getSelectionModel().hasSelection()){
-      EditorModificationUtil.deleteSelectedText(editor);
-    }
+    EditorModificationUtil.deleteSelectedTextForAllCarets(editor);
 
     FileType fileType = getFileType(file, editor);
 
@@ -194,7 +191,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
     }
 
-    if (!editor.getSelectionModel().hasBlockSelection()) {
+    if (!editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getAllCarets().size() == 1) {
       if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
         if (FileTypes.PLAIN_TEXT != fileType) {
           if (handleRParen(editor, fileType, charTyped)) return;
@@ -206,12 +203,14 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
-    myOriginalHandler.execute(originalEditor, charTyped, dataContext);
+    if (myOriginalHandler != null) {
+      myOriginalHandler.execute(originalEditor, charTyped, dataContext);
+    }
     AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStampBeforeTyping);
 
     if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
         CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-        !editor.getSelectionModel().hasBlockSelection() && fileType != FileTypes.PLAIN_TEXT) {
+        !editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getAllCarets().size() == 1 && fileType != FileTypes.PLAIN_TEXT) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {
@@ -604,6 +603,7 @@ public class TypedHandler extends TypedActionHandlerBase {
                 RangeMarker marker = document.createRangeMarker(offset, offset + 1);
                 CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
                 newOffset = marker.getStartOffset();
+                marker.dispose();
               } else {
                 newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
               }

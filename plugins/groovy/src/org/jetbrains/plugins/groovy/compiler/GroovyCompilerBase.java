@@ -194,7 +194,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     try {
       fileWithParameters = GroovycOSProcessHandler
         .fillFileWithGroovycParameters(outputDir.getPath(), paths2Compile, FileUtil.toSystemDependentName(finalOutputDir.getPath()),
-                                       class2Src, encoding, patchers);
+                                       class2Src, encoding, patchers, "");
     }
     catch (IOException e) {
       LOG.info(e);
@@ -202,6 +202,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       return;
     }
 
+    parameters.getProgramParametersList().add("do_not_optimize");
     parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
     parameters.getProgramParametersList().add(fileWithParameters.getPath());
     if (compilerConfiguration.isInvokeDynamic()) {
@@ -253,7 +254,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
           if (sourceVirtualFile == null) {
             continue;
           }
-          
+
           if (indicator != null) {
             indicator.setText2(sourceVirtualFile.getName());
           }

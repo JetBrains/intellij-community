@@ -18,67 +18,63 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
-import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Marks built-in names.
- * User: dcheryasov
- * Date: Jan 10, 2009 12:17:15 PM
+ *
+ * @author dcheryasov
  */
 public class PyBuiltinAnnotator extends PyAnnotator {
   @Override
   public void visitPyReferenceExpression(PyReferenceExpression node) {
     final String name = node.getName();
-    if (name == null) return; 
-    boolean highlighted_as_attribute = highlightAsAttribute(node, name);
-    if (! highlighted_as_attribute && !node.isQualified()) {
-      // things like len()
-      ResolveResult[] resolved = node.getReference().multiResolve(false); // constructors, etc may give multiple results...
-      if (resolved.length > 0) {
-        if (PyBuiltinCache.getInstance(node).hasInBuiltins(resolved[0].getElement())) { // ...but we only care about the default resolution
-          Annotation ann;
-          PsiElement parent = node.getParent();
-          if (parent instanceof PyDecorator) {
-            // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
-            ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
-          }
-          else ann = getHolder().createInfoAnnotation(node, null);
-          ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
-        }
+    if (name == null) return;
+    final boolean highlightedAsAttribute = highlightAsAttribute(node, name);
+    if (!highlightedAsAttribute && PyBuiltinCache.isInBuiltins(node)) {
+      final Annotation ann;
+      final PsiElement parent = node.getParent();
+      if (parent instanceof PyDecorator) {
+        // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
+        ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
       }
+      else {
+        ann = getHolder().createInfoAnnotation(node, null);
+      }
+      ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 
   @Override
   public void visitPyTargetExpression(PyTargetExpression node) {
     final String name = node.getName();
-    if (name == null) return;
-    highlightAsAttribute(node, name);
+    if (name != null) {
+      highlightAsAttribute(node, name);
+    }
   }
 
   /**
    * Try to highlight a node as a class attribute.
+   *
    * @param node what to work with
-   * @return true iff the node was highlighted.  
+   * @return true iff the node was highlighted.
    */
-  private boolean highlightAsAttribute(PyQualifiedExpression node, String name) {
-    LanguageLevel languageLevel = LanguageLevel.forElement(node);
+  private boolean highlightAsAttribute(@NotNull PyQualifiedExpression node, @NotNull String name) {
+    final LanguageLevel languageLevel = LanguageLevel.forElement(node);
     if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
-      // things like __len__
-      if (
-        node.isQualified() // foo.__len__
-        || (PyUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
-      ) {
+      // things like __len__: foo.__len__ or class Foo: ... __len__ = my_len_impl
+      if (node.isQualified() || ScopeUtil.getScopeOwner(node) instanceof PyClass) {
         final ASTNode astNode = node.getNode();
         if (astNode != null) {
-          ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
+          final ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
           if (tgt != null) {
-            Annotation ann = getHolder().createInfoAnnotation(tgt, null);
+            final Annotation ann = getHolder().createInfoAnnotation(tgt, null);
             ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
             return true;
           }
@@ -87,5 +83,4 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     }
     return false;
   }
-
 }

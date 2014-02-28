@@ -99,6 +99,6 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
       return false;
     }
     return (PyNames.FAKE_OLD_BASE.equals(containingClass.getName()) ||
-            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).hasInBuiltins(containingClass)));
+            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).isBuiltin(containingClass)));
   }
 }

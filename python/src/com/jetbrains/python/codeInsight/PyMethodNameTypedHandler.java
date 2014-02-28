@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                 if (caretOffset == chars.length() || chars.charAt(caretOffset) != ':') {
                   textToType += ':';
                 }
-                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, textToType, true);
-                editor.getCaretModel().moveToOffset(offset + 1 + pname.length()); // right after param name
+                EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, textToType, true, 1 + pname.length()); // right after param name
                 return Result.STOP;
               }
             }

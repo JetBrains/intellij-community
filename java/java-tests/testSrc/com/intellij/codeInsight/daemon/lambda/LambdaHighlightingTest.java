@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIntersectionTypeInCast() { doTest(); }
   public void testAmbiguitySpecificReturn() { doTest(true); }
   public void testFunctionalInterfaceAnnotation() { doTest(); }
+  public void testFunctionalInterfaceAnnotation2() { doTest(); }
   public void testAmbiguityReturnValueResolution() { doTest(); }
   public void testAmbiguityReturnValueResolution1() { doTest(); }
   public void testAmbiguityReturnValueResolution2() { doTest(true); }

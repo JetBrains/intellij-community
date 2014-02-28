@@ -142,4 +142,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   public void setTimeStamp(long timeStamp) {
     myTimeStamp = timeStamp;
   }
+
+  void applyDefaults(BreakpointState state) {
+    state.mySuspendPolicy = mySuspendPolicy;
+  }
 }

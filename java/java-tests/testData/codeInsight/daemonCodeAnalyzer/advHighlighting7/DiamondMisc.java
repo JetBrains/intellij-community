@@ -97,14 +97,14 @@ interface I<T> {
 class FI1 {
   I<? extends String> i1 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">String</error> m() {
+    public String m() {
       return null;
     }
   };
 
   I<?> i2 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">Object</error> m() {
+    public Object m() {
       return null;
     }
   };

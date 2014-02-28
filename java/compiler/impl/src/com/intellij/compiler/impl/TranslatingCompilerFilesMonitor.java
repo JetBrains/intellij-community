@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
-  private static final boolean ourDebugMode = false;
+  public static boolean ourDebugMode = false;
 
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
@@ -197,6 +197,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
       --myWatchedProjectsCount;
+      if (ourDebugMode) {
+        System.out.println("After suspend for project:"+projectId + "," + myWatchedProjectsCount);
+      }
       // cleanup internal structures to free memory
       mySourcesToRecompile.remove(projectId);
       myOutputsToDelete.remove(projectId);
@@ -217,8 +220,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void watchProject(Project project) {
     synchronized (myDataLock) {
-      mySuspendedProjects.remove(getProjectId(project));
+      int projectId = getProjectId(project);
+      mySuspendedProjects.remove(projectId);
       ++myWatchedProjectsCount;
+      if (ourDebugMode) {
+        System.out.println("After watch for project:"+projectId + "," + myWatchedProjectsCount);
+      }
     }
   }
 
@@ -1616,6 +1623,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
+      if (ourDebugMode) {
+        System.out.println("MyVfsListener.processNewFile");
+        System.out.println("file = [" + file + "], notifyServer = [" + notifyServer + "]");
+        System.out.println("myWatchedProjectsCount = " + myWatchedProjectsCount);
+      }
       if (myWatchedProjectsCount == 0) return;
       final Ref<Boolean> isInContent = Ref.create(false);
       ApplicationManager.getApplication().runReadAction(new Runnable() {

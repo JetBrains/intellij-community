@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,46 +52,57 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
     return builder.toString().getBytes();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myPath;
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFS;
   }
 
+  @Override
+  @NotNull
   public String getPath() {
     return myPath;
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public VirtualFile getParent() {
     return null;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return null;
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myContent == null) throw new IOException();
     return myContent;
   }
 
+  @Override
   public long getTimeStamp() {
     return -1;
   }
@@ -101,17 +112,21 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
     return myContent.hashCode();
   }
 
+  @Override
   public long getLength() {
     return myContent.length;
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(myContent,this);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();

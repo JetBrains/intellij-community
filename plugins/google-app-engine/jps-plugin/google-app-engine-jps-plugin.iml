@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="module" module-name="appEngine-runtime" />
+    <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
   </component>
 </module>
 

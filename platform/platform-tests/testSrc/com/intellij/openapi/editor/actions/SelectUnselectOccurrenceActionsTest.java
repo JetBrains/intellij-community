@@ -182,6 +182,6 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
   }
 
   private void executeReverseAction() {
-    myFixture.performEditorAction(IdeActions.ACTION_UNSELECT_LAST_OCCURENCE);
+    myFixture.performEditorAction(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE);
   }
 }

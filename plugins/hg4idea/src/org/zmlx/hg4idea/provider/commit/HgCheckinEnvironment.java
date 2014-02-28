@@ -264,31 +264,33 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
       HgVcs myVcs = HgVcs.getInstance(myProject);
-      if (myVcs != null && !myVcs.getVersion().isAmendSupported()) {
-        myAmend.setEnabled(false);
-      }
+      myAmend.setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
     }
 
+    @Override
     public void refresh() {
       super.refresh();
       myNextCommitAmend = false;
     }
 
+    @Override
     public void saveState() {
       myNextCommitAmend = myAmend.isSelected();
     }
 
+    @Override
     public void restoreState() {
       myNextCommitAmend = false;
     }
 
     @NotNull
     @Override
-    protected Collection<VirtualFile> getRoots() {
-      return HgUtil.getHgRepositories(myProject);
+    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      return HgUtil.hgRoots(myProject, filePaths);
     }
 
     @Nullable
+    @Override
     protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
       HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
       List<String> args = new ArrayList<String>();

@@ -15,10 +15,12 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
-import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +43,12 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
   @Override
   public XBreakpointPackageGroup getGroup(@NotNull B breakpoint, @NotNull Collection<XBreakpointPackageGroup> groups) {
     String packageName = null;
-    if (breakpoint instanceof BreakpointWithHighlighter) {
-      packageName = ((BreakpointWithHighlighter)breakpoint).getPackageName();
-    }
-    else if (breakpoint instanceof ExceptionBreakpoint) {
-      packageName = ((ExceptionBreakpoint)breakpoint).getPackageName();
+    if (breakpoint instanceof XBreakpoint) {
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
+      Breakpoint javaBreakpoint = breakpointManager.findBreakpoint((XBreakpoint)breakpoint);
+      if (javaBreakpoint != null) {
+        packageName = javaBreakpoint.getPackageName();
+      }
     }
     if (packageName == null) {
       return null;

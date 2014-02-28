@@ -154,7 +154,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
     for (PythonSdkFlavor flavor : flavors) {
       final Collection<String> strings = flavor.suggestHomePaths();
-      for (String string : strings) {
+      for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), strings, myExistingSdks)) {
         allSdks.add(new PyDetectedSdk(string));
       }
     }

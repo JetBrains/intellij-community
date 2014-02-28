@@ -18,6 +18,7 @@ package com.intellij.ide.impl;
 import com.intellij.facet.*;
 import com.intellij.ide.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
@@ -48,7 +49,8 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
       final Object o = ((WrappingVirtualFile)file).getWrappedObject(context.getProject());
       return o instanceof Facet;
     }
-    return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file);
+    return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)
+           || StdFileTypes.IDEA_MODULE.equals(file.getFileType()) && findModuleByModuleFile(context.getProject(), file) != null;
   }
 
   @Override
@@ -64,8 +66,9 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
       module = facet == null? null : facet.getModule();
     }
     else {
+      Module moduleByIml = file.getFileType().equals(StdFileTypes.IDEA_MODULE) ? findModuleByModuleFile(project, file) : null;
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      module = fileIndex.getModuleForFile(file);
+      module = moduleByIml != null ? moduleByIml : fileIndex.getModuleForFile(file);
       facet = fileIndex.isInSourceContent(file) ? null : findFacet(project, file);
     }
     if (module != null || facet != null) {
@@ -92,6 +95,16 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
         }
       });
     }
+  }
+
+  @Nullable
+  private static Module findModuleByModuleFile(@NotNull Project project, @NotNull VirtualFile file) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (file.equals(module.getModuleFile())) {
+        return module;
+      }
+    }
+    return null;
   }
 
   @Nullable

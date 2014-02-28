@@ -1409,7 +1409,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(stepThread);
       if (myBreakpoint != null) {
-        myBreakpoint.SUSPEND_POLICY = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL;
+        myBreakpoint.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
         myBreakpoint.createRequest(suspendContext.getDebugProcess());
         myRunToCursorBreakpoint = myBreakpoint;
       }
@@ -1476,8 +1476,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();
-      myRunToCursorBreakpoint.SUSPEND_POLICY = context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL;
-      myRunToCursorBreakpoint.LOG_ENABLED = false;
+      myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
       myRunToCursorBreakpoint.createRequest(context.getDebugProcess());
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
       super.contextAction();

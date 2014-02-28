@@ -353,7 +353,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String archs = """
     <key>LSArchitecturePriority</key>
     <array>"""
-  (args.archs != null ? args.archs : ["64_x86", "i386"]).each {
+  (args.archs != null ? args.archs : ["x86_64", "i386"]).each {
     archs += "<string>${it}</string>"
   }
   archs +="</array>\n"

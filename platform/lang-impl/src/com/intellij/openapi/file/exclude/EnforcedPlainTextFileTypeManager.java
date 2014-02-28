@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   }
 
   public boolean isMarkedAsPlainText(VirtualFile file) {
-    if (file.isDirectory()) return false;
+    if (file instanceof StubVirtualFile || file.isDirectory()) return false;
     synchronized (mySetsInitialized) {
       if (!mySetsInitialized.get()) {
         initPlainTextFileSets();
@@ -73,7 +74,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   }
 
   public static boolean isApplicableFor(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return false;
+    if (file instanceof StubVirtualFile || file.isDirectory()) return false;
     FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }

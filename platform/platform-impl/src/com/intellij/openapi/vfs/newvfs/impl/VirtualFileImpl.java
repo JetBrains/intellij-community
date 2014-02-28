@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,5 +124,20 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp), this);
+  }
+
+  @Override
+  public String getDetectedLineSeparator() {
+    if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+      return LineSeparator.getSystemLineSeparator().getSeparatorString();
+    }
+    return super.getDetectedLineSeparator();
+  }
+
+  @Override
+  public void setDetectedLineSeparator(String separator) {
+    boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
+    setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+    super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
 }

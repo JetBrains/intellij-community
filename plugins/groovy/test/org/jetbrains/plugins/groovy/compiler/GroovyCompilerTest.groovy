@@ -17,9 +17,9 @@
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -39,6 +39,12 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    TranslatingCompilerFilesMonitor.ourDebugMode = false
+    super.tearDown()
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -128,6 +134,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
+    TranslatingCompilerFilesMonitor.ourDebugMode = true
+
     myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "  static IFoo f\n" +
@@ -208,7 +216,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
-    new File(PathManager.systemPath, "compile-server/server.log").delete()
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.runBare()
   }
 
@@ -231,7 +239,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def logText = ideaLog.text
       println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
     }
-    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"
       println makeLog.text
@@ -725,11 +733,11 @@ public class Main {
     ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
 
     def messages = make()
-    assert messages 
+    assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
-    
+
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {

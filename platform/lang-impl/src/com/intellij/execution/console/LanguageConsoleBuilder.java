@@ -147,7 +147,7 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
@@ -184,11 +184,12 @@ public final class LanguageConsoleBuilder {
     @Nullable
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
-    public GutteredLanguageConsole(@NotNull Project project,
+    public GutteredLanguageConsole(@NotNull String title,
+                                   @NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
                                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, language.getDisplayName() + " Console", language, false);
+      super(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
 
       setShowSeparatorLine(false);
 

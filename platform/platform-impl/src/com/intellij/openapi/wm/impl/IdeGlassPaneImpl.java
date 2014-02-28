@@ -52,7 +52,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
-  private JPanel myFocusProxy = new JPanel();
+  private JPanel myFocusProxy = new JPanel(){
+    @Override
+    public String toString() {
+      return "FocusProxy";
+    }
+  };
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;

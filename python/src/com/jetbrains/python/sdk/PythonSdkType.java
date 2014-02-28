@@ -407,18 +407,19 @@ public class PythonSdkType extends SdkType {
   }
 
   public static String suggestSdkNameFromVersion(String sdkHome, String version) {
-    final String short_home_name = FileUtil.getLocationRelativeToUserHome(sdkHome);
+    sdkHome = FileUtil.toSystemDependentName(sdkHome);
+    final String shortHomeName = FileUtil.getLocationRelativeToUserHome(sdkHome);
     if (version != null) {
-      File virtualenv_root = getVirtualEnvRoot(sdkHome);
-      if (virtualenv_root != null) {
-        version += " virtualenv at " + FileUtil.getLocationRelativeToUserHome(virtualenv_root.getAbsolutePath());
+      File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
+      if (virtualEnvRoot != null) {
+        version += " virtualenv at " + FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
       }
       else {
-        version += " (" + short_home_name + ")";
+        version += " (" + shortHomeName + ")";
       }
     }
     else {
-      version = "Unknown at " + short_home_name;
+      version = "Unknown at " + shortHomeName;
     } // last resort
     return version;
   }
@@ -480,10 +481,10 @@ public class PythonSdkType extends SdkType {
     if (flavor != null) {
       VirtualFile sdkPath = flavor.getSdkPath(homePath);
       if (sdkPath != null) {
-        return sdkPath.getPath();
+        return FileUtil.toSystemDependentName(sdkPath.getPath());
       }
     }
-    return path;
+    return FileUtil.toSystemDependentName(path);
   }
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {

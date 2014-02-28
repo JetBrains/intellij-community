@@ -2,7 +2,21 @@
   <id>org.jetbrains.idea.maven</id>
 
   <name>Maven Integration</name>
-  <description>Import Maven projects and execute Maven goals</description>
+  <description>
+      <![CDATA[
+      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      The following features are available:
+        <ul>
+        <li>Maven Projects tool window.</li>
+        <li>Dedicated module type.</li>
+        <li>Maven repositories support.</li>
+        <li>Full editing support for pom.xml file.</li>
+        <li>Possibility to import Maven projects.</li>
+        <li>Running and debugging Maven goals.</li>
+        <li>Compiling.</li>
+        </ul>
+      ]]>
+   </description>
   <vendor>JetBrains</vendor>
 
   <extensionPoints>

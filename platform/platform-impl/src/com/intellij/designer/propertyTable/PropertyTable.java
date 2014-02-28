@@ -848,7 +848,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (isSetValue) {
       if (property.needRefreshPropertyList() || needRefresh[0]) {
-        update(myContainers, null, false);
+        update(myContainers, null, property.closeEditorDuringRefresh());
       }
       else {
         myModel.fireTableRowsUpdated(row, row);
@@ -1113,7 +1113,7 @@ public abstract class PropertyTable extends JBTable {
         }
 
         if (setValueAtRow(editingRow, value)) {
-          if (!continueEditing) {
+          if (!continueEditing && editingRow != -1) {
             PropertyEditor editor = myProperties.get(editingRow).getEditor();
             editor.removePropertyEditorListener(myPropertyEditorListener);
             removeEditor();

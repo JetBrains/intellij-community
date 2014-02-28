@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,15 +42,19 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return myResourceBundle;
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return LocalFileSystem.getInstance();
   }
 
+  @Override
+  @NotNull
   public String getPath() {
     return getName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myResourceBundle.getBaseName();
@@ -71,71 +75,88 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return myResourceBundle.hashCode();
   }
 
+  @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public VirtualFile getParent() {
     return myResourceBundle.getBaseDirectory();
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @Override
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void delete(Object requestor) throws IOException {
     //todo
   }
 
+  @Override
   public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
     //todo
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public long getModificationStamp() {
     return 0;
   }
 
+  @Override
   public long getTimeStamp() {
     return 0;
   }
 
+  @Override
   public long getLength() {
     return 0;
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
 
   }

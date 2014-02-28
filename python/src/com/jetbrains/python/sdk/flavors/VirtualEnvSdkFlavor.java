@@ -111,7 +111,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         for (String name : NAMES) {
           if (SystemInfo.isWindows) {
             if (childName.equals(name)) {
-              return child.getPath();
+              return FileUtil.toSystemDependentName(child.getPath());
             }
           }
           else {
