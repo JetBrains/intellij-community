@@ -7,19 +7,25 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificatesManager;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * This alternative base implementation of {@link com.intellij.tasks.impl.BaseRepository} should be used
@@ -29,6 +35,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class NewBaseRepositoryImpl extends BaseRepository {
   private static final Logger LOG = Logger.getInstance(NewBaseRepositoryImpl.class);
+  private static final AuthScope BASIC_AUTH_SCOPE =
+    new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM, AuthSchemes.BASIC);
+  // Provides preemptive authentication in HttpClient 4.x
+  // see http://stackoverflow.com/questions/2014700/preemptive-basic-authentication-with-apache-httpclient-4
+  private static final HttpRequestInterceptor PREEMPTIVE_BASIC_AUTH = new PreemptiveBasicAuthInterceptor();
 
   /**
    * Serialization constructor
@@ -51,13 +62,11 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       .setDefaultRequestConfig(createRequestConfig())
       .setSslcontext(CertificatesManager.getInstance().getSslContext())
         // TODO: use custom one for additional certificate check
-      //.setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
+        //.setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
       .setHostnameVerifier((X509HostnameVerifier)CertificatesManager.HOSTNAME_VERIFIER)
-      .setDefaultCredentialsProvider(createCredentialsProvider());
-    HttpRequestInterceptor interceptor = createRequestInterceptor();
-    if (interceptor != null) {
-      builder = builder.addInterceptorLast(interceptor);
-    }
+      .setDefaultCredentialsProvider(createCredentialsProvider())
+      .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
+      .addInterceptorLast(createRequestInterceptor());
     return builder.build();
   }
 
@@ -75,14 +84,15 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
   @NotNull
   private CredentialsProvider createCredentialsProvider() {
     CredentialsProvider provider = new BasicCredentialsProvider();
-    HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    // Basic authentication
     if (isUseHttpAuthentication()) {
-      provider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
+      provider.setCredentials(BASIC_AUTH_SCOPE, new UsernamePasswordCredentials(getUsername(), getPassword()));
     }
+    // Proxy authentication
+    HttpConfigurable proxySettings = HttpConfigurable.getInstance();
     if (isUseProxy() && proxySettings.PROXY_AUTHENTICATION) {
-      provider.setCredentials(new AuthScope(new HttpHost(proxySettings.PROXY_HOST)),
-                              new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,
-                                                              proxySettings.getPlainProxyPassword()));
+      provider.setCredentials(new AuthScope(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT),
+                              new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN, proxySettings.getPlainProxyPassword()));
     }
     return provider;
   }
@@ -95,8 +105,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       .setConnectTimeout(3000)
       .setSocketTimeout(tasksSettings.CONNECTION_TIMEOUT);
     if (isUseProxy()) {
-      HttpHost proxy = new HttpHost(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
-      builder = builder.setProxy(proxy);
+      builder.setProxy(new HttpHost(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT));
     }
     return builder.build();
   }
@@ -135,5 +144,16 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       builder.append('/').append(TaskUtil.encodeUrl(String.valueOf(part)));
     }
     return builder.toString();
+  }
+
+  private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
+    @Override
+    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+      CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
+      Credentials credentials = provider.getCredentials(BASIC_AUTH_SCOPE);
+      if (credentials != null) {
+        request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
+      }
+    }
   }
 }
