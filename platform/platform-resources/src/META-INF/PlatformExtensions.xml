@@ -190,6 +190,8 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
+    <projectService serviceImplementation="com.intellij.openapi.editor.LazyRangeMarkerFactory"/>
+
     <!-- General -->
     <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
