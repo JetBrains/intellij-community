@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer {
+
+  private static final Logger LOG = Logger.getInstance(AbstractPaddingCellRender.class);
 
   @NotNull private final VcsLogDataHolder myDataHolder;
 
@@ -69,6 +72,9 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
 
     if (myGraphImage != null) {
       UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
+    }
+    else if (this instanceof GraphCommitCellRender) { // TODO temporary diagnostics: why does graph sometimes disappear
+      LOG.error("Image is null");
     }
   }
 
