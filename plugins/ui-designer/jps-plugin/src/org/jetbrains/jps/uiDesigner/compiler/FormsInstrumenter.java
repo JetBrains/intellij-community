@@ -122,7 +122,7 @@ public class FormsInstrumenter extends FormsBuilder {
       }
     }
     finally {
-      context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
+      context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getPresentableShortName() + "]"));
     }
 
     return ExitCode.OK;
