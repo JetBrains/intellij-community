@@ -74,7 +74,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     myRunConfiguration.setScriptName(getScriptPath());
     myRunConfiguration.setWorkingDirectory(getWorkingFolder());
     myRunConfiguration.setScriptParameters(getScriptParameters());
-    myRunConfiguration.getEnvs().put("PYTHONDONTWRITEBYTECODE", "1"); //Don't write 'pyc' files as they can't be loaded by other versions
 
     new WriteAction() {
       @Override
@@ -90,12 +89,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
 
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
-
-
-    if (SystemInfo.isWindows) { //fix the problem with pydevd.py that can't be imported because of caches in multi-process debug test
-      deletePycFiles();
-    }
-
 
     final PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);
 
@@ -177,18 +170,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     });
 
     doTest(myOutputPrinter);
-  }
-
-  private static void deletePycFiles() {
-    File root = PythonHelpersLocator.getHelpersRoot();
-    for (File f : new File(root, "pydev").listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".pyc") || name.equals("__pycache__");
-      }
-    })) {
-      FileUtil.delete(f);
-    }
   }
 
   public PythonRunConfiguration getRunConfiguration() {
