@@ -33,8 +33,8 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +53,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
@@ -117,16 +116,14 @@ class FindInProjectTask {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
-      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch();
-      final Set<PsiFile> filesForFastWordSearch = ContainerUtil.newLinkedHashSet(fastWords.getSecond());
+      final Set<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch();
       myProgress.setIndeterminate(false);
 
       searchInFiles(consumer, processPresentation, filesForFastWordSearch);
 
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
-      final boolean useIdIndex = fastWords.getFirst() && canOptimizeForFastWordSearch(myFindModel);
-      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, useIdIndex);
+      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch);
       myProgress.setIndeterminate(false);
 
       searchInFiles(consumer, processPresentation, otherFiles);
@@ -188,9 +185,11 @@ class FindInProjectTask {
   }
 
   @NotNull
-  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched, final boolean skipIndexed) {
+  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched) {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
+
+    final boolean skipIndexed = canRelyOnIndices();
 
     class EnumContentIterator implements ContentIterator {
       final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
@@ -298,10 +297,31 @@ class FindInProjectTask {
     return files;
   }
 
+  private boolean canRelyOnIndices() {
+    if (DumbService.isDumb(myProject)) return false;
+
+    if (myFindModel.isRegularExpressions()) return false;
+
+    // a local scope may be over a non-indexed file
+    if (myFindModel.getCustomScope() instanceof LocalSearchScope) return false;
+
+    String text = myFindModel.getStringToFind();
+    if (StringUtil.isEmptyOrSpaces(text)) return false;
+
+    if (TrigramIndex.ENABLED) return !TrigramBuilder.buildTrigram(text).isEmpty();
+
+    // $ is used to separate words when indexing plain-text files but not when indexing
+    // Java identifiers, so we can't consistently break a string containing $ characters into words
+
+    return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0;
+  }
+
+
   @NotNull
-  private Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch() {
-    if (DumbService.getInstance(myProject).isDumb()) {
-      return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
+  private Set<PsiFile> getFilesForFastWordSearch() {
+    String stringToFind = myFindModel.getStringToFind();
+    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
+      return Collections.emptySet();
     }
 
     SearchScope customScope = myFindModel.getCustomScope();
@@ -316,12 +336,10 @@ class FindInProjectTask {
       scope = ProjectScope.getContentScope(myProject);
     }
 
-    Set<Integer> keys = new THashSet<Integer>(30);
-    final Set<PsiFile> resultFiles = new THashSet<PsiFile>();
-    boolean fast = false;
+    final Set<PsiFile> resultFiles = new LinkedHashSet<PsiFile>();
 
-    String stringToFind = myFindModel.getStringToFind();
     if (TrigramIndex.ENABLED) {
+      Set<Integer> keys = ContainerUtil.newTroveSet();
       TIntHashSet trigrams = TrigramBuilder.buildTrigram(stringToFind);
       TIntIterator it = trigrams.iterator();
       while (it.hasNext()) {
@@ -329,7 +347,6 @@ class FindInProjectTask {
       }
 
       if (!keys.isEmpty()) {
-        fast = true;
         List<VirtualFile> hits = new ArrayList<VirtualFile>();
         FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
 
@@ -339,15 +356,9 @@ class FindInProjectTask {
           }
         }
 
-        if (resultFiles.isEmpty()) return new Pair<Boolean, Collection<PsiFile>>(true, resultFiles);
+        return resultFiles;
       }
     }
-
-
-    // $ is used to separate words when indexing plain-text files but not when indexing
-    // Java identifiers, so we can't consistently break a string containing $ characters into words
-
-    fast |= myFindModel.isWholeWordsOnly() && stringToFind.indexOf('$') < 0;
 
     PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(myProject);
     helper.processFilesWithText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, new Processor<VirtualFile>() {
@@ -360,33 +371,15 @@ class FindInProjectTask {
       }
     });
 
-    if (stringToFind.isEmpty()) {
-      myFileIndex.iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile file) {
-          if (!file.isDirectory() && myFileMask.value(file)) {
-            ContainerUtil.addIfNotNull(resultFiles, findFile(file));
-          }
-          return true;
-        }
-      });
-    }
-    else {
-      // in case our word splitting is incorrect
-      for (PsiFile file : CacheManager.SERVICE.getInstance(myProject)
-        .getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, myFindModel.isCaseSensitive())) {
-        if (myFileMask.value(file.getVirtualFile())) {
-          resultFiles.add(file);
-        }
+    // in case our word splitting is incorrect
+    for (PsiFile file : CacheManager.SERVICE.getInstance(myProject)
+      .getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, myFindModel.isCaseSensitive())) {
+      if (myFileMask.value(file.getVirtualFile())) {
+        resultFiles.add(file);
       }
     }
 
-    return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
-  }
-
-  private static boolean canOptimizeForFastWordSearch(@NotNull final FindModel findModel) {
-    return !findModel.isRegularExpressions()
-           && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope);
+    return resultFiles;
   }
 
   private PsiFile findFile(@NotNull final VirtualFile virtualFile) {
