@@ -96,7 +96,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     fireRootsChanged(filesToSync, isPlainText);
   }
 
-  private static void fireRootsChanged(final Collection<VirtualFile> files, final boolean isAdded) {
+  private void fireRootsChanged(final Collection<VirtualFile> files, final boolean isAdded) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -105,6 +105,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
           ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
           for (VirtualFile file : files) {
             if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
+              ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
               if (isAdded) {
                 projectPlainTextFileTypeManager.addFile(file);
               }
@@ -116,6 +117,13 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
         }
       }
     });
+  }
+
+  private void ensureProjectFileSetAdded(@NotNull Project project,
+                                         @NotNull ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager) {
+    if (!myPlainTextFileSets.containsKey(project)) {
+      myPlainTextFileSets.put(project, projectPlainTextFileTypeManager.getFiles());
+    }
   }
 
   private static class EnforcedPlainTextFileTypeManagerHolder {
