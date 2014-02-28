@@ -4,7 +4,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
@@ -140,11 +143,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         });
       }
     });
-    
-    
   }
 
-  
 
   public void testDebugCompletion() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test4.py") {
@@ -334,6 +334,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                            boolean notifyOnTerminate,
                                            boolean notifyAlways,
                                            boolean notifyOnFirst) {
+    XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+
     PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("exceptions.ZeroDivisionError");
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyAlways(notifyAlways);
@@ -428,7 +430,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
           flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
-        } else {
+        }
+        else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
         }
       }
