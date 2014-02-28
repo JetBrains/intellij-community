@@ -1,11 +1,10 @@
 package com.intellij.remotesdk;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remotesdk2.RemoteSdkConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -13,11 +12,6 @@ import java.util.List;
  */
 public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implements RemoteSdkCredentials {
   public static final String SSH_PREFIX = "ssh://";
-  private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
-  private static final String HELPERS_PATH = "HELPERS_PATH";
-  private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
-  private static final String REMOTE_PATH = "REMOTE_PATH";
-  private static final String INITIALIZED = "INITIALIZED";
 
   @NotNull
   private final RemoteSdkPropertiesHolder myRemoteSdkProperties;
@@ -143,64 +137,26 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
-      return path.startsWith(SSH_PREFIX);
+      return path.startsWith(SSH_PREFIX) || path.startsWith(RemoteSdkConnection.VAGRANT_PREFIX);
     }
     else {
       return false;
     }
   }
 
-  public void loadRemoteSdkCredentials(Element element) {
-    setHost(element.getAttributeValue(HOST));
-    setPort(StringUtil.parseInt(element.getAttributeValue(PORT), 22));
-    setAnonymous(StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false));
-    setSerializedUserName(element.getAttributeValue(USERNAME));
-    setSerializedPassword(element.getAttributeValue(PASSWORD));
-    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
-    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
-    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
 
-    setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
-    setHelpersPath(StringUtil.nullize(element.getAttributeValue(HELPERS_PATH)));
+  @Override
+  public void load(Element element) {
+    super.load(element);
 
-    setRemoteRoots(loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
-
-    setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+    myRemoteSdkProperties.load(element);
   }
 
-  protected static List<String> loadStringsList(Element element, String rootName, String attrName) {
-    final List<String> paths = new LinkedList<String>();
-    if (element != null) {
-      @NotNull final List list = element.getChildren(rootName);
-      for (Object o : list) {
-        paths.add(((Element)o).getAttribute(attrName).getValue());
-      }
-    }
-    return paths;
-  }
+  @Override
+  public void save(Element rootElement) {
+    super.save(rootElement);
 
-  public void saveRemoteSdkData(Element rootElement) {
-    rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
-    rootElement.setAttribute(PORT, Integer.toString(getPort()));
-    rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
-    rootElement.setAttribute(USERNAME, getSerializedUserName());
-    rootElement.setAttribute(PASSWORD, getSerializedPassword());
-    rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
-    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
-    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
-    rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
-
-    rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
-    rootElement.setAttribute(HELPERS_PATH, StringUtil.notNullize(getHelpersPath()));
-
-    rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
-
-    for (String remoteRoot : getRemoteRoots()) {
-      final Element child = new Element(REMOTE_ROOTS);
-      child.setAttribute(REMOTE_PATH, remoteRoot);
-      rootElement.addContent(child);
-    }
+    myRemoteSdkProperties.save(rootElement);
   }
 
 
@@ -273,8 +229,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
            '}';
   }
 
-  public void copyTo(RemoteSdkCredentialsHolder to) {
-    super.copyTo(to);
+  public void copyRemoteSdkCredentialsTo(RemoteSdkCredentialsHolder to) {
+    super.copyRemoteCredentialsTo(to);
     myRemoteSdkProperties.copyTo(to.getRemoteSdkProperties());
   }
 }

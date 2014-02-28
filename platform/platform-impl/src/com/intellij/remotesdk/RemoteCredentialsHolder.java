@@ -18,6 +18,7 @@ package com.intellij.remotesdk;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -204,7 +205,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  public void copyTo(RemoteSdkCredentials to) {
+  public void copyRemoteCredentialsTo(RemoteSdkCredentials to) {
     to.setHost(getHost());
     to.setPort(getPort());
     to.setAnonymous(isAnonymous());
@@ -215,5 +216,29 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setKnownHostsFile(getKnownHostsFile());
     to.setStorePassword(isStorePassword());
     to.setStorePassphrase(isStorePassphrase());
+  }
+
+  public void load(Element element) {
+    setHost(element.getAttributeValue(HOST));
+    setPort(StringUtil.parseInt(element.getAttributeValue(PORT), 22));
+    setAnonymous(StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false));
+    setSerializedUserName(element.getAttributeValue(USERNAME));
+    setSerializedPassword(element.getAttributeValue(PASSWORD));
+    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
+    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
+    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
+    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
+  }
+
+  public void save(Element rootElement) {
+    rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
+    rootElement.setAttribute(PORT, Integer.toString(getPort()));
+    rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
+    rootElement.setAttribute(USERNAME, getSerializedUserName());
+    rootElement.setAttribute(PASSWORD, getSerializedPassword());
+    rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
+    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
+    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
+    rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
   }
 }

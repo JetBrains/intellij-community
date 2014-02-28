@@ -15,12 +15,15 @@
  */
 package com.intellij.remotesdk2;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * @author traff
 */
 public class VagrantBasedCredentialsHolder {
+  private static final String VAGRANT_FOLDER = "VAGRANT_FOLDER";
   private String myVagrantFolder;
 
   public VagrantBasedCredentialsHolder() {
@@ -37,5 +40,13 @@ public class VagrantBasedCredentialsHolder {
   @NotNull
   public String getVagrantFolder() {
     return myVagrantFolder;
+  }
+
+  public void load(Element element) {
+    setVagrantFolder(element.getAttributeValue(VAGRANT_FOLDER));
+  }
+
+  public void save(Element element) {
+    element.setAttribute(VAGRANT_FOLDER, getVagrantFolder());
   }
 }
