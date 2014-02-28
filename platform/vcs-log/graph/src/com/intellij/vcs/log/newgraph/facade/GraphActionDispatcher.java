@@ -66,6 +66,9 @@ public class GraphActionDispatcher {
   @Nullable
   private GraphAnswer clickToGraph(@NotNull ClickGraphAction action) {
     int visibleRowIndex = action.getRow();
+    if (visibleRowIndex >= myGraphData.getMutableGraph().getCountVisibleNodes())
+      return null;
+
     Point clickPoint = action.getRelativePoint();
     if (clickPoint == null)
       return clickToRow(visibleRowIndex);
@@ -92,6 +95,9 @@ public class GraphActionDispatcher {
 
   @Nullable
   private GraphAnswer mouseOverAction(@NotNull MouseOverAction action) {
+    if (action.getRow() >= myGraphData.getMutableGraph().getCountVisibleNodes())
+      return null;
+
     Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(action.getRow(), action.getRelativePoint());
     if (arrowOrGraphElement.first != null) {
       myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
