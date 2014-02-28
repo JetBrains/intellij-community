@@ -129,9 +129,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     breakpoint.setCountFilterEnabled(COUNT_FILTER_ENABLED);
     breakpoint.setCountFilter(COUNT_FILTER);
 
-    if (CONDITION_ENABLED) {
-      breakpoint.setCondition(myCondition != null ? myCondition.getText() : null);
-    }
+    breakpoint.setCondition(CONDITION_ENABLED && myCondition != null && !myCondition.getText().isEmpty() ? myCondition.getText() : null);
 
     breakpoint.setClassFiltersEnabled(CLASS_FILTERS_ENABLED);
     breakpoint.setClassFilters(getClassFilters());

@@ -597,7 +597,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void setLogMessage(TextWithImports logMessage) {
-    myXBreakpoint.setLogExpression(logMessage.getText());
+    if (!logMessage.getText().isEmpty()) {
+      myXBreakpoint.setLogExpression(logMessage.getText());
+    }
+    else {
+      myXBreakpoint.setLogExpression(null);
+    }
   }
 
   protected boolean isConditionEnabled() {
