@@ -35,7 +35,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.ClassProcessingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -197,14 +196,14 @@ public class FormsInstrumenter extends FormsBuilder {
       addBinding(compiled.getSourceFile(), formFile, instrumented);
 
       try {
-        context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getName() + "]"));
+        context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getPresentableShortName() + "]"));
 
         final BinaryContent originalContent = compiled.getContent();
         final ClassReader classReader =
           new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
-        final int version = BaseInstrumentingBuilder.getClassFileVersion(classReader);
-        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(BaseInstrumentingBuilder.getAsmClassWriterFlags(version), finder);
+        final int version = ClassProcessingBuilder.getClassFileVersion(classReader);
+        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(ClassProcessingBuilder.getAsmClassWriterFlags(version), finder);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
