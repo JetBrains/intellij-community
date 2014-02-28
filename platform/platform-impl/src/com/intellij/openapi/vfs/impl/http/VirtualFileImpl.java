@@ -102,6 +102,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     return myFileSystem;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myPath;

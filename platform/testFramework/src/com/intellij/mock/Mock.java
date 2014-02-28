@@ -453,9 +453,10 @@ public class Mock {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public String getPath() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override
