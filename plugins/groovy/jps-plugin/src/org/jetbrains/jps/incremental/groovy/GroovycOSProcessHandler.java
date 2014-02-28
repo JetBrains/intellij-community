@@ -219,10 +219,12 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     if (unparsedBuffer.length() != 0) {
       String msg = unparsedBuffer.toString();
       if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
-        msg = "Cannot compile Groovy files: no Groovy library is defined for module '" + moduleName + "'";
+        messages.add(new CompilerMessage("", BuildMessage.Kind.ERROR,
+                                         "Cannot compile Groovy files: no Groovy library is defined for module '" + moduleName + "'"));
+      } else {
+        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, msg));
       }
 
-      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, msg));
     }
 
     final int exitValue = getProcess().exitValue();
