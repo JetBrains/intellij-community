@@ -68,14 +68,16 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
     myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager, startupManager);
-    if (!project.isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      HttpVirtualFileListener httpVirtualFileListener = new HttpVirtualFileListener() {
-        @Override
-        public void fileDownloaded(@NotNull final VirtualFile file) {
-          updateBreakpointInFile(file);
-        }
-      };
-      HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
+    if (!project.isDefault()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        HttpVirtualFileListener httpVirtualFileListener = new HttpVirtualFileListener() {
+          @Override
+          public void fileDownloaded(@NotNull final VirtualFile file) {
+            updateBreakpointInFile(file);
+          }
+        };
+        HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
+      }
       for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
         addDefaultBreakpoint(type);
       }

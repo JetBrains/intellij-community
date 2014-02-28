@@ -15,21 +15,21 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
-import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,10 +39,12 @@ import java.util.List;
  */
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
 
+  @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
     return super.isEnabled(session, dataContext) && session.getDebugProcess().getSmartStepIntoHandler() != null;
   }
 
+  @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
     final XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
     final XSourcePosition position = session.getCurrentPosition();
