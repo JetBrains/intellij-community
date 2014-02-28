@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -140,7 +143,7 @@ public final class IterationState {
     myCaretRowStart = caretModel.getVisualLineStart();
     myCaretRowEnd = caretModel.getVisualLineEnd();
 
-    MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
+    MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd);
 
     final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
