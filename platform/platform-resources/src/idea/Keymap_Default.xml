@@ -115,7 +115,7 @@
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="alt J"/>
   </action>
-  <action id="UnselectLastOccurrence">
+  <action id="UnselectPreviousOccurrence">
     <keyboard-shortcut first-keystroke="alt shift J"/>
   </action>
   <action id="GotoDeclaration">

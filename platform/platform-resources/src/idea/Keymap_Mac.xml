@@ -353,7 +353,7 @@
     <action id="SelectNextOccurrence">
       <keyboard-shortcut first-keystroke="control G"/>
     </action>
-    <action id="UnselectLastOccurrence">
+    <action id="UnselectPreviousOccurrence">
       <keyboard-shortcut first-keystroke="control shift G"/>
     </action>
 

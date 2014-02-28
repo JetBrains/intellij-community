@@ -23,11 +23,11 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
-import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -145,7 +145,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
 
     private static boolean isRepeatedActionInvocation() {
       String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-      return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_LAST_OCCURENCE.equals(lastActionId);
+      return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE.equals(lastActionId);
     }
   }
 }

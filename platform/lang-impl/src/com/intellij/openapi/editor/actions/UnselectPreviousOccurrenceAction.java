@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class UnselectLastOccurrenceAction extends EditorAction {
-  protected UnselectLastOccurrenceAction() {
+public class UnselectPreviousOccurrenceAction extends EditorAction {
+  protected UnselectPreviousOccurrenceAction() {
     super(new Handler());
   }
 

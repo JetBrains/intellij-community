@@ -124,7 +124,7 @@
     <action id="SelectNextOccurrence">
       <keyboard-shortcut first-keystroke="alt Y"/>
     </action>
-    <action id="UnselectLastOccurrence">
+    <action id="UnselectPreviousOccurrence">
       <keyboard-shortcut first-keystroke="alt shift Y"/>
     </action>
     <action id="FindUsages">
