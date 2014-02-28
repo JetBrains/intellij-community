@@ -2,7 +2,19 @@
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
   <vendor>JetBrains</vendor>
-  <description><![CDATA[User configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)]]></description>
+  <description>
+      <![CDATA[
+      Enables user configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)
+        The following features are available:
+        <ul>
+        <li>Language injection</li>
+        <li>Pattern validation</li>
+        <li>Regular expression support</li>
+        <li>Language Injections page in the Settings/Preferences dialog.</li>
+        <li>Ability to edit injected code in the special scratch-pad editor.</l>
+        </ul>
+      ]]>
+   </description>
   <version>8.0</version>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
