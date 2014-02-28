@@ -389,15 +389,6 @@ public class BreakpointManager {
     return null;
   }
 
-  private XBreakpoint findXBreakpoint(Breakpoint breakpoint) {
-    for (Map.Entry<XBreakpoint, Breakpoint> entry : myBreakpoints.entrySet()) {
-      if (entry.getValue().equals(breakpoint)) {
-        return entry.getKey();
-      }
-    }
-    return null;
-  }
-
   public Breakpoint findBreakpoint(XBreakpoint xBreakpoint) {
     return myBreakpoints.get(xBreakpoint);
   }
@@ -994,7 +985,7 @@ public class BreakpointManager {
   // copied from XDebugSessionImpl processDependencies
   public void processBreakpointHit(@NotNull final Breakpoint breakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
-    XBreakpoint xBreakpoint = findXBreakpoint(breakpoint);
+    XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
     if (!dependentBreakpointManager.isMasterOrSlave(xBreakpoint)) {
       return;
     }
@@ -1038,8 +1029,7 @@ public class BreakpointManager {
   @Nullable
   public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
-    XBreakpoint xBreakpoint = findXBreakpoint(dependentBreakpoint);
-    return myBreakpoints.get(dependentBreakpointManager.getMasterBreakpoint(xBreakpoint));
+    return myBreakpoints.get(dependentBreakpointManager.getMasterBreakpoint(dependentBreakpoint.myXBreakpoint));
   }
 
   @Nullable
