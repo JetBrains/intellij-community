@@ -111,6 +111,7 @@ class Outer {
     int @TA [] a @TA [] <error descr="Annotations are not allowed here">@TA</error> = (p != null ? p : mixedArrays);
     return a;
   }
+  void <error descr="Annotations are not allowed here">@TA</error> misplaced() { }
 
   @TA Outer() { }
 
