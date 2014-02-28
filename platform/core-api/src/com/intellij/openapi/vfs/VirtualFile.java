@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    */
   @SuppressWarnings("JavadocReference")
+  @NotNull
   public abstract String getPath();
 
   /**
@@ -726,5 +727,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public static boolean isValidName(@NotNull String name) {
     return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+  }
+
+  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
+  public String getDetectedLineSeparator() {
+    return getUserData(DETECTED_LINE_SEPARATOR_KEY);
+  }
+  public void setDetectedLineSeparator(String separator) {
+    putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
 }

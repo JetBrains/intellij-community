@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,14 +52,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
+  private static final int IS_WRITABLE_FLAG = 0x01000000;
+  private static final int IS_HIDDEN_FLAG =   0x02000000;
+  private static final int INDEXED_FLAG =     0x04000000;
+          static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
   private static final int DIRTY_FLAG =       0x10000000;
   private static final int IS_SYMLINK_FLAG =  0x20000000;
   private static final int HAS_SYMLINK_FLAG = 0x40000000;
   private static final int IS_SPECIAL_FLAG =  0x80000000;
-  private static final int IS_WRITABLE_FLAG = 0x01000000;
-  private static final int IS_HIDDEN_FLAG =   0x02000000;
-  private static final int INDEXED_FLAG =     0x04000000;
-          static final int CHILDREN_CACHED =  0x08000000;
+          static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense only for non-directory file
 
   private static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
