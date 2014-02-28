@@ -713,6 +713,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     assertInsideCommand();
 
+    getLineSet(); // initialize line set to track changed lines
+
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
@@ -744,12 +746,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
-      synchronized (myLineSetLock) {
-        LineSet lineSet = myLineSet;
-        if (lineSet != null) {
-          lineSet.changedUpdate(event);
-        }
-      }
+      getLineSet().changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
