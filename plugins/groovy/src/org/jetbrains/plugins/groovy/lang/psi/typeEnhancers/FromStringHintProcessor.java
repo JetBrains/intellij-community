@@ -40,9 +40,16 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull final PsiSubstitutor substitutor,
                                                  @Nullable PsiAnnotationMemberValue options) {
-    if (!(options instanceof PsiArrayInitializerMemberValue)) return Collections.emptyList();
-
-    PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)options).getInitializers();
+    PsiAnnotationMemberValue[] initializers;
+    if (options instanceof PsiLiteral) {
+      initializers = new PsiAnnotationMemberValue[] {options};
+    }
+    else if ((options instanceof PsiArrayInitializerMemberValue)) {
+      initializers = ((PsiArrayInitializerMemberValue)options).getInitializers();
+    }
+    else {
+      return Collections.emptyList();
+    }
 
     return Collections.singletonList(ContainerUtil.map(initializers, new Function<PsiAnnotationMemberValue, PsiType>() {
       @Override
