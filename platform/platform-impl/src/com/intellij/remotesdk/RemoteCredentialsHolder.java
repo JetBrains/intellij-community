@@ -241,4 +241,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
   }
+
+  public void copyFrom(RemoteCredentials from) {
+    setHost(from.getHost());
+    setPort(from.getPort());
+    setAnonymous(from.isAnonymous());
+    setUserName(from.getUserName());
+    setPassword(from.getPassword());
+    setUseKeyPair(from.isUseKeyPair());
+    setPrivateKeyFile(from.getPrivateKeyFile());
+    setKnownHostsFile(from.getKnownHostsFile());
+    setStorePassword(from.isStorePassword());
+    setStorePassphrase(from.isStorePassphrase());
+  }
 }
