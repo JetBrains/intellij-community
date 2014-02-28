@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssueWrapper;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.ProjectsWrapper;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 
 /**
  * @author Mikhail Golubev
@@ -63,6 +62,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
    */
   public RedmineRepository(RedmineRepositoryType type) {
     super(type);
+    setUseHttpAuthentication(true);
   }
 
 
@@ -110,10 +110,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
-      .addParameter("status_is", withClosed ? "*" : "open");
-    if (StringUtil.isNotEmpty(query)) {
-      builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
-    }
+      .addParameter("status_id", withClosed ? "*" : "open")
+      .addParameter("assigned_to_id", "me");
+
+    // Legacy API, can't find proper documentation
+    //if (StringUtil.isNotEmpty(query)) {
+    //  builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
+    //}
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
       builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
@@ -123,7 +126,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     }
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(builder.toString());
-    return client.execute(method, new GsonSingleObjectDeserializer<RedmineResponseWrapper.IssuesWrapper>(GSON, RedmineResponseWrapper.IssuesWrapper.class)).getIssues();
+    return client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class)).getIssues();
   }
 
   public List<RedmineProject> fetchProjects() throws Exception {
