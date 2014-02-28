@@ -53,7 +53,16 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
     myGraphImage = getGraphImage(row);
     myRefs = cell.getRefsToThisCommit();
 
-    int graphPadding = myGraphImage != null ? myGraphImage.getWidth() : 0;
+    int graphPadding;
+    if (myGraphImage != null) {
+      graphPadding = myGraphImage.getWidth();
+      if (graphPadding < 2) {  // TODO temporary diagnostics: why does graph sometimes disappear
+        LOG.error("Too small image width: " + graphPadding);
+      }
+    }
+    else {
+      graphPadding = 0;
+    }
     int textPadding = graphPadding + calcRefsPadding(myRefs);
 
     append("");
