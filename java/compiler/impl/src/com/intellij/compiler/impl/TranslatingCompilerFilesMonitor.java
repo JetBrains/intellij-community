@@ -197,6 +197,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
       --myWatchedProjectsCount;
+      if (ourDebugMode) {
+        System.out.println("After suspend for project:"+projectId + "," + myWatchedProjectsCount);
+      }
       // cleanup internal structures to free memory
       mySourcesToRecompile.remove(projectId);
       myOutputsToDelete.remove(projectId);
@@ -217,8 +220,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void watchProject(Project project) {
     synchronized (myDataLock) {
-      mySuspendedProjects.remove(getProjectId(project));
+      int projectId = getProjectId(project);
+      mySuspendedProjects.remove(projectId);
       ++myWatchedProjectsCount;
+      if (ourDebugMode) {
+        System.out.println("After watch for project:"+projectId + "," + myWatchedProjectsCount);
+      }
     }
   }
 
