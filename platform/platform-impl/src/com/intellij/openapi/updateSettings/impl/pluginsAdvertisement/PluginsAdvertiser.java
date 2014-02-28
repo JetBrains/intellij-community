@@ -251,6 +251,7 @@ public class PluginsAdvertiser implements StartupActivity {
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);
+                if (project.isDisposed()) return;
                 EditorNotifications.getInstance(project).updateAllNotifications();
               }
               final Map<String, Plugin> ids = new HashMap<String, Plugin>();
