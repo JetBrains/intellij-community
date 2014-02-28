@@ -426,7 +426,8 @@ public class VcsLogDataHolder implements Disposable {
       RecentCommitsInfo info = entry.getValue();
 
       // in this case new commits won't be attached to the log, but will substitute existing ones.
-      logsToBuild.put(root, info.firstBlockCommits);
+      List<TimedVcsCommit> firstBlockCommits = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(info.firstBlockCommits);
+      logsToBuild.put(root, firstBlockCommits);
       refsByRoot.put(root, info.newRefs);
     }
 
