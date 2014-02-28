@@ -305,7 +305,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     Set<XBreakpointType<?, ?>> breakpointTypes = new THashSet<XBreakpointType<?, ?>>();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
-      breakpointTypes.add(XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass()));
+      breakpointTypes.add(getBreakpointTypeClass(handler));
     }
     for (XBreakpoint<?> slaveBreakpoint : slaveBreakpoints) {
       if (breakpointTypes.contains(slaveBreakpoint.getType())) {
@@ -329,6 +329,11 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     }
     return myValueMarkers;
+  }
+
+  @SuppressWarnings("unchecked") //need to compile under 1.8, please do not remove before checking
+  private static XBreakpointType getBreakpointTypeClass(final XBreakpointHandler handler) {
+    return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass());
   }
 
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler,
