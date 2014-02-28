@@ -68,11 +68,6 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @Override
   public String getShortText(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
-    return getDisplayText(breakpoint);
-  }
-
-  @Override
-  public String getDisplayText(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return getText(breakpoint);
   }
 

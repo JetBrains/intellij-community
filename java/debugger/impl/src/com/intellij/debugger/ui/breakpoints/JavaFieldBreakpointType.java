@@ -70,11 +70,10 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @Override
   public String getShortText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
-    return getDisplayText(breakpoint);
+    return getText(breakpoint);
   }
 
-  @Override
-  public String getDisplayText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+  public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     //if(!isValid()) {
     //  return DebuggerBundle.message("status.breakpoint.invalid");
     //}
