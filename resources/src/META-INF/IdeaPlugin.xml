@@ -86,9 +86,6 @@
     <extensionPoint name="debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
 
-    <extensionPoint name="debugger.breakpointFactory"
-                    interface="com.intellij.debugger.ui.breakpoints.BreakpointFactory"/>
-
     <extensionPoint name="debugger.jvmDebugProvider"
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
 
@@ -1378,11 +1375,11 @@
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.LineBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
+    <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaFieldBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
@@ -1460,8 +1457,6 @@
                      implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
-
-    <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
 
     <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
     <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>

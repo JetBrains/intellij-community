@@ -437,7 +437,7 @@ public class PositionHighlighter {
         public void actionPerformed(AnActionEvent e) {
           if (myEventsOutOfLine.size() == 1) {
             Breakpoint breakpoint = myEventsOutOfLine.get(0).getFirst();
-            breakpoint.ENABLED = !breakpoint.ENABLED;
+            breakpoint.setEnabled(!breakpoint.isEnabled());
             DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().fireBreakpointChanged(breakpoint);
           }
         }

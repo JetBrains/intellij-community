@@ -22,9 +22,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ReverseForLoopDirectionIntention extends Intention {

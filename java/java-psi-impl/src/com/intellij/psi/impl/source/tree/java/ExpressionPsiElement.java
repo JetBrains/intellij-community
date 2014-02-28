@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ public class ExpressionPsiElement extends CompositePsiElement {
 
   @Override
   public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
-    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType()) &&
+        ElementType.EXPRESSION_BIT_SET.contains(newElement.getElementType())) {
       boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
       if (needParenth) {
         newElement = SourceUtil.addParenthToReplacedChild(JavaElementType.PARENTH_EXPRESSION, newElement, getManager());

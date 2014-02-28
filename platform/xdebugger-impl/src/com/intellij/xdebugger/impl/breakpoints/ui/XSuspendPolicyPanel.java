@@ -15,11 +15,11 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,7 +72,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
     mySuspendPolicyGroup.add(mySuspendAll);
     mySuspendPolicyGroup.add(mySuspendThread);
 
-    updateSuspendPolicyFont(createSettingsKey());
+    updateSuspendPolicyFont();
 
     ItemListener suspendPolicyChangeListener = new ItemListener() {
       @Override
@@ -89,9 +89,8 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
       @Override
       public void actionPerformed(ActionEvent e) {
         SuspendPolicy suspendPolicy = getSelectedSuspendPolicy();
-        String settingsKey = createSettingsKey();
-        PropertiesComponent.getInstance().setValue(settingsKey, suspendPolicy.name());
-        updateSuspendPolicyFont(settingsKey);
+        ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).setSuspendPolicy(suspendPolicy);
+        updateSuspendPolicyFont();
         if (SuspendPolicy.THREAD == suspendPolicy) {
           mySuspendThread.requestFocus();
         }
@@ -104,20 +103,16 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   }
 
   private void updateMakeDefaultEnableState() {
-    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().name().equalsIgnoreCase(PropertiesComponent.getInstance().getValue(createSettingsKey(), SuspendPolicy.ALL.name())));
+    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().equals(((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy()));
   }
 
-  private String createSettingsKey() {
-    return "debugger.suspend.policy-" + myBreakpointType.getId();
-  }
-
-  private void updateSuspendPolicyFont(String settingsKey) {
-    String defaultPolicy = PropertiesComponent.getInstance().getValue(settingsKey, SuspendPolicy.ALL.name());
+  private void updateSuspendPolicyFont() {
+    SuspendPolicy defaultPolicy = ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
     Font font = mySuspendAll.getFont().deriveFont(Font.PLAIN);
     Font boldFont = font.deriveFont(Font.BOLD);
 
-    mySuspendAll.setFont(SuspendPolicy.ALL.name().equalsIgnoreCase(defaultPolicy) ? boldFont : font);
-    mySuspendThread.setFont(SuspendPolicy.THREAD.name().equalsIgnoreCase(defaultPolicy) ? boldFont : font);
+    mySuspendAll.setFont(SuspendPolicy.ALL.equals(defaultPolicy) ? boldFont : font);
+    mySuspendThread.setFont(SuspendPolicy.THREAD.equals(defaultPolicy) ? boldFont : font);
   }
 
   private void changeEnableState(boolean selected) {

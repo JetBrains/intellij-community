@@ -280,7 +280,9 @@ public class PluginsAdvertiser implements StartupActivity {
 
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                 final PluginId pluginId = loadedPlugin.getPluginId();
-                if (ids.containsKey(pluginId.getIdString()) && !disabledPlugins.contains(pluginId.getIdString())) {
+                if (ids.containsKey(pluginId.getIdString()) && 
+                    !disabledPlugins.contains(pluginId.getIdString()) && 
+                    !PluginManagerCore.isBrokenPlugin(loadedPlugin)) {
                   myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
                 }
               }

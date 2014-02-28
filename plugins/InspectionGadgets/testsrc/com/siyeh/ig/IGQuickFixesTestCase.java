@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,19 +39,33 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected void setUp() throws Exception {
     super.setUp();
 
-    final BaseInspection inspection = getInspection();
-    if (inspection != null) {
-      myFixture.enableInspections(inspection);
+    for (String environmentClass : getEnvironmentClasses()) {
+      myFixture.addClass(environmentClass);
     }
+    myFixture.enableInspections(getInspections());
   }
 
   protected BaseInspection getInspection() {
     return null;
   }
 
+  protected BaseInspection[] getInspections() {
+    final BaseInspection inspection = getInspection();
+    if (inspection != null) {
+      return new BaseInspection[] {inspection};
+    }
+    return new BaseInspection[0];
+  }
+
+  @NonNls
+  @Language("JAVA")
+  protected String[] getEnvironmentClasses() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
   @Override
   protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_1_7);
+    builder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   @Override
@@ -79,16 +94,16 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doExpressionTest(
     String hint,
-    @Language(value = "JAVA", prefix = "class X {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class X {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
-    doTest(hint, "class X {{System.out.print(" + before + ");}}", "class X {{System.out.print(" + after + ");}}");
+    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
+    doTest(hint, "class $X$ {{System.out.print(" + before + ");}}", "class $X$ {{System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
     String hint,
-    @Language(value = "JAVA", prefix = "class X {", suffix = "}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class X {", suffix = "}") @NotNull @NonNls String after) {
-    doTest(hint, "class X {" + before + "}", "class X {" + after + "}");
+    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
+    doTest(hint, "class $X$ {" + before + "}", "class $X$ {\n    " + after + "\n}");
   }
 
   protected void doTest(String hint, @Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after) {

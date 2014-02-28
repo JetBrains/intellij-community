@@ -1,7 +1,18 @@
 <idea-plugin>
   <name>Git Integration</name>
   <id>Git4Idea</id>
-  <description>Provides integration with Git version control system</description>
+  <description>
+      <![CDATA[
+      Allows working with <a href="http://git-scm.com/">Git version control system</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Git repositories, when Git is not enabled.</li>
+        <li>When Git is enabled, the Git node appears on the VCS menu, and on the context menu of the editor.</li>
+        </ul>
+         <p>Numerous plugins depend on the Git Integration plugin.</p>
+      ]]>
+   </description>
   <version>8.1</version>
   <category>VCS Integration</category>
   <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>

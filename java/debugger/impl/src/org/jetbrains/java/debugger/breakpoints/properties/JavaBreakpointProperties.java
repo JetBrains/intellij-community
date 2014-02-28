@@ -13,27 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.debugger.breakpoints;
+package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author egor
  */
-public class JavaBreakpointProperties extends XBreakpointProperties<JavaBreakpointProperties> {
+public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extends XBreakpointProperties<T> {
+  @OptionTag("count-filter-enabled")
   public boolean COUNT_FILTER_ENABLED     = false;
+  @OptionTag("count-filter")
   public int COUNT_FILTER = 0;
 
+  @OptionTag("class-filters-enabled")
   public boolean CLASS_FILTERS_ENABLED    = false;
   private ClassFilter[] myClassFilters;
   private ClassFilter[] myClassExclusionFilters;
 
+  @OptionTag("instance-filters-enabled")
   public boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
+  @Tag("instance-filters")
+  @AbstractCollection(surroundWithTag = false)
   public InstanceFilter[] getInstanceFilters() {
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
@@ -42,13 +51,15 @@ public class JavaBreakpointProperties extends XBreakpointProperties<JavaBreakpoi
     myInstanceFilters = instanceFilters;
   }
 
-  protected void addInstanceFilter(long l) {
+  public void addInstanceFilter(long l) {
     final InstanceFilter[] filters = new InstanceFilter[myInstanceFilters.length + 1];
     System.arraycopy(myInstanceFilters, 0, filters, 0, myInstanceFilters.length);
     filters[myInstanceFilters.length] = InstanceFilter.create(String.valueOf(l));
     myInstanceFilters = filters;
   }
 
+  @Tag("class-filters")
+  @AbstractCollection(surroundWithTag = false)
   public final ClassFilter[] getClassFilters() {
     return myClassFilters != null ? myClassFilters : ClassFilter.EMPTY_ARRAY;
   }
@@ -57,6 +68,8 @@ public class JavaBreakpointProperties extends XBreakpointProperties<JavaBreakpoi
     myClassFilters = classFilters;
   }
 
+  @Tag("class-exclusion-filters")
+  @AbstractCollection(surroundWithTag = false)
   public ClassFilter[] getClassExclusionFilters() {
     return myClassExclusionFilters != null ? myClassExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
@@ -67,20 +80,20 @@ public class JavaBreakpointProperties extends XBreakpointProperties<JavaBreakpoi
 
   @Nullable
   @Override
-  public JavaBreakpointProperties getState() {
-    return this;
+  public T getState() {
+    return (T)this;
   }
 
   @Override
-  public void loadState(JavaBreakpointProperties state) {
+  public void loadState(T state) {
     COUNT_FILTER_ENABLED = state.COUNT_FILTER_ENABLED;
     COUNT_FILTER = state.COUNT_FILTER;
 
     CLASS_FILTERS_ENABLED = state.CLASS_FILTERS_ENABLED;
-    myClassFilters = state.myClassFilters;
-    myClassExclusionFilters = state.myClassExclusionFilters;
+    myClassFilters = state.getClassFilters();
+    myClassExclusionFilters = state.getClassExclusionFilters();
 
     INSTANCE_FILTERS_ENABLED = state.INSTANCE_FILTERS_ENABLED;
-    myInstanceFilters = state.myInstanceFilters;
+    myInstanceFilters = state.getInstanceFilters();
   }
 }

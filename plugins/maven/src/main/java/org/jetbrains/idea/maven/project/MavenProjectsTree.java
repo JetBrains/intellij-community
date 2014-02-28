@@ -1206,7 +1206,7 @@ public class MavenProjectsTree {
                       @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(getWorkspaceMap(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
 
     try {
       process.checkCanceled();
@@ -1321,7 +1321,7 @@ public class MavenProjectsTree {
                                   @NotNull MavenProgressIndicator process,
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
-    embedder.customizeForResolve(getWorkspaceMap(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process, false);
     embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);

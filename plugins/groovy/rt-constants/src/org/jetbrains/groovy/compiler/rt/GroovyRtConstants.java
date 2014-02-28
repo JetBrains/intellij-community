@@ -36,4 +36,5 @@ public class GroovyRtConstants {
   public static final String PRESENTABLE_MESSAGE = "@#$%@# Presentable:";
   public static final String CLEAR_PRESENTABLE = "$@#$%^ CLEAR_PRESENTABLE";
   public static final String NO_GROOVY = "Cannot compile Groovy files: no Groovy library is defined";
+  public static final String OPTIMIZE = "optimize";
 }

@@ -189,7 +189,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final MessageBusConnection myConnection;
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
-  private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
+  private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<String, SelectInTarget>();
   private ContentManager myContentManager;
   private boolean myFoldersAlwaysOnTop = true;
 

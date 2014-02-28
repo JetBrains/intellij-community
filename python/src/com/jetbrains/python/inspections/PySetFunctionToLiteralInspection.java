@@ -22,9 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.ReplaceFunctionWithSetLiteralQuickFix;
@@ -66,7 +64,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
     public void visitPyCallExpression(final PyCallExpression node) {
       if (!isAvailable(node)) return;
       PyExpression callee = node.getCallee();
-      if (node.isCalleeText(PyNames.SET) && isInBuiltins(callee)) {
+      if (node.isCalleeText(PyNames.SET) && callee != null && PyBuiltinCache.isInBuiltins(callee)) {
         PyExpression[] arguments = node.getArguments();
         if (arguments.length == 1) {
           PyElement[] elements = getSetCallArguments(node);
@@ -90,20 +88,6 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
         }
       }
       return LanguageLevel.forElement(node).supportsSetLiterals();
-    }
-
-    private static boolean isInBuiltins(PyExpression callee) {
-      if (callee instanceof PyQualifiedExpression && (((PyQualifiedExpression)callee).isQualified())) {
-        return false;
-      }
-      PsiReference reference = callee.getReference();
-      if (reference != null) {
-        PsiElement resolved = reference.resolve();
-        if (resolved != null && PyBuiltinCache.getInstance(callee).hasInBuiltins(resolved)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 

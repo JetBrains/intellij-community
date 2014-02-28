@@ -520,17 +520,27 @@ public class PsiTreeUtil {
   @Nullable
   @Contract("null, _, _ -> null")
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
-    if (element == null) return null;
+    return getParentOfType(element, aClass, strict, -1);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, int minStartOffset) {
+    if (element == null) {
+      return null;
+    }
+
     if (strict) {
       element = element.getParent();
     }
 
-    while (element != null) {
+    while (element != null && (minStartOffset == -1 || element.getNode().getStartOffset() >= minStartOffset)) {
       if (aClass.isInstance(element)) {
         //noinspection unchecked
         return (T)element;
       }
-      if (element instanceof PsiFile) return null;
+      if (element instanceof PsiFile) {
+        return null;
+      }
       element = element.getParent();
     }
 

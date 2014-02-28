@@ -57,7 +57,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (! cls.isNewStyleClass()) return; // old-style classes don't know about __new__
       PyFunction init_or_new = cls.findInitOrNew(false); // only local
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
-      if (init_or_new == null || builtins.hasInBuiltins(init_or_new.getContainingClass())) return; // nothing is overridden
+      if (init_or_new == null || builtins.isBuiltin(init_or_new.getContainingClass())) return; // nothing is overridden
       String the_other_name = PyNames.NEW.equals(init_or_new.getName()) ? PyNames.INIT : PyNames.NEW;
       PyFunction the_other = cls.findMethodByName(the_other_name, true);
       if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;

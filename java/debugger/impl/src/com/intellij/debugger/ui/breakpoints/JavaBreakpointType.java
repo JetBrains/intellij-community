@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Class LineBreakpointPropertiesPanel
- * @author Jeka
- */
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
-public class LineBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
-  public LineBreakpointPropertiesPanel(Project project, boolean compact) {
-    super(project, LineBreakpoint.CATEGORY, compact);
-  }
+/**
+ * Base class for all Java breakpoint types
+ * @author egor
+ */
+public interface JavaBreakpointType<P extends JavaBreakpointProperties> {
+  Breakpoint createJavaBreakpoint(Project project, XBreakpoint<P> breakpoint);
 }

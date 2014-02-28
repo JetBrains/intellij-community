@@ -27,15 +27,9 @@ import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -183,7 +177,13 @@ public class PyBuiltinCache {
   @Nullable
   public PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
-      return myBuiltinsFile.getElementNamed(name);
+      final PsiElement element = myBuiltinsFile.getElementNamed(name);
+      if (element != null) {
+        return element;
+      }
+    }
+    if (myExceptionsFile != null) {
+      return myExceptionsFile.getElementNamed(name);
     }
     return null;
   }
@@ -337,7 +337,7 @@ public class PyBuiltinCache {
    * @param target an element to check.
    * @return true iff target is inside the __builtins__.py
    */
-  public boolean hasInBuiltins(@Nullable PsiElement target) {
+  public boolean isBuiltin(@Nullable PsiElement target) {
     if (target == null) return false;
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();
@@ -346,5 +346,23 @@ public class PyBuiltinCache {
     }
     // files are singletons, no need to compare URIs
     return the_file == myBuiltinsFile || the_file == myExceptionsFile;
+  }
+
+  public static boolean isInBuiltins(@NotNull PyExpression expression) {
+    if (expression instanceof PyQualifiedExpression && (((PyQualifiedExpression)expression).isQualified())) {
+      return false;
+    }
+    final String name = expression.getName();
+    PsiReference reference = expression.getReference();
+    if (reference != null && name != null) {
+      final PyBuiltinCache cache = getInstance(expression);
+      if (cache.getByName(name) != null) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved != null && cache.isBuiltin(resolved)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

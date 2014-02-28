@@ -311,26 +311,26 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
           String suspendPolicy = readValue(comment, "suspendPolicy");
           if (suspendPolicy != null) {
-            breakpoint.SUSPEND = !DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy);
-            breakpoint.SUSPEND_POLICY = suspendPolicy;
+            //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
+            breakpoint.setSuspendPolicy(suspendPolicy);
             println("SUSPEND_POLICY = " + suspendPolicy, ProcessOutputTypes.SYSTEM);
           }
           String condition = readValue(comment, "Condition");
           if (condition != null) {
-            breakpoint.CONDITION_ENABLED = true;
-            breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
+            //breakpoint.CONDITION_ENABLED = true;
+            breakpoint.setCondition(/*new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, */condition/*)*/);
             println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
           }
           String passCount = readValue(comment, "Pass count");
           if (passCount != null) {
-            breakpoint.COUNT_FILTER_ENABLED = true;
-            breakpoint.COUNT_FILTER = Integer.parseInt(passCount);
+            breakpoint.setCountFilterEnabled(true);
+            breakpoint.setCountFilter(Integer.parseInt(passCount));
             println("Pass count = " + passCount, ProcessOutputTypes.SYSTEM);
           }
 
           String classFilters = readValue(comment, "Class filters");
           if (classFilters != null) {
-            breakpoint.CLASS_FILTERS_ENABLED = true;
+            breakpoint.setClassFiltersEnabled(true);
             StringTokenizer tokenizer = new StringTokenizer(classFilters, " ,");
             ArrayList<ClassFilter> lst = new ArrayList<ClassFilter>();
 

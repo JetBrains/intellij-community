@@ -1,7 +1,17 @@
 <idea-plugin>
   <id>hg4idea</id>
   <name>hg4idea</name>
-  <description>Provides integration with Mercurial version control system. Supports Mercurial 1.3+.</description>
+  <description>
+      <![CDATA[
+      Allows working with <a href="http://mercurial.selenic.com/">Mercurial version control system</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Mercurial repositories, when Mercurial is not enabled.</li>
+        <li>When Mercurial is enabled, the Mercurial node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+   </description>
   <category>VCS Integration</category>
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>

@@ -153,7 +153,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     if (pos != null) {
       final StepIntoBreakpoint breakpoint = new StepIntoBreakpoint(project, pos, filter);
       breakpoint.init();
-      breakpoint.LOG_ENABLED = false;
+      breakpoint.setLogEnabled(false);
       return breakpoint;
     }
     return null;

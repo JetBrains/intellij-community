@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class ControlFlowUtils {
     }
     else if (statement instanceof PsiExpressionListStatement || statement instanceof PsiEmptyStatement ||
              statement instanceof PsiAssertStatement || statement instanceof PsiDeclarationStatement ||
-             statement instanceof PsiSwitchLabelStatement) {
+             statement instanceof PsiSwitchLabelStatement || statement instanceof PsiForeachStatement) {
       return true;
     }
     else if (statement instanceof PsiExpressionStatement) {
@@ -62,9 +62,6 @@ public class ControlFlowUtils {
     }
     else if (statement instanceof PsiForStatement) {
       return forStatementMayCompleteNormally((PsiForStatement)statement);
-    }
-    else if (statement instanceof PsiForeachStatement) {
-      return foreachStatementMayCompleteNormally((PsiForeachStatement)statement);
     }
     else if (statement instanceof PsiWhileStatement) {
       return whileStatementMayCompleteNormally((PsiWhileStatement)statement);
@@ -128,10 +125,6 @@ public class ControlFlowUtils {
     }
     final Object value = ExpressionUtils.computeConstantExpression(condition);
     return Boolean.TRUE != value;
-  }
-
-  private static boolean foreachStatementMayCompleteNormally(@NotNull PsiForeachStatement loopStatement) {
-    return true;
   }
 
   private static boolean switchStatementMayCompleteNormally(@NotNull PsiSwitchStatement switchStatement) {
@@ -524,7 +517,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class SystemExitFinder extends JavaRecursiveElementVisitor {
+  private static class SystemExitFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found = false;
 
@@ -564,7 +557,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ReturnFinder extends JavaRecursiveElementVisitor {
+  private static class ReturnFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found = false;
 
@@ -587,7 +580,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class BreakFinder extends JavaRecursiveElementVisitor {
+  private static class BreakFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found = false;
     private final PsiStatement m_target;
@@ -637,7 +630,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueFinder extends JavaRecursiveElementVisitor {
+  private static class ContinueFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found = false;
     private final PsiStatement m_target;
@@ -687,7 +680,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class MethodCallFinder extends JavaRecursiveElementVisitor {
+  private static class MethodCallFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final String containingClassName;
     private final PsiType returnType;
@@ -728,7 +721,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueToAncestorFinder extends JavaRecursiveElementVisitor {
+  private static class ContinueToAncestorFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiStatement statement;
     private boolean found = false;

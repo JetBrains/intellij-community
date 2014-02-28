@@ -749,8 +749,8 @@ def layoutCommunityJps(String home, String target) {
     dir("test") {
       jar("jps-build-test.jar") {
         moduleTests("jps-builders")
-        moduleTests("jps-model-impl")
-        moduleTests("jps-model-serialization")
+        moduleTests("jps-model-tests")
+        moduleTests("jps-serialization-tests")
       }
     }
     jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }

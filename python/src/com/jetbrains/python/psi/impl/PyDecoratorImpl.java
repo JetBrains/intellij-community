@@ -65,7 +65,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     if (node != null) {
       PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
       PsiElement target = ref.getReference().resolve();
-      return PyBuiltinCache.getInstance(this).hasInBuiltins(target);
+      return PyBuiltinCache.getInstance(this).isBuiltin(target);
     }
     return false;
   }

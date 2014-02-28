@@ -499,6 +499,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                         final PsiClass pClass = pResult.getElement();
                         final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil.getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
                         if (receiverSubstitutor != null) {
+                          if (!method.hasTypeParameters() && signature.getParameterTypes().length == 1) return receiverSubstitutor;
                           psiSubstitutor = receiverSubstitutor;
                         }
                       }
@@ -638,19 +639,25 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
         }
 
+        if (myQualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
+          //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
+          CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstCandidates, secondCandidates, true);
+          if (candidateInfo != null) {
+            return candidateInfo;
+          }
+
+          //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
+          candidateInfo = filterStaticCorrectCandidates(secondCandidates, firstCandidates, false);
+          if (candidateInfo != null) {
+            return candidateInfo;
+          }
+        }
+
         checkSpecifics(firstCandidates,
                        varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY, myLanguageLevel);
 
         checkSpecifics(secondCandidates, 
                        varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY, myLanguageLevel);
-
-        if (myQualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
-          //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
-          filterStaticCorrectCandidates(firstCandidates, true);
-
-          //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
-          filterStaticCorrectCandidates(secondCandidates, false);
-        }
 
         final int acceptedCount = firstCandidates.size() + secondCandidates.size();
         if (acceptedCount == 1) {
@@ -684,17 +691,29 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       /**
        * 15.13.1
        */
-      private void filterStaticCorrectCandidates(List<CandidateInfo> firstCandidates,
+      private CandidateInfo filterStaticCorrectCandidates(List<CandidateInfo> firstCandidates,
+                                                 List<CandidateInfo> secondCandidates, 
                                                  boolean shouldBeStatic) {
-        for (Iterator<CandidateInfo> iterator = firstCandidates.iterator(); iterator.hasNext(); ) {
-          final PsiElement element = iterator.next().getElement();
+        if (firstCandidates.size() == 1) {
+          final CandidateInfo candidateInfo = firstCandidates.get(0);
+          final PsiElement element = candidateInfo.getElement();
           if (element instanceof PsiMethod) {
             final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
-            if (shouldBeStatic && !isStatic || !shouldBeStatic && isStatic) {
-              iterator.remove();
+            if (shouldBeStatic && isStatic || !shouldBeStatic && !isStatic) {
+              for (CandidateInfo secondCandidate : secondCandidates) {
+                final PsiElement psiElement = secondCandidate.getElement();
+                if (psiElement instanceof PsiMethod) {
+                  final boolean oppositeStatic = ((PsiMethod)psiElement).hasModifierProperty(PsiModifier.STATIC);
+                  if (shouldBeStatic && !oppositeStatic || !shouldBeStatic && oppositeStatic) {
+                    return null;
+                  }
+                }
+              }
+              return candidateInfo;
             }
           }
         }
+        return null;
       }
 
       private boolean isCorrectAssignment(PsiType[] signatureParameterTypes2,

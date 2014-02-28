@@ -22,7 +22,6 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,7 +40,7 @@ public class ToggleBreakpointEnabledAction extends AnAction {
     Breakpoint breakpoint = findBreakpoint(project);
     if (breakpoint != null) {
       final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-      breakpointManager.setBreakpointEnabled(breakpoint, !breakpoint.ENABLED);
+      breakpointManager.setBreakpointEnabled(breakpoint, !breakpoint.isEnabled());
     }
   }
 

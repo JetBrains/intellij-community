@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,20 +44,25 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       myParent = null;
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
+  @Override
+  @NotNull
   public String getPath() {
     return myPath;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getPresentableName() {
     if (myRevision == null)
       return myName;
@@ -65,43 +70,53 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       return myName + " (" + myRevision + ")";
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public VirtualFile getParent() {
     return myParent;
 
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return null;
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new RuntimeException(VcsFileSystem.COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   @NotNull
   public abstract byte[] contentsToByteArray() throws IOException;
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }
 
+  @Override
   public long getTimeStamp() {
     return myModificationStamp;
   }
 
+  @Override
   public long getLength() {
     try {
       return contentsToByteArray().length;
@@ -110,6 +125,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     }
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
     if (postRunnable != null)
       postRunnable.run();
@@ -123,6 +139,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     myProcessingBeforeContentsChange = true;
     try {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ((VcsFileSystem)getFileSystem()).fireBeforeContentsChange(this, AbstractVcsVirtualFile.this);
         }

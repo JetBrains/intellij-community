@@ -389,21 +389,4 @@ public class InferenceIncorporationPhase {
       }
     }
   }
-
-  public PsiSubstitutor checkIncorporated(PsiSubstitutor substitutor, Collection<InferenceVariable> variables) {
-    for (InferenceVariable variable : variables) { //todo equals bounds?
-      for (PsiType lowerBound : variable.getBounds(InferenceBound.LOWER)) {
-        lowerBound = substitutor.substitute(lowerBound);
-        if (mySession.isProperType(lowerBound)) {
-          for (PsiType upperBound : variable.getBounds(InferenceBound.UPPER)) {
-            upperBound = substitutor.substitute(upperBound);
-            if (mySession.isProperType(upperBound) && !TypeConversionUtil.isAssignable(upperBound, lowerBound)) {
-              return null;
-            }
-          }
-        }
-      }
-    }
-    return substitutor;
-  }
 }

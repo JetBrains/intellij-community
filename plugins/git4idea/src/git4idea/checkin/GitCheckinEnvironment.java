@@ -25,7 +25,10 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
@@ -33,7 +36,10 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -643,8 +649,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     @NotNull
-    protected Set<VirtualFile> getRoots() {
-      return GitUtil.gitRoots(getSelectedFilePaths());
+    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      return GitUtil.gitRoots(filePaths);
     }
 
     @Nullable
@@ -665,26 +671,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return h.run();
     }
 
-    @NotNull
-    private List<FilePath> getSelectedFilePaths() {
-      return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
-        @Override
-        public FilePath fun(File file) {
-          return new FilePathImpl(file, file.isDirectory());
-        }
-      });
-    }
-
     private List<String> getUsersList(final Project project) {
       return NewGitUsersComponent.getInstance(project).get();
     }
 
+    @Override
     public void refresh() {
       super.refresh();
       myAuthor.setSelectedItem("");
       reset();
     }
 
+    @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
@@ -699,6 +697,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myNextCommitAuthorDate = myAuthorDate;
     }
 
+    @Override
     public void restoreState() {
       refresh();
     }

@@ -32,23 +32,26 @@ import java.util.List;
 public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testAddRemove() {
+    XBreakpoint<MyBreakpointProperties> defaultBreakpoint = myBreakpointManager.getDefaultBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE);
+    assertSameElements(getAllBreakpoints(), defaultBreakpoint);
+
     XLineBreakpoint<MyBreakpointProperties> lineBreakpoint =
       myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("123"));
 
     XBreakpoint<MyBreakpointProperties> breakpoint = myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("abc"));
 
-    assertSameElements(getAllBreakpoints(), breakpoint, lineBreakpoint);
+    assertSameElements(getAllBreakpoints(), breakpoint, lineBreakpoint, defaultBreakpoint);
     assertSame(lineBreakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE)));
-    assertSame(breakpoint, getSingleBreakpoint());
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
     myBreakpointManager.removeBreakpoint(lineBreakpoint);
-    assertSame(breakpoint, assertOneElement(getAllBreakpoints()));
+    assertSameElements(getAllBreakpoints(), breakpoint, defaultBreakpoint);
     assertTrue(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE).isEmpty());
-    assertSame(breakpoint, getSingleBreakpoint());
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
     myBreakpointManager.removeBreakpoint(breakpoint);
-    assertEmpty(getAllBreakpoints());
-    assertTrue(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE).isEmpty());
+    assertSameElements(getAllBreakpoints(), defaultBreakpoint);
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), defaultBreakpoint);
   }
 
   public void testSerialize() {

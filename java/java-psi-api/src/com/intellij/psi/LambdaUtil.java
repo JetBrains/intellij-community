@@ -308,7 +308,7 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
                     return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));

@@ -39,7 +39,8 @@ import java.util.*;
  * @author peter
  */
 public class DependentGroovycRunner {
-  static boolean runGroovyc(boolean forStubs, File argsFile) {
+  public static boolean runGroovyc(boolean forStubs, String argsPath) {
+    File argsFile = new File(argsPath);
     final CompilerConfiguration config = new CompilerConfiguration();
     config.setClasspath("");
     config.setOutput(new PrintWriter(System.err));
@@ -113,8 +114,9 @@ public class DependentGroovycRunner {
       stream = new FileInputStream(argsFile);
       reader = new BufferedReader(new InputStreamReader(stream));
 
-      String line;
+      reader.readLine(); // skip classpath
 
+      String line;
       while ((line = reader.readLine()) != null) {
         if (!GroovyRtConstants.SRC_FILE.equals(line)) {
           break;
