@@ -222,34 +222,34 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) return;
+    if (file == null) {
+      return;
+    }
 
     int lineStart;
     int lineEnd;
-
     try {
       lineStart = document.getLineStartOffset(line);
       lineEnd = document.getLineEndOffset(line);
     }
-    catch (IndexOutOfBoundsException e) {
+    catch (IndexOutOfBoundsException ignored) {
       return;
     }
 
     PsiElement element;
-
-    int off = lineStart;
-    while (off < lineEnd) {
-      element = file.findElementAt(off);
+    int offset = lineStart;
+    while (offset < lineEnd) {
+      element = file.findElementAt(offset);
       if (element != null) {
         if (!processor.process(element)) {
           return;
         }
         else {
-          off = element.getTextRange().getEndOffset();
+          offset = element.getTextRange().getEndOffset();
         }
       }
       else {
-        off++;
+        offset++;
       }
     }
   }
