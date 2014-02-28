@@ -28,6 +28,10 @@ public class FunctionalTypeWildcardParameterizationTest extends LightDaemonAnaly
     doTest();
   }
 
+  public void testLambdaFormalParamTypesParametrization() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", false, false);

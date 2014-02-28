@@ -118,12 +118,8 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+      if (!TypeConversionUtil.containsWildcards(parameterization) && psiClassType.isAssignableFrom(parameterization)) {
         return parameterization;
-      }
-
-      if (!psiClassType.isAssignableFrom(parameterization)) {
-        return null;
       }
 
       return getNonWildcardParameterization((PsiClassType)psiClassType);
