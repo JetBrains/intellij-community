@@ -44,6 +44,10 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightInspec
            "}");
   }
 
+  public void testAnnotationType() {
+    doTest("@interface A {}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new InterfaceMayBeAnnotatedFunctionalInspection();

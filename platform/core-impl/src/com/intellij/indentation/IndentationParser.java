@@ -54,6 +54,10 @@ public abstract class IndentationParser implements PsiParser {
     final PsiBuilder.Marker fileMarker = builder.mark();
     final PsiBuilder.Marker documentMarker = builder.mark();
 
+    while (builder.getTokenType() == myEolTokenType) {
+      advanceLexer(builder);
+    }
+
     final Stack<BlockInfo> stack = new Stack<BlockInfo>();
     stack.push(new BlockInfo(0, builder.mark(), builder.getTokenType()));
 

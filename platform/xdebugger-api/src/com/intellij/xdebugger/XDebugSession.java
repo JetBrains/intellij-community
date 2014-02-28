@@ -83,6 +83,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame)} instead
    */
+  @SuppressWarnings("UnusedDeclaration")
   void setCurrentStackFrame(@NotNull XStackFrame frame);
 
   /**

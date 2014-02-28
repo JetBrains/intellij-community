@@ -21,24 +21,30 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
+public class MethodBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPanel<XBreakpoint<JavaMethodBreakpointProperties>> {
   private JCheckBox myWatchEntryCheckBox;
   private JCheckBox myWatchExitCheckBox;
 
-  public MethodBreakpointPropertiesPanel(final Project project, boolean compact) {
-    super(project, MethodBreakpoint.CATEGORY, compact);
-  }
+  //public MethodBreakpointPropertiesPanel(final Project project, boolean compact) {
+  //  super(project, MethodBreakpoint.CATEGORY, compact);
+  //}
 
-  protected JComponent createSpecialBox() {
+
+  @NotNull
+  @Override
+  public JComponent getComponent() {
     JPanel _panel, _panel0;
 
     myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
@@ -86,31 +92,15 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     return _panel;
   }
 
-  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
-    super.initFrom(breakpoint, moreOptionsVisible);
-    if (breakpoint instanceof MethodBreakpoint) {
-      MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
-      myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);
-      myWatchExitCheckBox.setSelected(methodBreakpoint.WATCH_EXIT);
-    }
-    else if (breakpoint instanceof WildcardMethodBreakpoint){
-      final WildcardMethodBreakpoint methodBreakpoint = ((WildcardMethodBreakpoint)breakpoint);
-      myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);
-      myWatchExitCheckBox.setSelected(methodBreakpoint.WATCH_EXIT);
-    }
+  @Override
+  public void loadFrom(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    myWatchEntryCheckBox.setSelected(breakpoint.getProperties().WATCH_ENTRY);
+    myWatchExitCheckBox.setSelected(breakpoint.getProperties().WATCH_EXIT);
   }
 
-  public void saveTo(Breakpoint breakpoint) {
-    if (breakpoint instanceof MethodBreakpoint) {
-      MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
-      methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
-      methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
-    }
-    else if (breakpoint instanceof WildcardMethodBreakpoint){
-      final WildcardMethodBreakpoint methodBreakpoint = ((WildcardMethodBreakpoint)breakpoint);
-      methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
-      methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
-    }
-    super.saveTo(breakpoint);
+  @Override
+  public void saveTo(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    breakpoint.getProperties().WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
+    breakpoint.getProperties().WATCH_EXIT = myWatchExitCheckBox.isSelected();
   }
 }

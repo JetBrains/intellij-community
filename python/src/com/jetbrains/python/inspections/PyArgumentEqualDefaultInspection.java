@@ -84,7 +84,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     private static boolean hasSpecialCasedDefaults(Callable callable, PsiElement anchor) {
       final String name = callable.getName();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-      if ("getattr".equals(name) && cache.hasInBuiltins(callable)) {
+      if ("getattr".equals(name) && cache.isBuiltin(callable)) {
         return true;
       }
       else if ("get".equals(name) || "pop".equals(name)) {

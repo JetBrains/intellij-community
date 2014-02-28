@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,25 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  @NotNull private final PsiVariable variable;
+  @NotNull private final Collection<PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
   private boolean assigned = false;
   private PsiElement excludedElement = null;
 
+  public VariableAssignedVisitor(@NotNull Collection<PsiVariable> variables, boolean recurseIntoClasses) {
+    this.variables = variables;
+    checkUnaryExpressions = true;
+    this.recurseIntoClasses = recurseIntoClasses;
+  }
+
   public VariableAssignedVisitor(@NotNull PsiVariable variable, boolean recurseIntoClasses) {
-    this.variable = variable;
+    variables = Collections.singleton(variable);
     final PsiType type = variable.getType();
     checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
     this.recurseIntoClasses = recurseIntoClasses;
@@ -58,8 +67,11 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     }
     super.visitAssignmentExpression(assignment);
     final PsiExpression lhs = assignment.getLExpression();
-    if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
-      assigned = true;
+    for (PsiVariable variable : variables) {
+      if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+        assigned = true;
+        break;
+      }
     }
   }
 
@@ -85,8 +97,11 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
       return;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
-      assigned = true;
+    for (PsiVariable variable : variables) {
+      if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
+        assigned = true;
+        break;
+      }
     }
   }
 
@@ -104,8 +119,11 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
       return;
     }
     final PsiExpression operand = postfixExpression.getOperand();
-    if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
-      assigned = true;
+    for (PsiVariable variable : variables) {
+      if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
+        assigned = true;
+        break;
+      }
     }
   }
 

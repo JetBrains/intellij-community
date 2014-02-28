@@ -297,10 +297,10 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testParenthesizedInIf() {
-    doTestEnter("if isinstance(bz_value, list) and <caret>(isinstance(bz_value[0], str):\n" +
+    doTestEnter("if isinstance(bz_value, list) and <caret>(isinstance(bz_value[0], str)):\n" +
                 "    pass",
-                "if isinstance(bz_value, list) and \n" +
-                "(isinstance(bz_value[0], str):\n" +
+                "if isinstance(bz_value, list) and \\\n" +
+                "        (isinstance(bz_value[0], str)):\n" +
                 "    pass");
   }
 

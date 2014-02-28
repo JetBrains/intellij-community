@@ -2,6 +2,7 @@ package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -282,40 +283,35 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void updateUninstallUpgrade() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final int[] selected = myPackagesTable.getSelectedRows();
-        boolean upgradeAvailable = false;
-        boolean canUninstall = selected.length != 0;
-        boolean canUpgrade = true;
-        if (myPackageManagementService != null && selected.length != 0) {
-          for (int i = 0; i != selected.length; ++i) {
-            final int index = selected[i];
-            if (index >= myPackagesTable.getRowCount()) continue;
-            final Object value = myPackagesTable.getValueAt(index, 0);
-            if (value instanceof InstalledPackage) {
-              final InstalledPackage pkg = (InstalledPackage)value;
-              if (!canUninstallPackage(pkg)) {
-                canUninstall = false;
-              }
-              if (!canUpgradePackage(pkg)) {
-                canUpgrade = false;
-              }
-              final String pyPackageName = pkg.getName();
-              final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
-              if (!upgradeAvailable) {
-                upgradeAvailable = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), availableVersion) < 0 &&
-                                   !myCurrentlyInstalling.contains(pyPackageName);
-              }
-              if (!canUninstall && !canUpgrade) break;
-            }
+    final int[] selected = myPackagesTable.getSelectedRows();
+    boolean upgradeAvailable = false;
+    boolean canUninstall = selected.length != 0;
+    boolean canUpgrade = true;
+    if (myPackageManagementService != null && selected.length != 0) {
+      for (int i = 0; i != selected.length; ++i) {
+        final int index = selected[i];
+        if (index >= myPackagesTable.getRowCount()) continue;
+        final Object value = myPackagesTable.getValueAt(index, 0);
+        if (value instanceof InstalledPackage) {
+          final InstalledPackage pkg = (InstalledPackage)value;
+          if (!canUninstallPackage(pkg)) {
+            canUninstall = false;
           }
+          if (!canUpgradePackage(pkg)) {
+            canUpgrade = false;
+          }
+          final String pyPackageName = pkg.getName();
+          final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
+          if (!upgradeAvailable) {
+            upgradeAvailable = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), availableVersion) < 0 &&
+                               !myCurrentlyInstalling.contains(pyPackageName);
+          }
+          if (!canUninstall && !canUpgrade) break;
         }
-        myUninstallButton.setEnabled(canUninstall);
-        myUpgradeButton.setEnabled(upgradeAvailable && canUpgrade);
       }
-    }, ModalityState.any());
+    }
+    myUninstallButton.setEnabled(canUninstall);
+    myUpgradeButton.setEnabled(upgradeAvailable && canUpgrade);
   }
 
   protected boolean canUninstallPackage(InstalledPackage pyPackage) {
@@ -401,6 +397,10 @@ public class InstalledPackagesPanel extends JPanel {
   private void onUpdateFinished() {
     myPackagesTable.setPaintBusy(false);
     myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+    updateUninstallUpgrade();
+    // Action button presentations won't be updated if no events occur (e.g. mouse isn't moving, keys aren't being pressed).
+    // In that case emulating activity will help:
+    ActivityTracker.getInstance().inc();
   }
 
   public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
@@ -472,27 +472,23 @@ public class InstalledPackagesPanel extends JPanel {
 
         private void decrement() {
           if (inProgressPackageCount.decrementAndGet() == 0) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                onUpdateFinished();
-              }
-            });
+            onUpdateFinished();
           }
         }
 
         @Override
         public void consume(Exception e) {
-          decrement();
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              decrement();
+            }
+          });
         }
 
         @Override
         public void consume(@Nullable final String latestVersion) {
-          if (latestVersion == null) {
-            decrement();
-            return;
-          }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
               if (finalIndex < myPackagesTableModel.getRowCount()) {
@@ -503,7 +499,7 @@ public class InstalledPackagesPanel extends JPanel {
               }
               decrement();
             }
-          }, ModalityState.any());
+          });
         }
       });
     }

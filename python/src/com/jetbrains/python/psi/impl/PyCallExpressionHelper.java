@@ -439,7 +439,7 @@ public class PyCallExpressionHelper {
             }
             if (cls != null && t == null) {
               final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true);
-              if (newMethod != null && !PyBuiltinCache.getInstance(call).hasInBuiltins(newMethod)) {
+              if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
                 return PyUnionType.createWeakType(new PyClassTypeImpl(cls, false));
               }
             }

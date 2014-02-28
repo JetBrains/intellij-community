@@ -749,7 +749,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PsiElement element = reference.getElement();
       if (type instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)type).getPyClass();
-        if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
+        if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
           if (element.getParent() instanceof PyCallExpression) {
             actions.add(new AddMethodQuickFix(refText, (PyClassType)type, true));
           }
@@ -886,7 +886,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return true;
       }
       method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
-      if (method != null && !PyBuiltinCache.getInstance(cls).hasInBuiltins(method)) {
+      if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
         return true;
       }
       return false;

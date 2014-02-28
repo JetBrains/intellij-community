@@ -54,7 +54,6 @@ import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.templateLanguages.TemplatesService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
@@ -63,7 +62,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -85,9 +83,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private JCheckBox analyzeDoctest;
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
-  private JComboBox myTemplateLanguage;
-  private TemplatesConfigurationsModel myTemplatesModel;
-  private TemplatesService myTemplatesService;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -107,7 +102,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
     myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
     myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
-    myTemplatesService = TemplatesService.getInstance(module);
   }
 
   @NotNull
@@ -198,10 +192,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myModel = new PythonTestConfigurationsModel(configurations,
                                                 TestRunnerService.getInstance(myModule).getProjectConfiguration(), myModule);
 
-    List<String> templateConfigurations = TemplatesService.getAllTemplateLanguages();
-    myTemplatesModel = new TemplatesConfigurationsModel(templateConfigurations, myTemplatesService);
-    //noinspection unchecked
-    myTemplateLanguage.setModel(myTemplatesModel);
     updateConfigurations();
     initErrorValidation();
     return myMainPanel;
@@ -231,9 +221,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
       return true;
     }
-    if (myTemplateLanguage.getSelectedItem() != myTemplatesModel.getTemplateLanguage()) {
-      return true;
-    }
     return false;
   }
 
@@ -242,11 +229,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
       DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
-    if (myTemplateLanguage.getSelectedItem() != myTemplatesModel.getTemplateLanguage()) {
-      myTemplatesModel.apply();
-      reparseFiles(Arrays.asList("html", "xml", "js")); //TODO: get from file extensions
-    }
-
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
       final List<VirtualFile> files = Lists.newArrayList();
       ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
@@ -315,9 +297,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
     myRequirementsPathField.setText(getRequirementsPath());
-    myTemplateLanguage.setSelectedItem(myTemplatesModel.getTemplateLanguage());
-    myTemplatesModel.reset();
-
   }
 
   @Override

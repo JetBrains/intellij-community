@@ -74,25 +74,38 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public void updateUI() {
-    if (myDisposed) return;
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     Document document = getDocument();
-    if (document == null) return;
+    if (document == null) {
+      return;
+    }
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    removeHighlighter();
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeHighlighter highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
-                                                                            attributes);
+    RangeHighlighter highlighter = myHighlighter;
+    if (highlighter != null && highlighter.isValid() && document.getLineNumber(highlighter.getStartOffset()) != getLine()) {
+      highlighter.dispose();
+      myHighlighter = null;
+      highlighter = null;
+    }
+
+    if (highlighter == null) {
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+      highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+      if (highlighter != null) {
+        highlighter.setGutterIconRenderer(createGutterIconRenderer());
+        highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
+        myHighlighter = highlighter;
+      }
+    }
+
     if (highlighter != null) {
       updateIcon();
-      highlighter.setGutterIconRenderer(createGutterIconRenderer());
-      highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
     }
-    myHighlighter = highlighter;
   }
 
   @Nullable

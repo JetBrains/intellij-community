@@ -122,21 +122,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
 
-    if(method != null) {
-      final PsiElement method1 = method;
-      final Document document1 = document;
-
-      return new PlaceInDocument() {
-        public Document getDocument() {
-          return document1;
-        }
-
-        public int getOffset() {
-          return method1.getTextOffset();
-        }
-      };
-    }
-    return null;
+    return method != null ? new PlaceInDocument(document, method.getTextOffset()) : null;
   }
 
   @Nullable

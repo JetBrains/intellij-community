@@ -109,6 +109,11 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
+    if (myT instanceof PsiCapturedWildcardType && myS instanceof PsiCapturedWildcardType) {
+      return new TypeEqualityConstraint(((PsiCapturedWildcardType)myT).getWildcard(), 
+                                        ((PsiCapturedWildcardType)myS).getWildcard()).reduce(session, constraints);
+    }
+
     return false;
   }
 

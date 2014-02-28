@@ -19,14 +19,18 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -63,6 +67,7 @@ import java.util.concurrent.Future;
  *         Date: 10/25/11
  */
 public class GroovyBuilder extends ModuleLevelBuilder {
+  private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty("groovyc.optimized.class.loading.threshold", "10"));
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
@@ -86,6 +91,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                            ModuleChunk chunk,
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                            OutputConsumer outputConsumer) throws ProjectBuildException {
+    long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
@@ -102,8 +108,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         return ExitCode.ABORT;
       }
 
+      start = System.currentTimeMillis();
       final Set<String> toCompilePaths = getPathsToCompile(toCompile);
-      
+      boolean optimizeClassLoading = ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
+
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
       final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
@@ -117,10 +125,18 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
 
       String finalOutput = FileUtil.toSystemDependentName(finalOutputs.get(chunk.representativeTarget()));
+
+      Collection<String> classpath = generateClasspath(context, chunk);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Optimized class loading: " + optimizeClassLoading);
+        LOG.debug("Groovyc classpath: " + classpath);
+      }
+
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, finalOutput, class2Src, encoding, patchers
+        compilerOutput, toCompilePaths, finalOutput, class2Src, encoding, patchers,
+        optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
       );
-      final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile, settings);
+      final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading);
 
       Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, handler);
@@ -147,8 +163,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       throw new ProjectBuildException(e);
     }
     finally {
+      if (start > 0 && LOG.isDebugEnabled()) {
+        LOG.debug(myBuilderName + " took " + (System.currentTimeMillis() - start) + " on " + chunk.getName());
+      }
       if (!myForStubs) {
-        FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, null); 
+        FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, null);
       }
     }
   }
@@ -169,15 +188,24 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private GroovycOSProcessHandler runGroovyc(final CompileContext context,
-                                             ModuleChunk chunk,
+                                             final ModuleChunk chunk,
                                              File tempFile,
-                                             final JpsGroovySettings settings) throws IOException {
-    ArrayList<String> classpath = new ArrayList<String>(generateClasspath(context, chunk));
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Groovyc classpath: " + classpath);
+                                             final JpsGroovySettings settings,
+                                             Collection<String> compilationClassPath,
+                                             boolean optimizeClassLoading) throws IOException {
+    List<String> classpath = new ArrayList<String>();
+    if (optimizeClassLoading) {
+      classpath.add(getGroovyRtRoot().getPath());
+      classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
+      classpath.add(ClasspathBootstrap.getResourcePath(UrlClassLoader.class));
+      classpath.add(ClasspathBootstrap.getResourceFile(THashMap.class).getPath());
+    } else {
+      classpath.addAll(compilationClassPath);
     }
 
-    List<String> programParams = ContainerUtilRt.newArrayList(myForStubs ? "stubs" : "groovyc", tempFile.getPath());
+    List<String> programParams = ContainerUtilRt.newArrayList(optimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
+                                                              myForStubs ? "stubs" : "groovyc",
+                                                              tempFile.getPath());
     if (settings.invokeDynamic) {
       programParams.add("--indy");
     }
@@ -203,7 +231,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
     final Consumer<String> updater = new Consumer<String>() {
       public void consume(String s) {
-        context.processMessage(new ProgressMessage(s));
+        context.processMessage(new ProgressMessage(s + " [" + chunk.getName() + "]"));
       }
     };
     final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
@@ -403,7 +431,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
             callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(outputFile)));
           }
           catch (Throwable e) {
-            // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation  
+            // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
             final String message = "Class dependency information may be incomplete! Error parsing generated class " + item.outputPath;
             LOG.info(message, e);
             context.processMessage(new CompilerMessage(

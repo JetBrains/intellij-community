@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,68 +28,73 @@ import java.awt.*;
 
 /**
  * @author max
+ * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UseJBColor")
 public class IdeaActionButtonLook extends ActionButtonLook {
-  private static final Color ALPHA_20 = new Color(0, 0, 0, 20);
-  private static final Color ALPHA_30 = new Color(0, 0, 0, 30);
-  private static final Color ALPHA_40 = new Color(0, 0, 0, 40);
-  private static final Color ALPHA_120 = new Color(0, 0, 0, 120);
+  private static final Color ALPHA_20 = Gray._0.withAlpha(20);
+  private static final Color ALPHA_30 = Gray._0.withAlpha(30);
+  private static final Color ALPHA_40 = Gray._0.withAlpha(40);
+  private static final Color ALPHA_120 = Gray._0.withAlpha(120);
   private static final BasicStroke BASIC_STROKE = new BasicStroke();
 
   public void paintBackground(Graphics g, JComponent component, int state) {
-    if (state == ActionButtonComponent.NORMAL) return;
-    Dimension dimension = component.getSize();
+    if (state != ActionButtonComponent.NORMAL) {
+      paintBackground(g, component.getSize(), state);
+    }
+  }
 
+  protected void paintBackground(Graphics g, Dimension size, int state) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       if (state == ActionButtonComponent.PUSHED) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, dimension.width, dimension.height, ALPHA_20));
-        g.fillRect(0, 0, dimension.width - 1, dimension.height - 1);
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
+        g.fillRect(0, 0, size.width - 1, size.height - 1);
 
         g.setColor(ALPHA_120);
-        g.drawLine(0, 0, 0, dimension.height - 2);
-        g.drawLine(1, 0, dimension.width - 2, 0);
+        g.drawLine(0, 0, 0, size.height - 2);
+        g.drawLine(1, 0, size.width - 2, 0);
 
         g.setColor(ALPHA_30);
-        g.drawRect(1, 1, dimension.width - 3, dimension.height - 3);
+        g.drawRect(1, 1, size.width - 3, size.height - 3);
+      } else if (state == ActionButtonComponent.POPPED) {
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, Gray._235, 0, size.height, Gray._200));
+        g.fillRect(1, 1, size.width - 3, size.height - 3);
       }
-      else if (state == ActionButtonComponent.POPPED) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, Gray._235, 0, dimension.height, Gray._200));
-        g.fillRect(1, 1, dimension.width - 3, dimension.height - 3);
-      }
-    }
-    else {
+    } else {
       final Color bg = UIUtil.getPanelBackground();
       final boolean dark = UIUtil.isUnderDarcula();
       g.setColor(state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
-      g.fillRect(1, 1, dimension.width - 2, dimension.height - 2);
+      g.fillRect(1, 1, size.width - 2, size.height - 2);
     }
   }
 
   public void paintBorder(Graphics g, JComponent component, int state) {
-    if (state == ActionButtonComponent.NORMAL) return;
-    Rectangle r = new Rectangle(component.getWidth(), component.getHeight());
+    if (state != ActionButtonComponent.NORMAL) {
+      paintBorder(g, component.getSize(), state);
+    }
+  }
 
+  protected void paintBorder(Graphics g, Dimension size, int state) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       if (state == ActionButtonComponent.POPPED) {
         g.setColor(ALPHA_30);
-        g.drawRoundRect(r.x, r.y, r.width - 2, r.height - 2, 4, 4);
+        g.drawRoundRect(0, 0, size.width - 2, size.height - 2, 4, 4);
       }
-    }
-    else {
+    } else {
       final double shift = UIUtil.isUnderDarcula() ? 1/0.49 : 0.49;
       g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
       ((Graphics2D)g).setStroke(BASIC_STROKE);
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.drawRoundRect(r.x, r.y, r.width - 2, r.height - 2, 4, 4);
+      g.drawRoundRect(0, 0, size.width - 2, size.height - 2, 4, 4);
       config.restore();
     }
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
-    int width = icon.getIconWidth();
-    int height = icon.getIconHeight();
-    int x = (int)Math.ceil((actionButton.getWidth() - width) / 2);
-    int y = (int)Math.ceil((actionButton.getHeight() - height) / 2);
+    final int width = icon.getIconWidth();
+    final int height = icon.getIconHeight();
+    final int x = (int)Math.ceil((actionButton.getWidth() - width) / 2);
+    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2);
     paintIconAt(g, actionButton, icon, x, y);
   }
 

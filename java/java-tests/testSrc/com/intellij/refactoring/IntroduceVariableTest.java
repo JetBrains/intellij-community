@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -302,6 +301,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testNonExpression() throws Exception {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int"));
   }
+
   public void testTypeAnnotations() throws Exception {
     doTest(new MockIntroduceVariableHandler("y1", true, false, false, "@TA C"));
   }
@@ -362,8 +362,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
-        Assert.assertEquals("path", IntroduceVariableBase.getSuggestedName(type, expr).names[0]);
+        assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
+        assertEquals("path", IntroduceVariableBase.getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -381,7 +381,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
+        assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -428,7 +428,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testLambdaExpr() throws Exception {
-    
+
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.Integer>"));
   }
 

@@ -111,6 +111,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   private Date myBuildStartTime;
 
+  private boolean myAlwaysUpdateSnapshots;
+
   public Maven3ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
@@ -269,7 +271,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator) throws RemoteException {
+                        @NotNull MavenServerProgressIndicator indicator,
+                        boolean alwaysUpdateSnapshots) throws RemoteException {
 
     try {
       ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
@@ -280,6 +283,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       myWorkspaceMap = workspaceMap;
 
       myBuildStartTime = new Date();
+
+      myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
 
       setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }
@@ -348,6 +353,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                                final List<ResolutionListener> listeners) throws RemoteException {
     final MavenExecutionRequest request =
       createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+
+    request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
     final AtomicReference<MavenExecutionResult> ref = new AtomicReference<MavenExecutionResult>();
 

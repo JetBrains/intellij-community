@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ public class LambdaUtil {
     if (psiClass instanceof PsiAnonymousClass) {
       psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
     }
-    if (psiClass != null && psiClass.isInterface()) {
+    if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
@@ -308,7 +308,7 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
                     return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));

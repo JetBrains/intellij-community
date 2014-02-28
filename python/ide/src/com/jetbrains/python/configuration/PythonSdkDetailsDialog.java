@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -43,7 +42,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -72,9 +70,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private boolean myShowOtherProjectVirtualenvs = true;
   private final Module myModule;
   private NullableConsumer<Sdk> myShowMoreCallback;
+  private SdkModel.Listener myListener;
 
   public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
-    super(project);
+    super(project, true);
     myModule = null;
 
     setTitle("Project Interpreters");
@@ -84,6 +83,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myProjectSdksModel = myInterpreterList.getModel();
     init();
     updateOkButton();
+  }
+
+  @Override
+  protected void dispose() {
+    myProjectSdksModel.removeListener(myListener);
+    super.dispose();
   }
 
   public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback) {
@@ -130,8 +135,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
       })
       .addExtraAction(new ToggleVirtualEnvFilterButton())
-      .addExtraAction(new ShowPathButton())
-      .addExtraAction(new GenerateSkeletonsButton());
+      .addExtraAction(new ShowPathButton());
 
     decorator.setPreferredSize(new Dimension(600, 500));
     myMainPanel = decorator.createPanel();
@@ -141,7 +145,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void addListeners() {
-    myProjectSdksModel.addListener(new SdkModel.Listener() {
+    myListener = new SdkModel.Listener() {
       @Override
       public void sdkAdded(Sdk sdk) {
       }
@@ -158,7 +162,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       @Override
       public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       }
-    });
+    };
+    myProjectSdksModel.addListener(myListener);
     mySdkList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent event) {
         updateOkButton();
@@ -251,7 +256,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
             new NullableConsumer<Sdk>() {
               @Override
               public void consume(Sdk sdk) {
-                addCreatedSdk(sdk, false);
+                addCreatedSdk(sdk, true);
               }
             });
   }
@@ -444,38 +449,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       dialog.setTitle("Interpreter Paths");
       dialog.show();
       updateOkButton();
-    }
-  }
-
-  private class GenerateSkeletonsButton extends AnActionButton implements DumbAware {
-    public GenerateSkeletonsButton() {
-      super("Generate skeletons for the selected interpreter", PythonIcons.Python.Skeleton);
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return (getSelectedSdk() instanceof PyDetectedSdk);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      final Sdk sdk = getSelectedSdk();
-      if (sdk instanceof PyDetectedSdk) {
-        try {
-          myProjectSdksModel.apply();
-        }
-        catch (ConfigurationException ignored) {
-        }
-
-        final Sdk addedSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdk.getHomeDirectory(),
-                                                          PythonSdkType.getInstance(), true,
-                                                           null, null);
-        myProjectSdksModel.addSdk(addedSdk);
-        myProjectSdksModel.removeSdk(sdk);
-        refreshSdkList();
-        mySdkList.setSelectedValue(addedSdk, true);
-        updateOkButton();
-      }
     }
   }
 }

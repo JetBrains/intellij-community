@@ -30,7 +30,6 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -40,16 +39,6 @@ import java.util.*;
  */
 public class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;
-  private JComboBox mySdkCombo;
-
-  public void setSdkCombo(final JComboBox sdkCombo) {
-    mySdkCombo = sdkCombo;
-  }
-
-  public void setSelectedSdk(final Sdk selectedSdk) {
-    if (mySdkCombo != null)
-      mySdkCombo.setSelectedItem(selectedSdk);
-  }
 
   public static PyConfigurableInterpreterList getInstance(Project project) {
     return ServiceManager.getService(project, PyConfigurableInterpreterList.class);

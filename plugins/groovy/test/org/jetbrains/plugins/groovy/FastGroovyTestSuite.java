@@ -19,7 +19,6 @@ import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import org.jetbrains.plugins.groovy.compiler.GppCompilerTest;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest;
 import org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest;
 import org.jetbrains.plugins.groovy.lang.GroovyStressPerformanceTest;
@@ -46,8 +45,7 @@ public class FastGroovyTestSuite {
   private static boolean isSlow(Class aClass) {
     return aClass.equals(GroovyDebuggerTest.class) ||
            aClass.equals(GroovyStressPerformanceTest.class) ||
-           aClass.getName().startsWith(GroovyCompilerTest.class.getName()) ||
-           aClass.getName().startsWith(GppCompilerTest.class.getName());
+           aClass.getName().startsWith(GroovyCompilerTest.class.getName());
   }
 
 }

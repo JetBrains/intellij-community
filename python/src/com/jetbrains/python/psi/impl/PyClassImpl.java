@@ -1158,7 +1158,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
-    if (result.isEmpty() && isValid() && !builtinCache.hasInBuiltins(this)) {
+    if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
       final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
       final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
       if (implicitSuper != null) {

@@ -19,9 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
   private JPanel myContentPane;
   private JPanel myMainPanel;
   private JCheckBox myTemporaryCheckBox;
-  private XDebuggerExpressionComboBox myLogExpressionComboBox;
+  XBreakpointCustomPropertiesPanel<B> logExpressionPanel;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
     init(project, breakpointManager, breakpoint);
@@ -55,10 +55,18 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
         }
       };
 
-      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, "breakpointLogExpression", myBreakpoint.getSourcePosition());
-      JComponent logExpressionComponent = myLogExpressionComboBox.getComponent();
+      if (debuggerEditorsProvider instanceof XDebuggerComboBoxProvider) {
+        logExpressionPanel = ((XDebuggerComboBoxProvider<B>)debuggerEditorsProvider).createLogExpressionComboBoxPanel(
+          project, debuggerEditorsProvider, "breakpointCondition", myBreakpoint.getSourcePosition());
+      }
+      else {
+        logExpressionPanel =
+          new DefaultLogExpressionComboBoxPanel<B>(project, debuggerEditorsProvider, "breakpointCondition", myBreakpoint.getSourcePosition());
+      }
+
+      JComponent logExpressionComponent = logExpressionPanel.getComponent();
       myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
-      myLogExpressionComboBox.setEnabled(false);
+      logExpressionComponent.setEnabled(false);
       myTemporaryCheckBox.setVisible(breakpoint instanceof XLineBreakpoint);
       myLogExpressionCheckBox.addActionListener(listener);
       DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, logExpressionComponent);
@@ -81,8 +89,8 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
   }
 
   private void onCheckboxChanged() {
-    if (myLogExpressionComboBox != null) {
-      myLogExpressionComboBox.setEnabled(myLogExpressionCheckBox.isSelected());
+    if (logExpressionPanel != null) {
+      logExpressionPanel.getComponent().setEnabled(myLogExpressionCheckBox.isSelected());
     }
   }
 
@@ -94,10 +102,9 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       myTemporaryCheckBox.setSelected(((XLineBreakpoint)myBreakpoint).isTemporary());
     }
 
-    if (myLogExpressionComboBox != null) {
-      String logExpression = myBreakpoint.getLogExpression();
-      myLogExpressionCheckBox.setSelected(logExpression != null);
-      myLogExpressionComboBox.setText(logExpression != null ? logExpression : "");
+    if (logExpressionPanel != null) {
+      myLogExpressionCheckBox.setSelected(myBreakpoint.getLogExpression() != null);
+      logExpressionPanel.loadFrom(myBreakpoint);
     }
     onCheckboxChanged();
   }
@@ -110,11 +117,8 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());
     }
 
-    if (myLogExpressionComboBox != null) {
-      String logExpression = myLogExpressionCheckBox.isSelected() ? myLogExpressionComboBox.getText() : null;
-      myBreakpoint.setLogExpression(logExpression);
-      myLogExpressionComboBox.saveTextInHistory();
+    if (logExpressionPanel != null) {
+      logExpressionPanel.saveTo(myBreakpoint);
     }
-
   }
 }

@@ -83,15 +83,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     myWorksWithFormatter = worksWithFormatter;
   }
 
-  @Override
-  public Result preprocessEnter(
-    @NotNull final PsiFile file,
-    @NotNull final Editor editor,
-    @NotNull final Ref<Integer> caretOffset,
-    @NotNull final Ref<Integer> caretAdvance,
-    @NotNull final DataContext dataContext,
-    final EditorActionHandler originalHandler)
-  {
+  protected Result shouldSkipWithResult(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
@@ -119,7 +111,25 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     if (caret <= 0) {
       return Result.Continue;
     }
+    return null;
+  }
 
+  @Override
+  public Result preprocessEnter(
+    @NotNull final PsiFile file,
+    @NotNull final Editor editor,
+    @NotNull final Ref<Integer> caretOffset,
+    @NotNull final Ref<Integer> caretAdvance,
+    @NotNull final DataContext dataContext,
+    final EditorActionHandler originalHandler)
+  {
+    Result res = shouldSkipWithResult(file, editor, dataContext);
+    if (res != null) {
+      return res;
+    }
+
+    final Document document = editor.getDocument();
+    int caret = editor.getCaretModel().getOffset();
     final int lineNumber = document.getLineNumber(caret);
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
@@ -207,7 +217,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
+  protected IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
     while (!iterator.atEnd() && iterator.getEnd() >= currentLineStartOffset && iterator.getStart() >= prevLineStartOffset) {
       final IElementType tokenType = iterator.getTokenType();
       if (!myWhitespaceTokens.contains(tokenType)) {

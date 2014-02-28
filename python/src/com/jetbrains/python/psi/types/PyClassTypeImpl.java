@@ -531,7 +531,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public boolean isBuiltin(TypeEvalContext context) {
-    return PyBuiltinCache.getInstance(myClass).hasInBuiltins(myClass);
+    return PyBuiltinCache.getInstance(myClass).isBuiltin(myClass);
   }
 
   @Override

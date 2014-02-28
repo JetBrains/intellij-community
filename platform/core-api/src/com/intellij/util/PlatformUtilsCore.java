@@ -24,7 +24,7 @@ public class PlatformUtilsCore {
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String CPP_PREFIX = "CppIde";
   public static final String PYCHARM_PREFIX = "Python";
-  public static final String PYCHARM_PREFIX2 = "PyCharm";
+  public static final String PYCHARM_PREFIX2 = "PyCharmCore";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";

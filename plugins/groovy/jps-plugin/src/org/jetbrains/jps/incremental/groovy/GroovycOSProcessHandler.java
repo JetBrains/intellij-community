@@ -245,11 +245,17 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   public static File fillFileWithGroovycParameters(final String outputDir,
                                                    final Collection<String> changedSources,
                                                    String finalOutput,
-                                                   Map<String, String> class2Src, @Nullable final String encoding, List<String> patchers) throws IOException {
+                                                   Map<String, String> class2Src,
+                                                   @Nullable final String encoding,
+                                                   List<String> patchers,
+                                                   String classpath) throws IOException {
     File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
 
     final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
     try {
+      writer.write(classpath);
+      writer.write("\n");
+
       for (String file : changedSources) {
         writer.write(GroovyRtConstants.SRC_FILE + "\n");
         writer.write(file);

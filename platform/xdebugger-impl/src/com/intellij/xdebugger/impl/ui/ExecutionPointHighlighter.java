@@ -72,7 +72,7 @@ public class ExecutionPointHighlighter {
 
   public void navigateTo() {
     if (myOpenFileDescriptor != null) {
-      FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false);
+      FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, true);
     }
   }
 

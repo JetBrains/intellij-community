@@ -51,8 +51,8 @@ public class FileCopyPasteUtil {
 
   public static DataFlavor createDataFlavor(@NotNull final String mimeType, @Nullable final Class<?> klass, final boolean register) {
     try {
-      final String typeString = klass != null ? mimeType + ";class=" + klass.getName() : mimeType;
-      final DataFlavor flavor = new DataFlavor(typeString);
+      final DataFlavor flavor =
+        klass != null ? new DataFlavor(mimeType + ";class=" + klass.getName(), null, klass.getClassLoader()) : new DataFlavor(mimeType);
 
       if (register) {
         final FlavorMap map = SystemFlavorMap.getDefaultFlavorMap();

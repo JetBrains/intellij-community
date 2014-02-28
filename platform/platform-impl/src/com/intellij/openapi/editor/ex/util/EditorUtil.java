@@ -36,15 +36,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 
-public class EditorUtil {
+public final class EditorUtil {
+  private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
-  private static final Logger LOG = Logger.getInstance("#" + EditorUtil.class.getName());
-
-  private EditorUtil() { }
+  private EditorUtil() {
+  }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     Document document = editor.getDocument();
@@ -191,7 +192,7 @@ public class EditorUtil {
     if (!filler.isEmpty()) {
       new WriteAction(){
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           editor.getDocument().insertString(offset, filler);
           editor.getCaretModel().moveToOffset(offset + filler.length());
         }
@@ -791,6 +792,19 @@ public class EditorUtil {
     int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
     int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
     return TextRange.create(start, end);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
+    return yPositionToLogicalLine(editor, event.getY());
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull Point point) {
+    return yPositionToLogicalLine(editor, point.y);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
+    int line = y / editor.getLineHeight();
+    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 }
 

@@ -59,7 +59,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
-  private final LineSet myLineSet = new LineSet();
+  private final Object myLineSetLock = new String("line set lock");
+  private volatile LineSet myLineSet;
   private volatile ImmutableText myText;
   private volatile SoftReference<String> myTextString;
 
@@ -112,7 +113,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     assertValidSeparators(chars);
     myText = ImmutableText.valueOf(chars);
-    myLineSet.documentCreated(this);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
     myAssertThreading = !forUseInNonAWTThread;
@@ -125,6 +125,22 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     finally {
       myAcceptSlashR = accept;
     }
+  }
+
+  private LineSet getLineSet() {
+    LineSet lineSet = myLineSet;
+    if (lineSet == null) {
+      synchronized (myLineSetLock) {
+        lineSet = myLineSet;
+        if (lineSet == null) {
+          lineSet = new LineSet();
+          lineSet.documentCreated(this);
+          myLineSet = lineSet;
+        }
+      }
+    }
+
+    return lineSet;
   }
 
   @Override
@@ -159,11 +175,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     CharSequence text = myText;
     RangeMarker caretMarker = caretOffset < 0 || caretOffset > getTextLength() ? null : createRangeMarker(caretOffset, caretOffset);
     try {
-      for (int line = 0; line < myLineSet.getLineCount(); line++) {
-        if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
+      LineSet lineSet = getLineSet();
+      for (int line = 0; line < lineSet.getLineCount(); line++) {
+        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
         int whiteSpaceStart = -1;
-        final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
-        int lineStart = myLineSet.getLineStart(line);
+        final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
+        int lineStart = lineSet.getLineStart(line);
         for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
           char c = text.charAt(offset);
           if (c != ' ' && c != '\t') {
@@ -228,12 +245,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           markers.add(marker);
         }
       }
+      LineSet lineSet = getLineSet();
       lineLoop:
-      for (int line = 0; line < myLineSet.getLineCount(); line++) {
-        if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
+      for (int line = 0; line < lineSet.getLineCount(); line++) {
+        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
         int whiteSpaceStart = -1;
-        final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
-        int lineStart = myLineSet.getLineStart(line);
+        final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
+        int lineStart = lineSet.getLineStart(line);
         for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
           char c = text.charAt(offset);
           if (c != ' ' && c != '\t') {
@@ -644,19 +662,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void clearLineModificationFlags() {
-    myLineSet.clearModificationFlags();
+    getLineSet().clearModificationFlags();
   }
 
   public void clearLineModificationFlagsExcept(@NotNull List<Integer> caretLines) {
     List<Integer> modifiedLines = new ArrayList<Integer>(caretLines.size());
+    LineSet lineSet = getLineSet();
     for (Integer line : caretLines) {
-      if (line != null && line >= 0 && line < myLineSet.getLineCount() && myLineSet.isModified(line)) {
+      if (line != null && line >= 0 && line < lineSet.getLineCount() && lineSet.isModified(line)) {
         modifiedLines.add(line);
       }
     }
     clearLineModificationFlags();
     for (Integer line : modifiedLines) {
-      myLineSet.setModified(line);
+      lineSet.setModified(line);
     }
   }
 
@@ -694,6 +713,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     assertInsideCommand();
 
+    getLineSet(); // initialize line set to track changed lines
+
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
@@ -725,7 +746,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
-      myLineSet.changedUpdate(event);
+      getLineSet().changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
@@ -847,39 +868,39 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public int getLineNumber(final int offset) {
-    return myLineSet.findLineIndex(offset);
+    return getLineSet().findLineIndex(offset);
   }
 
   @Override
   @NotNull
   public LineIterator createLineIterator() {
-    return myLineSet.createIterator();
+    return getLineSet().createIterator();
   }
 
   @Override
   public final int getLineStartOffset(final int line) {
     if (line == 0) return 0; // otherwise it crashed for zero-length document
-    return myLineSet.getLineStart(line);
+    return getLineSet().getLineStart(line);
   }
 
   @Override
   public final int getLineEndOffset(int line) {
     if (getTextLength() == 0 && line == 0) return 0;
-    int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    int result = getLineSet().getLineEnd(line) - getLineSeparatorLength(line);
     assert result >= 0;
     return result;
   }
 
   @Override
   public final int getLineSeparatorLength(int line) {
-    int separatorLength = myLineSet.getSeparatorLength(line);
+    int separatorLength = getLineSet().getSeparatorLength(line);
     assert separatorLength >= 0;
     return separatorLength;
   }
 
   @Override
   public final int getLineCount() {
-    int lineCount = myLineSet.getLineCount();
+    int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;
   }

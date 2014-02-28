@@ -1299,10 +1299,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private static class JarRoot extends AbstractRoot {
     private final VirtualFile myParentLocalFile;
+    private final String myParentPath;
 
     private JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
       super(fs, rootId);
       myParentLocalFile = parentLocalFile;
+      myParentPath = myParentLocalFile.getPath();
     }
 
     @NotNull
@@ -1313,9 +1315,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @Override
     protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-      String parentPath = myParentLocalFile.getPath();
-      char[] chars = new char[parentPath.length() + JarFileSystem.JAR_SEPARATOR.length() + accumulatedPathLength];
-      positionRef[0] = copyString(chars, positionRef[0], myParentLocalFile.getPath());
+      char[] chars = new char[myParentPath.length() + JarFileSystem.JAR_SEPARATOR.length() + accumulatedPathLength];
+      positionRef[0] = copyString(chars, positionRef[0], myParentPath);
       positionRef[0] = copyString(chars, positionRef[0], JarFileSystem.JAR_SEPARATOR);
       return chars;
     }

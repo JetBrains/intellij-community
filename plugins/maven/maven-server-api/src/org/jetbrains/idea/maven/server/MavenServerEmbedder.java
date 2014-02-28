@@ -29,7 +29,8 @@ public interface MavenServerEmbedder extends Remote {
   void customize(@Nullable MavenWorkspaceMap workspaceMap,
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenServerConsole console,
-                 @NotNull MavenServerProgressIndicator indicator) throws RemoteException;
+                 @NotNull MavenServerProgressIndicator indicator,
+                 boolean alwaysUpdateSnapshots) throws RemoteException;
 
   @NotNull
   MavenServerExecutionResult resolveProject(@NotNull File file,

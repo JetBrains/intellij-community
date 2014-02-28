@@ -93,6 +93,9 @@
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="xml-tests" scope="TEST" />
     <orderEntry type="module" module-name="devkit-jps-plugin" scope="TEST" />
+    <orderEntry type="module" module-name="jps-model-tests" scope="TEST" />
+    <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
+    <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="community-tests" scope="TEST" />

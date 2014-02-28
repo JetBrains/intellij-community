@@ -98,6 +98,8 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/jps-model-api.iml" filepath="$PROJECT_DIR$/jps/model-api/jps-model-api.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps"/>
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />

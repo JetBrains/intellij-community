@@ -153,7 +153,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       final PyClass baseClass = deepestSuperMethod.getContainingClass();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(baseClass);
       String baseClassName = baseClass == null? "" : baseClass.getName();
-      if (cache.hasInBuiltins(baseClass))
+      if (cache.isBuiltin(baseClass))
         return function;
       final String message = PyBundle.message(
         "refactoring.change.signature.find.usages.of.base.class",

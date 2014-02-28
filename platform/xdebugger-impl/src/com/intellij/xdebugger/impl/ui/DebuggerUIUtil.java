@@ -141,6 +141,7 @@ public class DebuggerUIUtil {
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> moreOptionsRequested = Ref.create(Boolean.FALSE);
 
     propertiesPanel.setDelegate(new XLightBreakpointPropertiesPanel.Delegate() {
       @Override
@@ -152,12 +153,17 @@ public class DebuggerUIUtil {
           balloonRef.get().hide();
         }
         showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+        moreOptionsRequested.set(true);
       }
     });
 
     isLoading.set(Boolean.TRUE);
     propertiesPanel.loadProperties();
     isLoading.set(Boolean.FALSE);
+
+    if (moreOptionsRequested.get()) {
+      return;
+    }
 
     Runnable showMoreOptions = new Runnable() {
       @Override

@@ -1112,15 +1112,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
-  public int yPositionToLogicalLine(int y) {
-    int line = yPositionToVisibleLine(y);
-    if (line <= 0) {
-      return 0;
-    }
-    LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
-    return logicalPosition.line;
-  }
-
   @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
@@ -1372,7 +1363,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
     Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
-
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
 
@@ -2382,7 +2372,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
 
       // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(yPositionToLogicalLine(position.y));
+      repaintToScreenBottom(EditorUtil.yPositionToLogicalLine(this, position));
 
       // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
       // in accordance with the newly introduced soft wrap(s).
@@ -5484,7 +5474,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, null);
 
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
-        myDragOnGutterSelectionStartLine = yPositionToLogicalLine(e.getY());
+        myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
       // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
@@ -6554,8 +6544,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int endToUse = Math.min(lineCount, myLineWidths.size());
         if (endToUse > 0 && getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
-          startToUse = yPositionToLogicalLine(visibleArea.getLocation().y);
-          endToUse = Math.min(endToUse, yPositionToLogicalLine(visibleArea.y + visibleArea.height));
+          startToUse = EditorUtil.yPositionToLogicalLine(EditorImpl.this, visibleArea.getLocation());
+          endToUse = Math.min(endToUse, EditorUtil.yPositionToLogicalLine(EditorImpl.this, visibleArea.y + visibleArea.height));
           if (endToUse <= startToUse) {
             // There is a possible case that there is the only soft-wrapped line, i.e. end == start. We still want to update the
             // size container's width then.

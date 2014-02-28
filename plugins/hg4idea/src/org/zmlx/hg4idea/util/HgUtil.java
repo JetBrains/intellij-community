@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,6 +239,21 @@ public abstract class HgUtil {
       return getNearestHgRoot(VcsUtil.getVirtualFile(filePath.getPath()));
     }
     return getNearestHgRoot(VcsUtil.getVcsRootFor(project, filePath));
+  }
+
+  /**
+   * Get hg roots for paths
+   *
+   * @param filePaths the context paths
+   * @return a set of hg roots
+   */
+  @NotNull
+  public static Set<VirtualFile> hgRoots(@NotNull Project project, @NotNull Collection<FilePath> filePaths) {
+    HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    for (FilePath path : filePaths) {
+      ContainerUtil.addIfNotNull(roots, getHgRootOrNull(project, path));
+    }
+    return roots;
   }
 
   /**

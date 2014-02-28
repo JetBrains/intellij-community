@@ -586,7 +586,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator) {
+                        @NotNull MavenServerProgressIndicator indicator,
+                        boolean alwaysUpdateSnapshots) {
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();

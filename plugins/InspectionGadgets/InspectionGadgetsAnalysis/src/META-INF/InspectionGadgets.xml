@@ -2640,6 +2640,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
+    <localInspection language="JAVA" suppressId="LambdaParameterHidesMemberVariable" shortName="LambdaParameterHidingMemberVariable"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="lambda.parameter.hides.member.variable.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.visibility.LambdaParameterHidingMemberVariableInspection"/>
   </extensions>
 
   <application-components>
