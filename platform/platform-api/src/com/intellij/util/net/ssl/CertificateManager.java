@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
 
 /**
- * {@code CertificatesManager} is responsible for negotiation SSL connection with server
+ * {@code CertificateManager} is responsible for negotiation SSL connection with server
  * and deals with untrusted/self-singed/expired and other kinds of digital certificates.
  * <h1>Integration details:</h1>
  * If you're using httpclient-3.1 without custom {@code Protocol} instance for HTTPS you don't have to do anything
@@ -57,16 +57,16 @@ import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPAT
  */
 
 @State(
-  name = "CertificatesManager",
+  name = "CertificateManager",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class CertificatesManager implements ApplicationComponent, PersistentStateComponent<CertificatesManager.Config> {
+public class CertificateManager implements ApplicationComponent, PersistentStateComponent<CertificateManager.Config> {
 
-  @NonNls public static final String COMPONENT_NAME = "Certificates Manager";
+  @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
   @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
   @NonNls private static final String DEFAULT_PASSWORD = "changeit";
 
-  private static final Logger LOG = Logger.getInstance(CertificatesManager.class);
+  private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
   /**
    * Special version of hostname verifier, that asks user whether he accepts certificate, which subject's common name
@@ -79,8 +79,8 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
    */
   private static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
-  public static CertificatesManager getInstance() {
-    return (CertificatesManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
+  public static CertificateManager getInstance() {
+    return (CertificateManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
   }
 
   private final String myCacertsPath;
@@ -97,7 +97,7 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
   /**
    * Component initialization constructor
    */
-  public CertificatesManager() {
+  public CertificateManager() {
     myCacertsPath = DEFAULT_PATH;
     myPassword = DEFAULT_PASSWORD;
     myConfig = new Config();
@@ -108,7 +108,7 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
   public void initComponent() {
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
-      // Protocol.registerProtocol("https", CertificatesManager.createDefault().createProtocol());
+      // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       SSLContext.setDefault(getSslContext());
       LOG.debug("Default SSL context initialized");
     }

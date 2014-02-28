@@ -199,7 +199,7 @@ public class GithubApiUtil {
     try {
       client.executeMethod(method);
     }
-    catch (SSLHandshakeException e) { // User canceled operation from CertificatesManager
+    catch (SSLHandshakeException e) { // User canceled operation from CertificateManager
       if (e.getCause() instanceof ValidatorException) {
         LOG.info("Host SSL certificate is not trusted", e);
         throw new GithubOperationCanceledException("Host SSL certificate is not trusted", e);
