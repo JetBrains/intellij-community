@@ -73,10 +73,10 @@ public interface GraphFacade {
   /**
    * Set filter to the commits displayed by the log.
    *
-   * @param visibilityPredicate check if the given commit should be shown or not.
+   * @param visibilityPredicate check if the given commit should be shown or not. null means no filter.
    * @see #setVisibleBranches(Collection)
    */
-  void setFilter(@NotNull Condition<Integer> visibilityPredicate);
+  void setFilter(@Nullable Condition<Integer> visibilityPredicate);
 
   /**
    * Returns the provider of some information about the graph.

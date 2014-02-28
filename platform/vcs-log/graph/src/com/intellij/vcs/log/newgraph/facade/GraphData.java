@@ -83,7 +83,7 @@ public class GraphData {
     applyFilters();
   }
 
-  public void setFilter(@NotNull Condition<Integer> visibilityPredicate) {
+  public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
     myVisibilityPredicate = visibilityPredicate;
     applyFilters();
   }

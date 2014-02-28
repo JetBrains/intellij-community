@@ -135,7 +135,7 @@ public class GraphFacadeImpl implements GraphFacade {
   }
 
   @Override
-  public void setFilter(@NotNull Condition<Integer> visibilityPredicate) {
+  public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
     myGraphData.setFilter(visibilityPredicate);
   }
 

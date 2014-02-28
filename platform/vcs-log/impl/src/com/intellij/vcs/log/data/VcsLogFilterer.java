@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +32,7 @@ public class VcsLogFilterer {
   @NotNull private final VcsLogUI myUI;
 
   // TODO remove after new Graph supports filtering
-  private static final boolean USE_NEW_GRAPH_FOR_FILTERING = false;
+  private static final boolean USE_NEW_GRAPH_FOR_FILTERING = true;
 
   public VcsLogFilterer(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui) {
     myLogDataHolder = logDataHolder;
@@ -60,7 +59,7 @@ public class VcsLogFilterer {
         dataPack.getGraphFacade().setFilter(filter);
       }
       else {
-        dataPack.getGraphFacade().setFilter(Conditions.<Integer>alwaysTrue());
+        dataPack.getGraphFacade().setFilter(null);
       }
       model = new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
     }
@@ -83,6 +82,10 @@ public class VcsLogFilterer {
         return myLogDataHolder.putHash(pair.getFirst());
       }
     });
+    //!!!!!!!!! TODO !!!!!!!! TEMP DIAGNOSTICS
+    if (commitSet.isEmpty()) {
+      return null;
+    }
     return new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
