@@ -287,8 +287,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       placeToInferType = (GrExpression)expression.getParent();
     }
 
-    final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType);
-    for (PsiType type : types) {
+    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (type instanceof PsiArrayType) {
         final PsiType _type = GenericsUtil.eliminateWildcards(type);
         final LookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER);
@@ -307,7 +306,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
     final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
 
-    for (PsiType psiType : types) {
+    for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (psiType instanceof PsiClassType) {
         PsiType type = GenericsUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
         final PsiClassType classType = (PsiClassType)type;

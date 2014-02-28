@@ -79,6 +79,7 @@
 
     <extensionPoint name="convertToJava.customMethodInvocator" interface="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator"/>
 
+    <extensionPoint name="signatureHintProcessor" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -150,7 +151,9 @@
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
 
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>
