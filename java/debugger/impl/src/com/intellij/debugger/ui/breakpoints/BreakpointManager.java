@@ -917,6 +917,7 @@ public class BreakpointManager {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     breakpoint.reload();
+    breakpoint.updateUI();
     RequestManagerImpl.updateRequests(breakpoint);
     if (myAllowMulticasting) {
       // can be invoked from non-AWT thread
