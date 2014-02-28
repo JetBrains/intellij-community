@@ -298,7 +298,7 @@ public final class PyClassRefactoringUtil {
   }
 
   public static boolean insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName, boolean preferFromImport) {
-    if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return false;
+    if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
     final PsiFile newFile = element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return false;

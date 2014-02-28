@@ -132,7 +132,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final PsiElement resolved = ref.resolve();
-        final boolean isBuiltin = PyBuiltinCache.getInstance(node).hasInBuiltins(resolved);
+        final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
             return;
