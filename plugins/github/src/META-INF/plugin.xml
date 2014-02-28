@@ -4,7 +4,7 @@
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
-      Allows working with <a href="https://github.com/">GitHub version control system</a>.
+      Allows working with <a href="http://github.com/">GitHub</a>.
       The following features are available:
         <ul>
         <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
