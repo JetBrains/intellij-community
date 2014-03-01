@@ -231,7 +231,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
     final Consumer<String> updater = new Consumer<String>() {
       public void consume(String s) {
-        context.processMessage(new ProgressMessage(s + " [" + chunk.getName() + "]"));
+        context.processMessage(new ProgressMessage(s + " [" + chunk.getPresentableShortName() + "]"));
       }
     };
     final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {

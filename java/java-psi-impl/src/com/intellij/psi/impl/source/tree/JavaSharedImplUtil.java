@@ -25,7 +25,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,18 +54,19 @@ public class JavaSharedImplUtil {
     return type;
   }
 
+  // collects annotations bound to C-style arrays
   private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor, PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = new SmartList<PsiAnnotation[]>();
+    List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
 
     List<PsiAnnotation> current = null;
-    boolean stop = false;
+    boolean found = (stopAt == null), stop = false;
     for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
       if (child instanceof PsiAnnotation) {
-        if (current == null) current = new SmartList<PsiAnnotation>();
+        if (current == null) current = ContainerUtil.newSmartList();
         current.add((PsiAnnotation)child);
-        if (child == stopAt) stop = true;
+        if (child == stopAt) found = stop = true;
         continue;
       }
 
@@ -80,8 +80,8 @@ public class JavaSharedImplUtil {
       }
     }
 
-    // stop == true means annotation is misplaced
-    return stop ? null : annotations;
+    // annotation is misplaced (either located before the anchor or has no following brackets)
+    return !found || stop ? null : annotations;
   }
 
   public static void normalizeBrackets(@NotNull PsiVariable variable) {

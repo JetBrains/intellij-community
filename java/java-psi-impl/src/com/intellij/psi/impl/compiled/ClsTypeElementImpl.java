@@ -17,8 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -28,7 +27,6 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   @NonNls static final char VARIANCE_NONE = '\0';
@@ -41,18 +39,18 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private final PsiElement myParent;
   private final String myTypeText;
   private final char myVariance;
-  private final NullableLazyValue<ClsElementImpl> myChild;
+  private final NotNullLazyValue<Ref<ClsElementImpl>> myChild;
   private final NotNullLazyValue<PsiType> myCachedType;
 
   public ClsTypeElementImpl(@NotNull PsiElement parent, @NotNull String typeText, char variance) {
     myParent = parent;
     myTypeText = TypeInfo.internFrequentType(typeText);
     myVariance = variance;
-    myChild = new VolatileNullableLazyValue<ClsElementImpl>() {
-      @Nullable
+    myChild = new AtomicNotNullLazyValue<Ref<ClsElementImpl>>() {
+      @NotNull
       @Override
-      protected ClsElementImpl compute() {
-        return calculateChild();
+      protected Ref<ClsElementImpl> compute() {
+        return Ref.create(calculateChild());
       }
     };
     myCachedType = new AtomicNotNullLazyValue<PsiType>() {
@@ -67,7 +65,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    ClsElementImpl child = myChild.getValue();
+    ClsElementImpl child = myChild.getValue().get();
     return child != null ? new PsiElement[]{child} : PsiElement.EMPTY_ARRAY;
   }
 
@@ -111,7 +109,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
 
-    ClsElementImpl child = myChild.getValue();
+    ClsElementImpl child = myChild.getValue().get();
     if (child != null) {
       child.setMirror(element.getFirstChildNode());
     }
@@ -157,7 +155,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     PsiType result = PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText);
     if (result != null) return result;
 
-    ClsElementImpl childElement = myChild.getValue();
+    ClsElementImpl childElement = myChild.getValue().get();
     if (childElement instanceof ClsTypeElementImpl) {
       if (isArray()) {
         switch (myVariance) {

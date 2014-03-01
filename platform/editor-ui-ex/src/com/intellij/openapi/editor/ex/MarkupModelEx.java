@@ -33,7 +33,7 @@ public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
   @Nullable
-  RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
+  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
 
   void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged);
 

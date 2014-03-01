@@ -240,7 +240,7 @@ public class GeneralCommandLine implements UserDataHolder {
       commands = CommandLineUtil.toCommandLine(myExePath, myProgramParams.getList());
     }
     catch (ExecutionException e) {
-      LOG.warn(e);
+      LOG.info(e);
       throw e;
     }
 
@@ -248,7 +248,7 @@ public class GeneralCommandLine implements UserDataHolder {
       return startProcess(commands);
     }
     catch (IOException e) {
-      LOG.warn(e);
+      LOG.info(e);
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }

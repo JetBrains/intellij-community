@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -360,16 +359,11 @@ public class InferenceSession {
     }
     return sameMethodCall;
   }
-  
-  public void addCapturedVariable(PsiTypeParameter param) {
-    initBounds(param);
-  }
 
   private void initReturnTypeConstraint(PsiMethod method, final PsiCallExpression context) {
     if (PsiPolyExpressionUtil.isMethodCallPolyExpression(context, method)) {
       PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
-        returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context);
         PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
         if (targetType == null) {
           targetType = getTargetType(context);

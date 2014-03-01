@@ -194,7 +194,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
-    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
+    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
   }
 

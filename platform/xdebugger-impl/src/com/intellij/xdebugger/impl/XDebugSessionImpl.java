@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
@@ -67,6 +68,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,8 +88,8 @@ public class XDebugSessionImpl implements XDebugSession {
                                                                                                false);
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
-    new HashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
-  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new HashSet<XBreakpoint<?>>();
+    new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
+  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new SmartHashSet<XBreakpoint<?>>();
   private boolean myBreakpointsMuted;
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
@@ -329,6 +331,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myValueMarkers;
   }
 
+  @SuppressWarnings("unchecked") //need to compile under 1.8, please do not remove before checking
   private static XBreakpointType getBreakpointTypeClass(final XBreakpointHandler handler) {
     return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass());
   }
@@ -351,12 +354,9 @@ public class XDebugSessionImpl implements XDebugSession {
       handler.registerBreakpoint(b);
     }
     if (!register) {
-      boolean removed = false;
+      boolean removed;
       synchronized (myRegisteredBreakpoints) {
-        if (myRegisteredBreakpoints.containsKey(b)) {
-          myRegisteredBreakpoints.remove(b);
-          removed = true;
-        }
+        removed = myRegisteredBreakpoints.remove(b) != null;
       }
       if (removed) {
         handler.unregisterBreakpoint(b, temporary);

@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -68,6 +70,18 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   @Override
   public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
+  }
+
+  @Override
+  public String getDisplayText(XLineBreakpoint<P> breakpoint) {
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
+      BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpointManager.findBreakpoint(breakpoint);
+      if (javaBreakpoint != null) {
+        return javaBreakpoint.getDescription();
+      }
+      else {
+        return super.getDisplayText(breakpoint);
+      }
   }
 
   @Override

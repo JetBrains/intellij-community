@@ -127,7 +127,7 @@ public class FindInProjectManager {
                     return processor.process(usage);
                   }
                 };
-                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, true, consumer, processPresentation);
+                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer, processPresentation);
               }
               finally {
                 myIsFindInProgress = false;

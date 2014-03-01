@@ -24,7 +24,7 @@ import com.intellij.util.Consumer;
 public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
   T getRemoteSdkCredentials() throws InterruptedException;
   
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkConsumer);
+  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
 
   Object getRemoteSdkDataKey();
 }

@@ -514,18 +514,23 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       if (classLoader == null && clazz == null) return file;
 
       final URL resource = clazz == null ? classLoader.getResource(file) : clazz.getResource(file);
-      classLoader = null;
-      clazz = null;
-      if (resource == null) {
-        String message = "Cannot find standard resource. filename:" + file + " class=" + classLoader;
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error(message);
-        }
-        else {
-          LOG.warn(message);
-        }
 
-        return null;
+      try {
+        if (resource == null) {
+          String message = "Cannot find standard resource. filename:" + file + " class=" + clazz + ", classLoader:" + classLoader;
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            LOG.error(message);
+          }
+          else {
+            LOG.warn(message);
+          }
+
+          return null;
+        }
+      }
+      finally {
+        classLoader = null;
+        clazz = null;
       }
 
       String path = FileUtil.unquote(resource.toString());
@@ -534,7 +539,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       file = path;
       return path;
     }
-
 
     @Override
     public boolean equals(Object o) {

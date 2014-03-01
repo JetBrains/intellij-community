@@ -120,7 +120,7 @@ public class PatienceIntLCS {
   }
 
   private int matchForward(int offset1, int offset2) {
-    final int size = Math.min(myCount1 - offset1, myCount2 - offset2);
+    final int size = Math.min(myCount1 + myStart1 - offset1, myCount2 + myStart2 - offset2);
     int idx = 0;
     for (int i = 0; i < size; i++) {
       if (!(myFirst[offset1 + i] == mySecond[offset2 + i])) break;

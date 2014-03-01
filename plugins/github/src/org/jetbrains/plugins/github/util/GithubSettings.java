@@ -59,6 +59,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
+    public boolean VALID_GIT_AUTH = true;
   }
 
   public static GithubSettings getInstance() {
@@ -120,6 +121,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.SAVE_PASSWORD;
   }
 
+  public boolean isValidGitAuth() {
+    return myState.VALID_GIT_AUTH;
+  }
+
   public boolean isSavePasswordMakesSense() {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
@@ -135,6 +140,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setSavePassword(final boolean savePassword) {
     myState.SAVE_PASSWORD = savePassword;
+  }
+
+  public void setValidGitAuth(final boolean validGitAuth) {
+    myState.VALID_GIT_AUTH = validGitAuth;
   }
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
@@ -172,10 +181,25 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
+  private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {
+    switch (auth.getAuthType()) {
+      case BASIC:
+        assert auth.getBasicAuth() != null;
+        return auth.getBasicAuth().getCode() == null;
+      case TOKEN:
+        return true;
+      case ANONYMOUS:
+        return false;
+      default:
+        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
+    }
+  }
+
   @NotNull
   public GithubAuthData getAuthData() {
     switch (getAuthType()) {
       case BASIC:
+        //noinspection ConstantConditions
         return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
         return GithubAuthData.createTokenAuth(getHost(), getPassword());
@@ -186,8 +210,11 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
-  private void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
+    setValidGitAuth(isValidGitAuth(auth));
+
     setAuthType(auth.getAuthType());
+    setHost(auth.getHost());
 
     switch (auth.getAuthType()) {
       case BASIC:
@@ -205,12 +232,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
         setPassword("", rememberPassword);
         break;
       default:
-        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + getAuthType());
+        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
     }
-  }
-
-  public void setCredentials(@NotNull String host, @NotNull GithubAuthData auth, boolean rememberPassword) {
-    setHost(host);
-    setAuthData(auth, rememberPassword);
   }
 }

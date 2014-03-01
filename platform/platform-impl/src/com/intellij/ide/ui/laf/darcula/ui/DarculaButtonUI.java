@@ -50,7 +50,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       final Insets ins = border.getBorderInsets(c);
       final int yOff = (ins.top + ins.bottom) / 4;
       if (!square) {
-        if (((JButton)c).isDefaultButton()) {
+        if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
           ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
         }
         else {
@@ -100,7 +100,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void update(Graphics g, JComponent c) {
     super.update(g, c);
-    if (((JButton)c).isDefaultButton() && !SystemInfo.isMac) {
+    if (c instanceof JButton && ((JButton)c).isDefaultButton() && !SystemInfo.isMac) {
       if (!c.getFont().isBold()) {
        c.setFont(c.getFont().deriveFont(Font.BOLD));
       }

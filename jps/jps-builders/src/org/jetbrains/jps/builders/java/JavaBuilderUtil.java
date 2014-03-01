@@ -79,7 +79,7 @@ public class JavaBuilderUtil {
       final boolean errorsDetected = Utils.errorsDetected(context);
       if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
-          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getName() + "]"));
+          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getPresentableShortName() + "]"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
           final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
@@ -144,7 +144,7 @@ public class JavaBuilderUtil {
             }
           }
           else {
-            final String messageText = "Marking " + chunk.getName() + " and direct dependants for recompilation";
+            final String messageText = "Marking " + chunk.getPresentableShortName() + " and direct dependants for recompilation";
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
@@ -172,7 +172,7 @@ public class JavaBuilderUtil {
         return false;
       }
 
-      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getName() + "]"));
+      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
 
       globalMappings.integrate(delta);
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffUtil;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -108,12 +110,12 @@ public class ChangeList {
 
   private ArrayList<Change> buildChanges() throws FilesTooBigForDiffException {
     Document base = getDocument(FragmentSide.SIDE1);
-    String[] baseLines = DiffUtil.convertToLines(base.getText());
+    DiffString[] baseLines = DiffUtil.convertToLines(base.getText());
     Document version = getDocument(FragmentSide.SIDE2);
-    String[] versionLines = DiffUtil.convertToLines(version.getText());
+    DiffString[] versionLines = DiffUtil.convertToLines(version.getText());
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
     final ArrayList<Change> result = new ArrayList<Change>();
-    new DiffFragmemntsEnumerator(fragments) {
+    new DiffFragmentsEnumerator(fragments) {
       protected void process(DiffFragment fragment) {
         if (fragment.isEqual()) return;
         Context context = getContext();
@@ -129,11 +131,11 @@ public class ChangeList {
     return myChanges.get(index);
   }
 
-  private abstract static class DiffFragmemntsEnumerator {
+  private abstract static class DiffFragmentsEnumerator {
     private final DiffFragment[] myFragments;
     private final Context myContext;
 
-    private DiffFragmemntsEnumerator(DiffFragment[] fragments) {
+    private DiffFragmentsEnumerator(DiffFragment[] fragments) {
       myContext = new Context();
       myFragments = fragments;
     }
@@ -142,8 +144,8 @@ public class ChangeList {
       for (DiffFragment fragment : myFragments) {
         myContext.myFragment = fragment;
         process(fragment);
-        String text1 = fragment.getText1();
-        String text2 = fragment.getText2();
+        DiffString text1 = fragment.getText1();
+        DiffString text2 = fragment.getText2();
         myContext.myStarts[0] += StringUtil.length(text1);
         myContext.myStarts[1] += StringUtil.length(text2);
         myContext.myLines[0] += countLines(text1);
@@ -151,7 +153,7 @@ public class ChangeList {
       }
     }
 
-    private static int countLines(String text) {
+    private static int countLines(@Nullable DiffString text) {
       if (text == null) return 0;
       return StringUtil.countNewLines(text);
     }

@@ -569,7 +569,7 @@ public class ReplaceInProjectManager {
             myIsFindInProgress = true;
 
             FindInProjectUtil.findUsages(myFindModelCopy, myPsiDirectory, myProject,
-                                         true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                         new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
                                          myProcessPresentation);
           }
           finally {

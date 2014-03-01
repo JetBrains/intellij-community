@@ -146,7 +146,7 @@ public class FragmentedDiffRequestFromChange {
           comparisonPolicy = ComparisonPolicy.DEFAULT;
         }
         final TextCompareProcessor processor = new TextCompareProcessor(comparisonPolicy);
-        final ArrayList<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
+        final List<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
         myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());
         for (LineFragment lineFragment : lineFragments) {
           if (!lineFragment.isEqual()) {

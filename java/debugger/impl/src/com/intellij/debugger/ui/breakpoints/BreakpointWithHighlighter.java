@@ -383,7 +383,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     if (myVisible) {
       if (isValid()) {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-        breakpointManager.updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), getDescription());
+        breakpointManager.updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), null);
       }
       //RangeHighlighter highlighter = myHighlighter;
       //if (highlighter != null && highlighter.isValid() && isValid()) {

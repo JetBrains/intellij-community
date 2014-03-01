@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -54,7 +55,7 @@ import java.util.List;
  * @author nik
  */
 public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>> implements XLineBreakpoint<P> {
-  @Nullable private RangeHighlighter myHighlighter;
+  @Nullable private RangeHighlighterEx myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
   private boolean myDisposed;
@@ -86,25 +87,37 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    RangeHighlighter highlighter = myHighlighter;
-    if (highlighter != null && highlighter.isValid() && document.getLineNumber(highlighter.getStartOffset()) != getLine()) {
+    RangeHighlighterEx highlighter = myHighlighter;
+    if (highlighter != null && (!highlighter.isValid() || document.getLineNumber(highlighter.getStartOffset()) != getLine())) {
       highlighter.dispose();
       myHighlighter = null;
       highlighter = null;
     }
 
+    MarkupModelEx markupModel;
     if (highlighter == null) {
-      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+      markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
       highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-      if (highlighter != null) {
-        highlighter.setGutterIconRenderer(createGutterIconRenderer());
-        highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-        myHighlighter = highlighter;
+      if (highlighter == null) {
+        return;
       }
+
+      highlighter.setGutterIconRenderer(createGutterIconRenderer());
+      highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
+      myHighlighter = highlighter;
+    }
+    else {
+      markupModel = null;
     }
 
-    if (highlighter != null) {
-      updateIcon();
+    updateIcon();
+
+    if (markupModel == null) {
+      markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
+      if (markupModel != null) {
+        // renderersChanged false — we don't change gutter size
+        markupModel.fireAttributesChanged(highlighter, false);
+      }
     }
   }
 

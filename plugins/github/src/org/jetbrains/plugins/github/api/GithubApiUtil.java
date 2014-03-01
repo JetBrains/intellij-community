@@ -169,6 +169,10 @@ public class GithubApiUtil {
     if (tokenAuth != null) {
       method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
     }
+    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+    if (basicAuth != null && basicAuth.getCode() != null) {
+      method.addRequestHeader("X-GitHub-OTP", basicAuth.getCode());
+    }
     for (Header header : headers) {
       method.addRequestHeader(header);
     }
@@ -401,6 +405,14 @@ public class GithubApiUtil {
    * Github API
    */
 
+  public static void askForTwoFactorCodeSMS(@NotNull GithubAuthData auth) {
+    try {
+      postRequest(auth, "/authorizations", null, ACCEPT_V3_JSON);
+    } catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
   @NotNull
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
@@ -448,10 +460,9 @@ public class GithubApiUtil {
 
   @NotNull
   public static String getMasterToken(@NotNull GithubAuthData auth, @Nullable String note) throws IOException {
-    List<String> scopes = new ArrayList<String>();
-
-    scopes.add("repo"); // read/write access to public/private repositories
-    scopes.add("gist"); // create/delete gists
+    // "repo" - read/write access to public/private repositories
+    // "gist" - create/delete gists
+    List<String> scopes = Arrays.asList("repo", "gist");
 
     return getScopedToken(auth, scopes, note);
   }

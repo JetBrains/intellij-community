@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python;
 
-import junit.framework.TestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyEncodingTest extends TestCase {
+public class PyEncodingTest extends PyTestCase {
   public void testEncodingEmacs() {
     doTest("#!/usr/bin/python\n# -*- coding: iso-8859-15 -*-\nimport os, sys", "iso-8859-15");
   }
@@ -33,7 +33,8 @@ public class PyEncodingTest extends TestCase {
     doTest("#!/usr/local/bin/python\n# coding: latin-1\nimport os, sys", "iso-8859-1");
   }
 
-  private static void doTest(final String text, final String expected) {
-    assertEquals(expected, PythonFileType.getCharsetFromEncodingDeclaration(text));
+  private void doTest(final String text, final String expected) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    assertEquals(expected, PythonFileType.getCharsetFromEncodingDeclaration(myFixture.getFile()));
   }
 }
