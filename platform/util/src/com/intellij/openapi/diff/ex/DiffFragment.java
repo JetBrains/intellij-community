@@ -143,6 +143,8 @@ public class DiffFragment {
   }
 
   public static DiffFragment unchanged(@Nullable DiffString text1, @Nullable DiffString text2) {
+    if (text1 == null) text1 = DiffString.EMPTY;
+    if (text2 == null) text2 = DiffString.EMPTY;
     DiffFragment result = new DiffFragment(text1, text2);
     result.setModified(false);
     return result;
