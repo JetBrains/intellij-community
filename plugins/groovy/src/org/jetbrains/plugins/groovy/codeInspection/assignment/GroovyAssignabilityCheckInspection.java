@@ -242,7 +242,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
-      super.visitReturnStatement(returnStatement);
       final GrExpression value = returnStatement.getReturnValue();
       if (value == null || isNewInstanceInitialingByTuple(value)) return;
 
@@ -254,7 +253,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitExpression(GrExpression expression) {
-      super.visitExpression(expression);
       if (PsiUtil.isExpressionStatement(expression)) {
         final PsiType returnType = PsiImplUtil.inferReturnType(expression);
         final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
@@ -274,8 +272,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitAssignmentExpression(GrAssignmentExpression assignment) {
-      super.visitAssignmentExpression(assignment);
-
       GrExpression lValue = assignment.getLValue();
       if (lValue instanceof GrIndexProperty) return;
       if (!PsiUtil.mightBeLValue(lValue)) return;
@@ -363,8 +359,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitVariable(GrVariable variable) {
-      super.visitVariable(variable);
-
       PsiType varType = variable.getType();
 
       PsiElement parent = variable.getParent();
@@ -430,7 +424,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitNewExpression(GrNewExpression newExpression) {
-      super.visitNewExpression(newExpression);
       if (newExpression.getArrayCount() > 0) return;
 
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
@@ -502,7 +495,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitListOrMap(GrListOrMap listOrMap) {
-      super.visitListOrMap(listOrMap);
 
       final PsiReference reference = listOrMap.getReference();
       if (!(reference instanceof LiteralConstructorReference)) return;
@@ -515,7 +507,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitThrowStatement(GrThrowStatement throwStatement) {
-      super.visitThrowStatement(throwStatement);
 
       final GrExpression exception = throwStatement.getException();
       if (exception != null) {
@@ -557,7 +548,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitConstructorInvocation(GrConstructorInvocation invocation) {
-      super.visitConstructorInvocation(invocation);
       GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
       checkConstructorCall(info);
       checkNamedArgumentsType(info);
@@ -565,8 +555,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitIndexProperty(GrIndexProperty expression) {
-      super.visitIndexProperty(expression);
-
       checkIndexProperty(new GrIndexPropertyInfo(expression));
     }
 
@@ -651,25 +639,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
-      super.visitMethodCallExpression(methodCallExpression);
       checkMethodCall(new GrMethodCallInfo(methodCallExpression));
     }
 
     @Override
     public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
-      super.visitApplicationStatement(applicationStatement);
       checkMethodCall(new GrMethodCallInfo(applicationStatement));
     }
 
     @Override
     public void visitBinaryExpression(GrBinaryExpression binary) {
-      super.visitBinaryExpression(binary);
       checkOperator(new GrBinaryExprInfo(binary));
     }
 
     @Override
     public void visitEnumConstant(GrEnumConstant enumConstant) {
-      super.visitEnumConstant(enumConstant);
       GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
       checkConstructorCall(info);
       checkNamedArgumentsType(info);
@@ -1020,6 +1004,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private void highlightUnknownArgs(@NotNull CallInfo info) {
       registerError(info.getElementToHighlight(), GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
     }
+
+    @Override
+    public void visitElement(GroovyPsiElement element) {
+      //do nothing
+    }
   }
 
   @Nullable
@@ -1107,12 +1096,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                                  ProblemHighlightType highlightType,
                                  Object... args) {
       registerError(location, (String)args[0], LocalQuickFix.EMPTY_ARRAY, highlightType);
-    }
-
-
-    @Override
-    public void visitElement(GroovyPsiElement element) {
-      //do nothing
     }
   }
 
