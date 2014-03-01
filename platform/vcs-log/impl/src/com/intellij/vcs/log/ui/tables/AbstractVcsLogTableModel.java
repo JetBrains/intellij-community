@@ -12,7 +12,6 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @param <CommitColumnClass> commit column class
- * @param <CommitId>          Commit identifier, which can be different depending on the model nature,
- *                            for example, a {@link Hash} or an {@link Integer} or a {@link Node}.
- */
-public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> extends AbstractTableModel {
+public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends AbstractTableModel {
 
   public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 

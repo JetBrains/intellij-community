@@ -10,7 +10,6 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -21,7 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, Node> {
+public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
 
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
 

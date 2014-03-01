@@ -111,7 +111,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
-      AbstractVcsLogTableModel<?,?> tableModel = (AbstractVcsLogTableModel)myGraphTable.getModel();
+      AbstractVcsLogTableModel<?> tableModel = (AbstractVcsLogTableModel)myGraphTable.getModel();
       Hash hash = tableModel.getHashAtRow(row);
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
       if (commitData == null || hash == null) {

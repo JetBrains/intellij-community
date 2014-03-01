@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash> {
+public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
 
