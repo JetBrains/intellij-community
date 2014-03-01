@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
@@ -59,7 +60,10 @@ public class TextCompareProcessor {
       return new DummyDiffFragmentsProcessor().process(text1, text2);
     }
 
-    DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(text1, text2);
+    DiffString diffText1 = DiffString.create(text1);
+    DiffString diffText2 = DiffString.create(text2);
+
+    DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(diffText1, diffText2);
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
 
@@ -68,8 +72,8 @@ public class TextCompareProcessor {
       for (LineFragment lineBlock : lineBlocks) {
         if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
         try {
-          String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
-          String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
+          DiffString subText1 = lineBlock.getText(diffText1, FragmentSide.SIDE1);
+          DiffString subText2 = lineBlock.getText(diffText2, FragmentSide.SIDE2);
           ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
           lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
           lineBlock.adjustTypeFromChildrenTypes();
@@ -84,7 +88,7 @@ public class TextCompareProcessor {
     return lineBlocks;
   }
 
-  private ArrayList<LineFragment> findSubFragments(String text1, String text2) throws FilesTooBigForDiffException {
+  private ArrayList<LineFragment> findSubFragments(@NotNull DiffString text1, @NotNull DiffString text2) throws FilesTooBigForDiffException {
     DiffFragment[] fragments = new ByWord(myComparisonPolicy).buildFragments(text1, text2);
     fragments = DiffCorrection.ConnectSingleSideToChange.INSTANCE.correct(fragments);
     fragments = UniteSameType.INSTANCE.correct(fragments);
