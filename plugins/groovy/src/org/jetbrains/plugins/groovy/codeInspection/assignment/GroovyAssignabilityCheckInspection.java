@@ -718,8 +718,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               @Override
               public boolean value(PsiType[] types) {
                 for (int i = 0; i < types.length; i++) {
-                  if (!TypesUtil.isAssignableWithoutConversions(types[i], paramTypes.get(i), parameterList) ||
-                      !TypesUtil.isAssignableWithoutConversions(paramTypes.get(i), types[i], parameterList)) {
+                  if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
                     return false;
                   }
                 }
@@ -738,15 +737,18 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               if (typeElement == null) continue;
               PsiType expected = types[i];
               PsiType actual = paramTypes.get(i);
-              if (!TypesUtil.isAssignableWithoutConversions(expected, actual, parameterList) ||
-                  !TypesUtil.isAssignableWithoutConversions(actual, expected, parameterList)) {
-
+              if (!typesAreEqual(expected, actual, parameterList)) {
                 registerError(typeElement, GroovyInspectionBundle.message("expected.type.0", expected.getPresentableText()));
               }
             }
           }
         }
       }
+    }
+
+    private static boolean typesAreEqual(@NotNull PsiType expected, @NotNull PsiType actual, @NotNull PsiElement context) {
+      return TypesUtil.isAssignableByMethodCallConversion(expected, actual, context) &&
+             TypesUtil.isAssignableByMethodCallConversion(actual, expected, context);
     }
 
 
