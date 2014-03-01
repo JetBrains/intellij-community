@@ -16,7 +16,9 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DiffContentUtil;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
@@ -100,9 +102,9 @@ public class DiffUtil {
     UIUtil.drawLine(g, startX, y + 1, endX, y + 1, null, color);
   }
 
-  @NotNull
-  public static Color getFramingColor(@NotNull Color backgroundColor) {
-    return backgroundColor.darker();
+  @Nullable
+  public static Color getFramingColor(@Nullable Color backgroundColor) {
+    return backgroundColor != null ? backgroundColor.darker() : null;
   }
 
   @NotNull
