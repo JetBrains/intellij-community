@@ -24,6 +24,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -70,8 +71,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -79,6 +82,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -693,6 +697,58 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
       }
     }
+
+    @Override
+    public void visitParameterList(final GrParameterList parameterList) {
+      PsiElement parent = parameterList.getParent();
+      if (parent instanceof GrClosableBlock) {
+
+        GrParameter[] parameters = parameterList.getParameters();
+        if (parameters.length > 0) {
+          List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent);
+          final List<PsiType> paramTypes = ContainerUtil.map(parameters, new Function<GrParameter, PsiType>() {
+            @Override
+            public PsiType fun(GrParameter parameter) {
+              return parameter.getType();
+            }
+          });
+
+          if (signatures.size() > 1) {
+            PsiType[] fittingSignature = ContainerUtil.find(signatures, new Condition<PsiType[]>() {
+              @Override
+              public boolean value(PsiType[] types) {
+                for (int i = 0; i < types.length; i++) {
+                  if (!TypesUtil.isAssignableWithoutConversions(types[i], paramTypes.get(i), parameterList) ||
+                      !TypesUtil.isAssignableWithoutConversions(paramTypes.get(i), types[i], parameterList)) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+            });
+
+            if (fittingSignature == null) {
+              registerError(parameterList, GroovyInspectionBundle.message("no.applicable.signature.found"));
+            }
+          }
+          else if (signatures.size() == 1) {
+            PsiType[] types = signatures.get(0);
+            for (int i = 0; i < types.length; i++) {
+              GrTypeElement typeElement = parameters[i].getTypeElementGroovy();
+              if (typeElement == null) continue;
+              PsiType expected = types[i];
+              PsiType actual = paramTypes.get(i);
+              if (!TypesUtil.isAssignableWithoutConversions(expected, actual, parameterList) ||
+                  !TypesUtil.isAssignableWithoutConversions(actual, expected, parameterList)) {
+
+                registerError(typeElement, GroovyInspectionBundle.message("expected.type.0", expected.getPresentableText()));
+              }
+            }
+          }
+        }
+      }
+    }
+
 
     /**
      * checks only children of e

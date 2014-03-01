@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,64 +46,11 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) return null;
 
     final GrParameter[] parameters = closure.getAllParameters();
-
-    if (ContainerUtil.find(parameters, new Condition<GrParameter>() {
-      @Override
-      public boolean value(GrParameter parameter) {
-        return parameter.getDeclaredType() != null;
-      }
-    }) != null) {
+    if (containsParametersWithDeclaredType(parameters)) {
       return null;
     }
 
-    GrParameter parameter = parameters[index];
-    if (parameter.getDeclaredType() != null) return null;
-
-    GrCall call = findCall(closure);
-    if (call == null) return null;
-
-    GroovyResolveResult resolveResult = call.advancedResolve();
-    PsiElement element = resolveResult.getElement();
-
-    if (!(element instanceof PsiMethod)) {
-      return null;
-    }
-
-    while (element instanceof PsiMirrorElement) {
-      element = ((PsiMirrorElement)element).getPrototype();
-    }
-
-    List<Pair<PsiParameter,PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure, new GroovyResolveResult[]{resolveResult}, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), closure);
-    if (params.isEmpty()) return null;
-
-    Pair<PsiParameter, PsiType> pair = params.get(0);
-
-    PsiParameter param = pair.getFirst();
-    PsiModifierList modifierList = param.getModifierList();
-    if (modifierList == null) return null;
-
-    PsiAnnotation anno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS);
-    if (anno == null) return null;
-
-    PsiClass closureSignatureHint = GrAnnotationUtil.inferClassAttribute(anno, "value");
-    if (closureSignatureHint == null) return null;
-
-    String qnameOfClosureSignatureHint = closureSignatureHint.getQualifiedName();
-    if (qnameOfClosureSignatureHint == null) return null;
-
-    SignatureHintProcessor signatureHintProcessor = SignatureHintProcessor.getHintProcessor(qnameOfClosureSignatureHint);
-    if (signatureHintProcessor == null) return null;
-
-    List<PsiType[]> expectedSignatures = signatureHintProcessor.inferExpectedSignatures((PsiMethod)element,
-                                                                                         resolveResult.getSubstitutor(),
-                                                                                         SignatureHintProcessor.buildOptions(anno));
-
-    List<PsiType[]> fittingSignatures = ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
-      @Override
-      public boolean value(PsiType[] types) {
-        return types.length == parameters.length;
-      }
-    });
+    List<PsiType[]> fittingSignatures = findFittingSignatures(closure);
 
     if (fittingSignatures.size() == 1) {
       PsiType[] expectedSignature = fittingSignatures.get(0);
@@ -110,6 +58,71 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     }
 
     return null;
+  }
+
+  @NotNull
+  public static List<PsiType[]> findFittingSignatures(GrClosableBlock closure) {
+
+    final GrParameter[] parameters = closure.getAllParameters();
+
+    GrCall call = findCall(closure);
+    if (call == null) return Collections.emptyList();
+
+    GroovyResolveResult resolveResult = call.advancedResolve();
+    PsiElement element = resolveResult.getElement();
+
+    if (!(element instanceof PsiMethod)) {
+      return Collections.emptyList();
+    }
+
+    while (element instanceof PsiMirrorElement) {
+      element = ((PsiMirrorElement)element).getPrototype();
+    }
+
+    List<Pair<PsiParameter,PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure,
+                                                                                     new GroovyResolveResult[]{resolveResult},
+                                                                                     call.getNamedArguments(),
+                                                                                     call.getExpressionArguments(),
+                                                                                     call.getClosureArguments(), closure);
+    if (params.isEmpty()) return Collections.emptyList();
+
+    Pair<PsiParameter, PsiType> pair = params.get(0);
+
+    PsiParameter param = pair.getFirst();
+    PsiModifierList modifierList = param.getModifierList();
+    if (modifierList == null) return Collections.emptyList();
+
+    PsiAnnotation anno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS);
+    if (anno == null) return Collections.emptyList();
+
+    PsiClass closureSignatureHint = GrAnnotationUtil.inferClassAttribute(anno, "value");
+    if (closureSignatureHint == null) return Collections.emptyList();
+
+    String qnameOfClosureSignatureHint = closureSignatureHint.getQualifiedName();
+    if (qnameOfClosureSignatureHint == null) return Collections.emptyList();
+
+    SignatureHintProcessor signatureHintProcessor = SignatureHintProcessor.getHintProcessor(qnameOfClosureSignatureHint);
+    if (signatureHintProcessor == null) return Collections.emptyList();
+
+    List<PsiType[]> expectedSignatures = signatureHintProcessor.inferExpectedSignatures((PsiMethod)element,
+                                                                                         resolveResult.getSubstitutor(),
+                                                                                         SignatureHintProcessor.buildOptions(anno));
+
+    return ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
+      @Override
+      public boolean value(PsiType[] types) {
+        return types.length == parameters.length;
+      }
+    });
+  }
+
+  private static boolean containsParametersWithDeclaredType(GrParameter[] parameters) {
+    return ContainerUtil.find(parameters, new Condition<GrParameter>() {
+      @Override
+      public boolean value(GrParameter parameter) {
+        return parameter.getDeclaredType() != null;
+      }
+    }) != null;
   }
 
   @Nullable
