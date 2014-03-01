@@ -15,14 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,36 +40,25 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull final PsiSubstitutor substitutor,
-                                                 @Nullable PsiAnnotationMemberValue options) {
-    PsiAnnotationMemberValue[] initializers;
-    if (options instanceof PsiLiteral) {
-      initializers = new PsiAnnotationMemberValue[] {options};
-    }
-    else if ((options instanceof PsiArrayInitializerMemberValue)) {
-      initializers = ((PsiArrayInitializerMemberValue)options).getInitializers();
-    }
-    else {
-      return Collections.emptyList();
-    }
-
-    return Collections.singletonList(ContainerUtil.map(initializers, new Function<PsiAnnotationMemberValue, PsiType>() {
+                                                 @NotNull String[] options) {
+    return ContainerUtil.map(options, new Function<String, PsiType[]>() {
       @Override
-      public PsiType fun(PsiAnnotationMemberValue memberValue) {
-        if (memberValue instanceof PsiLiteral) {
-          Object value = ((PsiLiteral)memberValue).getValue();
-          if (value instanceof String) {
-            try {
-              PsiType original = JavaPsiFacade.getElementFactory(memberValue.getProject()).createTypeFromText((String)value, method);
-              return substitutor.substitute(original);
+      public PsiType[] fun(String value) {
+          String[] params = value.split(",");
+          return ContainerUtil.map(params, new Function<String, PsiType>() {
+            @Override
+            public PsiType fun(String param) {
+              try {
+                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, method);
+                return substitutor.substitute(original);
+              }
+              catch (IncorrectOperationException e) {
+                //do nothing. Just don't throw an exception
+              }
+              return PsiType.NULL;
             }
-            catch (IncorrectOperationException e) {
-              //do nothing. Just don't throw an exception
-            }
-          }
-        }
-
-        return PsiType.NULL;
+          }, new PsiType[params.length]);
       }
-    }, new PsiType[initializers.length]));
+    });
   }
 }
