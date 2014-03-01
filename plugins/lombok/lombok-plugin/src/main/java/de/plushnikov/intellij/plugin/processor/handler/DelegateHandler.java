@@ -194,7 +194,8 @@ public class DelegateHandler {
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(returnType)
         .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation);
+            //Have to go to original method, or some refactoring action will not work (like extract parameter oder change signature)
+        .withNavigationElement(psiMethod);
 
     for (PsiTypeParameter typeParameter : psiMethod.getTypeParameters()) {
       methodBuilder.withTypeParameter(typeParameter);
