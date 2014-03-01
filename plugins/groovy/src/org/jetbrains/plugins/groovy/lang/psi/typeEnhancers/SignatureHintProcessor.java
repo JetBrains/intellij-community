@@ -16,13 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,12 +31,38 @@ import java.util.List;
 public abstract class SignatureHintProcessor {
   private static final ExtensionPointName<SignatureHintProcessor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.signatureHintProcessor");
 
+  static String[] buildOptions(PsiAnnotation anno) {
+    PsiAnnotationMemberValue options = anno.findAttributeValue("options");
+    if (options instanceof PsiLiteral) {
+      Object value = ((PsiLiteral)options).getValue();
+      if (value instanceof String) {
+        return new String[]{(String)value};
+      }
+    }
+    else if (options instanceof PsiArrayInitializerMemberValue) {
+      PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)options).getInitializers();
+      ArrayList<String> result = ContainerUtil.newArrayList();
+      for (PsiAnnotationMemberValue initializer : initializers) {
+        if (initializer instanceof PsiLiteral) {
+          Object value = ((PsiLiteral)initializer).getValue();
+          if (value instanceof String) {
+            result.add((String)value);
+          }
+        }
+      }
+
+      return ArrayUtil.toStringArray(result);
+    }
+
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
   public abstract String getHintName();
 
   @NotNull
   public abstract List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                           @NotNull PsiSubstitutor substitutor,
-                                                          @Nullable PsiAnnotationMemberValue options);
+                                                          @NotNull String[] options);
 
   @Nullable
   public static SignatureHintProcessor getHintProcessor(@NotNull String hint) {

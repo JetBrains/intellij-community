@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -42,8 +44,16 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) return null;
 
-    GrParameter[] parameters = closure.getAllParameters();
-    if (parameters.length != 1) return null;
+    final GrParameter[] parameters = closure.getAllParameters();
+
+    if (ContainerUtil.find(parameters, new Condition<GrParameter>() {
+      @Override
+      public boolean value(GrParameter parameter) {
+        return parameter.getDeclaredType() != null;
+      }
+    }) != null) {
+      return null;
+    }
 
     GrParameter parameter = parameters[index];
     if (parameter.getDeclaredType() != null) return null;
@@ -56,6 +66,10 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     if (!(element instanceof PsiMethod)) {
       return null;
+    }
+
+    while (element instanceof PsiMirrorElement) {
+      element = ((PsiMirrorElement)element).getPrototype();
     }
 
     List<Pair<PsiParameter,PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure, new GroovyResolveResult[]{resolveResult}, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), closure);
@@ -74,18 +88,25 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     if (closureSignatureHint == null) return null;
 
     String qnameOfClosureSignatureHint = closureSignatureHint.getQualifiedName();
+    if (qnameOfClosureSignatureHint == null) return null;
 
     SignatureHintProcessor signatureHintProcessor = SignatureHintProcessor.getHintProcessor(qnameOfClosureSignatureHint);
     if (signatureHintProcessor == null) return null;
 
     List<PsiType[]> expectedSignatures = signatureHintProcessor.inferExpectedSignatures((PsiMethod)element,
                                                                                          resolveResult.getSubstitutor(),
-                                                                                         anno.findAttributeValue("options"));
-    if (expectedSignatures.size() == 1) {
-      PsiType[] expectedSignature = expectedSignatures.get(0);
-      if (expectedSignature.length == 1) {
-        return expectedSignature[0];
+                                                                                         SignatureHintProcessor.buildOptions(anno));
+
+    List<PsiType[]> fittingSignatures = ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
+      @Override
+      public boolean value(PsiType[] types) {
+        return types.length == parameters.length;
       }
+    });
+
+    if (fittingSignatures.size() == 1) {
+      PsiType[] expectedSignature = fittingSignatures.get(0);
+      return expectedSignature[index];
     }
 
     return null;

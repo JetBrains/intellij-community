@@ -78,6 +78,28 @@ public class GrAnnotationUtil {
       if (resolved instanceof PsiClass) return (PsiClass)resolved;
     }
     return null;
+  }
 
+  @Nullable
+  public static PsiType extractClassTypeFromClassAttributeValue(PsiAnnotationMemberValue targetValue) {
+    if (targetValue instanceof PsiClassObjectAccessExpression) {
+      return ((PsiClassObjectAccessExpression)targetValue).getOperand().getType();
+    }
+    else if (targetValue instanceof GrReferenceExpression) {
+      if ("class".equals(((GrReferenceExpression)targetValue).getReferenceName())) {
+        GrExpression qualifier = ((GrReferenceExpression)targetValue).getQualifier();
+        if (qualifier instanceof GrReferenceExpression) {
+          PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+          if (resolved instanceof PsiClass) {
+            return qualifier.getType();
+          }
+        }
+      }
+      PsiElement resolved = ((GrReferenceExpression)targetValue).resolve();
+      if (resolved instanceof PsiClass) {
+        return ((GrReferenceExpression)targetValue).getType();
+      }
+    }
+    return null;
   }
 }
