@@ -143,11 +143,13 @@ public class GraphFacadeImpl implements GraphFacade {
   @Override
   public GraphInfoProvider getInfoProvider() {
     return new GraphInfoProvider() {
+      @NotNull
       @Override
       public Set<Integer> getContainingBranches(int visibleRow) {
         return Collections.emptySet();
       }
 
+      @NotNull
       @Override
       public RowInfo getRowInfo(int visibleRow) {
         int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);

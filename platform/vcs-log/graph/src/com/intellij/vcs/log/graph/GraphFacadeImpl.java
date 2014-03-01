@@ -282,11 +282,13 @@ public class GraphFacadeImpl implements GraphFacade {
 
   private class GraphInfoProviderImpl implements GraphInfoProvider {
 
+    @NotNull
     @Override
     public Set<Integer> getContainingBranches(int visibleRow) {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public RowInfo getRowInfo(int visibleRow) {
       return new RowInfoImpl(visibleRow);

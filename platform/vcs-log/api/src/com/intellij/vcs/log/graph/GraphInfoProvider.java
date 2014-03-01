@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log.graph;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
 /**
@@ -23,8 +25,10 @@ import java.util.Set;
  */
 public interface GraphInfoProvider {
 
+  @NotNull
   Set<Integer> getContainingBranches(int visibleRow); // this requires graph iteration => can take some time
 
+  @NotNull
   RowInfo getRowInfo(int visibleRow);
 
   boolean areLongEdgesHidden();
