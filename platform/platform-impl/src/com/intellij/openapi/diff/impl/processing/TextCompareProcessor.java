@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
@@ -24,36 +23,39 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.LineBlockDivider;
 import com.intellij.openapi.diff.impl.highlighting.Util;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
   private final DiffPolicy myDiffPolicy;
   @NotNull private final ComparisonPolicy myComparisonPolicy;
-  private final boolean mySearchForSubFragments;
+  @NotNull private final HighlightMode myHighlightMode;
 
   public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy,
-                              final DiffPolicy diffPolicy,
-                              boolean searchForSubFragments) {
+                              @NotNull DiffPolicy diffPolicy,
+                              @NotNull HighlightMode highlightMode) {
     myComparisonPolicy = comparisonPolicy;
     myDiffPolicy = diffPolicy;
-    mySearchForSubFragments = searchForSubFragments;
-  }
-
-  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
-    this(comparisonPolicy, diffPolicy, true);
+    myHighlightMode = highlightMode;
   }
 
   public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy) {
-    this(comparisonPolicy, DiffPolicy.LINES_WO_FORMATTING);
+    this(comparisonPolicy, DiffPolicy.LINES_WO_FORMATTING, HighlightMode.BY_WORD);
   }
 
-  public ArrayList<LineFragment> process(@Nullable String text1, @Nullable String text2) throws FilesTooBigForDiffException {
+  public List<LineFragment> process(@Nullable String text1, @Nullable String text2) throws FilesTooBigForDiffException {
+    if (myHighlightMode == HighlightMode.NO_HIGHLIGHTING) {
+      return Collections.emptyList();
+    }
+
     text1 = StringUtil.notNullize(text1);
     text2 = StringUtil.notNullize(text2);
     if (text1.isEmpty() || text2.isEmpty()) {
@@ -68,7 +70,7 @@ public class TextCompareProcessor {
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
 
     int badLinesCount = 0;
-    if (mySearchForSubFragments) {
+    if (myHighlightMode == HighlightMode.BY_WORD) {
       for (LineFragment lineBlock : lineBlocks) {
         if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
         try {
