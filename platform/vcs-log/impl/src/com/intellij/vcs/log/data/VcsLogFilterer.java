@@ -14,6 +14,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import com.intellij.vcs.log.ui.tables.EmptyTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.ui.tables.NoGraphTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -53,15 +54,7 @@ public class VcsLogFilterer {
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
     if (USE_NEW_GRAPH_FOR_FILTERING) {
-      if (!detailsFilters.isEmpty()) {
-        List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
-        Condition<Integer> filter = getFilterFromCommits(filteredCommits);
-        dataPack.getGraphFacade().setFilter(filter);
-      }
-      else {
-        dataPack.getGraphFacade().setFilter(null);
-      }
-      model = new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
+      model = updateFacadeAndCreateModel(dataPack, detailsFilters);
     }
     else {
       if (!detailsFilters.isEmpty()) {
@@ -75,6 +68,23 @@ public class VcsLogFilterer {
     return model;
   }
 
+  private AbstractVcsLogTableModel updateFacadeAndCreateModel(DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
+    if (!detailsFilters.isEmpty()) {
+      List<Pair<Hash, VirtualFile>> filteredCommits = filterByDetails(dataPack, detailsFilters);
+      if (filteredCommits.isEmpty()) {
+        return new EmptyTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
+      }
+      else{
+        Condition<Integer> filter = getFilterFromCommits(filteredCommits);
+        dataPack.getGraphFacade().setFilter(filter);
+      }
+    }
+    else {
+      dataPack.getGraphFacade().setFilter(null);
+    }
+    return new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
+  }
+
   private Condition<Integer> getFilterFromCommits(List<Pair<Hash, VirtualFile>> filteredCommits) {
     final Set<Integer> commitSet = ContainerUtil.map2Set(filteredCommits, new Function<Pair<Hash, VirtualFile>, Integer>() {
       @Override
@@ -82,10 +92,6 @@ public class VcsLogFilterer {
         return myLogDataHolder.putHash(pair.getFirst());
       }
     });
-    //!!!!!!!!! TODO !!!!!!!! TEMP DIAGNOSTICS
-    if (commitSet.isEmpty()) {
-      return null;
-    }
     return new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -107,8 +113,13 @@ public class VcsLogFilterer {
           model = new NoGraphTableModel(dataPack, myLogDataHolder, myUI, details, newLoadMoreStage);
         }
         else {
-          dataPack.getGraphFacade().setFilter(getFilterFromCommits(details));
-          model = new GraphTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
+          if (details.isEmpty()) {
+            model = new EmptyTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
+          }
+          else {
+            dataPack.getGraphFacade().setFilter(getFilterFromCommits(details));
+            model = new GraphTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
+          }
         }
         myUI.setModel(model);
         myUI.updateUI();
