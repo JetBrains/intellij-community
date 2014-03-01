@@ -36,9 +36,9 @@ import java.util.List;
 public class PresetBlocksDiffPolicy implements DiffPolicy {
   // fragment _start_ offsets
   private List<BeforeAfter<TextRange>> myRanges;
-  private final DiffPolicy myDelegate;
+  @NotNull private final DiffPolicy myDelegate;
 
-  public PresetBlocksDiffPolicy(DiffPolicy delegate) {
+  public PresetBlocksDiffPolicy(@NotNull DiffPolicy delegate) {
     myDelegate = delegate;
   }
 

@@ -40,13 +40,12 @@ public class DiffFragment {
     myIsModified = (text1 == null || text2 == null || !text1.equals(text2));
   }
 
-  public static boolean isEmpty(@NotNull DiffFragment fragment) {
-    return StringUtil.length(fragment.getText1()) == 0 &&
-           StringUtil.length(fragment.getText2()) == 0;
+  public boolean isEmpty() {
+    return StringUtil.isEmpty(myText1) && StringUtil.isEmpty(myText2);
   }
 
   /**
-   * Makes sence if both texts are not null
+   * Makes sense if both texts are not null
    * @return true if both texts are considered modified, false otherwise
    */
   public boolean isModified() {

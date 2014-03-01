@@ -76,7 +76,7 @@ public class ByWord implements DiffPolicy {
     result.addTails();
     DiffFragment[] fragments = result.getFragments();
     DiffFragment firstFragment = fragments[0];
-    if (DiffFragment.isEmpty(firstFragment)) {
+    if (firstFragment.isEmpty()) {
       DiffFragment[] newFragments = new DiffFragment[fragments.length - 1];
       System.arraycopy(fragments, 1, newFragments, 0, newFragments.length);
       fragments = newFragments;
