@@ -26,13 +26,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -51,18 +51,18 @@ import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubRepo;
+import org.jetbrains.plugins.github.api.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
@@ -125,8 +125,10 @@ public class GithubShareAction extends DumbAwareAction {
       externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
     }
 
+    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
+
     // get available GitHub repos with modal progress
-    final GithubInfo githubInfo = loadGithubInfoWithModal(project);
+    final GithubInfo githubInfo = loadGithubInfoWithModal(authHolder, project);
     if (githubInfo == null) {
       return;
     }
@@ -150,7 +152,7 @@ public class GithubShareAction extends DumbAwareAction {
         // create GitHub repo (network)
         LOG.info("Creating GitHub repository");
         indicator.setText("Creating GitHub repository...");
-        final String url = createGithubRepository(project, githubInfo.getAuthData(), name, description, isPrivate);
+        final String url = createGithubRepository(project, authHolder, indicator, name, description, isPrivate);
         if (url == null) {
           return;
         }
@@ -202,29 +204,28 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project) {
+  private static GithubInfo loadGithubInfoWithModal(@NotNull final GithubAuthDataHolder authHolder, @NotNull final Project project) {
     try {
       return GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
+          @NotNull
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
             // get existing github repos (network) and validate auth data
-            final AtomicReference<List<GithubRepo>> availableReposRef = new AtomicReference<List<GithubRepo>>();
-            final GithubAuthData auth =
-              GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-                @Override
-                public void consume(GithubAuthData authData) throws IOException {
-                  availableReposRef.set(GithubApiUtil.getUserRepos(authData));
-                }
-              });
-            final HashSet<String> names = new HashSet<String>();
-            for (GithubRepo info : availableReposRef.get()) {
-              names.add(info.getName());
-            }
+            return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubInfo, IOException>() {
+              @NotNull
+              @Override
+              public GithubInfo convert(@NotNull GithubAuthData auth) throws IOException {
+                // check access to private repos (network)
+                GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
 
-            // check access to private repos (network)
-            final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
-            return new GithubInfo(auth, userInfo, names);
+                HashSet<String> names = new HashSet<String>();
+                for (GithubRepo info : GithubApiUtil.getUserRepos(auth)) {
+                  names.add(info.getName());
+                }
+                return new GithubInfo(userInfo, names);
+              }
+            });
           }
         });
     }
@@ -239,14 +240,20 @@ public class GithubShareAction extends DumbAwareAction {
 
   @Nullable
   private static String createGithubRepository(@NotNull Project project,
-                                               @NotNull GithubAuthData auth,
-                                               @NotNull String name,
-                                               @NotNull String description,
-                                               boolean isPrivate) {
+                                               @NotNull GithubAuthDataHolder authHolder,
+                                               @NotNull ProgressIndicator indicator,
+                                               @NotNull final String name,
+                                               @NotNull final String description,
+                                               final boolean isPrivate) {
 
     try {
-      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, isPrivate);
-      return response.getHtmlUrl();
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubRepo, IOException>() {
+        @NotNull
+        @Override
+        public GithubRepo convert(@NotNull GithubAuthData auth) throws IOException {
+          return GithubApiUtil.createRepo(auth, name, description, isPrivate);
+        }
+      }).getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Failed to create GitHub Repository", e);
@@ -286,15 +293,15 @@ public class GithubShareAction extends DumbAwareAction {
 
       // ask for files to add
       final List<VirtualFile> trackedFiles = ChangeListManager.getInstance(project).getAffectedFiles();
-      final Collection<VirtualFile> untrackedFiles = filterOutIgnored(project,
-                                                                      repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      final Collection<VirtualFile> untrackedFiles =
+        filterOutIgnored(project, repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
       trackedFiles.removeAll(untrackedFiles); // fix IDEA-119855
 
       final List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
       allFiles.addAll(trackedFiles);
       allFiles.addAll(untrackedFiles);
 
-      final AtomicReference<GithubUntrackedFilesDialog> dialogRef = new AtomicReference<GithubUntrackedFilesDialog>();
+      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
@@ -429,23 +436,16 @@ public class GithubShareAction extends DumbAwareAction {
 
   private static class GithubInfo {
     @NotNull private final GithubUserDetailed myUser;
-    @NotNull private final GithubAuthData myAuthData;
     @NotNull private final HashSet<String> myRepositoryNames;
 
-    GithubInfo(@NotNull GithubAuthData auth, @NotNull GithubUserDetailed user, @NotNull HashSet<String> repositoryNames) {
+    GithubInfo(@NotNull GithubUserDetailed user, @NotNull HashSet<String> repositoryNames) {
       myUser = user;
-      myAuthData = auth;
       myRepositoryNames = repositoryNames;
     }
 
     @NotNull
     public GithubUserDetailed getUser() {
       return myUser;
-    }
-
-    @NotNull
-    public GithubAuthData getAuthData() {
-      return myAuthData;
     }
 
     @NotNull

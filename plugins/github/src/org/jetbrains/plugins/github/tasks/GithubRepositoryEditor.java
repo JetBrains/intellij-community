@@ -13,11 +13,12 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -124,15 +125,19 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
           @Override
           public String convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil
-              .runWithValidBasicAuthForHost(myProject, indicator, getHost(), new ThrowableConvertor<GithubAuthData, String, IOException>() {
-                @NotNull
-                @Override
-                public String convert(GithubAuthData auth) throws IOException {
-                  return GithubApiUtil.getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
-                }
-              });
+              .runTaskWithBasicAuthForHost(myProject, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
+                                           new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                             @NotNull
+                                             @Override
+                                             public String convert(@NotNull GithubAuthData auth) throws IOException {
+                                               return GithubApiUtil
+                                                 .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
+                                             }
+                                           }
+              );
           }
-        }));
+        })
+      );
     }
     catch (GithubOperationCanceledException ignore) {
     }

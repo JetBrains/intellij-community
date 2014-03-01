@@ -32,6 +32,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -60,12 +61,15 @@ public class GithubCheckoutProvider implements CheckoutProvider {
           @NotNull
           @Override
           public List<GithubRepo> convert(ProgressIndicator indicator) throws IOException {
-            return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {
-              @Override
-              public List<GithubRepo> convert(GithubAuthData authData) throws IOException {
-                return GithubApiUtil.getAvailableRepos(authData);
-              }
-            });
+            return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
+                                      new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {
+                                        @NotNull
+                                        @Override
+                                        public List<GithubRepo> convert(@NotNull GithubAuthData auth) throws IOException {
+                                          return GithubApiUtil.getAvailableRepos(auth);
+                                        }
+                                      }
+            );
           }
         });
     }

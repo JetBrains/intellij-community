@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,12 +42,14 @@ import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
@@ -110,33 +113,24 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    GithubAuthData auth = GithubAuthData.createAnonymous();
-    if (!dialog.isAnonymous()) {
-      try {
-        auth = getValidAuthData(project);
-      }
-      catch (GithubOperationCanceledException e) {
-        return;
-      }
-      catch (IOException e) {
-        GithubNotifications.showError(project, "Can't create gist", e);
-        return;
-      }
+    final GithubAuthDataHolder authHolder = getValidAuthData(project, dialog.isAnonymous());
+    if (authHolder == null) {
+      return;
     }
 
-    final AtomicReference<String> url = new AtomicReference<String>();
-    final GithubAuthData finalAuth = auth;
+    final Ref<String> url = new Ref<String>();
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+        String gistUrl =
+          createGist(project, authHolder, indicator, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
       @Override
       public void onSuccess() {
-        if (url.get() == null) {
+        if (url.isNull()) {
           return;
         }
         if (dialog.isOpenInBrowser()) {
@@ -149,17 +143,32 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  @NotNull
-  private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
-    return GithubUtil.computeValueInModal(project, "Access to GitHub",
-                                          new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
-                                            @NotNull
-                                            @Override
-                                            public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
-                                              return GithubUtil.getValidAuthDataFromConfig(project, indicator);
-                                            }
-                                          }
-    );
+  @Nullable
+  private static GithubAuthDataHolder getValidAuthData(@NotNull final Project project, boolean isAnonymous) {
+    if (isAnonymous) {
+      return new GithubAuthDataHolder(GithubAuthData.createAnonymous());
+    }
+    else {
+      try {
+        return GithubUtil
+          .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthDataHolder, IOException>() {
+                                 @NotNull
+                                 @Override
+                                 public GithubAuthDataHolder convert(ProgressIndicator indicator) throws IOException {
+                                   return GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
+                                 }
+                               }
+          );
+      }
+      catch (GithubOperationCanceledException e) {
+        return null;
+      }
+      catch (IOException e) {
+        GithubNotifications.showError(project, "Can't create gist", e);
+        return null;
+      }
+
+    }
   }
 
   @NotNull
@@ -197,10 +206,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   static String createGist(@NotNull Project project,
-                           @NotNull GithubAuthData auth,
+                           @NotNull GithubAuthDataHolder auth,
+                           @NotNull ProgressIndicator indicator,
                            @NotNull List<FileContent> contents,
-                           boolean isPrivate,
-                           @NotNull String description,
+                           final boolean isPrivate,
+                           @NotNull final String description,
                            @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
@@ -211,8 +221,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
       contents = Collections.singletonList(new FileContent(filename, entry.getContent()));
     }
     try {
-      GithubGist gist = GithubApiUtil.createGist(auth, contents, description, isPrivate);
-      return gist.getHtmlUrl();
+      final List<FileContent> finalContents = contents;
+      return GithubUtil.runTask(project, auth, indicator, new ThrowableConvertor<GithubAuthData, GithubGist, IOException>() {
+        @NotNull
+        @Override
+        public GithubGist convert(@NotNull GithubAuthData auth) throws IOException {
+          return GithubApiUtil.createGist(auth, finalContents, description, isPrivate);
+        }
+      }).getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);

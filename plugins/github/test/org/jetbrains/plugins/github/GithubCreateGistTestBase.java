@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
+import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +50,11 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   @Override
   protected void afterTest() throws Exception {
     deleteGist();
+  }
+
+  @NotNull
+  protected GithubAuthDataHolder getAuthDataHolder() {
+    return new GithubAuthDataHolder(myGitHubSettings.getAuthData());
   }
 
   protected void deleteGist() throws IOException {
@@ -133,7 +139,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
   }
 
-  protected void registerDefaultLoginDialogHandler() {
+  protected void registerCancelingLoginDialogHandler() {
     myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
       @Override
       public int handleDialog(GithubLoginDialog dialog) {
