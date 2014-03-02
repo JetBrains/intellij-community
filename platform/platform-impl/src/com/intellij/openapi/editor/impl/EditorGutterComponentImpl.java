@@ -401,7 +401,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myBackgroundColor;
   }
 
-  private boolean isDistractionFreeMode() {
+  private static boolean isDistractionFreeMode() {
     return Registry.is("editor.distraction.free.mode");
   }
 
@@ -469,9 +469,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int patchedStartOffset = startOffset < docLength ? document.getLineStartOffset(document.getLineNumber(startOffset)) : docLength;
     int patchedEndOffset = endOffset <= docLength ? document.getLineEndOffset(document.getLineNumber(endOffset)) + 1 : docLength;
     DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(patchedStartOffset, patchedEndOffset);
-
-    final MarkupModelEx editorMarkup = (MarkupModelEx)myEditor.getMarkupModel();
-    DisposableIterator<RangeHighlighterEx> editorHighlighters = editorMarkup.overlappingIterator(startOffset, endOffset);
+    DisposableIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
