@@ -484,10 +484,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   protected GrReferenceExpression bindWithQualifiedRef(@NotNull String qName) {
+    GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(qName);
     final GrTypeArgumentList list = getTypeArgumentList();
-    final String typeArgs = (list != null) ? list.getText() : "";
-    final String text = qName + typeArgs;
-    GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(text);
+    if (list != null) {
+      qualifiedRef.getNode().addChild(list.copy().getNode());
+    }
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
     return qualifiedRef;
   }

@@ -91,10 +91,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   protected GrCodeReferenceElement bindWithQualifiedRef(@NotNull String qName) {
-    final GrTypeArgumentList list = getTypeArgumentList();
-    final String typeArgs = (list != null) ? list.getText() : "";
-    final String text = qName + typeArgs;
-    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(text);
+    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+    final PsiElement list = getTypeArgumentList();
+    if (list != null) {
+      qualifiedRef.getNode().addChild(list.copy().getNode());
+    }
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
     return qualifiedRef;
   }
