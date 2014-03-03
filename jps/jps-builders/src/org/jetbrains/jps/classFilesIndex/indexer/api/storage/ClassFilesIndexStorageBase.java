@@ -163,7 +163,7 @@ public class ClassFilesIndexStorageBase<K, V> {
   private static <V> DataExternalizer<CompiledDataValueContainer<V>> createValueContainerExternalizer(final DataExternalizer<V> valueExternalizer) {
     return new DataExternalizer<CompiledDataValueContainer<V>>() {
       @Override
-      public void save(final DataOutput out, final CompiledDataValueContainer<V> value) throws IOException {
+      public void save(@NotNull final DataOutput out, final CompiledDataValueContainer<V> value) throws IOException {
         final TIntObjectHashMap<V> underlying = value.myUnderlying;
         out.writeInt(underlying.size());
         final IOException[] ioException = {null};
@@ -187,7 +187,7 @@ public class ClassFilesIndexStorageBase<K, V> {
       }
 
       @Override
-      public CompiledDataValueContainer<V> read(final DataInput in) throws IOException {
+      public CompiledDataValueContainer<V> read(@NotNull final DataInput in) throws IOException {
         final TIntObjectHashMap<V> map = new TIntObjectHashMap<V>();
         final int size = in.readInt();
         for (int i = 0; i < size; i++) {

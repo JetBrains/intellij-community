@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,13 +95,15 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     };
   }
 
+  @NotNull
   public KeyDescriptor<String> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
+  @NotNull
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
-      public boolean acceptInput(final VirtualFile file) {
+      public boolean acceptInput(@NotNull final VirtualFile file) {
         FileType fileType = file.getFileType();
         final String extension = file.getExtension();
         return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface AbstractIndex<Key, Value> {
   @NotNull
-  ValueContainer<Value> getData(Key key) throws StorageException;
+  ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
-  boolean processAllKeys(Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+  boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 }

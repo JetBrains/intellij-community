@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,14 +260,14 @@ public class JarHandler extends JarHandlerBase {
             private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
             @Override
-            public void save(DataOutput out, CacheLibraryInfo value) throws IOException {
+            public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
               IOUtil.writeUTFFast(myBuffer, out, value.mySnapshotPath);
               out.writeLong(value.myModificationTime);
               out.writeLong(value.myFileLength);
             }
 
             @Override
-            public CacheLibraryInfo read(DataInput in) throws IOException {
+            public CacheLibraryInfo read(@NotNull DataInput in) throws IOException {
               return new CacheLibraryInfo(IOUtil.readUTFFast(myBuffer, in), in.readLong(), in.readLong());
             }
           }

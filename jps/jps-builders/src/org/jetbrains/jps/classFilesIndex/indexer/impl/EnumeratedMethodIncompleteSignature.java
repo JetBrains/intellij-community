@@ -53,14 +53,14 @@ public class EnumeratedMethodIncompleteSignature {
   public static DataExternalizer<EnumeratedMethodIncompleteSignature> createDataExternalizer() {
     return new DataExternalizer<EnumeratedMethodIncompleteSignature>() {
       @Override
-      public void save(final DataOutput out, final EnumeratedMethodIncompleteSignature value) throws IOException {
+      public void save(@NotNull final DataOutput out, final EnumeratedMethodIncompleteSignature value) throws IOException {
         out.writeInt(value.getOwner());
         out.writeInt(value.getName());
         out.writeBoolean(value.isStatic());
       }
 
       @Override
-      public EnumeratedMethodIncompleteSignature read(final DataInput in) throws IOException {
+      public EnumeratedMethodIncompleteSignature read(@NotNull final DataInput in) throws IOException {
         return new EnumeratedMethodIncompleteSignature(in.readInt(),
                                                        in.readInt(),
                                                        in.readBoolean());

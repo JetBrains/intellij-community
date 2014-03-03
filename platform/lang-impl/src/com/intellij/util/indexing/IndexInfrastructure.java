@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,23 +47,28 @@ public class IndexInfrastructure {
   private IndexInfrastructure() {
   }
 
+  @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexDirectory(indexName, true), indexName + ".ver");
   }
 
+  @NotNull
   public static File getStorageFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString());
   }
 
+  @NotNull
   public static File getInputIndexStorageFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString()+"_inputs");
+    return new File(getIndexRootDir(indexName), indexName +"_inputs");
   }
 
+  @NotNull
   public static File getIndexRootDir(@NotNull ID<?, ?> indexName) {
     return getIndexDirectory(indexName, false);
   }
 
-  private static File getIndexDirectory(ID<?, ?> indexName, boolean forVersion) {
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion) {
     final String dirName = indexName.toString().toLowerCase(Locale.US);
     // store StubIndices under StubUpdating index' root to ensure they are deleted
     // when StubUpdatingIndex version is changed
@@ -76,7 +81,7 @@ public class IndexInfrastructure {
 
   private static volatile long ourLastStamp; // ensure any file index stamp increases
 
-  public static synchronized void rewriteVersion(final File file, final int version) throws IOException {
+  public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
       FileUtil.delete(file);
@@ -108,7 +113,7 @@ public class IndexInfrastructure {
     }
   }
 
-  public static long getIndexCreationStamp(ID<?, ?> indexName) {
+  public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     Long version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version.longValue();
 
@@ -118,7 +123,7 @@ public class IndexInfrastructure {
     return stamp;
   }
 
-  public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
+  public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
     try {
       ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
@@ -137,7 +142,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  public static VirtualFile findFileById(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileById(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {
@@ -159,7 +164,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  public static VirtualFile findFileByIdIfCached(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {

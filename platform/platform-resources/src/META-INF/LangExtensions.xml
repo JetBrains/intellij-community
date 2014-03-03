@@ -343,6 +343,9 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
+    <projectService serviceInterface="com.intellij.ide.scratch.ScratchpadManager"
+                    serviceImplementation="com.intellij.ide.scratch.ScratchpadManagerImpl"/>
+
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="ansi"/>
@@ -875,6 +878,8 @@
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
+
+    <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
   </extensions>
 </idea-plugin>
 

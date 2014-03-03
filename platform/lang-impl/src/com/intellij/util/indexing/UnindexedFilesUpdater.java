@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,8 +50,9 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     return myIndex.getNumberOfPendingInvalidations();
   }
 
+  @NotNull
   @Override
-  public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
+  public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
     myIndex.filesUpdateStarted(myProject);
     CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
@@ -66,10 +68,11 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   @Override
-  public void processFile(final FileContent fileContent) {
+  public void processFile(@NotNull FileContent fileContent) {
     try {
       myIndex.indexFileContent(myProject, fileContent);
-    } finally {
+    }
+    finally {
       IndexingStamp.flushCache(fileContent.getVirtualFile());
     }
   }

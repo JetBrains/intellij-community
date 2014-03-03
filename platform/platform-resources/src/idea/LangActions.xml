@@ -319,6 +319,10 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.CreateScratchFileAction">
+      <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
+    </action>
+
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>

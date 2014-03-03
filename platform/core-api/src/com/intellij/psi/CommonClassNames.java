@@ -61,6 +61,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_LIST = "java.util.List";
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
   @NonNls String JAVA_UTIL_SET = "java.util.Set";
+  @NonNls String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   @NonNls String JAVA_UTIL_DATE = "java.util.Date";

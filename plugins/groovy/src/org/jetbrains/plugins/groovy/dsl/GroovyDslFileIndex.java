@@ -131,11 +131,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new MyInputFilter();
@@ -513,7 +515,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return "gdsl".equals(file.getExtension());
     }
   }
