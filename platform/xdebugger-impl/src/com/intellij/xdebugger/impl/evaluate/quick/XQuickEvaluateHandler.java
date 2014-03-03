@@ -44,11 +44,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   @Override
   public boolean isEnabled(@NotNull final Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session == null || !session.isSuspended()) {
-      return false;
-    }
-    XStackFrame stackFrame = session.getCurrentStackFrame();
-    return stackFrame != null && stackFrame.getEvaluator() != null;
+    return session != null && session.getDebugProcess().getEvaluator() != null;
   }
 
   @Override
@@ -58,11 +54,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
       return null;
     }
 
-    XStackFrame stackFrame = session.getCurrentStackFrame();
-    if (stackFrame == null) {
-      return null;
-    }
-    final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
+    final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {
       return null;
     }

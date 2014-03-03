@@ -23,6 +23,8 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -226,4 +228,9 @@ public abstract class XDebugProcess {
     return false;
   }
 
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
+    XStackFrame frame = getSession().getCurrentStackFrame();
+    return frame == null ? null : frame.getEvaluator();
+  }
 }
