@@ -33,7 +33,7 @@ public class Foo {
 import bar.Log
 
 public class Foo {
-Lo<caret>g l = bar.LogFactory.log();
+    Lo<caret>g l = bar.LogFactory.log();
 }
 ''')
   }
