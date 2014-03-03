@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class FilterMutableGraph extends AbstractMutableGraph<FilterMutableGraph.GraphWithElementsInfoImpl> {
+  private static final Logger LOG = Logger.getInstance(FilterMutableGraph.class);
 
   public static FilterMutableGraph newInstance(@NotNull PermanentGraph permanentGraph,
                                                @NotNull PermanentGraphLayout layout,
@@ -42,7 +44,10 @@ public class FilterMutableGraph extends AbstractMutableGraph<FilterMutableGraph.
                                                @NotNull Condition<Integer> isVisibleNode) {
 
     for (int i = 0; i < permanentGraph.nodesCount(); i++) {
-      visibleNodes.set(i, isVisibleNode.value(i) && visibleNodesInBranches.get(i));
+      if (isVisibleNode.value(i) && !visibleNodesInBranches.get(i))
+        LOG.debug("Filter give me commit, which hidden in current branches visibility; commitHashIndex: " + permanentGraph.getHashIndex(i));
+
+      visibleNodes.set(i, isVisibleNode.value(i));
     }
     TreeIntToIntMap visibleToReal = TreeIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
@@ -96,6 +101,8 @@ public class FilterMutableGraph extends AbstractMutableGraph<FilterMutableGraph.
     return realIndex < myPermanentGraph.nodesCount() - 1 && ! myVisibleNodes.get(realIndex + 1);
   }
 
+  // for future
+  @SuppressWarnings("unused")
   private void showHideFragment(int visibleRowIndex) {
     int startIndex = myVisibleToReal.getLongIndex(visibleRowIndex);
     int endIndex;

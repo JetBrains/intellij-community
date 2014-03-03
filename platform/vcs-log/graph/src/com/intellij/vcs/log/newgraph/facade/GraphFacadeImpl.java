@@ -36,15 +36,11 @@ import java.util.*;
 public class GraphFacadeImpl implements GraphFacade {
   @NotNull
   public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits, @NotNull final GraphColorManager colorManager) {
-    long ms;
-    ms = System.currentTimeMillis();
     GraphFlags flags = new GraphFlags(commits.size());
     final PermanentGraphImpl permanentGraph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
-    System.out.println("PermanentGraph:" + (System.currentTimeMillis() - ms));
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());
 
-    ms = System.currentTimeMillis();
     final PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, permanentGraph, new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
@@ -53,23 +49,6 @@ public class GraphFacadeImpl implements GraphFacade {
         return colorManager.compareHeads(hashIndex1, hashIndex2);
       }
     });
-    System.out.println("LayoutModel:" + (System.currentTimeMillis() - ms));
-
-
-    ms = System.currentTimeMillis();
-    for (int i = 0; i < permanentGraph.nodesCount(); i++) {
-      graphLayout.getOneOfHeadNodeIndex(i);
-    }
-    System.out.println("getOneOfHead:" + (System.currentTimeMillis() - ms));
-
-    ms = System.currentTimeMillis();
-    List<Integer> headers = new ArrayList<Integer>();
-    for (int i = 0; i < permanentGraph.nodesCount(); i++) {
-      if (permanentGraph.getUpNodes(i).size() == 0) {
-        headers.add(i);
-      }
-    }
-    System.out.println("graph walk:" + (System.currentTimeMillis() - ms));
 
     ElementColorManager elementColorManager = new ElementColorManager() {
       @NotNull
@@ -100,9 +79,16 @@ public class GraphFacadeImpl implements GraphFacade {
     myActionDispatcher = new GraphActionDispatcher(graphData);
   }
 
+  private void assertRange(int visibleRowIndex) {
+    if (visibleRowIndex < 0 || visibleRowIndex >= getVisibleCommitCount()) {
+      throw new IllegalArgumentException("Row not exist! Request row index: " + visibleRowIndex + ", count rows: " + getVisibleCommitCount());
+    }
+  }
+
   @NotNull
   @Override
   public PaintInfo paint(int visibleRow) {
+    assertRange(visibleRow);
     return myGraphData.getGraphRender().paint(visibleRow);
   }
 
@@ -120,6 +106,7 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @Override
   public int getCommitAtRow(int visibleRow) {
+    assertRange(visibleRow);
     int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
     return myGraphData.getPermanentGraph().getHashIndex(indexInPermanentGraph);
   }
@@ -146,12 +133,14 @@ public class GraphFacadeImpl implements GraphFacade {
       @NotNull
       @Override
       public Set<Integer> getContainingBranches(int visibleRow) {
+        assertRange(visibleRow);
         return Collections.emptySet();
       }
 
       @NotNull
       @Override
       public RowInfo getRowInfo(int visibleRow) {
+        assertRange(visibleRow);
         int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
         final int oneOfHeadNodeIndex = myGraphData.getPermanentGraphLayout().getOneOfHeadNodeIndex(indexInPermanentGraph);
         return new RowInfo() {
