@@ -316,11 +316,10 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static Map<PyGenericType, PyType> unifyGenericCall(@NotNull PyFunction function,
-                                                            @Nullable PyExpression receiver,
+  public static Map<PyGenericType, PyType> unifyGenericCall(@Nullable PyExpression receiver,
                                                             @NotNull Map<PyExpression, PyNamedParameter> arguments,
                                                             @NotNull TypeEvalContext context) {
-    final Map<PyGenericType, PyType> substitutions = collectCallGenerics(function, receiver, context);
+    final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
       if (p.isPositionalContainer() || p.isKeywordContainer()) {
@@ -336,8 +335,7 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull Callable callable, @Nullable PyExpression receiver,
-                                                               @NotNull TypeEvalContext context) {
+  public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
     // Collect generic params of object type
     final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();
@@ -346,14 +344,22 @@ public class PyTypeChecker {
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
-    final PyClass cls = (callable instanceof PyFunction) ? ((PyFunction)callable).getContainingClass() : null;
-    if (cls != null) {
-      final PyFunction init = cls.findInitOrNew(true);
-      // Unify generics in constructor
-      if (init != null) {
-        final PyType initType = init.getCallType(context, null);
-        if (initType != null) {
-          match(initType, qualifierType, context, substitutions);
+    // Unify generics in constructor
+    if (qualifierType != null) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      // TODO: Resolve to __new__ as well
+      final List<? extends RatedResolveResult> results = qualifierType.resolveMember(PyNames.INIT, null, AccessDirection.READ,
+                                                                                     resolveContext);
+      if (results != null && !results.isEmpty()) {
+        final PsiElement init = results.get(0).getElement();
+        if (init instanceof PyTypedElement) {
+          final PyType initType = context.getType((PyTypedElement)init);
+          if (initType instanceof PyCallableType) {
+            final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
+            if (initReturnType != null) {
+              match(initReturnType, qualifierType, context, substitutions);
+            }
+          }
         }
       }
     }

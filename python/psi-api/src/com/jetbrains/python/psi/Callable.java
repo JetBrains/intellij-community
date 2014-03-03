@@ -34,6 +34,12 @@ public interface Callable extends PyTypedElement, PyQualifiedNameOwner {
   PyParameterList getParameterList();
 
   /**
+   * Returns the return type of the callable independent of a call site.
+   */
+  @Nullable
+  PyType getReturnType(@NotNull TypeEvalContext context);
+
+  /**
    * Returns the type of the call to the callable.
    */
   @Nullable
