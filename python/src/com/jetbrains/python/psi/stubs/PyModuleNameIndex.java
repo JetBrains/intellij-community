@@ -70,11 +70,13 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(PythonFileType.INSTANCE);

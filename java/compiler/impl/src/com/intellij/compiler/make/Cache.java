@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -54,10 +55,10 @@ public class Cache {
     myStorePath = storePath;
     new File(storePath).mkdirs();
     myQNameToClassInfoMap = new CachedPersistentHashMap<Integer, ClassInfo>(getOrCreateFile("classes"), EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
-      public void save(DataOutput out, ClassInfo value) throws IOException {
+      public void save(@NotNull DataOutput out, ClassInfo value) throws IOException {
         value.save(out);
       }
-      public ClassInfo read(DataInput in) throws IOException {
+      public ClassInfo read(@NotNull DataInput in) throws IOException {
         return new ClassInfo(in);
       }
     }, cacheSize * 2) {
@@ -71,11 +72,11 @@ public class Cache {
     myQNameToSubclassesMap = new CompilerDependencyStorage<Integer>(getOrCreateFile("subclasses"), EnumeratorIntegerDescriptor.INSTANCE, cacheSize);
 
     myRemoteQNames = new PersistentHashMap<Integer, Boolean>(getOrCreateFile("remote"), EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<Boolean>() {
-      public void save(DataOutput out, Boolean value) throws IOException {
+      public void save(@NotNull DataOutput out, Boolean value) throws IOException {
         out.writeBoolean(value.booleanValue());
       }
 
-      public Boolean read(DataInput in) throws IOException {
+      public Boolean read(@NotNull DataInput in) throws IOException {
         return in.readBoolean();
       }
     }, cacheSize);

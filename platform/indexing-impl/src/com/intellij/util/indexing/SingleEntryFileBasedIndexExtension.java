@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *         Date: Feb 18, 2009
  */
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
+  @NotNull
   @Override
   public final KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,8 +112,8 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   public static class PersistentStateData<SourceState, OutputState> {
-    public final SourceState mySourceState;
-    public final OutputState myOutputState;
+    @NotNull public final SourceState mySourceState;
+    @NotNull public final OutputState myOutputState;
 
     private PersistentStateData(@NotNull SourceState sourceState, @NotNull OutputState outputState) {
       mySourceState = sourceState;
@@ -139,14 +139,14 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     }
 
     @Override
-    public void save(DataOutput out, KeyAndTargetData<Key> value) throws IOException {
+    public void save(@NotNull DataOutput out, KeyAndTargetData<Key> value) throws IOException {
       out.writeInt(value.myTarget);
       myKeyDescriptor.save(out, value.myKey);
     }
 
 
     @Override
-    public KeyAndTargetData<Key> read(DataInput in) throws IOException {
+    public KeyAndTargetData<Key> read(@NotNull DataInput in) throws IOException {
       int target = in.readInt();
       final Key item = myKeyDescriptor.read(in);
       return getKeyAndTargetData(item, target);
@@ -163,13 +163,13 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     }
 
     @Override
-    public void save(DataOutput out, PersistentStateData<SourceState, OutputState> value) throws IOException {
+    public void save(@NotNull DataOutput out, PersistentStateData<SourceState, OutputState> value) throws IOException {
       mySourceStateExternalizer.save(out, value.mySourceState);
       myOutputStateExternalizer.save(out, value.myOutputState);
     }
 
     @Override
-    public PersistentStateData<SourceState, OutputState> read(DataInput in) throws IOException {
+    public PersistentStateData<SourceState, OutputState> read(@NotNull DataInput in) throws IOException {
       SourceState sourceState = mySourceStateExternalizer.read(in);
       OutputState outputState = myOutputStateExternalizer.read(in);
       return new PersistentStateData<SourceState,OutputState>(sourceState, outputState);

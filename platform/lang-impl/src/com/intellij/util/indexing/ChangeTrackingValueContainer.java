@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.util.Computable;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -72,11 +73,13 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return getMergedData().size();
   }
 
+  @NotNull
   @Override
   public Iterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
   }
 
+  @NotNull
   @Override
   public List<Value> toValueList() {
     return getMergedData().toValueList();
@@ -87,11 +90,13 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return getMergedData().isAssociated(value, inputId);
   }
 
+  @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
     return getMergedData().getValueAssociationPredicate(value);
   }
 
+  @NotNull
   @Override
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);

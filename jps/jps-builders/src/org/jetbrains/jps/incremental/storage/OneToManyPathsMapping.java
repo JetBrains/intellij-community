@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,13 +83,13 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
 
   private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
     private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-    public void save(DataOutput out, Collection<String> value) throws IOException {
+    public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
         IOUtil.writeUTFFast(myBuffer, out, str);
       }
     }
 
-    public Collection<String> read(DataInput in) throws IOException {
+    public Collection<String> read(@NotNull DataInput in) throws IOException {
       final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

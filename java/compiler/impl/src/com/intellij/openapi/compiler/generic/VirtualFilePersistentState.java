@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.compiler.generic;
 
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -38,12 +39,12 @@ public class VirtualFilePersistentState {
 
   private static class VirtualFileStateExternalizer implements DataExternalizer<VirtualFilePersistentState> {
     @Override
-    public void save(DataOutput out, VirtualFilePersistentState value) throws IOException {
+    public void save(@NotNull DataOutput out, VirtualFilePersistentState value) throws IOException {
       out.writeLong(value.getSourceTimestamp());
     }
 
     @Override
-    public VirtualFilePersistentState read(DataInput in) throws IOException {
+    public VirtualFilePersistentState read(@NotNull DataInput in) throws IOException {
       return new VirtualFilePersistentState(in.readLong());
     }
 

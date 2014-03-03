@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import gnu.trove.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -139,6 +140,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return true;
   }
 
+  @NotNull
   @Override
   public Iterator<Value> getValueIterator() {
     if (myInputIdMapping != null) {
@@ -190,6 +192,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
+  @NotNull
   @Override
   public List<Value> toValueList() {
     if (myInputIdMapping == null) {
@@ -216,6 +219,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return false;
   }
 
+  @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
     final Object input = getInput(value);
@@ -247,6 +251,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     };
   }
 
+  @NotNull
   @Override
   public IntIterator getInputIdsIterator(Value value) {
     final Object input = getInput(value);
@@ -335,6 +340,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   };
 
+  @NotNull
   public ValueContainerImpl<Value> copy() {
     ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
 

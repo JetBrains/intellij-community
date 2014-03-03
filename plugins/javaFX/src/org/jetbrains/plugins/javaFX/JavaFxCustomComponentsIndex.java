@@ -81,11 +81,13 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public DataExternalizer<Set<String>> getValueExternalizer() {
     return myDataExternalizer;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -97,6 +99,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
     return KEY;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;

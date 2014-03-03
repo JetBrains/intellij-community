@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,13 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
-    public boolean acceptInput(VirtualFile file) {
+    public boolean acceptInput(@NotNull VirtualFile file) {
       return !file.getFileType().isBinary();
     }
   };
   private static final FileBasedIndex.InputFilter NO_FILES = new FileBasedIndex.InputFilter() {
     @Override
-    public boolean acceptInput(VirtualFile file) {
+    public boolean acceptInput(@NotNull VirtualFile file) {
       return false;
     }
   };
@@ -76,11 +76,13 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     if (ENABLED) {
