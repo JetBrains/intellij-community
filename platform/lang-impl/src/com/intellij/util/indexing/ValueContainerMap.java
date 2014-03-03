@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -71,7 +86,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
 
     @Override
-    public void save(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
+    public void save(@NotNull final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       saveImpl(out, container);
     }
 
@@ -79,29 +94,24 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       DataInputOutputUtil.writeSINT(out, -inputId);
     }
 
-    private void saveImpl(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
+    private void saveImpl(@NotNull DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       DataInputOutputUtil.writeSINT(out, container.size());
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
         myExternalizer.save(out, value);
 
         final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
-        if (ids != null) {
-          DataInputOutputUtil.writeSINT(out, ids.size());
-          while (ids.hasNext()) {
-            final int id = ids.next();
-            DataInputOutputUtil.writeSINT(out, id);
-          }
-        }
-        else {
-          DataInputOutputUtil.writeSINT(out, 0);
+        DataInputOutputUtil.writeSINT(out, ids.size());
+        while (ids.hasNext()) {
+          final int id = ids.next();
+          DataInputOutputUtil.writeSINT(out, id);
         }
       }
     }
 
     @NotNull
     @Override
-    public ValueContainerImpl<T> read(final DataInput in) throws IOException {
+    public ValueContainerImpl<T> read(@NotNull final DataInput in) throws IOException {
       DataInputStream stream = (DataInputStream)in;
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
 

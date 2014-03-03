@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +101,7 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      final PsiSubstitutor substitutor = session.resolveDependencies(session.getInferenceVariables());
+      final PsiSubstitutor substitutor = session.retrieveNonPrimitiveEqualsBounds(session.getInferenceVariables());
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
@@ -119,12 +118,8 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+      if (!TypeConversionUtil.containsWildcards(parameterization) && psiClassType.isAssignableFrom(parameterization)) {
         return parameterization;
-      }
-
-      if (!psiClassType.isAssignableFrom(parameterization)) {
-        return null;
       }
 
       return getNonWildcardParameterization((PsiClassType)psiClassType);
@@ -169,27 +164,32 @@ public class FunctionalInterfaceParameterizationUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
-          final PsiClassType[] extendsListTypes = typeParameters[i].getExtendsListTypes();
-          final PsiClassType Bi = extendsListTypes.length > 0 ? extendsListTypes[0]
-                                                              : PsiType.getJavaLangObject(psiClass.getManager(),
-                                                                                          GlobalSearchScope.allScope(psiClass.getProject()));
-          if (PsiPolyExpressionUtil.mentionsTypeParameters(Bi, typeParametersSet)) {
-            return null;
+          final PsiType bound = GenericsUtil.eliminateWildcards(((PsiWildcardType)paramType).getBound(), false);
+          if (((PsiWildcardType)paramType).isSuper()) {
+            newParameters[i] = bound;
           }
-
-          final PsiType bound = ((PsiWildcardType)paramType).getBound();
-          if (bound == null) {
-            newParameters[i] = Bi;
-          } else if (((PsiWildcardType)paramType).isExtends()){
-            newParameters[i] = GenericsUtil.getGreatestLowerBound(Bi, GenericsUtil.eliminateWildcards(bound, false));
-          } else {
-            newParameters[i] = GenericsUtil.eliminateWildcards(bound, false);
+          else {
+            newParameters[i] = bound != null ? bound : PsiType.getJavaLangObject(psiClass.getManager(), psiClassType.getResolveScope());
+            for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
+              if (!PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+                newParameters[i] = GenericsUtil.getGreatestLowerBound(paramBound, newParameters[i]);
+              }
+            }
           }
         } else {
           newParameters[i] = paramType;
         }
       }
-      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, newParameters);
+
+      if (!isWellFormed(psiClass, typeParameters, newParameters)) {
+        return null;
+      }
+
+      final PsiClassType parameterization = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, newParameters);
+      if (!psiClassType.isAssignableFrom(parameterization)) {
+        return null;
+      }
+      return parameterization;
     }
     return null;
   }

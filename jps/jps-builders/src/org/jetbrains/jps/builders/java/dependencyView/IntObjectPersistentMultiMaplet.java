@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,14 +245,14 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
     }
 
     @Override
-    public void save(final DataOutput out, final Collection<V> value) throws IOException {
+    public void save(@NotNull final DataOutput out, final Collection<V> value) throws IOException {
       for (V x : value) {
         myElementExternalizer.save(out, x);
       }
     }
 
     @Override
-    public Collection<V> read(final DataInput in) throws IOException {
+    public Collection<V> read(@NotNull final DataInput in) throws IOException {
       final Collection<V> result = myCollectionFactory.create();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

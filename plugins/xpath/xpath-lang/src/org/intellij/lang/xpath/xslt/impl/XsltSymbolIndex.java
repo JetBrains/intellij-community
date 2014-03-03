@@ -132,21 +132,24 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         };
     }
 
+    @NotNull
     @Override
     public DataExternalizer<Kind> getValueExternalizer() {
         return new EnumDataDescriptor<Kind>(Kind.class);
     }
 
+    @NotNull
     @Override
     public KeyDescriptor<String> getKeyDescriptor() {
         return new EnumeratorStringDescriptor();
     }
 
+    @NotNull
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
             @Override
-            public boolean acceptInput(VirtualFile file) {
+            public boolean acceptInput(@NotNull VirtualFile file) {
                 return !(file.getFileSystem() instanceof JarFileSystem);
             }
         };

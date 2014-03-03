@@ -221,7 +221,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
-        return "'" + input.replace("\\", "\\\\") + "'";
+        return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
       }
     }));
 

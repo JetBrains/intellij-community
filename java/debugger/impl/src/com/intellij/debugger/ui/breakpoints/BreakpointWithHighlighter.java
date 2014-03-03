@@ -34,10 +34,12 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -383,7 +385,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     if (myVisible) {
       if (isValid()) {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-        breakpointManager.updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), getDescription());
+        breakpointManager.updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), null);
       }
       //RangeHighlighter highlighter = myHighlighter;
       //if (highlighter != null && highlighter.isValid() && isValid()) {
@@ -424,11 +426,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   public boolean isAt(@NotNull Document document, int offset) {
-    RangeHighlighter highlighter = getHighlighter();
-    return highlighter != null &&
-           highlighter.isValid() &&
-           document.equals(highlighter.getDocument()) &&
-           getSourcePosition().getLine() == document.getLineNumber(offset);
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    int line = document.getLineNumber(offset);
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    return position != null && position.getLine() == line && position.getFile().equals(file);
   }
 
   protected void reload(PsiFile psiFile) {

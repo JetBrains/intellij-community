@@ -21,9 +21,12 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.diff.Diff;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -56,25 +59,26 @@ public class DiffFragmentBuilder {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffFragmentBuilder");
 
-  private final String[] mySource1;
-  private final String[] mySource2;
+  @NotNull private final DiffString[] mySource1;
+  @NotNull private final DiffString[] mySource2;
   private int myLastLine1 = 1;
   private int myLastLine2 = 1;
-  private final List<DiffFragment> myData = new LinkedList<DiffFragment>();
+  @NotNull private final List<DiffFragment> myData = new LinkedList<DiffFragment>();
 
-  public DiffFragmentBuilder(String[] source1, String[] source2) {
+  public DiffFragmentBuilder(@NotNull DiffString[] source1, @NotNull DiffString[] source2) {
     mySource1 = source1;
     mySource2 = source2;
     init();
   }
 
+  @NotNull
   private List<DiffFragment> getFragments() {
     return myData;
   }
 
   private void finish() {
-    String text1 = null;
-    String text2 = null;
+    DiffString text1 = null;
+    DiffString text2 = null;
     if (myLastLine1 <= mySource1.length) {
       text1 = concatenate(mySource1, myLastLine1, mySource1.length);
     }
@@ -91,10 +95,10 @@ public class DiffFragmentBuilder {
     myLastLine1 = myLastLine2 = 1;
   }
 
-  private void append(int line, TextRange range) {
+  private void append(int line, @NotNull TextRange range) {
     LOG.debug("DiffFragmentBuilder.append(" + line + "," + range + "), modified:");
-    String text1 = null;
-    String text2 = null;
+    DiffString text1 = null;
+    DiffString text2 = null;
     int start = range.getStartOffset();
     int end = range.getEndOffset();
     if (myLastLine1 <= line) {
@@ -111,10 +115,10 @@ public class DiffFragmentBuilder {
     myLastLine2 = end + 1;
   }
 
-  private void change(TextRange range1, TextRange range2) {
+  private void change(@NotNull TextRange range1, @NotNull TextRange range2) {
     LOG.debug("DiffFragmentBuilder.change(" + range1 + "," + range2 + ")");
 
-    String text1 = null, text2 = null;
+    DiffString text1 = null, text2 = null;
     int start1 = range1.getStartOffset();
     int end1 = range1.getEndOffset();
     int start2 = range2.getStartOffset();
@@ -134,11 +138,11 @@ public class DiffFragmentBuilder {
     myLastLine2 = end2 + 1;
   }
 
-  private void delete(TextRange range, int line) {
+  private void delete(@NotNull TextRange range, int line) {
     LOG.debug("DiffFragmentBuilder.delete(" + range + "," + line + ")");
 
-    String text1 = null;
-    String text2 = null;
+    DiffString text1 = null;
+    DiffString text2 = null;
     int start = range.getStartOffset();
     int end = range.getEndOffset();
     if (myLastLine1 < start) {
@@ -155,15 +159,13 @@ public class DiffFragmentBuilder {
     myLastLine2 = line + 1;
   }
 
-  private static String concatenate(String[] strings, int start, int end) {
-    int len = 0;
-    for (int i = start - 1; i < end; i++) len += strings[i] == null ? 0 : strings[i].length();
-    StringBuilder buffer = new StringBuilder(len);
-    for (int i = start - 1; i < end; i++) buffer.append(strings[i]);
-    return buffer.toString();
+  @NotNull
+  private static DiffString concatenate(@NotNull DiffString[] strings, int start, int end) {
+    return DiffString.concatenate(strings, start - 1, end - start + 1);
   }
 
-  public DiffFragment[] buildFragments(Diff.Change change) {
+  @NotNull
+  public DiffFragment[] buildFragments(@Nullable Diff.Change change) {
     while (change != null) {
       if (change.inserted > 0 && change.deleted > 0) {
         change(

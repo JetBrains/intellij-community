@@ -27,7 +27,7 @@ class UnsupportedFeatures {
     for (String s : args) { System.out.println(s); }
 
     List<String> list =
-      new ArrayList<>();
+      new ArrayList<error descr="Diamond types are not supported at this language level"><></error>();
 
     for (String s : list) {}
     Arrays.asList("");

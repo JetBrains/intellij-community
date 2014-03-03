@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,27 @@ import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
+  @Nullable
   private final ProjectFileIndex myIndex;
 
   public JavaSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
     super(delegate);
-    myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+
+    Project project = getProject();
+    myIndex = project != null ? ProjectRootManager.getInstance(project).getFileIndex()
+                              : null;
   }
 
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
     if (!super.contains(file)) {
+      return false;
+    }
+
+    if (myIndex == null) {
       return false;
     }
 

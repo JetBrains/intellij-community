@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -117,10 +116,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       final List<PsiMethod> methods;
       if (clazz instanceof GrTypeDefinition) {
         methods = new ArrayList<PsiMethod>();
-        final GrTypeDefinitionBody body = ((GrTypeDefinition)clazz).getBody();
-        if (body != null) {
-          GrClassImplUtil.collectMethodsFromBody(body, methods);
-        }
+        GrClassImplUtil.collectMethodsFromBody((GrTypeDefinition)clazz, methods);
       }
       else {
         methods = Arrays.asList(clazz.getMethods());
@@ -247,10 +243,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     final List<PsiMethod> methods;
     if (currentClass instanceof GrTypeDefinition) {
       methods = new ArrayList<PsiMethod>();
-      final GrTypeDefinitionBody body = ((GrTypeDefinition)currentClass).getBody();
-      if (body != null) {
-        GrClassImplUtil.collectMethodsFromBody(body, methods);
-      }
+      GrClassImplUtil.collectMethodsFromBody((GrTypeDefinition)currentClass, methods);
     }
     else {
       methods = Arrays.asList(currentClass.getMethods());

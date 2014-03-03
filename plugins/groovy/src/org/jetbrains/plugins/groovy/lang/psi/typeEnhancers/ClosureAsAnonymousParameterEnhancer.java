@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -39,14 +39,14 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
   @Override
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
 
-    Set<PsiType> expectedTypes;
+    List<PsiType> expectedTypes;
 
     if (closure.getParent() instanceof GrSafeCastExpression) {
       GrSafeCastExpression safeCastExpression = (GrSafeCastExpression)closure.getParent();
       GrTypeElement typeElement = safeCastExpression.getCastTypeElement();
       if (typeElement != null) {
         PsiType castType = typeElement.getType();
-        expectedTypes = ContainerUtil.newHashSet(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
+        expectedTypes = ContainerUtil.newArrayList(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
         for (Iterator<PsiType> iterator = expectedTypes.iterator(); iterator.hasNext(); ) {
           if (!TypesUtil.isAssignable(iterator.next(), castType, closure)) {
             iterator.remove();

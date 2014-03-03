@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -71,6 +73,18 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   }
 
   @Override
+  public String getDisplayText(XLineBreakpoint<P> breakpoint) {
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
+      BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpointManager.findBreakpoint(breakpoint);
+      if (javaBreakpoint != null) {
+        return javaBreakpoint.getDescription();
+      }
+      else {
+        return super.getDisplayText(breakpoint);
+      }
+  }
+
+  @Override
   public final boolean canPutAt(@NotNull VirtualFile file, final int line, @NotNull Project project) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     // JSPX supports jvm debugging, but not in XHTML files
@@ -94,21 +108,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
         if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
           return true;
         }
-        // first check fields
-        PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
-        if(field != null) {
-          result.set(JavaFieldBreakpointType.class);
-          return false;
-        }
-        // then methods
-        PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-        if(method != null && document.getLineNumber(method.getTextOffset()) == line) {
-          result.set(JavaMethodBreakpointType.class);
-          return false;
-        }
-        // then regular statements
-        PsiElement child = element;
+        PsiElement parent = element;
         while(element != null) {
+          // skip modifiers
+          if (element instanceof PsiModifierList) {
+            element = element.getParent();
+            continue;
+          }
 
           final int offset = element.getTextOffset();
           if (offset >= 0) {
@@ -116,17 +122,27 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
               break;
             }
           }
-          child = element;
+          parent = element;
           element = element.getParent();
         }
 
-        if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(line)) {
-          PsiCodeBlock body = ((PsiMethod)child).getBody();
-          if(body != null) {
-            PsiStatement[] statements = body.getStatements();
-            if (statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == line) {
-              result.set(JavaLineBreakpointType.class);
+        if(parent instanceof PsiMethod) {
+          if (parent.getTextRange().getEndOffset() >= document.getLineEndOffset(line)) {
+            PsiCodeBlock body = ((PsiMethod)parent).getBody();
+            if (body != null) {
+              PsiStatement[] statements = body.getStatements();
+              if (statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == line) {
+                result.set(JavaLineBreakpointType.class);
+              }
             }
+          }
+          if (result.isNull()) {
+            result.set(JavaMethodBreakpointType.class);
+          }
+        }
+        else if (parent instanceof PsiField) {
+          if (result.isNull()) {
+            result.set(JavaFieldBreakpointType.class);
           }
         }
         else {

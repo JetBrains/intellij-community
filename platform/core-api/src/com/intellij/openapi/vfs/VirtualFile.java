@@ -730,10 +730,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
+
+  /**
+   * @return Line separator for this file.
+   * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
+   * @see com.intellij.util.LineSeparator
+   */
   public String getDetectedLineSeparator() {
     return getUserData(DETECTED_LINE_SEPARATOR_KEY);
   }
-  public void setDetectedLineSeparator(String separator) {
+  public void setDetectedLineSeparator(@Nullable String separator) {
     putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
 }

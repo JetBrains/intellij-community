@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 /**
  * Container for authentication data:
- * - host
- * - login
+ * * host
+ * * credentials
  *    - login/password pair
- *    or
+ *        or
+ *    - login/password pair/2 factor code
+ *        or
  *    - OAuth2 access token
  *
  * @author Aleksey Pivovarov
@@ -38,7 +40,6 @@ public class GithubAuthData {
   @Nullable private final TokenAuth myTokenAuth;
   private final boolean myUseProxy;
 
-
   private GithubAuthData(@NotNull AuthType authType,
                          @NotNull String host,
                          @Nullable BasicAuth basicAuth,
@@ -51,6 +52,10 @@ public class GithubAuthData {
     myUseProxy = useProxy;
   }
 
+  public static GithubAuthData createFromSettings() {
+    return GithubSettings.getInstance().getAuthData();
+  }
+
   public static GithubAuthData createAnonymous() {
     return createAnonymous(GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
@@ -61,6 +66,13 @@ public class GithubAuthData {
 
   public static GithubAuthData createBasicAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
     return new GithubAuthData(AuthType.BASIC, host, new BasicAuth(login, password), null, true);
+  }
+
+  public static GithubAuthData createBasicAuthTF(@NotNull String host,
+                                                 @NotNull String login,
+                                                 @NotNull String password,
+                                                 @NotNull String code) {
+    return new GithubAuthData(AuthType.BASIC, host, new BasicAuth(login, password, code), null, true);
   }
 
   public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
@@ -95,13 +107,28 @@ public class GithubAuthData {
     return myUseProxy;
   }
 
+  @NotNull
+  public GithubAuthData copyWithTwoFactorCode(@NotNull String code) {
+    if (myBasicAuth == null) {
+      throw new IllegalStateException("Two factor authentication can be used only with Login/Password");
+    }
+
+    return createBasicAuthTF(getHost(), myBasicAuth.getLogin(), myBasicAuth.getPassword(), code);
+  }
+
   public static class BasicAuth {
     @NotNull private final String myLogin;
     @NotNull private final String myPassword;
+    @Nullable private final String myCode;
 
     private BasicAuth(@NotNull String login, @NotNull String password) {
+      this(login, password, null);
+    }
+
+    private BasicAuth(@NotNull String login, @NotNull String password, @Nullable String code) {
       myLogin = login;
       myPassword = password;
+      myCode = code;
     }
 
     @NotNull
@@ -112,6 +139,11 @@ public class GithubAuthData {
     @NotNull
     public String getPassword() {
       return myPassword;
+    }
+
+    @Nullable
+    public String getCode() {
+      return myCode;
     }
   }
 

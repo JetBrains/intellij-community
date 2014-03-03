@@ -69,6 +69,10 @@ public class Alarm implements Disposable {
     }
   }
 
+  public void checkDisposed() {
+    LOG.assertTrue(!myDisposed, "Already disposed");
+  }
+
   public enum ThreadToUse {
     SWING_THREAD,
     SHARED_THREAD,
@@ -158,7 +162,7 @@ public class Alarm implements Disposable {
 
   protected void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
-      LOG.assertTrue(!myDisposed, "Already disposed");
+      checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
 
       if (myActivationComponent == null || myActivationComponent.isShowing()) {

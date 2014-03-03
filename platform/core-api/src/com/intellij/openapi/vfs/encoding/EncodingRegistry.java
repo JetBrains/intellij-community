@@ -53,6 +53,11 @@ public abstract class EncodingRegistry {
 
   public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);
 
+  @Nullable("null means 'use system-default'")
+  public Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
+    return null;
+  }
+
   public static EncodingRegistry getInstance() {
     if (ourInstanceGetter == null) {
       return (EncodingRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.vfs.encoding.EncodingManager");

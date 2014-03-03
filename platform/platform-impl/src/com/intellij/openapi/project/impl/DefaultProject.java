@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,14 +31,5 @@ public class DefaultProject extends ProjectImpl {
   @Override
   public boolean isDefault() {
     return true;
-  }
-
-  @Override
-  public synchronized void dispose() {
-    if (!ApplicationManager.getApplication().isDisposeInProgress() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      Logger.getInstance(DefaultProject.class).error(new Exception("Too young to die"));
-    }
-
-    super.dispose();
   }
 }

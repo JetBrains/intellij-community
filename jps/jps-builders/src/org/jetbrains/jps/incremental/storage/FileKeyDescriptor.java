@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -31,11 +32,11 @@ import java.io.IOException;
 public final class FileKeyDescriptor implements KeyDescriptor<File> {
   private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
-  public void save(DataOutput out, File value) throws IOException {
+  public void save(@NotNull DataOutput out, File value) throws IOException {
     IOUtil.writeUTFFast(buffer, out, value.getPath());
   }
 
-  public File read(DataInput in) throws IOException {
+  public File read(@NotNull DataInput in) throws IOException {
     return new File(IOUtil.readUTFFast(buffer, in));
   }
 

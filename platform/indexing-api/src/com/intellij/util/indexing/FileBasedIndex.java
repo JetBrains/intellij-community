@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public abstract class FileBasedIndex implements BaseComponent {
    * @param project it is guaranteed to return data which is up-to-date withing the project
    *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, Processor<K> processor, @Nullable Project project);
+  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @Nullable Project project);
 
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
@@ -156,7 +156,7 @@ public abstract class FileBasedIndex implements BaseComponent {
   * Author: dmitrylomov
   */
   public interface InputFilter {
-    boolean acceptInput(VirtualFile file);
+    boolean acceptInput(@NotNull VirtualFile file);
   }
 
   public interface FileTypeSpecificInputFilter extends InputFilter {

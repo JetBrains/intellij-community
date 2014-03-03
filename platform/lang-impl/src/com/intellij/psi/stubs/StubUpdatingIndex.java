@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /*
  * @author max
@@ -54,13 +54,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
-    public void save(final DataOutput out, @NotNull final SerializedStubTree v) throws IOException {
+    public void save(@NotNull final DataOutput out, @NotNull final SerializedStubTree v) throws IOException {
       v.write(out);
     }
 
     @NotNull
     @Override
-    public SerializedStubTree read(final DataInput in) throws IOException {
+    public SerializedStubTree read(@NotNull final DataInput in) throws IOException {
       return new SerializedStubTree(in);
     }
   };
@@ -226,11 +226,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @NotNull
   @Override
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final ID<Integer, SerializedStubTree> indexId, @NotNull final FileBasedIndex owner, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final ID<Integer, SerializedStubTree> indexId, @NotNull final FileBasedIndex owner, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
     throws StorageException {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
-      memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
+      memStorage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {
           ((StubIndexImpl)StubIndex.getInstance()).setDataBufferingEnabled(newState);
@@ -294,7 +294,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     @Override
     protected void updateWithMap(final int inputId,
                                  @NotNull final Map<Integer, SerializedStubTree> newData,
-                                 @NotNull Callable<Collection<Integer>> oldKeysGetter)
+                                 @NotNull NotNullComputable<Collection<Integer>> oldKeysGetter)
       throws StorageException {
 
       checkNameStorage();

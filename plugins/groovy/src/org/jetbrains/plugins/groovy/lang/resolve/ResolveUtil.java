@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -914,6 +915,33 @@ public class ResolveUtil {
     else {
       return qualifier == null;
     }
+  }
+
+  @NotNull
+  public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull PsiElement place,
+                                                                             @NotNull GroovyResolveResult[] variants,
+                                                                             @NotNull GrNamedArgument[] namedArguments,
+                                                                             @NotNull GrExpression[] expressionArguments,
+                                                                             @NotNull GrClosableBlock[] closureArguments,
+                                                                             @NotNull GrExpression arg) {
+    List<Pair<PsiParameter, PsiType>> expectedParams = ContainerUtil.newArrayList();
+
+    for (GroovyResolveResult variant : variants) {
+      final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
+        variant, place, true, true, namedArguments, expressionArguments, closureArguments
+      );
+
+      if (map != null) {
+        final Pair<PsiParameter, PsiType> pair = map.get(arg);
+        ContainerUtil.addIfNotNull(expectedParams, pair);
+      }
+    }
+    return expectedParams;
+  }
+
+  @NotNull
+  public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull GrCall call, @NotNull GrExpression arg) {
+    return collectExpectedParamsByArg(arg, call.getCallVariants(arg), call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), arg);
   }
 
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {

@@ -116,7 +116,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               params[i] = typeParams[i];
             }
           }
-          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() 
+                                                 ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
           for (PsiTypeParameter typeParameter : siteSubstitutor.getSubstitutionMap().keySet()) {
             substitutor = substitutor.put(typeParameter, substitutor.substitute(siteSubstitutor.substitute(typeParameter)));
           }
@@ -129,7 +130,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             callSession.initExpressionConstraints(parameters, args, myExpression, method);
           }
-          callSession.registerConstraints(returnType, myT);
+          final boolean accepted = callSession.repeatInferencePhases(true);
+          if (!accepted) {
+            //todo return false;
+          }
+          callSession.registerConstraints(returnType, substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
             final Collection<InferenceVariable> inferenceVariables = callSession.getInferenceVariables();
             if (sameMethodCall) {

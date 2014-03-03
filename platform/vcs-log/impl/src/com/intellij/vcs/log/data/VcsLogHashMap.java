@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,12 @@ class VcsLogHashMap implements Disposable {
 
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {
     @Override
-    public void save(DataOutput out, Hash value) throws IOException {
+    public void save(@NotNull DataOutput out, Hash value) throws IOException {
       out.writeUTF(value.asString());
     }
 
     @Override
-    public Hash read(DataInput in) throws IOException {
+    public Hash read(@NotNull DataInput in) throws IOException {
       return HashImpl.build(in.readUTF());
     }
 

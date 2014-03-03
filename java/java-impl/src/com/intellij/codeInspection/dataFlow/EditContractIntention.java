@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -48,21 +47,14 @@ public class EditContractIntention extends BaseIntentionAction {
 
   @Nullable
   private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    if (element == null) return null;
-    if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
-      final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(element);
-      if (owner instanceof PsiMethod) {
-        PsiElement original = owner.getOriginalElement();
-        if (original instanceof PsiMethod) {
-          return (PsiMethod)original;
-        }
-        return (PsiMethod)owner;
-      }
+    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
+    if (owner instanceof PsiMethod &&
+        (!owner.getManager().isInProject(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
+      PsiElement original = owner.getOriginalElement();
+      return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }
     return null;
   }
-
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

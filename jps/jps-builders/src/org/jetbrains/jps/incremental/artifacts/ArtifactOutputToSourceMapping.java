@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
@@ -85,7 +86,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
     @Override
-    public void save(DataOutput out, List<SourcePathAndRootIndex> value) throws IOException {
+    public void save(@NotNull DataOutput out, List<SourcePathAndRootIndex> value) throws IOException {
       for (SourcePathAndRootIndex pair : value) {
         IOUtil.writeUTFFast(myBuffer, out, pair.myPath);
         out.writeInt(pair.getRootIndex());
@@ -93,7 +94,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     }
 
     @Override
-    public List<SourcePathAndRootIndex> read(DataInput in) throws IOException {
+    public List<SourcePathAndRootIndex> read(@NotNull DataInput in) throws IOException {
       List<SourcePathAndRootIndex> result = new SmartList<SourcePathAndRootIndex>();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

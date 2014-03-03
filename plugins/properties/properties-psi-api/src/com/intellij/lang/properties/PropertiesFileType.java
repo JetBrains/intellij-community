@@ -63,12 +63,10 @@ public class PropertiesFileType extends LanguageFileType {
 
   @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
-    final EncodingRegistry encodingManager = EncodingRegistry.getInstance();
-    if (encodingManager != null) {
-      final Charset encoding = encodingManager.getEncoding(file, true);
-      if (encoding != null) return encoding.toString();
+    Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
+    if (charset == null) {
+      charset = CharsetToolkit.getDefaultSystemCharset();
     }
-    final Charset charset = CharsetToolkit.getDefaultSystemCharset();
-    return charset != null ? charset.toString() : null;
+    return charset != null ? charset.name() : null;
   }
 }

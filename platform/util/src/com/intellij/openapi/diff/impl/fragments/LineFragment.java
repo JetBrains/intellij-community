@@ -16,10 +16,12 @@
 package com.intellij.openapi.diff.impl.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -147,9 +149,10 @@ public class LineFragment extends LineBlock implements Fragment {
     return myChildren == null || myChildren.isEmpty() ? null : myChildren.iterator();
   }
 
-  public String getText(String text, FragmentSide side) {
+  @NotNull
+  public DiffString getText(@NotNull DiffString text, @NotNull FragmentSide side) {
     TextRange range = getRange(side);
-    return range.substring(text);
+    return text.substring(range.getStartOffset(), range.getEndOffset());
   }
 
 
@@ -186,7 +189,7 @@ public class LineFragment extends LineBlock implements Fragment {
     }
     boolean hasLineChildren = false;
     boolean hasInlineChildren = false;
-    for (; iterator.hasNext();) {
+    while(iterator.hasNext()) {
       Fragment fragment = iterator.next();
       boolean lineChild = fragment instanceof LineFragment;
       hasLineChildren |= lineChild;

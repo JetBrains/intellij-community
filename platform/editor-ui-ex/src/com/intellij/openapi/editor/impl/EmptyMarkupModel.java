@@ -109,7 +109,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
+  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     return null;
   }
 

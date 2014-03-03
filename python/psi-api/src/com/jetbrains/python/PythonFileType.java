@@ -16,11 +16,15 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +45,7 @@ import java.util.regex.Pattern;
  */
 public class PythonFileType extends LanguageFileType {
   private static final Pattern ENCODING_PATTERN = Pattern.compile("coding[:=]\\s*([-\\w.]+)");
+  public static final int MAX_CHARSET_ENCODING_LINE = 2;
 
   public static PythonFileType INSTANCE = new PythonFileType();
 
@@ -100,14 +105,28 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Nullable
-  public static String getCharsetFromEncodingDeclaration(String content) {
+  public static String getCharsetFromEncodingDeclaration(@NotNull PsiFile file) {
+    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final String content;
+    if (document != null && document.getLineCount() > MAX_CHARSET_ENCODING_LINE) {
+      final int offset = document.getLineEndOffset(MAX_CHARSET_ENCODING_LINE);
+      content = document.getText(TextRange.create(0, offset));
+    }
+    else {
+      content = file.getText();
+    }
+    return getCharsetFromEncodingDeclaration(content);
+  }
+
+  @Nullable
+  private static String getCharsetFromEncodingDeclaration(@Nullable String content) {
     if (content == null || content.isEmpty()) {
       return null;
     }
     try {
       final BufferedReader reader = new BufferedReader(new StringReader(content));
       try {
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < MAX_CHARSET_ENCODING_LINE; i++) {
           final String line = reader.readLine();
           if (line == null) {
             return null;

@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,19 +36,28 @@ import java.util.List;
 public class PresetBlocksDiffPolicy implements DiffPolicy {
   // fragment _start_ offsets
   private List<BeforeAfter<TextRange>> myRanges;
-  private final DiffPolicy myDelegate;
+  @NotNull private final DiffPolicy myDelegate;
 
-  public PresetBlocksDiffPolicy(DiffPolicy delegate) {
+  public PresetBlocksDiffPolicy(@NotNull DiffPolicy delegate) {
     myDelegate = delegate;
   }
 
+  @TestOnly
+  @NotNull
   @Override
-  public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
+  public DiffFragment[] buildFragments(@NotNull String text1, @NotNull String text2) throws FilesTooBigForDiffException {
+    return buildFragments(DiffString.create(text1), DiffString.create(text2));
+  }
+
+  @NotNull
+  @Override
+  public DiffFragment[] buildFragments(@NotNull DiffString text1, @NotNull DiffString text2) throws FilesTooBigForDiffException {
     final List<DiffFragment> fragments = new ArrayList<DiffFragment>();
     for (int i = 0; i < myRanges.size(); i++) {
       final BeforeAfter<TextRange> range = myRanges.get(i);
-      fragments.addAll(Arrays.asList(myDelegate.buildFragments(new String(text1.substring(range.getBefore().getStartOffset(), range.getBefore().getEndOffset())),
-                       new String(text2.substring(range.getAfter().getStartOffset(), range.getAfter().getEndOffset())))));
+      fragments.addAll(Arrays.asList(myDelegate.buildFragments(
+        text1.substring(range.getBefore().getStartOffset(), range.getBefore().getEndOffset()).copy(),
+        text2.substring(range.getAfter().getStartOffset(), range.getAfter().getEndOffset()).copy())));
     }
 
     return fragments.toArray(new DiffFragment[fragments.size()]);

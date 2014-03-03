@@ -11,7 +11,7 @@ public class RunnerTest extends UpdaterTestCase {
   @Test
   public void testExtractingFiles() throws Exception {
     String[] args = {"bar", "ignored=xxx;yyy;zzz/zzz", "critical=", "ignored=aaa", "baz", "critical=ccc"};
-    Runner.initLogger(System.getProperty("java.io.tmpdir"));
+    Runner.initLogger();
 
     assertEquals(Arrays.asList("xxx", "yyy", "zzz/zzz", "aaa"),
                  Runner.extractFiles(args, "ignored"));

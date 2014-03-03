@@ -15,10 +15,18 @@
  */
 package com.intellij.openapi.diff.impl.processing;
 
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class Formatting extends Word {
-  public Formatting(String text, TextRange range) {
+  @TestOnly
+  public Formatting(@NotNull String baseText, @NotNull TextRange range) {
+    this(DiffString.create(baseText), range);
+  }
+
+  public Formatting(@NotNull DiffString text, @NotNull TextRange range) {
     super(text, range);
   }
 

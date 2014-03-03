@@ -74,7 +74,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     final String progress = getProgressMessage();
     final boolean shouldShowProgress = !StringUtil.isEmptyOrSpaces(progress);
     if (shouldShowProgress) {
-      context.processMessage(new ProgressMessage(progress + " [" + chunk.getName() + "]"));
+      context.processMessage(new ProgressMessage(progress + " [" + chunk.getPresentableShortName() + "]"));
     }
 
     ExitCode exitCode = ExitCode.NOTHING_DONE;

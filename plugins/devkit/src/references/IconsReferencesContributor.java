@@ -299,7 +299,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setCaseSensitive(true);
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
-        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false, new Processor<UsageInfo>() {
+        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, new Processor<UsageInfo>() {
           @Override
           public boolean process(final UsageInfo usage) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {

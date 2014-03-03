@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,14 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
     @Override
-    public void save(final DataOutput out, final ImageInfo info) throws IOException {
+    public void save(@NotNull final DataOutput out, final ImageInfo info) throws IOException {
       DataInputOutputUtil.writeINT(out, info.width);
       DataInputOutputUtil.writeINT(out, info.height);
       DataInputOutputUtil.writeINT(out, info.bpp);
     }
 
     @Override
-    public ImageInfo read(final DataInput in) throws IOException {
+    public ImageInfo read(@NotNull final DataInput in) throws IOException {
       return new ImageInfo(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
     }
   };
@@ -83,16 +83,18 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
         .fileScope(project, virtualFile));
   }
 
+  @NotNull
   @Override
   public DataExternalizer<ImageInfo> getValueExternalizer() {
     return myValueExternalizer;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
       @Override
-      public boolean acceptInput(final VirtualFile file) {
+      public boolean acceptInput(@NotNull final VirtualFile file) {
         return file.isInLocalFileSystem() &&
                file.getLength() / 1024 < ourMaxImageSize
           ;
