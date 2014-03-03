@@ -355,7 +355,7 @@ public class PyTypeChecker {
         if (init instanceof PyTypedElement) {
           final PyType initType = context.getType((PyTypedElement)init);
           if (initType instanceof PyCallableType) {
-            final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
+            final PyType initReturnType = ((PyCallableType)initType).getReturnType();
             if (initReturnType != null) {
               match(initReturnType, qualifierType, context, substitutions);
             }

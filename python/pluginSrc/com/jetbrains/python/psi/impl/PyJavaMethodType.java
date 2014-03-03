@@ -52,14 +52,14 @@ public class PyJavaMethodType implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
+  public PyType getReturnType() {
     return PyJavaTypeProvider.asPyType(myMethod.getReturnType());
   }
 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    return getReturnType(context);
+    return getReturnType();
   }
 
   @Nullable

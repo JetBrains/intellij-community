@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -46,7 +47,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         return type;
       }
     }
-    return new PyFunctionType(this);
+    return new PyFunctionType(this, calculateReturnType(context));
   }
 
   @NotNull
@@ -62,6 +63,15 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
+    final PyType type = context.getType(this);
+    if (type instanceof PyCallableType) {
+      return ((PyCallableType)type).getReturnType();
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType calculateReturnType(@NotNull TypeEvalContext context) {
     final PyExpression body = getBody();
     return body != null ? context.getType(body) : null;
   }

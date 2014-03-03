@@ -104,7 +104,7 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
+  public PyType getReturnType() {
     if (myDefinition) {
       return new PyJavaClassType(myClass, false);
     }
@@ -114,7 +114,7 @@ public class PyJavaClassType implements PyClassLikeType {
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    return getReturnType(context);
+    return getReturnType();
   }
 
   @Nullable

@@ -49,8 +49,7 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
-    // TODO: Check that this return type doesn't depend on the call site for all PyCallableTypeImpl objects
+  public PyType getReturnType() {
     return myReturnType;
   }
 

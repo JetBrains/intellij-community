@@ -177,6 +177,15 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
+    final PyType type = context.getType(this);
+    if (type instanceof PyCallableType) {
+      return ((PyCallableType)type).getReturnType();
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType calculateReturnType(@NotNull TypeEvalContext context) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType returnType = typeProvider.getReturnType(this, context);
       if (returnType != null) {
@@ -399,8 +408,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return type;
       }
     }
-    final PyFunctionType type = new PyFunctionType(this);
-    if (getDecoratorList() != null) {
+    final PyFunctionType type = new PyFunctionType(this, calculateReturnType(context));
+    if (PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null) {
       return PyUnionType.createWeakType(type);
     }
     return type;
