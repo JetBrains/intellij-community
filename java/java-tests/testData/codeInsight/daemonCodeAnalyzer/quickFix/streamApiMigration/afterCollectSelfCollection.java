@@ -10,6 +10,6 @@ public abstract class Collect implements Collection<String>{
   }
 
   void collectNames(List<Person> persons){
-      addAll(persons.stream().map(person -> person.getName()).collect(Collectors.toList()));
+      addAll(persons.stream().map(person::getName).collect(Collectors.toList()));
   }
 }

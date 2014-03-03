@@ -1,7 +1,7 @@
 // "Replace with collect" "true"
 import java.util.*;
 
-public abstract class Collect implements Collection<String>{
+public class Collect {
   class Person {
     String getName() {
       return "";
@@ -9,8 +9,9 @@ public abstract class Collect implements Collection<String>{
   }
 
   void collectNames(List<Person> persons){
+    List<String> names = new ArrayList<>();
     for (Person person : pers<caret>ons) {
-      add(person.getName());
+      names.add("name: " + person.getName());
     }
   }
 }

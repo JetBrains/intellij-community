@@ -299,11 +299,11 @@ public class InferenceSession {
     return prepareSubstitution();
   }
 
-  public PsiSubstitutor resolveDependencies(Collection<InferenceVariable> variables) {
+  public PsiSubstitutor retrieveNonPrimitiveEqualsBounds(Collection<InferenceVariable> variables) {
     PsiSubstitutor substitutor = mySiteSubstitutor;
     for (InferenceVariable variable : variables) {
       final PsiType equalsBound = getEqualsBound(variable, substitutor);
-      if (equalsBound != PsiType.NULL) {
+      if (!(equalsBound instanceof PsiPrimitiveType)) {
         substitutor = substitutor.put(variable.getParameter(), equalsBound);
       }
     }

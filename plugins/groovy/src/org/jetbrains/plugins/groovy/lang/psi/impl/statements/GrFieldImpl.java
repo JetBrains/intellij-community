@@ -23,6 +23,9 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -59,8 +62,6 @@ import java.util.Map;
  * Date: 25.05.2007
  */
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
-  private volatile GrAccessorMethod mySetter;
-  private volatile GrAccessorMethod[] myGetters;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -188,24 +189,24 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrAccessorMethod getSetter() {
-    if (mySetter == null) {
-      mySetter = GrAccessorMethodImpl.createSetterMethod(this);
-    }
-    return mySetter;
-  }
-
-  public void clearCaches() {
-    mySetter = null;
-    myGetters = null;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod> compute() {
+        return Result.create(GrAccessorMethodImpl.createSetterMethod(GrFieldImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
   public GrAccessorMethod[] getGetters() {
-    if (myGetters == null) {
-      myGetters = GrAccessorMethodImpl.createGetterMethods(this);
-    }
-
-    return myGetters;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod[]>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod[]> compute() {
+        return Result.create(GrAccessorMethodImpl.createGetterMethods(GrFieldImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
