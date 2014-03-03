@@ -18,6 +18,7 @@ package com.intellij.refactoring.copy;
 import com.intellij.CommonBundle;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -119,11 +120,11 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     PsiDirectory targetDirectory;
     if (element instanceof PsiDirectory) {
       targetDirectory = ((PsiDirectory)element).getParentDirectory();
-      assert targetDirectory != null : element;
     }
     else  {
-      targetDirectory = ((PsiFile)element).getContainingDirectory();
+      targetDirectory = PlatformPackageUtil.getDirectory(element);
     }
+    assert targetDirectory != null : element;
 
     PsiElement[] elements = {element};
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, null, element.getProject(), true);
@@ -146,7 +147,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         directory = directory.getParentDirectory();
       }
       else if (element instanceof PsiFile) {
-        directory = ((PsiFile)element).getContainingDirectory();
+        directory = PlatformPackageUtil.getDirectory(element);
       }
       else {
         throw new IllegalArgumentException("unexpected element " + element);

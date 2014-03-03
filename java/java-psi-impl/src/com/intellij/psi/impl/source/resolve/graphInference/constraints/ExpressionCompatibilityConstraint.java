@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (!accepted) {
             //todo return false;
           }
-          callSession.registerConstraints(returnType, substitutor.substitute(returnType));
+          callSession.registerConstraints(method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType, substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
             final Collection<InferenceVariable> inferenceVariables = callSession.getInferenceVariables();
             if (sameMethodCall) {

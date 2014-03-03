@@ -787,11 +787,9 @@ public final class TreeUtil {
       if (rowCount == oldRowCount) break;
       oldRowCount = rowCount;
       for (int i = 0; i < rowCount; i++) {
-        if (!tree.isExpanded(i)) {
           tree.expandRow(i);
         }
      }
-    }
     while (true);
   }
 

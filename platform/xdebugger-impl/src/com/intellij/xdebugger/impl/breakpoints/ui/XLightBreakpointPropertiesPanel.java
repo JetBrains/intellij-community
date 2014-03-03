@@ -187,4 +187,11 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   public JPanel getMainPanel() {
     return myMainPanel;
   }
+
+  public void dispose() {
+    myActionsPanel.dispose();
+    for (XBreakpointCustomPropertiesPanel<B> panel : myCustomPanels) {
+      panel.dispose();
+    }
+  }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -107,7 +108,7 @@ public class ValueLookupManager implements EditorMouseMotionListener {
     }
   }
 
-  public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, ValueHintType type) {
+  public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
     myAlarm.cancelAllRequests();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;

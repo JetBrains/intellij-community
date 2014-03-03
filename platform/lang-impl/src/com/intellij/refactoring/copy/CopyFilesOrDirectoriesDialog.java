@@ -101,7 +101,9 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         PsiFile file = (PsiFile)elements[0];
         String url = shortenPath(file.getVirtualFile());
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", url);
-        final String fileName = file.getName();
+        // keep extensions (dots) and spaces, e.g. fragment file name will be "HTML Fragment (my.sql_61).html"
+        // and leave ordinary file name AS IS
+        String fileName = PathUtil.suggestFileName(file.getName(), true, true);
         myNewNameField.setText(fileName);
         final int dotIdx = fileName.lastIndexOf(".");
         if (dotIdx > -1) {

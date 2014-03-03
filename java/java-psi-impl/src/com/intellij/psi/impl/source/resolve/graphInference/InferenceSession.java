@@ -369,7 +369,7 @@ public class InferenceSession {
           targetType = getTargetType(context);
         }
         if (targetType != null) {
-          registerConstraints(returnType, targetType);
+          registerConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
       }
     }
@@ -400,7 +400,7 @@ public class InferenceSession {
           PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            copy[i] = elementFactory.createTypeParameterFromText(typeParameter.getName(), null);
+            copy[i] = elementFactory.createTypeParameterFromText("rCopy" + typeParameter.getName(), null);
             initBounds(copy[i]);
             subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
           }
