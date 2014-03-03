@@ -731,10 +731,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
 
       // deal with height
-      if (historySize.width == 0) {
-        historySize.height = 0;
-      }
-
       int minHistoryHeight = historySize.height > 0 ? (getMinHistoryLineCount() * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0)) : 0;
       int minInputHeight = input.isViewer() ? 0 : input.getLineHeight();
       final int inputPreferredHeight = input.isViewer() ? 0 : Math.max(minInputHeight, inputSize.height);
