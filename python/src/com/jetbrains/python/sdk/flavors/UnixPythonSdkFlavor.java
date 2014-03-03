@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
@@ -55,9 +55,12 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
           final String childName = child.getName();
           for (String name : NAMES) {
             if (childName.startsWith(name)) {
-              if (!childName.endsWith("-config") && !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m") && !child.is(VFileProperty.SYMLINK)) {
-                candidates.add(child.getPath());
+              String childPath = child.getPath();
+              if (FileSystemUtil.isSymLink(childPath)) {
+                childPath = FileSystemUtil.resolveSymLink(childPath);
+              }
+              if (childPath != null && !childName.endsWith("-config") && !childName.startsWith("pythonw") && !childName.endsWith("m")) {
+                candidates.add(childPath);
               }
               break;
             }
