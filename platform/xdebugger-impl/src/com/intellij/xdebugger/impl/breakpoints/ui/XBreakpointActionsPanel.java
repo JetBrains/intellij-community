@@ -121,4 +121,10 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       logExpressionPanel.saveTo(myBreakpoint);
     }
   }
+
+  public void dispose() {
+    if (logExpressionPanel != null) {
+      logExpressionPanel.dispose();
+    }
+  }
 }
