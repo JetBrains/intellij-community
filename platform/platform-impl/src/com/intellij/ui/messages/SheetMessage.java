@@ -54,13 +54,14 @@ public class SheetMessage {
       @Override
       public void paint(Graphics g) {
         super.paint(g);
+
       }
     };
 
     myParent = owner;
 
     myWindow.setUndecorated(true);
-    myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
+   myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
 
 
@@ -70,7 +71,7 @@ public class SheetMessage {
     myWindow.setFocusable(true);
 
     startAnimation(true);
-    myWindow.setSize(myController.SHEET_WIDTH, myController.SHEET_HEIGHT);
+    myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
     restoreFullscreenButton = couldBeInFullScreen();
     if (restoreFullscreenButton) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
@@ -108,24 +109,24 @@ public class SheetMessage {
 
           int imageCropOffset = (UIUtil.isRetina()) ? imageHeight * 2 : imageHeight;
 
-          g.drawImage(staticImage, 0,0,myController.SHEET_WIDTH,imageHeight,
+          g.drawImage(staticImage, 0, 0, myController.SHEET_NC_WIDTH,imageHeight,
                       0, staticImage.getHeight(null) - imageCropOffset,
                       staticImage.getWidth(null) ,staticImage.getHeight(null) ,null);
         }
       }
     };
     staticPanel.setOpaque(false);
-    staticPanel.setSize(myController.SHEET_WIDTH,myController.SHEET_HEIGHT);
+    staticPanel.setSize(myController.SHEET_NC_WIDTH,myController.SHEET_NC_HEIGHT);
     myWindow.setContentPane(staticPanel);
 
-    Animator myAnimator = new Animator("Roll Down Sheet Animator", myController.SHEET_HEIGHT ,
+    Animator myAnimator = new Animator("Roll Down Sheet Animator", myController.SHEET_NC_HEIGHT ,
                                        TIME_TO_SHOW_SHEET, false) {
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
         setPositionRelativeToParent();
         float percentage = (float)frame/(float)totalFrames;
-        imageHeight = enlarge ? (int)(((float)myController.SHEET_HEIGHT) * percentage):
-                      (int)(myController.SHEET_HEIGHT - percentage * myController.SHEET_HEIGHT);
+        imageHeight = enlarge ? (int)(((float)myController.SHEET_NC_HEIGHT) * percentage):
+                      (int)(myController.SHEET_NC_HEIGHT - percentage * myController.SHEET_HEIGHT);
         myWindow.repaint();
       }
 
@@ -133,9 +134,10 @@ public class SheetMessage {
       protected void paintCycleEnd() {
         setPositionRelativeToParent();
         if (enlarge) {
-          imageHeight = myController.SHEET_HEIGHT;
+          imageHeight = myController.SHEET_NC_HEIGHT;
           staticImage = null;
           myWindow.setContentPane(myController.getPanel(myWindow));
+
           myController.requestFocus();
         } else {
           if (restoreFullscreenButton) {
@@ -152,8 +154,11 @@ public class SheetMessage {
 
   private void setPositionRelativeToParent () {
     int width = myParent.getWidth();
-    myWindow.setLocation(width / 2 - myController.SHEET_WIDTH / 2 + myParent.getLocation().x,
-                         myParent.getInsets().top + myParent.getLocation().y);
+    myWindow.setBounds(width / 2 - myController.SHEET_NC_WIDTH / 2 + myParent.getLocation().x,
+                       myParent.getInsets().top + myParent.getLocation().y,
+                       myController.SHEET_NC_WIDTH,
+                       myController.SHEET_NC_HEIGHT);
+
   }
 
   private void registerMoveResizeHandler () {

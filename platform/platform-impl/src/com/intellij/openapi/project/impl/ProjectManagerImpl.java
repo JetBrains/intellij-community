@@ -299,6 +299,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private static void scheduleDispose(final ProjectImpl project) {
+    if (project.isDefault()) {
+      return;
+    }
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

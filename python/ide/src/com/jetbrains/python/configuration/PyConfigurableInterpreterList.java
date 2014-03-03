@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,7 +32,10 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
@@ -78,42 +83,51 @@ public class PyConfigurableInterpreterList {
         final boolean isVEnv2 = PythonSdkType.isVirtualEnv(o2);
         final boolean isRemote1 = PySdkUtil.isRemote(o1);
         final boolean isRemote2 = PySdkUtil.isRemote(o2);
+
+        if (isVEnv1) {
+          if (project != null && associatedWithCurrent(o1, project)) {
+            if (associatedWithCurrent(o2, project)) return compareSdk(o1, o2);
+            return -1;
+          }
+          if (isVEnv2) {
+            return compareSdk(o1, o2);
+          }
+          return -1;
+        }
+        if (isVEnv2)   return 1;
+        if (isRemote1) return 1;
+        if (isRemote2) return -1;
+
+        return compareSdk(o1, o2);
+      }
+
+      private int compareSdk(final Sdk o1, final Sdk o2) {
         final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
         final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
         final LanguageLevel level1 = flavor1 != null ? flavor1.getLanguageLevel(o1) : LanguageLevel.getDefault();
         final LanguageLevel level2 = flavor2 != null ? flavor2.getLanguageLevel(o2) : LanguageLevel.getDefault();
-
-        if (isVEnv1) {
-          if (project != null && associatedWithCurrent(o1, project)) return -1;
-          if (isVEnv2) {
-            final int compare = Comparing.compare(level1, level2);
-            if (compare != 0) return -compare;
-            return Comparing.compare(o1.getName(), o2.getName());
-          }
-          return -1;
-        }
-        if (isVEnv2) {
-          return 1;
-        }
-        if (isRemote1) return 1;
-        if (isRemote2) return -1;
-
         final int compare = Comparing.compare(level1, level2);
         if (compare != 0) return -compare;
         return Comparing.compare(o1.getName(), o2.getName());
       }
     });
 
-    final Collection<String> sdkHomes = new ArrayList<String>();
+    final List<String> sdkHomes = new ArrayList<String>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       if (flavor instanceof VirtualEnvSdkFlavor) continue;
       sdkHomes.addAll(flavor.suggestHomePaths());
     }
-
+    Collections.sort(sdkHomes);
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
       result.add(new PyDetectedSdk(sdkHome));
     }
+    Iterables.removeIf(result, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(@Nullable Sdk input) {
+        return input != null && PyRemovedSdkService.getInstance().isRemoved(input);
+      }
+    });
     return result;
   }
 

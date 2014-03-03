@@ -372,6 +372,8 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.testing.PyTestFrameworkService"
                         serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
+    <applicationService serviceInterface="com.jetbrains.python.configuration.PyRemovedSdkService"
+                        serviceImplementation="com.jetbrains.python.configuration.PyRemovedSdkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
