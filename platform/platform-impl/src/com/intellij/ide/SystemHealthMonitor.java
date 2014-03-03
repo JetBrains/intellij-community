@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -111,6 +112,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private static void startDiskSpaceMonitoring() {
+    if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) return;
     final File file = new File(PathManager.getSystemPath());
     final AtomicBoolean reported = new AtomicBoolean();
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
