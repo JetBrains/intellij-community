@@ -42,6 +42,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -740,11 +741,16 @@ public class GitHistoryUtils {
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
+    StopWatch sw = StopWatch.start("git log --all-details");
     String output = h.run();
+    sw.report();
 
+    sw = StopWatch.start("parsing");
     List<GitLogRecord> records = parser.parse(output);
+    sw.report();
 
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
+    sw = StopWatch.start("Creating GitCommit objects");
+    List<GitCommit> gitCommits = ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
       @Override
       public GitCommit fun(GitLogRecord record) {
         try {
@@ -756,6 +762,8 @@ public class GitHistoryUtils {
         }
       }
     });
+    sw.report();
+    return gitCommits;
   }
 
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record)
