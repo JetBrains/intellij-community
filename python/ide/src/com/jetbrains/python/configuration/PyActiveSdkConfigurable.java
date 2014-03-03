@@ -140,6 +140,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                                     @Override
                                                     public void consume(Sdk sdk) {
                                                       if (sdk == null) return;
+                                                      final PyRemovedSdkService sdkService = PyRemovedSdkService.getInstance();
+                                                      sdkService.restoreSdk(sdk);
                                                       if (myProjectSdksModel.findSdk(sdk) == null) {
                                                         myProjectSdksModel.addSdk(sdk);
                                                         myAddedSdks.add(sdk);

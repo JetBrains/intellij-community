@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,7 +32,10 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
@@ -117,6 +122,12 @@ public class PyConfigurableInterpreterList {
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
       result.add(new PyDetectedSdk(sdkHome));
     }
+    Iterables.removeIf(result, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(@Nullable Sdk input) {
+        return input != null && PyRemovedSdkService.getInstance().isRemoved(input);
+      }
+    });
     return result;
   }
 
