@@ -247,7 +247,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           drawLogic(true, false, true, JBColor.BLACK, new LitePrinter() {
             @Override
             public void print(Color color) {
-              paintDownHarmonica(color);
+              //paintDownHarmonica(color);
             }
           });
           break;
