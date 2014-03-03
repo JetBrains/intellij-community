@@ -201,7 +201,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread(), Thread.currentThread().toString());
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
