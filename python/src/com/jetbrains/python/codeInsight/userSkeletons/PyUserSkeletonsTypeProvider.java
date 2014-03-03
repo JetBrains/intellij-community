@@ -47,7 +47,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
     final Callable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
     if (callableSkeleton != null) {
-      return callableSkeleton.getReturnType(context);
+      return context.getReturnType(callableSkeleton);
     }
     return null;
   }

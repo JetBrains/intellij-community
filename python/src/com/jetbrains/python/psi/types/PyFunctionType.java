@@ -34,11 +34,9 @@ import java.util.List;
  */
 public class PyFunctionType implements PyCallableType {
   @NotNull private final Callable myCallable;
-  @Nullable private final PyType myReturnType;
 
-  public PyFunctionType(@NotNull Callable callable, @Nullable PyType returnType) {
+  public PyFunctionType(@NotNull Callable callable) {
     myCallable = callable;
-    myReturnType = returnType;
   }
 
   @Override
@@ -48,8 +46,8 @@ public class PyFunctionType implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getReturnType() {
-    return myReturnType;
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
+    return context.getReturnType(myCallable);
   }
 
   @Nullable

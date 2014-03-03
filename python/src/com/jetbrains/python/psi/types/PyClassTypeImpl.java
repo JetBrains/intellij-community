@@ -307,7 +307,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Nullable
   @Override
-  public PyType getReturnType() {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     if (isDefinition()) {
       return new PyClassTypeImpl(getPyClass(), false);
     }
@@ -317,7 +317,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
-    return getReturnType();
+    return getReturnType(context);
   }
 
   @Nullable

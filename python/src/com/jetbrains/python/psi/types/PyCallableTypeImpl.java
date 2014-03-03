@@ -49,7 +49,7 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getReturnType() {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     return myReturnType;
   }
 

@@ -175,20 +175,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
-    PyType type = context.getType(this);
-    if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
-      type = unionType.excludeNull();
-    }
-    if (type instanceof PyCallableType) {
-      return ((PyCallableType)type).getReturnType();
-    }
-    return null;
-  }
-
-  @Nullable
-  private PyType calculateReturnType(@NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType returnType = typeProvider.getReturnType(this, context);
       if (returnType != null) {
@@ -232,7 +219,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (type == null) {
-      type = getReturnType(context);
+      type = context.getReturnType(this);
     }
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
     if (results != null) {
@@ -246,7 +233,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public PyType getCallType(@Nullable PyExpression receiver,
                             @NotNull Map<PyExpression, PyNamedParameter> parameters,
                             @NotNull TypeEvalContext context) {
-    return analyzeCallType(getReturnType(context), receiver, parameters, context);
+    return analyzeCallType(context.getReturnType(this), receiver, parameters, context);
   }
 
   @Nullable
@@ -404,8 +391,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     final boolean hasCustomDecorators = PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null;
-    final PyType returnType = calculateReturnType(context);
-    final PyFunctionType type = new PyFunctionType(this, hasCustomDecorators ? PyUnionType.createWeakType(returnType) : returnType);
+    final PyFunctionType type = new PyFunctionType(this);
     if (hasCustomDecorators) {
       return PyUnionType.createWeakType(type);
     }

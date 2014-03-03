@@ -226,7 +226,7 @@ public class PyTypeModelBuilder {
         parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
       }
     }
-    final PyType ret = type.getReturnType();
+    final PyType ret = type.getReturnType(myContext);
     final TypeModel returnType = build(ret, true);
     return new FunctionType(returnType, parameterModels);
   }
