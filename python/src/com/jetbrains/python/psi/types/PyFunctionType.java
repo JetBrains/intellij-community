@@ -48,13 +48,13 @@ public class PyFunctionType implements PyCallableType {
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
     // TODO: Make Callable.getReturnType() call site independent, extract getCallType()
-    return myCallable.getReturnType(context, null);
+    return myCallable.getCallType(context, null);
   }
 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    return myCallable.getReturnType(context, callSite);
+    return myCallable.getCallType(context, callSite);
   }
 
   @Nullable

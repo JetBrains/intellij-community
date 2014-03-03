@@ -61,7 +61,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     final PyExpression body = getBody();
     if (body != null) return context.getType(body);
     else return null;

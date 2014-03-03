@@ -20,7 +20,6 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -352,7 +351,7 @@ public class PyTypeChecker {
       final PyFunction init = cls.findInitOrNew(true);
       // Unify generics in constructor
       if (init != null) {
-        final PyType initType = init.getReturnType(context, null);
+        final PyType initType = init.getCallType(context, null);
         if (initType != null) {
           match(initType, qualifierType, context, substitutions);
         }

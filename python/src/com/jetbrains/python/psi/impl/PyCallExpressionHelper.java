@@ -198,7 +198,7 @@ public class PyCallExpressionHelper {
       final PyFunction function = (PyFunction)resolved;
       final Property property = function.getProperty();
       if (property != null && isQualifiedByInstance(function, qualifiers, context)) {
-        final PyType type = function.getReturnType(context, null);
+        final PyType type = function.getCallType(context, null);
         if (type instanceof PyFunctionType) {
           resolved = ((PyFunctionType)type).getCallable();
         }
@@ -424,7 +424,7 @@ public class PyCallExpressionHelper {
             }
           }
           if (init != null) {
-            final PyType t = init.getReturnType(context, (PyReferenceExpression)callee);
+            final PyType t = init.getCallType(context, (PyReferenceExpression)callee);
             if (cls != null) {
               if (init.getContainingClass() != cls) {
                 if (t instanceof PyCollectionType) {
@@ -453,7 +453,7 @@ public class PyCallExpressionHelper {
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
-            return callable.getReturnType(context, (PyReferenceExpression)callee);
+            return callable.getCallType(context, (PyReferenceExpression)callee);
           }
         }
       }

@@ -441,7 +441,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (function instanceof PyFunctionImpl) {
       return ((PyFunctionImpl)function).getReturnTypeWithoutCallSite(context, source);
     }
-    return function.getReturnType(context, null);
+    return function.getCallType(context, null);
   }
 
   @Nullable
