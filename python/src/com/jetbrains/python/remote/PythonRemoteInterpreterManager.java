@@ -143,6 +143,8 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
+  public abstract boolean testConnection(RemoteCredentials credentials);
+
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
     public PyRemoteInterpreterExecutionException() {
@@ -158,6 +160,8 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data);
+
+  public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
 
   public abstract RemoteCredentials getCredentialsBySftpServerId(String id);
 }
