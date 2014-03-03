@@ -73,8 +73,6 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   private final JLabel myChooseFactory = new JLabel();
   private WeakReference<ListPopup> myPopup;
 
-  private boolean myExplicitlyChosen = false;
-
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
@@ -142,7 +140,6 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
         @Override
         public void actionPerformed(AnActionEvent e) {
           setFactory(fragmentFactory);
-          myExplicitlyChosen = true;
           setText(getText());
           IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this, true);
         }
@@ -300,33 +297,12 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     return DefaultCodeFragmentFactory.getInstance();
   }
 
-  @NotNull
-  private CodeFragmentFactory findFactoryForRestore(@NotNull TextWithImports text, @NotNull PsiElement context) {
-    List<CodeFragmentFactory> factories = DebuggerUtilsEx.getCodeFragmentFactories(context);
-
-    if (myExplicitlyChosen && factories.contains(myFactory)) return myFactory;
-
-    DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
-    factories.remove(defaultFactory);
-    for (CodeFragmentFactory factory : factories) {
-      if (factory.getFileType().equals(text.getFileType())) {
-        return factory;
-      }
-    }
-    if (!factories.isEmpty()) return factories.get(0);
-    else return defaultFactory;
-  }
-
   protected void restoreFactory(TextWithImports text) {
     FileType fileType = text.getFileType();
     if (fileType == null) return;
     if (myContext == null) return;
 
-    CodeFragmentFactory newFactory = findFactoryForRestore(text, myContext);
-    if (!newFactory.equals(myFactory)) {
-      myExplicitlyChosen = false;
-      setFactory(newFactory);
-    }
+    setFactory(findAppropriateFactory(text, myContext));
   }
 
   private void setFactory(@NotNull final CodeFragmentFactory factory) {
