@@ -24,15 +24,12 @@ public class Runner {
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
-    if (args.length >= 7 && "create".equals(args[0])) {
+    if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
       String newVersionDesc = args[2];
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
-
-//      String logFolder = args[6];
-//      initLogger(logFolder);
       initLogger();
 
       List<String> ignoredFiles = extractFiles(args, "ignored");
@@ -42,9 +39,6 @@ public class Runner {
     }
     else if (args.length >= 2 && "install".equals(args[0])) {
       String destFolder = args[1];
-
-//      String logFolder = args.length >= 3 ? args[2] : null;
-//      initLogger(logFolder);
       initLogger();
       logger.info("destFolder: " + destFolder);
 
@@ -61,7 +55,6 @@ public class Runner {
     return fileLogDir.isDirectory() && fileLogDir.canWrite() && fileLogDir.getUsableSpace() >= 1000000;
   }
 
-//  private static String getLogDir(String logFolder) {
   private static String getLogDir() {
     String logFolder = System.getProperty("idea.updater.log");
     if (logFolder == null || !isValidLogDir(logFolder)) {
@@ -76,8 +69,6 @@ public class Runner {
 //  public static void initLogger(String logFolder) {
   public static void initLogger() {
     if (logger == null) {
-//      String logFolder = System.getProperty("idea.updater.log");
-//      String logFolder = getLogDir(System.getProperty("idea.updater.log"));
       String logFolder = getLogDir();
       System.out.println("Log dir: " + logFolder);
       FileAppender update = new FileAppender();
