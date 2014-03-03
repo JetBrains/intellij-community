@@ -138,6 +138,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDiamondInLambdaReturn() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

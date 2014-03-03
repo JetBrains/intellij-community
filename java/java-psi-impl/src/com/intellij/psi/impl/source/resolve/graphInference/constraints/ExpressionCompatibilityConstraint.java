@@ -116,7 +116,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               params[i] = typeParams[i];
             }
           }
-          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() 
+                                                 ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
           for (PsiTypeParameter typeParameter : siteSubstitutor.getSubstitutionMap().keySet()) {
             substitutor = substitutor.put(typeParameter, substitutor.substitute(siteSubstitutor.substitute(typeParameter)));
           }
