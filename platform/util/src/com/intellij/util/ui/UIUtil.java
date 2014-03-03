@@ -1585,6 +1585,7 @@ public class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
+  /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
@@ -1604,6 +1605,7 @@ public class UIUtil {
     }
   }
 
+  /** @see #dispatchAllInvocationEvents() */
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
