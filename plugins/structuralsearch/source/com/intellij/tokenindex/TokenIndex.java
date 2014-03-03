@@ -38,7 +38,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
 
   private final DataExternalizer<List<Token>> myDataExternalizer = new DataExternalizer<List<Token>>() {
     @Override
-    public void save(DataOutput out, List<Token> value) throws IOException {
+    public void save(@NotNull DataOutput out, List<Token> value) throws IOException {
       out.writeInt(value.size());
       for (Token token : value) {
         if (token instanceof AnonymToken) {
@@ -69,7 +69,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     }
 
     @Override
-    public List<Token> read(DataInput in) throws IOException {
+    public List<Token> read(@NotNull DataInput in) throws IOException {
       List<Token> result = new ArrayList<Token>();
       int n = in.readInt();
       for (int i = 0; i < n; i++) {
@@ -142,21 +142,24 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<TokenIndexKey> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public DataExternalizer<List<Token>> getValueExternalizer() {
     return myDataExternalizer;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
       @Override
-      public boolean acceptInput(VirtualFile file) {
+      public boolean acceptInput(@NotNull VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) return false;
         return file.getFileType() instanceof LanguageFileType;
       }
