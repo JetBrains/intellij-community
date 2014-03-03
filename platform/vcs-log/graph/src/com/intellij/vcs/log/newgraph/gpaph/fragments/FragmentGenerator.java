@@ -18,12 +18,11 @@ package com.intellij.vcs.log.newgraph.gpaph.fragments;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.newgraph.gpaph.impl.CollapsedMutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,32 +35,24 @@ public class FragmentGenerator {
   private static final int MAX_SEARCH_SIZE = 10;
 
   @NotNull
-  private final MutableGraph myMutableGraph;
+  private final CollapsedMutableGraph myMutableGraph;
 
   private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      List<Integer> result = new SmartList<Integer>();
-      for (Edge edge : myMutableGraph.getNode(integer).getUpEdges()) {
-        result.add(edge.getUpNodeVisibleIndex());
-      }
-      return result;
+      return myMutableGraph.getInternalGraph().getUpNodes(integer);
     }
   };
 
   private final Function<Integer, List<Integer>> downNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      List<Integer> result = new SmartList<Integer>();
-      for (Edge edge : myMutableGraph.getNode(integer).getDownEdges()) {
-        result.add(edge.getDownNodeVisibleIndex());
-      }
-      return result;
+      return myMutableGraph.getInternalGraph().getDownNodes(integer);
     }
   };
 
 
-  public FragmentGenerator(@NotNull MutableGraph mutableGraph) {
+  public FragmentGenerator(@NotNull CollapsedMutableGraph mutableGraph) {
     myMutableGraph = mutableGraph;
   }
 
@@ -93,15 +84,15 @@ public class FragmentGenerator {
   }
 
   @Nullable
-  public GraphFragment getDownFragment(int upperNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(upperNodeIndex, downNodesFun, upNodesFun);
-    return fragment == null ? null : new GraphFragment(fragment.first, fragment.second);
+  public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
+    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex), downNodesFun, upNodesFun);
+    return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.first), myMutableGraph.toVisibleIndex(fragment.second));
   }
 
   @Nullable
   public GraphFragment getUpFragment(int lowerNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(lowerNodeIndex, upNodesFun, downNodesFun);
-    return fragment == null ? null : new GraphFragment(fragment.second, fragment.first);
+    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex), upNodesFun, downNodesFun);
+    return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.second), myMutableGraph.toVisibleIndex(fragment.first));
   }
 
   @Nullable

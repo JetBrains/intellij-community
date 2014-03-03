@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> implements MutableGraph {
+public abstract class MutableGraphWithHiddenNodes<T extends GraphWithElementsInfo> implements MutableGraph {
 
   @Nullable
   public static Edge containedCollapsedEdge(@NotNull GraphElement element) {
@@ -55,7 +55,7 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
   @NotNull
   protected final PermanentGraphLayout myLayout;
 
-  protected AbstractMutableGraph(@NotNull IntToIntMap visibleToReal, @NotNull T graph, @NotNull PermanentGraphLayout layout) {
+  protected MutableGraphWithHiddenNodes(@NotNull IntToIntMap visibleToReal, @NotNull T graph, @NotNull PermanentGraphLayout layout) {
     myVisibleToReal = visibleToReal;
     myGraph = graph;
     myLayout = layout;
@@ -83,10 +83,10 @@ public abstract class AbstractMutableGraph<T extends GraphWithElementsInfo> impl
     return toNodeIndex(visibleNodeIndex);
   }
 
-  protected int toVisibleIndex(int nodeIndex) {
-    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT)
+  public int toVisibleIndex(int nodeIndexInPermanentGraph) {
+    if (nodeIndexInPermanentGraph == SomeGraph.NOT_LOAD_COMMIT)
       return SomeGraph.NOT_LOAD_COMMIT;
-    return myVisibleToReal.getShortIndex(nodeIndex);
+    return myVisibleToReal.getShortIndex(nodeIndexInPermanentGraph);
   }
 
   protected int toNodeIndex(int visibleNodeIndex) {

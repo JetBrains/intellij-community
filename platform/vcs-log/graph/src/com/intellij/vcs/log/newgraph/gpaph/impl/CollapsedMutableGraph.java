@@ -40,7 +40,7 @@ import java.util.Map;
 
 import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
-public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutableGraph.GraphWithElementsInfoImpl> {
+public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<CollapsedMutableGraph.GraphWithElementsInfoImpl> {
 
   public static CollapsedMutableGraph newInstance(@NotNull PermanentGraph permanentGraph,
                                                   @NotNull PermanentGraphLayout layout,
@@ -123,6 +123,12 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
 
     return -1;
   }
+
+  @NotNull
+  public GraphWithElementsInfo getInternalGraph() {
+    return myGraph;
+  }
+
 
   @NotNull
   @Override

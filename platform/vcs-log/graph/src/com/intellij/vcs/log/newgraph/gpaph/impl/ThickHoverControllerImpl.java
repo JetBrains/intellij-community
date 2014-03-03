@@ -31,7 +31,6 @@ import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.newgraph.utils.Flags;
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -165,7 +164,7 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   }
 
   private void hoverFragment(@NotNull GraphElement graphElement) {
-    Edge collapsedEdge = AbstractMutableGraph.containedCollapsedEdge(graphElement);
+    Edge collapsedEdge = MutableGraphWithHiddenNodes.containedCollapsedEdge(graphElement);
     if (collapsedEdge != null) {
       hoverNodes.add(collapsedEdge.getUpNodeVisibleIndex());
       hoverNodes.add(collapsedEdge.getDownNodeVisibleIndex());

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PermanentAsMutableGraph extends AbstractMutableGraph<PermanentAsMutableGraph.GraphWithElementsInfoImpl> {
+public class PermanentAsMutableGraph extends MutableGraphWithHiddenNodes<PermanentAsMutableGraph.GraphWithElementsInfoImpl> {
 
   @NotNull
   private final ThickHoverController myThickHoverController;

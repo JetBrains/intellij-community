@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class FilterMutableGraph extends AbstractMutableGraph<FilterMutableGraph.GraphWithElementsInfoImpl> {
+public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutableGraph.GraphWithElementsInfoImpl> {
   private static final Logger LOG = Logger.getInstance(FilterMutableGraph.class);
 
   public static FilterMutableGraph newInstance(@NotNull PermanentGraph permanentGraph,
