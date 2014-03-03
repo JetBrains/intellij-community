@@ -37,7 +37,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
   private static final String ourQt4Signal = "pyqtSignal";
 
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     if (PyNames.INIT.equals(function.getName())) {
       final PyClass containingClass = function.getContainingClass();
       if (containingClass != null && ourQt4Signal.equals(containingClass.getName())) {

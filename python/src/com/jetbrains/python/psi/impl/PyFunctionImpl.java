@@ -261,7 +261,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
+      final PyType returnType = typeProvider.getCallType(this, callSite, typeEvalContext);
       if (returnType != null) {
         returnType.assertValid(typeProvider.toString());
         return returnType;

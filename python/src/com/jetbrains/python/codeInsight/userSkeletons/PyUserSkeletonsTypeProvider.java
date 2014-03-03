@@ -43,7 +43,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     final PyFunction functionSkeleton = PyUserSkeletonsUtil.getUserSkeleton(function);
     if (functionSkeleton != null) {
       return functionSkeleton.getCallType(context, callSite);
