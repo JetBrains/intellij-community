@@ -198,7 +198,7 @@ public class PyCallExpressionHelper {
       final PyFunction function = (PyFunction)resolved;
       final Property property = function.getProperty();
       if (property != null && isQualifiedByInstance(function, qualifiers, context)) {
-        final PyType type = function.getCallType(context, null);
+        final PyType type = function.getReturnType(context);
         if (type instanceof PyFunctionType) {
           resolved = ((PyFunctionType)type).getCallable();
         }
