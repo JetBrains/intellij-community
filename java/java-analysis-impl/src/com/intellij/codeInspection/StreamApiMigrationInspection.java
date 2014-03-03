@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -276,7 +277,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           } else if (qualifierExpression == null) {
             variableName = "";
           }
-          
+
+          PsiElement result = null;
           if (initializer != null) {
             final PsiType initializerType = initializer.getType();
             final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
@@ -288,11 +290,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               iteration += "toCollection(() -> " + initializer.getText() +")";
             }
             iteration += ")";
-            initializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
+            result = initializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
             foreachStatement.delete();
           } else if (variableName != null){
             iteration += "toList())";
-            foreachStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(variableName + "addAll(" + iteration +");", foreachStatement));
+            result = foreachStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(variableName + "addAll(" + iteration +");", foreachStatement));
+          }
+
+          if (result != null) {
+            result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
           }
         }
       }
