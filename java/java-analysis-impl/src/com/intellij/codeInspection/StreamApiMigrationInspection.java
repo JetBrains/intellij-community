@@ -151,6 +151,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             ((PsiMethod)resolve).getParameterList().getParametersCount() == 1) {
           final PsiExpression[] args = methodCallExpression.getArgumentList().getExpressions();
           if (args.length == 1) {
+            if (args[0] instanceof PsiCallExpression) {
+              final PsiMethod method = ((PsiCallExpression)args[0]).resolveMethod();
+              return method != null && !method.hasTypeParameters();
+            }
             return true;
           }
         }
