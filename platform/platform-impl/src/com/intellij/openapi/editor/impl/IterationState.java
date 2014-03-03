@@ -184,31 +184,20 @@ public final class IterationState {
 
     private void advance() {
       if (myNextHighlighter != null) {
-        if (myNextHighlighter.getAffectedAreaStartOffset() <= myStartOffset) {
-          myCurrentHighlighters.add(myNextHighlighter);
-          myNextHighlighter = null;
+        if (myNextHighlighter.getAffectedAreaStartOffset() > myStartOffset) {
+          return;
         }
-        
-        // There is a possible case that there are two highlighters mapped to offset of the first non-white space symbol
-        // on a line. The second one may have HighlighterTargetArea.LINES_IN_RANGE area, so, we should use it for indent
-        // background processing (that is the case for the active debugger line that starts with highlighted brace/bracket).
-        // So, we check if it's worth to use next highlighter here.
-        else if (myIterator.hasNext()) {
-          final RangeHighlighterEx lookAhead = myIterator.next();
-          if (lookAhead.getAffectedAreaStartOffset() <= myStartOffset) {
-            myCurrentHighlighters.add(lookAhead);
-          }
-          else {
-            myIterator.pushBack(lookAhead);
-          }
-        }
+
+        myCurrentHighlighters.add(myNextHighlighter);
+        myNextHighlighter = null;
       }
 
-      while (myNextHighlighter == null && myIterator.hasNext()) {
+      while (myIterator.hasNext()) {
         RangeHighlighterEx highlighter = myIterator.next();
         if (!skipHighlighter(highlighter)) {
           if (highlighter.getAffectedAreaStartOffset() > myStartOffset) {
             myNextHighlighter = highlighter;
+            break;
           }
           else {
             myCurrentHighlighters.add(highlighter);
@@ -546,8 +535,8 @@ public final class IterationState {
         return layerDiff;
       }
       // prefer more specific region
-      int o1Length = o1.getEndOffset() - o1.getStartOffset();
-      int o2Length = o2.getEndOffset() - o2.getStartOffset();
+      int o1Length = o1.getAffectedAreaEndOffset() - o1.getAffectedAreaStartOffset();
+      int o2Length = o2.getAffectedAreaEndOffset() - o2.getAffectedAreaStartOffset();
       return o1Length - o2Length;
     }
   }
