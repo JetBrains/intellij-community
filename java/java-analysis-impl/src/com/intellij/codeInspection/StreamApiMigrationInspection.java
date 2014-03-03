@@ -261,7 +261,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               iteration += ".filter(" + parameter.getName() + " -> " + condition.getText() +")";
             }
           }
-          iteration +=".map(" + parameter.getName() + " -> " + methodCallExpression.getArgumentList().getExpressions()[0].getText() + ").collect(java.util.stream.Collectors.";
+          iteration +=".map(";
+
+          final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
+
+          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(mapperCall, null, new PsiParameter[]{parameter});
+          if (methodReferenceText != null) {
+            iteration += methodReferenceText;
+          } else {
+            iteration += parameter.getName() + " -> " + mapperCall.getText();
+          }
+          iteration += ").collect(java.util.stream.Collectors.";
 
           String variableName = null;
           PsiExpression initializer = null;

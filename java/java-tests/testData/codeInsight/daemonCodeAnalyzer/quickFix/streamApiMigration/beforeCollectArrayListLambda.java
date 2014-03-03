@@ -1,6 +1,5 @@
 // "Replace with collect" "true"
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Collect {
   class Person {
@@ -10,6 +9,9 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-    Set<String> names = persons.stream().map(person::getName).collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    List<String> names = new ArrayList<>();
+    for (Person person : pers<caret>ons) {
+      names.add("name: " + person.getName());
+    }
   }
 }
