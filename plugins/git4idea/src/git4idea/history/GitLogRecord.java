@@ -219,7 +219,7 @@ class GitLogRecord {
         }
         final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true, true);
         before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath, (GitRevisionNumber)thisRevision, parentRevisions);
+        after = GitContentRevision.createRevision(filePath, thisRevision, project, null);
         break;
       case DELETED:
         status = FileStatus.DELETED;
@@ -234,14 +234,13 @@ class GitLogRecord {
         final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
                                                                            false, false, true);
         before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, true, true, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename,
-                                                                 (GitRevisionNumber)thisRevision, parentRevisions);
+        after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project, null);
         break;
       case TYPE_CHANGED:
         status = FileStatus.MODIFIED;
         final FilePath filePath2 = GitContentRevision.createPath(vcsRoot, path, false, true, true);
         before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath2, (GitRevisionNumber)thisRevision, parentRevisions);
+        after = GitContentRevision.createRevision(filePath2, thisRevision, project, null);
         break;
       default:
         throw new AssertionError("Unknown file status: " + statusInfo);
