@@ -366,7 +366,7 @@ public class PatchReader {
           iterator.previous();
           break;
         }
-        lastLine = parsePatchLine(hunkCurLine, 1);
+        lastLine = parsePatchLine(hunkCurLine, 1, numLines >= 0);
         if (lastLine == null) {
           iterator.previous();
           break;
@@ -389,11 +389,16 @@ public class PatchReader {
 
     @Nullable
     private static PatchLine parsePatchLine(final String line, final int prefixLength) {
+      return parsePatchLine(line, prefixLength, true);
+    }
+
+    @Nullable
+    private static PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
       PatchLine.Type type;
-      if (line.startsWith("+")) {
+      if (line.startsWith("+") && expectMeaningfulLines) {
         type = PatchLine.Type.ADD;
       }
-      else if (line.startsWith("-")) {
+      else if (line.startsWith("-") && expectMeaningfulLines) {
         type = PatchLine.Type.REMOVE;
       }
       else if (line.startsWith(" ") || line.length() == 0) {
