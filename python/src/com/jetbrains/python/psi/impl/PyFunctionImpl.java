@@ -220,7 +220,17 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    PyType type = getGenericReturnType(context, callSite);
+    PyType type = null;
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      type = typeProvider.getCallType(this, callSite, context);
+      if (type != null) {
+        type.assertValid(typeProvider.toString());
+        break;
+      }
+    }
+    if (type == null) {
+      type = getReturnType(context);
+    }
     if (callSite == null) {
       return type;
     }
@@ -250,7 +260,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
    */
   public PyType getReturnTypeWithoutCallSite(@NotNull TypeEvalContext context,
                                              @Nullable PyExpression receiver) {
-    PyType type = getGenericReturnType(context, null);
+    PyType type = getReturnType(context);
     if (PyTypeChecker.hasGenerics(type, context)) {
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver,
                                                                                       Maps.<PyExpression, PyNamedParameter>newHashMap(),
@@ -290,18 +300,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     return false;
-  }
-
-  @Nullable
-  private PyType getGenericReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType returnType = typeProvider.getCallType(this, callSite, context);
-      if (returnType != null) {
-        returnType.assertValid(typeProvider.toString());
-        return returnType;
-      }
-    }
-    return getReturnType(context);
   }
 
   @Nullable
