@@ -32,6 +32,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -107,8 +108,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final ASTNode tagStartEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
       final ASTNode tagEndStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tag.getNode());
       if (tagStartEnd != null && tagEndStart != null) {
-        result.add(new TextRange(tagStartEnd.getTextRange().getEndOffset(),
-                                 tagEndStart.getTextRange().getStartOffset()));
+        result.add(new UnfairTextRange(tagStartEnd.getTextRange().getEndOffset(),
+                                       tagEndStart.getTextRange().getStartOffset()));
       }
       if (tagStartEnd != null) {
         result.add(new TextRange(tag.getTextRange().getStartOffset(),
