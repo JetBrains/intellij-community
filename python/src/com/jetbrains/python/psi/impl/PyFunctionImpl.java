@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
@@ -235,36 +234,25 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return type;
     }
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-    if (PyTypeChecker.hasGenerics(type, context)) {
-      if (results != null) {
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(results.getReceiver(), results.getArguments(),
-                                                                                        context);
-        type = substitutions != null ? PyTypeChecker.substitute(type, substitutions, context) : null;
-      }
-      else {
-        type = null;
-      }
-    }
     if (results != null) {
-      type = replaceSelf(type, results.getReceiver(), context);
-    }
-    if (results != null && isDynamicallyEvaluated(results.getArguments().values(), context)) {
-      return PyUnionType.createWeakType(type);
+      return analyzeCallType(type, results.getReceiver(), results.getArguments(), context);
     }
     return type;
   }
 
   @Nullable
-  /**
-   * Suits when there is no call site(e.g. implicit __iter__ call in statement for)
-   */
-  public PyType getReturnTypeWithoutCallSite(@NotNull TypeEvalContext context,
-                                             @Nullable PyExpression receiver) {
-    PyType type = getReturnType(context);
+  @Override
+  public PyType getCallType(@Nullable PyExpression receiver,
+                            @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                            @NotNull TypeEvalContext context) {
+    return analyzeCallType(getReturnType(context), receiver, parameters, context);
+  }
+
+  @Nullable
+  private PyType analyzeCallType(@Nullable PyType type, @Nullable PyExpression receiver,
+                                 @NotNull Map<PyExpression, PyNamedParameter> parameters, @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver,
-                                                                                      Maps.<PyExpression, PyNamedParameter>newHashMap(),
-                                                                                      context);
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
         type = PyTypeChecker.substitute(type, substitutions, context);
       }
@@ -272,7 +260,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         type = null;
       }
     }
-    return replaceSelf(type, receiver, context);
+    if (receiver != null) {
+      type = replaceSelf(type, receiver, context);
+    }
+    if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
+      type = PyUnionType.createWeakType(type);
+    }
+    return type;
   }
 
   @Nullable

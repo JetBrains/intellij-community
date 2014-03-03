@@ -28,6 +28,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * @author yole
  */
@@ -79,6 +81,14 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+    return getReturnType(context);
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@Nullable PyExpression receiver,
+                            @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                            @NotNull TypeEvalContext context) {
     return getReturnType(context);
   }
 
