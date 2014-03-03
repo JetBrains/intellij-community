@@ -70,7 +70,6 @@ public class Runner {
   public static void initLogger() {
     if (logger == null) {
       String logFolder = getLogDir();
-      System.out.println("Log dir: " + logFolder);
       FileAppender update = new FileAppender();
 
       update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
