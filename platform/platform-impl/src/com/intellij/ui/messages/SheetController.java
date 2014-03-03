@@ -277,12 +277,12 @@ public class SheetController {
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = 120;
+    int buttonsWidth = 15 * 2;
 
     for (JButton button : buttons) {
       panel.add(button);
       button.repaint();
-      buttonsWidth = button.getWidth() + 10;
+      buttonsWidth += button.getPreferredSize().width + 10;
     }
 
     SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
