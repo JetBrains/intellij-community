@@ -26,7 +26,7 @@ import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.actions.RowClickInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.SelectAllRelativeCommitsInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
@@ -109,9 +109,9 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   @Override
   public void performAction(@NotNull InternalGraphAction action) {
     super.performAction(action);
-    if (action instanceof RowClickInternalGraphAction) {
+    if (action instanceof SelectAllRelativeCommitsInternalGraphAction) {
       setAllValues(myThickFlags, false);
-      Integer visibleNodeIndex = ((RowClickInternalGraphAction)action).getInfo();
+      Integer visibleNodeIndex = ((SelectAllRelativeCommitsInternalGraphAction)action).getInfo();
       if (visibleNodeIndex != null) {
         int realRowIndex = myMutableGraph.getIndexInPermanentGraph(visibleNodeIndex);
         enableAllRelativeNodes(myThickFlags, realRowIndex);
@@ -129,13 +129,9 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   private void enableAllRelativeNodes(@NotNull final Flags flags, final int rowIndex) {
     flags.set(rowIndex, true);
 
-
     myDfsUtil.nodeDfsIterator(rowIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
-        if (Math.abs(rowIndex - currentNode) > 5000)
-          return NODE_NOT_FOUND;
-
         for (int downNode : myPermanentGraph.getDownNodes(currentNode)) {
           if (downNode != SomeGraph.NOT_LOAD_COMMIT && !flags.get(downNode)) {
             flags.set(downNode, true);
@@ -149,9 +145,6 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
     myDfsUtil.nodeDfsIterator(rowIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
-        if (Math.abs(rowIndex - currentNode) > 5000)
-          return NODE_NOT_FOUND;
-
         for (int upNode : myPermanentGraph.getUpNodes(currentNode)) {
           if (!flags.get(upNode)) {
             flags.set(upNode, true);

@@ -17,8 +17,8 @@ package com.intellij.vcs.log.newgraph.gpaph.actions;
 
 import org.jetbrains.annotations.Nullable;
 
-public class RowClickInternalGraphAction extends InternalGraphActionWithSomeInfo<Integer> {
-  public RowClickInternalGraphAction(@Nullable Integer visibleRowIndex) {
+public class SelectAllRelativeCommitsInternalGraphAction extends InternalGraphActionWithSomeInfo<Integer> {
+  public SelectAllRelativeCommitsInternalGraphAction(@Nullable Integer visibleRowIndex) {
     super(visibleRowIndex);
   }
 }

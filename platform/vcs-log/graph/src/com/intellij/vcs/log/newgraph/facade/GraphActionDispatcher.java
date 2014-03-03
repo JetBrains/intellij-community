@@ -62,7 +62,7 @@ public class GraphActionDispatcher {
 
   @Nullable
   private GraphAnswer clickToRow(int visibleRowIndex) {
-    myGraphData.getMutableGraph().performAction(new RowClickInternalGraphAction(visibleRowIndex));
+    //myGraphData.getMutableGraph().performAction(new SelectAllRelativeCommitsInternalGraphAction(visibleRowIndex));
     return null;
   }
 
