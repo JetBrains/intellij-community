@@ -63,14 +63,14 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return ourEnabled && findDuplicatesProfile(file.getFileType()) != null;
     }
   };
 
   private final DataExternalizer<TIntArrayList> myValueExternalizer = new DataExternalizer<TIntArrayList>() {
     @Override
-    public void save(DataOutput out, TIntArrayList value) throws IOException {
+    public void save(@NotNull DataOutput out, TIntArrayList value) throws IOException {
       DataInputOutputUtil.writeINT(out, value.size());
       for(int i = 0, len = value.size(); i < len; ++i) {
         DataInputOutputUtil.writeINT(out, value.getQuick(i));
@@ -78,7 +78,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     }
 
     @Override
-    public TIntArrayList read(DataInput in) throws IOException {
+    public TIntArrayList read(@NotNull DataInput in) throws IOException {
       int capacity = DataInputOutputUtil.readINT(in);
       TIntArrayList list = new TIntArrayList(capacity);
       while(capacity -- > 0) {
@@ -135,16 +135,19 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     return myIndexer;
   }
 
+  @NotNull
   @Override
   public DataExternalizer<TIntArrayList> getValueExternalizer() {
     return myValueExternalizer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
