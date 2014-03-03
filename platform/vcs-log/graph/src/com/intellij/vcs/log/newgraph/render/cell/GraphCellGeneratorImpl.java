@@ -157,15 +157,18 @@ public class GraphCellGeneratorImpl extends AbstractGraphCellGenerator {
       result.add(new SpecialRowElement(edge, position, SpecialRowElement.Type.UP_ARROW));
   }
 
+  @Override
   public boolean isShowLongEdges() {
     return showLongEdges;
   }
 
+  @Override
   public void setShowLongEdges(boolean showLongEdges) {
     this.showLongEdges = showLongEdges;
     invalidate();
   }
 
+  @Override
   public void invalidate() {
     myEdgesInRow.invalidate();
     cache.clear();

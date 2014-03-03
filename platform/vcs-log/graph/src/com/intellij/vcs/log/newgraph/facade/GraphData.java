@@ -22,8 +22,11 @@ import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
 import com.intellij.vcs.log.newgraph.gpaph.impl.CollapsedMutableGraph;
+import com.intellij.vcs.log.newgraph.gpaph.impl.FilterMutableGraph;
 import com.intellij.vcs.log.newgraph.render.ElementColorManager;
 import com.intellij.vcs.log.newgraph.render.GraphRender;
+import com.intellij.vcs.log.newgraph.render.cell.FilterGraphCellGenerator;
+import com.intellij.vcs.log.newgraph.render.cell.GraphCellGeneratorImpl;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,8 +93,23 @@ public class GraphData {
 
   private void applyFilters() {
     myCurrentBranches.setVisibleBranches(myHeads);
-    myMutableGraph = CollapsedMutableGraph.newInstance(myPermanentGraph, myPermanentGraphLayout, myGraphFlags, myDfsUtil);
-    myGraphRender = new GraphRender(myMutableGraph, myColorManager);
+    if (myVisibilityPredicate == null) {
+      myMutableGraph = CollapsedMutableGraph.newInstance(myPermanentGraph, myPermanentGraphLayout, myGraphFlags, myDfsUtil);
+      GraphCellGeneratorImpl cellGenerator = new GraphCellGeneratorImpl(myMutableGraph);
+      myGraphRender = new GraphRender(myMutableGraph, myColorManager, cellGenerator);
+    } else {
+      Condition<Integer> isVisibleNode = new Condition<Integer>() {
+        @Override
+        public boolean value(Integer integer) {
+          return myVisibilityPredicate.value(myPermanentGraph.getHashIndex(integer));
+        }
+      };
+      FilterMutableGraph filterMutableGraph =
+        FilterMutableGraph.newInstance(myPermanentGraph, myPermanentGraphLayout, myGraphFlags.getVisibleNodesInBranches(), myGraphFlags.getFlagsForFilters(), isVisibleNode);
+      myMutableGraph = filterMutableGraph;
+      FilterGraphCellGenerator filterGraphCellGenerator = new FilterGraphCellGenerator(filterMutableGraph);
+      myGraphRender = new GraphRender(myMutableGraph, myColorManager, filterGraphCellGenerator);
+    }
   }
 
   @NotNull

@@ -16,12 +16,13 @@
 package com.intellij.vcs.log.newgraph.render.cell;
 
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
+import com.intellij.vcs.log.newgraph.render.GraphCellGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractGraphCellGenerator {
+public abstract class AbstractGraphCellGenerator implements GraphCellGenerator {
   @NotNull
   protected final MutableGraph myGraph;
 

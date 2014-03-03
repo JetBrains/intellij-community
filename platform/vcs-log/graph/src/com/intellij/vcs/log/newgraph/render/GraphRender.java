@@ -17,11 +17,9 @@ package com.intellij.vcs.log.newgraph.render;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.graph.*;
+import com.intellij.vcs.log.graph.PaintInfo;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
-import com.intellij.vcs.log.newgraph.render.cell.AbstractGraphCellGenerator;
 import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
-import com.intellij.vcs.log.newgraph.render.cell.GraphCellGeneratorImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -33,13 +31,13 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
 public class GraphRender {
 
   @NotNull
-  private final GraphCellGeneratorImpl myCellGenerator;
+  private final GraphCellGenerator myCellGenerator;
 
   @NotNull
   private final GraphCellPainter myCellPainter;
 
-  public GraphRender(@NotNull MutableGraph mutableGraph, @NotNull ElementColorManager colorManager) {
-    myCellGenerator = new GraphCellGeneratorImpl(mutableGraph);
+  public GraphRender(@NotNull MutableGraph mutableGraph, @NotNull ElementColorManager colorManager, @NotNull GraphCellGenerator cellGenerator) {
+    myCellGenerator = cellGenerator;
     myCellPainter = new SimpleGraphCellPainter(mutableGraph.getThickHoverController(), colorManager);
   }
 
@@ -68,7 +66,7 @@ public class GraphRender {
   }
 
   @NotNull
-  public AbstractGraphCellGenerator getCellGenerator() {
+  public GraphCellGenerator getCellGenerator() {
     return myCellGenerator;
   }
 

@@ -17,11 +17,11 @@ package com.intellij.vcs.log.newgraph.gpaph.impl;
 
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
-import com.intellij.vcs.log.newgraph.gpaph.*;
+import com.intellij.vcs.log.newgraph.gpaph.Edge;
+import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
+import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.newgraph.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.impl.IDIntToInt;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,23 +30,17 @@ import java.util.List;
 public class PermanentAsMutableGraph extends AbstractMutableGraph<PermanentAsMutableGraph.GraphWithElementsInfoImpl> {
 
   @NotNull
-  private final AbstractThickHoverController myThickHoverController;
-
-  @NotNull
-  private final FragmentGenerator myFragmentGenerator;
+  private final ThickHoverController myThickHoverController;
 
   public PermanentAsMutableGraph(@NotNull PermanentGraph graph,
                                  @NotNull PermanentGraphLayout layout,
-                                 @NotNull Flags thickFlags,
-                                 @NotNull DfsUtil dfsUtil) {
+                                 @NotNull ThickHoverController thickHoverController) {
     super(new IDIntToInt(graph.nodesCount()), new GraphWithElementsInfoImpl(graph), layout);
-    myFragmentGenerator = new FragmentGenerator(this);
-    myThickHoverController = new ThickHoverControllerImpl(graph, this, myFragmentGenerator, thickFlags, dfsUtil);
+    myThickHoverController = thickHoverController;
   }
 
   @Override
   public int performAction(@NotNull InternalGraphAction action) {
-    myThickHoverController.performAction(action);
     return -1;
   }
 

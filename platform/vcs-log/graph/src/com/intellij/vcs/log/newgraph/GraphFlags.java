@@ -67,4 +67,8 @@ public class GraphFlags {
   public Flags getThickFlags() {
     return getFlags(2);
   }
+
+  public Flags getFlagsForFilters() {
+    return getFlags(4);
+  }
 }

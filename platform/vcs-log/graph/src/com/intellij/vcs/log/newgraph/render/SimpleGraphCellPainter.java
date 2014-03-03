@@ -122,6 +122,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
 
+  private void paintDownHarmonica(Color color) {
+    int x0 = 0;
+    int y0 = PrintParameters.HEIGHT_CELL - 1;
+    g2.setColor(color);
+    g2.drawLine(x0, y0, x0 + PrintParameters.WIDTH_NODE / 2 , y0);
+  }
+
   private void setStroke(boolean usual, boolean select) {
     if (usual) {
       if (select) {
@@ -236,6 +243,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             }
           });
           break;
+        case DOWN_HARMONICA:
+          drawLogic(true, false, true, JBColor.BLACK, new LitePrinter() {
+            @Override
+            public void print(Color color) {
+              paintDownHarmonica(color);
+            }
+          });
+          break;
         default:
           throw new IllegalStateException();
       }
@@ -271,7 +286,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @Override
   public SpecialRowElement mouseOverArrow(@NotNull GraphCell graphCell, int x, int y) {
     for (SpecialRowElement rowElement : graphCell.getSpecialRowElements()) {
-      if (rowElement.getType() != SpecialRowElement.Type.NODE) {
+      if (rowElement.getType() == SpecialRowElement.Type.UP_ARROW || rowElement.getType() == SpecialRowElement.Type.DOWN_ARROW) {
         if (PositionUtil.overNode(rowElement.getPosition(), x, y)) {
           return rowElement;
         }
