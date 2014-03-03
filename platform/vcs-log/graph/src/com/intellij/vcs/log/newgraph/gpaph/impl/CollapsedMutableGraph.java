@@ -26,17 +26,19 @@ import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.*;
 import com.intellij.vcs.log.newgraph.gpaph.actions.ClickInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.LinearBranchesExpansionInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.newgraph.utils.Flags;
-import com.intellij.vcs.log.newgraph.utils.MyUtils;
 import com.intellij.vcs.log.newgraph.utils.impl.TreeIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
 public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutableGraph.GraphWithElementsInfoImpl> {
 
@@ -46,7 +48,7 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
                                                   @NotNull DfsUtil dfsUtil) {
     final Flags visibleNodes = graphFlags.getVisibleNodes();
     final Flags visibleNodesInBranches = graphFlags.getVisibleNodesInBranches();
-    MyUtils.setAllValues(visibleNodes, true);
+    setAllValues(visibleNodes, true);
     TreeIntToIntMap intToIntMap = TreeIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
       public boolean fun(Integer integer) {
@@ -64,9 +66,6 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
   private final FragmentGenerator myFragmentGenerator;
 
   @NotNull
-  private final GraphWithElementsInfoImpl myGraphWithElementsInfo;
-
-  @NotNull
   private final AbstractThickHoverController myThickHoverController;
 
   private CollapsedMutableGraph(@NotNull PermanentGraph permanentGraph,
@@ -76,7 +75,6 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
                                 @NotNull DfsUtil dfsUtil,
                                 @NotNull GraphWithElementsInfoImpl graphWithElementsInfo) {
     super(intToIntMap, graphWithElementsInfo, layout);
-    myGraphWithElementsInfo = graphWithElementsInfo;
     myFragmentGenerator = new FragmentGenerator(this);
     myThickHoverController = new ThickHoverControllerImpl(permanentGraph, this, myFragmentGenerator, thickFlags, dfsUtil);
   }
@@ -89,19 +87,40 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
       if (element != null) {
         Edge edge = containedCollapsedEdge(element);
         if (edge != null) {
-          myGraphWithElementsInfo.expand(getIndexInPermanentGraph(edge.getUpNodeVisibleIndex()),
+          myGraph.expand(getIndexInPermanentGraph(edge.getUpNodeVisibleIndex()),
                                          getIndexInPermanentGraph(edge.getDownNodeVisibleIndex()));
           return edge.getUpNodeVisibleIndex();
         }
 
         GraphFragment fragment = myFragmentGenerator.getLongFragment(element);
         if (fragment != null) {
-          myGraphWithElementsInfo.collapse(getIndexInPermanentGraph(fragment.upVisibleNodeIndex),
+          myGraph.collapse(getIndexInPermanentGraph(fragment.upVisibleNodeIndex),
                                            getIndexInPermanentGraph(fragment.downVisibleNodeIndex));
           return fragment.upVisibleNodeIndex;
         }
       }
     }
+
+    if (action instanceof LinearBranchesExpansionInternalGraphAction) {
+      Boolean info = ((LinearBranchesExpansionInternalGraphAction)action).getInfo();
+      assert info != null;
+      boolean shouldExpand = info;
+      if (shouldExpand)
+        myGraph.expandAll();
+      else {
+        int currentVisibleIndex = 0;
+        while (currentVisibleIndex < this.getCountVisibleNodes()) {
+          GraphFragment fragment = myFragmentGenerator.getLongDownFragment(currentVisibleIndex);
+          if (fragment != null) {
+            myGraph.collapse(getIndexInPermanentGraph(fragment.upVisibleNodeIndex),
+                             getIndexInPermanentGraph(fragment.downVisibleNodeIndex));
+          }
+          currentVisibleIndex++;
+        }
+      }
+      return 1;
+    }
+
     return -1;
   }
 
@@ -153,6 +172,9 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
           if (upToEdge.containsKey(currentNode)) {
             Pair<Integer, Integer> edge = upToEdge.remove(currentNode);
             downToEdge.remove(edge.second);
+            if (edge.second == downNodeIndex)
+              return NODE_NOT_FOUND;
+
             visibleNodes.set(edge.second, false);
             return edge.second;
           }
@@ -197,6 +219,13 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
       return visibleNodes.get(nodeIndex) && visibleNodesInBranches.get(nodeIndex);
     }
 
+    public void expandAll() {
+      upToEdge.clear();
+      downToEdge.clear();
+      setAllValues(visibleNodes, true);
+      intToIntMap.update(0, myPermanentGraph.nodesCount() - 1);
+    }
+
     @NotNull
     @Override
     public Node.Type getNodeType(int nodeIndex) {
@@ -216,8 +245,6 @@ public class CollapsedMutableGraph extends AbstractMutableGraph<CollapsedMutable
     public int nodesCount() {
       return intToIntMap.shortSize();
     }
-
-
 
     @NotNull
     @Override

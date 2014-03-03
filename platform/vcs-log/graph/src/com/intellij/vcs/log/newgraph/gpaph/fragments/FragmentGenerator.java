@@ -105,19 +105,23 @@ public class FragmentGenerator {
   }
 
   @Nullable
+  public GraphFragment getLongDownFragment(int rowIndex) {
+    return getLongFragment(getDownFragment(rowIndex), Integer.MAX_VALUE);
+  }
+
+  @Nullable
   public GraphFragment getLongFragment(@NotNull GraphElement element) {
-    return getLongFragment(element, Integer.MAX_VALUE);
+    return getLongFragment(getRelativeFragment(element), Integer.MAX_VALUE);
   }
 
   // for hover
   @Nullable
   public GraphFragment getPartLongFragment(@NotNull GraphElement element) {
-    return getLongFragment(element, 500);
+    return getLongFragment(getRelativeFragment(element), 500);
   }
 
   @Nullable
-  private GraphFragment getLongFragment(@NotNull GraphElement element, int bound) {
-    GraphFragment startFragment = getRelativeFragment(element);
+  private GraphFragment getLongFragment(@Nullable GraphFragment startFragment, int bound) {
     if (startFragment == null)
       return null;
 

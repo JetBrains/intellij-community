@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.actions.ClickInternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverArrowInternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.actions.MouseOverGraphElementInternalGraphAction;
-import com.intellij.vcs.log.newgraph.gpaph.actions.RowClickInternalGraphAction;
+import com.intellij.vcs.log.newgraph.gpaph.actions.*;
 import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
 import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +49,12 @@ public class GraphActionDispatcher {
 
     if (action instanceof ClickGraphAction) {
       return clickToGraph((ClickGraphAction)action);
+    }
+
+    if (action instanceof LinearBranchesExpansionAction) {
+      myGraphData.getMutableGraph().performAction(new LinearBranchesExpansionInternalGraphAction(((LinearBranchesExpansionAction)action).shouldExpand()));
+      myGraphData.getGraphRender().invalidate();
+      return new JumpToRowAnswer(0);
     }
 
     return null;
