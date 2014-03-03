@@ -234,7 +234,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     if (!myShowOtherProjectVirtualenvs) {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
     }
-    Collections.sort(pythonSdks, new PreferredSdkComparator());
     //noinspection unchecked
     mySdkList.setModel(new CollectionListModel<Sdk>(pythonSdks));
 
