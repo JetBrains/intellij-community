@@ -18,14 +18,17 @@ package com.jetbrains.python.configuration;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,6 +36,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -425,7 +431,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return !(getSelectedSdk() instanceof PyDetectedSdk);
+      return getSelectedSdk() != null;
     }
 
     @Override
@@ -443,7 +449,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       component.setPreferredSize(new Dimension(600, 400));
       component.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
       dialog.setCenterPanel(component);
-      final Sdk sdk = getSelectedSdk();
+      Sdk sdk = getSelectedSdk();
+      if (sdk instanceof PyDetectedSdk) {
+        final String sdkName = sdk.getName();
+        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+          @Override
+          public VirtualFile compute() {
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
+          }
+        });
+        sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
+      }
       editor.reload(sdk != null ? sdk.getSdkModificator(): null);
 
       dialog.setTitle("Interpreter Paths");
