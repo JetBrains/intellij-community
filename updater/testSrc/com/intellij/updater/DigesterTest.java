@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class DigesterTest extends UpdaterTestCase {
   @Test
   public void testBasics() throws Exception {
-    Runner.initLogger(System.getProperty("java.io.tmpdir"));
+    Runner.initLogger();
     Map<String, Long> checkSums = Digester.digestFiles(getDataDir(), Collections.<String>emptyList(), TEST_UI);
     assertEquals(12, checkSums.size());
 
