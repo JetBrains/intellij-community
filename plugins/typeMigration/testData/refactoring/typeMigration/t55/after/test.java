@@ -1,4 +1,4 @@
 import java.util.*;
 class Test {
-   Set<?> f = new Set<Object>();
+   Set<?> f = new Set<>();
 }
