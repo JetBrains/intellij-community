@@ -113,7 +113,7 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
     return getReturnType();
   }
 

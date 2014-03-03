@@ -463,8 +463,14 @@ public class PyCallExpressionHelper {
       else {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
+          final PyCallableType callableType = (PyCallableType)type;
           final PyQualifiedExpression callSite = callee instanceof PyQualifiedExpression ? (PyQualifiedExpression)callee : null;
-          return ((PyCallableType) type).getCallType(context, callSite);
+          if (callSite != null) {
+            return callableType.getCallType(context, callSite);
+          }
+          else {
+            return callableType.getReturnType();
+          }
         }
         return null;
       }

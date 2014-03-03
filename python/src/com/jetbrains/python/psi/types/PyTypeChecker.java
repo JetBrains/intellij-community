@@ -171,8 +171,7 @@ public class PyTypeChecker {
             }
           }
         }
-        if (!match(expectedCallable.getCallType(context, null), actualCallable.getCallType(context, null), context, substitutions,
-                   recursive)) {
+        if (!match(expectedCallable.getReturnType(), actualCallable.getReturnType(), context, substitutions, recursive)) {
           return false;
         }
         return true;
@@ -258,7 +257,7 @@ public class PyTypeChecker {
           }
         }
       }
-      collectGenerics(callable.getCallType(context, null), context, collected, visited);
+      collectGenerics(callable.getReturnType(), context, collected, visited);
     }
   }
 
@@ -308,7 +307,7 @@ public class PyTypeChecker {
             substParams.add(subst);
           }
         }
-        final PyType substResult = substitute(callable.getCallType(context, null), substitutions, context);
+        final PyType substResult = substitute(callable.getReturnType(), substitutions, context);
         return new PyCallableTypeImpl(substParams, substResult);
       }
     }

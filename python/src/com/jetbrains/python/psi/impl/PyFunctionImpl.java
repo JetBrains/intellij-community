@@ -176,7 +176,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
-    final PyType type = context.getType(this);
+    PyType type = context.getType(this);
+    if (type instanceof PyUnionType) {
+      final PyUnionType unionType = (PyUnionType)type;
+      type = unionType.excludeNull();
+    }
     if (type instanceof PyCallableType) {
       return ((PyCallableType)type).getReturnType();
     }
@@ -218,7 +222,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
     PyType type = null;
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       type = typeProvider.getCallType(this, callSite, context);
@@ -229,9 +233,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     }
     if (type == null) {
       type = getReturnType(context);
-    }
-    if (callSite == null) {
-      return type;
     }
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
     if (results != null) {
@@ -249,8 +250,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType analyzeCallType(@Nullable PyType type, @Nullable PyExpression receiver,
-                                 @NotNull Map<PyExpression, PyNamedParameter> parameters, @NotNull TypeEvalContext context) {
+  private PyType analyzeCallType(@Nullable PyType type,
+                                 @Nullable PyExpression receiver,
+                                 @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                                 @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
@@ -400,8 +403,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return type;
       }
     }
-    final PyFunctionType type = new PyFunctionType(this, calculateReturnType(context));
-    if (PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null) {
+    final boolean hasCustomDecorators = PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null;
+    final PyType returnType = calculateReturnType(context);
+    final PyFunctionType type = new PyFunctionType(this, hasCustomDecorators ? PyUnionType.createWeakType(returnType) : returnType);
+    if (hasCustomDecorators) {
       return PyUnionType.createWeakType(type);
     }
     return type;

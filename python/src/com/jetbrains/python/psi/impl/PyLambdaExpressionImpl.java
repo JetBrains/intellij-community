@@ -80,7 +80,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
     return getReturnType(context);
   }
 
