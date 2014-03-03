@@ -143,6 +143,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
         console.setLanguage(PythonLanguage.getInstance());
         console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
       } else {
+        if(line.equals("\n")) {
+          myInputBuffer.append("\n");
+        }
         return;
       }
     }
