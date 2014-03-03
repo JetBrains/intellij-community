@@ -196,7 +196,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         return;
       }
       FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
-      --myWatchedProjectsCount;
+      if (myWatchedProjectsCount > 0) --myWatchedProjectsCount;
       if (ourDebugMode) {
         System.out.println("After suspend for project:"+projectId + "," + myWatchedProjectsCount);
       }
