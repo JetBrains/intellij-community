@@ -89,7 +89,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 

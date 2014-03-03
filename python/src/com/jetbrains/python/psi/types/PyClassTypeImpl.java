@@ -163,7 +163,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if ("super".equals(getClassQName()) && isBuiltin(context) && location instanceof PyCallExpression) {
+    if ("super".equals(getClassQName()) && isBuiltin() && location instanceof PyCallExpression) {
       // methods of super() call are not of class super!
       PyExpression first_arg = ((PyCallExpression)location).getArgument(0, PyExpression.class);
       if (first_arg != null) { // the usual case: first arg is the derived class that super() is proxying for
@@ -536,7 +536,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return PyBuiltinCache.getInstance(myClass).isBuiltin(myClass);
   }
 
