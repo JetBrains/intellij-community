@@ -354,22 +354,30 @@ public class PatchReader {
       PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
 
       PatchLine lastLine = null;
-      int numLines = linesBefore + linesAfter;
+      int before = 0;
+      int after = 0;
       while (iterator.hasNext()) {
         String hunkCurLine = iterator.next();
-        -- numLines;
         if (lastLine != null && hunkCurLine.startsWith(NO_NEWLINE_SIGNATURE)) {
           lastLine.setSuppressNewLine(true);
           continue;
         }
-        if (hunkCurLine.startsWith("--- ") && numLines == 0) {
-          iterator.previous();
-          break;
-        }
-        lastLine = parsePatchLine(hunkCurLine, 1, numLines >= 0);
+        lastLine = parsePatchLine(hunkCurLine, 1, before < linesBefore || after < linesAfter);
         if (lastLine == null) {
           iterator.previous();
           break;
+        }
+        switch (lastLine.getType()) {
+          case CONTEXT:
+            before++;
+            after++;
+            break;
+          case ADD:
+            after++;
+            break;
+          case REMOVE:
+            before++;
+            break;
         }
         hunk.addLine(lastLine);
       }
