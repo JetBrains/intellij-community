@@ -338,6 +338,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   private void setPromptInner(@Nullable final String prompt) {
+    myUpdateQueue.checkDisposed();
+
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

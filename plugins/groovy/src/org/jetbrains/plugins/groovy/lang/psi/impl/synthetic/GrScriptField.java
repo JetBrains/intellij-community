@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -45,10 +46,6 @@ public class GrScriptField extends GrLightField {
   private GrScriptField(@NotNull GrVariable original, @NotNull GroovyScriptClass scriptClass) {
     super(scriptClass, original.getName(), original.getType(), original);
 
-    mySetterInitialized = true;
-    mySetter = null;
-    myGetters = GrAccessorMethod.EMPTY_ARRAY;
-
     final GrLightModifierList modifierList = getModifierList();
     for (@PsiModifier.ModifierConstant String modifier : PsiModifier.MODIFIERS) {
       if (original.hasModifierProperty(modifier)) {
@@ -65,6 +62,17 @@ public class GrScriptField extends GrLightField {
     }
   }
 
+  @Nullable
+  @Override
+  public GrAccessorMethod getSetter() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public GrAccessorMethod[] getGetters() {
+    return GrAccessorMethod.EMPTY_ARRAY;
+  }
 
   @NotNull
   public static GrScriptField getScriptField(@NotNull final GrVariable original) {

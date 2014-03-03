@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -39,15 +40,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov, ilyas
  */
 public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody {
-  private GrField[] myFields = null;
-
   public GrTypeDefinitionBodyBase(@NotNull ASTNode node) {
     super(node);
   }
@@ -61,14 +59,6 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return getParentByStub();
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myFields = null;
-    for (GrField field : getFields()) {
-      field.clearCaches();
-    }
-  }
-
   public abstract void accept(GroovyElementVisitor visitor);
 
   public String toString() {
@@ -76,22 +66,18 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   }
 
   public GrField[] getFields() {
-    if (myFields == null) {
-      GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.ARRAY_FACTORY);
-      if (declarations.length == 0) return GrField.EMPTY_ARRAY;
-      List<GrField> result = new ArrayList<GrField>();
-      for (GrVariableDeclaration declaration : declarations) {
-        GrVariable[] variables = declaration.getVariables();
-        for (GrVariable variable : variables) {
-          if (variable instanceof GrField) {
-            result.add((GrField) variable);
-          }
+    GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.ARRAY_FACTORY);
+    List<GrField> result = ContainerUtil.newArrayList();
+    for (GrVariableDeclaration declaration : declarations) {
+      GrVariable[] variables = declaration.getVariables();
+      for (GrVariable variable : variables) {
+        if (variable instanceof GrField) {
+          result.add((GrField)variable);
         }
       }
-      myFields = result.toArray(new GrField[result.size()]);
     }
 
-    return myFields;
+    return result.toArray(new GrField[result.size()]);
   }
 
   public GrMethod[] getMethods() {

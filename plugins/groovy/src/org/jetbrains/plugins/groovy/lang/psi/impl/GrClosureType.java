@@ -56,7 +56,7 @@ public class GrClosureType extends GrLiteralClassType {
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature signature,
-                        @NotNull PsiType[] typeArgs) {
+                        @Nullable PsiType[] typeArgs) {
     super(level, scope, facade);
 
     mySignature = signature;
@@ -132,7 +132,7 @@ public class GrClosureType extends GrLiteralClassType {
 
   @Override
   public boolean equalsToText(@NotNull @NonNls String text) {
-    return text != null && text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
+    return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
   @Override

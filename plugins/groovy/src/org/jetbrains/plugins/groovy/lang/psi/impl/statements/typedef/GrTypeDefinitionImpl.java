@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -28,7 +28,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -37,7 +36,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
-import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,32 +69,21 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.isClassEquivalentTo;
 
 /**
  * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
-  private static final LightCacheKey<List<GrField>> AST_TRANSFORM_FIELD = LightCacheKey.createByJavaModificationCount();
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyMembers");
-
-  private volatile PsiClass[] myInnerClasses;
-  private volatile GrMethod[] myGroovyMethods;
-  private volatile PsiMethod[] myConstructors;
-  private volatile GrMethod[] myCodeConstructors;
-
-  Key<CachedValue<PsiMethod[]>> CACHED_METHODS = Key.create("cached.type.definition.methods");
+  private final GrTypeDefinitionMembersCache myCache = new GrTypeDefinitionMembersCache(this);
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -328,150 +315,45 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return GrClassImplUtil.findFieldByName(this, name, checkBases, false);
   }
 
-  private List<GrField> getSyntheticFields() {
-    List<GrField> fields = AST_TRANSFORM_FIELD.getCachedValue(this);
-    if (fields == null) {
-      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      fields = AstTransformContributor.runContributorsForFields(this);
-      if (stamp.mayCacheNow()) {
-        fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
-      }
-    }
-
-    return fields;
-  }
-
   @NotNull
   public GrField[] getFields() {
-    GrField[] codeFields = getCodeFields();
-
-    List<GrField> fromAstTransform = getSyntheticFields();
-    if (fromAstTransform.isEmpty()) return codeFields;
-
-    GrField[] res = new GrField[codeFields.length + fromAstTransform.size()];
-    System.arraycopy(codeFields, 0, res, 0, codeFields.length);
-
-    for (int i = 0; i < fromAstTransform.size(); i++) {
-      res[codeFields.length + i] = fromAstTransform.get(i);
-    }
-
-    return res;
+    return myCache.getFields();
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    CachedValue<PsiMethod[]> cached = getUserData(CACHED_METHODS);
-    if (cached == null) {
-      cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<PsiMethod[]>() {
-        @Override
-        public Result<PsiMethod[]> compute() {
-          GrTypeDefinitionBody body = getBody();
-          List<PsiMethod> result = new ArrayList<PsiMethod>();
-          if (body != null) {
-            collectMethodsFromBody(body, result);
-          }
-
-          for (PsiMethod method : AstTransformContributor.runContributorsForMethods(GrTypeDefinitionImpl.this)) {
-            addExpandingReflectedMethods(result, method);
-          }
-
-          for (GrField field : getSyntheticFields()) {
-            ContainerUtil.addIfNotNull(result, field.getSetter());
-            Collections.addAll(result, field.getGetters());
-          }
-          return Result.create(result.toArray(new PsiMethod[result.size()]), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
-      putUserData(CACHED_METHODS, cached);
-    }
-
-
-    return cached.getValue();
+    return myCache.getMethods();
   }
 
   @NotNull
   public GrMethod[] getCodeMethods() {
-    GrMethod[] cached = myGroovyMethods;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      GrTypeDefinitionBody body = getBody();
-      cached = body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
-      if (stamp.mayCacheNow()) {
-        myGroovyMethods = cached;
-      }
-    }
-    return cached;
+    return myCache.getCodeMethods();
   }
 
   public void subtreeChanged() {
-    myInnerClasses = null;
-    myConstructors = null;
-    myCodeConstructors = null;
-    myGroovyMethods = null;
+    myCache.dropCaches();
     super.subtreeChanged();
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    PsiMethod[] cached = myConstructors;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (final PsiMethod method : getMethods()) {
-        if (method.isConstructor()) {
-          addExpandingReflectedMethods(result, method);
-        }
-      }
-
-      cached = result.toArray(new PsiMethod[result.size()]);
-      if (stamp.mayCacheNow()) {
-        myConstructors = cached;
-      }
-    }
-    return cached;
+    return myCache.getConstructors();
   }
 
   @NotNull
   public GrMethod[] getCodeConstructors() {
-    GrMethod[] cached = myCodeConstructors;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      List<GrMethod> result = new ArrayList<GrMethod>();
-      for (final GrMethod method : getCodeMethods()) {
-        if (method.isConstructor()) {
-          result.add(method);
-        }
-      }
-
-      cached = result.toArray(new GrMethod[result.size()]);
-      if (stamp.mayCacheNow()) {
-        myCodeConstructors = cached;
-      }
-    }
-    return cached;
+    return myCache.getCodeConstructors();
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    PsiClass[] inners = myInnerClasses;
-    if (inners == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      final GrTypeDefinitionBody body = getBody();
-      inners = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
-      if (stamp.mayCacheNow()) {
-        myInnerClasses = inners;
-      }
-    }
-
-    return inners;
+    return myCache.getInnerClasses();
   }
 
   @NotNull
   public GrClassInitializer[] getInitializers() {
     GrTypeDefinitionBody body = getBody();
-    if (body == null) return GrClassInitializer.EMPTY_ARRAY;
-
-    return body.getInitializers();
+    return body != null ? body.getInitializers() : GrClassInitializer.EMPTY_ARRAY;
   }
 
   @NotNull
