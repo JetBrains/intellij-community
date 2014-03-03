@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
    Methods to add new behavior
    *********************************************************** */
   public void property(Map<Object, Object> args) {
+    if (args == null) return;
+
     String name = (String)args.get("name");
     Object type = args.get("type");
     Object doc = args.get("doc");
@@ -156,6 +158,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   public void constructor(Map<Object, Object> args) {
+    if (args == null) return;
+
     args.put("constructor", true);
     method(args);
   }
@@ -190,8 +194,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       ContainerUtil.map(argTypes, new Function<PsiType, Object>() {
         @Override
         public Object fun(PsiType type) {
-          String canonical = type.getCanonicalText();
-          return canonical != null ? canonical : type.getPresentableText();
+          return type.getCanonicalText();
         }
       }, types);
 

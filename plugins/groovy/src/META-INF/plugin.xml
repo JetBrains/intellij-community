@@ -79,6 +79,7 @@
 
     <extensionPoint name="convertToJava.customMethodInvocator" interface="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator"/>
 
+    <extensionPoint name="signatureHintProcessor" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -150,7 +151,30 @@
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
 
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SimpleTypeHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.MapEntryOrKeyValueHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromAbstractTypeMethodsHintProcessor"/>
+
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FirstParamHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FirstParamHintProcessor$FirstGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FirstParamHintProcessor$SecondGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FirstParamHintProcessor$ThirdGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FirstParamHintProcessor$Component"/>
+
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SecondParamHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SecondParamHintProcessor$FirstGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SecondParamHintProcessor$SecondGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SecondParamHintProcessor$ThirdGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SecondParamHintProcessor$Component"/>
+
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ThirdParamHintProcessor"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ThirdParamHintProcessor$FirstGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ThirdParamHintProcessor$SecondGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ThirdParamHintProcessor$ThirdGeneric"/>
+    <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ThirdParamHintProcessor$Component"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>

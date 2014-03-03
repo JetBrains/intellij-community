@@ -131,7 +131,10 @@ public abstract class Animator implements Disposable {
 
   public void resume() {
     final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode()) return;
+    if (app == null || app.isUnitTestMode()) {
+      animationDone();
+      return;
+    }
 
     if (myCycleDuration == 0) {
       myCurrentFrame = myTotalFrames - 1;

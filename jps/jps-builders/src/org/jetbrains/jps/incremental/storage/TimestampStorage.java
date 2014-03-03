@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
   }
 
   private static class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
-    public void save(DataOutput out, TimestampPerTarget[] value) throws IOException {
+    public void save(@NotNull DataOutput out, TimestampPerTarget[] value) throws IOException {
       out.writeInt(value.length);
       for (TimestampPerTarget target : value) {
         out.writeInt(target.targetId);
@@ -121,7 +121,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
       }
     }
 
-    public TimestampPerTarget[] read(DataInput in) throws IOException {
+    public TimestampPerTarget[] read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
       TimestampPerTarget[] targets = new TimestampPerTarget[size];
       for (int i = 0; i < size; i++) {

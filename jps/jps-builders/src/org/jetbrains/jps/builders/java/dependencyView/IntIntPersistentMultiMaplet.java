@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,7 +256,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   private static class IntSetExternalizer implements DataExternalizer<TIntHashSet> {
     @Override
-    public void save(final DataOutput out, final TIntHashSet value) throws IOException {
+    public void save(@NotNull final DataOutput out, final TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = new Ref<IOException>(null);
       value.forEach(new TIntProcedure() {
         @Override
@@ -278,7 +278,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
 
     @Override
-    public TIntHashSet read(final DataInput in) throws IOException {
+    public TIntHashSet read(@NotNull final DataInput in) throws IOException {
       final TIntHashSet result = new TIntHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

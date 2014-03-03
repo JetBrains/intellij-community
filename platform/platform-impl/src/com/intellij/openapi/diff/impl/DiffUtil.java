@@ -19,11 +19,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffContentUtil;
 import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.diff.LineTokenizer;
-import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.FocusDiffSide;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +33,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +45,7 @@ public class DiffUtil {
   private DiffUtil() {
   }
 
-  public static void initDiffFrame(Project project, FrameWrapper frameWrapper, final DiffViewer diffPanel, final JComponent mainComponent) {
+  public static void initDiffFrame(Project project, @NotNull FrameWrapper frameWrapper, @NotNull final DiffViewer diffPanel, final JComponent mainComponent) {
     frameWrapper.setComponent(mainComponent);
     frameWrapper.setProject(project);
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
@@ -56,15 +54,17 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static FocusDiffSide getFocusDiffSide(DataContext dataContext) {
+  public static FocusDiffSide getFocusDiffSide(@NotNull DataContext dataContext) {
     return FocusDiffSide.DATA_KEY.getData(dataContext);
   }
 
-  public static String[] convertToLines(@NotNull String text) {
-    return new LineTokenizer(text).execute();
+  @NotNull
+  public static DiffString[] convertToLines(@NotNull String text) {
+    return DiffString.create(text).tokenize();
   }
 
-  public static FileType[] chooseContentTypes(DiffContent[] contents) {
+  @NotNull
+  public static FileType[] chooseContentTypes(@NotNull DiffContent[] contents) {
     FileType commonType = FileTypes.PLAIN_TEXT;
     for (DiffContent content : contents) {
       FileType contentType = content.getContentType();
@@ -78,7 +78,7 @@ public class DiffUtil {
     return result;
   }
 
-  public static boolean isWritable(DiffContent content) {
+  public static boolean isWritable(@NotNull DiffContent content) {
     Document document = content.getDocument();
     return document != null && document.isWritable();
   }
@@ -92,7 +92,7 @@ public class DiffUtil {
     return editor;
   }
 
-  public static void drawBoldDottedFramingLines(Graphics2D g, int startX, int endX, int startY, int bottomY, Color color) {
+  public static void drawBoldDottedFramingLines(@NotNull Graphics2D g, int startX, int endX, int startY, int bottomY, @NotNull Color color) {
     UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
     UIUtil.drawBoldDottedLine(g, startX, endX, bottomY, null, color, false);
   }
@@ -102,8 +102,9 @@ public class DiffUtil {
     UIUtil.drawLine(g, startX, y + 1, endX, y + 1, null, color);
   }
 
-  public static Color getFramingColor(@NotNull Color backgroundColor) {
-    return backgroundColor.darker();
+  @Nullable
+  public static Color getFramingColor(@Nullable Color backgroundColor) {
+    return backgroundColor != null ? backgroundColor.darker() : null;
   }
 
   @NotNull

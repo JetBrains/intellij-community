@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,12 +380,12 @@ public class ClassRepr extends Proto {
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ClassRepr>() {
       @Override
-      public void save(final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(final DataInput in) throws IOException {
+      public ClassRepr read(@NotNull final DataInput in) throws IOException {
         return new ClassRepr(context, in);
       }
     };

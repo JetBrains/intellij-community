@@ -110,7 +110,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
-  public RangeHighlighter addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
+  public RangeHighlighterEx addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
     int hostLine = myDocument.injectedToHostLine(line);
     return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
   }

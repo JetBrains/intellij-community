@@ -15,74 +15,38 @@
  */
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.DiffPanelImpl;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Map;
-
-public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware {
-  private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
+public class IgnoreWhiteSpacesAction extends DiffPanelComboBoxAction<ComparisonPolicy> {
   private static final ComparisonPolicy[] ourActionOrder = new ComparisonPolicy[]{
     ComparisonPolicy.DEFAULT,
     ComparisonPolicy.TRIM_SPACE,
-    ComparisonPolicy.IGNORE_SPACE};
+    ComparisonPolicy.IGNORE_SPACE
+  };
 
   public IgnoreWhiteSpacesAction() {
-    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
-    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
-    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
-  }
-
-  @Override
-  public JComponent createCustomComponent(final Presentation presentation) {
-    JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(DiffBundle.message("ignore.whitespace.acton.name"));
-    label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-    panel.add(label, BorderLayout.WEST);
-    panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
-    return panel;
+    super(ourActionOrder);
+    addAction(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
+    addAction(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
+    addAction(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
   }
 
   @NotNull
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (ComparisonPolicy comparisonPolicy : ourActionOrder) {
-      actionGroup.add(myActions.get(comparisonPolicy));
-    }
-    return actionGroup;
+  @Override
+  protected String getActionName() {
+    return DiffBundle.message("ignore.whitespace.acton.name");
   }
 
-  public void update(AnActionEvent e) {
-    super.update(e);
-    Presentation presentation = e.getPresentation();
-    DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
-    if (diffPanel != null && diffPanel.getComponent().isDisplayable()) {
-      AnAction action = myActions.get(diffPanel.getComparisonPolicy());
-      Presentation templatePresentation = action.getTemplatePresentation();
-      presentation.setIcon(templatePresentation.getIcon());
-      presentation.setText(templatePresentation.getText());
-      presentation.setEnabled(true);
-    } else {
-      presentation.setIcon(null);
-      presentation.setText(DiffBundle.message("ignore.whitespace.action.not.available.action.name"));
-      presentation.setEnabled(false);
-    }
+  @NotNull
+  @Override
+  protected ComparisonPolicy getCurrentOption(@NotNull DiffPanelEx diffPanel) {
+    return diffPanel.getComparisonPolicy();
   }
 
-  private static class IgnoringPolicyAction extends DumbAwareAction {
+  private static class IgnoringPolicyAction extends DiffPanelAction {
     private final ComparisonPolicy myPolicy;
 
     public IgnoringPolicyAction(String text, ComparisonPolicy policy) {
@@ -90,11 +54,9 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
       myPolicy = policy;
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
-      if (diffPanel != null) {
-        diffPanel.setComparisonPolicy(myPolicy);
-      }
+    @Override
+    protected void perform(@NotNull DiffPanelEx diffPanel) {
+      diffPanel.setComparisonPolicy(myPolicy);
     }
   }
 }

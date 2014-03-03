@@ -30,8 +30,8 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 public abstract class SimpleDiffPanelState implements Disposable  {
   protected ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
@@ -84,7 +84,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
   public void dispose() {
   }
 
-  private LineBlocks addMarkup(final ArrayList<LineFragment> lines) {
+  private LineBlocks addMarkup(final List<LineFragment> lines) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2);
@@ -114,12 +114,8 @@ public abstract class SimpleDiffPanelState implements Disposable  {
       return LineBlocks.EMPTY;
     }
 
-    if (myHighlightMode == HighlightMode.NO_HIGHLIGHTING) {
-      return LineBlocks.fromLineFragments(Collections.<LineFragment>emptyList());
-    }
-
-    return addMarkup(new TextCompareProcessor(myComparisonPolicy, myDiffPolicy, myHighlightMode == HighlightMode.BY_WORD)
-                       .process(myAppender1.getText(), myAppender2.getText()));
+    return addMarkup(
+      new TextCompareProcessor(myComparisonPolicy, myDiffPolicy, myHighlightMode).process(myAppender1.getText(), myAppender2.getText()));
   }
 
   public Project getProject() { return myProject; }

@@ -545,5 +545,9 @@
     <action id ="Refactorings.QuickListPopupAction">
       <keyboard-shortcut first-keystroke="control T"/>
     </action>
+
+    <action id="NewScratchFile">
+      <keyboard-shortcut first-keystroke="meta shift N"/>
+    </action>
   </keymap>
 </component>

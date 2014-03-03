@@ -100,7 +100,7 @@ public class GithubSettingsPanel {
               @NotNull
               @Override
               public GithubUser convert(ProgressIndicator indicator) throws IOException {
-                return GithubUtil.checkAuthData(auth);
+                return GithubUtil.checkAuthData(project, new GithubAuthDataHolder(auth), indicator);
               }
             });
 
@@ -132,13 +132,14 @@ public class GithubSettingsPanel {
               @NotNull
               @Override
               public String convert(ProgressIndicator indicator) throws IOException {
-                return GithubUtil.runWithValidBasicAuthForHost(project, indicator, getHost(),
-                                                               new ThrowableConvertor<GithubAuthData, String, IOException>() {
-                                                                 @Override
-                                                                 public String convert(GithubAuthData auth) throws IOException {
-                                                                   return GithubApiUtil.getMasterToken(auth, "IntelliJ plugin");
-                                                                 }
-                                                               }
+                return GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
+                                                              new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                                                @NotNull
+                                                                @Override
+                                                                public String convert(@NotNull GithubAuthData auth) throws IOException {
+                                                                  return GithubApiUtil.getMasterToken(auth, "IntelliJ plugin");
+                                                                }
+                                                              }
                 );
               }
             })
@@ -294,7 +295,7 @@ public class GithubSettingsPanel {
 
   public void apply() {
     if (myCredentialsModified) {
-      mySettings.setCredentials(getHost(), getAuthData(), true);
+      mySettings.setAuthData(getAuthData(), true);
     }
     mySettings.setConnectionTimeout(getConnectionTimeout());
     resetCredentialsModification();

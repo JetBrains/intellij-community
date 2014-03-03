@@ -188,7 +188,10 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
   private static boolean isInplace(@NotNull IntroduceParameterInfo info,
                                    @NotNull Editor editor) {
-    return findExpr(info) != null && GrIntroduceHandlerBase.isInplace(editor, info.getContext());
+    return findExpr(info) != null &&
+           info.getToReplaceIn() instanceof GrMethod &&
+           info.getToSearchFor() instanceof PsiMethod &&
+           GrIntroduceHandlerBase.isInplace(editor, info.getContext());
   }
 
   @Override

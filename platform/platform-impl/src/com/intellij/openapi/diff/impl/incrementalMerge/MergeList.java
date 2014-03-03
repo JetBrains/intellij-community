@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
@@ -149,8 +150,8 @@ public class MergeList implements UserDataHolder {
                                                  @NotNull String baseText,
                                                  @NotNull String rightText,
                                                  @NotNull ContextLogger logger) throws FilesTooBigForDiffException {
-    DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
-    DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
+    DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(DiffString.create(baseText), DiffString.create(leftText));
+    DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(DiffString.create(baseText), DiffString.create(rightText));
     int[] leftOffsets = {0, 0};
     int[] rightOffsets = {0, 0};
     int leftIndex = 0;
@@ -188,7 +189,7 @@ public class MergeList implements UserDataHolder {
     leftOffsets[1] += versionLength;
   }
 
-  private static int getTextLength(@Nullable String text1) {
+  private static int getTextLength(@Nullable DiffString text1) {
     return text1 != null ? text1.length() : 0;
   }
 

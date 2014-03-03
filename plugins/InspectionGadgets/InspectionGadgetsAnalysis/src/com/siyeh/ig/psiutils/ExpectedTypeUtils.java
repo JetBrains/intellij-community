@@ -153,86 +153,59 @@ public class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitBinaryExpression(@NotNull PsiBinaryExpression binaryExpression) {
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        expectedType = null;
-        return;
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression) {
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (operand == null || operand.getType() == null) {
+          expectedType = null;
+          return;
+        }
       }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      PsiType lhsType = lhs.getType();
-      if (lhsType == null) {
-        expectedType = null;
-        return;
-      }
-      PsiType rhsType = rhs.getType();
-      if (rhsType == null) {
-        expectedType = null;
-        return;
-      }
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-      final PsiType type = binaryExpression.getType();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
+      final PsiType type = polyadicExpression.getType();
+      final PsiType wrappedExpressionType = wrappedExpression.getType();
       if (TypeUtils.isJavaLangString(type) || isArithmeticOperation(tokenType) || isBooleanOperation(tokenType)) {
         expectedType = type;
       }
       else if (isShiftOperation(tokenType)) {
-        if (lhs == wrappedExpression) {
-          expectedType = unaryNumericPromotion(lhsType);
-        }
-        else {
-          expectedType = unaryNumericPromotion(rhsType);
-        }
+        expectedType = unaryNumericPromotion(wrappedExpressionType);
       }
-      else if (ComparisonUtils.isEqualityComparison(binaryExpression)) {
+      else if (ComparisonUtils.isEqualityComparison(polyadicExpression)) {
         // JLS 15.21.1 Numerical Equality Operators == and !=
-        final PsiType wrappedExpressionType = wrappedExpression.getType();
         if (TypeConversionUtil.isPrimitiveAndNotNull(wrappedExpressionType)) {
           expectedType = wrappedExpressionType;
-          return;
         }
-        if (lhs == wrappedExpression) {
-          if (TypeConversionUtil.isPrimitiveAndNotNull(rhsType)) {
+        else if (operands.length > 2) {
+          expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
+        }
+        else if (operands[0] == wrappedExpression) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(operands[1].getType())) {
             expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
-            return;
           }
-          expectedType = TypeUtils.getObjectType(wrappedExpression);
+          else {
+            expectedType = TypeUtils.getObjectType(wrappedExpression);
+          }
         }
         else {
-         if (TypeConversionUtil.isPrimitiveAndNotNull(lhsType)) {
+         if (TypeConversionUtil.isPrimitiveAndNotNull(operands[0].getType())) {
             expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
-            return;
-          }
-          expectedType = TypeUtils.getObjectType(wrappedExpression);
+         }
+          else {
+           expectedType = TypeUtils.getObjectType(wrappedExpression);
+         }
         }
       }
       else if (ComparisonUtils.isComparisonOperation(tokenType)) {
-        if (lhs == wrappedExpression && !TypeConversionUtil.isPrimitiveAndNotNull(lhsType)) {
-          lhsType = PsiPrimitiveType.getUnboxedType(lhsType);
-          if (lhsType == null) {
-            expectedType = null;
+        if (operands.length > 2) {
+          expectedType = null;
+          return;
+        }
+        else if (!TypeConversionUtil.isPrimitiveAndNotNull(wrappedExpressionType)) {
+          if (PsiPrimitiveType.getUnboxedType(wrappedExpressionType) == null) {
             return;
           }
         }
-        if (rhs == wrappedExpression && !TypeConversionUtil.isPrimitiveAndNotNull(rhsType)) {
-          rhsType = PsiPrimitiveType.getUnboxedType(rhsType);
-          if (rhsType == null) {
-            expectedType = null;
-            return;
-          }
-        }
-        // JLS 5.6.2 Binary Numeric Promotion
-        if (PsiType.DOUBLE.equals(lhsType) || PsiType.DOUBLE.equals(rhsType)) {
-          expectedType = PsiType.DOUBLE;
-        }
-        else if (PsiType.FLOAT.equals(lhsType) || PsiType.FLOAT.equals(rhsType)) {
-          expectedType = PsiType.FLOAT;
-        }
-        else if (PsiType.LONG.equals(lhsType) || PsiType.LONG.equals(rhsType)) {
-          expectedType = PsiType.LONG;
-        }
-        else {
-          expectedType = PsiType.INT;
-        }
+        expectedType = TypeConversionUtil.binaryNumericPromotion(operands[0].getType(), operands[1].getType());
       }
       else {
         expectedType = null;

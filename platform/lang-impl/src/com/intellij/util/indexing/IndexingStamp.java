@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,19 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,16 +105,17 @@ public class IndexingStamp {
             }
           }
         });
-      } else {
+      }
+      else {
         DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase);
       }
     }
 
-    public long get(ID<?, ?> id) {
+    private long get(ID<?, ?> id) {
       return myIndexStamps != null? myIndexStamps.get(id) : 0L;
     }
 
-    public void set(ID<?, ?> id, long tmst) {
+    private void set(ID<?, ?> id, long tmst) {
       try {
         if (tmst < 0) {
           if (myIndexStamps == null) return;
@@ -130,9 +136,9 @@ public class IndexingStamp {
     }
   }
 
-  private static final ConcurrentHashMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
+  private static final ConcurrentMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
   private static final int CAPACITY = 100;
-  private static final ArrayBlockingQueue<VirtualFile> myFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
+  private static final BlockingQueue<VirtualFile> ourFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
@@ -148,7 +154,7 @@ public class IndexingStamp {
     return false;
   }
 
-  public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
+  public static long getIndexStamp(@NotNull VirtualFile file, ID<?, ?> indexName) {
     synchronized (getStripedLock(file)) {
       Timestamps stamp = createOrGetTimeStamp(file);
       if (stamp != null) return stamp.get(indexName);
@@ -156,7 +162,7 @@ public class IndexingStamp {
     }
   }
 
-  private static Timestamps createOrGetTimeStamp(VirtualFile file) {
+  private static Timestamps createOrGetTimeStamp(@NotNull VirtualFile file) {
     if (file instanceof NewVirtualFile && file.isValid()) {
       Timestamps timestamps = myTimestampsCache.get(file);
       if (timestamps == null) {
@@ -174,7 +180,7 @@ public class IndexingStamp {
     return null;
   }
 
-  public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
+  public static void update(@NotNull VirtualFile file, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
     synchronized (getStripedLock(file)) {
       try {
         Timestamps stamp = createOrGetTimeStamp(file);
@@ -185,7 +191,7 @@ public class IndexingStamp {
     }
   }
 
-  public static void removeAllIndexedState(VirtualFile file) {
+  public static void removeAllIndexedState(@NotNull VirtualFile file) {
     synchronized (getStripedLock(file)) {
       if (file instanceof NewVirtualFile && file.isValid()) {
         myTimestampsCache.put(file, new Timestamps());
@@ -193,7 +199,8 @@ public class IndexingStamp {
     }
   }
 
-  public static Collection<ID<?,?>> getIndexedIds(final VirtualFile file) {
+  @NotNull
+  public static Collection<ID<?,?>> getIndexedIds(@NotNull VirtualFile file) {
     synchronized (getStripedLock(file)) {
       try {
         Timestamps stamp = createOrGetTimeStamp(file);
@@ -220,17 +227,11 @@ public class IndexingStamp {
   }
 
   public static void flushCache(@Nullable VirtualFile finishedFile) {
-    if (finishedFile == null || !myFinishedFiles.offer(finishedFile)) {
-      VirtualFile[] files = null;
-      synchronized (myFinishedFiles) {
-        int size = myFinishedFiles.size();
-        if ((finishedFile == null && size > 0) || size == CAPACITY) {
-          files = myFinishedFiles.toArray(new VirtualFile[size]);
-          myFinishedFiles.clear();
-        }
-      }
+    if (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
+      List<VirtualFile> files = new ArrayList<VirtualFile>(ourFinishedFiles.size());
+      ourFinishedFiles.drainTo(files);
 
-      if (files != null) {
+      if (!files.isEmpty()) {
         for(VirtualFile file:files) {
           synchronized (getStripedLock(file)) {
             Timestamps timestamp = myTimestampsCache.remove(file);
@@ -248,7 +249,7 @@ public class IndexingStamp {
           }
         }
       }
-      if (finishedFile != null) myFinishedFiles.offer(finishedFile);
+      if (finishedFile != null) ourFinishedFiles.offer(finishedFile);
     }
   }
 
@@ -257,7 +258,7 @@ public class IndexingStamp {
     for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new Object();
   }
 
-  private static Object getStripedLock(VirtualFile file) {
+  private static Object getStripedLock(@NotNull VirtualFile file) {
     if (!(file instanceof NewVirtualFile)) return 0;
     int id = ((NewVirtualFile)file).getId();
     return ourLocks[(id & 0xFF) % ourLocks.length];

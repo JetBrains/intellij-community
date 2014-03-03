@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Key> getKeyDescriptor() {
     return new KeyDescriptor<Key>() {
@@ -122,24 +123,25 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       }
 
       @Override
-      public void save(DataOutput out, Key value) throws IOException {
+      public void save(@NotNull DataOutput out, Key value) throws IOException {
         out.writeBoolean(value.isInclude());
         value.writeValue(out);
       }
 
       @Override
-      public Key read(DataInput in) throws IOException {
+      public Key read(@NotNull DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
         return isInclude ? IncludeKey.read(in) : new FileKey(in.readInt());
       }
     };
   }
 
+  @NotNull
   @Override
   public DataExternalizer<List<FileIncludeInfoImpl>> getValueExternalizer() {
     return new DataExternalizer<List<FileIncludeInfoImpl>>() {
       @Override
-      public void save(DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
+      public void save(@NotNull DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
         for (FileIncludeInfoImpl info : value) {
           out.writeUTF(info.path);
@@ -150,7 +152,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       }
 
       @Override
-      public List<FileIncludeInfoImpl> read(DataInput in) throws IOException {
+      public List<FileIncludeInfoImpl> read(@NotNull DataInput in) throws IOException {
         int size = in.readInt();
         ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
         for (int i = 0; i < size; i++) {
@@ -161,11 +163,12 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.FileTypeSpecificInputFilter() {
       @Override
-      public boolean acceptInput(VirtualFile file) {
+      public boolean acceptInput(@NotNull VirtualFile file) {
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }

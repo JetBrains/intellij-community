@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.classFilesIndex;
 import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,7 +35,7 @@ public class TObjectIntHashMapExternalizer<K> implements DataExternalizer<TObjec
   }
 
   @Override
-  public void save(final DataOutput out, final TObjectIntHashMap<K> map) throws IOException {
+  public void save(@NotNull final DataOutput out, final TObjectIntHashMap<K> map) throws IOException {
     out.writeInt(map.size());
     try {
       map.forEachEntry(new TObjectIntProcedure<K>() {
@@ -57,7 +58,7 @@ public class TObjectIntHashMapExternalizer<K> implements DataExternalizer<TObjec
   }
 
   @Override
-  public TObjectIntHashMap<K> read(final DataInput in) throws IOException {
+  public TObjectIntHashMap<K> read(@NotNull final DataInput in) throws IOException {
     final int size = in.readInt();
     final TObjectIntHashMap<K> map = new TObjectIntHashMap<K>(size);
     for (int i = 0; i < size; i++) {

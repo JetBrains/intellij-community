@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -119,6 +120,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private static void startDiskSpaceMonitoring() {
+    if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
+      return;
+    }
+
     final File file = new File(PathManager.getSystemPath());
     final AtomicBoolean reported = new AtomicBoolean();
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();

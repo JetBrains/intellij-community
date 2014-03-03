@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author ven
@@ -125,9 +124,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
       }
     }
     else {
-      final Set<PsiType> expectedTypes = GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure);
-
-      for (PsiType expectedType : expectedTypes) {
+      for (PsiType expectedType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure)) {
         if (TypesUtil.isPsiClassTypeToClosure(expectedType)) {
           PsiType[] parameters = ((PsiClassType)expectedType).getParameters();
           if (parameters.length == 1) {

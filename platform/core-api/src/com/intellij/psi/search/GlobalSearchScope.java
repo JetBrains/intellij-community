@@ -39,7 +39,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
   @Nullable private final Project myProject;
 
-  protected GlobalSearchScope(Project project) {
+  protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
   }
 
@@ -49,6 +49,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public abstract boolean contains(@NotNull VirtualFile file);
 
+  @Nullable
   @Override
   public Project getProject() {
     return myProject;

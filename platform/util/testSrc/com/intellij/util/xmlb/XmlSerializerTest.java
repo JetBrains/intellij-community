@@ -1029,6 +1029,31 @@ public class XmlSerializerTest extends TestCase {
     }
   }
 
+  public static class ConversionFromTextToAttributeBean {
+    @Property(surroundWithTag = false)
+    public ConditionBean myConditionBean = new ConditionBean();
+  }
+  @Tag("condition")
+  public static class ConditionBean {
+    @Attribute("expression")
+    public String myNewCondition;
+    @Text
+    public String myOldCondition;
+  }
+
+  public void testConversionFromTextToAttribute() {
+    ConversionFromTextToAttributeBean bean = new ConversionFromTextToAttributeBean();
+    bean.myConditionBean.myOldCondition = "2+2";
+    doSerializerTest("<ConversionFromTextToAttributeBean>\n" +
+                     "  <condition>2+2</condition>\n" +
+                     "</ConversionFromTextToAttributeBean>", bean);
+
+    bean = new ConversionFromTextToAttributeBean();
+    bean.myConditionBean.myNewCondition = "2+2";
+    doSerializerTest("<ConversionFromTextToAttributeBean>\n" +
+                     "  <condition expression=\"2+2\" />\n" +
+                     "</ConversionFromTextToAttributeBean>", bean);
+  }
 
   public void testDeserializeInto() throws Exception {
     BeanWithPublicFields bean = new BeanWithPublicFields();

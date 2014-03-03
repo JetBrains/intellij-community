@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.remotesdk.RemoteSdkCredentials;
 import com.intellij.remotesdk.RemoteSdkCredentialsHolder;
 import com.intellij.remotesdk.RemoteSdkProperties;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -33,9 +34,13 @@ public interface RemoteSdkAdditionalData2<T extends RemoteSdkCredentials>
 
   String getFullInterpreterPath();
 
+  void setVagrantConnectionType(@NotNull VagrantBasedCredentialsHolder vagrantBasedCredentials);
+
   /**
    * This method switches to use of ssh-credentials based data
    * @param credentials credentials that specify connection
    */
-  void setSshCredentials(RemoteSdkCredentialsHolder credentials);
+  void setSshCredentials(@NotNull RemoteSdkCredentialsHolder credentials);
+
+  void setDeploymentConnectionType(@NotNull WebDeploymentCredentialsHolder credentials);
 }

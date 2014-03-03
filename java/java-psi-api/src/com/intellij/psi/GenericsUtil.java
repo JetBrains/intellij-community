@@ -519,6 +519,14 @@ public class GenericsUtil {
     else if (type instanceof PsiArrayType) {
       return checkNotAssignable(bound, type, true);
     }
+    else if (type instanceof PsiIntersectionType) {
+      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+        if (!checkNotInBounds(psiType, bound, uncheckedConversionByDefault)) {
+          return false; 
+        }
+      }
+      return true;
+    }
     return false;
   }
 

@@ -58,11 +58,13 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -133,7 +135,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       super(StdFileTypes.XML);
     }
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return JavaFxFileTypeFactory.isFxml(file);
     }
   }

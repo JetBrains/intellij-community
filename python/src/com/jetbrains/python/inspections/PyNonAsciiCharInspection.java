@@ -69,7 +69,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
       if (LanguageLevel.forElement(node).isPy3K()) return;
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
-      final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file.getText());
+      final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file);
 
       boolean hasNonAscii = false;
 

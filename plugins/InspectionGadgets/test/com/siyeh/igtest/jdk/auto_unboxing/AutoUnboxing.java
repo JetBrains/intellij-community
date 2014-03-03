@@ -59,4 +59,8 @@ public class AutoUnboxing {
         if ((boolean) b) {}
         if ((int)n) {}
     }
+
+    boolean polyadic() {
+        return true && Boolean.TRUE && true;
+    }
 }

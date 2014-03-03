@@ -196,7 +196,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         return;
       }
       FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
-      --myWatchedProjectsCount;
+      if (myWatchedProjectsCount > 0) --myWatchedProjectsCount;
       if (ourDebugMode) {
         System.out.println("After suspend for project:"+projectId + "," + myWatchedProjectsCount);
       }
@@ -607,7 +607,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private void initOutputRootsFile(File rootsFile) throws IOException {
     myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(rootsFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<TIntObjectHashMap<Pair<Integer, Integer>>>() {
-      public void save(DataOutput out, TIntObjectHashMap<Pair<Integer, Integer>> value) throws IOException {
+      public void save(@NotNull DataOutput out, TIntObjectHashMap<Pair<Integer, Integer>> value) throws IOException {
         for (final TIntObjectIterator<Pair<Integer, Integer>> it = value.iterator(); it.hasNext();) {
           it.advance();
           DataInputOutputUtil.writeINT(out, it.key());
@@ -617,7 +617,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
 
-      public TIntObjectHashMap<Pair<Integer, Integer>> read(DataInput in) throws IOException {
+      public TIntObjectHashMap<Pair<Integer, Integer>> read(@NotNull DataInput in) throws IOException {
         final DataInputStream _in = (DataInputStream)in;
         final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
         while (_in.available() > 0) {

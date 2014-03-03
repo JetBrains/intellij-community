@@ -34,6 +34,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -113,7 +114,7 @@ public class IndexTest extends IdeaTestCase {
   private PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
-      public void save(DataOutput out, Collection<String> value) throws IOException {
+      public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.size());
         for (String key : value) {
           out.writeUTF(key);
@@ -121,7 +122,7 @@ public class IndexTest extends IdeaTestCase {
       }
 
       @Override
-      public Collection<String> read(DataInput in) throws IOException {
+      public Collection<String> read(@NotNull DataInput in) throws IOException {
         final int size = DataInputOutputUtil.readINT(in);
         final List<String> list = new ArrayList<String>();
         for (int idx = 0; idx < size; idx++) {

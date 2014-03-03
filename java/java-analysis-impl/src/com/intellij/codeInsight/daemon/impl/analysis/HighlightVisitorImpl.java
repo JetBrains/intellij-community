@@ -1324,8 +1324,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(GenericsHighlightUtil.checkParametersAllowed(list, myLanguageLevel,myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
     if (!myHolder.hasErrorResults()) {
-      for (PsiType type : list.getTypeArguments()) {
-        myHolder.add(HighlightUtil.checkDiamondFeature(type, list, myLanguageLevel,myFile));
+      for (PsiTypeElement typeElement : list.getTypeParameterElements()) {
+        myHolder.add(HighlightUtil.checkDiamondFeature(typeElement.getType(), list, myLanguageLevel,myFile));
       }
     }
   }

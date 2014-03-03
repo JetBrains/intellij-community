@@ -200,13 +200,27 @@ public class StaticImportMethodFix implements IntentionAction {
             //do not show methods from default package
             && !((PsiJavaFile)file).getPackageName().isEmpty()
             && PsiUtil.isAccessible(file.getProject(), method, element, containingClass)) {
-          if (method.isDeprecated()) {
+          if (isEffectivelyDeprecated(method)) {
             deprecated.put(containingClass, method);
             return processCondition();
           }
           registrar.registerMethod(containingClass, method);
         }
         return processCondition();
+      }
+
+      private boolean isEffectivelyDeprecated(PsiMethod method) {
+        if (method.isDeprecated()) {
+          return true;
+        }
+        PsiClass aClass = method.getContainingClass();
+        while (aClass != null) {
+          if (aClass.isDeprecated()) {
+            return true;
+          }
+          aClass = aClass.getContainingClass();
+        }
+        return false;
       }
 
       private boolean processCondition() {

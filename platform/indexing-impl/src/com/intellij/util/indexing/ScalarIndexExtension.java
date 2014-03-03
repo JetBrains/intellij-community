@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -31,6 +32,7 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
 
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = new VoidDataExternalizer();
 
+  @NotNull
   @Override
   public final DataExternalizer<Void> getValueExternalizer() {
     return VOID_DATA_EXTERNALIZER;
@@ -39,12 +41,12 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
   private static class VoidDataExternalizer implements DataExternalizer<Void> {
 
     @Override
-    public void save(final DataOutput out, final Void value) throws IOException {
+    public void save(@NotNull final DataOutput out, final Void value) throws IOException {
     }
 
     @Override
     @Nullable
-    public Void read(final DataInput in) throws IOException {
+    public Void read(@NotNull final DataInput in) throws IOException {
       return null;
     }
   }

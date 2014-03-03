@@ -64,15 +64,25 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   }
 
   @Nullable
-  public static PsiModifierListOwner getContainer(final PsiElement element) {
-    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-    if (listOwner == null) {
-      final PsiIdentifier psiIdentifier = PsiTreeUtil.getParentOfType(element, PsiIdentifier.class, false);
-      if (psiIdentifier != null && psiIdentifier.getParent() instanceof PsiModifierListOwner) {
-        listOwner = (PsiModifierListOwner)psiIdentifier.getParent();
+  public static PsiModifierListOwner getContainer(final PsiFile file, int offset) {
+    PsiReference reference = file.findReferenceAt(offset);
+    if (reference != null) {
+      PsiElement target = reference.resolve();
+      if (target instanceof PsiMember) {
+        return (PsiMember)target;
       }
     }
-    return listOwner;
+
+    PsiElement element = file.findElementAt(offset);
+
+    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
+    if (listOwner != null) return listOwner;
+
+    final PsiIdentifier psiIdentifier = PsiTreeUtil.getParentOfType(element, PsiIdentifier.class, false);
+    if (psiIdentifier != null && psiIdentifier.getParent() instanceof PsiModifierListOwner) {
+      return (PsiModifierListOwner)psiIdentifier.getParent();
+    }
+    return null;
   }
 
   @Override

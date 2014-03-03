@@ -24,7 +24,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.containers.hash.HashSet;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -34,9 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -71,17 +70,10 @@ public class PyPep8NamingInspection extends PyInspection {
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
-      final Collection<PyGlobalStatement> globalStatements = PsiTreeUtil.findChildrenOfType(function, PyGlobalStatement.class);
-      final Set<String> globals = new HashSet<String>();
-      for (PyGlobalStatement statement : globalStatements) {
-        final PyTargetExpression[] statementGlobals = statement.getGlobals();
-        for (PyTargetExpression global : statementGlobals) {
-          globals.add(global.getName());
-        }
-      }
+      final Scope scope = ControlFlowCache.getScope(function);
       for (PyExpression expression : node.getTargets()) {
         final String name = expression.getName();
-        if (name == null || globals.contains(name)) continue;
+        if (name == null || scope.isGlobal(name)) continue;
         if (expression instanceof PyTargetExpression) {
           final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
           if (qualifier != null) {

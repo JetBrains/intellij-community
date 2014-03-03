@@ -43,9 +43,9 @@ public interface RemoteSdkProperties {
 
   void setHelpersVersionChecked(boolean helpersVersionChecked);
 
-  String getFullInterpreterPath();
-
   void setSdkId(String sdkId);
+
+  String getSdkId();
 
   @Deprecated
   boolean isInitialized();

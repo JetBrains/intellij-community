@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f<error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, capture<? extends S1>)'">(k,  k.get(0))</error>;
     }
 }
 
