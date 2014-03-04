@@ -489,7 +489,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx consoleEditor, boolean preserveMarkup) {
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     doAddPromptToHistory();
 
     final Document history = myHistoryViewer.getDocument();
@@ -497,16 +497,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final int localStartOffset = textRange.getStartOffset();
     String text;
     EditorHighlighter highlighter;
-    if (consoleEditor instanceof EditorWindow) {
-      PsiFile file = ((EditorWindow)consoleEditor).getInjectedFile();
+    if (inputEditor instanceof EditorWindow) {
+      PsiFile file = ((EditorWindow)inputEditor).getInjectedFile();
       highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
       String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
       highlighter.setText(fullText);
       text = textRange.substring(fullText);
     }
     else {
-      text = consoleEditor.getDocument().getText(textRange);
-      highlighter = consoleEditor.getHighlighter();
+      text = inputEditor.getDocument().getText(textRange);
+      highlighter = inputEditor.getHighlighter();
     }
     //offset can be changed after text trimming after insert due to buffer constraints
     int offset = appendToHistoryDocument(history, text);
@@ -528,9 +528,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       iterator.advance();
     }
     if (preserveMarkup) {
-      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(consoleEditor.getDocument(), myProject, true), offset, textRange);
+      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(inputEditor.getDocument(), myProject, true), offset, textRange);
       // don't copy editor markup model, i.e. brace matcher, spell checker, etc.
-      // duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+      // duplicateHighlighters(markupModel, inputEditor.getMarkupModel(), offset, textRange);
     }
     if (!text.endsWith("\n")) {
       appendToHistoryDocument(history, "\n");

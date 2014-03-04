@@ -38,8 +38,23 @@ class DependencyVisitor extends PyRecursiveElementVisitor {
       }
       final String calleeName = callee.getName();
 
-      if ((calleeName != null) && calleeName.equals(myElementToFind.getName())) {  // Check by name also
+      final String name = myElementToFind.getName();
+      if ((calleeName != null) && calleeName.equals(name)) {  // Check by name also
         myDependencyFound = true;
+      }
+
+      // Member could be used as method param
+      final PyArgumentList list = node.getArgumentList();
+      if (list != null) {
+        for (final PyExpression expression : node.getArgumentList().getArgumentExpressions()) {
+          final PsiReference reference = expression.getReference();
+          if ((reference != null) && reference.isReferenceTo(myElementToFind)) {
+            myDependencyFound = true;
+          }
+          if ((name != null) && name.equals(expression.getName())) {
+            myDependencyFound = true;
+          }
+        }
       }
     }
   }

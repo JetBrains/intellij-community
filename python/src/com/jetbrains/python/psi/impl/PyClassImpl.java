@@ -381,6 +381,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
+  @NotNull
+  public Map<String, Property> getProperties() {
+    initProperties();
+    return new HashMap<String, Property>(myPropertyCache);
+  }
+
+  @Override
   public PyClass[] getNestedClasses() {
     return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.ARRAY_FACTORY);
   }
@@ -607,9 +614,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public Property findPropertyByCallable(Callable callable) {
-    if (myPropertyCache == null) {
-      myPropertyCache = initializePropertyCache();
-    }
+    initProperties();
     for (Property property : myPropertyCache.values()) {
       if (property.getGetter().valueOrNull() == callable ||
           property.getSetter().valueOrNull() == callable ||
@@ -621,10 +626,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private Property findLocalProperty(String name) {
+    initProperties();
+    return myPropertyCache.get(name);
+  }
+
+  private synchronized void initProperties() {
     if (myPropertyCache == null) {
       myPropertyCache = initializePropertyCache();
     }
-    return myPropertyCache.get(name);
   }
 
   private Map<String, Property> initializePropertyCache() {

@@ -1,9 +1,9 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.google.common.collect.FluentIterable;
+import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +31,21 @@ class ClassFieldsManager extends FieldsManager {
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
                                                   @NotNull final Collection<PyAssignmentStatement> statements,
                                                   @NotNull final PyClass... to) {
+    return moveAssignmentsImpl(from, statements, to);
+  }
+
+  /**
+   * Moves assignments from one class to anothers
+   * @param from source
+   * @param statements assignments
+   * @param to destination
+   * @return newly created assignments
+   */
+  static Collection<PyElement> moveAssignmentsImpl(@NotNull final PyClass from,
+                                                   @NotNull final Collection<PyAssignmentStatement> statements,
+                                                   @NotNull final PyClass... to) {
     //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
-    final List<PyElement> result = new ArrayList<PyElement>();
+    final Collection<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       result.addAll(PyClassRefactoringUtil.copyFieldDeclarationToStatement(statements, destClass.getStatementList(), destClass));
     }
@@ -49,6 +62,39 @@ class ClassFieldsManager extends FieldsManager {
   @NotNull
   @Override
   protected List<PyTargetExpression> getFieldsByClass(@NotNull final PyClass pyClass) {
-    return pyClass.getClassAttributes();
+    return FluentIterable.from(pyClass.getClassAttributes()).filter(new NoMetaAndProperties(pyClass)).toList();
+  }
+
+  /**
+   * Exclude "__metaclass__" field and properties (there should be separate managers for them)
+   * TODO: Check type and filter out any builtin element instead?
+   */
+  private static class NoMetaAndProperties extends NotNullPredicate<PyTargetExpression> {
+    @NotNull
+    private final PyClass myClass;
+
+    private NoMetaAndProperties(@NotNull final PyClass aClass) {
+      myClass = aClass;
+    }
+
+    @Override
+    public boolean applyNotNull(@NotNull final PyTargetExpression input) {
+      final String name = input.getName();
+      if (name == null) {
+        return false;
+      }
+      if (name.equals(PyNames.DUNDER_METACLASS)) {
+        return false;
+      }
+
+      final PyExpression assignedValue = input.findAssignedValue();
+      if (assignedValue instanceof PyCallExpression) {
+        final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
+        if ((callee != null) && PyNames.PROPERTY.equals(callee.getName()) && (myClass.findProperty(name, false) != null)) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 }

@@ -35,7 +35,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Nullable
-  private static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+  protected static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
