@@ -139,7 +139,8 @@ public class GraphFacadeImpl implements GraphFacade {
       @Override
       public Set<Integer> getContainingBranches(int visibleRow) {
         myGraphData.assertRange(visibleRow);
-        return Collections.emptySet();
+        return myGraphData.getContainingBranchesGetter()
+          .getBranchHashIndexes(myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow));
       }
 
       @NotNull

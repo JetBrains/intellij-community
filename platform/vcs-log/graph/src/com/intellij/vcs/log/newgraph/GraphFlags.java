@@ -28,6 +28,7 @@ public class GraphFlags {
   }
 
   private Flags getFlags(int offset) {
+    assert offset >= 0 && offset < 8;
     final int mask = 1 << offset;
     return new Flags() {
       @Override
@@ -70,5 +71,9 @@ public class GraphFlags {
 
   public Flags getFlagsForFilters() {
     return getFlags(4);
+  }
+
+  public Flags getTempFlags() {
+    return getFlags(5);
   }
 }

@@ -64,6 +64,9 @@ public class GraphData {
   private final CurrentBranches myCurrentBranches;
 
   @NotNull
+  private final ContainingBranchesGetter myContainingBranchesGetter;
+
+  @NotNull
   private MutableGraph myMutableGraph;
 
   @NotNull
@@ -87,6 +90,7 @@ public class GraphData {
     myDfsUtil = dfsUtil;
     myBranchNodeIndexes = branchNodeIndexes;
     myCurrentBranches = new CurrentBranches(permanentGraph, graphFlags.getVisibleNodesInBranches(), dfsUtil);
+    myContainingBranchesGetter = new ContainingBranchesGetter(myPermanentGraph, branchNodeIndexes, dfsUtil, graphFlags.getTempFlags());
     applyFilters();
   }
 
@@ -137,8 +141,8 @@ public class GraphData {
   }
 
   @NotNull
-  public Set<Integer> getBranchNodeIndexes() {
-    return myBranchNodeIndexes;
+  public ContainingBranchesGetter getContainingBranchesGetter() {
+    return myContainingBranchesGetter;
   }
 
   @NotNull

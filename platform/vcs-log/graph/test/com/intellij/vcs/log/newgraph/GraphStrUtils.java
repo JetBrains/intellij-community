@@ -17,11 +17,9 @@
 package com.intellij.vcs.log.newgraph;
 
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.newgraph.facade.ContainingBranchesGetter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -107,6 +105,32 @@ public class GraphStrUtils {
         s.append("\n");
 
       s.append(graphLayout.getLayoutIndex(nodeIndex)).append("|-").append(graphLayout.getOneOfHeadNodeIndex(nodeIndex));
+    }
+    return s.toString();
+  }
+
+  public static String containingBranchesGetterToStr(ContainingBranchesGetter containingBranchesGetter, int nodesCount) {
+    StringBuilder s = new StringBuilder();
+    for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
+      if (nodeIndex != 0)
+        s.append("\n");
+
+      List<Integer> branchHashIndexes = new ArrayList<Integer>(containingBranchesGetter.getBranchHashIndexes(nodeIndex));
+      if (branchHashIndexes.isEmpty()) {
+        s.append("none");
+        continue;
+      }
+
+      Collections.sort(branchHashIndexes);
+      boolean first = true;
+      for (int hashIndex : branchHashIndexes) {
+        if (first)
+          first = false;
+        else
+          s.append(" ");
+
+        s.append(Integer.toHexString(hashIndex));
+      }
     }
     return s.toString();
   }
