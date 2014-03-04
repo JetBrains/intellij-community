@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,5 +279,24 @@ public abstract class PsiClassType extends PsiType {
         return false;
       }
     };
+  }
+
+  /**
+   * Temporary class to facilitate transition to {@link #getCanonicalText(boolean)}.
+   */
+  public static abstract class Stub extends PsiClassType {
+    protected Stub(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
+      super(languageLevel, annotations);
+    }
+
+    @NotNull
+    @Override
+    public final String getCanonicalText() {
+      return getCanonicalText(false);
+    }
+
+    @NotNull
+    @Override
+    public abstract String getCanonicalText(boolean annotated);
   }
 }

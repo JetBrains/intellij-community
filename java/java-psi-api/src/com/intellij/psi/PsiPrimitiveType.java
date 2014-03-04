@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Represents primitive types of Java language.
  */
-public class PsiPrimitiveType extends PsiType {
+public class PsiPrimitiveType extends PsiType.Stub {
   private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
   private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
 
@@ -52,19 +52,29 @@ public class PsiPrimitiveType extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return getAnnotationsTextPrefix(false, false, true) + myName;
+    return getText(false, true);
   }
 
   @NotNull
   @Override
-  public String getCanonicalText() {
-    return myName;
+  public String getCanonicalText(boolean annotated) {
+    return getText(true, annotated);
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getAnnotationsTextPrefix(true, false, true) + myName;
+    return getText(true, true);
+  }
+
+  private String getText(boolean qualified, boolean annotated) {
+    PsiAnnotation[] annotations = getAnnotations();
+    if (!annotated || annotations.length == 0) return myName;
+
+    StringBuilder sb = new StringBuilder();
+    PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+    sb.append(myName);
+    return sb.toString();
   }
 
   /**
