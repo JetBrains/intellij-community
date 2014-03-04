@@ -59,7 +59,7 @@ public class PyGenericType implements PyType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 

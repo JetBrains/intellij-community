@@ -52,8 +52,14 @@ public class PyJavaMethodType implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     return PyJavaTypeProvider.asPyType(myMethod.getReturnType());
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
+    return getReturnType(context);
   }
 
   @Nullable
@@ -84,7 +90,7 @@ public class PyJavaMethodType implements PyCallableType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 

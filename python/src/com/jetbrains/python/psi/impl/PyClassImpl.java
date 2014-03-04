@@ -759,7 +759,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return callable.getReturnType(context, null);
+        return context.getReturnType(callable);
       }
       return null;
     }

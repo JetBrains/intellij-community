@@ -15,12 +15,11 @@
  */
 package com.jetbrains.pyqt;
 
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -37,8 +36,9 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
   private static final String ourQt4Signal = "pyqtSignal";
 
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
-    if (PyNames.INIT.equals(function.getName())) {
+  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+    if (PyNames.INIT.equals(callable.getName()) && callable instanceof PyFunction) {
+      final PyFunction function = (PyFunction)callable;
       final PyClass containingClass = function.getContainingClass();
       if (containingClass != null && ourQt4Signal.equals(containingClass.getName())) {
         final String classQName = containingClass.getQualifiedName();
