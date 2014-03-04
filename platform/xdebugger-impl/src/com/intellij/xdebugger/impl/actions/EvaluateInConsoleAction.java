@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk2;
+package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.util.Consumer;
+import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
-  T getRemoteSdkCredentials() throws InterruptedException;
-  
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
+final class EvaluateInConsoleAction extends XDebuggerActionBase {
+  public EvaluateInConsoleAction() {
+    super(true);
+  }
 
-  Object getRemoteSdkDataKey();
+  @NotNull
+  @Override
+  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+    return debuggerSupport.getAddToWatchesActionHandler();
+  }
 }

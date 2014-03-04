@@ -325,7 +325,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                   final CachedValue<XmlAttributeDescriptor> value = CachedValuesManager.getManager(includedDocument.getProject()).createCachedValue(
                     new CachedValueProvider<XmlAttributeDescriptor>(){
                       public Result<XmlAttributeDescriptor> compute() {
-                        return new Result<XmlAttributeDescriptor>(attributeDescriptor, attributeDescriptor.getDependences());
+                        Object[] deps = attributeDescriptor.getDependences();
+                        if (deps.length == 0) {
+                          LOG.error(attributeDescriptor + " returned no dependencies");
+                        }
+                        return new Result<XmlAttributeDescriptor>(attributeDescriptor, deps);
                       }
                     },
                     false

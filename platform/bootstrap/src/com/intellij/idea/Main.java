@@ -120,6 +120,19 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
+  private static void copyFile(String fileNameFrom, String fileNameTo) throws IOException {
+    File fileFrom = new File(fileNameFrom);
+    File fileTo   = new File(fileNameTo);
+    try{
+      FileUtilRt.copy(fileFrom, fileTo);
+    }
+    finally{
+      if(!fileTo.exists()) {
+        throw new IOException("Cannot copy " + fileNameFrom + " to " + fileNameTo);
+      }
+    }
+  }
+
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
@@ -148,12 +161,13 @@ public class Main {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
       }
-
+      String copyLog4j = tempDir + "/log4j.jar";
+      copyFile(PathManager.getLibPath() + "/log4j.jar", copyLog4j);
       Collections.addAll(args,
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath() + File.pathSeparator + PathManager.getLibPath() + "/log4j.jar",
+                         copyPatchFile.getPath() + File.pathSeparator + copyLog4j,
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "com.intellij.updater.Runner",

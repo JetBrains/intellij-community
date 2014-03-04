@@ -202,6 +202,11 @@ public final class LanguageConsoleBuilder {
       return gutterContentProvider == null;
     }
 
+    @Override
+    int getMinHistoryLineCount() {
+      return 1;
+    }
+
     @NotNull
     @Override
     protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {

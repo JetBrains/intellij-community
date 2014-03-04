@@ -167,7 +167,7 @@ public class BreakpointsDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction()};
+    return new Action[]{getOKAction(), getHelpAction()};
   }
 
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
@@ -378,6 +378,12 @@ public class BreakpointsDialog extends DialogWrapper {
     for (BreakpointItem item : myBreakpointItems) {
       item.dispose();
     }
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.breakpoints";
   }
 
   private void saveCurrentItem() {

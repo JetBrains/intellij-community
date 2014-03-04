@@ -71,61 +71,73 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 
+  @Override
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepOverHandler() {
     return myStepOverActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepOutHandler() {
     return myStepOutActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceStepOverHandler() {
     return myForceStepOverActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceStepIntoHandler() {
     return myForceStepIntoActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getRunToCursorHandler() {
     return myRunToCursorActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceRunToCursorHandler() {
     return myForceRunToCursorActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getResumeActionHandler() {
     return myResumeActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getPauseHandler() {
     return myPauseActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getToggleLineBreakpointHandler() {
     return DISABLED;
@@ -137,16 +149,19 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return DISABLED;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateActionHandler;
   }
 
+  @Override
   @NotNull
   public QuickEvaluateHandler getQuickEvaluateHandler() {
     return myQuickEvaluateHandler;
@@ -158,6 +173,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return myAddToWatchedActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
@@ -181,6 +197,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return DISABLED_EDIT;
   }
 
+  @Override
   @NotNull
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return myDebuggerSettingsPanelProvider;
@@ -233,10 +250,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       //}
     }
 
+    @Override
     public int getPriority() {
       return 100;
     }
 
+    @Override
     public Breakpoint findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
       return null;
       //return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset, null);
@@ -253,6 +272,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return null;
     }
 
+    @Override
     public void onDialogClosed(final Project project) {
       //DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
     }
@@ -308,6 +328,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   public static class JavaDebuggerSettingsPanelProvider extends DebuggerSettingsPanelProvider {
+    @Override
     public int getPriority() {
       return 1;
     }
@@ -317,6 +338,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return new DebuggerLaunchingConfigurable();
     }
 
+    @Override
     public Collection<? extends Configurable> getConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
       configurables.add(new DebuggerDataViewsConfigurable(null));
@@ -326,6 +348,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return configurables;
     }
 
+    @Override
     public void apply() {
       NodeRendererSettings.getInstance().fireRenderersChanged();
     }

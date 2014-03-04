@@ -23,12 +23,17 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
@@ -41,6 +46,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -81,7 +87,11 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   }
 
   public PsiClass getPsiClass() {
-    return null;
+    return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<PsiClass>() {
+      public PsiClass compute() {
+        return getClassName() != null ? DebuggerUtilsEx.findClass(getClassName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
+      }
+    });
   }
 
   public String getDisplayName() {
@@ -224,21 +234,21 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return null;
   }
 
-  //public void readExternal(Element parentNode) throws InvalidDataException {
-  //  super.readExternal(parentNode);
-  //
-  //  //noinspection HardCodedStringLiteral
-  //  String className = parentNode.getAttributeValue("class_name");
-  //  setClassPattern(className);
-  //
-  //  //noinspection HardCodedStringLiteral
-  //  String methodName = parentNode.getAttributeValue("method_name");
-  //  setMethodName(methodName);
-  //
-  //  if(className == null || methodName == null) {
-  //    throw new InvalidDataException();
-  //  }
-  //}
+  public void readExternal(Element parentNode) throws InvalidDataException {
+    super.readExternal(parentNode);
+
+    //noinspection HardCodedStringLiteral
+    String className = parentNode.getAttributeValue("class_name");
+    setClassPattern(className);
+
+    //noinspection HardCodedStringLiteral
+    String methodName = parentNode.getAttributeValue("method_name");
+    setMethodName(methodName);
+
+    if(className == null || methodName == null) {
+      throw new InvalidDataException();
+    }
+  }
 
   public boolean matchesEvent(final LocatableEvent event){
     final Method method = event.location().method();

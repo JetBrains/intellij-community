@@ -115,7 +115,7 @@ public abstract class XDebuggerEvaluator {
    * @param offset             offset
    * @param sideEffectsAllowed if this parameter is false, the expression should not have any side effects when evaluated
    *                           (such expressions are evaluated in quick popups)
-   * @return pair of text range of expression (to display as link) and actual expression to evaluate (optional, could be null)
+   * @return pair of text range of expression (to highlight as link) and actual expression to evaluate (optional, could be null)
    */
   @Nullable
   public Pair<TextRange, String> getExpressionAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {

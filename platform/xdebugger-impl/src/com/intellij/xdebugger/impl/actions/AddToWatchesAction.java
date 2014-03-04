@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class AddToWatchesAction extends XDebuggerActionBase {
+final class AddToWatchesAction extends XDebuggerActionBase {
   public AddToWatchesAction() {
     super(true);
   }

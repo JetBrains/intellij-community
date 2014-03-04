@@ -27,12 +27,8 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remotesdk.RemoteCredentials;
-import com.intellij.remotesdk.RemoteInterpreterException;
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.remotesdk.RemoteSshProcess;
-import com.intellij.remotesdk2.VagrantBasedCredentialsHolder;
-import com.intellij.util.Consumer;
+import com.intellij.remote.*;
+import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -59,14 +55,14 @@ public abstract class PythonRemoteInterpreterManager {
                                                     @NotNull GeneralCommandLine commandLine,
                                                     @Nullable
                                                     PathMappingSettings mappingSettings)
-    throws RemoteInterpreterException;
+    throws RemoteSdkException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
                                                            @NotNull PyRemoteSdkCredentials data,
                                                            @NotNull GeneralCommandLine commandLine,
                                                            @Nullable
                                                            PathMappingSettings mappingSettings)
-    throws RemoteInterpreterException;
+    throws RemoteSdkException;
 
   public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
                                     NullableConsumer<Sdk> sdkCallback);
@@ -77,13 +73,13 @@ public abstract class PythonRemoteInterpreterManager {
                                                  String[] command,
                                                  @Nullable String workingDir,
                                                  boolean askForSudo)
-    throws RemoteInterpreterException;
+    throws RemoteSdkException;
 
   @NotNull
   public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
                                                          @NotNull RemoteSdkCredentials data,
                                                          @NotNull GeneralCommandLine commandLine, boolean allocatePty)
-    throws RemoteInterpreterException;
+    throws RemoteSdkException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
@@ -143,6 +139,8 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
+  public abstract boolean testConnection(RemoteCredentials credentials);
+
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
     public PyRemoteInterpreterExecutionException() {
@@ -158,6 +156,8 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data);
+
+  public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
 
   public abstract RemoteCredentials getCredentialsBySftpServerId(String id);
 }

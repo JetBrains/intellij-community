@@ -17,7 +17,7 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remotesdk.RemoteFile;
+import com.intellij.remote.RemoteFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;

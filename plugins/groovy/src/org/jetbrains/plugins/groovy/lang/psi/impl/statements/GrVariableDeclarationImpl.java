@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +211,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
       @Nullable
       @Override
       public Result<PsiReference> compute() {
-        return Result.create(getReferenceInner(), PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(getReferenceInner(), getContainingFile());
       }
     });
   }
@@ -226,20 +225,40 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     final GrVariable[] variables = getVariables();
     if (variables.length == 0) return null;
 
-    final PsiElement resolved = variables[0];
-    return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
-      @Nullable
-      @Override
-      public PsiElement resolve() {
-        return resolved;
-      }
+    final GrVariable resolved = variables[0];
+    final PsiType inferredType = resolved.getTypeGroovy();
+    if (inferredType == null) return null;
 
-      @NotNull
-      @Override
-      public Object[] getVariants() {
-        return EMPTY_ARRAY;
-      }
-    };
+    if (inferredType instanceof PsiClassType) {
+      return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
+        @Nullable
+        @Override
+        public PsiElement resolve() {
+          return ((PsiClassType)inferredType).resolve();
+        }
+
+        @NotNull
+        @Override
+        public Object[] getVariants() {
+          return EMPTY_ARRAY;
+        }
+      };
+    }
+    else {
+      return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
+        @Nullable
+        @Override
+        public PsiElement resolve() {
+          return resolved;
+        }
+
+        @NotNull
+        @Override
+        public Object[] getVariants() {
+          return EMPTY_ARRAY;
+        }
+      };
+    }
   }
 
   private TextRange getRangeForReference() {

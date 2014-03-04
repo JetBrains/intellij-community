@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class PsiCapturedWildcardType extends PsiType {
+public class PsiCapturedWildcardType extends PsiType.Stub {
   @NotNull private final PsiWildcardType myExistential;
   @NotNull private final PsiElement myContext;
   @Nullable private final PsiTypeParameter myParameter;
@@ -78,8 +78,8 @@ public class PsiCapturedWildcardType extends PsiType {
 
   @NotNull
   @Override
-  public String getCanonicalText() {
-    return myExistential.getCanonicalText();
+  public String getCanonicalText(boolean annotated) {
+    return myExistential.getCanonicalText(annotated);
   }
 
   @NotNull

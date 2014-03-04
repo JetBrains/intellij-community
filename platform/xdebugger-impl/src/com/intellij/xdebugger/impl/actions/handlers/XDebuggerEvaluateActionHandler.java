@@ -28,7 +28,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +36,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHandler {
+public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    if (stackFrame == null) return;
-    final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-    if (evaluator == null) return;
+    final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    if (evaluator == null) {
+      return;
+    }
 
     @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
@@ -64,7 +64,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
         text = value.getEvaluationExpression();
       }
     }
-    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, StringUtil.notNullize(text), stackFrame.getSourcePosition()).show();
+    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, StringUtil.notNullize(text), stackFrame == null ? null : stackFrame.getSourcePosition()).show();
   }
 
   @Nullable
@@ -86,11 +86,6 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
 
   @Override
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
-    if (!super.isEnabled(session, dataContext)) {
-      return false;
-    }
-
-    XStackFrame stackFrame = session.getCurrentStackFrame();
-    return stackFrame != null && stackFrame.getEvaluator() != null;
+    return session.getDebugProcess().getEvaluator() != null;
   }
 }

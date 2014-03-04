@@ -39,7 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remotesdk.RemoteCredentials;
+import com.intellij.remote.RemoteCredentials;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;

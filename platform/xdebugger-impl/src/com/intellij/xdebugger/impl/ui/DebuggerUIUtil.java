@@ -169,6 +169,7 @@ public class DebuggerUIUtil {
       @Override
       public void run() {
         propertiesPanel.saveProperties();
+        propertiesPanel.dispose();
         BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
       }
     };
@@ -190,6 +191,7 @@ public class DebuggerUIUtil {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveProperties();
+        propertiesPanel.dispose();
         breakpointManager.removeBreakpointListener(breakpointListener);
       }
     });

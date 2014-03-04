@@ -25,8 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.remotesdk.RemoteCredentials;
-import com.intellij.remotesdk2.RemoteSdkAdditionalData2;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -214,7 +213,7 @@ public class PySdkUtil {
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData2;
+    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
   }
 
   public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
