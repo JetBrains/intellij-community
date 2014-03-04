@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
@@ -37,7 +40,7 @@ public abstract class PsiNameHelper {
   public static PsiNameHelper getInstance(Project project) {
     return ServiceManager.getService(project, PsiNameHelper.class);
   }
-  
+
   /**
    * Checks if the specified text is a Java identifier, using the language level of the project
    * with which the name helper is associated to filter out keywords.
@@ -121,30 +124,15 @@ public abstract class PsiNameHelper {
   }
 
   @NotNull
-  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] typeParameters) {
-    if (typeParameters.length == 0 && annotations.length == 0) {
+  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] types) {
+    if (types.length == 0 && annotations.length == 0) {
       return refName != null ? refName : "";
     }
 
     StringBuilder buffer = new StringBuilder();
-
-    if (annotations.length > 0) {
-      for (PsiAnnotation annotation : annotations) {
-        buffer.append(annotation.getText()).append(' ');
-      }
-    }
-
+    appendAnnotations(buffer, annotations, false);
     buffer.append(refName);
-
-    if (typeParameters.length > 0) {
-      buffer.append("<");
-      for (int i = 0; i < typeParameters.length; i++) {
-        buffer.append(typeParameters[i].getPresentableText());
-        if (i < typeParameters.length - 1) buffer.append(", ");
-      }
-      buffer.append(">");
-    }
-
+    appendTypeArgs(buffer, types, false, true);
     return buffer.toString();
   }
 
@@ -261,5 +249,44 @@ public abstract class PsiNameHelper {
   public static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
     return subpackageName.equals(packageName) ||
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
+  }
+
+  public static void appendTypeArgs(@NotNull StringBuilder sb, @NotNull PsiType[] types, boolean canonical, boolean annotated) {
+    if (types.length == 0) return;
+
+    sb.append('<');
+    for (int i = 0; i < types.length; i++) {
+      if (i > 0) {
+        sb.append(canonical ? "," : ", ");
+      }
+
+      PsiType type = types[i];
+      if (canonical) {
+        sb.append(type.getCanonicalText(annotated));
+      }
+      else {
+        sb.append(type.getPresentableText());
+      }
+    }
+    sb.append('>');
+  }
+
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull PsiAnnotation[] annotations, boolean canonical) {
+    return appendAnnotations(sb, Arrays.asList(annotations), canonical);
+  }
+
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<PsiAnnotation> annotations, boolean canonical) {
+    for (PsiAnnotation annotation : annotations) {
+      sb.append('@');
+      if (canonical) {
+        sb.append(annotation.getQualifiedName());
+        sb.append(annotation.getParameterList().getText());
+      }
+      else {
+        sb.append(assertNotNull(annotation.getNameReferenceElement()).getText());
+      }
+      sb.append(' ');
+    }
+    return annotations.size() > 0;
   }
 }

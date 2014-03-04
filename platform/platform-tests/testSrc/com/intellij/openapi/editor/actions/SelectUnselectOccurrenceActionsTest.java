@@ -49,6 +49,30 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     super.tearDown();
   }
 
+  public void testAllWithoutInitialSelection() throws Exception {
+    init("some t<caret>ext\n" +
+         "some texts\n" +
+         "another text here"
+    );
+    executeSelectAllAction();
+    checkResult("some <selection>t<caret>ext</selection>\n" +
+                "some texts\n" +
+                "another <selection>t<caret>ext</selection> here");
+  }
+
+  public void testAllWithInitialWholeWordSelection() throws Exception {
+    init("some <selection>t<caret>ext</selection>\n" +
+         "some texts\n" +
+         "some texts\n" +
+         "another text here");
+    executeSelectAllAction();
+    checkResult("some <selection>t<caret>ext</selection>\n" +
+                "some texts\n" +
+                "some texts\n" +
+                "another <selection>t<caret>ext</selection> here");
+    assertEquals(0, hintCount);
+  }
+
   public void testNoInitialSelection() throws Exception {
     init("some t<caret>ext\n" +
          "some texts\n" +
@@ -183,5 +207,9 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
 
   private void executeReverseAction() {
     myFixture.performEditorAction(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE);
+  }
+
+  private void executeSelectAllAction() {
+    myFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
   }
 }

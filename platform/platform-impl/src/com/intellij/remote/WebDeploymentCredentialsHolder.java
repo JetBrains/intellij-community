@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk2;
+package com.intellij.remote;
 
-import com.intellij.remotesdk.RemoteCredentials;
-import com.intellij.remotesdk.RemoteCredentialsHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

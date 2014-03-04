@@ -1,6 +1,5 @@
 // "Replace with collect" "true"
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class Collect implements Collection<String>{
   class Person {

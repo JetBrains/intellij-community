@@ -10,6 +10,6 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-    Set<String> names = persons.stream().map(person -> person.getName()).collect(Collectors.toSet());
+    Set<String> names = persons.stream().map(person::getName).collect(Collectors.toSet());
   }
 }

@@ -356,6 +356,9 @@
     <action id="UnselectPreviousOccurrence">
       <keyboard-shortcut first-keystroke="control shift G"/>
     </action>
+    <action id="SelectAllOccurrences">
+      <keyboard-shortcut first-keystroke="meta control G"/>
+    </action>
 
     <action id="Run">
       <keyboard-shortcut first-keystroke="control R"/>

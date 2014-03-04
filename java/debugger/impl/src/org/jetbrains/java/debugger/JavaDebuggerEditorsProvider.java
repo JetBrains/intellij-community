@@ -100,5 +100,10 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
     public JComponent getComponent() {
       return myComboBox;
     }
+
+    @Override
+    public void dispose() {
+      myComboBox.dispose();
+    }
   }
 }

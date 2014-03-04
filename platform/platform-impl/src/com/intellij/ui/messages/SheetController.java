@@ -20,13 +20,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jdesktop.swingx.graphics.GraphicsUtilities;
+import org.jdesktop.swingx.graphics.ShadowRenderer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 
 /**
@@ -45,8 +45,18 @@ public class SheetController {
   private JButton[] buttons;
   private JButton myDefaultButton;
   private JButton myFocusedButton;
+
+  public int SHADOW_BORDER = 10;
+
+  // SHEET
   public int SHEET_WIDTH = 400;
+
   public int SHEET_HEIGHT = 150;
+
+  // SHEET + shadow
+  int SHEET_NC_WIDTH = SHEET_WIDTH + SHADOW_BORDER * 2;
+  int SHEET_NC_HEIGHT = SHEET_HEIGHT + SHADOW_BORDER ;
+
 
   private Icon myIcon = AllIcons.Logo_welcomeScreen;
 
@@ -151,9 +161,11 @@ public class SheetController {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
         g2d.setColor(Gray._225);
-        Rectangle2D dialog  = new Rectangle2D.Double(0,0,mySheetPanel.getBounds().width - 5, mySheetPanel.getBounds().height - 10);
+        Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+
+        paintShadow(g2d);
+        // draw the sheet background
         g2d.fill(dialog);
-        paintShadow(g2d, dialog);
       }
 
     };
@@ -211,19 +223,28 @@ public class SheetController {
 
 
     SHEET_HEIGHT = 20 + headerLabel.getPreferredSize().height + 10 + messageArea.height + 10 + 70;
-    sheetPanel.setSize(SHEET_WIDTH, SHEET_HEIGHT);
+
 
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
-    ico.setLocation(20, 20);
+    ico.setLocation(40, 20);
     sheetPanel.add(ico);
-    headerLabel.setLocation(120, 20);
-    messageTextPane.setLocation(120, 20 + headerLabel.getPreferredSize().height + 10);
+    headerLabel.setLocation(140, 20);
+    messageTextPane.setLocation(140, 20 + headerLabel.getPreferredSize().height + 10);
     layoutWithAbsoluteLayout(buttons, sheetPanel);
 
     sheetPanel.setFocusCycleRoot(true);
 
+    recalculateShadow();
+
+    sheetPanel.setSize(SHEET_NC_WIDTH, SHEET_NC_HEIGHT );
+
     return sheetPanel;
+  }
+
+  private void recalculateShadow() {
+    SHEET_NC_WIDTH = SHEET_WIDTH + SHADOW_BORDER * 2;
+    SHEET_NC_HEIGHT = SHEET_HEIGHT + SHADOW_BORDER;
   }
 
   private void layoutWithAbsoluteLayout(JButton[] buttons, JPanel sheetPanel) {
@@ -235,31 +256,33 @@ public class SheetController {
     }
   }
 
-  private void paintShadow(Graphics2D g2d, Rectangle2D dialog) {
-    Area shadow = new Area(new RoundRectangle2D.Double(0, 0, mySheetPanel.getBounds().width, mySheetPanel.getBounds().height, 10, 10));
+  private void paintShadow(Graphics2D g2d) {
+    BufferedImage bufferedImage = GraphicsUtilities.createCompatibleTranslucentImage(
+      SHEET_WIDTH, SHEET_HEIGHT);
 
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.80f));
+    Graphics2D g2 = bufferedImage.createGraphics();
+    g2.setColor(JBColor.WHITE);
+    g2.fillRoundRect(0, 0, SHEET_WIDTH - 1, SHEET_HEIGHT - 1, SHADOW_BORDER, SHADOW_BORDER);
+    g2.dispose();
 
-    Color color1 = Gray._130;
-    Color color2 = new JBColor(new Color(130, 130, 130, 0), new Color(130, 130, 130, 0));
-
-    GradientPaint gp = new GradientPaint(
-      0, mySheetPanel.getBounds().height - 10, color1,
-      0, mySheetPanel.getBounds().height, color2 );
-
-    g2d.setPaint(gp);
-    shadow.subtract(new Area(dialog));
-    g2d.fill(shadow);
+    ShadowRenderer renderer = new ShadowRenderer();
+    renderer.setSize(SHADOW_BORDER);
+    renderer.setOpacity(0.95f);
+    renderer.setColor(JBColor.BLACK);
+    BufferedImage shadow = renderer.createShadow(bufferedImage);
+    g2d.drawImage(shadow, 0, - SHADOW_BORDER, null);
+    g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(255, 255, 255, 0)));
+    g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = 120;
+    int buttonsWidth = 15 * 2;
 
     for (JButton button : buttons) {
       panel.add(button);
       button.repaint();
-      buttonsWidth = button.getWidth() + 10;
+      buttonsWidth += button.getPreferredSize().width + 10;
     }
 
     SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
@@ -298,7 +321,7 @@ public class SheetController {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    final BufferedImage image = UIUtil.createImage(SHEET_WIDTH, SHEET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
     mySheetPanel.paint(image.createGraphics());
     myOffScreenFrame.dispose();

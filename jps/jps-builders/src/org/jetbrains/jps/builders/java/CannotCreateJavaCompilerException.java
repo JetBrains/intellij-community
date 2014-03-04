@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk2;
-
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.util.Consumer;
+package org.jetbrains.jps.builders.java;
 
 /**
- * @author traff
+ * @author nik
  */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
-  T getRemoteSdkCredentials() throws InterruptedException;
-  
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
-
-  Object getRemoteSdkDataKey();
+public class CannotCreateJavaCompilerException extends Exception {
+  public CannotCreateJavaCompilerException(String message) {
+    super(message);
+  }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.Nullable;
 
 public class UnselectPreviousOccurrenceAction extends EditorAction {
@@ -28,7 +27,7 @@ public class UnselectPreviousOccurrenceAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static class Handler extends SelectOccurrencesActionHandler {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return super.isEnabled(editor, dataContext) && editor.getCaretModel().supportsMultipleCarets();
@@ -42,7 +41,7 @@ public class UnselectPreviousOccurrenceAction extends EditorAction {
       else {
         editor.getSelectionModel().removeSelection();
       }
-      SelectNextOccurrenceAction.Handler.getAndResetNotFoundStatus(editor);
+      getAndResetNotFoundStatus(editor);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

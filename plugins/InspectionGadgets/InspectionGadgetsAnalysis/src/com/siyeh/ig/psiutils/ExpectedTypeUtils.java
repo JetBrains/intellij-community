@@ -196,7 +196,7 @@ public class ExpectedTypeUtils {
         }
       }
       else if (ComparisonUtils.isComparisonOperation(tokenType)) {
-        if (operands.length > 2) {
+        if (operands.length != 2) {
           expectedType = null;
           return;
         }

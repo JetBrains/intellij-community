@@ -263,7 +263,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
     final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
+    if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
       indicator.setIndeterminate(true);
     }
@@ -299,6 +299,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private static void scheduleDispose(final ProjectImpl project) {
+    if (project.isDefault()) {
+      return;
+    }
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

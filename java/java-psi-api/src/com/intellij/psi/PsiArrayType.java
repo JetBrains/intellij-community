@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author max
  */
-public class PsiArrayType extends PsiType {
+public class PsiArrayType extends PsiType.Stub {
   private final PsiType myComponentType;
 
   /**
@@ -44,19 +43,33 @@ public class PsiArrayType extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return StringUtil.join(myComponentType.getPresentableText(), getAnnotationsTextPrefix(false, true, true), "[]");
+    return getText(myComponentType.getPresentableText(), "[]", false, true);
   }
 
   @NotNull
   @Override
-  public String getCanonicalText() {
-    return StringUtil.join(myComponentType.getCanonicalText(), "[]");
+  public String getCanonicalText(boolean annotated) {
+    return getText(myComponentType.getCanonicalText(annotated), "[]", true, annotated);
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.join(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "[]");
+    return getText(myComponentType.getInternalCanonicalText(), "[]", true, true);
+  }
+
+  protected String getText(@NotNull String prefix, @NotNull String suffix, boolean qualified, boolean annotated) {
+    StringBuilder sb = new StringBuilder(prefix.length() + suffix.length());
+    sb.append(prefix);
+    if (annotated) {
+      PsiAnnotation[] annotations = getAnnotations();
+      if (annotations.length != 0) {
+        sb.append(' ');
+        PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+      }
+    }
+    sb.append(suffix);
+    return sb.toString();
   }
 
   @Override

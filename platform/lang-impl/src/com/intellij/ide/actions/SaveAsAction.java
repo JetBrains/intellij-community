@@ -1,9 +1,9 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +28,6 @@ public class SaveAsAction extends DumbAwareAction {
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     @SuppressWarnings({"ConstantConditions"}) final PsiElement element = PsiManager.getInstance(project).findFile(virtualFile);
     if(element==null) return;
-    CopyHandler.doCopy(new PsiElement[] {element.getContainingFile()}, element.getContainingFile().getContainingDirectory());
+    CopyHandler.doCopy(new PsiElement[] {element.getContainingFile()}, PlatformPackageUtil.getDirectory(element));
   }
 }

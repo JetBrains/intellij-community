@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,19 +44,19 @@ public class PsiEllipsisType extends PsiArrayType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return StringUtil.join(getComponentType().getPresentableText(), getAnnotationsTextPrefix(false, true, true), "...");
+    return getText(getComponentType().getPresentableText(), "...", false, true);
   }
 
   @NotNull
   @Override
-  public String getCanonicalText() {
-    return StringUtil.join(getComponentType().getCanonicalText(), "...");
+  public String getCanonicalText(boolean annotated) {
+    return getText(getComponentType().getCanonicalText(annotated), "...", true, annotated);
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.join(getComponentType().getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "...");
+    return getText(getComponentType().getInternalCanonicalText(), "...", true, true);
   }
 
   @Override

@@ -644,14 +644,17 @@
       <add-to-group group-id="RunMenu" anchor="last"/>
     </group>
 
-    <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+    <group id="Debugger.WatchActions">
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
+    </group>
 
     <group id="EditorPopupMenuDebug">
       <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.WatchActions"/>
       <separator/>
 
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
@@ -716,7 +719,7 @@
       <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.JumpToTypeSource"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="Debugger.WatchActions"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
@@ -737,7 +740,7 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="Debugger.WatchActions"/>
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">

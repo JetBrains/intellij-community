@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -150,6 +151,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             ((PsiMethod)resolve).getParameterList().getParametersCount() == 1) {
           final PsiExpression[] args = methodCallExpression.getArgumentList().getExpressions();
           if (args.length == 1) {
+            if (args[0] instanceof PsiCallExpression) {
+              final PsiMethod method = ((PsiCallExpression)args[0]).resolveMethod();
+              return method != null && !method.hasTypeParameters();
+            }
             return true;
           }
         }
@@ -260,7 +265,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               iteration += ".filter(" + parameter.getName() + " -> " + condition.getText() +")";
             }
           }
-          iteration +=".map(" + parameter.getName() + " -> " + methodCallExpression.getArgumentList().getExpressions()[0].getText() + ").collect(java.util.stream.Collectors.";
+          iteration +=".map(";
+
+          final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
+
+          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(mapperCall, null, new PsiParameter[]{parameter});
+          if (methodReferenceText != null) {
+            iteration += methodReferenceText;
+          } else {
+            iteration += parameter.getName() + " -> " + mapperCall.getText();
+          }
+          iteration += ").collect(java.util.stream.Collectors.";
 
           String variableName = null;
           PsiExpression initializer = null;
@@ -276,7 +291,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           } else if (qualifierExpression == null) {
             variableName = "";
           }
-          
+
+          PsiElement result = null;
           if (initializer != null) {
             final PsiType initializerType = initializer.getType();
             final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
@@ -288,11 +304,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               iteration += "toCollection(() -> " + initializer.getText() +")";
             }
             iteration += ")";
-            initializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
+            result = initializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
             foreachStatement.delete();
           } else if (variableName != null){
             iteration += "toList())";
-            foreachStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(variableName + "addAll(" + iteration +");", foreachStatement));
+            result = foreachStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(variableName + "addAll(" + iteration +");", foreachStatement));
+          }
+
+          if (result != null) {
+            result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
           }
         }
       }

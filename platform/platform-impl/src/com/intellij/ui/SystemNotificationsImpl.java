@@ -83,7 +83,13 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
       }
     }
     catch (Throwable t) {
-      Logger.getInstance(SystemNotifications.class).warn(t);
+      Logger logger = Logger.getInstance(SystemNotifications.class);
+      if (logger.isDebugEnabled()) {
+        logger.debug(t);
+      }
+      else {
+        logger.info(t.getMessage());
+      }
     }
 
     return null;

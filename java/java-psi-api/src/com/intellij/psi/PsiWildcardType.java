@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-public class PsiWildcardType extends PsiType {
+public class PsiWildcardType extends PsiType.Stub {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
 
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
@@ -83,21 +83,37 @@ public class PsiWildcardType extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return getAnnotationsTextPrefix(false, false, true) +
-           (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getPresentableText());
+    return getText(false, true, myBound == null ? null : myBound.getPresentableText());
   }
 
   @Override
   @NotNull
-  public String getCanonicalText() {
-    return myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getCanonicalText();
+  public String getCanonicalText(boolean annotated) {
+    return getText(true, annotated, myBound == null ? null : myBound.getCanonicalText(annotated));
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getAnnotationsTextPrefix(true, false, true) +
-           (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getInternalCanonicalText());
+    return getText(true, true, myBound == null ? null : myBound.getInternalCanonicalText());
+  }
+
+  private String getText(boolean qualified, boolean annotated, @Nullable String suffix) {
+    PsiAnnotation[] annotations = getAnnotations();
+    if ((!annotated || annotations.length == 0) && suffix == null) return "?";
+
+    StringBuilder sb = new StringBuilder();
+    if (annotated) {
+      PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+    }
+    if (suffix == null) {
+      sb.append('?');
+    }
+    else {
+      sb.append(myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX);
+      sb.append(suffix);
+    }
+    return sb.toString();
   }
 
   @Override

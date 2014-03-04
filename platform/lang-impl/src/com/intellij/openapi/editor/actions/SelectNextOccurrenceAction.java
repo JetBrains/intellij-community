@@ -15,37 +15,24 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.Nullable;
 
 public class SelectNextOccurrenceAction extends EditorAction {
-  private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
-  private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
-
   protected SelectNextOccurrenceAction() {
     super(new Handler());
   }
 
-  static class Handler extends EditorActionHandler {
+  static class Handler extends SelectOccurrencesActionHandler {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return super.isEnabled(editor, dataContext) && editor.getProject() != null && editor.getCaretModel().supportsMultipleCarets();
@@ -54,9 +41,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
     @Override
     public void execute(Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
-      TextRange wordSelectionRange = SelectWordUtil.getWordSelectionRange(editor.getDocument().getCharsSequence(),
-                                                                          caret.getOffset(),
-                                                                          SelectWordUtil.JAVA_IDENTIFIER_PART_CONDITION);
+      TextRange wordSelectionRange = getSelectionRange(editor, caret);
       boolean notFoundPreviously = getAndResetNotFoundStatus(editor);
       boolean wholeWordSearch = isWholeWordSearch(editor);
       if (caret.hasSelection()) {
@@ -68,7 +53,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
         FindManager findManager = FindManager.getInstance(project);
 
         FindModel model = new FindModel();
-        model.setStringToFind(caret.getSelectedText());
+        model.setStringToFind(selectedText);
         model.setCaseSensitive(true);
         model.setWholeWordsOnly(wholeWordSearch);
 
@@ -101,51 +86,6 @@ public class SelectNextOccurrenceAction extends EditorAction {
         setWholeWordSearch(editor, true);
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-
-    private static void setSelection(Editor editor, Caret caret, TextRange selectionRange) {
-      EditorActionUtil.makePositionVisible(editor, selectionRange.getStartOffset());
-      EditorActionUtil.makePositionVisible(editor, selectionRange.getEndOffset());
-      caret.setSelection(selectionRange.getStartOffset(), selectionRange.getEndOffset());
-    }
-
-
-    private static void showHint(final Editor editor) {
-      String message = FindBundle.message("select.next.occurence.not.found.message");
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint,
-                                                       editor,
-                                                       HintManager.UNDER,
-                                                       HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                                       0,
-                                                       false);
-    }
-
-    static boolean getAndResetNotFoundStatus(Editor editor) {
-      boolean status = editor.getUserData(NOT_FOUND) != null;
-      editor.putUserData(NOT_FOUND, null);
-      return status && isRepeatedActionInvocation();
-    }
-
-    private static void setNotFoundStatus(Editor editor) {
-      editor.putUserData(NOT_FOUND, Boolean.TRUE);
-    }
-
-    private static boolean isWholeWordSearch(Editor editor) {
-      if (!isRepeatedActionInvocation()) {
-        editor.putUserData(WHOLE_WORDS, null);
-      }
-      Boolean value = editor.getUserData(WHOLE_WORDS);
-      return value != null;
-    }
-
-    private static void setWholeWordSearch(Editor editor, boolean isWholeWordSearch) {
-      editor.putUserData(WHOLE_WORDS, isWholeWordSearch);
-    }
-
-    private static boolean isRepeatedActionInvocation() {
-      String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-      return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE.equals(lastActionId);
     }
   }
 }

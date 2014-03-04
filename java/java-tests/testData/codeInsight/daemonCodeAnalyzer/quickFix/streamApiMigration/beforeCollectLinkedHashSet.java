@@ -1,6 +1,5 @@
 // "Replace with collect" "true"
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Collect {
   class Person {

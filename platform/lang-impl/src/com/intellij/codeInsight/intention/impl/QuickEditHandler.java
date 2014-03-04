@@ -51,9 +51,11 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -117,10 +119,15 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String newFileName =
       StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
-    myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
-    myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
+
+    // preserve \r\n as it is done in MultiHostRegistrarImpl
+    myNewVirtualFile = new LightVirtualFile(newFileName, language, text);
+    MultiHostRegistrarImpl.createDocument(myNewVirtualFile);
+    myNewFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(myNewVirtualFile, language, true, false);
+
+    assert myNewFile != null : "PSI file is null";
+    assert myNewFile.getTextLength() == myNewVirtualFile.getLength() : "PSI / Virtual file text mismatch";
     myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
-    assert myNewVirtualFile != null;
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));

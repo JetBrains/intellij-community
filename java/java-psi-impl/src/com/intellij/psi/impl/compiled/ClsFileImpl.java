@@ -15,15 +15,18 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -35,6 +38,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
@@ -324,7 +328,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
             setMirror(mirrorTreeElement);
           }
           catch (InvalidMirrorException e) {
-            LOG.error(file.getPath(), e);
+            LOG.error(file.getPath(), wrapException(e, file));
           }
           finally {
             section.done();
@@ -335,6 +339,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
     return mirrorTreeElement.getPsi();
+  }
+
+  private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
+    if (decompiler instanceof ClassFileDecompilers.Light) {
+      PluginId pluginId = PluginManagerCore.getPluginByClassName(decompiler.getClass().getName());
+      if (pluginId != null) {
+        return new PluginException(e, pluginId);
+      }
+    }
+
+    return e;
   }
 
   @Override

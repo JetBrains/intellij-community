@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -141,7 +142,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
     LOG.assertTrue(selectedEditor != null);
     final int selectedProviderIndex = ArrayUtilRt.find(editors, selectedEditor);
-    LOG.assertTrue(selectedProviderIndex != -1);
+    LOG.assertTrue(selectedProviderIndex != -1, "Can't find " + selectedEditor + " among " + Arrays.asList(editors));
 
     final HistoryEntry entry = getEntry(file);
     if(entry != null){

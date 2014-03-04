@@ -121,6 +121,9 @@
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="shift control K" />
     </action>
+    <action id="SelectAllOccurrences">
+      <keyboard-shortcut first-keystroke="alt control Y"/>
+    </action>
     <action id="SelectNextOccurrence">
       <keyboard-shortcut first-keystroke="alt Y"/>
     </action>

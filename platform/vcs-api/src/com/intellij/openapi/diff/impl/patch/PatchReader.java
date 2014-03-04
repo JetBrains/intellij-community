@@ -354,22 +354,30 @@ public class PatchReader {
       PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
 
       PatchLine lastLine = null;
-      int numLines = linesBefore + linesAfter;
+      int before = 0;
+      int after = 0;
       while (iterator.hasNext()) {
         String hunkCurLine = iterator.next();
-        -- numLines;
         if (lastLine != null && hunkCurLine.startsWith(NO_NEWLINE_SIGNATURE)) {
           lastLine.setSuppressNewLine(true);
           continue;
         }
-        if (hunkCurLine.startsWith("--- ") && numLines == 0) {
-          iterator.previous();
-          break;
-        }
-        lastLine = parsePatchLine(hunkCurLine, 1);
+        lastLine = parsePatchLine(hunkCurLine, 1, before < linesBefore || after < linesAfter);
         if (lastLine == null) {
           iterator.previous();
           break;
+        }
+        switch (lastLine.getType()) {
+          case CONTEXT:
+            before++;
+            after++;
+            break;
+          case ADD:
+            after++;
+            break;
+          case REMOVE:
+            before++;
+            break;
         }
         hunk.addLine(lastLine);
       }
@@ -389,11 +397,16 @@ public class PatchReader {
 
     @Nullable
     private static PatchLine parsePatchLine(final String line, final int prefixLength) {
+      return parsePatchLine(line, prefixLength, true);
+    }
+
+    @Nullable
+    private static PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
       PatchLine.Type type;
-      if (line.startsWith("+")) {
+      if (line.startsWith("+") && expectMeaningfulLines) {
         type = PatchLine.Type.ADD;
       }
-      else if (line.startsWith("-")) {
+      else if (line.startsWith("-") && expectMeaningfulLines) {
         type = PatchLine.Type.REMOVE;
       }
       else if (line.startsWith(" ") || line.length() == 0) {

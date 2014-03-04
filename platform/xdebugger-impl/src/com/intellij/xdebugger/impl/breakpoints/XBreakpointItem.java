@@ -86,7 +86,10 @@ class XBreakpointItem extends BreakpointItem {
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
     //saveState();
-    myPropertiesPanel = null;
+    if (myPropertiesPanel != null) {
+      myPropertiesPanel.dispose();
+      myPropertiesPanel = null;
+    }
     if (!editorOnly) {
       myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
 
@@ -176,6 +179,12 @@ class XBreakpointItem extends BreakpointItem {
     }
     else {
       return 0;
+    }
+  }
+
+  public void dispose() {
+    if (myPropertiesPanel != null) {
+      myPropertiesPanel.dispose();
     }
   }
 }
