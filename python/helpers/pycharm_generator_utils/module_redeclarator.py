@@ -77,6 +77,7 @@ class ModuleRedeclarator(object):
         self.footer_buf = Buf(self)
         self.indent_size = indent_size
         self._indent_step = " " * self.indent_size
+        self.split_modules = False
         #
         self.imported_modules = {"": the_builtins} # explicit module imports: {"name": module}
         self.hidden_imports = {} # {'real_mod_name': 'alias'}; we alias names with "__" since we don't want them exported
@@ -115,7 +116,7 @@ class ModuleRedeclarator(object):
     def flush(self):
         init = None
         try:
-            if self.mod_filename and len(self.classes_buffs) >= 30:
+            if self.split_modules:
                 mod_path = self.outfile.strip(".py")
 
                 fname = build_output_name(mod_path, "__init__")
@@ -128,11 +129,9 @@ class ModuleRedeclarator(object):
                     fname = build_output_name(mod_path, buf.name)
                     dummy = fopen(fname, "w")
                     self.header_buf.flush(dummy)
+                    self.imports_buf.flush(dummy)
                     buf.flush(dummy)
-                    data += "from "
-                    if version[0] >= 3:
-                        data += "."
-                    data += buf.name + " import " + buf.name + "\n"
+                    data += self.create_local_import(buf.name)
                     dummy.close()
 
                 init.write(data)
@@ -158,6 +157,13 @@ class ModuleRedeclarator(object):
 
     fake_builtin_init.__doc__ = object.__init__.__doc__ # this forces class's doc to be used instead
 
+    def create_local_import(self, name):
+        if len(name.split(".")) > 1: return ""
+        data = "from "
+        if version[0] >= 3:
+            data += "."
+        data += name + " import " + name + "\n"
+        return data
 
     def find_imported_name(self, item):
         """
@@ -636,6 +642,11 @@ class ModuleRedeclarator(object):
                 else:
                     bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
+
+            for base in bases_list:
+                local_import = self.create_local_import(base)
+                if local_import:
+                    out(indent, local_import)
         out(indent, "class ", p_name, base_def, ":",
             skipped_bases and " # skipped bases: " + ", ".join(skipped_bases) or "")
         out_doc_attr(out, p_class, indent + 1)
@@ -968,6 +979,7 @@ class ModuleRedeclarator(object):
                         ins_index = i # we could not go farther than current ins_index
                         break         # ...and need not go fartehr than first known child
                 cls_list.insert(ins_index, (cls_name, get_mro(cls)))
+            self.split_modules = self.mod_filename and len(cls_list) >= 30
             for item_name in [cls_item[0] for cls_item in cls_list]:
                 buf = ClassBuf(item_name, self)
                 self.classes_buffs.append(buf)

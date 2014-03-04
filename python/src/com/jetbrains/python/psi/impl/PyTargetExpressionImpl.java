@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -243,8 +244,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (exprType instanceof PyClassType) {
         final PyClass cls = ((PyClassType)exprType).getPyClass();
         final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
-        if (enter instanceof PyFunctionImpl) {
-          final PyType enterType = ((PyFunctionImpl)enter).getReturnTypeWithoutCallSite(context, expression);
+        if (enter != null) {
+          final PyType enterType = enter.getCallType(expression, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
           if (enterType != null) {
             return enterType;
           }
@@ -438,10 +439,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Nullable
   private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                 @Nullable PyExpression source) {
-    if (function instanceof PyFunctionImpl) {
-      return ((PyFunctionImpl)function).getReturnTypeWithoutCallSite(context, source);
-    }
-    return function.getReturnType(context, null);
+    return function.getCallType(source, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
   }
 
   @Nullable

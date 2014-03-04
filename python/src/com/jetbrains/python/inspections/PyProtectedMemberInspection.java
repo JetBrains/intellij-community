@@ -70,7 +70,10 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
-          final PsiReference reference = node.getReference();
+          final PsiReference reference = node.getReference(resolveWithoutImplicits());
+          if (reference == null) {
+            return;
+          }
           final PsiElement resolvedExpression = reference.resolve();
           final PyClass resolvedClass = getClassOwner(resolvedExpression);
           if (parentClass.isSubclass(resolvedClass))

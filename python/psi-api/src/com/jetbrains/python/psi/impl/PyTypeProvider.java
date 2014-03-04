@@ -39,7 +39,10 @@ public interface PyTypeProvider {
   PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context);
 
   @Nullable
-  PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context);
+  PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context);
+
+  @Nullable
+  PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context);
 
   @Nullable
   PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);

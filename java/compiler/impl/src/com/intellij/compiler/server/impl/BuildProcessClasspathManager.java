@@ -141,4 +141,12 @@ public class BuildProcessClasspathManager {
     }
     return classpath;
   }
+
+  public static List<String> getLauncherClasspath(Project project) {
+    final List<String> classpath = ContainerUtil.newArrayList();
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+      classpath.addAll(provider.getLauncherClassPath());
+    }
+    return classpath;
+  }
 }

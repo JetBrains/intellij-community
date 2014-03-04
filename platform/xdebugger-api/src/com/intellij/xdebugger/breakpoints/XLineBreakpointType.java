@@ -100,4 +100,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public Icon getTemporaryIcon() {
     return AllIcons.Debugger.Db_temporary_breakpoint;
   }
+
+  /**
+   * Higher priority wins if several types available for the line(s)
+   */
+  public int getPriority() {
+    return 0;
+  }
 }

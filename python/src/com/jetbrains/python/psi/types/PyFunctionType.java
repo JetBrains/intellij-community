@@ -46,8 +46,14 @@ public class PyFunctionType implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    return myCallable.getReturnType(context, callSite);
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
+    return context.getReturnType(myCallable);
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
+    return myCallable.getCallType(context, callSite);
   }
 
   @Nullable
@@ -79,7 +85,7 @@ public class PyFunctionType implements PyCallableType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 
