@@ -16,6 +16,10 @@
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -72,7 +76,17 @@ public class XValueHint extends AbstractValueHint {
     myEvaluator = evaluator;
     myDebugSession = session;
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionData, editor.getDocument());
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+
+    VirtualFile file;
+    ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
+    if (consoleView instanceof LanguageConsoleView) {
+      LanguageConsoleImpl console = ((LanguageConsoleView)consoleView).getConsole();
+      file = console.getHistoryViewer() == editor ? console.getVirtualFile() : null;
+    }
+    else {
+      file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    }
+
     myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, expressionData.first.getStartOffset()) : null;
   }
 
