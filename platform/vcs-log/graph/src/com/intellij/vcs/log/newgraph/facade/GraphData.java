@@ -38,7 +38,6 @@ import java.util.Set;
 
 public class GraphData {
 
-
   @NotNull
   private final GraphFlags myGraphFlags;
 
@@ -56,6 +55,10 @@ public class GraphData {
 
   @NotNull
   private final ElementColorManager myColorManager;
+
+  // contains node index in permanent graph
+  @NotNull
+  private final Set<Integer> myBranchNodeIndexes;
 
   @NotNull
   private final CurrentBranches myCurrentBranches;
@@ -75,13 +78,14 @@ public class GraphData {
   public GraphData(@NotNull GraphFlags graphFlags,
                    @NotNull PermanentGraph permanentGraph, @NotNull Map<Integer, GraphCommit> commitsWithNotLoadParentMap, @NotNull PermanentGraphLayout permanentGraphLayout,
                    @NotNull ElementColorManager colorManager,
-                   @NotNull DfsUtil dfsUtil) {
+                   @NotNull DfsUtil dfsUtil, @NotNull Set<Integer> branchNodeIndexes) {
     myGraphFlags = graphFlags;
     myPermanentGraph = permanentGraph;
     myCommitsWithNotLoadParentMap = commitsWithNotLoadParentMap;
     myPermanentGraphLayout = permanentGraphLayout;
     myColorManager = colorManager;
     myDfsUtil = dfsUtil;
+    myBranchNodeIndexes = branchNodeIndexes;
     myCurrentBranches = new CurrentBranches(permanentGraph, graphFlags.getVisibleNodesInBranches(), dfsUtil);
     applyFilters();
   }
@@ -99,7 +103,7 @@ public class GraphData {
   private void applyFilters() {
     myCurrentBranches.setVisibleBranches(myHeads);
     if (myVisibilityPredicate == null) {
-      myMutableGraph = CollapsedMutableGraph.newInstance(myPermanentGraph, myPermanentGraphLayout, myGraphFlags, myDfsUtil);
+      myMutableGraph = CollapsedMutableGraph.newInstance(myPermanentGraph, myPermanentGraphLayout, myGraphFlags, myBranchNodeIndexes, myDfsUtil);
       GraphCellGeneratorImpl cellGenerator = new GraphCellGeneratorImpl(myMutableGraph);
       myGraphRender = new GraphRender(myMutableGraph, myColorManager, cellGenerator);
     } else {
@@ -130,6 +134,11 @@ public class GraphData {
   @NotNull
   public PermanentGraphLayout getPermanentGraphLayout() {
     return myPermanentGraphLayout;
+  }
+
+  @NotNull
+  public Set<Integer> getBranchNodeIndexes() {
+    return myBranchNodeIndexes;
   }
 
   @NotNull

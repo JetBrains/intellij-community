@@ -36,7 +36,9 @@ import java.util.*;
 
 public class GraphFacadeImpl implements GraphFacade {
   @NotNull
-  public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits, @NotNull final GraphColorManager colorManager) {
+  public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits,
+                                            @NotNull Set<Integer> branchCommitHashIndexes,
+                                            @NotNull final GraphColorManager colorManager) {
     GraphFlags flags = new GraphFlags(commits.size());
     Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
     final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
@@ -66,7 +68,14 @@ public class GraphFacadeImpl implements GraphFacade {
         }
       }
     };
-    GraphData graphData = new GraphData(flags, permanentGraph, graphAndUnderdoneCommits.second, graphLayout, elementColorManager, dfsUtil);
+
+    Set<Integer> branchNodeIndexes = new HashSet<Integer>();
+    for (int i = 0; i < permanentGraph.nodesCount(); i++) {
+      if (branchCommitHashIndexes.contains(permanentGraph.getHashIndex(i)))
+        branchNodeIndexes.add(i);
+    }
+    GraphData graphData = new GraphData(flags, permanentGraph, graphAndUnderdoneCommits.second, graphLayout, elementColorManager, dfsUtil,
+                                        branchNodeIndexes);
     return new GraphFacadeImpl(graphData);
   }
 
@@ -80,8 +89,6 @@ public class GraphFacadeImpl implements GraphFacade {
     myGraphData = graphData;
     myActionDispatcher = new GraphActionDispatcher(graphData);
   }
-
-
 
   @NotNull
   @Override

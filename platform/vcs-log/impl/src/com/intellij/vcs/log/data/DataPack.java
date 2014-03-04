@@ -31,7 +31,7 @@ public class DataPack {
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(logProviders));
     if (USE_NEW_FACADE) {
       if (!commits.isEmpty()) {
-        return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, colorManager));
+        return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager));
       }
       else {
         return new DataPack(refsModel, new EmptyGraphFacade());
@@ -40,6 +40,17 @@ public class DataPack {
       GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
       return new DataPack(refsModel, graphFacade);
     }
+  }
+
+  @NotNull
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> allRefs,
+                                                         @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+    Set<Integer> result = new HashSet<Integer>();
+    for (VcsRef vcsRef : allRefs) {
+      if (vcsRef.getType().isBranch())
+        result.add(indexGetter.fun(vcsRef.getCommitHash()));
+    }
+    return result;
   }
 
   @NotNull

@@ -37,6 +37,9 @@ public class FragmentGenerator {
   @NotNull
   private final CollapsedMutableGraph myMutableGraph;
 
+  @NotNull
+  private final Set<Integer> myBranchNodeIndexes;
+
   private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
@@ -51,9 +54,17 @@ public class FragmentGenerator {
     }
   };
 
+  private final Function<Integer, Boolean> thisNodeCantBeInMiddle = new Function<Integer, Boolean>() {
+    @Override
+    public Boolean fun(Integer integer) {
+      return myBranchNodeIndexes.contains(integer);
+    }
+  };
 
-  public FragmentGenerator(@NotNull CollapsedMutableGraph mutableGraph) {
+
+  public FragmentGenerator(@NotNull CollapsedMutableGraph mutableGraph, @NotNull Set<Integer> branchNodeIndexes) {
     myMutableGraph = mutableGraph;
+    myBranchNodeIndexes = branchNodeIndexes;
   }
 
   @Nullable
@@ -85,13 +96,19 @@ public class FragmentGenerator {
 
   @Nullable
   public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex), downNodesFun, upNodesFun);
+    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex),
+                                                  downNodesFun,
+                                                  upNodesFun,
+                                                  thisNodeCantBeInMiddle);
     return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.first), myMutableGraph.toVisibleIndex(fragment.second));
   }
 
   @Nullable
   public GraphFragment getUpFragment(int lowerNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex), upNodesFun, downNodesFun);
+    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex),
+                                                  upNodesFun,
+                                                  downNodesFun,
+                                                  thisNodeCantBeInMiddle);
     return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.second), myMutableGraph.toVisibleIndex(fragment.first));
   }
 
@@ -119,14 +136,14 @@ public class FragmentGenerator {
     GraphFragment shortFragment;
 
     int maxDown = startFragment.downVisibleNodeIndex;
-    while ((shortFragment = getDownFragment(maxDown)) != null) {
+    while ((shortFragment = getDownFragment(maxDown)) != null && !myBranchNodeIndexes.contains(myMutableGraph.getIndexInPermanentGraph(maxDown))) {
       maxDown = shortFragment.downVisibleNodeIndex;
       if (maxDown - startFragment.downVisibleNodeIndex > bound)
         break;
     }
 
     int maxUp = startFragment.upVisibleNodeIndex;
-    while ((shortFragment = getUpFragment(maxUp)) != null) {
+    while ((shortFragment = getUpFragment(maxUp)) != null && !myBranchNodeIndexes.contains(myMutableGraph.getIndexInPermanentGraph(maxUp))) {
       maxUp = shortFragment.upVisibleNodeIndex;
       if (startFragment.upVisibleNodeIndex - maxUp > bound)
         break;
@@ -144,7 +161,8 @@ public class FragmentGenerator {
   @Nullable
   private static Pair<Integer, Integer> getFragment(int startNode,
                                                     Function<Integer, List<Integer>> getNextNodes,
-                                                    Function<Integer, List<Integer>> getPrevNodes) {
+                                                    Function<Integer, List<Integer>> getPrevNodes,
+                                                    Function<Integer, Boolean> thisNodeCantBeInMiddle) {
     Set<Integer> blackNodes = new HashSet<Integer>();
     blackNodes.add(startNode);
 
@@ -170,7 +188,7 @@ public class FragmentGenerator {
       }
 
       List<Integer> nextGrayNodes = getNextNodes.fun(nextBlackNode);
-      if (nextGrayNodes.isEmpty())
+      if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.fun(nextBlackNode))
         return null;
 
       blackNodes.add(nextBlackNode);

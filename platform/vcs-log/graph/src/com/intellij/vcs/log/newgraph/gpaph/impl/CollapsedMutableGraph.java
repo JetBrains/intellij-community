@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
@@ -45,6 +46,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
   public static CollapsedMutableGraph newInstance(@NotNull PermanentGraph permanentGraph,
                                                   @NotNull PermanentGraphLayout layout,
                                                   @NotNull GraphFlags graphFlags,
+                                                  @NotNull Set<Integer> branchNodeIndexes,
                                                   @NotNull DfsUtil dfsUtil) {
     final Flags visibleNodes = graphFlags.getVisibleNodes();
     final Flags visibleNodesInBranches = graphFlags.getVisibleNodesInBranches();
@@ -59,7 +61,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     GraphWithElementsInfoImpl graphWithElementsInfo =
       new GraphWithElementsInfoImpl(permanentGraph, visibleNodesInBranches, visibleNodes, intToIntMap, dfsUtil);
     return new CollapsedMutableGraph(permanentGraph, layout, intToIntMap, graphFlags.getThickFlags(),
-                                     dfsUtil, graphWithElementsInfo);
+                                     dfsUtil,branchNodeIndexes, graphWithElementsInfo);
   }
 
   @NotNull
@@ -73,9 +75,10 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
                                 @NotNull TreeIntToIntMap intToIntMap,
                                 @NotNull Flags thickFlags,
                                 @NotNull DfsUtil dfsUtil,
+                                @NotNull Set<Integer> branchNodeIndexes,
                                 @NotNull GraphWithElementsInfoImpl graphWithElementsInfo) {
     super(intToIntMap, graphWithElementsInfo, layout);
-    myFragmentGenerator = new FragmentGenerator(this);
+    myFragmentGenerator = new FragmentGenerator(this, branchNodeIndexes);
     myThickHoverController = new ThickHoverControllerImpl(permanentGraph, this, myFragmentGenerator, thickFlags, dfsUtil);
   }
 
