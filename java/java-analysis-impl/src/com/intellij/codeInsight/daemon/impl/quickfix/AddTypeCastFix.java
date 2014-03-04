@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final PsiType myType;
@@ -75,28 +76,26 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     addTypeCast(project, (PsiExpression)startElement, myType);
   }
 
-  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) throws IncorrectOperationException {
+  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
     originalExpression.replace(typeCast);
   }
 
-  static PsiExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) throws IncorrectOperationException {
+  static PsiExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) {
     // remove nested casts
-    PsiElement element = PsiUtil.deparenthesizeExpression(originalExpression);
-    if (element == null){
-      return null;
-    }
+    PsiElement expression = PsiUtil.deparenthesizeExpression(originalExpression);
+    if (expression == null) return null;
+
     PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
-
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
+    assertNotNull(typeCast.getCastType()).replace(factory.createTypeElement(type));
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);
-    typeCast.getCastType().replace(factory.createTypeElement(type));
 
-    if (element instanceof PsiConditionalExpression) {
-      // we'd better cast one branch of ternary expression if we could
-      PsiConditionalExpression expression = (PsiConditionalExpression)element.copy();
-      PsiExpression thenE = expression.getThenExpression();
-      PsiExpression elseE = expression.getElseExpression();
+    if (expression instanceof PsiConditionalExpression) {
+      // we'd better cast one branch of ternary expression if we can
+      PsiConditionalExpression conditional = (PsiConditionalExpression)expression.copy();
+      PsiExpression thenE = conditional.getThenExpression();
+      PsiExpression elseE = conditional.getElseExpression();
       PsiType thenType = thenE == null ? null : thenE.getType();
       PsiType elseType = elseE == null ? null : elseE.getType();
       if (elseType != null && thenType != null) {
@@ -104,18 +103,20 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
         boolean replaceElse = !TypeConversionUtil.isAssignable(type, elseType);
         if (replaceThen != replaceElse) {
           if (replaceThen) {
-            typeCast.getOperand().replace(thenE);
+            assertNotNull(typeCast.getOperand()).replace(thenE);
             thenE.replace(typeCast);
           }
           else {
-            typeCast.getOperand().replace(elseE);
+            assertNotNull(typeCast.getOperand()).replace(elseE);
             elseE.replace(typeCast);
           }
-          return expression;
+          return conditional;
         }
       }
     }
-    typeCast.getOperand().replace(element);
+
+    assertNotNull(typeCast.getOperand()).replace(expression);
+
     return typeCast;
   }
 

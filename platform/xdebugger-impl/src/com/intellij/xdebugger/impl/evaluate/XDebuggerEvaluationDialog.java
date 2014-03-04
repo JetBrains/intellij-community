@@ -29,7 +29,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
@@ -38,6 +37,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,10 +61,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final boolean myIsCodeFragmentEvaluationSupported;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
-                                   final @NotNull XDebuggerEditorsProvider editorsProvider,
+                                   @NotNull XDebuggerEditorsProvider editorsProvider,
                                    @NotNull XDebuggerEvaluator evaluator,
                                    @NotNull String text,
-                                   final XSourcePosition sourcePosition) {
+                                   @Nullable XSourcePosition sourcePosition) {
     super(session.getProject(), true);
     mySession = session;
     myEditorsProvider = editorsProvider;
@@ -212,8 +212,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     inputEditor.saveTextInHistory();
     String expression = inputEditor.getText();
 
-    XStackFrame frame = mySession.getCurrentStackFrame();
-    XDebuggerEvaluator evaluator = frame == null ? null : frame.getEvaluator();
+    XDebuggerEvaluator evaluator = mySession.getDebugProcess().getEvaluator();
     if (evaluator == null) {
       evaluationCallback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"));
     }

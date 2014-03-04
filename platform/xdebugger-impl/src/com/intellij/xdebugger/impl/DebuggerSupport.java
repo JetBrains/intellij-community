@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
+
+  protected static final class DisabledActionHandler extends DebuggerActionHandler {
+    public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
+
+    @Override
+    public void perform(@NotNull Project project, AnActionEvent event) {
+    }
+
+    @Override
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+      return false;
+    }
+  }
 
   @NotNull
   public static DebuggerSupport[] getDebuggerSupports() {

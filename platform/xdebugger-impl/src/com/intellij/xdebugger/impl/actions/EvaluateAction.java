@@ -15,17 +15,18 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class EvaluateAction extends XDebuggerActionBase {
+final class EvaluateAction extends XDebuggerActionBase {
   public EvaluateAction() {
     super(true);
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getEvaluateHandler();
