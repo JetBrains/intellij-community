@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+
+<project name="Fernflower" default="buildAll" basedir=".">
+
+   	<taskdef resource="proguard/ant/task.properties" 
+   				classpath="${basedir}/lib/proguard_4_11.jar" />
+	
+   	<taskdef name="javancss"
+	            classname="javancss.JavancssAntTask">
+   	    <classpath>
+   	        <pathelement path="${classpath}"/>
+   	      	<pathelement location="${basedir}/lib/ncss/javancss.jar"/>
+   	      	<pathelement location="${basedir}/lib/ncss/javacc.jar"/>
+   	      	<pathelement location="${basedir}/lib/ncss/ccl.jar"/>
+   	    </classpath>
+	</taskdef>
+	
+	<target name="init" description="initialization">
+		<property name="jar.file" value="fernflower.jar" />
+		<property name="timer.jar.file" value="timer.jar" />
+		<property name="bin" value="${basedir}/bin" />
+		<property name="lib" value="${basedir}/lib" />
+		<property name="fulldist" value="${basedir}/dist/full" />
+		<property name="obfuscateddist" value="${basedir}/dist/obfuscated" />
+
+		<property name="tomcat" value="C:/revjava/apache-tomcat-5.5.27/shared/lib/" />
+		<property name="webwrapper" value="D:/Nonbku/workspace/webwrapper/lib/" />
+	</target>
+
+	<target name="buildAll" depends="init, jar, obfuscate" description="build full distribution paket"/>
+	
+	<target name="timer" depends="init" description="generate timer jar file">
+		<jar jarfile="${lib}/timer/${timer.jar.file}" compress="true" basedir="${bin}" includes="com/**/*.class,*.class"/>
+	</target>
+
+	<target name="jar" depends="init" description="generate jar file">
+		<jar jarfile="${fulldist}/${jar.file}" compress="true" basedir="${bin}" includes="**/*.class" excludes="test/**/*.*,com/**/*.*,*.class">
+	        <manifest>
+	            <attribute name="Main-Class" value="de.fernflower.main.decompiler.ConsoleDecompiler"/>
+	        </manifest>
+		</jar>
+	</target>
+
+	<target name="deploy" depends="jar" description="deploy generated jar file to Tomcat">
+		 <copy todir="${webwrapper}" file="${fulldist}/${jar.file}" overwrite="true"/>
+		 <copy todir="${tomcat}" file="${fulldist}/${jar.file}" overwrite="true"/>
+	</target>
+	
+	<target name="loc" description="count lines of code">
+		<javancss srcdir="${basedir}/src"
+			generateReport="true"
+			functionMetrics="false" 			
+			classMetrics="false"
+		    includes="**/*.java"
+			excludes="**/test/**,**/de/fernflower/code/instructions/**,**/timer/**"
+		/>
+	</target>
+		
+	
+	<target name="obfuscate" description="Call Proguard on Fernflower">
+		<!-- 4.0.1 -->
+	  <proguard>
+
+	  	-injars       "${fulldist}/${jar.file}"
+	  	-outjars      "${obfuscateddist}/${jar.file}"
+	  	-libraryjars  "${java.home}/lib/rt.jar"
+
+	  	-forceprocessing
+	  	-repackageclasses
+	  	<!-- -allowaccessmodification -->
+	  	
+	  	-optimizationpasses 5 
+	  	
+	  	-keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
+	  	    public protected *;
+	  	}
+
+	  	-keep public class de.fernflower.main.decompiler.EclipseDecompiler {
+	  	    public protected *;
+	  	}
+
+	  	-keep public class de.fernflower.main.extern.* {
+	  	    public protected *;
+	  	}
+	  	
+	  	<!--
+	  	-keep public class de.fernflower.code.instructions.* {
+	  	    public protected *;
+	  	}
+	  	-->
+	  	
+	  </proguard>
+	</target>
+	
+	<target name="printunused" depends="init" description="Print unused code">
+	  <proguard>
+
+	  	-injars      ${fulldist}/${jar.file}
+	  	-libraryjars ${java.home}/lib/rt.jar
+
+	  	-dontoptimize
+	  	-dontobfuscate
+	  	-dontpreverify
+	  	-printusage
+
+	  	<!--
+	  	-whyareyoukeeping public class de.fernflower.code.instructions.ALOAD {
+	  		public *;
+	  	}
+	  	-->
+	  	
+	  	-keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
+	  	    public protected *;
+	  	}
+
+	  	-keep public class de.fernflower.main.decompiler.EclipseDecompiler {
+	  	    public protected *;
+	  	}
+
+	  	-keep public class de.fernflower.main.extern.* {
+	  	    public protected *;
+	  	}
+
+	  	<!--
+	  	-keep public class de.fernflower.code.instructions.*
+	  	-->	  	
+	  	
+	  </proguard>
+	</target>
+	
+</project>
