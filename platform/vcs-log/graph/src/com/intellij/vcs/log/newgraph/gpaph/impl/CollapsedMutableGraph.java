@@ -169,6 +169,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
       myDfsUtil = dfsUtil;
     }
 
+    // nodes up and down must be loaded
     public void collapse(int upNodeIndex, final int downNodeIndex) {
       Pair<Integer, Integer> edge = Pair.create(upNodeIndex, downNodeIndex);
 

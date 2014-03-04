@@ -22,6 +22,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
@@ -170,7 +171,7 @@ public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutabl
     public List<Integer> getDownNodes(int nodeIndex) {
       List<Integer> result = new SmartList<Integer>();
       for (int downNode : myGraph.getDownNodes(nodeIndex)) {
-        if (myVisibleNodes.get(downNode))
+        if (downNode != SomeGraph.NOT_LOAD_COMMIT && myVisibleNodes.get(downNode))
           result.add(downNode);
       }
 
