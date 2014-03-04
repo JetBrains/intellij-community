@@ -25,12 +25,81 @@ import static org.junit.Assert.assertEquals;
 
 public class VcsLogSorterTest {
 
+  private static String toStr(List<? extends TimedVcsCommit> commits) {
+    StringBuilder s = new StringBuilder();
+    for (TimedVcsCommit commit : commits) {
+      if (s.length() != 0) {
+        s.append(", ");
+      }
+      s.append(commit.getHash().asString());
+    }
+    return s.toString();
+  }
+
+  private static void doTest(List<TimedVcsCommit> started, List<TimedVcsCommit> expected) {
+    List<TimedVcsCommit> sorted = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(started);
+    assertEquals(toStr(expected), toStr(sorted));
+  }
+
   @Test
   public void simpleTest() {
-    List<TimedVcsCommit> log = log("6|-a2|-a0", "3|-a1|-a0", "1|-a0|-");
-    List<TimedVcsCommit> sorted = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(log);
-    List<TimedVcsCommit> expected = log("6|-a2|-a0", "3|-a1|-a0", "1|-a0|-");
-    assertEquals(expected, sorted);
+    doTest(log("1|-a0|-", "3|-a1|-a0", "6|-a2|-a0"),
+           log("6|-a2|-a0", "3|-a1|-a0", "1|-a0|-"));
+  }
+
+  @Test
+  public void severalHeads() {
+    doTest(log(
+      "1|-a4|-",
+      "2|-a3|-a4",
+      "6|-b1|-b2",
+      "4|-b2|-a3",
+      "3|-a2|-a3",
+      "5|-a1|-a2"
+    ),
+
+           log("6|-b1|-b2",
+               "5|-a1|-a2",
+               "4|-b2|-a3",
+               "3|-a2|-a3",
+               "2|-a3|-a4",
+               "1|-a4|-"));
+  }
+
+  @Test
+  public void withMerge() {
+    doTest(log(
+      "6|-b1|-b2",
+      "2|-a3|-a4",
+      "3|-a2|-a3",
+      "4|-b2|-a3",
+      "5|-a1|-a2",
+      "1|-a0|-b1 a1",
+      "1|-a4|-"
+    ),
+
+           log("1|-a0|-b1 a1",
+               "6|-b1|-b2",
+               "5|-a1|-a2",
+               "4|-b2|-a3",
+               "3|-a2|-a3",
+               "2|-a3|-a4",
+               "1|-a4|-"));
+  }
+
+  @Test
+  public void severalBranches() {
+    doTest(log(
+      "1|-a1|-",
+      "3|-a3|-a1",
+      "2|-a2|-",
+      "4|-a4|-a2"
+      ),
+    log("4|-a4|-a2",
+        "3|-a3|-a1",
+        "2|-a2|-",
+        "1|-a1|-"
+    ));
   }
 
 }
