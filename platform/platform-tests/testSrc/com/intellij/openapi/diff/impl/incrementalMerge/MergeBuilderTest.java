@@ -52,10 +52,6 @@ public class MergeBuilderTest extends TestCase {
     }, finish(2, 2, 2));
   }
 
-  private MergeFragment fragment(TextRange left, TextRange base, TextRange right) {
-    return new MergeFragment(left, base, right);
-  }
-
   public void testHeadInsert() {
     TextRange range = new TextRange(0, 1);
     addRight(range, new TextRange(1, 2));
@@ -65,8 +61,8 @@ public class MergeBuilderTest extends TestCase {
   }
 
   public void testOneSideChange() {
-    addLeft(new TextRange(1, 2), new TextRange(2, 3));
     addRight(new TextRange(0, 2), new TextRange(0, 2));
+    addLeft(new TextRange(1, 2), new TextRange(2, 3));
     CHECK.singleElement(finish(3, 2, 2), fragment(new TextRange(0, 2), new TextRange(0, 1), null));
   }
 
@@ -77,6 +73,14 @@ public class MergeBuilderTest extends TestCase {
       fragment(new TextRange(0, 1), new TextRange(0, 2), new TextRange(0, 1)),
       fragment(new TextRange(2, 3), new TextRange(3, 4), null)
     }, finish(3, 4, 3));
+  }
+
+  public void testBug() {
+    addRight(new TextRange(0, 1), new TextRange(0, 1));
+    addLeft(new TextRange(0, 2), new TextRange(0, 2));
+    CHECK.compareAll(new MergeFragment[]{
+      fragment(new TextRange(1, 3), new TextRange(1, 2), new TextRange(1, 1)),
+    }, finish(3, 2, 1));
   }
 
   public void testMultiChanges() {
@@ -103,6 +107,10 @@ public class MergeBuilderTest extends TestCase {
     CHECK.compareAll(new MergeFragment[]{
       fragment(new TextRange(1, 2), new TextRange(1, 4), new TextRange(1, 2))
     }, finish(3, 5, 3));
+  }
+
+  private MergeFragment fragment(TextRange left, TextRange base, TextRange right) {
+    return new MergeFragment(left, base, right);
   }
 
   private void addRight(TextRange base, TextRange right) {
