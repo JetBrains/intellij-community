@@ -137,8 +137,7 @@ public class IndexingStamp {
   }
 
   private static final ConcurrentMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
-  private static final int CAPACITY = 100;
-  private static final BlockingQueue<VirtualFile> ourFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
+  private static final BlockingQueue<VirtualFile> ourFinishedFiles = new ArrayBlockingQueue<VirtualFile>(100);
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
