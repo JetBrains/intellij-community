@@ -335,6 +335,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                            boolean notifyAlways,
                                            boolean notifyOnFirst) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+    XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
     PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("exceptions.ZeroDivisionError");
     properties.setNotifyOnTerminate(notifyOnTerminate);
