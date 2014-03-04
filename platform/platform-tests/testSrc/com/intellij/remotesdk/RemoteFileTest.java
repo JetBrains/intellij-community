@@ -15,6 +15,8 @@
  */
 package com.intellij.remotesdk;
 
+import com.intellij.remote.RemoteFile;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
 import junit.framework.TestCase;
 
 /**

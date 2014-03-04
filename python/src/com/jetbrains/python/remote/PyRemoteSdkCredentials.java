@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.remotesdk.RemoteSdkCredentials;
+import com.intellij.remote.RemoteSdkCredentials;
 
 /**
  * @author yole

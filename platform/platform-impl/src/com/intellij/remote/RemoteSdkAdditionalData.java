@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk2;
+package com.intellij.remote;
 
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.remotesdk.RemoteSdkCredentialsHolder;
-import com.intellij.remotesdk.RemoteSdkProperties;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
-public interface RemoteSdkAdditionalData2<T extends RemoteSdkCredentials>
+public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   extends SdkAdditionalData, RemoteSdkProducer<T>, RemoteSdkProperties {
   void completeInitialization();
 
