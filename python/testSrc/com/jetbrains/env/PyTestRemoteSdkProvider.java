@@ -10,8 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remotesdk.RemoteInterpreterException;
-import com.intellij.util.Consumer;
+import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyTestTask;
@@ -60,9 +59,9 @@ public class PyTestRemoteSdkProvider {
     return mySdkTable.get(sdkPath);
   }
 
-  private Sdk createSdk(String interpreterPath) throws RemoteInterpreterException {
+  private Sdk createSdk(String interpreterPath) throws RemoteSdkException {
     try {
-      PyRemoteSdkAdditionalData2 data = createRemoteSdkData(interpreterPath);
+      PyRemoteSdkAdditionalData data = createRemoteSdkData(interpreterPath);
 
       final Sdk sdk = myInterpreterManager.createRemoteSdk(myProject, data, null, Lists.<Sdk>newArrayList());
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -96,8 +95,8 @@ public class PyTestRemoteSdkProvider {
     return data;
   }
 
-  private static PyRemoteSdkAdditionalData2 createRemoteSdkData(final String path) throws IOException {
-    PyRemoteSdkAdditionalData2 res = new PyRemoteSdkAdditionalData2(path);
+  private static PyRemoteSdkAdditionalData createRemoteSdkData(final String path) throws IOException {
+    PyRemoteSdkAdditionalData res = new PyRemoteSdkAdditionalData(path);
     res.setSshCredentials(getTestSdkCredentials(path));
     return res;
 

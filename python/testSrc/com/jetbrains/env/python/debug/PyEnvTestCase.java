@@ -12,7 +12,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyTestRemoteSdkProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData2;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +204,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
           });
         }
 
-        return ((PyRemoteSdkAdditionalData2)sdk.getSdkAdditionalData()).getRemoteSdkCredentials().getSdkId();
+        return ((PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getRemoteSdkCredentials().getSdkId();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
