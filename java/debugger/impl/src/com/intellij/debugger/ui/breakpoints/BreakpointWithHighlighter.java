@@ -42,13 +42,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -296,8 +295,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final XSourcePosition position = myXBreakpoint.getSourcePosition();
     try {
-      PsiElement element = XDebuggerUtil.getInstance().findContextElement(position.getFile(), position.getOffset(), myProject, false);
-      mySourcePosition = SourcePosition.createFromOffset(element.getContainingFile(), position.getOffset());
+      final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(position.getFile());
+      mySourcePosition = SourcePosition.createFromOffset(psiFile, position.getOffset());
     } catch (Exception e) {
       mySourcePosition = null;
     }
