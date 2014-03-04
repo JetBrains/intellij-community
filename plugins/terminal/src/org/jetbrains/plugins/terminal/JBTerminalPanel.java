@@ -89,15 +89,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           @Override
           public void actionPerformed(AnActionEvent e) {
             if (e.getInputEvent() instanceof KeyEvent) {
-              action.update(e);
-              if (e.getPresentation().isEnabled()) {
-                action.actionPerformed(e);
+              AnActionEvent event = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(), e.getModifiers());
+              action.update(event);
+              if (event.getPresentation().isEnabled()) {
+                action.actionPerformed(event);
               }
               else {
-                terminalPanel.handleKeyEvent((KeyEvent)e.getInputEvent());
+                terminalPanel.handleKeyEvent((KeyEvent)event.getInputEvent());
               }
 
-              e.getInputEvent().consume();
+              event.getInputEvent().consume();
             }
           }
         };
