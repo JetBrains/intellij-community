@@ -117,20 +117,6 @@ public class ConstantPool {
 		    }
 	    }
 	    
-//	    // second pass: resolve the elements referencing constants resolved at the first pass
-//	    for (int i = 1; i < size; i++) {
-//	    	if (pass[i] == 1) {
-//	    		pool.get(i).resolveConstant(this);
-//	    	}
-//	    }
-//	    
-//	    // third pass: resolve the elements referencing constants resolved at the second pass
-//	    for (int i = 1; i < size; i++) {
-//	    	if (pass[i] == 2) {
-//	    		pool.get(i).resolveConstant(this);
-//	    	}
-//	    }
-	    
 	    // get global constant pool interceptor instance, if any available
 	    interceptor = DecompilerContext.getPoolInterceptor();
 	}
