@@ -77,7 +77,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private void showOptions(final Project project) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
-    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), false, new NullableConsumer<Sdk>() {
+    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           //noinspection unchecked

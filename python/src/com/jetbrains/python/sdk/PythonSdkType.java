@@ -282,7 +282,7 @@ public class PythonSdkType extends SdkType {
     final Point point = parentComponent.getMousePosition();
     SwingUtilities.convertPointToScreen(point, parentComponent);
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, false, new NullableConsumer<Sdk>() {
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {

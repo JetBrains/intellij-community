@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
-  private static DialogWrapper myMore;
+  private DialogWrapper myMore;
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
@@ -55,21 +55,20 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           final Sdk[] existingSdks,
                           DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
-                          final boolean showMore,
                           final NullableConsumer<Sdk> callback) {
-    myMore = moreDialog;
-    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, ownerComponent, existingSdks, showMore, callback);
+
+    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
   public PythonSdkDetailsStep(Project project,
-                              Component ownerComponent,
+                              DialogWrapper moreDialog, Component ownerComponent,
                               Sdk[] existingSdks,
-                              boolean showMore,
                               NullableConsumer<Sdk> callback) {
-    super(null, getAvailableOptions(showMore));
+    super(null, getAvailableOptions(moreDialog != null));
     myProject = project;
+    myMore = moreDialog;
     myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
     myCallback = callback;
