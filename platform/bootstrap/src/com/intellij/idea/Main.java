@@ -155,6 +155,7 @@ public class Main {
                          patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
+                         "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",
                          "install",
                          PathManager.getHomePath());
