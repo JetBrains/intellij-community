@@ -39,7 +39,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,32 +216,26 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-    Runnable operation = new Runnable() {
+    Runnable runnable = updateFoldRegions(editor, true, true);
+    if (runnable != null) {
+      runnable.run();
+    }
+    if (myProject.isDisposed() || editor.isDisposed()) return;
+    foldingModel.runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
-        Runnable runnable = updateFoldRegions(editor, true, true);
-        if (runnable != null) {
-          runnable.run();
+        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+        for (Editor otherEditor : editors) {
+          if (otherEditor == editor) continue;
+          documentFoldingInfo.loadFromEditor(otherEditor);
+          break;
         }
-        if (myProject.isDisposed() || editor.isDisposed()) return;
-        foldingModel.runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-            for (Editor otherEditor : editors) {
-              if (otherEditor == editor) continue;
-              documentFoldingInfo.loadFromEditor(otherEditor);
-              break;
-            }
-            documentFoldingInfo.setToEditor(editor);
+        documentFoldingInfo.setToEditor(editor);
 
-            documentFoldingInfo.clear();
-          }
-        });
+        documentFoldingInfo.clear();
       }
-    };
-    UIUtil.invokeLaterIfNeeded(operation);
+    });
   }
 
   @Override
