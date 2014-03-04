@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
@@ -45,7 +44,11 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * List of managers. Class delegates all logic to them.
    */
   private static final Collection<? extends MembersManager<? extends PyElement>> MANAGERS =
-    Arrays.asList(new MethodsManager(), new SuperClassesManager(), new ClassFieldsManager(), new InstanceFieldsManager());
+    Arrays.asList(new MethodsManager(),
+                  new SuperClassesManager(),
+                  new ClassFieldsManager(),
+                  new InstanceFieldsManager(),
+                  new PropertiesManager());
 
   @NotNull
   private final Class<T> myExpectedClass;
@@ -175,7 +178,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
   /**
    * Finds member in class.
-   * @param pyClass class to find member in
+   *
+   * @param pyClass   class to find member in
    * @param pyElement element to find
    * @return member info with element
    */
@@ -212,6 +216,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   /**
    * Moves element from one class to another. Returns members that may require reference restoring aid from
    * ({@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#restoreNamedReferences(com.intellij.psi.PsiElement)})
+   * Sort members according to their dependncies, before calling this method
    *
    * @see #getElementsToStoreReferences(java.util.Collection)
    */

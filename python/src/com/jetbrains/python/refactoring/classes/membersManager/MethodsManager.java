@@ -76,7 +76,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     final Collection<PyFunction> methodsToAbstract = fetchElements(Collections2.filter(members, new AbstractFilter(true)));
 
     makeMethodsAbstract(methodsToAbstract, to);
-    return moveMethods(from, methodsToMove, to);
+    return moveMethods(from, methodsToMove, true, to);
   }
 
   /**
@@ -158,9 +158,10 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param from          source
    * @param methodsToMove what to move
    * @param to            where
+   * @param skipIfExist skip (do not add) if method already exists
    * @return newly added methods
    */
-  private static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final PyClass... to) {
+  static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
     final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       //We move copies here because there may be several destinations
@@ -170,7 +171,7 @@ class MethodsManager extends MembersManager<PyFunction> {
         copies.add(newMethod);
       }
 
-      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass));
+      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass, skipIfExist));
     }
     deleteElements(methodsToMove);
 
