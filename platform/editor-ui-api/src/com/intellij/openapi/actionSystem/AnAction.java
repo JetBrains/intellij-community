@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -145,7 +144,8 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component){
     myShortcutSet = shortcutSet;
     if (component != null){
-      @SuppressWarnings("unchecked") List<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
+      @SuppressWarnings("unchecked")
+      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList == null){
         actionList = new SmartList<AnAction>();
         component.putClientProperty(ourClientProperty, actionList);
@@ -172,7 +172,8 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   public final void unregisterCustomShortcutSet(JComponent component){
     if (component != null){
-      @SuppressWarnings("unchecked") ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
+      @SuppressWarnings("unchecked")
+      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList != null){
         actionList.remove(this);
       }
