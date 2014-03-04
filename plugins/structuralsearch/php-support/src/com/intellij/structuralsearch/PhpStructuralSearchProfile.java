@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.php.lang.PhpFileType;
 import com.jetbrains.php.lang.lexer.PhpTokenTypes;
-import com.jetbrains.php.refactoring.PhpTemplateContextType;
+import com.jetbrains.php.liveTemplates.PhpTemplateContextType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
