@@ -120,11 +120,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        new WriteAction() {
-          protected void run(final Result result) {
-            XDebuggerTestUtil.removeAllBreakpoints(getProject());
-          }
-        };
+        XDebuggerTestUtil.removeAllBreakpoints(getProject());
       }
     });
   }
