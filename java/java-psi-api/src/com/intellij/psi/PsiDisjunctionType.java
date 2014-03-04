@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.List;
  * Composite type resulting from Project Coin's multi-catch statements, i.e. <code>FileNotFoundException | EOFException</code>.
  * In most cases should be threatened via its least upper bound (<code>IOException</code> in the example above).
  */
-public class PsiDisjunctionType extends PsiType {
+public class PsiDisjunctionType extends PsiType.Stub {
   private final PsiManager myManager;
   private final List<PsiType> myTypes;
   private final CachedValue<PsiType> myLubCache;
@@ -85,15 +85,21 @@ public class PsiDisjunctionType extends PsiType {
   @Override
   public String getPresentableText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getPresentableText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getPresentableText();
+      }
     }, " | ");
   }
 
   @NotNull
   @Override
-  public String getCanonicalText() {
+  public String getCanonicalText(final boolean annotated) {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getCanonicalText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getCanonicalText(annotated);
+      }
     }, " | ");
   }
 
@@ -101,7 +107,10 @@ public class PsiDisjunctionType extends PsiType {
   @Override
   public String getInternalCanonicalText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getInternalCanonicalText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getInternalCanonicalText();
+      }
     }, " | ");
   }
 

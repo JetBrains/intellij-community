@@ -123,8 +123,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
 
   @Override
   public void addWatchExpression(@NotNull String expression, int index, final boolean navigateToWatchNode) {
-    XStackFrame stackFrame = mySession.getCurrentStackFrame();
-    myRootNode.addWatchExpression(stackFrame == null ? null : stackFrame.getEvaluator(), expression, index, navigateToWatchNode);
+    myRootNode.addWatchExpression(mySession.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
     updateSessionData();
   }
 

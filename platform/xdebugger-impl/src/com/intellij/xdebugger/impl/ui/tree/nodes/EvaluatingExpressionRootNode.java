@@ -44,7 +44,7 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
 
   public static class EvaluatingResultContainer extends XValueContainer implements XDebuggerTreeListener {
     private final XDebuggerEvaluationDialog myDialog;
-    private XDebuggerTree myTree;
+    private final XDebuggerTree myTree;
 
     public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog, XDebuggerTree tree) {
       myDialog = dialog;

@@ -39,6 +39,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -81,7 +82,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
-  private static final Key<Boolean> IS_COMPILER_API_SUPPORTED = Key.create("_java_compiler_api_supported_");
+  private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
@@ -137,16 +138,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
-    final boolean isJavac = JavaCompilers.JAVAC_ID.equalsIgnoreCase(compilerId) || JavaCompilers.JAVAC_API_ID.equalsIgnoreCase(compilerId);
-    final boolean isEclipse = JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
-    IS_COMPILER_API_SUPPORTED.set(context, isJavac || isEclipse);
-    String messageText = null;
-    if (isJavac) {
-      messageText = "Using javac " + System.getProperty("java.version") + " to compile java sources";
-    }
-    else if (isEclipse) {
-      messageText = "Using eclipse compiler to compile java sources";
-    }
+    JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
+    COMPILING_TOOL.set(context, compilingTool);
+    String messageText = compilingTool != null ? "Using " + compilingTool.getDescription() + " to compile java sources" : null;
     COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
@@ -159,16 +153,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
                         @NotNull ModuleChunk chunk,
                         @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    if (!IS_ENABLED.get(context, Boolean.TRUE) || !IS_COMPILER_API_SUPPORTED.get(context, Boolean.TRUE)) {
+    JavaCompilingTool compilingTool = COMPILING_TOOL.get(context);
+    if (!IS_ENABLED.get(context, Boolean.TRUE) || compilingTool == null) {
       return ExitCode.NOTHING_DONE;
     }
-    return doBuild(context, chunk, dirtyFilesHolder, outputConsumer);
+    return doBuild(context, chunk, dirtyFilesHolder, outputConsumer, compilingTool);
   }
 
   public ExitCode doBuild(@NotNull CompileContext context,
                           @NotNull ModuleChunk chunk,
                           @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                          @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                          @NotNull OutputConsumer outputConsumer, JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
@@ -190,7 +185,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool);
     }
     catch (BuildDataCorruptedException e) {
       throw e;
@@ -224,7 +219,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                            ModuleChunk chunk,
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
-                           OutputConsumer outputConsumer)
+                           OutputConsumer outputConsumer, @NotNull JavaCompilingTool compilingTool)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
@@ -284,7 +279,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           try {
-            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
+            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool);
           }
           finally {
             // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
@@ -328,7 +323,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     Collection<File> platformCp,
     Collection<File> sourcePath,
     DiagnosticOutputConsumer diagnosticSink,
-    final OutputFileConsumer outputSink) throws Exception {
+    final OutputFileConsumer outputSink, JavaCompilingTool compilingTool) throws Exception {
 
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
@@ -372,7 +367,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
-    final List<String> options = getCompilationOptions(context, chunk, profile);
+    final List<String> options = getCompilationOptions(context, chunk, profile, compilingTool);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
@@ -380,13 +375,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        final boolean useEclipse = useEclipseCompiler(context);
-        rc = JavacMain.compile(
-          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
-        );
+        rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer,
+                               context.getCancelStatus(), compilingTool);
       }
       else {
-        final JavacServerClient client = ensureJavacServerLaunched(context);
+        final JavacServerClient client = ensureJavacServerLaunched(context, compilingTool);
         final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
         );
@@ -402,13 +395,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.await();
     }
-  }
-
-  private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
-    final String compilerId = configuration != null? configuration.getJavaCompilerId() : null;
-    return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
   }
 
   private void submitAsyncTask(final CompileContext context, final Runnable taskRunnable) {
@@ -432,7 +418,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
+  private static synchronized JavacServerClient ensureJavacServerLaunched(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) throws Exception {
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       return descriptor.client;
@@ -445,7 +431,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String javaHome = SystemProperties.getJavaHome();
 
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context), useEclipseCompiler(context)
+      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context, compilingTool), compilingTool
     );
     final JavacServerClient client = new JavacServerClient();
     try {
@@ -529,19 +515,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
   private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");
 
-  private static List<String> getCompilationVMOptions(CompileContext context) {
+  private static List<String> getCompilationVMOptions(CompileContext context, JavaCompilingTool compilingTool) {
     List<String> cached = JAVAC_VM_OPTIONS.get(context);
     if (cached == null) {
-      loadCommonJavacOptions(context);
+      loadCommonJavacOptions(context, compilingTool);
       cached = JAVAC_VM_OPTIONS.get(context);
     }
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+  private static List<String> getCompilationOptions(CompileContext context,
+                                                    ModuleChunk chunk,
+                                                    @Nullable ProcessorConfigProfile profile,
+                                                    @NotNull JavaCompilingTool compilingTool) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
-      loadCommonJavacOptions(context);
+      loadCommonJavacOptions(context, compilingTool);
       cached = JAVAC_OPTIONS.get(context);
       assert cached != null : context;
     }
@@ -701,7 +690,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return javaVersion;
   }
 
-  private static void loadCommonJavacOptions(CompileContext context) {
+  private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
@@ -755,14 +744,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (useEclipseCompiler(context)) {
-      for (String option : options) {
-        if (option.startsWith("-proceedOnError")) {
-          Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-          break;
-        }
-      }
-    }
+    compilingTool.processCompilerOptions(context, options);
 
     JAVAC_OPTIONS.set(context, options);
     JAVAC_VM_OPTIONS.set(context, vmOptions);

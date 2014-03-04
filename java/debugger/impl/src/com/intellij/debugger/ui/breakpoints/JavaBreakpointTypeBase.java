@@ -15,7 +15,12 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -52,5 +57,19 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
   @Override
   public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<T> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
+  }
+
+  @Nullable
+  @Override
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
+    Breakpoint javaBreakpoint = breakpointManager.findBreakpoint(breakpoint);
+    if (javaBreakpoint != null) {
+      PsiClass aClass = javaBreakpoint.getPsiClass();
+      if (aClass != null && aClass.getContainingFile() != null) {
+        return XDebuggerUtil.getInstance().createPositionByOffset(aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
+      }
+    }
+    return null;
   }
 }

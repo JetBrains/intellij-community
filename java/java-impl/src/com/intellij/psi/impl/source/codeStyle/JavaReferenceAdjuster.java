@@ -60,6 +60,12 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         }
 
         if (rightKind) {
+          // annotations may jump out of reference (see PsiJavaCodeReferenceImpl#setAnnotations()) so they should be processed first
+          List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(ref, PsiAnnotation.class);
+          for (PsiAnnotation annotation : annotations) {
+            process(annotation.getNode(), addImports, incompleteCode, useFqInJavadoc, useFqInCode);
+          }
+
           boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT) != null;
           boolean isShort = !ref.isQualified();
           if (isInsideDocComment ? !useFqInJavadoc : !useFqInCode) {

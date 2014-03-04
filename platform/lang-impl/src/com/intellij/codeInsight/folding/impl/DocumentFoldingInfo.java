@@ -21,6 +21,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
 class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
@@ -64,7 +64,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   void loadFromEditor(@NotNull Editor editor) {
-    assertDispatchThread();
+    assertDispatchThread(editor);
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -95,12 +95,12 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     }
   }
 
-  private static void assertDispatchThread() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+  private static void assertDispatchThread(@NotNull Editor editor) {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
   }
 
   void setToEditor(@NotNull final Editor editor) {
-    assertDispatchThread();
+    assertDispatchThread(editor);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.actions;
-
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.jps.builders.java;
 
 /**
  * @author nik
  */
-final class AddToWatchesAction extends XDebuggerActionBase {
-  public AddToWatchesAction() {
-    super(true);
-  }
-
-  @NotNull
-  @Override
-  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getAddToWatchesActionHandler();
+public class CannotCreateJavaCompilerException extends Exception {
+  public CannotCreateJavaCompilerException(String message) {
+    super(message);
   }
 }

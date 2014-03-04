@@ -16,11 +16,12 @@
 
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.Painter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,6 +70,9 @@ public class IdeGlassPaneUtil {
 
   public static boolean canBePreprocessed(MouseEvent e) {
     Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+    if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null) {
+      return false;
+    }
 
     if (c instanceof IdeGlassPane.TopComponent) {
       return ((IdeGlassPane.TopComponent)c).canBePreprocessed(e);

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -38,6 +39,7 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -279,6 +281,16 @@ public class JavaBuilderUtil {
       throw new StopBuildException();
     }
     return sdkLibrary.getProperties();
+  }
+
+  @Nullable
+  public static JavaCompilingTool findCompilingTool(@NotNull String compilerId) {
+    for (JavaCompilingTool tool : JpsServiceManager.getInstance().getExtensions(JavaCompilingTool.class)) {
+      if (compilerId.equals(tool.getId()) || compilerId.equals(tool.getAlternativeId())) {
+        return tool;
+      }
+    }
+    return null;
   }
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
