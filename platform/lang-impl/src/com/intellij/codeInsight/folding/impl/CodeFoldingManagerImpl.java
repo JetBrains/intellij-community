@@ -183,7 +183,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
     final Project project = editor.getProject();
     if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
 
