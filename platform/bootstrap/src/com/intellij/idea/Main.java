@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,38 +120,24 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  private static void copyFile(String fileNameFrom, String fileNameTo) throws IOException {
-    File fileFrom = new File(fileNameFrom);
-    File fileTo   = new File(fileNameTo);
-    try{
-      FileUtilRt.copy(fileFrom, fileTo);
-    }
-    finally{
-      if(!fileTo.exists()) {
-        throw new IOException("Cannot copy " + fileNameFrom + " to " + fileNameTo);
-      }
-    }
-  }
-
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
     String tempDir = System.getProperty("java.io.tmpdir");
-    File originalPatchFile = new File(tempDir, patchFileName);
-    File copyPatchFile = new File(tempDir, patchFileName + "_copy");
 
     // always delete previous patch copy
-    if (!FileUtilRt.delete(copyPatchFile)) {
-      throw new IOException("Cannot create temporary patch file");
+    File patchCopy = new File(tempDir, patchFileName + "_copy");
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
+    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy)) {
+      throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
-    if (!originalPatchFile.exists()) {
-      return;
-    }
-
-    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtilRt.delete(originalPatchFile)) {
-      throw new IOException("Cannot create temporary patch file");
-    }
+    File patch = new File(tempDir, patchFileName);
+    if (!patch.exists()) return;
+    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
+    if (!log4j.exists()) throw new IOException("Log4J missing: " + log4j);
+    copyFile(patch, patchCopy, true);
+    copyFile(log4j, log4jCopy, false);
 
     int status = 0;
     if (Restarter.isSupported()) {
@@ -161,13 +147,12 @@ public class Main {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
       }
-      String copyLog4j = tempDir + "/log4j.jar";
-      copyFile(PathManager.getLibPath() + "/log4j.jar", copyLog4j);
+
       Collections.addAll(args,
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath() + File.pathSeparator + copyLog4j,
+                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "com.intellij.updater.Runner",
@@ -182,6 +167,20 @@ public class Main {
     }
 
     System.exit(status);
+  }
+
+  private static void copyFile(File original, File copy, boolean move) throws IOException {
+    if (move) {
+      if (!original.renameTo(copy) || !FileUtilRt.delete(original)) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
+    else {
+      FileUtilRt.copy(original, copy);
+      if (!copy.exists()) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
   }
 
   public static void showMessage(String title, Throwable t) {
