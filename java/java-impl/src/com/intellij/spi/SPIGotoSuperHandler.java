@@ -16,9 +16,8 @@
 package com.intellij.spi;
 
 import com.intellij.codeInsight.navigation.JavaGotoSuperHandler;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 
@@ -27,11 +26,11 @@ import com.intellij.spi.psi.SPIClassProviderReferenceElement;
  */
 public class SPIGotoSuperHandler extends JavaGotoSuperHandler {
   @Override
-  protected PsiNameIdentifierOwner getElement(PsiFile file, int offset) {
+  protected PsiElement getElement(PsiFile file, int offset) {
     final SPIClassProviderReferenceElement
-      providerElement = PsiTreeUtil.getParentOfType(file.findElementAt(offset), SPIClassProviderReferenceElement.class);
+      providerElement = PsiTreeUtil.getParentOfType(super.getElement(file, offset), SPIClassProviderReferenceElement.class);
     if (providerElement != null) {
-      return (PsiClass)providerElement.resolve();
+      return providerElement.resolve();
     }
 
     return null;

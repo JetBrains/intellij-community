@@ -53,27 +53,27 @@ public class MarkerType {
   public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
-      PsiElement parent = element.getParent();
+      PsiElement parent = getParentMethod(element);
       if (!(parent instanceof PsiMethod)) return null;
       PsiMethod method = (PsiMethod)parent;
 
-      return calculateOverridingMethodTooltip(method);
+      return calculateOverridingMethodTooltip(method, method != element.getParent());
     }
   }, new LineMarkerNavigator(){
     @Override
     public void browse(MouseEvent e, PsiElement element) {
-      PsiElement parent = element.getParent();
+      PsiElement parent = getParentMethod(element);
       if (!(parent instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)parent;
-      navigateToOverridingMethod(e, method);
+      navigateToOverridingMethod(e, method, method != element.getParent());
 
     }
   });
 
   @Nullable
-  public static String calculateOverridingMethodTooltip(PsiMethod method) {
-    PsiMethod[] superMethods = method.findSuperMethods(false);
-    if (superMethods.length == 0) return null;
+  public static String calculateOverridingMethodTooltip(PsiMethod method, boolean acceptSelf) {
+    PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
+    if (superMethods == null) return null;
 
     PsiMethod superMethod = superMethods[0];
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -90,14 +90,30 @@ public class MarkerType {
     return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
   }
 
-  public static void navigateToOverridingMethod(MouseEvent e, PsiMethod method) {
-    PsiMethod[] superMethods = method.findSuperMethods(false);
-    if (superMethods.length == 0) return;
+  public static void navigateToOverridingMethod(MouseEvent e, PsiMethod method, boolean acceptSelf) {
+    PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
+    if (superMethods == null) return;
     boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
     PsiElementListNavigator.openTargets(e, superMethods,
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(showMethodNames));
+  }
+
+  @Nullable
+  private static PsiMethod[] composeSuperMethods(PsiMethod method, boolean acceptSelf) {
+    PsiMethod[] superMethods = method.findSuperMethods(false);
+    if (acceptSelf) {
+      superMethods = ArrayUtil.prepend(method, superMethods);
+    }
+    if (superMethods.length == 0) return null;
+    return superMethods;
+  }
+
+  private static PsiElement getParentMethod(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
+    return interfaceMethod != null ? interfaceMethod : parent;
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for overriding methods";
