@@ -111,6 +111,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
+    this(chars, false, forUseInNonAWTThread);
+  }
+
+  public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
+    setAcceptSlashR(acceptSlashR);
     assertValidSeparators(chars);
     myText = ImmutableText.valueOf(chars);
     setCyclicBufferSize(0);

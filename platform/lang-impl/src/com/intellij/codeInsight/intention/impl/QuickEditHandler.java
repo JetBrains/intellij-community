@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -52,11 +51,9 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -122,10 +119,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
 
     // preserve \r\n as it is done in MultiHostRegistrarImpl
-    myNewVirtualFile = new LightVirtualFile(newFileName, language, text);
-    DocumentEx document = MultiHostRegistrarImpl.createDocument(myNewVirtualFile);
-    ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).registerDocument((DocumentEx)document);
-    myNewFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(myNewVirtualFile, language, true, false);
+    myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
+    myNewVirtualFile = ObjectUtils.assertNotNull((LightVirtualFile)myNewFile.getVirtualFile());
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
 
     assert myNewFile != null : "PSI file is null";
     assert myNewFile.getTextLength() == myNewVirtualFile.getLength() : "PSI / Virtual file text mismatch";
