@@ -21,6 +21,8 @@ import org.jetbrains.jps.incremental.CompileContext;
 
 import javax.tools.*;
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,5 +47,12 @@ public abstract class JavaCompilingTool {
   public abstract List<File> getAdditionalClasspath();
 
   public void processCompilerOptions(@NotNull CompileContext context, @NotNull List<String> options) {
+  }
+
+  public void prepareCompilationTask(@NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options) {
+  }
+
+  public List<String> getDefaultCompilerOptions() {
+    return Collections.emptyList();
   }
 }

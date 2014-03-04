@@ -928,6 +928,7 @@ public class BuildManager implements ApplicationComponent{
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.add(compilerPath);
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
+    launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
     

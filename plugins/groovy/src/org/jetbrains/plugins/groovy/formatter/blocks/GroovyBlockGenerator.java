@@ -405,7 +405,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
         alignGroup(currentGroup, spock, classLevel);
-        currentGroup = ContainerUtil.newArrayList(/*(GrStatement)psi*/);
+        currentGroup = ContainerUtil.newArrayList();
         spock = true;
       }
       else if (currentGroup != null && spock && isTablePart(psi)) {
@@ -427,6 +427,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         alignGroup(currentGroup, spock, classLevel);
         currentGroup = null;
       }
+    }
+
+    if (currentGroup != null) {
+      alignGroup(currentGroup, spock, classLevel);
     }
   }
 

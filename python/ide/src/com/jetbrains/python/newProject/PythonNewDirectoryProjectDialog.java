@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.NewDirectoryProjectDialog;
-import com.intellij.remotesdk.RemoteSdkCredentials;
+import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;

@@ -112,6 +112,10 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract DebuggerActionHandler getAddToWatchesActionHandler();
 
+  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
   @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 

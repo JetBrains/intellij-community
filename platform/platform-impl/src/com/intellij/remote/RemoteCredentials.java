@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk2;
+package com.intellij.remote;
 
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.util.Consumer;
+import com.intellij.util.xmlb.annotations.Transient;
 
 /**
  * @author traff
  */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
-  T getRemoteSdkCredentials() throws InterruptedException;
-  
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
+public interface RemoteCredentials {
+  String getHost();
 
-  Object getRemoteSdkDataKey();
+  int getPort();
+
+  @Transient
+  String getUserName();
+
+  String getPassword();
+
+  @Transient
+  String getPassphrase();
+
+  boolean isUseKeyPair();
+
+  boolean isAnonymous();
+
+  String getPrivateKeyFile();
+
+  boolean isStorePassword();
+
+  boolean isStorePassphrase();
+
+  String getKnownHostsFile();
 }

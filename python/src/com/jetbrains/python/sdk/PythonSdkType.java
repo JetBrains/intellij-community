@@ -51,8 +51,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.remotesdk.RemoteSdkCredentialsHolder;
+import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -282,7 +282,7 @@ public class PythonSdkType extends SdkType {
     final Point point = parentComponent.getMousePosition();
     SwingUtilities.convertPointToScreen(point, parentComponent);
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, false, new NullableConsumer<Sdk>() {
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {

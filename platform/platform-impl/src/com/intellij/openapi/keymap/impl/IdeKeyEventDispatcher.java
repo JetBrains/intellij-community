@@ -651,8 +651,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (!(component instanceof JComponent)) {
         continue;
       }
-      ArrayList listOfActions = (ArrayList)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
-      if (listOfActions == null) {
+      List<AnAction> listOfActions = ActionUtil.getActions((JComponent)component);
+      if (listOfActions.isEmpty()) {
         continue;
       }
       for (Object listOfAction : listOfActions) {

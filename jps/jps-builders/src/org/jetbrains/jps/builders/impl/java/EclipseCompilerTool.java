@@ -86,4 +86,9 @@ public class EclipseCompilerTool extends JavaCompilingTool {
       }
     }
   }
+
+  @Override
+  public List<String> getDefaultCompilerOptions() {
+    return Collections.singletonList("-noExit");
+  }
 }
