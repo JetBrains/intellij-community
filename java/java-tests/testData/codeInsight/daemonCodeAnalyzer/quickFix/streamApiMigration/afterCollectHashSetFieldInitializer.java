@@ -11,6 +11,6 @@ public class Collect {
 
   Set<String> names = new HashSet<>();
   void collectNames(List<Person> persons){
-      names.addAll(persons.stream().map(person::getName).collect(Collectors.toList()));
+      names.addAll(persons.stream().map(Person::getName).collect(Collectors.toList()));
   }
 }
