@@ -17,6 +17,8 @@ package de.fernflower.struct.consts;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import de.fernflower.code.CodeConstants;
+
 /*
  *   Integer, Long, Float, Double, String, Class, UTF8
  */
@@ -75,7 +77,7 @@ public class PrimitiveConstant extends PooledConstant {
 	
 	public void resolveConstant(ConstantPool pool) {
 
-		if(type == CONSTANT_Class || type == CONSTANT_String) {
+		if(type == CONSTANT_Class || type == CONSTANT_String || type == CONSTANT_MethodType) {
 			value = pool.getPrimitiveConstant(index).getString(); 
 			initConstant();
 		}
@@ -100,7 +102,7 @@ public class PrimitiveConstant extends PooledConstant {
 			case CONSTANT_Utf8:
 				out.writeUTF(getString());
 				break;
-			default: // CONSTANT_Class or CONSTANT_String 
+			default: // CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType 
 				out.writeShort(index);
 		}
 	}

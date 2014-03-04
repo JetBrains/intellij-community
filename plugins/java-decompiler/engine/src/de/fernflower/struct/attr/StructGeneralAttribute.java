@@ -39,8 +39,11 @@ public class StructGeneralAttribute {
 	public static final String ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS = "RuntimeInvisibleAnnotations";
 	public static final String ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = "RuntimeVisibleParameterAnnotations";
 	public static final String ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = "RuntimeInvisibleParameterAnnotations";
+	public static final String ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = "RuntimeVisibleTypeAnnotations";
+	public static final String ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = "RuntimeInvisibleTypeAnnotations";
 	public static final String ATTRIBUTE_LOCAL_VARIABLE_TABLE = "LocalVariableTable";
 	public static final String ATTRIBUTE_CONSTANT_VALUE = "ConstantValue";
+	public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
 	
 	
 	
@@ -92,8 +95,13 @@ public class StructGeneralAttribute {
 		} else if(ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS.equals(attrname) ||
 				ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS.equals(attrname)) {
 			attr = new StructAnnotationParameterAttribute();
+		} else if(ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS.equals(attrname) ||
+				ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.equals(attrname)) {
+			attr = new StructAnnotationTypeAttribute();
 		} else if(ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(attrname)) {
 			attr = new StructLocalVariableTableAttribute();
+		} else if(ATTRIBUTE_BOOTSTRAP_METHODS.equals(attrname)) {
+			attr = new StructBootstrapMethodsAttribute();
 		} else {
 			// unsupported attribute
 			return null;

@@ -19,6 +19,7 @@ import java.io.IOException;
 
 /*
  *   NameAndType, FieldRef, MethodRef, InterfaceMethodref
+ *   InvokeDynamic, MethodHandle
  */
 
 public class LinkConstant extends PooledConstant {
@@ -39,7 +40,7 @@ public class LinkConstant extends PooledConstant {
 	
 	public boolean isVoid = false;;
 	
-	public boolean returnCategory2 = false;;
+	public boolean returnCategory2 = false;
 	
 	 	
 	// *****************************************************************************
@@ -71,8 +72,17 @@ public class LinkConstant extends PooledConstant {
 		if(type == CONSTANT_NameAndType) {
 			elementname = pool.getPrimitiveConstant(index1).getString();
 			descriptor = pool.getPrimitiveConstant(index2).getString();
+		} else if(type == CONSTANT_MethodHandle) {
+			LinkConstant ref_info = pool.getLinkConstant(index2);
+			
+			classname = ref_info.classname;
+			elementname = ref_info.elementname;
+			descriptor = ref_info.descriptor;
+			
 		} else {
-			classname = pool.getPrimitiveConstant(index1).getString();
+			if(type != CONSTANT_InvokeDynamic) {
+				classname = pool.getPrimitiveConstant(index1).getString();
+			}
 			
 			LinkConstant nametype = pool.getLinkConstant(index2);
 			elementname = nametype.elementname;
@@ -84,7 +94,11 @@ public class LinkConstant extends PooledConstant {
 
 	public void writeToStream(DataOutputStream out) throws IOException {
 		out.writeByte(type);
-		out.writeShort(index1);
+		if(type == CONSTANT_MethodHandle) {
+			out.writeByte(index1);
+		} else {
+			out.writeShort(index1);
+		}
 		out.writeShort(index2);
 	}
 	
@@ -117,7 +131,7 @@ public class LinkConstant extends PooledConstant {
 	
 	private void initConstant() {
 		
-		if(type == CONSTANT_Methodref || type == CONSTANT_InterfaceMethodref) {
+		if(type == CONSTANT_Methodref || type == CONSTANT_InterfaceMethodref || type == CONSTANT_InvokeDynamic || type == CONSTANT_MethodHandle) {
 			resolveDescriptor(descriptor);
 		} else if(type == CONSTANT_Fieldref) {
 			returnCategory2 = ("D".equals(descriptor) || "J".equals(descriptor));

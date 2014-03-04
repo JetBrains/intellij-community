@@ -135,6 +135,19 @@ public interface CodeConstants {
 	public final static int		CONSTANT_MethodType = 16;
 	public final static int		CONSTANT_InvokeDynamic = 18;
 	
+	// ----------------------------------------------------------------------
+	// MethodHandle reference_kind values
+	// ----------------------------------------------------------------------
+
+	public final static int		CONSTANT_MethodHandle_REF_getField = 1;
+	public final static int		CONSTANT_MethodHandle_REF_getStatic = 2;
+	public final static int		CONSTANT_MethodHandle_REF_putField = 3;
+	public final static int		CONSTANT_MethodHandle_REF_putStatic = 4;
+	public final static int		CONSTANT_MethodHandle_REF_invokeVirtual = 5;
+	public final static int		CONSTANT_MethodHandle_REF_invokeStatic = 6;
+	public final static int		CONSTANT_MethodHandle_REF_invokeSpecial = 7;
+	public final static int		CONSTANT_MethodHandle_REF_newInvokeSpecial = 8;
+	public final static int		CONSTANT_MethodHandle_REF_invokeInterface = 9;
 	
 	// ----------------------------------------------------------------------
 	// VM OPCODES

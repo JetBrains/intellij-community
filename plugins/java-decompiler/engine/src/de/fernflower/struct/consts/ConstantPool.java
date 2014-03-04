@@ -90,6 +90,7 @@ public class ConstantPool {
 	    	case CodeConstants.CONSTANT_Methodref:
 	    	case CodeConstants.CONSTANT_InterfaceMethodref:
 	    	case CodeConstants.CONSTANT_NameAndType: 
+	    	case CodeConstants.CONSTANT_InvokeDynamic:
 	    		pool.add(new LinkConstant(tag, in.readUnsignedShort(), in.readUnsignedShort()));
 	    		if(tag == CodeConstants.CONSTANT_NameAndType) {
 		    		pass[i] = 1;
@@ -101,9 +102,6 @@ public class ConstantPool {
 	    		pool.add(new LinkConstant(tag, in.readUnsignedByte(), in.readUnsignedShort()));
 	    		pass[i] = 3;
 	    		break;
-	    	case CodeConstants.CONSTANT_InvokeDynamic:
-	    		pool.add(new LinkConstant(tag, in.readUnsignedShort(), in.readUnsignedShort()));
-	    		pass[i] = 2;
 	    	}
 	    }
 	    
@@ -151,6 +149,7 @@ public class ConstantPool {
 	    	case CodeConstants.CONSTANT_Methodref:
 	    	case CodeConstants.CONSTANT_InterfaceMethodref:
 	    	case CodeConstants.CONSTANT_NameAndType: 
+	    	case CodeConstants.CONSTANT_InvokeDynamic:
 	    		in.skip(4);
 	    		break;
 	    	case CodeConstants.CONSTANT_Long:
@@ -160,7 +159,11 @@ public class ConstantPool {
 	    		break;
 	    	case CodeConstants.CONSTANT_Class:
 	    	case CodeConstants.CONSTANT_String:
+	    	case CodeConstants.CONSTANT_MethodType:
 	    		in.skip(2);
+	    		break;
+	    	case CodeConstants.CONSTANT_MethodHandle:
+	    		in.skip(3);
 	    	}
 	    }
 	}

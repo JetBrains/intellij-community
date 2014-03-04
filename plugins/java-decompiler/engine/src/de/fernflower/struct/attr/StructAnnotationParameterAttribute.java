@@ -23,7 +23,7 @@ import java.util.List;
 import de.fernflower.modules.decompiler.exps.AnnotationExprent;
 import de.fernflower.struct.consts.ConstantPool;
 
-public class StructAnnotationParameterAttribute  extends StructGeneralAttribute {
+public class StructAnnotationParameterAttribute extends StructGeneralAttribute {
 
 	private List<List<AnnotationExprent>> paramAnnotations;
 	
