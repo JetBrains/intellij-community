@@ -17,6 +17,7 @@ package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class GraphData {
@@ -42,6 +44,9 @@ public class GraphData {
 
   @NotNull
   private final PermanentGraph myPermanentGraph;
+
+  @NotNull
+  private final Map<Integer,GraphCommit> myCommitsWithNotLoadParentMap;
 
   @NotNull
   private final PermanentGraphLayout myPermanentGraphLayout;
@@ -68,12 +73,12 @@ public class GraphData {
   private Condition<Integer> myVisibilityPredicate = null;
 
   public GraphData(@NotNull GraphFlags graphFlags,
-                   @NotNull PermanentGraph permanentGraph,
-                   @NotNull PermanentGraphLayout permanentGraphLayout,
+                   @NotNull PermanentGraph permanentGraph, @NotNull Map<Integer, GraphCommit> commitsWithNotLoadParentMap, @NotNull PermanentGraphLayout permanentGraphLayout,
                    @NotNull ElementColorManager colorManager,
                    @NotNull DfsUtil dfsUtil) {
     myGraphFlags = graphFlags;
     myPermanentGraph = permanentGraph;
+    myCommitsWithNotLoadParentMap = commitsWithNotLoadParentMap;
     myPermanentGraphLayout = permanentGraphLayout;
     myColorManager = colorManager;
     myDfsUtil = dfsUtil;
@@ -118,6 +123,11 @@ public class GraphData {
   }
 
   @NotNull
+  public Map<Integer, GraphCommit> getCommitsWithNotLoadParentMap() {
+    return myCommitsWithNotLoadParentMap;
+  }
+
+  @NotNull
   public PermanentGraphLayout getPermanentGraphLayout() {
     return myPermanentGraphLayout;
   }
@@ -130,5 +140,15 @@ public class GraphData {
   @NotNull
   public GraphRender getGraphRender() {
     return myGraphRender;
+  }
+
+  public int getCountVisibleNodes() {
+    return getMutableGraph().getCountVisibleNodes();
+  }
+
+  public void assertRange(int visibleRowIndex) {
+    if (visibleRowIndex < 0 || visibleRowIndex >= getCountVisibleNodes()) {
+      throw new IllegalArgumentException("Row not exist! Request row index: " + visibleRowIndex + ", count rows: " + getCountVisibleNodes());
+    }
   }
 }

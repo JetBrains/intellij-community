@@ -16,9 +16,14 @@
 
 package com.intellij.vcs.log.newgraph;
 
+import com.intellij.vcs.log.GraphCommit;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class GraphStrUtils {
 
@@ -56,6 +61,30 @@ public class GraphStrUtils {
 
       s.append("|-");
       appendList(graph.getDownNodes(nodeIndex), s);
+    }
+    return s.toString();
+  }
+
+  public static String commitsWithNotLoadParentMapToStr(Map<Integer, GraphCommit> commitMap) {
+    List<Integer> hashes = new ArrayList<Integer>(commitMap.keySet());
+    Collections.sort(hashes);
+
+    StringBuilder s = new StringBuilder();
+    for (int i = 0; i < hashes.size(); i++) {
+      if (i != 0)
+        s.append("\n");
+
+      Integer hash = hashes.get(i);
+      GraphCommit commit = commitMap.get(hash);
+      assertEquals(Integer.toHexString(hash), Integer.toHexString(commit.getIndex()));
+
+      s.append(Integer.toHexString(hash)).append("|-");
+      int[] parentIndices = commit.getParentIndices();
+      for (int j = 0 ; j < parentIndices.length; j++) {
+        if (j > 0)
+          s.append(" ");
+        s.append(Integer.toHexString(parentIndices[j]));
+      }
     }
     return s.toString();
   }

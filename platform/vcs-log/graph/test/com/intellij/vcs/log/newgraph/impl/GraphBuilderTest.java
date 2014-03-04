@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
 import com.intellij.vcs.log.newgraph.GraphFlags;
@@ -25,7 +26,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
+import static com.intellij.vcs.log.newgraph.GraphStrUtils.commitsWithNotLoadParentMapToStr;
 import static com.intellij.vcs.log.newgraph.GraphStrUtils.permanentGraphTorStr;
 import static org.junit.Assert.assertEquals;
 
@@ -38,9 +41,16 @@ public class GraphBuilderTest extends AbstractTestWithTextFile {
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
     GraphFlags flags = new GraphFlags(commits.size());
-    PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndCommitsWithNotLoadParent = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Map<Integer, GraphCommit> commitsWithNotLoadParent = graphAndCommitsWithNotLoadParent.second;
+    PermanentGraph graph = graphAndCommitsWithNotLoadParent.first;
 
-    assertEquals(out, permanentGraphTorStr(graph));
+    String actual = permanentGraphTorStr(graph);
+    if (!commitsWithNotLoadParent.isEmpty()) {
+      actual += "\nNOT LOAD MAP:\n";
+      actual += commitsWithNotLoadParentMapToStr(commitsWithNotLoadParent);
+    }
+    assertEquals(out, actual);
   }
 
 

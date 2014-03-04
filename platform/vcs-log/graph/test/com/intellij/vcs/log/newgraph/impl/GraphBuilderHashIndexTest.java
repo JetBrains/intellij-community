@@ -39,7 +39,7 @@ public class GraphBuilderHashIndexTest extends AbstractTestWithTextFile {
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
     GraphFlags flags = new GraphFlags(commits.size());
-    PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits).first;
 
     assertEquals(out, permanentGraphToHashIndex(graph));
   }

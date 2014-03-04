@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph.gpaph.actions;
 
-import org.jetbrains.annotations.Nullable;
+package com.intellij.vcs.log.graph;
 
-public class SelectAllRelativeCommitsInternalGraphAction extends InternalGraphActionWithSomeInfo<Integer> {
-  public static final SelectAllRelativeCommitsInternalGraphAction DESELECT_ALL = new SelectAllRelativeCommitsInternalGraphAction(null);
+public class SelectAllRelativeCommitsAction implements GraphAction {
+  public static final SelectAllRelativeCommitsAction DESELECT_ALL = new SelectAllRelativeCommitsAction(-1);
 
-  public SelectAllRelativeCommitsInternalGraphAction(@Nullable Integer visibleRowIndex) {
-    super(visibleRowIndex);
+  private final int visibleRowIndex;
+
+  public SelectAllRelativeCommitsAction(int visibleRowIndex) {
+    this.visibleRowIndex = visibleRowIndex;
+  }
+
+  public int getVisibleRowIndex() {
+    return visibleRowIndex;
   }
 }

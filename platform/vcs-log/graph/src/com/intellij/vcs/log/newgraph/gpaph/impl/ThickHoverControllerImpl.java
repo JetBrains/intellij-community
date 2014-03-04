@@ -48,7 +48,7 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
   private final FragmentGenerator myFragmentGenerator;
 
   @NotNull
-  private final Set<Integer> hoverNodes = new HashSet<Integer>(); // contains visibleIndex
+  private final Set<Integer> hoverNodes = new HashSet<Integer>(); // contains visibleNodeIndex
 
   @NotNull
   private final Flags myThickFlags;
@@ -98,7 +98,7 @@ public class ThickHoverControllerImpl extends AbstractThickHoverController {
       int visibleDownNodeIndex = edge.getDownNodeVisibleIndex();
 
       if (visibleDownNodeIndex == SomeGraph.NOT_LOAD_COMMIT)
-        return visibleNodeIndexToOn.fun(visibleUpNodeIndex);
+        return false;
       else
         return visibleNodeIndexToOn.fun(visibleUpNodeIndex) && visibleNodeIndexToOn.fun(visibleDownNodeIndex);
     }

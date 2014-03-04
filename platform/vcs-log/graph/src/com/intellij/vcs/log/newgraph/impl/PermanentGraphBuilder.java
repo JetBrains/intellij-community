@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.newgraph.SomeGraph;
@@ -29,7 +30,7 @@ import static com.intellij.vcs.log.newgraph.impl.DuplicateParentFixer.fixDuplica
 public class PermanentGraphBuilder {
 
   @NotNull
-  public static PermanentGraphImpl build(@NotNull Flags simpleNodes, @NotNull List<? extends GraphCommit> commits) {
+  public static Pair<PermanentGraphImpl, Map<Integer, GraphCommit>> build(@NotNull Flags simpleNodes, @NotNull List<? extends GraphCommit> commits) {
     commits = fixDuplicateParentCommits(commits);
     assert commits.size() == simpleNodes.size();
 
@@ -51,7 +52,8 @@ public class PermanentGraphBuilder {
     }
 
     PermanentGraphBuilder builder = new PermanentGraphBuilder(commits, simpleNodes, longEdgesCount, nodeToHashIndex);
-    return builder.build();
+    PermanentGraphImpl permanentGraph = builder.build();
+    return new Pair<PermanentGraphImpl, Map<Integer, GraphCommit>>(permanentGraph, builder.commitsWithNotLoadParentMap);
   }
 
   private static int nextCommitHashIndex(List<? extends GraphCommit> commits, int nodeIndex) {
@@ -75,6 +77,9 @@ public class PermanentGraphBuilder {
   // downHashIndex -> List of upNodeIndex
   private final Map<Integer, List<Integer>> upAdjacentNodes = new HashMap<Integer, List<Integer>>();
 
+  // commitHash -> GraphCommit
+  private final Map<Integer, GraphCommit> commitsWithNotLoadParentMap = new HashMap<Integer, GraphCommit>();
+
   private PermanentGraphBuilder(List<? extends GraphCommit> commits, Flags simpleNodes, int longEdgesCount, int[] nodeToHashIndex) {
     myCommits = commits;
     mySimpleNodes = simpleNodes;
@@ -95,9 +100,15 @@ public class PermanentGraphBuilder {
     upNodes.add(upNodeIndex);
   }
 
+  private void addCommitWithNotLoadParent(int nodeIndex) {
+    GraphCommit commit = myCommits.get(nodeIndex);
+    commitsWithNotLoadParentMap.put(commit.getIndex(), commit);
+  }
+
   private void fixUnderdoneEdgeForNotLoadCommit(int upNodeIndex) {
     for (int edgeIndex = myNodeToEdgeIndex[upNodeIndex]; edgeIndex < myNodeToEdgeIndex[upNodeIndex + 1]; edgeIndex++) {
       if (myLongEdges[edgeIndex] == -1) {
+        addCommitWithNotLoadParent(upNodeIndex);
         myLongEdges[edgeIndex] = SomeGraph.NOT_LOAD_COMMIT;
         return;
       }

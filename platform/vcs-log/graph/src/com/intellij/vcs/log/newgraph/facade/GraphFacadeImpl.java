@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.graph.*;
@@ -37,7 +38,8 @@ public class GraphFacadeImpl implements GraphFacade {
   @NotNull
   public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits, @NotNull final GraphColorManager colorManager) {
     GraphFlags flags = new GraphFlags(commits.size());
-    final PermanentGraphImpl permanentGraph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());
 
@@ -64,7 +66,7 @@ public class GraphFacadeImpl implements GraphFacade {
         }
       }
     };
-    GraphData graphData = new GraphData(flags, permanentGraph, graphLayout, elementColorManager, dfsUtil);
+    GraphData graphData = new GraphData(flags, permanentGraph, graphAndUnderdoneCommits.second, graphLayout, elementColorManager, dfsUtil);
     return new GraphFacadeImpl(graphData);
   }
 
@@ -79,16 +81,12 @@ public class GraphFacadeImpl implements GraphFacade {
     myActionDispatcher = new GraphActionDispatcher(graphData);
   }
 
-  private void assertRange(int visibleRowIndex) {
-    if (visibleRowIndex < 0 || visibleRowIndex >= getVisibleCommitCount()) {
-      throw new IllegalArgumentException("Row not exist! Request row index: " + visibleRowIndex + ", count rows: " + getVisibleCommitCount());
-    }
-  }
+
 
   @NotNull
   @Override
   public PaintInfo paint(int visibleRow) {
-    assertRange(visibleRow);
+    myGraphData.assertRange(visibleRow);
     return myGraphData.getGraphRender().paint(visibleRow);
   }
 
@@ -106,14 +104,14 @@ public class GraphFacadeImpl implements GraphFacade {
 
   @Override
   public int getCommitAtRow(int visibleRow) {
-    assertRange(visibleRow);
+    myGraphData.assertRange(visibleRow);
     int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
     return myGraphData.getPermanentGraph().getHashIndex(indexInPermanentGraph);
   }
 
   @Override
   public int getVisibleCommitCount() {
-    return myGraphData.getMutableGraph().getCountVisibleNodes();
+    return myGraphData.getCountVisibleNodes();
   }
 
   @Override
@@ -133,14 +131,14 @@ public class GraphFacadeImpl implements GraphFacade {
       @NotNull
       @Override
       public Set<Integer> getContainingBranches(int visibleRow) {
-        assertRange(visibleRow);
+        myGraphData.assertRange(visibleRow);
         return Collections.emptySet();
       }
 
       @NotNull
       @Override
       public RowInfo getRowInfo(int visibleRow) {
-        assertRange(visibleRow);
+        myGraphData.assertRange(visibleRow);
         int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(visibleRow);
         final int oneOfHeadNodeIndex = myGraphData.getPermanentGraphLayout().getOneOfHeadNodeIndex(indexInPermanentGraph);
         return new RowInfo() {

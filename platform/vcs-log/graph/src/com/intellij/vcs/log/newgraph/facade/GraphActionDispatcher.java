@@ -16,8 +16,11 @@
 
 package com.intellij.vcs.log.newgraph.facade;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.graph.*;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import com.intellij.vcs.log.newgraph.gpaph.actions.*;
@@ -29,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class GraphActionDispatcher {
-  
+
+  private static final Logger LOG = Logger.getInstance(GraphActionDispatcher.class);
+
   @NotNull
   private final GraphData myGraphData;
   
@@ -54,16 +59,27 @@ public class GraphActionDispatcher {
     if (action instanceof LinearBranchesExpansionAction) {
       myGraphData.getMutableGraph().performAction(new LinearBranchesExpansionInternalGraphAction(((LinearBranchesExpansionAction)action).shouldExpand()));
       myGraphData.getGraphRender().invalidate();
-      return new JumpToRowAnswer(0);
+      return ActionRequestGraphAnswer.JUMP_TO_FIRST_ROW;
+    }
+
+    if (action instanceof SelectAllRelativeCommitsAction) {
+      selectAllRelativeCommits(((SelectAllRelativeCommitsAction)action));
     }
 
     return null;
   }
 
-  @Nullable
-  private GraphAnswer clickToRow(int visibleRowIndex) {
-    //myGraphData.getMutableGraph().performAction(new SelectAllRelativeCommitsInternalGraphAction(visibleRowIndex));
-    return null;
+  private void selectAllRelativeCommits(@NotNull SelectAllRelativeCommitsAction action) {
+    InternalGraphAction internalGraphAction;
+
+    if (action == SelectAllRelativeCommitsAction.DESELECT_ALL) {
+      internalGraphAction = SelectAllRelativeCommitsInternalGraphAction.DESELECT_ALL;
+    } else {
+      int visibleRowIndex = action.getVisibleRowIndex();
+      myGraphData.assertRange(visibleRowIndex);
+      internalGraphAction = new SelectAllRelativeCommitsInternalGraphAction(visibleRowIndex);
+    }
+    myGraphData.getMutableGraph().performAction(internalGraphAction);
   }
 
   @Nullable
@@ -73,8 +89,9 @@ public class GraphActionDispatcher {
       return null;
 
     Point clickPoint = action.getRelativePoint();
-    if (clickPoint == null)
-      return clickToRow(visibleRowIndex);
+    if (clickPoint == null) {
+      return null;
+    }
 
     Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(visibleRowIndex, clickPoint);
     if (arrowOrGraphElement.first != null) {
@@ -85,31 +102,50 @@ public class GraphActionDispatcher {
         toRow = edge.getDownNodeVisibleIndex();
       else
         toRow = edge.getUpNodeVisibleIndex();
-      return new JumpToRowAnswer(toRow);
+
+      if (toRow == SomeGraph.NOT_LOAD_COMMIT) {
+        int indexOfParentCommit = myGraphData.getMutableGraph().getNode(edge.getUpNodeVisibleIndex()).getDownEdges().indexOf(edge);
+
+        int indexInPermanentGraph = myGraphData.getMutableGraph().getIndexInPermanentGraph(edge.getUpNodeVisibleIndex());
+        int commitHashIndex = myGraphData.getPermanentGraph().getHashIndex(indexInPermanentGraph);
+
+        GraphCommit commit = myGraphData.getCommitsWithNotLoadParentMap().get(commitHashIndex);
+        if (indexOfParentCommit >= 0 && indexOfParentCommit < commit.getParentIndices().length) {
+          return ActionRequestGraphAnswer.jumpToNotLoadCommit(commit.getParentIndices()[indexOfParentCommit]);
+        } else {
+          LOG.error("Jump to not load commit with bad edge index. " +
+                    "Edge index: " + indexOfParentCommit + ", commit hash index: " + commitHashIndex +
+                    "count parents commits: " + commit.getParentIndices().length + ".");
+          return null;
+        }
+      }
+
+      return ActionRequestGraphAnswer.jumpToRow(toRow);
     } else {
       int toRow = myGraphData.getMutableGraph().performAction(new ClickInternalGraphAction(arrowOrGraphElement.second));
       myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
       myGraphData.getGraphRender().invalidate();
       if (toRow != -1)
-        return new JumpToRowAnswer(toRow);
+        return ActionRequestGraphAnswer.jumpToRow(toRow);
       return null; // TODO
     }
   }
 
   @Nullable
   private GraphAnswer mouseOverAction(@NotNull MouseOverAction action) {
-    if (action.getRow() >= myGraphData.getMutableGraph().getCountVisibleNodes())
+    int visibleRowIndex = action.getRow();
+    if (visibleRowIndex >= myGraphData.getMutableGraph().getCountVisibleNodes())
       return null;
 
-    Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(action.getRow(), action.getRelativePoint());
+    Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(visibleRowIndex, action.getRelativePoint());
     if (arrowOrGraphElement.first != null) {
       myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
       myGraphData.getMutableGraph().performAction(new MouseOverArrowInternalGraphAction(arrowOrGraphElement.first));
-      return ChangeCursorAnswer.HAND_CURSOR;
+      return ActionRequestGraphAnswer.CHANGE_CURSOR_TO_HAND_CURSOR;
     } else {
       myGraphData.getMutableGraph().performAction(new MouseOverArrowInternalGraphAction(null));
       myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(arrowOrGraphElement.second));
-      return ChangeCursorAnswer.DEFAULT_CURSOR;
+      return ActionRequestGraphAnswer.CHANGE_CURSOR_TO_DEFAULT;
     }
   }
 
@@ -124,11 +160,33 @@ public class GraphActionDispatcher {
   }
 
 
-  private static class JumpToRowAnswer implements GraphAnswer {
-    private final int myRow;
+  private static class ActionRequestGraphAnswer implements GraphAnswer {
 
-    public JumpToRowAnswer(int row) {
-      myRow = row;
+    public final static GraphAnswer CHANGE_CURSOR_TO_HAND_CURSOR = changeCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    public final static GraphAnswer CHANGE_CURSOR_TO_DEFAULT = changeCursor(Cursor.getDefaultCursor());
+
+    public final static GraphAnswer JUMP_TO_FIRST_ROW = jumpToRow(0);
+
+    @NotNull
+    public static GraphAnswer jumpToRow(int rowIndex) {
+      return new ActionRequestGraphAnswer(new JumpToRowActionRequest(rowIndex));
+    }
+
+    @NotNull
+    public static GraphAnswer jumpToNotLoadCommit(int commitHashIndex) {
+      return new ActionRequestGraphAnswer(new JumpToNotLoadCommitActionRequest(commitHashIndex));
+    }
+
+    @NotNull
+    public static GraphAnswer changeCursor(@NotNull Cursor cursor) {
+      return new ActionRequestGraphAnswer(new ChangeCursorActionRequest(cursor));
+    }
+
+    @NotNull
+    private final GraphActionRequest myGraphActionRequest;
+
+    private ActionRequestGraphAnswer(@NotNull GraphActionRequest graphActionRequest) {
+      myGraphActionRequest = graphActionRequest;
     }
 
     @Nullable
@@ -140,31 +198,8 @@ public class GraphActionDispatcher {
     @Nullable
     @Override
     public GraphActionRequest getActionRequest() {
-      return new JumpToRowActionRequest(myRow);
-    }
-
-  }
-
-  private static class ChangeCursorAnswer implements GraphAnswer {
-    public final static ChangeCursorAnswer HAND_CURSOR = new ChangeCursorAnswer(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    public final static ChangeCursorAnswer DEFAULT_CURSOR = new ChangeCursorAnswer(Cursor.getDefaultCursor());
-
-    private final Cursor myCursor;
-
-    private ChangeCursorAnswer(@NotNull Cursor cursor) {
-      myCursor = cursor;
-    }
-
-    @Nullable
-    @Override
-    public GraphChange getGraphChange() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public GraphActionRequest getActionRequest() {
-      return new ChangeCursorActionRequest(myCursor);
+      return myGraphActionRequest;
     }
   }
+
 }

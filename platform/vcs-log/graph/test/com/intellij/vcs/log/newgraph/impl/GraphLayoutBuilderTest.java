@@ -42,7 +42,7 @@ public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
     GraphFlags flags = new GraphFlags(commits.size());
-    final PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    final PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits).first;
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());
     PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, graph, new Comparator<Integer>() {
