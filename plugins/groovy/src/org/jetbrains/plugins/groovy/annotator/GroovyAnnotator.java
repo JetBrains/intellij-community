@@ -168,9 +168,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitNamedArgument(GrNamedArgument argument) {
-    final PsiElement parent = argument.getParent().getParent();
-    if (parent instanceof GrIndexProperty) {
-      myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
+    PsiElement parent = argument.getParent();
+    if (parent instanceof GrArgumentList) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrIndexProperty) {
+        myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
+      }
     }
   }
 
