@@ -26,6 +26,6 @@ final class EvaluateInConsoleAction extends XDebuggerActionBase {
   @NotNull
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getAddToWatchesActionHandler();
+    return debuggerSupport.getEvaluateInConsoleActionHandler();
   }
 }
