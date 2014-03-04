@@ -74,4 +74,9 @@ public class JavacCompilerTool extends JavaCompilingTool {
   public List<File> getAdditionalClasspath() {
     return Collections.emptyList();
   }
+
+  @Override
+  public List<String> getDefaultCompilerOptions() {
+    return Collections.singletonList("-implicit:class");
+  }
 }

@@ -47,8 +47,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source",
-    /*eclipse options*/"-noExit"
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -81,7 +80,7 @@ public class JavacMain {
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
-    final Collection<String> _options = prepareOptions(options, usingJavac);
+    final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
       fileManager.setOutputDirectories(outputDirToRoots);
@@ -148,6 +147,7 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
+      compilingTool.prepareCompilationTask(task, _options);
 
       //if (!IS_VM_6_VERSION) { //todo!
       //  // Do not add the processor for JDK 1.6 because of the bugs in javac
@@ -200,14 +200,9 @@ public class JavacMain {
     return false;
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
+  private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
     final List<String> result = new ArrayList<String>();
-    if (usingJavac) {
-      result.add("-implicit:class"); // the option supported by javac only
-    }
-    else { // is Eclipse
-      result.add("-noExit");
-    }
+    result.addAll(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {
@@ -215,7 +210,7 @@ public class JavacMain {
         continue;
       }
       if (!skip) {
-        if (!FILTERED_SINGLE_OPTIONS.contains(option)) {
+        if (!FILTERED_SINGLE_OPTIONS.contains(option) && !compilingTool.getDefaultCompilerOptions().contains(option)) {
           result.add(option);
         }
       }
