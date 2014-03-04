@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.service.SharedThreadPool;
 
@@ -44,7 +45,7 @@ public class JavacServerBootstrap {
                                                        int port,
                                                        File workingDir,
                                                        List<String> vmOptions,
-                                                       boolean useEclipseCompiler) throws Exception {
+                                                       JavaCompilingTool compilingTool) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
     appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
     appendParam(cmdLine, "-XX:MaxPermSize=150m");
@@ -82,9 +83,7 @@ public class JavacServerBootstrap {
       appendParam(cmdLine, "-Duser.region=" + region);
     }
 
-    if (useEclipseCompiler) {
-      appendParam(cmdLine, "-D" + JavacServer.USE_ECLIPSE_COMPILER_PROPERTY);
-    }
+    appendParam(cmdLine, "-D" + JavacServer.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
 
     // this will disable standard extensions to ensure javac is loaded from the right tools.jar
     appendParam(cmdLine, "-Djava.ext.dirs=");
@@ -95,7 +94,7 @@ public class JavacServerBootstrap {
 
     appendParam(cmdLine, "-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath, useEclipseCompiler);
+    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath, compilingTool);
     final StringBuilder classpath = new StringBuilder();
     for (File file : cp) {
       if (classpath.length() > 0) {

@@ -29,6 +29,9 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
@@ -44,7 +47,7 @@ public class JavacServer {
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String SERVER_SUCCESS_START_MESSAGE = "Javac server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Javac Server: ";
-  public static final String USE_ECLIPSE_COMPILER_PROPERTY = "use.eclipse.compiler";
+  public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
 
   private ChannelRegistrar myChannelRegistrar;
 
@@ -153,7 +156,8 @@ public class JavacServer {
     };
 
     try {
-      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus, System.getProperty(USE_ECLIPSE_COMPILER_PROPERTY) != null);
+      JavaCompilingTool tool = getCompilingTool();
+      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
     catch (Throwable e) {
@@ -161,6 +165,17 @@ public class JavacServer {
       e.printStackTrace(System.err);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
     }
+  }
+
+  private static JavaCompilingTool getCompilingTool() {
+    String property = System.getProperty(JPS_JAVA_COMPILING_TOOL_PROPERTY);
+    if (property != null) {
+      JavaCompilingTool tool = JavaBuilderUtil.findCompilingTool(property);
+      if (tool != null) {
+        return tool;
+      }
+    }
+    return new JavacCompilerTool();
   }
 
   private final Set<CancelHandler> myCancelHandlers = Collections.synchronizedSet(new HashSet<CancelHandler>());
