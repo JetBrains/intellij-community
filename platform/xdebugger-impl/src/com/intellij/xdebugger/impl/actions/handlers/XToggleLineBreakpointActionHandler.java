@@ -99,5 +99,8 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     }
 
     ExpandRegionAction.expandRegionAtCaret(project, editor);
+    if (editor != null && lineStart != lineWinner) {
+      editor.getCaretModel().moveToOffset(editor.getDocument().getLineStartOffset(lineWinner));
+    }
   }
 }
