@@ -301,7 +301,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   @NotNull
-  public static Document createDocument(@NotNull LightVirtualFile virtualFile) {
+  public static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
     DocumentImpl document;
     CharSequence content = virtualFile.getContent();
     if (StringUtil.indexOf(content, '\r') == -1) {

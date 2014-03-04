@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -122,7 +123,8 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
     // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewVirtualFile = new LightVirtualFile(newFileName, language, text);
-    MultiHostRegistrarImpl.createDocument(myNewVirtualFile);
+    DocumentEx document = MultiHostRegistrarImpl.createDocument(myNewVirtualFile);
+    ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).registerDocument((DocumentEx)document);
     myNewFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(myNewVirtualFile, language, true, false);
 
     assert myNewFile != null : "PSI file is null";
