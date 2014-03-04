@@ -218,8 +218,9 @@ public class XmlCompletionData extends CompletionData {
           containingFile = (XmlFile)document.getContainingFile();
 
           final FileType ft = containingFile.getFileType();
-
-          if(ft != StdFileTypes.XML) {
+          if (HtmlUtil.isHtml5Document(document)) {
+            descriptorFile = XmlUtil.findXmlFile(containingFile, Html5SchemaProvider.getCharsDtdLocation());
+          } else if(ft != StdFileTypes.XML) {
             final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
             final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
 

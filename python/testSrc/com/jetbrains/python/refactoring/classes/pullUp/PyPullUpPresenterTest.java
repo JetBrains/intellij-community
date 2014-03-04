@@ -144,7 +144,9 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
                           new PyPresenterTestMemberEntry("static_2()", true, true, py3K),
                           new PyPresenterTestMemberEntry("self.instance_field_1", true, false, false),
                           new PyPresenterTestMemberEntry("self.instance_field_2", true, false, false),
-                          new PyPresenterTestMemberEntry("bad_method()", true, false, true));
+                          new PyPresenterTestMemberEntry("bad_method()", true, false, true),
+                          new PyPresenterTestMemberEntry("name", true, false, false),
+                          new PyPresenterTestMemberEntry("some_property", true, false, false));
     compareMembers(memberNamesAndStatus, matcher);
   }
 

@@ -152,26 +152,27 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
          ) {
         XmlDocument document = ((XmlFile)targetElement).getDocument();
         final XmlTag rootTag = document.getRootTag();
+        XmlFile descriptorFile = null;
 
-        if (rootTag != null && document.getUserData(DISABLE_ENTITY_EXPAND) == null) {
+        if (HtmlUtil.isHtml5Document(document)) {
+          descriptorFile = XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
+        } else if (rootTag != null && document.getUserData(DISABLE_ENTITY_EXPAND) == null) {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
-              PsiElement element = !HtmlUtil.isHtml5Context(rootTag) ? descriptor.getDeclaration() :
-                                   XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
+              PsiElement element = descriptor.getDeclaration();
               final PsiFile containingFile = element != null ? element.getContainingFile():null;
-              final XmlFile descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
-
-              if (descriptorFile != null &&
-                  !descriptorFile.getName().equals(((XmlFile)targetElement).getName()+".dtd")) {
-                deps.add(descriptorFile);
-                XmlUtil.processXmlElements(
-                  descriptorFile,
-                  processor,
-                  true
-                );
-              }
+              descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
             }
+        }
+        if (descriptorFile != null &&
+            !descriptorFile.getName().equals(((XmlFile)targetElement).getName() + ".dtd")) {
+          deps.add(descriptorFile);
+          XmlUtil.processXmlElements(
+            descriptorFile,
+            processor,
+            true
+          );
         }
       }
 

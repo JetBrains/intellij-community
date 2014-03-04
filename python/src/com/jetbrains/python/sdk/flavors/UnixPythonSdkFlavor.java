@@ -19,10 +19,10 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -37,12 +37,12 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+    Set<String> candidates = new HashSet<String>();
     collectUnixPythons("/usr/bin", candidates);
     return candidates;
   }
 
-  public static void collectUnixPythons(String path, List<String> candidates) {
+  public static void collectUnixPythons(String path, Set<String> candidates) {
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {
@@ -59,7 +59,8 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
               if (FileSystemUtil.isSymLink(childPath)) {
                 childPath = FileSystemUtil.resolveSymLink(childPath);
               }
-              if (childPath != null && !childName.endsWith("-config") && !childName.startsWith("pythonw") && !childName.endsWith("m")) {
+              if (childPath != null && !childName.endsWith("-config") && !childName.startsWith("pythonw") && !childName.endsWith("m") &&
+                !candidates.contains(childPath)) {
                 candidates.add(childPath);
               }
               break;
