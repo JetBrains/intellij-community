@@ -15,9 +15,16 @@
  */
 package com.intellij.remotesdk;
 
+import com.intellij.remote.RemoteSdkCredentialsHolder;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @deprecated Remove in IDEA 14
+ * 
  * @author traff
  */
-public interface MutableRemoteCredentials extends com.intellij.remote.MutableRemoteCredentials {
+public class RemoteSdkDataHolder extends RemoteSdkCredentialsHolder {
+  public RemoteSdkDataHolder(@NotNull String defaultHelpersDirName) {
+    super(defaultHelpersDirName);
+  }
 }

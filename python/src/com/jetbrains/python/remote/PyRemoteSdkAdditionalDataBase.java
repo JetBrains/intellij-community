@@ -15,10 +15,10 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.remotesdk2.RemoteSdkAdditionalData2;
+import com.intellij.remote.RemoteSdkAdditionalData;
 
 /**
  * @author traff
  */
-public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData2<PyRemoteSdkCredentials>, PySkeletonsPathAware {
+public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PySkeletonsPathAware {
 }

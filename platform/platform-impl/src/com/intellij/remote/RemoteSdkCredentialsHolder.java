@@ -1,6 +1,5 @@
-package com.intellij.remotesdk;
+package com.intellij.remote;
 
-import com.intellij.remotesdk2.RemoteConnectionCredentialsWrapper;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

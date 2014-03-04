@@ -1,4 +1,7 @@
-package com.intellij.remotesdk;
+package com.intellij.remote;
+
+import com.intellij.remote.MutableRemoteCredentials;
+import com.intellij.remote.RemoteSdkProperties;
 
 /**
  * @author traff

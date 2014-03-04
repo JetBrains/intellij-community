@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remotesdk;
+package com.intellij.remote;
+
+import com.intellij.util.Consumer;
 
 /**
- * @deprecated Remove in IDEA 14
  * @author traff
  */
-public interface MutableRemoteCredentials extends com.intellij.remote.MutableRemoteCredentials {
+public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
+  T getRemoteSdkCredentials() throws InterruptedException;
+  
+  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
+
+  Object getRemoteSdkDataKey();
 }

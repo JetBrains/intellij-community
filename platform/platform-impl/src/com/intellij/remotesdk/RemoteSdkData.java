@@ -15,9 +15,12 @@
  */
 package com.intellij.remotesdk;
 
+import com.intellij.remote.RemoteSdkCredentials;
+
 /**
  * @deprecated Remove in IDEA 14
+ * 
  * @author traff
  */
-public interface MutableRemoteCredentials extends com.intellij.remote.MutableRemoteCredentials {
+public interface RemoteSdkData extends RemoteSdkCredentials {
 }
