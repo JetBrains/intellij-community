@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="idea-tests" scope="TEST" />
+    <orderEntry type="module" module-name="IntelliLang-js" scope="TEST" />
   </component>
 </module>
 

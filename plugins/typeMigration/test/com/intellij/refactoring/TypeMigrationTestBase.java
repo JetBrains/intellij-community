@@ -32,11 +32,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     return PathManager.getHomePath() + "/plugins/typeMigration/testData";
   }
 
-  protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) throws Exception {
+  protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {
     doTestFieldType(fieldName, "Test", fromType, toType);
   }
 
-  protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType rootType, final PsiType migrationType) throws Exception {
+  protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType rootType, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
@@ -57,11 +57,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  protected void doTestMethodType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) throws Exception {
+  protected void doTestMethodType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) {
     doTestMethodType(methodName, "Test", rootType, migrationType);
   }
 
-  protected void doTestMethodType(@NonNls final String methodName, @NonNls String className, final PsiType rootType, final PsiType migrationType) throws Exception {
+  protected void doTestMethodType(@NonNls final String methodName, @NonNls String className, final PsiType rootType, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
@@ -80,11 +80,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  protected void doTestFirstParamType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) throws Exception {
+  protected void doTestFirstParamType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) {
     doTestFirstParamType(methodName, "Test", rootType, migrationType);
   }
 
-  protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType rootType, final PsiType migrationType) throws Exception {
+  protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType rootType, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
@@ -103,11 +103,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  public void start(final RulesProvider provider) throws Exception {
+  public void start(final RulesProvider provider) {
     start(provider, "Test");
   }
 
-  public void start(final RulesProvider provider, final String className) throws Exception {
+  public void start(final RulesProvider provider, final String className) {
     doTest(new PerformAction() {
       @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
