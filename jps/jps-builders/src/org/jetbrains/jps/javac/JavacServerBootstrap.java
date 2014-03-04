@@ -155,17 +155,15 @@ public class JavacServerBootstrap {
 
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR) {
-          try {
-            final String text = event.getText();
-            if (text != null) {
-              if (text.contains(JavacServer.SERVER_SUCCESS_START_MESSAGE) || text.contains(JavacServer.SERVER_ERROR_START_MESSAGE)) {
-                processHandler.removeProcessListener(this);
-                serverStartMessage.set(text);
-              }
+          final String text = event.getText();
+          if (text != null && (text.contains(JavacServer.SERVER_SUCCESS_START_MESSAGE) || text.contains(JavacServer.SERVER_ERROR_START_MESSAGE))) {
+            try {
+              processHandler.removeProcessListener(this);
+              serverStartMessage.set(text);
             }
-          }
-          finally {
-            semaphore.up();
+            finally {
+              semaphore.up();
+            }
           }
         }
       }
