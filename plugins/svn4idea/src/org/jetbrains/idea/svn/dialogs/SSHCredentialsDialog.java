@@ -257,7 +257,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     group.add(myPasswordButton);
     group.add(myKeyButton);
     group.setSelected(myPasswordButton.getModel(), true);
-    group.setSelected(myPasswordButton.getModel(), false);
 
     gb.gridy += 1;
     gb.gridx = 0;
