@@ -378,6 +378,16 @@ public class XDebuggerTestUtil {
     }
   }
 
+  public static <B extends XBreakpoint<?>>
+  void setDefaultBreakpointEnabled(@NotNull final Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointType<B, ?> bpType = XDebuggerUtil.getInstance().findBreakpointType(bpTypeClass);
+    XBreakpoint<?> bp = breakpointManager.getDefaultBreakpoint(bpType);
+    if (bp != null) {
+      bp.setEnabled(enabled);
+    }
+  }
+
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
