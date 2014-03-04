@@ -23,6 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -213,8 +214,16 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
 
           final PsiParameter[] parameters = {parameter};
-          final PsiCallExpression expression = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body, parameters, null);
-          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(expression, null, parameters);
+          String methodReferenceText = null;
+          final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(body);
+          if (callExpression != null) {
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
+            final PsiClassType functionalType = consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, callExpression.getType()) : null;
+
+            final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body, parameters, functionalType);
+            methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalType, parameters);
+          }
           final String lambdaText = parameter.getName() + " -> " + foreEachText;
           final String codeBlock8 = methodReferenceText != null ? methodReferenceText : lambdaText;
           PsiExpressionStatement callStatement = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(iterated + ".forEach(" + codeBlock8 + ");", foreachStatement);
@@ -269,7 +278,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
           final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
 
-          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(mapperCall, null, new PsiParameter[]{parameter});
+          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+          final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
+          final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), mapperCall.getType()) : null;
+          final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(mapperCall,
+                                                                                                                   new PsiParameter[]{
+                                                                                                                     parameter},
+                                                                                                                   functionalInterfaceType);
+          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
           if (methodReferenceText != null) {
             iteration += methodReferenceText;
           } else {
