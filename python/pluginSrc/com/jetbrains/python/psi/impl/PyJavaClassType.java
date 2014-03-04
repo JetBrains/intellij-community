@@ -89,7 +89,7 @@ public class PyJavaClassType implements PyClassLikeType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;  // TODO: JDK's types could be considered built-in.
   }
 
@@ -104,11 +104,17 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     if (myDefinition) {
       return new PyJavaClassType(myClass, false);
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
+    return getReturnType(context);
   }
 
   @Nullable

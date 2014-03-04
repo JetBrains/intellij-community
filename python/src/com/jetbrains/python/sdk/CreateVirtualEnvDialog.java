@@ -29,6 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +42,8 @@ import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.packaging.PyExternalProcessException;
@@ -112,8 +116,10 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     setupDialog(null, allSdks, suggestedBaseSdk);
   }
 
-  private void setupDialog(Project project, List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
+  private void setupDialog(Project project, final List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
     myProject = project;
+    layoutPanel(allSdks);
+
     init();
     setTitle("Create Virtual Environment");
     Iterables.removeIf(allSdks, new Predicate<Sdk>() {
@@ -140,16 +146,19 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
 
     final VirtualFile file = VirtualEnvSdkFlavor.getDefaultLocation();
 
-    if (file != null)
+    if (file != null) {
       myInitialPath = file.getPath();
+    }
     else {
       final String savedPath = PyPackageService.getInstance().getVirtualEnvBasePath();
-      if (!StringUtil.isEmptyOrSpaces(savedPath))
+      if (!StringUtil.isEmptyOrSpaces(savedPath)) {
         myInitialPath = savedPath;
+      }
       else if (myProject != null) {
         final VirtualFile baseDir = myProject.getBaseDir();
-        if (baseDir != null)
+        if (baseDir != null) {
           myInitialPath = baseDir.getPath();
+        }
       }
     }
 
@@ -166,6 +175,87 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     });
     myMainPanel.setPreferredSize(new Dimension(300, 50));
     checkValid();
+  }
+
+  private void layoutPanel(final List<Sdk> allSdks) {
+    final GridBagLayout layout = new GridBagLayout();
+    myMainPanel = new JPanel(layout);
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = new Insets(2,2,2,2);
+
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Name:"), c);
+
+    c.gridx = 1;
+    c.gridy = 0;
+    c.gridwidth = 2;
+    c.weightx = 1.0;
+    myName = new JTextField();
+    myMainPanel.add(myName, c);
+
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridwidth = 1;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Location:"), c);
+
+    c.gridx = 1;
+    c.gridy = 1;
+    c.gridwidth = 2;
+    c.weightx = 1.0;
+    myDestination = new TextFieldWithBrowseButton();
+    myMainPanel.add(myDestination, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
+    c.gridwidth = 1;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Base interpreter:"), c);
+
+    c.gridx = 1;
+    c.gridy = 2;
+    mySdkCombo = new ComboBox();
+    c.insets = new Insets(2,2,2,2);
+    c.weightx = 1.0;
+    myMainPanel.add(mySdkCombo, c);
+
+    c.gridx = 2;
+    c.gridy = 2;
+    c.insets = new Insets(0,0,2,2);
+    c.weightx = 0.0;
+    FixedSizeButton button = new FixedSizeButton();
+    button.setPreferredSize(myDestination.getButton().getPreferredSize());
+    myMainPanel.add(button, c);
+
+    c.gridx = 0;
+    c.gridy = 3;
+    c.gridwidth = 3;
+    c.insets = new Insets(2,2,2,2);
+    mySitePackagesCheckBox = new JBCheckBox("Inherit global site-packages");
+    myMainPanel.add(mySitePackagesCheckBox, c);
+
+    c.gridx = 0;
+    c.gridy = 4;
+    myMakeAvailableToAllProjectsCheckbox = new JBCheckBox("Make available to all projects");
+    myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
+    button.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        SdkConfigurationUtil.createSdk(myProject, allSdks.toArray(new Sdk[allSdks.size() - 1]), new NullableConsumer<Sdk>() {
+          @Override
+          public void consume(@Nullable Sdk sdk) {
+            if (sdk == null) return;
+            if (!allSdks.contains(sdk)) {
+              allSdks.add(sdk);
+            }
+            updateSdkList(allSdks, sdk);
+          }
+        }, false, PythonSdkType.getInstance());
+      }
+    });
   }
 
   private void checkValid() {

@@ -257,7 +257,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
-      .show(myProject, myProjectSdksModel.getSdks(), this, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(), false,
+      .show(myProject, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
             new NullableConsumer<Sdk>() {
               @Override
               public void consume(Sdk sdk) {

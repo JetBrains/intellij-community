@@ -69,6 +69,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile VirtualDirectoryImpl myParent;
   private volatile int myFlags;
   private volatile int myId;
+  
+  static {
+    assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
+  }
 
   public VirtualFileSystemEntry(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
     myParent = parent;

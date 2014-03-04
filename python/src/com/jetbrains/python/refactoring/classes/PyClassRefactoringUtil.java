@@ -125,7 +125,7 @@ public final class PyClassRefactoringUtil {
   }
 
   @NotNull
-  public static List<PyFunction> copyMethods(Collection<PyFunction> methods, PyClass superClass) {
+  public static List<PyFunction> copyMethods(Collection<PyFunction> methods, PyClass superClass, boolean skipIfExist ) {
     if (methods.isEmpty()) {
       return Collections.emptyList();
     }
@@ -133,7 +133,7 @@ public final class PyClassRefactoringUtil {
       rememberNamedReferences(e);
     }
     final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
-    return addMethods(superClass, true,  elements);
+    return addMethods(superClass, skipIfExist,  elements);
   }
 
   /**

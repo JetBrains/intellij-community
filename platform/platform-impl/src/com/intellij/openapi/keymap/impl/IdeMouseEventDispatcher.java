@@ -19,6 +19,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -78,21 +79,16 @@ public final class IdeMouseEventDispatcher {
 
     // here we try to find "local" shortcuts
     if (component instanceof JComponent) {
-      @SuppressWarnings("unchecked")
-      final ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
-      if (listOfActions != null) {
-        for (AnAction action : listOfActions) {
-          final Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-          for (Shortcut shortcut : shortcuts) {
-            if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
-              myActions.add(action);
-            }
+      for (AnAction action : ActionUtil.getActions((JComponent)component)) {
+        for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+          if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
+            myActions.add(action);
           }
         }
-        // once we've found a proper local shortcut(s), we exit
-        if (! myActions.isEmpty()) {
-          return;
-        }
+      }
+      // once we've found a proper local shortcut(s), we exit
+      if (!myActions.isEmpty()) {
+        return;
       }
     }
 

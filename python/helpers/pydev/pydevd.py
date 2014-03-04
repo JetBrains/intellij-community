@@ -764,7 +764,7 @@ class PyDB:
                         del self.exception_set[exception]
                         self.always_exception_set.remove(exception)
                     except:
-                        pass
+                        pydev_log.debug("Error while removing exception"%sys.exc_info()[0]);
                     update_exception_hook(self)
 
                 elif cmd_id == CMD_LOAD_SOURCE:

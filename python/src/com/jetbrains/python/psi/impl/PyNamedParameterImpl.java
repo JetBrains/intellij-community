@@ -208,7 +208,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             PyType initType = null;
             final PyFunction init = containingClass.findInitOrNew(true);
             if (init != null && init != func) {
-              initType = init.getReturnType(context, null);
+              initType = context.getReturnType(init);
               if (init.getContainingClass() != containingClass) {
                 if (initType instanceof PyCollectionType) {
                   final PyType elementType = ((PyCollectionType)initType).getElementType(context);

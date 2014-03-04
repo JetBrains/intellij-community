@@ -67,7 +67,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     if (isInsideNumPy(function)) {
       final NumPyDocString docString = NumPyDocString.forFunction(function, callSite);
       if (docString != null) {

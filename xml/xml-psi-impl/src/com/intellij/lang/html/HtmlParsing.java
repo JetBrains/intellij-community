@@ -76,7 +76,10 @@ public class HtmlParsing {
         error = flushError(error);
         parseProcessingInstruction();
       }
-      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_DATA_CHARACTERS) {
+      else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+        parseReference();
+      }
+      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
         advance();
       } else if (tt == XmlTokenType.XML_END_TAG_START) {

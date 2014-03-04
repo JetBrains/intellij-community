@@ -93,7 +93,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
       myVcs.created(f.getPath(), f.isDirectory());
     }
     if (f.isDirectory()) {
-      for (VirtualFile each : IdeaGateway.iterateDBChildren(f)) {
+      for (VirtualFile each : IdeaGateway.loadAndIterateChildren(f)) {
         createRecursively(each);
       }
     }

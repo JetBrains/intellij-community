@@ -49,7 +49,13 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
+    return myReturnType;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
     return myReturnType;
   }
 
@@ -105,7 +111,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 
