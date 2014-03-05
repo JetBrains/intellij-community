@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -244,6 +245,15 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     //noinspection HardCodedStringLiteral
     String methodName = parentNode.getAttributeValue("method_name");
     setMethodName(methodName);
+
+    try {
+      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
+    } catch (Exception e) {
+    }
+    try {
+      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
+    } catch (Exception e) {
+    }
 
     if(className == null || methodName == null) {
       throw new InvalidDataException();
