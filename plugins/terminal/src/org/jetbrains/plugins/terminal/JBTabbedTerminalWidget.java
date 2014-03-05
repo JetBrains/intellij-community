@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author traff
  */
-public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable{
+public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable {
 
   private Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
@@ -220,7 +220,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     private class TerminalTabLabel extends TabLabel {
-      public TerminalTabLabel(final JBTabsImpl tabs, TabInfo info) {
+      public TerminalTabLabel(final JBTabsImpl tabs, final TabInfo info) {
         super(tabs, info);
 
         setOpaque(false);
@@ -244,17 +244,29 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
             handleMouse(event);
           }
 
-          private void handleMouse(MouseEvent event) {
-            if (event.isPopupTrigger()) {
+          private void handleMouse(MouseEvent e) {
+            if (e.isPopupTrigger()) {
               JPopupMenu menu = createPopup();
-              menu.show(event.getComponent(), event.getX(), event.getY());
+              menu.show(e.getComponent(), e.getX(), e.getY());
             }
-            else {
+            else if (e.getButton() != MouseEvent.BUTTON2) {
               myTabs.select(getInfo(), true);
 
-              if (event.getClickCount() == 2 && !event.isConsumed()) {
-                event.consume();
+              if (e.getClickCount() == 2 && !e.isConsumed()) {
+                e.consume();
                 renameTab();
+              }
+            }
+          }
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON2) {
+              if (myTabs.getSelectedInfo() == info) {
+                closeCurrentSession();
+              }
+              else {
+                myTabs.select(info, true);
               }
             }
           }
@@ -354,14 +366,14 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       @Override
       public void dragOutFinished(MouseEvent event, TabInfo source) {
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
-        
-        
+
+
         myTabs.removeTab(source);
-        
+
         mySession.process(event);
 
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
-        
+
 
         myFile = null;
         mySession = null;
