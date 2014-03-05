@@ -73,6 +73,7 @@ public class FileListeningTest extends IntegrationTestCase {
     myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
+    assertEquals(changes.toString(), 4, changes.size());
     List<String> actual = new SmartList<String>();
     for (Change each : changes) {
       actual.add(((StructuralChange)each).getPath());
