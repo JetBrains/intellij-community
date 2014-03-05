@@ -159,6 +159,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return (VirtualMachineProxyImpl) myTimer;
   }
 
+  @Nullable
   @Override
   public Location location() throws EvaluateException {
     InvalidStackFrameException error = null;
