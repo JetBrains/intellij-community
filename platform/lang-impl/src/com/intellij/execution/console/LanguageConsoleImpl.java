@@ -730,7 +730,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
       }
 
-      // deal with height
+      // deal with height, WEB-11122 we cannot trust editor width — it could be 0 in case of soft wrap even if editor has text
+      if (history.getDocument().getLineCount() == 0) {
+        historySize.height = 0;
+      }
+
       int minHistoryHeight = historySize.height > 0 ? (getMinHistoryLineCount() * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0)) : 0;
       int minInputHeight = input.isViewer() ? 0 : input.getLineHeight();
       final int inputPreferredHeight = input.isViewer() ? 0 : Math.max(minInputHeight, inputSize.height);
