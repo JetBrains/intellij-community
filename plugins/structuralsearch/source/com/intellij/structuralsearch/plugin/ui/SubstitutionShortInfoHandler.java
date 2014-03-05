@@ -99,6 +99,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     handleInputFocusMovement(e.getNewPosition());
   }
 
+  @Override
+  public void caretAdded(CaretEvent e) {
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
+  }
+
   public ArrayList<Variable> getVariables() {
     checkModelValidity();
     return variables;
