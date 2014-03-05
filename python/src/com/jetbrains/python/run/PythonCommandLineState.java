@@ -21,10 +21,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -179,6 +176,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), myConfig.getMappingSettings());
     }
     else {
+      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myConfig.getProject());
       processHandler = doCreateProcess(commandLine);
       ProcessTerminatedListener.attach(processHandler);
     }

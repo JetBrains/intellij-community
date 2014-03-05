@@ -18,6 +18,7 @@ package com.jetbrains.python.run;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
@@ -102,6 +103,7 @@ public class PythonTask {
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
     else {
+      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myModule.getProject());
       handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
 
       ProcessTerminatedListener.attach(handler);
