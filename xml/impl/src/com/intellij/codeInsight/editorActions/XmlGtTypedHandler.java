@@ -233,7 +233,6 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         if (hasBalance) return Result.CONTINUE; 
       }
 
-      TextRange cdataReformatRange = null;
       Collection<TextRange> cdataReformatRanges = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
@@ -251,13 +250,12 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
               cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length()));
             }
           }
-          cdataReformatRange = TextRange.from(offset, inserted.length() + 1);
         }
       }
 
       EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + name + ">", false, 0);
 
-      if (cdataReformatRange != null && !cdataReformatRanges.isEmpty()) {
+      if (cdataReformatRanges != null && !cdataReformatRanges.isEmpty()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         try {          
           CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRanges);
@@ -266,7 +264,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
           LOG.error(e);
         }
       }
-      return cdataReformatRange != null ? Result.STOP : Result.CONTINUE;
+      return cdataReformatRanges != null && !cdataReformatRanges.isEmpty() ? Result.STOP : Result.CONTINUE;
     }
     return Result.CONTINUE;
   }
