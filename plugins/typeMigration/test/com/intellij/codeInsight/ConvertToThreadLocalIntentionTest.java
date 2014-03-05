@@ -1,15 +1,13 @@
-/*
- * User: anna
- * Date: 28-Oct-2009
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author anna
+ */
 public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterizedTestCase {
-
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;

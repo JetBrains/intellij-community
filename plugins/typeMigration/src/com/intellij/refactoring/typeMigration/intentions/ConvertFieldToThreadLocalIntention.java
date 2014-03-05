@@ -27,22 +27,26 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionAction implements LowPriorityAction{
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
+public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToThreadLocalIntention.class.getName());
 
-
   @NotNull
+  @Override
   public String getText() {
     return "Convert to ThreadLocal";
   }
 
   @NotNull
+  @Override
   public String getFamilyName() {
     return getText();
   }
@@ -75,20 +79,21 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiType fromType = psiField.getType();
-
 
     final PsiClass threadLocalClass = psiFacade.findClass(ThreadLocal.class.getName(), GlobalSearchScope.allScope(project));
     if (threadLocalClass == null) {//show warning
       return;
     }
-    final HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<PsiTypeParameter, PsiType>();
+    final Map<PsiTypeParameter, PsiType> substitutor = ContainerUtil.newHashMap();
     final PsiTypeParameter[] typeParameters = threadLocalClass.getTypeParameters();
     if (typeParameters.length == 1) {
-      substitutor.put(typeParameters[0], fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedType(element) : fromType);
+      PsiType type = fromType;
+      if (fromType instanceof PsiPrimitiveType) type = ((PsiPrimitiveType)fromType).getBoxedType(element);
+      substitutor.put(typeParameters[0], type);
     }
-    final PsiClassType toType = elementFactory.createType(threadLocalClass, elementFactory.createSubstitutor(substitutor));
+    final PsiClassType toType = factory.createType(threadLocalClass, factory.createSubstitutor(substitutor));
 
     try {
       final TypeMigrationRules rules = new TypeMigrationRules(fromType);
@@ -100,28 +105,31 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
           final PsiElement parent = psiElement.getParent();
-          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression) && !(parent instanceof PsiPolyadicExpression)) {
+          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression || parent instanceof PsiPolyadicExpression)) {
             psiElement = parent;
           }
-          final TypeConversionDescriptor directConversion = ThreadLocalConversionRule.findDirectConversion(psiElement, toType, fromType, labeler);
-          if (directConversion != null) {
-            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, directConversion);
+          final TypeConversionDescriptor conversion = ThreadLocalConversionRule.findDirectConversion(psiElement, toType, fromType, labeler);
+          if (conversion != null) {
+            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, conversion);
           }
         }
       }
 
       final PsiExpression initializer = psiField.getInitializer();
       if (initializer != null) {
-        TypeMigrationReplacementUtil.replaceExpression(initializer, project, ThreadLocalConversionRule.wrapWithNewExpression(toType, fromType, initializer));
+        final TypeConversionDescriptor conversion = ThreadLocalConversionRule.wrapWithNewExpression(toType, fromType, initializer);
+        TypeMigrationReplacementUtil.replaceExpression(initializer, project, conversion);
         CodeStyleManager.getInstance(project).reformat(psiField);
-      }  else if (!psiField.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
-        final PsiExpression defaultInitializer =
-          elementFactory.createExpressionFromText("new " + PsiDiamondTypeUtil.getCollapsedType(toType, psiField) + "()", psiField);
-        psiField.setInitializer(defaultInitializer);
+      }
+      else if (!assertNotNull(psiField.getModifierList()).hasModifierProperty(PsiModifier.FINAL)) {
+        final String text = "new " + PsiDiamondTypeUtil.getCollapsedType(toType, psiField) + "()";
+        final PsiExpression newInitializer = factory.createExpressionFromText(text, psiField);
+        psiField.setInitializer(newInitializer);
       }
 
-      psiField.getTypeElement().replace(elementFactory.createTypeElement(toType));
-      final PsiModifierList modifierList = psiField.getModifierList();
+      assertNotNull(psiField.getTypeElement()).replace(factory.createTypeElement(toType));
+
+      final PsiModifierList modifierList = assertNotNull(psiField.getModifierList());
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
       modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
     }
@@ -130,6 +138,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
