@@ -165,6 +165,11 @@ public class CaretModelWindow implements CaretModel {
     return createInjectedCaret(myDelegate.getPrimaryCaret());
   }
 
+  @Override
+  public int getCaretCount() {
+    return myDelegate.getCaretCount();
+  }
+
   @NotNull
   @Override
   public List<Caret> getAllCarets() {

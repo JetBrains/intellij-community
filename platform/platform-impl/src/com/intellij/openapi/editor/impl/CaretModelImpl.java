@@ -241,6 +241,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
+  public int getCaretCount() {
+    synchronized (myCarets) {
+      return myCarets.size();
+    }
+  }
+
+  @Override
   @NotNull
   public List<Caret> getAllCarets() {
     List<Caret> carets;
