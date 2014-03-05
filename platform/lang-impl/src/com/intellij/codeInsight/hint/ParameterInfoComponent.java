@@ -251,24 +251,19 @@ public class ParameterInfoComponent extends JPanel {
 
       int lineOffset = 0;
 
-      boolean hasHighlighting = highlightStartOffset >= 0 && highlightEndOffset > highlightStartOffset;
-      TextRange highlightingRange = hasHighlighting ? new TextRange(highlightStartOffset, highlightEndOffset) : null;
-
       for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
+        String line = escapeString(lines[i]);
 
         myOneLineComponents[i] = new OneLineComponent();
 
-        TextRange lRange = new TextRange(lineOffset, lineOffset + line.length());
-        TextRange hr = highlightingRange == null ? null : lRange.intersection(highlightingRange);
-        hr = hr == null ? null : hr.shiftRight(-lineOffset);
+        TextRange range = null;
+        if (highlightStartOffset >= 0 && highlightEndOffset > lineOffset && highlightStartOffset < lineOffset + line.length()) {
+          int startOffset = Math.max(highlightStartOffset - lineOffset, 0);
+          int endOffset = Math.min(highlightEndOffset - lineOffset, line.length());
+          range = TextRange.create(startOffset, endOffset);
+        }
 
-        String before = escapeString(hr == null ? line : line.substring(0, hr.getStartOffset()));
-        String in = hr == null ? "" : escapeString(hr.substring(line));
-        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset(), line.length()));
-
-        TextRange escapedHighlightingRange = in.isEmpty() ? null : TextRange.create(before.length(), before.length() + in.length());
-        buf.append(myOneLineComponents[i].setup(before + in + after, isDisabled, strikeout, background, escapedHighlightingRange));
+        buf.append(myOneLineComponents[i].setup(line, isDisabled, strikeout, background, range));
 
         if (isDisabledBeforeHighlight) {
           if (highlightStartOffset < 0 || highlightEndOffset > lineOffset) {
