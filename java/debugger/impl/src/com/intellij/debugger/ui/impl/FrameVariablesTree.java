@@ -63,6 +63,7 @@ import java.util.*;
 
 public class FrameVariablesTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
+
   private boolean myAnyNewLocals;
   private boolean myAutoWatchMode = false;
 
@@ -129,6 +130,7 @@ public class FrameVariablesTree extends DebuggerTree {
       if (sourcePosition == null) {
         return;
       }
+
       try {
         if (!ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS && !myAutoWatchMode) {
           // optimization
@@ -168,6 +170,7 @@ public class FrameVariablesTree extends DebuggerTree {
           if (frame == null) {
             throw e;
           }
+
           final Collection<Value> argValues = frame.getArgumentValues();
           int index = 0;
           for (Value argValue : argValues) {
@@ -206,6 +209,7 @@ public class FrameVariablesTree extends DebuggerTree {
     }
     try {
       final Location location = frame.location();
+      LOG.assertTrue(location != null);
       final Method method = location.method();
       final Location methodLocation = method.location();
       if (methodLocation == null || methodLocation.codeIndex() < 0) {

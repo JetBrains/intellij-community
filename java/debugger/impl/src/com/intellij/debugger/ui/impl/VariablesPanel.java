@@ -31,8 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
-
+public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
   @NonNls private static final String HELP_ID = "debugging.debugFrame";
 
   public VariablesPanel(Project project, DebuggerStateManager stateManager, Disposable parent) {
@@ -51,21 +50,25 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
     new ValueNodeDnD(myTree, parent);
   }
 
+  @Override
   protected DebuggerTree createTreeView() {
     return new FrameVariablesTree(getProject());
   }
 
+  @Override
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
     if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
       super.changeEvent(newContext, event);
     }
   }
 
+  @Override
   protected ActionPopupMenu createPopupMenu() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.FRAME_PANEL_POPUP);
     return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.FRAME_PANEL_POPUP, group);
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
@@ -75,7 +78,6 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
 
 
   public FrameVariablesTree getFrameTree() {
-    return (FrameVariablesTree) getTree();
+    return (FrameVariablesTree)getTree();
   }
-
 }

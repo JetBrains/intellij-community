@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectCollectedException;
 
 public abstract class DebuggerContextCommandImpl extends SuspendContextCommandImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.events.DebuggerContextCommandImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerContextCommandImpl.class);
 
   private final DebuggerContextImpl myDebuggerContext;
 
@@ -37,6 +37,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     return myDebuggerContext;
   }
 
+  @Override
   public final void contextAction() throws Exception {
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
 
@@ -45,7 +46,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     try {
       isSuspendedByContext = suspendManager.isSuspended(debuggerContextThread);
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       notifyCancelled();
       return;
     }
@@ -59,7 +60,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     else {
       // there are no suspend context currently registered
       SuspendContextImpl suspendContextForThread = SuspendManagerUtil.findContextByThread(suspendManager, debuggerContextThread);
-      if(suspendContextForThread != null) {
+      if (suspendContextForThread != null) {
         suspendContextForThread.postponeCommand(this);
       }
       else {
@@ -68,5 +69,5 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
   }
 
-  abstract public void threadAction ();
+  abstract public void threadAction();
 }
