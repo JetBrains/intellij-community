@@ -17,18 +17,21 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.PositionManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CompoundPositionManager implements PositionManager {
+public class CompoundPositionManager extends PositionManagerEx {
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
 
   @SuppressWarnings("UnusedDeclaration")
@@ -92,6 +95,20 @@ public class CompoundPositionManager implements PositionManager {
       }
     }
 
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public XStackFrame createStackFrame(@NotNull Location location) {
+    for (PositionManager positionManager : myPositionManagers) {
+      if (positionManager instanceof PositionManagerEx) {
+        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(location);
+        if (xStackFrame != null) {
+          return xStackFrame;
+        }
+      }
+    }
     return null;
   }
 }

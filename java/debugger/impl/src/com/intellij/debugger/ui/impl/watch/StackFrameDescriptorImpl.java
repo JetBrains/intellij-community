@@ -34,6 +34,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ui.TextTransferable;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private int myUiIndex;
   private String myName = null;
   private Location myLocation;
+  private final XStackFrame myXStackFrame;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
@@ -84,7 +87,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         }
       });
     }
-    catch(InternalException e) {
+    catch (InternalException e) {
       LOG.info(e);
       myLocation = null;
       myMethodOccurrence = tracker.getMethodOccurrence(null);
@@ -98,6 +101,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
+
+    myXStackFrame = myLocation == null ? null : getDebugProcess().getPositionManager().createStackFrame(myLocation);
   }
 
   public int getUiIndex() {
@@ -151,6 +156,13 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+
+    if (myXStackFrame != null) {
+      TextTransferable.ColoredStringBuilder builder = new TextTransferable.ColoredStringBuilder();
+      myXStackFrame.customizePresentation(builder);
+      return builder.getBuilder().toString();
+    }
+
     if (myLocation == null) {
       return "";
     }
