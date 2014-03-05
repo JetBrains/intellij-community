@@ -22,6 +22,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -63,7 +64,7 @@ public abstract class XStackFrame extends XValueContainer {
    * Customize presentation of the stack frame in frames list
    * @param component component
    */
-  public void customizePresentation(ColoredTextContainer component) {
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
     XSourcePosition position = getSourcePosition();
     if (position != null) {
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
