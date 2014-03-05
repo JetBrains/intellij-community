@@ -32,7 +32,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -393,7 +392,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       for (int j = 0; j < numParams; j++) {
         PsiParameter param = parms[j];
 
-        int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+        int startOffset = buffer.length();
 
         if (param.isValid()) {
           PsiType paramType = param.getType();
@@ -411,7 +410,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
         }
 
-        int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+        int endOffset = buffer.length();
 
         if (j < numParams - 1) {
           buffer.append(", ");
