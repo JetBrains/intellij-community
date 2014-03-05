@@ -126,6 +126,7 @@ public class GithubUrlUtil {
   }
 
   public static boolean isGithubUrl(@NotNull String url, @NotNull String host) {
+    host = getHostFromUrl(host);
     url = removeProtocolPrefix(url);
     if (StringUtil.startsWithIgnoreCase(url, host)) {
       if (url.length() > host.length() && ":/".indexOf(url.charAt(host.length())) == -1) {
