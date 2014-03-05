@@ -61,7 +61,6 @@ public class PermanentGraphLayoutBuilder {
 
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = new int[headNodeIndex.size()];
-
   }
 
   private void dfs(int nodeIndex) {
@@ -148,8 +147,13 @@ public class PermanentGraphLayoutBuilder {
     }
 
     @Override
-    public int getStartLayout(int layoutIndex) {
+    public int getStartLayoutNodeIndex(int layoutIndex) {
       return myStartLayoutIndexForHead[getHeadOrder(layoutIndex)];
+    }
+
+    @Override
+    public List<Integer> getStartedSortedNodes() {
+      return myHeadNodeIndex;
     }
   }
 }

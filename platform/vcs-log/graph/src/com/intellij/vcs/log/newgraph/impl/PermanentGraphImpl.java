@@ -18,6 +18,7 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
+import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +98,7 @@ public class PermanentGraphImpl implements PermanentGraph {
 
   @Override
   public int getHashIndex(int nodeIndex) {
-    if (nodeIndex == nodesCount())
+    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT)
       return NOT_LOAD_COMMIT;
     return myNodeToHashIndex[nodeIndex];
   }

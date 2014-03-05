@@ -15,12 +15,13 @@
  */
 package com.intellij.vcs.log.newgraph;
 
+import java.util.List;
+
 /**
  * @author erokhins
  */
 public interface PermanentGraphLayout {
   // nodeIndex must be in [0..graph.nodesCount() - 1]
-
 
   int getLayoutIndex(int nodeIndex);
   int getOneOfHeadNodeIndex(int nodeIndex);
@@ -28,5 +29,7 @@ public interface PermanentGraphLayout {
   int getHeadNodeIndex(int layoutIndex);
 
   // return layout index head node
-  int getStartLayout(int layoutIndex);
+  int getStartLayoutNodeIndex(int layoutIndex);
+
+  List<Integer> getStartedSortedNodes();
 }

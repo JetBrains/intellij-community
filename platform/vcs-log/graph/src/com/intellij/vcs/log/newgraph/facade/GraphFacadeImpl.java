@@ -39,6 +39,9 @@ public class GraphFacadeImpl implements GraphFacade {
   public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits,
                                             @NotNull Set<Integer> branchCommitHashIndexes,
                                             @NotNull final GraphColorManager colorManager) {
+    if (commits.size() > 1001)
+      commits = FocusOnBranchSorter.sortCommits(commits, colorManager);
+
     GraphFlags flags = new GraphFlags(commits.size());
     Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
     final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
@@ -50,7 +53,7 @@ public class GraphFacadeImpl implements GraphFacade {
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
         int hashIndex1 = permanentGraph.getHashIndex(o1);
         int hashIndex2 = permanentGraph.getHashIndex(o2);
-        return colorManager.compareHeads(hashIndex1, hashIndex2);
+        return colorManager.compareHeads(hashIndex2, hashIndex1);
       }
     });
 
@@ -60,7 +63,7 @@ public class GraphFacadeImpl implements GraphFacade {
       public JBColor getColor(@NotNull GraphElement element) {
         int headNodeIndex = graphLayout.getHeadNodeIndex(element.getLayoutIndex());
         int headHashIndex = permanentGraph.getHashIndex(headNodeIndex);
-        int baseLayoutIndex = graphLayout.getStartLayout(element.getLayoutIndex());
+        int baseLayoutIndex = graphLayout.getStartLayoutNodeIndex(element.getLayoutIndex());
         if (baseLayoutIndex == element.getLayoutIndex()) {
           return colorManager.getColorOfBranch(headHashIndex);
         } else {
