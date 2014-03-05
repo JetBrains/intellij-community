@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
@@ -115,8 +116,19 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     return myEnabledCondition.value(myConsole);
   }
 
-  public void execute(@NotNull TextRange range, @NotNull String text, @NotNull EditorEx editor) {
-    myConsole.addTextRangeToHistory(range, editor, myExecuteActionHandler.myPreserveMarkup);
+  public void execute(@Nullable TextRange range, @NotNull String text, @Nullable EditorEx editor) {
+    if (range == null) {
+      myConsole.doAddPromptToHistory();
+      DocumentEx document = myConsole.getHistoryViewer().getDocument();
+      document.insertString(document.getTextLength(), text);
+      if (!text.endsWith("\n")) {
+        document.insertString(document.getTextLength(), "\n");
+      }
+    }
+    else {
+      assert editor != null;
+      myConsole.addTextRangeToHistory(range, editor, myExecuteActionHandler.myPreserveMarkup);
+    }
     myExecuteActionHandler.addToCommandHistoryAndExecute(myConsole, myConsoleView, text);
   }
 
