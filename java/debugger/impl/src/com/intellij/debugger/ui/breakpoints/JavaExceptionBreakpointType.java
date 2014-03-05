@@ -128,7 +128,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
 
   @Override
   public Breakpoint createJavaBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
-    if (breakpoint.getProperties().myQualifiedName != null) {
+    if (!XDebuggerManager.getInstance(project).getBreakpointManager().isDefaultBreakpoint(breakpoint)) {
       return new ExceptionBreakpoint(project, breakpoint);
     }
     else {
