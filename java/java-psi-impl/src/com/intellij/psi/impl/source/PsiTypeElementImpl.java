@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    // neighbouring type annotations are logical part of this type element and should be dropped
+    PsiImplUtil.markTypeAnnotations(this);
     PsiElement result = super.replace(newElement);
+    PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
 
     // We want to reformat method call arguments on method return type change because there is a possible situation that they are aligned
     // and the change breaks the alignment.
