@@ -46,7 +46,13 @@ public class EditorModificationUtil {
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    editor.getCaretModel().moveToOffset(selectionStart);
+    VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
+    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && selectionStartPosition != null) {
+      editor.getCaretModel().moveToVisualPosition(selectionStartPosition);
+    }
+    else {
+      editor.getCaretModel().moveToOffset(selectionStart);
+    }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -102,7 +108,13 @@ public class EditorModificationUtil {
   public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
+      VisualPosition startPosition = selectionModel.getSelectionStartPosition();
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && startPosition != null) {
+        editor.getCaretModel().moveToVisualPosition(startPosition);
+      }
+      else {
+        editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
+      }
     }
 
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual

@@ -2289,6 +2289,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
                                                      defaultBackground, clip, softWrapsToSkip, caretRowPainted);
 
+            paintAfterLineEndBackgroundSegments(g, iterationState, position, defaultBackground, lineHeight);
+
             if (lIterator.getLineNumber() < lastLineIndex) {
               if (backColor != null && !backColor.equals(defaultBackground)) {
                 g.setColor(backColor);
@@ -2296,6 +2298,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
             else {
+              if (iterationState.hasPastFileEndBackgroundSegments()) {
+                paintAfterLineEndBackgroundSegments(g, iterationState, position, defaultBackground, lineHeight);
+              }
               paintAfterFileEndBackground(iterationState,
                                           g,
                                           position, clip,
@@ -2377,6 +2382,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
       // in accordance with the newly introduced soft wrap(s).
       myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+    }
+  }
+
+  private void paintAfterLineEndBackgroundSegments(@NotNull Graphics g,
+                                                   @NotNull IterationState iterationState,
+                                                   @NotNull Point position,
+                                                   @NotNull Color defaultBackground,
+                                                   int lineHeight) {
+    while (iterationState.hasPastLineEndBackgroundSegment()) {
+      TextAttributes backgroundAttributes = iterationState.getPastLineEndBackgroundAttributes();
+      int width = EditorUtil.getSpaceWidth(backgroundAttributes.getFontType(), this) * iterationState.getPastLineEndBackgroundSegmentWidth();
+      Color color = getBackgroundColor(backgroundAttributes);
+      if (color != null && !color.equals(defaultBackground)) {
+        g.setColor(color);
+        g.fillRect(position.x, position.y, width, lineHeight);
+      }
+      position.x += width;
+      iterationState.advanceToNextPastLineEndBackgroundSegment();
     }
   }
 

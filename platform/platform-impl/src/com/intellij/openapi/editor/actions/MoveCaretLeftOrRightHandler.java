@@ -49,13 +49,19 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
         int start = selectionModel.getSelectionStart();
         int end = selectionModel.getSelectionEnd();
         int caretOffset = caretModel.getOffset();
+        VisualPosition targetPosition = myDirection == Direction.RIGHT ? selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
 
         //int leftGuard = start + (myDirection == Direction.LEFT ? 1 : 0);
         //int rightGuard = end - (myDirection == Direction.RIGHT ? 1 : 0);
         //if (TextRange.from(leftGuard, rightGuard - leftGuard + 1).contains(caretModel.getOffset())) { // See IDEADEV-36957
         if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
           selectionModel.removeSelection();
-          caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
+          if (caretModel.supportsMultipleCarets() && editor.isColumnMode() && targetPosition != null) {
+            caretModel.moveToVisualPosition(targetPosition);
+          }
+          else {
+            caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
+          }
           scrollingModel.scrollToCaret(ScrollType.RELATIVE);
           return;
         }

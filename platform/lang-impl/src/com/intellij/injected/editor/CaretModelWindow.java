@@ -21,12 +21,13 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Alexey
@@ -204,17 +205,14 @@ public class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
-    List<LogicalPosition> convertedPositions = new ArrayList<LogicalPosition>(caretPositions);
-    for (LogicalPosition position : caretPositions) {
-      convertedPositions.add(myEditorWindow.injectedToHost(position));
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
+    List<CaretState> convertedStates = new ArrayList<CaretState>(caretStates.size());
+    for (CaretState state : caretStates) {
+      convertedStates.add(new CaretState(state.getCaretPosition() == null ? null : myEditorWindow.injectedToHost(state.getCaretPosition()),
+                                         state.getSelectionStart() == null ? null : myEditorWindow.injectedToHost(state.getSelectionStart()),
+                                         state.getSelectionEnd() == null ? null : myEditorWindow.injectedToHost(state.getSelectionEnd())));
     }
-    List<Segment> convertedSelections = new ArrayList<Segment>(selections.size());
-    for (Segment selection : selections) {
-      convertedSelections.add(new TextRange(myEditorWindow.getDocument().injectedToHost(selection.getStartOffset()),
-                                            myEditorWindow.getDocument().injectedToHost(selection.getEndOffset())));
-    }
-    myDelegate.setCaretsAndSelections(convertedPositions, convertedSelections);
+    myDelegate.setCaretsAndSelections(convertedStates);
   }
 
   private InjectedCaret createInjectedCaret(Caret caret) {

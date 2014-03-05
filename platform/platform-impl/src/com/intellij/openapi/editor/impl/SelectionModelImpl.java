@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +46,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
@@ -214,42 +216,40 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       int endLine = Math.max(Math.min(blockEnd.line, myEditor.getDocument().getLineCount() - 1), 0);
       int step = endLine < startLine ? -1 : 1;
       int count = 1 + Math.abs(endLine - startLine);
-      List<LogicalPosition> positions = new LinkedList<LogicalPosition>();
-      List<TextRange> selections = new LinkedList<TextRange>();
+      List<CaretState> caretStates = new LinkedList<CaretState>();
       boolean hasSelection = false;
       for (int line = startLine, i = 0; i < count; i++, line += step) {
         int startColumn = blockStart.column;
         int endColumn = blockEnd.column;
         int lineEndOffset = myEditor.getDocument().getLineEndOffset(line);
-        int lineWidth = myEditor.offsetToLogicalPosition(lineEndOffset).column;
-        if (startColumn > lineWidth && endColumn > lineWidth) {
+        LogicalPosition lineEndPosition = myEditor.offsetToLogicalPosition(lineEndOffset);
+        int lineWidth = lineEndPosition.column;
+        if (startColumn > lineWidth && endColumn > lineWidth && !myEditor.isColumnMode()) {
           LogicalPosition caretPos = new LogicalPosition(line, Math.min(startColumn, endColumn));
-          positions.add(caretPos);
-          selections.add(new TextRange(lineEndOffset, lineEndOffset));
+          caretStates.add(new CaretState(caretPos,
+                                         lineEndPosition,
+                                         lineEndPosition));
         }
         else {
-          LogicalPosition startPos = new LogicalPosition(line, Math.min(startColumn, lineWidth));
-          LogicalPosition endPos = new LogicalPosition(line, Math.min(endColumn, lineWidth));
+          LogicalPosition startPos = new LogicalPosition(line, myEditor.isColumnMode() ? startColumn : Math.min(startColumn, lineWidth));
+          LogicalPosition endPos = new LogicalPosition(line, myEditor.isColumnMode() ? endColumn : Math.min(endColumn, lineWidth));
           int startOffset = myEditor.logicalPositionToOffset(startPos);
           int endOffset = myEditor.logicalPositionToOffset(endPos);
-          positions.add(endPos);
-          selections.add(new TextRange(Math.min(startOffset, endOffset), Math.max(startOffset, endOffset)));
+          caretStates.add(new CaretState(endPos, startPos, endPos));
           hasSelection |= startOffset != endOffset;
         }
       }
       if (hasSelection && !myEditor.isColumnMode()) { // filtering out lines without selection
-        Iterator<LogicalPosition> positionIterator = positions.iterator();
-        Iterator<TextRange> selectionIterator = selections.iterator();
-        while(selectionIterator.hasNext()) {
-          TextRange selection = selectionIterator.next();
-          positionIterator.next();
-          if (selection.isEmpty()) {
-            selectionIterator.remove();
-            positionIterator.remove();
+        Iterator<CaretState> caretStateIterator = caretStates.iterator();
+        while(caretStateIterator.hasNext()) {
+          CaretState state = caretStateIterator.next();
+          //noinspection ConstantConditions
+          if (state.getSelectionStart().equals(state.getSelectionEnd())) {
+            caretStateIterator.remove();
           }
         }
       }
-      myEditor.getCaretModel().setCaretsAndSelections(positions, selections);
+      myEditor.getCaretModel().setCaretsAndSelections(caretStates);
     }
     else {
       removeSelection();
