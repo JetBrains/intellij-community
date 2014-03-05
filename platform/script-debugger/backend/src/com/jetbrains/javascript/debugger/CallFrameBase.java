@@ -11,7 +11,7 @@ public abstract class CallFrameBase implements CallFrame {
 
   protected NotNullLazyValue<Scope[]> scopes;
 
-  protected CallFrameBase(String functionName, int line, int column) {
+  protected CallFrameBase(@Nullable String functionName, int line, int column) {
     this.functionName = functionName;
     this.line = line;
     this.column = column;
