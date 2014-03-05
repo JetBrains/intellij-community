@@ -17,6 +17,7 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -103,7 +104,7 @@ public class CaretModelWindow implements CaretModel {
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();
   @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
-    CaretListener wrapper = new CaretListener() {
+    CaretListener wrapper = new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now

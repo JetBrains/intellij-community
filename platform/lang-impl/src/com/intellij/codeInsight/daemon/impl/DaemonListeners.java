@@ -176,7 +176,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    eventMulticaster.addCaretListener(new CaretListener() {
+    eventMulticaster.addCaretListener(new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();

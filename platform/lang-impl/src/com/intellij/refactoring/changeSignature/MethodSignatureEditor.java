@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
@@ -163,7 +160,7 @@ public abstract class MethodSignatureEditor<M extends PsiElement> extends Editor
           CodeStyleManager.getInstance(getProject()).reformatText(myFile, range.getStartOffset(), range.getEndOffset());
         }
       });
-      editor.getCaretModel().addCaretListener(new CaretListener() {
+      editor.getCaretModel().addCaretListener(new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           createFromString();

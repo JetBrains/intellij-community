@@ -129,14 +129,14 @@ public interface CaretModel {
   int getOffset();
 
   /**
-   * Adds a listener for receiving notifications about caret movement.
+   * Adds a listener for receiving notifications about caret movement and caret addition/removal
    *
    * @param listener the listener instance.
    */
   void addCaretListener(@NotNull CaretListener listener);
 
   /**
-   * Removes a listener for receiving notifications about caret movement.
+   * Removes a listener for receiving notifications about caret movement and caret addition/removal
    *
    * @param listener the listener instance.
    */

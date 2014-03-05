@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -627,7 +627,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
             myCurrentEditor = editor;
           }
           EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
-          editor.getCaretModel().addCaretListener(new CaretListener() {
+          editor.getCaretModel().addCaretListener(new CaretAdapter() {
             @Override
             public void caretPositionChanged(CaretEvent e) {
               queueUiUpdate(false);

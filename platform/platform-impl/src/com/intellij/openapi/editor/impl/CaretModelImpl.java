@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MultipleCaretListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
@@ -47,8 +46,7 @@ import java.util.*;
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
   private final EditorImpl myEditor;
   
-  private final EventDispatcher<MultipleCaretListener> myCaretListeners = EventDispatcher.create(MultipleCaretListener.class);
-  private final Map<CaretListener, MultipleCaretListener> myListenerMap = new HashMap<CaretListener, MultipleCaretListener>();
+  private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
   private final boolean mySupportsMultipleCarets = Registry.is("editor.allow.multiple.carets");
 
   private TextAttributes myTextAttributes;
@@ -201,38 +199,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
-    MultipleCaretListener newListener;
-    if (listener instanceof MultipleCaretListener) {
-      newListener = (MultipleCaretListener)listener;
-    }
-    else {
-      newListener = new MultipleCaretListener() {
-        @Override
-        public void caretAdded(CaretEvent e) {
-
-        }
-
-        @Override
-        public void caretRemoved(CaretEvent e) {
-
-        }
-
-        @Override
-        public void caretPositionChanged(CaretEvent e) {
-          listener.caretPositionChanged(e);
-        }
-      };
-    }
-    myListenerMap.put(listener, newListener);
-    myCaretListeners.addListener(newListener);
+    myCaretListeners.addListener(listener);
   }
 
   @Override
   public void removeCaretListener(@NotNull CaretListener listener) {
-    MultipleCaretListener newListener = myListenerMap.remove(listener);
-    if (newListener != null) {
-      myCaretListeners.removeListener(newListener);
-    }
+    myCaretListeners.removeListener(listener);
   }
 
   @Override

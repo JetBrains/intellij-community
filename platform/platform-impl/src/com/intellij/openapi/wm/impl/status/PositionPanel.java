@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,14 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
 
   public void caretPositionChanged(final CaretEvent e) {
     updatePosition(e.getEditor());
+  }
+
+  @Override
+  public void caretAdded(CaretEvent e) {
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
   }
 
   private void updatePosition(final Editor editor) {

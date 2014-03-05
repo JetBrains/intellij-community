@@ -19,8 +19,8 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -71,7 +71,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     myPsiFile = file;
 
     if (editor != null) {
-      EditorFactory.getInstance().getEventMulticaster().addCaretListener(new CaretListener() {
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           if (e.getEditor().equals(myEditor)) {

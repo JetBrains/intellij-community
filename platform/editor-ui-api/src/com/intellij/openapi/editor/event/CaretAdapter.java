@@ -15,21 +15,16 @@
  */
 package com.intellij.openapi.editor.event;
 
-/**
- * In addition to caret movement event received by CaretListener instances, these listeners will also get caret creation/destroying events.
- *
- * @see CaretListener
- * @see com.intellij.openapi.editor.CaretModel#addCaretListener(CaretListener)
- * @see EditorEventMulticaster#addCaretListener(CaretListener)
- */
-public interface MultipleCaretListener extends CaretListener {
-  /**
-   * Called when a new caret was added to the document.
-   */
-  void caretAdded(CaretEvent e);
+public abstract class CaretAdapter implements CaretListener {
+  @Override
+  public void caretPositionChanged(CaretEvent e) {
+  }
 
-  /**
-   * Called when a caret was removed from the document.
-   */
-  void caretRemoved(CaretEvent e);
+  @Override
+  public void caretAdded(CaretEvent e) {
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
+  }
 }

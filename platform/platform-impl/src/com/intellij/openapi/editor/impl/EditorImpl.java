@@ -393,7 +393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
-    myCaretModel.addCaretListener(new MultipleCaretListener() {
+    myCaretModel.addCaretListener(new CaretListener() {
       @Nullable private LightweightHint myCurrentHint = null;
       @Nullable private IndentGuideDescriptor myCurrentCaretGuide = null;
 

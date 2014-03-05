@@ -34,10 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MultipleCaretListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -86,7 +83,7 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChanged = false;
 
   @Nullable private CommandAdapter myCommandListener;
-  @Nullable private MultipleCaretListener myCaretListener;
+  @Nullable private CaretListener myCaretListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentAdapter myEditorDocumentListener;
@@ -146,7 +143,7 @@ public class TemplateState implements Disposable {
       }
     };
 
-    myCaretListener = new MultipleCaretListener() {
+    myCaretListener = new CaretAdapter() {
       @Override
       public void caretAdded(CaretEvent e) {
         if (isMultiCaretMode()) {
@@ -160,9 +157,6 @@ public class TemplateState implements Disposable {
           finishTemplateEditing(false);
         }
       }
-
-      @Override
-      public void caretPositionChanged(CaretEvent e) {}
     };
 
     if (myEditor != null) {

@@ -170,7 +170,7 @@ public class IncrementalSearchHandler {
     };
     document.addDocumentListener(documentListener[0]);
 
-    caretListener[0] = new CaretListener() {
+    caretListener[0] = new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
