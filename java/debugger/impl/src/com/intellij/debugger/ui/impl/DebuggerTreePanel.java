@@ -93,7 +93,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
             getTree().rebuild(context);
           }
         }
-        catch (VMDisconnectedException e) {
+        catch (VMDisconnectedException ignored) {
           // ignored
         }
       }

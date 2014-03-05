@@ -83,11 +83,13 @@ public class FrameVariablesTree extends DebuggerTree {
     }
   }
 
+  @Override
   protected void build(DebuggerContextImpl context) {
     myAnyNewLocals = false;
     buildWhenPaused(context, new RefreshFrameTreeCommand(context));
   }
 
+  @Override
   public void restoreNodeState(DebuggerTreeNodeImpl node) {
     if (myAnyNewLocals) {
       final NodeDescriptorImpl descriptor = node.getDescriptor();
@@ -107,6 +109,7 @@ public class FrameVariablesTree extends DebuggerTree {
   }
 
 
+  @Override
   protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildFrameTreeVariablesCommand(node);
@@ -119,6 +122,7 @@ public class FrameVariablesTree extends DebuggerTree {
       super(stackNode);
     }
     
+    @Override
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
@@ -135,6 +139,7 @@ public class FrameVariablesTree extends DebuggerTree {
           final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
           final Pair<Set<String>, Set<TextWithImports>> usedVars =
             ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+              @Override
               public Pair<Set<String>, Set<TextWithImports>> compute() {
                 return findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
               }
@@ -396,6 +401,7 @@ public class FrameVariablesTree extends DebuggerTree {
       super(context);
     }
 
+    @Override
     public void contextAction() throws Exception {
       DebuggerTreeNodeImpl rootNode;
 
@@ -433,7 +439,7 @@ public class FrameVariablesTree extends DebuggerTree {
               rootNode.add(MessageDescriptor.THREAD_IS_RUNNING);
             }
           }
-          catch (ObjectCollectedException e) {
+          catch (ObjectCollectedException ignored) {
             rootNode.add(new MessageDescriptor(DebuggerBundle.message("label.thread.node.thread.collected", currentThread.name())));
           }
         }
@@ -448,12 +454,14 @@ public class FrameVariablesTree extends DebuggerTree {
 
       final DebuggerTreeNodeImpl rootNode1 = rootNode;
       DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        @Override
         public void run() {
           getMutableModel().setRoot(rootNode1);
           treeChanged();
 
           final TreeModel model = getModel();
           model.addTreeModelListener(new TreeModelAdapter() {
+            @Override
             public void treeStructureChanged(TreeModelEvent e) {
               final Object[] path = e.getPath();
               if (path.length > 0 && path[path.length - 1] == rootNode1) {
