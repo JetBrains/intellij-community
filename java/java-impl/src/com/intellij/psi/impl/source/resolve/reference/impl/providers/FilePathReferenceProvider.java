@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,12 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, String text, int offset, final boolean soft) {
     return getReferencesByElement(element, text, offset, soft, Module.EMPTY_ARRAY);
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element,
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                String text,
                                                int offset,
                                                final boolean soft,

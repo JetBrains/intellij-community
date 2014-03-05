@@ -44,7 +44,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     return INSTANCE.forClass(element.getClass());
   }
 
-  public static int getOffsetInElement(final PsiElement element) {
+  public static int getOffsetInElement(@NotNull PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getNotNullManipulator(element);
     return manipulator.getRangeInElement(element).getStartOffset();
   }
