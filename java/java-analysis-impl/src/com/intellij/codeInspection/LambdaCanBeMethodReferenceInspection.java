@@ -223,6 +223,12 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     else if (body instanceof PsiBlockStatement) {
       return extractMethodCallFromBlock(((PsiBlockStatement)body).getCodeBlock());
     }
+    else if (body instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)body).getExpression();
+      if (expression instanceof PsiCallExpression) {
+        methodCall = (PsiCallExpression)expression;
+      }
+    }
     return methodCall;
   }
 
