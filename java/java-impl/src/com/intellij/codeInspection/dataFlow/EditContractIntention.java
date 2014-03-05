@@ -61,7 +61,7 @@ public class EditContractIntention extends BaseIntentionAction {
     final PsiMethod method = getTargetMethod(project, editor, file);
     if (method != null) {
       boolean hasContract = ControlFlowAnalyzer.findContractAnnotation(method) != null;
-      setText(hasContract ? "Edit method contract" : "Add method contract");
+      setText(hasContract ? "Edit method contract of '" + method.getName() + "'" : "Add method contract to '" + method.getName() + "'");
       return true;
     }
     return false;

@@ -614,7 +614,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private void updateVarStateOnComparison(DfaVariableValue dfaVar, DfaValue value) {
     if (!isUnknownState(dfaVar)) {
-      if (isNull(value)) {
+      if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.NULLABLE));
       } else if (isNotNull(value) && !isNotNull(dfaVar)) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.UNKNOWN));
@@ -815,20 +815,34 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFields() {
+    Set<DfaVariableValue> vars = ContainerUtil.newLinkedHashSet(getChangedVariables());
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
-        for (DfaVariableValue value : aClass.getVariables()) {
-          if (value.isFlushableByCalls()) {
-            doFlush(value, true);
-          }
-        }
+        vars.addAll(aClass.getVariables());
       }
     }
-    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariables())) {
+    for (DfaVariableValue value : vars) {
       if (value.isFlushableByCalls()) {
-        doFlush(value, true);
+        doFlush(value, shouldMarkUnknown(value));
       }
     }
+  }
+
+  private boolean shouldMarkUnknown(DfaVariableValue value) {
+    int eqClassIndex = getEqClassIndex(value);
+    if (eqClassIndex < 0) return false;
+
+    EqClass eqClass = myEqClasses.get(eqClassIndex);
+    if (eqClass == null) return false;
+    if (eqClass.findConstant(true) != null) return true;
+
+    for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
+      if (pair.first == eqClass && pair.second.findConstant(true) != null ||
+          pair.second == eqClass && pair.first.findConstant(true) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Set<DfaVariableValue> getChangedVariables() {

@@ -1,6 +1,6 @@
 class C{
     {
-        Object o;
+        final Object o;
         if (o instanceof Foo) {
             new Runnable() {
                 public void run() {
