@@ -83,6 +83,7 @@ public class PluginHeaderPanel {
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
     myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase());
+    final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId());
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
 
@@ -93,7 +94,7 @@ public class PluginHeaderPanel {
       myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
       switch (node.getStatus()) {
         case PluginNode.STATUS_INSTALLED:
-          myActionId = InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId()) ? ACTION_ID.UPDATE : ACTION_ID.UNINSTALL;
+          myActionId = hasNewerVersion ? ACTION_ID.UPDATE : ACTION_ID.UNINSTALL;
           break;
         case PluginNode.STATUS_DOWNLOADED:
           myActionId = ACTION_ID.RESTART;
@@ -114,10 +115,10 @@ public class PluginHeaderPanel {
       final String version = plugin.getVersion();
       myVersion.setText("Version: " + (version == null ? "N/A" : version));
       myUpdated.setVisible(false);
-      if (!plugin.isBundled()) {
+      if (!plugin.isBundled() || hasNewerVersion) {
         if (((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
           myActionId = ACTION_ID.RESTART;
-        } else if (InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId())) {
+        } else if (hasNewerVersion) {
           myActionId = ACTION_ID.UPDATE;
         } else {
           myActionId = ACTION_ID.UNINSTALL;
