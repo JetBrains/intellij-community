@@ -68,20 +68,20 @@ public class SyncScrollSupport implements Disposable {
   }
 
   private void install2(@NotNull Editor[] editors, @NotNull EditingSides[] sideContainers) {
-    addSlavesScroller(editors[0], new ScrollingContext(FragmentSide.SIDE1, sideContainers[0]));
-    addSlavesScroller(editors[1], new ScrollingContext(FragmentSide.SIDE2, sideContainers[0]));
+    addSlavesScroller(editors[0], new ScrollingContext(FragmentSide.SIDE1, sideContainers[0], FragmentSide.SIDE1));
+    addSlavesScroller(editors[1], new ScrollingContext(FragmentSide.SIDE2, sideContainers[0], FragmentSide.SIDE2));
   }
 
   private void install3(@NotNull Editor[] editors, @NotNull EditingSides[] sideContainers) {
     addSlavesScroller(editors[0],
-                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[0]),
-                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[1]));
+                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[0], FragmentSide.SIDE2),
+                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[1], FragmentSide.SIDE1));
     addSlavesScroller(editors[1],
-                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[0]),
-                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[1]));
+                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[0], FragmentSide.SIDE1),
+                      new ScrollingContext(FragmentSide.SIDE1, sideContainers[1], FragmentSide.SIDE1));
     addSlavesScroller(editors[2],
-                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[1]),
-                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[0]));
+                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[1], FragmentSide.SIDE2),
+                      new ScrollingContext(FragmentSide.SIDE2, sideContainers[0], FragmentSide.SIDE1));
   }
 
   private void addSlavesScroller(@NotNull Editor editor, @NotNull ScrollingContext... contexts) {
@@ -148,6 +148,7 @@ public class SyncScrollSupport implements Disposable {
     if (newRectangle.y == oldRectangle.y && newRectangle.height == oldRectangle.height) return;
     EditingSides sidesContainer = context.getSidesContainer();
     FragmentSide masterSide = context.getMasterSide();
+    FragmentSide masterDiffSide = context.getMasterDiffSide();
 
     Editor master = sidesContainer.getEditor(masterSide);
     Editor slave = sidesContainer.getEditor(masterSide.otherSide());
@@ -165,7 +166,7 @@ public class SyncScrollSupport implements Disposable {
     if (masterCenterLine > master.getDocument().getLineCount()) {
       masterCenterLine = master.getDocument().getLineCount();
     }
-    int scrollToLine = sidesContainer.getLineBlocks().transform(masterSide, masterCenterLine) + 1;
+    int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine) + 1;
     int actualLine = scrollToLine - 1;
 
 
@@ -203,10 +204,12 @@ public class SyncScrollSupport implements Disposable {
   private static class ScrollingContext {
     @NotNull private final EditingSides mySidesContainer;
     @NotNull private final FragmentSide myMasterSide;
+    @NotNull private final FragmentSide myMasterDiffSide;
 
-    public ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer) {
+    public ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer, @NotNull FragmentSide masterDiffSide) {
       mySidesContainer = sidesContainer;
       myMasterSide = masterSide;
+      myMasterDiffSide = masterDiffSide;
     }
 
     @NotNull
@@ -217,6 +220,11 @@ public class SyncScrollSupport implements Disposable {
     @NotNull
     public FragmentSide getMasterSide() {
       return myMasterSide;
+    }
+
+    @NotNull
+    public FragmentSide getMasterDiffSide() {
+      return myMasterDiffSide;
     }
   }
 }
