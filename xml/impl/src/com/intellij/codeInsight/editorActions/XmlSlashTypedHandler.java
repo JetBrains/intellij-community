@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       final int offset = editor.getCaretModel().getOffset();
+      if (file == null) return Result.CONTINUE;
       FileViewProvider provider = file.getViewProvider();
       PsiElement element = provider.findElementAt(offset, XMLLanguage.class);
 
@@ -71,6 +72,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return Result.CONTINUE;
       FileViewProvider provider = file.getViewProvider();
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
@@ -91,7 +93,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
               tag = tag1;
             }
           }
-          EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">");
+          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, tag.getName() + ">", false);
           return Result.STOP;
         }
       }
@@ -100,7 +102,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
         element = file.getViewProvider().findElementAt(offset - 1, file.getLanguage());
-        prevLeaf = element.getNode();
+        prevLeaf = element != null ? element.getNode() : null;
         while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       }
       if(prevLeaf == null) return Result.CONTINUE;
@@ -118,7 +120,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return Result.CONTINUE;
       if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return Result.CONTINUE;
 
-      EditorModificationUtil.insertStringAtCaret(editor, ">");
+      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, ">", false);
       return Result.STOP;
     }
     return Result.CONTINUE;
