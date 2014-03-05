@@ -281,6 +281,10 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
                                                    : EnvironmentUtil.getEnvironmentMap());
     }
+    
+    if (PlatformUtils.isPyCharm()) { //We test the approach on snakes first. If it won't cause problems then apply for all (IDEA-118946)
+      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(this, null);      
+    }
 
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
