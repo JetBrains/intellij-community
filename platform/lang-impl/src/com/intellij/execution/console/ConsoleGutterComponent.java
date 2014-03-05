@@ -3,8 +3,6 @@ package com.intellij.execution.console;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -120,40 +118,34 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
   @Override
   public void paint(Graphics g) {
-    ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
-    try {
-      Rectangle clip = g.getClipBounds();
-      if (clip.height <= 0 || maxContentWidth == 0) {
+    Rectangle clip = g.getClipBounds();
+    if (clip.height <= 0 || maxContentWidth == 0) {
+      return;
+    }
+
+    if (atLineStart) {
+      // don't paint in the overlapped region
+      if (clip.x >= maxContentWidth) {
         return;
       }
 
-      if (atLineStart) {
-        // don't paint in the overlapped region
-        if (clip.x >= maxContentWidth) {
-          return;
-        }
+      g.setColor(editor.getBackgroundColor());
+      g.fillRect(clip.x, clip.y, Math.min(clip.width, maxContentWidth - clip.x), clip.height);
+    }
 
-        g.setColor(editor.getBackgroundColor());
-        g.fillRect(clip.x, clip.y, Math.min(clip.width, maxContentWidth - clip.x), clip.height);
-      }
+    UISettings.setupAntialiasing(g);
 
-      UISettings.setupAntialiasing(g);
+    Graphics2D g2 = (Graphics2D)g;
+    Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    if (!UIUtil.isRetina()) {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
 
-      Graphics2D g2 = (Graphics2D)g;
-      Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isRetina()) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-      }
-
-      try {
-        paintAnnotations(g, clip);
-      }
-      finally {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
-      }
+    try {
+      paintAnnotations(g, clip);
     }
     finally {
-      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }
   }
 
