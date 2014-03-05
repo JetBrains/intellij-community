@@ -44,7 +44,7 @@ public class PropertyUtil {
   private PropertyUtil() {
   }
 
-  public static boolean isSimplePropertyGetter(PsiMethod method) {
+  public static boolean isSimplePropertyGetter(@NotNull PsiMethod method) {
     return hasGetterName(method) && method.getParameterList().getParametersCount() == 0;
   }
 
