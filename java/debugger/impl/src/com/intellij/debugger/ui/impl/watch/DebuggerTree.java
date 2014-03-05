@@ -440,7 +440,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     @Override
-    public final void threadAction() {
+    public void threadAction() {
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();

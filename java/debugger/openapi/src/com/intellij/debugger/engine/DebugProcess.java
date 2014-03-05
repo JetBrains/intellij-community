@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.PositionManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
@@ -45,7 +44,7 @@ public interface DebugProcess {
 
   RequestManager getRequestsManager();
 
-  PositionManagerEx getPositionManager();
+  PositionManager getPositionManager();
 
   VirtualMachineProxy getVirtualMachineProxy();
 

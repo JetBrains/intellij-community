@@ -16,10 +16,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -102,7 +99,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsInLibraryContent = false;
     }
 
-    myXStackFrame = myLocation == null ? null : getDebugProcess().getPositionManager().createStackFrame(myLocation);
+    myXStackFrame = myLocation == null ? null : ((DebugProcessImpl)getDebugProcess()).getPositionManager().createStackFrame(this);
+  }
+
+  @Nullable
+  public XStackFrame getXStackFrame() {
+    return myXStackFrame;
   }
 
   public int getUiIndex() {

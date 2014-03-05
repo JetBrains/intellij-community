@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger;
+package com.intellij.debugger.engine;
 
+import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PositionManagerEx implements PositionManager {
   @Nullable
-  public abstract XStackFrame createStackFrame(@NotNull Location location);
+  public abstract XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl frameDescriptor);
 }

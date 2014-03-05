@@ -52,9 +52,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
@@ -67,9 +70,17 @@ public class FrameVariablesTree extends DebuggerTree {
   private boolean myAnyNewLocals;
   private boolean myAutoWatchMode = false;
 
-  public FrameVariablesTree(Project project) {
+  private final VariablesPanel myVariablesPanel;
+
+  public FrameVariablesTree(@NotNull Project project) {
+    this(project, null);
+  }
+
+  public FrameVariablesTree(@NotNull Project project, @Nullable VariablesPanel variablesPanel) {
     super(project);
+
     getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+    myVariablesPanel = variablesPanel;
   }
 
   public boolean isAutoWatchMode() {
@@ -122,7 +133,21 @@ public class FrameVariablesTree extends DebuggerTree {
     public BuildFrameTreeVariablesCommand(DebuggerTreeNodeImpl stackNode) {
       super(stackNode);
     }
-    
+
+    @Override
+    public void threadAction() {
+      if (myVariablesPanel != null) {
+        StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
+        XStackFrame xStackFrame = stackDescriptor.getXStackFrame();
+        myVariablesPanel.stackChanged(xStackFrame);
+        if (xStackFrame != null) {
+          return;
+        }
+      }
+
+      super.threadAction();
+    }
+
     @Override
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
