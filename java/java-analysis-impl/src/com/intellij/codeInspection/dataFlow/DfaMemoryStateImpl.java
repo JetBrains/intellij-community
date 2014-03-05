@@ -614,7 +614,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private void updateVarStateOnComparison(DfaVariableValue dfaVar, DfaValue value) {
     if (!isUnknownState(dfaVar)) {
-      if (isNull(value)) {
+      if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.NULLABLE));
       } else if (isNotNull(value) && !isNotNull(dfaVar)) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.UNKNOWN));
