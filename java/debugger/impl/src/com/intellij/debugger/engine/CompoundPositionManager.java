@@ -19,7 +19,6 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -29,10 +28,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CompoundPositionManager implements PositionManager{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.CompoundPositionManager");
+public class CompoundPositionManager implements PositionManager {
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
 
+  @SuppressWarnings("UnusedDeclaration")
   public CompoundPositionManager() {
   }
 
@@ -45,6 +44,7 @@ public class CompoundPositionManager implements PositionManager{
     myPositionManagers.add(0, manager);
   }
 
+  @Override
   public SourcePosition getSourcePosition(Location location) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
@@ -56,6 +56,7 @@ public class CompoundPositionManager implements PositionManager{
     return null;
   }
 
+  @Override
   @NotNull
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) {
     for (PositionManager positionManager : myPositionManagers) {
@@ -68,6 +69,7 @@ public class CompoundPositionManager implements PositionManager{
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
@@ -80,6 +82,7 @@ public class CompoundPositionManager implements PositionManager{
     return Collections.emptyList();
   }
 
+  @Override
   public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {

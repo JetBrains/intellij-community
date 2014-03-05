@@ -70,7 +70,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
       }
       catch (InternalException e) {
-        if (e.errorCode() == 23 /*INVALID_METHODID accoeding to JDI sources*/) {
+        if (e.errorCode() == 23 /*INVALID_METHODID according to JDI sources*/) {
           myIsObsolete = Boolean.TRUE;
           return true;
         }
@@ -83,6 +83,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return false;
   }
 
+  @Override
   protected void clearCaches() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (LOG.isDebugEnabled()) {
@@ -100,6 +101,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
    * Use with caution. Better access stackframe data through the Proxy's methods
    */
 
+  @Override
   public StackFrame getStackFrame() throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
@@ -113,7 +115,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       catch (IndexOutOfBoundsException e) {
         throw new EvaluateException(e.getMessage(), e);
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
       }
       catch (IncompatibleThreadStateException e) {
@@ -124,6 +126,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myStackFrame;
   }
 
+  @Override
   public int getFrameIndex() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
@@ -151,10 +154,12 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 //    return false;
 //  }
 
+  @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     return (VirtualMachineProxyImpl) myTimer;
   }
 
+  @Override
   public Location location() throws EvaluateException {
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -172,6 +177,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return null;
   }
 
+  @Override
   public ThreadReferenceProxyImpl threadProxy() {
     return myThreadProxy;
   }
@@ -197,13 +203,13 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           }
           break;
         }
-        catch (InvalidStackFrameException e) {
+        catch (InvalidStackFrameException ignored) {
           clearCaches();
         }
       }
     }
     catch (InternalException e) {
-      // supress some internal errors caused by bugs in specific JDI implementations
+      // suppress some internal errors caused by bugs in specific JDI implementations
       if(e.errorCode() != 23) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
@@ -238,6 +244,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return Collections.emptyList();
   }
 
+  @Override
   public LocalVariableProxyImpl visibleVariableByName(String name) throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final LocalVariable variable = visibleVariableByNameInt(name);
@@ -332,7 +339,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           myAllValues.put(variable, value);
         }
       }
-      catch (InconsistentDebugInfoException e) {
+      catch (InconsistentDebugInfoException ignored) {
         clearCaches();
         throw EvaluateExceptionUtil.INCONSISTEND_DEBUG_INFO;
       }
@@ -388,12 +395,13 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     try {
       return var.getVariable().isVisible(getStackFrame());
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException ignored) {
       // can be thrown if frame's method is different than variable's method
       return false;
     }
   }
 
+  @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
     if(myClassLoader == null) {
       myClassLoader = location().declaringType().classLoader();
