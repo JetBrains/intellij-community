@@ -187,13 +187,14 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         }
       }
       else if (!assertNotNull(psiVariable.getModifierList()).hasModifierProperty(PsiModifier.FINAL)) {
-        final PsiExpression newInitializer = factory.createExpressionFromText("new " + toType.getPresentableText() + "()", psiVariable);
+        final PsiExpression newInitializer = factory.createExpressionFromText("new " + toType.getCanonicalText() + "()", psiVariable);
         if (psiVariable instanceof PsiLocalVariable) {
           ((PsiLocalVariable)psiVariable).setInitializer(newInitializer);
         }
         else if (psiVariable instanceof PsiField) {
           ((PsiField)psiVariable).setInitializer(newInitializer);
         }
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiVariable.getInitializer());
       }
 
       PsiElement replaced = assertNotNull(psiVariable.getTypeElement()).replace(factory.createTypeElement(toType));
