@@ -110,18 +110,6 @@ public class InferenceIncorporationPhase {
           }
         }
       }
-
-      //todo no such a rule in spec?!
-      for (PsiType lowerBound : lowerBounds) {
-        if (mySession.isProperType(lowerBound)) {
-          final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(inferenceVariable.getParameter(), lowerBound);
-          for (PsiType upperBound : upperBounds) {
-            if (!mySession.isProperType(upperBound)) {
-              addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), lowerBound));
-            }
-          }
-        }
-      }
     }
 
     for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {

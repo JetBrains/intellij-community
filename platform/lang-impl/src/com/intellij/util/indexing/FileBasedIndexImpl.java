@@ -2117,7 +2117,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
       else {
-        myFilesToUpdate.remove(file);
+        boolean removed = myFilesToUpdate.remove(file);
+        if (removed) {
+          // file was scheduled for update, it might mean we have data in indices which would have been lazily updated
+          indexedIdsToUpdate.addAll(calculateAffectedContentIndices(file));
+        }
 
         if (!indexedIdsToUpdate.isEmpty()) {
           myFutureInvalidations.offer(new InvalidationTask(file) {
@@ -2304,13 +2308,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         try {
           if (onlyRemoveOutdatedData || isTooLarge(file)) {
             // on shutdown there is no need to re-index the file, just remove outdated data from indices
-            final List<ID<?, ?>> affected = new ArrayList<ID<?, ?>>();
-            for (final ID<?, ?> indexId : getAffectedIndexCandidates(file)) {  // non requiring content indices should be flushed
-              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                affected.add(indexId);
-              }
-            }
-            removeFileDataFromIndices(affected, file);
+            removeFileDataFromIndices(calculateAffectedContentIndices(file), file);
             if (onlyRemoveOutdatedData && file instanceof VirtualFileSystemEntry) {
               ((VirtualFileSystemEntry)file).setFileIndexed(false); // we should be able index this file via UnindexedFileFinder later
             }
@@ -2353,6 +2351,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       myContentlessIndicesUpdateQueue.signalUpdateEnd();
     }
+  }
+
+  private List<ID<?, ?>> calculateAffectedContentIndices(VirtualFile file) {
+    final List<ID<?, ?>> affected = new ArrayList<ID<?, ?>>();
+    for (final ID<?, ?> indexId : getAffectedIndexCandidates(file)) {  // non requiring content indices should be flushed
+      if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+        affected.add(indexId);
+      }
+    }
+    return affected;
   }
 
   private class UnindexedFilesFinder implements CollectingContentIterator {

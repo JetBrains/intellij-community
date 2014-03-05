@@ -150,6 +150,11 @@ public class TextComponentCaretModel implements CaretModel {
     return myCaret;
   }
 
+  @Override
+  public int getCaretCount() {
+    return 1;
+  }
+
   @NotNull
   @Override
   public List<Caret> getAllCarets() {

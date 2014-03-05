@@ -85,6 +85,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     myNodeManager = createNodeManager(project);
 
     final TreeBuilder model = new TreeBuilder(this) {
+      @Override
       public void buildChildren(TreeBuilderNode node) {
         final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
         if (debuggerTreeNode.getDescriptor() instanceof DefaultNodeDescriptor) {
@@ -93,24 +94,29 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         buildNode(debuggerTreeNode);
       }
 
+      @Override
       public boolean isExpandable(TreeBuilderNode builderNode) {
         return DebuggerTree.this.isExpandable((DebuggerTreeNodeImpl)builderNode);
       }
     };
     model.setRoot(getNodeFactory().getDefaultNode());
     model.addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesChanged(TreeModelEvent event) {
         hideTooltip();
       }
 
+      @Override
       public void treeNodesInserted(TreeModelEvent event) {
         hideTooltip();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent event) {
         hideTooltip();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent event) {
         hideTooltip();
       }
@@ -126,6 +132,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     return new NodeManagerImpl(project, this);
   }
 
+  @Override
   public void dispose() {
     myNodeManager.dispose();
     myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
@@ -137,8 +144,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     return descriptor.isExpandable();
   }
 
+  @Override
   public Object getData(String dataId) {
-    if (DebuggerTree.DATA_KEY.is(dataId)) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     return null;
@@ -234,6 +242,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
+  @Override
   public void scrollRectToVisible(Rectangle aRect) {
     // see IDEADEV-432
     aRect.width += aRect.x;
@@ -336,9 +345,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     myDebuggerContext = context;
     saveState();
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
       protected void action() throws Exception {
         getNodeFactory().setHistoryByContext(context);
       }
+      @Override
       public Priority getPriority() {
         return Priority.NORMAL;
       }
@@ -371,6 +382,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   protected abstract static class RefreshDebuggerTreeCommand extends SuspendContextCommandImpl {
     private final DebuggerContextImpl myDebuggerContext;
 
+    @Override
     public Priority getPriority() {
       return Priority.NORMAL;
     }
@@ -399,6 +411,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       myNode = node;
     }
 
+    @Override
     public Priority getPriority() {
       return Priority.NORMAL;
     }
@@ -409,6 +422,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     protected void updateUI(final boolean scrollToVisible) {
       DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        @Override
         public void run() {
           myNode.removeAllChildren();
           for (DebuggerTreeNode debuggerTreeNode : myChildren) {
@@ -425,31 +439,31 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       super(stackNode);
     }
 
-    public final void threadAction() {
+    @Override
+    public void threadAction() {
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
         if (frame == null) {
           return;
         }
-        final Location location = frame.location();
-
-        final ObjectReference thisObjectReference = frame.thisObject();
 
         final DebuggerContextImpl debuggerContext = getDebuggerContext();
         final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
-
         if (!debuggerContext.isEvaluationPossible()) {
           myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
         }
 
+        final Location location = frame.location();
+        LOG.assertTrue(location != null);
+
+        final ObjectReference thisObjectReference = frame.thisObject();
         final NodeDescriptor descriptor;
         if (thisObjectReference != null) {
           descriptor = myNodeManager.getThisDescriptor(stackDescriptor, thisObjectReference);
         }
         else {
-          final ReferenceType type = location.method().declaringType();
-          descriptor = myNodeManager.getStaticDescriptor(stackDescriptor, type);
+          descriptor = myNodeManager.getStaticDescriptor(stackDescriptor, location.method().declaringType());
         }
         myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
 
@@ -483,10 +497,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         // add last method return value if any
         final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
         if (methodValuePair != null) {
-          final ValueDescriptorImpl returnValueDescriptor =
-            myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
-          final DebuggerTreeNodeImpl methodReturnValueNode = myNodeManager.createNode(returnValueDescriptor, evaluationContext);
-          myChildren.add(1, methodReturnValueNode);
+          ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+          myChildren.add(1, myNodeManager.createNode(returnValueDescriptor, evaluationContext));
         }
         // add context exceptions
         for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(getSuspendContext())) {
@@ -541,6 +553,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       super(node);
     }
 
+    @Override
     public void threadAction() {
       final DebuggerTreeNodeImpl node = getNode();
       ValueDescriptorImpl descriptor = (ValueDescriptorImpl)node.getDescriptor();
@@ -563,19 +576,23 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
     }
 
+    @Override
     public NodeManagerImpl getNodeManager() {
 
       return myNodeManager;
     }
 
+    @Override
     public NodeManagerImpl getDescriptorManager() {
       return myNodeManager;
     }
 
+    @Override
     public ValueDescriptorImpl getParentDescriptor() {
       return (ValueDescriptorImpl)getNode().getDescriptor();
     }
 
+    @Override
     public void setChildren(final List<DebuggerTreeNode> children) {
       myChildren.addAll(children);
       updateUI(false);
@@ -587,6 +604,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       super(node);
     }
 
+    @Override
     public void threadAction() {
       final StaticDescriptorImpl sd = (StaticDescriptorImpl)getNode().getDescriptor();
       final ReferenceType refType = sd.getType();
@@ -609,6 +627,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       super(threadNode);
     }
 
+    @Override
     public void threadAction() {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)getNode().getDescriptor());
       ThreadReferenceProxyImpl threadProxy = threadDescriptor.getThreadReference();
@@ -653,6 +672,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       myNode = node;
     }
 
+    @Override
     protected void action() throws Exception {
       ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)myNode.getDescriptor();
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
@@ -701,6 +721,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     protected void updateUI(final boolean scrollToVisible) {
       DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        @Override
         public void run() {
           myNode.removeAllChildren();
           for (DebuggerTreeNode debuggerTreeNode : myChildren) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -37,11 +39,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
@@ -88,9 +93,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             }
 
             if (tokenType == XmlTokenType.XML_TAG_END ||
-                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
-               ) {
-              editor.getCaretModel().moveToOffset(offset + 1);
+                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1) {
+              EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               return Result.STOP;
             }
@@ -149,10 +153,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (!(element instanceof XmlTag)) {
         if (element instanceof XmlTokenImpl &&
             element.getPrevSibling() !=null &&
-            element.getPrevSibling().getText().equals("<")
-           ) {
+            element.getPrevSibling().getText().equals("<")) {
           // tag is started and there is another text in the end
-          editor.getDocument().insertString(offset, "</" + element.getText() + ">");
+          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + element.getText() + ">", false, 0);
         }
         return Result.CONTINUE;
       }
@@ -230,36 +233,38 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         if (hasBalance) return Result.CONTINUE; 
       }
 
-      TextRange cdataReformatRange = null;
+      Collection<TextRange> cdataReformatRanges = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
+        cdataReformatRanges = ContainerUtil.newSmartList();
         if (cDataContainer.requiresCdataBracesInContext(tag)) {
-          int rangeStart = offset;
           @NonNls final String cDataStart = "><![CDATA[";
           final String inserted = cDataStart + "\n]]>";
-          editor.getDocument().insertString(offset, inserted);
-          final int newoffset = offset + cDataStart.length();
-          editor.getCaretModel().moveToOffset(newoffset);
-          offset += inserted.length();
-          cdataReformatRange = new TextRange(rangeStart, offset + 1);
+          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, inserted, false, cDataStart.length());
+          for (Caret caret : editor.getCaretModel().getAllCarets()) {
+            int caretOffset = caret.getOffset();
+            if (caretOffset >= cDataStart.length()) {
+              cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length()));
+            }
+          }
         }
       }
 
-      editor.getDocument().insertString(offset, "</" + name + ">");
+      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + name + ">", false, 0);
 
-      if (cdataReformatRange != null) {
+      if (cdataReformatRanges != null && !cdataReformatRanges.isEmpty()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         try {          
-          CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRange.getStartOffset(), cdataReformatRange.getEndOffset());
+          CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRanges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
-      return cdataReformatRange != null ? Result.STOP : Result.CONTINUE;
+      return cdataReformatRanges != null && !cdataReformatRanges.isEmpty() ? Result.STOP : Result.CONTINUE;
     }
     return Result.CONTINUE;
   }

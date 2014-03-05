@@ -17,9 +17,9 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.PositionManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -100,10 +100,10 @@ public class CompoundPositionManager extends PositionManagerEx {
 
   @Nullable
   @Override
-  public XStackFrame createStackFrame(@NotNull Location location) {
+  public XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl frameDescriptor) {
     for (PositionManager positionManager : myPositionManagers) {
       if (positionManager instanceof PositionManagerEx) {
-        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(location);
+        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(frameDescriptor);
         if (xStackFrame != null) {
           return xStackFrame;
         }

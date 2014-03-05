@@ -167,7 +167,7 @@ public class TemplateState implements Disposable {
   }
 
   private boolean isMultiCaretMode() {
-    return myEditor != null && myEditor.getCaretModel().supportsMultipleCarets() && myEditor.getCaretModel().getAllCarets().size() > 1;
+    return myEditor != null && myEditor.getCaretModel().getCaretCount() > 1;
   }
 
   @Override

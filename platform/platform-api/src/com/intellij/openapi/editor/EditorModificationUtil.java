@@ -165,7 +165,7 @@ public class EditorModificationUtil {
     if (text == null) return null;
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      int caretCount = editor.getCaretModel().getAllCarets().size();
+      int caretCount = editor.getCaretModel().getCaretCount();
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override

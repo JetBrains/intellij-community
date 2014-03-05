@@ -181,6 +181,11 @@ public interface CaretModel {
   Caret getPrimaryCaret();
 
   /**
+   * Returns number of carets currently existing in the document
+   */
+  int getCaretCount();
+
+  /**
    * Returns all carets currently existing in the document, ordered by their position in the document.
    */
   @NotNull
