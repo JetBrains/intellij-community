@@ -823,15 +823,19 @@ public class InferenceSession {
         MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
       }
 
-      for (ConstraintFormula additionalConstraint : subset) {
-        additionalConstraint.apply(substitutor);
-      }
+      try {
+        for (ConstraintFormula additionalConstraint : subset) {
+          additionalConstraint.apply(substitutor);
+        }
 
-      myConstraints.addAll(subset);
-      if (!repeatInferencePhases(true)) {
-        return false;
+        myConstraints.addAll(subset);
+        if (!repeatInferencePhases(true)) {
+          return false;
+        }
       }
-
+      finally {
+        LambdaUtil.ourFunctionTypes.set(null);
+      }
     }
     return true;
   }

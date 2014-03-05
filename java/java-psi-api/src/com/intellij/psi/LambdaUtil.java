@@ -33,6 +33,7 @@ import java.util.*;
  * Date: 7/17/12
  */
 public class LambdaUtil {
+  public static ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
   @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
@@ -318,6 +319,13 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
+                final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+                if (map != null) {
+                  final PsiType type = map.get(expression);
+                  if (type != null) {
+                    return type;
+                  }
+                }
                 return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
