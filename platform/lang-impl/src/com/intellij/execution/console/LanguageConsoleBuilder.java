@@ -251,7 +251,7 @@ public final class LanguageConsoleBuilder {
           int w = getWidth();
           int h = getHeight();
           int lineStartGutterWidth = lineStartGutter.getPreferredSize().width;
-          lineStartGutter.setBounds(0, 0, lineStartGutterWidth + gutterContentProvider.getStartLineOverlap(editor.getEditor()), h);
+          lineStartGutter.setBounds(0, 0, lineStartGutterWidth + gutterContentProvider.getLineStartGutterOverlap(editor.getEditor()), h);
 
           editor.setBounds(lineStartGutterWidth, 0, w - lineStartGutterWidth, h);
 

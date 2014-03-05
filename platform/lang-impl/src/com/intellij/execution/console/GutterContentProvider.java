@@ -34,7 +34,7 @@ public abstract class GutterContentProvider {
     return true;
   }
 
-  public int getStartLineOverlap(@NotNull Editor editor) {
+  public int getLineStartGutterOverlap(@NotNull Editor editor) {
     return 0;
   }
 }

@@ -45,7 +45,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     this.atLineStart = atLineStart;
 
     if (atLineStart) {
-      setOpaque(gutterContentProvider.getStartLineOverlap(editor) == 0);
+      setOpaque(gutterContentProvider.getLineStartGutterOverlap(editor) == 0);
     }
     else {
       addListeners();
@@ -123,13 +123,18 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
     try {
       Rectangle clip = g.getClipBounds();
-      if (clip.height < 0 || maxContentWidth == 0) {
+      if (clip.height <= 0 || maxContentWidth == 0) {
         return;
       }
 
       if (atLineStart) {
+        // don't paint in the overlapped region
+        if (clip.x >= maxContentWidth) {
+          return;
+        }
+
         g.setColor(editor.getBackgroundColor());
-        g.fillRect(clip.x, clip.y, clip.width == getWidth() ? (clip.width - gutterContentProvider.getStartLineOverlap(editor)) : clip.width, clip.height);
+        g.fillRect(clip.x, clip.y, Math.min(clip.width, maxContentWidth - clip.x), clip.height);
       }
 
       UISettings.setupAntialiasing(g);
