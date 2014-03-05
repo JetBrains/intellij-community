@@ -59,17 +59,21 @@ public class MessageDescriptor extends NodeDescriptorImpl {
     return myKind;
   }
 
+  @Override
   public String getLabel() {
     return myMessage;
   }
 
+  @Override
   public boolean isExpandable() {
     return false;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myMessage;
