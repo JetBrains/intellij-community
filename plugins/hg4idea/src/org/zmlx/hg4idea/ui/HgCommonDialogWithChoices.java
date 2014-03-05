@@ -144,9 +144,6 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
 
   protected ValidationInfo doValidate() {
     String message = "You have to specify appropriate name or revision.";
-    if (StringUtil.isEmptyOrSpaces(getTargetValue())) {
-      return new ValidationInfo(message, myBranchesBorderPanel);
-    }
-    return null;
+    return StringUtil.isEmptyOrSpaces(getTargetValue()) ? new ValidationInfo(message, myBranchesBorderPanel) : null;
   }
 }

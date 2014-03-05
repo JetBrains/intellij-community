@@ -13,8 +13,6 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -151,24 +149,14 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public void updateRepository() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final HgRepository repo = hgRepositorySelectorComponent.getRepository();
-        final String defaultPath = HgUtil.getRepositoryDefaultPushPath(repo);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            addPathsFromHgrc(repo.getRoot());
-            if (defaultPath != null) {
-              updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
-              myCurrentRepositoryUrl = defaultPath;
-            }
-            updateComboBoxes(repo);
-          }
-        }, ModalityState.stateForComponent(getRootPane()));
-      }
-    });
+    HgRepository repo = hgRepositorySelectorComponent.getRepository();
+    String defaultPath = HgUtil.getRepositoryDefaultPushPath(repo);
+    addPathsFromHgrc(repo.getRoot());
+    if (defaultPath != null) {
+      updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
+      myCurrentRepositoryUrl = defaultPath;
+    }
+    updateComboBoxes(repo);
   }
 
   private void updateComboBoxes(HgRepository repo) {

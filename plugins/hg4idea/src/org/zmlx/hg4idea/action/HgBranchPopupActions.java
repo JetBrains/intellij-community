@@ -335,7 +335,8 @@ public class HgBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       final UpdatedFiles updatedFiles = UpdatedFiles.create();
       final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
-      hgMergeCommand.setRevision(myBranchName);
+      hgMergeCommand.setRevision(myBranchName);//there is no difference between branch or revision or bookmark as parameter to merge,
+      // we need just a string
       final HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
       new Task.Backgroundable(myProject, "Merging changes...") {
         @Override

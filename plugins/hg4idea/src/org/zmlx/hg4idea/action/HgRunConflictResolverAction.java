@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -28,16 +29,8 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
   @Override
   public void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
-    final HgRepository repository;
-    if (repositories.size() > 1) {
-      repository = letUserSelectRepository(project, repositories, selectedRepo);
-    }
-    else if (repositories.size() == 1) {
-      repository = repositories.iterator().next();
-    }
-    else {
-      repository = null;
-    }
+    final HgRepository repository = repositories.size() > 1 ? letUserSelectRepository(project, repositories, selectedRepo) :
+                                    ContainerUtil.getFirstItem(repositories);
     if (repository != null) {
       new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.run.conflict.resolver.description")) {
 
@@ -50,17 +43,11 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
     }
   }
 
-
   @Nullable
   private static HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
                                                       @Nullable HgRepository selectedRepo) {
     HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project, repositories, selectedRepo);
     dialog.show();
-    if (dialog.isOK()) {
-      return dialog.getRepository();
-    }
-    else {
-      return null;
-    }
+    return dialog.isOK() ? dialog.getRepository() : null;
   }
 }

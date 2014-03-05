@@ -68,8 +68,7 @@ public class HgMerge extends HgAbstractGlobalAction {
     hgMergeCommand.setRevision(targetValue);
 
     try {
-      new HgHeadMerger(project, hgMergeCommand)
-        .merge(repo);
+      new HgHeadMerger(project, hgMergeCommand).merge(repo);
       new HgConflictResolver(project, updatedFiles).resolve(repo);
     }
     catch (VcsException e) {
