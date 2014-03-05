@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
+  private static final Logger LOG = Logger.getInstance(JavaSourceFilterScope.class);
+
   @Nullable
   private final ProjectFileIndex myIndex;
 
@@ -40,8 +43,13 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     super(delegate);
 
     Project project = getProject();
-    myIndex = project != null ? ProjectRootManager.getInstance(project).getFileIndex()
-                              : null;
+    if (project != null) {
+      myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    }
+    else {
+      myIndex = null;
+      LOG.error("delegate.getProject() == null, delegate.getClass() == " + delegate.getClass());
+    }
   }
 
   @Override
