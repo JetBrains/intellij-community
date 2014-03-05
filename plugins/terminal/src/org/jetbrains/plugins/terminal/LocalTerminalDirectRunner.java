@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.TaskExecutor;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +68,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm");
+    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
     try {
       return PtyProcess.exec(getCommand(), envs, currentProjectFolder());
     }
