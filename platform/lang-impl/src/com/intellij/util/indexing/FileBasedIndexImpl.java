@@ -2101,7 +2101,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
 
-      final Collection<ID<?, ?>> indexedIdsToUpdate = ContainerUtil.intersection(existingIndexedIds, myRequiringContentIndices);
+      Collection<ID<?, ?>> indexedIdsToUpdate = ContainerUtil.intersection(existingIndexedIds, myRequiringContentIndices);
 
       if (markForReindex) {
         // only mark the file as unindexed, reindex will be done lazily
@@ -2120,14 +2120,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         boolean removed = myFilesToUpdate.remove(file);
         if (removed) {
           // file was scheduled for update, it might mean we have data in indices which would have been lazily updated
-          indexedIdsToUpdate.addAll(calculateAffectedContentIndices(file));
+          List<ID<?, ?>> affectedContentIndices = calculateAffectedContentIndices(file);
+          affectedContentIndices.addAll(indexedIdsToUpdate);
+          indexedIdsToUpdate = affectedContentIndices;
         }
 
         if (!indexedIdsToUpdate.isEmpty()) {
+          final Collection<ID<?, ?>> finalIndexedIdsToUpdate = indexedIdsToUpdate;
           myFutureInvalidations.offer(new InvalidationTask(file) {
             @Override
             public void run() {
-              removeFileDataFromIndices(indexedIdsToUpdate, file);
+              removeFileDataFromIndices(finalIndexedIdsToUpdate, file);
             }
           });
         }
