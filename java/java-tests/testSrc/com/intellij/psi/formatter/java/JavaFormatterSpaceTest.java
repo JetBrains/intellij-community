@@ -540,4 +540,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = false;
     doTextTest(before, "public class Foo<T extends Bar&Abba, U> {\n}");
   }
+
+  public void testInnerTypeAnnotations() {
+    doTextTest(
+      "class C<@TA(1)T> {\n" +
+      "    L<@TA(2)A> f = (@TA(3)  A) new @TA(4)  A() {\n" +
+      "    };\n" +
+      "}",
+
+      "class C<@TA(1) T> {\n" +
+      "    L<@TA(2) A> f = (@TA(3) A) new @TA(4) A() {\n" +
+      "    };\n" +
+      "}"
+    );
+  }
 }
