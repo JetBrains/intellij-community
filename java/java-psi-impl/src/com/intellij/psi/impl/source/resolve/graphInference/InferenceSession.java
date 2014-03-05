@@ -995,8 +995,9 @@ public class InferenceSession {
         return true;
       }
 
-      if (sReturnType == PsiType.VOID && session != null) {
-        return false;
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
+      if (sReturnType == PsiType.VOID) {
+        return returnExpressions.isEmpty() && session == null;
       }
 
       if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
@@ -1005,15 +1006,14 @@ public class InferenceSession {
 
         //Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, 
         //then these rules are applied recursively to R1 and R2, for each result expression in expi.
-        final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
         if (!isFunctionalTypeMoreSpecific(sReturnType, tReturnType, session, returnExpressions.toArray(new PsiExpression[returnExpressions.size()]))) {
           return false;
         }
       } else {
-        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
-        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
+        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
         if (sPrimitive ^ tPrimitive) {
-          for (PsiExpression returnExpression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg)) {
+          for (PsiExpression returnExpression : returnExpressions) {
             if (!PsiPolyExpressionUtil.isPolyExpression(returnExpression)) {
               final PsiType returnExpressionType = returnExpression.getType();
               if (sPrimitive) {
