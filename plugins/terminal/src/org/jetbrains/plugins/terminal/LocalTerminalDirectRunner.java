@@ -67,7 +67,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
-    envs.put("TERM", "xterm");
+    envs.put("TERM", "xterm-256color");
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
     try {
       return PtyProcess.exec(getCommand(), envs, currentProjectFolder());
