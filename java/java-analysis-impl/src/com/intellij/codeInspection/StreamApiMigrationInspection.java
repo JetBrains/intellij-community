@@ -111,10 +111,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   if (effectivelyFinal[0]) {
                     if (isCollectCall(body)) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
-                                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithCollectCallFix());
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
                     } else if (!isTrivial(body, statement.getIterationParameter(), iteratedValueType)) {
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
-                                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithForeachCallFix());
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithForeachCallFix());
                     }
                   }
                 }
