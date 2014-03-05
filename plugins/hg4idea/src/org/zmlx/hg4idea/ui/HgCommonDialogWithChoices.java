@@ -118,7 +118,6 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
   private void updateRepository() {
     HgRepository repo = hgRepositorySelectorComponent.getRepository();
     branchSelector.setModel(new DefaultComboBoxModel(repo.getOpenedBranches().toArray()));
-    tagSelector.setModel(new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getTags()).toArray()));
     DefaultComboBoxModel tagComboBoxModel = new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getTags()).toArray());
     tagComboBoxModel.addElement("tip");    //HgRepository does not store 'tip' tag because it is internal and not included in tags file
     tagSelector.setModel(tagComboBoxModel);

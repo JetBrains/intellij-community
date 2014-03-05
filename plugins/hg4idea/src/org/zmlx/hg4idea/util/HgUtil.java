@@ -667,6 +667,7 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    Collections.sort(names);
     return names;
   }
 
