@@ -22,6 +22,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.EnvironmentUtil;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -308,21 +312,19 @@ public class DateFormatUtil {
     DateFormat[] formats = new DateFormat[4];
 
     boolean loaded = false;
-    if (SystemInfo.isMac) {
-      try {
+    try {
+      if (SystemInfo.isWinVistaOrNewer) {
+        loaded = getWindowsFormats(formats);
+      }
+      else if (SystemInfo.isMac) {
         loaded = getMacFormats(formats);
       }
-      catch (Throwable t) {
-        LOG.error(t);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      try {
+      else if (SystemInfo.isUnix) {
         loaded = getUnixFormats(formats);
       }
-      catch (Throwable t) {
-        LOG.error(t);
-      }
+    }
+    catch (Throwable t) {
+      LOG.error(t);
     }
 
     if (!loaded) {
@@ -393,6 +395,40 @@ public class DateFormatUtil {
     formats[1] = DateFormat.getTimeInstance(DateFormat.SHORT, locale);
     formats[2] = DateFormat.getTimeInstance(DateFormat.MEDIUM, locale);
     formats[3] = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
+
+    return true;
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface Kernel32 extends StdCallLibrary {
+    int LOCALE_SSHORTDATE  = 0x0000001F;
+    int LOCALE_SSHORTTIME  = 0x00000079;
+    int LOCALE_STIMEFORMAT = 0x00001003;
+
+    int GetLocaleInfoEx(String localeName, int lcType, Pointer lcData, int dataSize);
+  }
+
+  private static boolean getWindowsFormats(DateFormat[] formats) {
+    Kernel32 kernel32 = (Kernel32)Native.loadLibrary("Kernel32", Kernel32.class);
+    int dataSize = 128, rv;
+    Memory data = new Memory(dataSize);
+
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTDATE, data, dataSize);
+    assert rv > 1 : rv;
+    String shortDate = new String(data.getCharArray(0, rv - 1));
+
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
+    assert rv > 1 : rv;
+    String shortTime = new String(data.getCharArray(0, rv - 1));
+
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
+    assert rv > 1 : rv;
+    String mediumTime = new String(data.getCharArray(0, rv - 1));
+
+    formats[0] = new SimpleDateFormat(shortDate);
+    formats[1] = new SimpleDateFormat(shortTime);
+    formats[2] = new SimpleDateFormat(mediumTime);
+    formats[3] = new SimpleDateFormat(shortDate + " " + shortTime);
 
     return true;
   }
