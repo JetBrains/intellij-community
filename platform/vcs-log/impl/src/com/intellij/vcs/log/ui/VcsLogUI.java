@@ -23,6 +23,7 @@ import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Set;
@@ -185,6 +186,11 @@ public class VcsLogUI {
     if (answer == null) {
       return;
     }
+    GraphChange graphChange = answer.getGraphChange();
+    if (graphChange != null) {
+      ((AbstractTableModel)(getTable().getModel())).fireTableStructureChanged();
+    }
+
     GraphActionRequest actionRequest = answer.getActionRequest();
     if (actionRequest instanceof JumpToRowActionRequest) {
       int row = ((JumpToRowActionRequest)actionRequest).getRow();
