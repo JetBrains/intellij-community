@@ -125,13 +125,8 @@ public class VcsLogUI {
     return rowsToSelect;
   }
 
-  public void updateUI() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myMainFrame.getGraphTable().repaint();
-      }
-    });
+  public void repaintUI() {
+    myMainFrame.getGraphTable().repaint();
   }
 
   public void showAll() {
@@ -185,7 +180,7 @@ public class VcsLogUI {
   }
 
   public void handleAnswer(@Nullable GraphAnswer answer) {
-    updateUI();
+    repaintUI();
 
     if (answer == null) {
       return;
@@ -267,7 +262,7 @@ public class VcsLogUI {
             myDataPack = dataPack;
             setModel(newModel);
             myMainFrame.updateDataPack(myDataPack);
-            updateUI();
+            repaintUI();
 
             if (newModel.getRowCount() == 0) { // getValueAt won't be called for empty model => need to explicitly request to load more
               newModel.requestToLoadMore(EmptyRunnable.INSTANCE);

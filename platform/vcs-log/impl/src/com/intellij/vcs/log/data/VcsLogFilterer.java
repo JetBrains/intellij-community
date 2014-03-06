@@ -122,7 +122,7 @@ public class VcsLogFilterer {
           }
         }
         myUI.setModel(model);
-        myUI.updateUI();
+        myUI.repaintUI();
         onSuccess.run();
       }
     }, maxCount);
