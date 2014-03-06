@@ -56,6 +56,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
@@ -173,13 +174,16 @@ public class BreakpointManager {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
-        if (highlighter != null) {
-          final GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-          if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-              myProject, editor, breakpoint, renderer
-            );
+        XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
+        if (xBreakpoint instanceof XLineBreakpointImpl) {
+          RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
+          if (highlighter != null) {
+            GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+            if (renderer != null) {
+              DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+                myProject, editor, breakpoint.myXBreakpoint, renderer
+              );
+            }
           }
         }
       }

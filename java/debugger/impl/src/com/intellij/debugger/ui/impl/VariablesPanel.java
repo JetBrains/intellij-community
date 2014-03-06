@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.xdebugger.XSourcePosition;
@@ -60,6 +61,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
     myCards.add(frameTree, TREE);
 
     myXTree = new MyXVariablesView(project);
+    registerDisposable(myXTree);
     myCards.add(myXTree.getTree(), X_TREE);
 
     add(ScrollPaneFactory.createScrollPane(myCards), BorderLayout.CENTER);
@@ -101,15 +103,20 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
     return (FrameVariablesTree)getTree();
   }
 
-  public void stackChanged(@Nullable XStackFrame xStackFrame) {
-    myXTree.stackChanged(xStackFrame);
-    ((CardLayout)(myCards.getLayout())).show(myCards, xStackFrame == null ? TREE : X_TREE);
+  public void stackChanged(@Nullable final XStackFrame xStackFrame) {
+    AppUIUtil.invokeOnEdt(new Runnable() {
+      @Override
+      public void run() {
+        myXTree.stackChanged(xStackFrame);
+        ((CardLayout)(myCards.getLayout())).show(myCards, xStackFrame == null ? TREE : X_TREE);
+      }
+    });
   }
 
   private static final class MyXVariablesView extends XVariablesViewBase {
     private XStackFrame myCurrentXStackFrame;
 
-    public MyXVariablesView(Project project) {
+    public MyXVariablesView(@NotNull Project project) {
       super(project, new XDebuggerEditorsProvider() {
         @NotNull
         @Override

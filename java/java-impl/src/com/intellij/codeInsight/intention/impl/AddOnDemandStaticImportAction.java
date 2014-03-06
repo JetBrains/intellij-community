@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction {
+public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
   @Override
@@ -103,13 +103,16 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     if (aClass == null) {
       return;
     }
-    PsiImportStaticStatement importStaticStatement =
-      JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
-    PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    if (importList == null) {
-      return;
+    final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
+    if (aClass != containingClass) {
+      PsiImportStaticStatement importStaticStatement =
+        JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      if (importList == null) {
+        return;
+      }
+      importList.add(importStaticStatement);
     }
-    importList.add(importStaticStatement);
 
     List<PsiFile> roots = file.getViewProvider().getAllFiles();
     for (final PsiFile root : roots) {

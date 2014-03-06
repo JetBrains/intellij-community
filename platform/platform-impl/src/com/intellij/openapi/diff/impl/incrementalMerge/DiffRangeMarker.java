@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -30,7 +31,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.DiffRangeMarker");
   private RangeInvalidListener myListener;
 
-  DiffRangeMarker(DocumentEx document, TextRange range, RangeInvalidListener listener) {
+  DiffRangeMarker(@NotNull DocumentEx document, @NotNull TextRange range, RangeInvalidListener listener) {
     super(document, range.getStartOffset(), range.getEndOffset(),true);
     myListener = listener;
     if (myListener != null) InvalidRangeDispatcher.addClient(document);
@@ -71,7 +72,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
       notifier.myDeferedNotifications.add(listener);
     }
 
-    public static void addClient(Document document) {
+    public static void addClient(@NotNull Document document) {
       InvalidRangeDispatcher notifier = document.getUserData(KEY);
       if (notifier == null) {
         notifier = new InvalidRangeDispatcher();

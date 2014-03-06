@@ -72,12 +72,12 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +119,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
-  private final Map<Type, NodeRenderer> myNodeRenderersMap = new THashMap<Type, NodeRenderer>();
+
+  // we use null key here
+  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<Type, NodeRenderer>();
+
   private final NodeRendererSettingsListener mySettingsListener = new NodeRendererSettingsListener() {
     @Override
     public void renderersChanged() {

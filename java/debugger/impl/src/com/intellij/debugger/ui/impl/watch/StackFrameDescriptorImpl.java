@@ -35,6 +35,7 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -58,8 +59,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   private Icon myIcon = AllIcons.Debugger.StackFrame;
 
-  public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {
+  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;
+
     try {
       myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
@@ -112,10 +114,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   @Override
+  @NotNull
   public StackFrameProxyImpl getFrameProxy() {
     return myFrame;
   }
 
+  @NotNull
   @Override
   public DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();

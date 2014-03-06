@@ -45,10 +45,11 @@ public class TemplateContext {
       //noinspection NestedSynchronizedStatement
       synchronized (defaultContext == null ? myContextStates : defaultContext.myContextStates) {
         for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-          String context = contextType.getContextId();
-          Boolean myStateInContext = myContextStates.get(context);
-          if (myStateInContext != null && differsFromDefault(defaultContext, context, myStateInContext)) {
-            result.put(contextType, myStateInContext);
+          Boolean ownValue = getOwnValue(contextType);
+          if (ownValue != null) {
+            if (defaultContext == null || isEnabled(contextType) != defaultContext.isEnabled(contextType)) {
+              result.put(contextType, ownValue);
+            }
           }
         }
       }
@@ -56,16 +57,8 @@ public class TemplateContext {
     return result;
   }
 
-  private static boolean differsFromDefault(@Nullable TemplateContext defaultContext, String context, boolean myStateInContext) {
-    Boolean defaultStateInContext = defaultContext == null ? null : defaultContext.myContextStates.get(context);
-    if (defaultStateInContext == null) {
-      return true;
-    }
-    return myStateInContext != defaultStateInContext;
-  }
-
   public boolean isEnabled(TemplateContextType contextType) {
-    Boolean storedValue = isEnabledBare(contextType);
+    Boolean storedValue = getOwnValue(contextType);
     if (storedValue == null) {
       TemplateContextType baseContextType = contextType.getBaseContextType();
       if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
@@ -76,7 +69,18 @@ public class TemplateContext {
     return storedValue.booleanValue();
   }
 
-  private Boolean isEnabledBare(TemplateContextType contextType) {
+  public void putValue(TemplateContextType context, boolean enabled) {
+    synchronized (myContextStates) {
+      myContextStates.put(context.getContextId(), enabled);
+    }
+  }
+
+  public boolean isExplicitlyEnabled(TemplateContextType contextType) {
+    return Boolean.TRUE.equals(getOwnValue(contextType));
+  }
+
+  @Nullable
+  public Boolean getOwnValue(TemplateContextType contextType) {
     synchronized (myContextStates) {
       return myContextStates.get(contextType.getContextId());
     }

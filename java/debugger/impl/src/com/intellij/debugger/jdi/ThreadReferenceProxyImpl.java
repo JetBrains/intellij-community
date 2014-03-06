@@ -35,14 +35,15 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   // cached data
   private String myName;
   private int                       myFrameCount = -1;
-  // stackframes, 0 - bottom
+  // stack frames, 0 - bottom
   private final List<StackFrameProxyImpl> myFramesFromBottom = new ArrayList<StackFrameProxyImpl>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
   private List<StackFrameProxyImpl> myFrames = null;
 
   private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
 
-  public static Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
+  public static final Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
+    @Override
     public int compare(ThreadReferenceProxyImpl th1, ThreadReferenceProxyImpl th2) {
       return th1.name().compareToIgnoreCase(th2.name());
     }
@@ -52,11 +53,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     super(virtualMachineProxy, threadReference);
   }
 
+  @Override
   public ThreadReference getThreadReference() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return (ThreadReference)getObjectReference();
   }
 
+  @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return (VirtualMachineProxyImpl) myTimer;
@@ -68,10 +71,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       try {
         myName = getThreadReference().name();
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         myName = "";
       }
-      catch (IllegalThreadStateException e) {
+      catch (IllegalThreadStateException ignored) {
         myName = "zombie";
       }                    
     }
@@ -84,7 +87,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       return getThreadReference().suspendCount();
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       return 0;
     }
   }
@@ -106,7 +109,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       threadRefString = getThreadReference().toString() ;
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       threadRefString = "[thread collected]";
     }
     return "ThreadReferenceProxyImpl: " + threadRefString + " " + super.toString();
@@ -127,6 +130,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
   }
 
+  @Override
   protected void clearCaches() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myName = null;
@@ -139,7 +143,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       return getThreadReference().status();
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       return ThreadReference.THREAD_STATUS_ZOMBIE;
     }
   }
@@ -152,7 +156,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       try {
         threadGroupRef = getThreadReference().threadGroup();
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         threadGroupRef = null;
       }
       myThreadGroupProxy = getVirtualMachineProxy().getThreadGroupReferenceProxy(threadGroupRef);
@@ -160,6 +164,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myThreadGroupProxy;
   }
 
+  @Override
   public int frameCount() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
@@ -168,7 +173,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       try {
         myFrameCount = threadReference.frameCount();
       }
-      catch(ObjectCollectedException e) {
+      catch(ObjectCollectedException ignored) {
         myFrameCount = 0;
       }
       catch (IncompatibleThreadStateException e) {
@@ -176,7 +181,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
         try {
           isSuspended = threadReference.isSuspended();
         }
-        catch (Throwable th) {
+        catch (Throwable ignored) {
           // unable to determine whether the thread is actually suspended, so propagating original exception
           throw EvaluateExceptionUtil.createEvaluateException(e);
         }
@@ -207,12 +212,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   
         myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
         for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
-          StackFrameProxyImpl stackFrameProxy = iterator.previous();
-          myFrames.add(stackFrameProxy);
+          myFrames.add(iterator.previous());
         }
       }
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       return Collections.emptyList();
     }
     return myFrames;
@@ -234,13 +238,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
       int index = myFramesFromBottom.size() + 1;
       for (ListIterator<StackFrame> iterator = frames.listIterator(count - myFramesFromBottom.size()); iterator.hasPrevious();) {
-        StackFrame stackFrame = iterator.previous();
-        myFramesFromBottom.add(new StackFrameProxyImpl(this, stackFrame, index));
+        myFramesFromBottom.add(new StackFrameProxyImpl(this, iterator.previous(), index));
         index++;
       }
     }
   }
 
+  @Override
   public StackFrameProxyImpl frame(int i) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadReference = getThreadReference();
@@ -255,10 +259,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
       return myFramesFromBottom.get(frameCount - i  - 1);
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       return null;
     }
-    catch (IllegalThreadStateException e) {
+    catch (IllegalThreadStateException ignored) {
       return null;
     }
   }

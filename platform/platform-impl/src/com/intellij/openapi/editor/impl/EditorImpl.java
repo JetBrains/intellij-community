@@ -722,8 +722,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintToScreenBottom(getCaretModel().getLogicalPosition().line);
       int y = getCaretModel().getVisualLineStart() * getLineHeight();
       myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - y);
-      getCaretModel().moveToOffset(getCaretModel().getOffset());
     }
+    // make sure carets won't appear at invalid positions (e.g. on Tab width change)
+    getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        caret.moveToOffset(caret.getOffset());
+      }
+    });
   }
 
   private void initTabPainter() {

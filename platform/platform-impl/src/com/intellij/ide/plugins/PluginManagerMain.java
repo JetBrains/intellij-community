@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.*;
@@ -73,7 +74,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 /**
  * @author stathik
- * @since Dec 25, 2003
+ * @author Konstantin Bulenkov
  */
 public abstract class PluginManagerMain implements Disposable {
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
@@ -584,28 +585,6 @@ public abstract class PluginManagerMain implements Disposable {
                           }).notify(project);
   }
 
-  protected class SortByStatusAction extends ToggleAction {
-
-    protected SortByStatusAction(final String title) {
-      super(title, title, AllIcons.ObjectBrowser.SortByType);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return pluginsModel.isSortByStatus();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
-      pluginsModel.setSortByStatus(state);
-      pluginsModel.sort();
-      if (selected != null) {
-        select(selected);
-      }
-    }
-  }
-
   public class MyPluginsFilter extends FilterComponent {
 
     public MyPluginsFilter() {
@@ -633,5 +612,11 @@ public abstract class PluginManagerMain implements Disposable {
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(!myBusy);
     }
+  }
+
+  protected DefaultActionGroup createSortersGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup("Sort by", true);
+    group.addAction(new SortByStatusAction(pluginTable, pluginsModel));
+    return group;
   }
 }

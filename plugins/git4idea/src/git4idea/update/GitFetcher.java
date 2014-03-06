@@ -16,15 +16,18 @@
 package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
@@ -48,9 +51,6 @@ import java.util.regex.Pattern;
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);
@@ -285,9 +285,9 @@ public class GitFetcher {
                                         @NotNull GitFetchResult result,
                                         @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
     if (result.isSuccess()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully" + result.getAdditionalInfo(), NotificationType.INFORMATION).notify(project);
+      VcsNotifier.getInstance(project).notifySuccess("Fetched successfully" + result.getAdditionalInfo());
     } else if (result.isCancelled()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user" + result.getAdditionalInfo(), NotificationType.WARNING).notify(project);
+      VcsNotifier.getInstance(project).notifyMinorWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
     } else if (result.isNotAuthorized()) {
       String title;
       String description;
@@ -299,11 +299,11 @@ public class GitFetcher {
         description = "Couldn't authorize";
       }
       description += result.getAdditionalInfo();
-      GitUIUtil.notifyMessage(project, title, description, NotificationType.ERROR, true, null);
+      GitUIUtil.notifyMessage(project, title, description, true, null);
     } else {
       GitVcs instance = GitVcs.getInstance(project);
       if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.notifyMessage(project, "Fetch failed",  result.getAdditionalInfo(), NotificationType.ERROR, true, errors);
+        GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
       }
     }
   }
@@ -336,12 +336,12 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      GitUIUtil.notifySuccess(myProject, "", "Fetched successfully");
+      VcsNotifier.getInstance(myProject).notifySuccess("Fetched successfully");
     }
 
     String addInfo = makeAdditionalInfoByRoot(additionalInfo);
     if (!StringUtil.isEmptyOrSpaces(addInfo)) {
-        Notificator.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
+      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", addInfo);
     }
 
     return true;

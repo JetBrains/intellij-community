@@ -81,7 +81,9 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     XLineBreakpointType<?> typeWinner = null;
     int lineWinner = -1;
     for (int line = lineStart; line <= linesEnd; line++) {
+      int maxPriority = 0;
       for (XLineBreakpointType<?> type : lineTypes) {
+        maxPriority = Math.max(maxPriority, type.getPriority());
         final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null && myTemporary && !breakpoint.isTemporary()) {
           breakpoint.setTemporary(true);
@@ -91,6 +93,10 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
             lineWinner = line;
           }
         }
+      }
+      // already found max priority type - stop
+      if (typeWinner != null && typeWinner.getPriority() == maxPriority) {
+        break;
       }
     }
 

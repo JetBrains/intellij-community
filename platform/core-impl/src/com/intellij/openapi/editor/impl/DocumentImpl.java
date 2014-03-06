@@ -38,8 +38,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableText;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +50,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -166,6 +171,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
+   *
+   * @deprecated should be replaced with {@link #stripTrailingSpaces(com.intellij.openapi.project.Project, boolean, boolean, java.util.List)}
+   * once multicaret logic will become unconditional (not controlled by configuration flag)
    */
   public boolean stripTrailingSpaces(@Nullable final Project project,
                                      boolean inChangedLinesOnly,
@@ -233,7 +241,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
-    Map<Integer, List<RangeMarker>> caretMarkers = new HashMap<Integer, List<RangeMarker>>(caretOffsets.size());
+    TIntObjectHashMap<List<RangeMarker>> caretMarkers = new TIntObjectHashMap<List<RangeMarker>>(caretOffsets.size());
     try {
       if (!virtualSpaceEnabled) {
         for (Integer caretOffset : caretOffsets) {
@@ -291,18 +299,22 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
     finally {
-      for (List<RangeMarker> markerList : caretMarkers.values()) {
-        if (markerList != null) {
-          for (RangeMarker marker : markerList) {
-            try {
-              marker.dispose();
-            }
-            catch (Exception e) {
-              LOG.error(e);
+      caretMarkers.forEachValue(new TObjectProcedure<List<RangeMarker>>() {
+        @Override
+        public boolean execute(List<RangeMarker> markerList) {
+          if (markerList != null) {
+            for (RangeMarker marker : markerList) {
+              try {
+                marker.dispose();
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
             }
           }
+          return true;
         }
-      }
+      });
     }
     return markAsNeedsStrippingLater;
   }
@@ -670,17 +682,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     getLineSet().clearModificationFlags();
   }
 
-  public void clearLineModificationFlagsExcept(@NotNull List<Integer> caretLines) {
-    List<Integer> modifiedLines = new ArrayList<Integer>(caretLines.size());
+  public void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
+    IntArrayList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
-    for (Integer line : caretLines) {
-      if (line != null && line >= 0 && line < lineSet.getLineCount() && lineSet.isModified(line)) {
+    for (int line : caretLines) {
+      if (line >= 0 && line < lineSet.getLineCount() && lineSet.isModified(line)) {
         modifiedLines.add(line);
       }
     }
     clearLineModificationFlags();
-    for (Integer line : modifiedLines) {
-      lineSet.setModified(line);
+    for (int i = 0; i < modifiedLines.size(); i++) {
+      lineSet.setModified(modifiedLines.get(i));
     }
   }
 

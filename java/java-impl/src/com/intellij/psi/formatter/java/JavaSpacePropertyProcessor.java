@@ -1441,7 +1441,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitTypeElement(PsiTypeElement type) {
-    if (myType2 == JavaTokenType.ELLIPSIS || myType2 == JavaTokenType.LBRACKET || myType2 == JavaTokenType.RBRACKET) {
+    if (myType1 == JavaElementType.ANNOTATION || myType2 == JavaElementType.ANNOTATION) {
+      createSpaceInCode(true);
+    }
+    else if (myType2 == JavaTokenType.ELLIPSIS || myType2 == JavaTokenType.LBRACKET || myType2 == JavaTokenType.RBRACKET) {
       createSpaceInCode(false);
     }
     else if (type.getType() instanceof PsiDisjunctionType) {

@@ -74,7 +74,9 @@ public class InferenceIncorporationPhase {
   }
 
   public boolean incorporate() {
-    for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
+    final Collection<InferenceVariable> inferenceVariables = mySession.getInferenceVariables();
+    final PsiSubstitutor substitutor = mySession.retrieveNonPrimitiveEqualsBounds(inferenceVariables);
+    for (InferenceVariable inferenceVariable : inferenceVariables) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
@@ -82,15 +84,14 @@ public class InferenceIncorporationPhase {
 
       eqEq(eqBounds);
 
-      upDown(lowerBounds, upperBounds);
-      upDown(eqBounds, upperBounds);
-      upDown(lowerBounds, eqBounds);
+      upDown(lowerBounds, upperBounds, substitutor);
+      upDown(eqBounds, upperBounds, substitutor);
+      upDown(lowerBounds, eqBounds, substitutor);
 
       upUp(upperBounds);
 
       for (PsiType eqBound : eqBounds) {
         if (mySession.isProperType(eqBound)) {
-          final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(inferenceVariable.getParameter(), eqBound);
           for (PsiType upperBound : upperBounds) {
             if (!mySession.isProperType(upperBound)) {
               addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), eqBound));
@@ -274,12 +275,12 @@ public class InferenceIncorporationPhase {
    *           or
    * S <: a & a <: T imply S <: T
    */
-  private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
+  private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds, PsiSubstitutor substitutor) {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null) continue;
       for (PsiType eqBound : eqBounds) {
         if (eqBound == null) continue;
-        addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
+        addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), substitutor.substitute(eqBound)));
       }
     }
   }
@@ -289,7 +290,7 @@ public class InferenceIncorporationPhase {
    */
   private void eqEq(List<PsiType> eqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
-      PsiType sBound= eqBounds.get(i);
+      PsiType sBound = eqBounds.get(i);
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
         addConstraint(new TypeEqualityConstraint(tBound, sBound));

@@ -334,6 +334,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XslTextContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
 
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlErrorQuickFixProvider"/>
 

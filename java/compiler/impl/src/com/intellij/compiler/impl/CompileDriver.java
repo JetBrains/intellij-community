@@ -910,7 +910,7 @@ public class CompileDriver {
       if (!outputs.isEmpty()) {
         final ProgressIndicator indicator = compileContext.getProgressIndicator();
         indicator.setText("Synchronizing output directories...");
-        lfs.refreshIoFiles(outputs, _status == ExitStatus.CANCELLED, false, null);
+        CompilerUtil.refreshOutputDirectories(outputs, _status == ExitStatus.CANCELLED);
         indicator.setText("");
       }
       if (compileContext.isAnnotationProcessorsEnabled() && !myProject.isDisposed()) {

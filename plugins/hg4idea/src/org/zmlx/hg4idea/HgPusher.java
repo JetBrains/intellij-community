@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -90,12 +91,10 @@ public class HgPusher {
           String successTitle = "Pushed successfully";
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
-          new HgCommandResultNotifier(project).notifySuccess(successTitle, successDescription);
-        }
-        else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-          new HgCommandResultNotifier(project).notifySuccess("", "Nothing to push");
-        }
-        else {
+          VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
+        } else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
+          VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
+        } else {
           new HgCommandResultNotifier(project).notifyError(result, "Push failed",
                                                            "Failed to push to [" + repo.getPresentableName() + "]");
         }

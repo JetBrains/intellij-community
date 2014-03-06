@@ -21,7 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import git4idea.Notificator;
+import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,6 @@ import java.awt.*;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
 
-/**
- * @author Aleksey Pivovarov
- */
 public class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
@@ -40,31 +37,31 @@ public class GithubNotifications {
   public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.INFORMATION);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.WARNING);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String logDetails) {
     LOG.warn(title + "; " + message + "; " + logDetails);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, getErrorTextFromException(e), NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showInfoURL(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String url) {
@@ -72,7 +69,7 @@ public class GithubNotifications {
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, "<a href='" + url + "'>" + message + "</a>", NotificationType.INFORMATION,
                        NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showWarningURL(@NotNull Project project,
@@ -85,7 +82,7 @@ public class GithubNotifications {
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                        NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showErrorURL(@NotNull Project project,
@@ -98,7 +95,7 @@ public class GithubNotifications {
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                        NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   public static void showInfoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {

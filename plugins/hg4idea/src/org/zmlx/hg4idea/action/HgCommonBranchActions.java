@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,6 @@ public class HgCommonBranchActions extends ActionGroup {
       final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
       hgMergeCommand.setRevision(myBranchName);//there is no difference between branch or revision or bookmark as parameter to merge,
       // we need just a string
-      final HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
       new Task.Backgroundable(myProject, "Merging changes...") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -84,11 +84,12 @@ public class HgCommonBranchActions extends ActionGroup {
           }
 
           catch (VcsException exception) {
+            assert myProject != null;  // myProject couldn't be null, see annotation for Merge action
             if (exception.isWarning()) {
-              notifier.notifyWarning("Warning during merge", exception.getMessage());
+              VcsNotifier.getInstance(myProject).notifyWarning("Warning during merge", exception.getMessage());
             }
             else {
-              notifier.notifyError(null, "Exception during merge", exception.getMessage());
+              VcsNotifier.getInstance(myProject).notifyError("Exception during merge", exception.getMessage());
             }
           }
           catch (Exception e1) {

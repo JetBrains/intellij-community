@@ -1789,4 +1789,15 @@ public class Bar3 { }
 ''')
   }
 
+  void testImportStaticFix() {
+    myFixture.configureByText('a.groovy', '''
+class A {
+  static void foo(String s){}
+}
+
+foo(<caret>)
+''')
+
+    myFixture.getAvailableIntention("Static Import Method 'A.foo'")
+  }
 }

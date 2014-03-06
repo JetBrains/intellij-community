@@ -22,9 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -110,5 +108,11 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   @Override
   public void apply(PsiSubstitutor substitutor) {
     setT(substitutor.substitute(getT()));
+    Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
+    if (map == null) {
+      map = new HashMap<PsiElement, PsiType>();
+      LambdaUtil.ourFunctionTypes.set(map);
+    }
+    map.put(getExpression(), getT());
   }
 }

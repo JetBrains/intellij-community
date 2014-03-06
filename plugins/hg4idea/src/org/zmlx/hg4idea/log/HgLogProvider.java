@@ -68,7 +68,7 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
-    return HgHistoryUtil.readAllHashes(myProject, root, userRegistry);
+    return HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
   }
 
   @NotNull
@@ -155,9 +155,9 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull VcsLogFilterCollection filterCollection,
-                                                                 int maxCount) throws VcsException {
+  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
+                                                                       @NotNull VcsLogFilterCollection filterCollection,
+                                                                       int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
@@ -216,7 +216,7 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.history(myProject, root, maxCount, filterParameters);
+    return HgHistoryUtil.readAllHashes(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
   }
 
   @Nullable

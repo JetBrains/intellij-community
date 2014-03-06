@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -43,11 +44,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * TODO: Use {@link com.jetbrains.python.run.PythonRunner} instead of this class? At already supports rerun and other things
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
  *
  * @author yole
  */
 public class PythonTask {
+  /**
+   * Mils we wait to process to be stopped when "rerun" called
+   */
+  private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   protected final Module myModule;
   private final Sdk mySdk;
   private String myWorkingDirectory;
@@ -183,7 +189,12 @@ public class PythonTask {
         @Override
         public void run() {
           try {
-            PythonTask.this.run();
+            process.destroyProcess(); // Stop process before rerunning it
+            if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
+              PythonTask.this.run();
+            }else {
+              Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
+            }
           }
           catch (ExecutionException e) {
             Messages.showErrorDialog(e.getMessage(), myRunTabTitle);

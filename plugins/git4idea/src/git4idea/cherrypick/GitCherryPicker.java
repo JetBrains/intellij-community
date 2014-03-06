@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -136,7 +137,7 @@ public class GitCherryPicker {
                              "Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>";
         description += getSuccessfulCommitDetailsIfAny(successfulCommits);
 
-        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, myPlatformFacade, untrackedFilesDetector.getFiles(),
+        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesDetector.getFiles(),
                                                                  "cherry-pick", description);
         return false;
       }
@@ -182,7 +183,7 @@ public class GitCherryPicker {
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Cherry-picked with conflicts", description, resolveLinkListener);
+    VcsNotifier.getInstance(myProject).notifyImportantWarning("Cherry-picked with conflicts", description, resolveLinkListener);
   }
 
   private void notifyCommitCancelled(@NotNull GitCommitWrapper commit, @NotNull List<GitCommitWrapper> successfulCommits) {
@@ -192,7 +193,7 @@ public class GitCherryPicker {
     }
     String description = commitDetails(commit);
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-pick cancelled", description, null);
+    VcsNotifier.getInstance(myProject).notifyMinorWarning("Cherry-pick cancelled", description, null);
   }
 
   private CherryPickData updateChangeListManager(@NotNull final VcsFullCommitDetails commit) {
@@ -317,10 +318,12 @@ public class GitCherryPicker {
     }
   }
 
-  private void notifyError(@NotNull String content, @NotNull GitCommitWrapper failedCommit, @NotNull List<GitCommitWrapper> successfulCommits) {
+  private void notifyError(@NotNull String content,
+                           @NotNull GitCommitWrapper failedCommit,
+                           @NotNull List<GitCommitWrapper> successfulCommits) {
     String description = commitDetails(failedCommit) + "<br/>" + content;
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
+    VcsNotifier.getInstance(myProject).notifyError("Cherry-pick failed", description);
   }
 
   @NotNull
@@ -335,7 +338,7 @@ public class GitCherryPicker {
 
   private void notifySuccess(@NotNull List<GitCommitWrapper> successfulCommits) {
     String description = getCommitsDetails(successfulCommits);
-    myPlatformFacade.getNotificator(myProject).notifySuccess("Cherry-pick successful", description);
+    VcsNotifier.getInstance(myProject).notifySuccess("Cherry-pick successful", description);
   }
 
   @NotNull

@@ -65,7 +65,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class FrameVariablesTree extends DebuggerTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
+  private static final Logger LOG = Logger.getInstance(FrameVariablesTree.class);
 
   private boolean myAnyNewLocals;
   private boolean myAutoWatchMode = false;
@@ -122,7 +122,7 @@ public class FrameVariablesTree extends DebuggerTree {
 
 
   @Override
-  protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected DebuggerCommandImpl getBuildNodeCommand(@NotNull DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildFrameTreeVariablesCommand(node);
     }
@@ -192,9 +192,6 @@ public class FrameVariablesTree extends DebuggerTree {
       catch (EvaluateException e) {
         if (e.getCause() instanceof AbsentInformationException) {
           final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-          if (frame == null) {
-            throw e;
-          }
 
           final Collection<Value> argValues = frame.getArgumentValues();
           int index = 0;
@@ -281,9 +278,6 @@ public class FrameVariablesTree extends DebuggerTree {
 
   private static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameDescriptorImpl stackDescriptor) throws EvaluateException {
     final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-    if (frame == null) {
-      return Collections.emptyMap();
-    }
     final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
     for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
       vars.put(localVariableProxy.name(), localVariableProxy);
@@ -442,7 +436,6 @@ public class FrameVariablesTree extends DebuggerTree {
 
       try {
         StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
-
         if (frame != null) {
           NodeManagerImpl nodeManager = getNodeFactory();
           rootNode = nodeManager.createNode(nodeManager.getStackFrameDescriptor(null, frame), debuggerContext.createEvaluationContext());

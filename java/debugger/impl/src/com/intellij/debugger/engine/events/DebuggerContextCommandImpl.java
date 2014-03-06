@@ -22,14 +22,16 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectCollectedException;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class DebuggerContextCommandImpl extends SuspendContextCommandImpl {
   private static final Logger LOG = Logger.getInstance(DebuggerContextCommandImpl.class);
 
   private final DebuggerContextImpl myDebuggerContext;
 
-  protected DebuggerContextCommandImpl(DebuggerContextImpl debuggerContext) {
+  protected DebuggerContextCommandImpl(@NotNull DebuggerContextImpl debuggerContext) {
     super(debuggerContext.getSuspendContext());
+
     myDebuggerContext = debuggerContext;
   }
 
@@ -40,7 +42,6 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
   @Override
   public final void contextAction() throws Exception {
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
-
     final ThreadReferenceProxyImpl debuggerContextThread = myDebuggerContext.getThreadProxy();
     final boolean isSuspendedByContext;
     try {

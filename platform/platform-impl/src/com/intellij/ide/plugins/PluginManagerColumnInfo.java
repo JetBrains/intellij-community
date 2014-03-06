@@ -97,15 +97,15 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   protected boolean isSortByName() {
-    return COLUMN_NAME == columnIdx;
+    return !isSortByDate() && !isSortByDownloads() && !isSortByStatus();
   }
 
   protected boolean isSortByDownloads() {
-    return columnIdx == COLUMN_DOWNLOADS;
+    return myModel.isSortByDownloads();
   }
 
   protected boolean isSortByDate() {
-    return columnIdx == COLUMN_DATE;
+    return myModel.isSortByUpdated();
   }
 
   protected boolean isSortByStatus() {
@@ -167,76 +167,61 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   protected Comparator<IdeaPluginDescriptor> getColumnComparator() {
-    if (isSortByName()) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
-      };
-    }
-    if (columnIdx == COLUMN_RATE) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        @Override
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+    return new Comparator<IdeaPluginDescriptor>() {
+      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+        if (myModel.isSortByRating()) {
           final String rating1 = ((PluginNode)o1).getRating();
           final String rating2 = ((PluginNode)o2).getRating();
-          return Comparing.compare(rating1, rating2);
+          final int compare = Comparing.compare(rating2, rating1);
+          if (compare != 0) {
+            return compare;
+          }
         }
-      };
-    }
-    if (isSortByDownloads()) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+
+        if (isSortByDate()) {
+          long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
+          long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
+          date1 /= 60 * 1000;
+          date2 /= 60 * 1000;
+          if (date2 != date1) {
+            return date2 - date1 > 0L ? 1 : -1;
+          }
+        }
+
+        if (isSortByDownloads()) {
           String count1 = o1.getDownloads();
           String count2 = o2.getDownloads();
           if (count1 != null && count2 != null) {
-            return Long.valueOf(count1).compareTo(Long.valueOf(count2));
-          }
-          else if (count1 != null) {
-            return -1;
+            final Long result = Long.valueOf(count2);
+            if (result != 0) {
+              return result.compareTo(Long.valueOf(count1));
+            }
           }
           else {
-            return 1;
+            return count1 != null ? -1 : 1;
           }
         }
-      };
-    }
-    if (isSortByDate()) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-          long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
-          long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
-          if (date1 < date2) {
-            return -1;
-          }
-          else if (date1 > date2) return 1;
-          return 0;
-        }
-      };
-    }
-    return new Comparator<IdeaPluginDescriptor>() {
-      @Override
-      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-        return StringUtil.compare(o1.getCategory(), o2.getCategory(), true);
+
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       }
     };
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String getFormattedSize(String size) {
-    if (size.equals("-1")) {
-      return IdeBundle.message("plugin.info.unknown");
-    }
-    else if (size.length() >= 4) {
-      if (size.length() < 7) {
-        size = String.format("%.1f", (float)Integer.parseInt(size) / kByte) + " K";
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    public static String getFormattedSize (String size){
+      if (size.equals("-1")) {
+        return IdeBundle.message("plugin.info.unknown");
       }
-      else {
-        size = String.format("%.1f", (float)Integer.parseInt(size) / mgByte) + " M";
+      else if (size.length() >= 4) {
+        if (size.length() < 7) {
+          size = String.format("%.1f", (float)Integer.parseInt(size) / kByte) + " K";
+        }
+        else {
+          size = String.format("%.1f", (float)Integer.parseInt(size) / mgByte) + " M";
+        }
       }
+      return size;
     }
-    return size;
-  }
 
   public static int getRealNodeState(PluginNode node) {
     if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return PluginNode.STATUS_DOWNLOADED;

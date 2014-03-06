@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
@@ -23,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,24 +31,11 @@ import java.util.Map;
  * <p>Handles UI interaction during various operations on branches: shows notifications, proposes to rollback, shows dialogs, messages, etc.
  * Some methods return the choice selected by user to the calling code, if it is needed.</p>
  * <p>The purpose of this class is to separate UI interaction from the main code, which would in particular simplify testing.</p>
- *
- * @author Kirill Likhodedov
  */
 public interface GitBranchUiHandler {
 
   @NotNull
   ProgressIndicator getProgressIndicator();
-
-  /**
-   * Shows a notification about successful branch operation. The title is empty.
-   */
-  void notifySuccess(@NotNull String message);
-
-  void notifySuccess(@NotNull String title, @NotNull String message);
-
-  void notifySuccess(@NotNull String title, @NotNull String description, @Nullable NotificationListener listener);
-
-  void notifyError(@NotNull String title, @NotNull String message);
 
   boolean notifyErrorWithRollbackProposal(@NotNull String title, @NotNull String message, @NotNull String rollbackProposal);
 

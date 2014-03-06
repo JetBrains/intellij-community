@@ -50,6 +50,9 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
 
   @Override
   public int compareTo(XBreakpointGroup o) {
+    if (getName().equals(o.getName())) {
+      return 0;
+    }
     if (o instanceof XBreakpointTypeGroup) {
       if (((XBreakpointTypeGroup)o).myBreakpointType instanceof XLineBreakpointType) {
         if (myBreakpointType instanceof XLineBreakpointType) {
