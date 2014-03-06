@@ -115,6 +115,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
     return myEventSet;
   }
 
+  @NotNull
   public DebugProcessImpl getDebugProcess() {
     assertNotResumed();
     return myDebugProcess;

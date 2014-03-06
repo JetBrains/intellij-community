@@ -65,7 +65,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class FrameVariablesTree extends DebuggerTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
+  private static final Logger LOG = Logger.getInstance(FrameVariablesTree.class);
 
   private boolean myAnyNewLocals;
   private boolean myAutoWatchMode = false;
@@ -442,7 +442,6 @@ public class FrameVariablesTree extends DebuggerTree {
 
       try {
         StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
-
         if (frame != null) {
           NodeManagerImpl nodeManager = getNodeFactory();
           rootNode = nodeManager.createNode(nodeManager.getStackFrameDescriptor(null, frame), debuggerContext.createEvaluationContext());

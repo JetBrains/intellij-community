@@ -36,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -47,16 +48,23 @@ public final class DebuggerContextImpl implements DebuggerContext {
   private boolean myInitialized;
 
   @Nullable
-  private final DebuggerSession      myDebuggerSession;
-  private final DebugProcessImpl     myDebugProcess;
-  private final SuspendContextImpl   mySuspendContext;
+  private final DebuggerSession myDebuggerSession;
+  private final DebugProcessImpl myDebugProcess;
+  private final SuspendContextImpl mySuspendContext;
   private final ThreadReferenceProxyImpl myThreadProxy;
 
-  private       StackFrameProxyImpl  myFrameProxy;
-  private       SourcePosition       mySourcePosition;
-  private       PsiElement           myContextElement;
+  private StackFrameProxyImpl myFrameProxy;
+  private SourcePosition mySourcePosition;
+  private PsiElement myContextElement;
 
-  private DebuggerContextImpl(@Nullable DebuggerSession session, DebugProcessImpl debugProcess, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy, SourcePosition position, PsiElement contextElement, boolean initialized) {
+  private DebuggerContextImpl(@Nullable DebuggerSession session,
+                              DebugProcessImpl debugProcess,
+                              @Nullable SuspendContextImpl context,
+                              ThreadReferenceProxyImpl threadProxy,
+                              StackFrameProxyImpl frameProxy,
+                              SourcePosition position,
+                              PsiElement contextElement,
+                              boolean initialized) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     LOG.assertTrue(debugProcess != null || frameProxy == null && threadProxy == null);
     myDebuggerSession = session;
@@ -74,6 +82,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myDebuggerSession;
   }
 
+  @NotNull
   @Override
   public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
@@ -133,7 +142,10 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);
   }
 
-  public static DebuggerContextImpl createDebuggerContext(DebuggerSession session, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy) {
+  public static DebuggerContextImpl createDebuggerContext(DebuggerSession session,
+                                                          @Nullable SuspendContextImpl context,
+                                                          ThreadReferenceProxyImpl threadProxy,
+                                                          StackFrameProxyImpl frameProxy) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     LOG.assertTrue(session == null || session.getProcess() != null);
     return new DebuggerContextImpl(session, session != null ? session.getProcess() : null, context, threadProxy, frameProxy, null, null, context == null);
@@ -153,7 +165,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
       }
     }
 
-    if(myFrameProxy != null) {
+    if (myFrameProxy != null) {
       PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Runnable() {
         @Override
         public void run() {

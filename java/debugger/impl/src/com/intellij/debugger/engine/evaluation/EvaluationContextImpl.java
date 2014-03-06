@@ -41,33 +41,41 @@ public final class EvaluationContextImpl implements EvaluationContext{
     mySuspendContext = suspendContext;
   }
 
+  @Override
   public Value getThisObject() {
     return myThisObject;
   }
 
+  @Override
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
   }
 
+  @Override
   public StackFrameProxyImpl getFrameProxy() {
     return myFrameProxy;
   }
 
+  @NotNull
+  @Override
   public DebugProcessImpl getDebugProcess() {
     return getSuspendContext().getDebugProcess();
   }
 
+  @Override
   public Project getProject() {
     DebugProcessImpl debugProcess = getDebugProcess();
     return debugProcess != null ? debugProcess.getProject() : null;
   }
 
+  @Override
   public EvaluationContextImpl createEvaluationContext(Value value) {
     final EvaluationContextImpl copy = new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
     copy.setAutoLoadClasses(myAutoLoadClasses);
     return copy;
   }
 
+  @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myFrameProxy != null ? myFrameProxy.getClassLoader() : null;

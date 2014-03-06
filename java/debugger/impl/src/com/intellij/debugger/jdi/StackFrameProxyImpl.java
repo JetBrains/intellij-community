@@ -107,7 +107,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
     checkValid();
 
-    if(myStackFrame == null) {
+    if (myStackFrame == null) {
       try {
         final ThreadReference threadRef = myThreadProxy.getThreadReference();
         myStackFrame = threadRef.frame(getFrameIndex());
