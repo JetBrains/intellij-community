@@ -179,7 +179,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       actionGroup.add(new MyFilterCategoryAction());
     }
     else {
-      actionGroup.add(new SortByStatusAction("Sort Installed First"));
+      actionGroup.add(createSortersGroup());
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
     }

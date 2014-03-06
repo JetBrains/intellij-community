@@ -251,7 +251,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       //actionGroup.add(new MyFilterBundleAction());
     } else {
       actionGroup.add(new RefreshAction());
-      actionGroup.addAction(new SortByStatusAction("Sort by Status"));
+      actionGroup.addAction(createSortersGroup());
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
       actionGroup.add(new UninstallPluginAction(this, pluginTable));
