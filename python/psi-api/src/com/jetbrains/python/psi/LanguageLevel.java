@@ -37,10 +37,13 @@ public enum LanguageLevel {
   PYTHON33(33, true, false, true, true),
   PYTHON34(34, true, false, true, true);
 
+  private static LanguageLevel DEFAULT2 = PYTHON27;
+  private static LanguageLevel DEFAULT3 = PYTHON33;
+
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
   public static LanguageLevel getDefault() {
-    return PYTHON26;
+    return DEFAULT2;
   }
 
   private final int myVersion;
@@ -90,14 +93,20 @@ public enum LanguageLevel {
   }
 
   public static LanguageLevel fromPythonVersion(@NotNull String pythonVersion) {
-    if (pythonVersion.startsWith("2.7")) {
-      return PYTHON27;
-    }
-    if (pythonVersion.startsWith("2.6")) {
-      return PYTHON26;
-    }
-    if (pythonVersion.startsWith("2.5")) {
-      return PYTHON25;
+    if (pythonVersion.startsWith("2")) {
+      if (pythonVersion.startsWith("2.4")) {
+        return PYTHON24;
+      }
+      if (pythonVersion.startsWith("2.5")) {
+        return PYTHON25;
+      }
+      if (pythonVersion.startsWith("2.6")) {
+        return PYTHON26;
+      }
+      if (pythonVersion.startsWith("2.7")) {
+        return PYTHON27;
+      }
+      return DEFAULT2;
     }
     if (pythonVersion.startsWith("3")) {
       if (pythonVersion.startsWith("3.0")) {
@@ -112,9 +121,12 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.3")) {
         return PYTHON33;
       }
-      return PYTHON34;
+      if (pythonVersion.startsWith("3.4")) {
+        return PYTHON34;
+      }
+      return DEFAULT3;
     }
-    return PYTHON24;
+    return getDefault();
   }
 
   public static final Key<LanguageLevel> KEY = new Key<LanguageLevel>("python.language.level");
