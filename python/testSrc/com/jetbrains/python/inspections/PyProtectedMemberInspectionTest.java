@@ -50,6 +50,10 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testNamedTuple() {
+    doTest();
+  }
+
   public void testModule() {
     myFixture.configureByFiles(getTestName(true) + ".py", "tmp.py");
     myFixture.enableInspections(PyProtectedMemberInspection.class);

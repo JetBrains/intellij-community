@@ -25,6 +25,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -72,6 +73,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
+      if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = getClassOwner(node);
