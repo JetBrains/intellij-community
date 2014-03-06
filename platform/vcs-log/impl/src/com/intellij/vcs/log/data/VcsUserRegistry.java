@@ -22,6 +22,8 @@ import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  *
@@ -29,18 +31,33 @@ import java.util.Set;
 public class VcsUserRegistry {
 
   private final Interner<VcsUser> myUserMap = new Interner<VcsUser>();
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   @NotNull
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
     return addUser(new VcsUserImpl(name, email));
   }
 
+  @NotNull
   public VcsUser addUser(@NotNull VcsUser user) {
-    return myUserMap.intern(user);
+    myLock.writeLock().lock();
+    try {
+      return myUserMap.intern(user);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+
   }
 
   @NotNull
   public Set<VcsUser> getUsers() {
-    return ContainerUtil.newHashSet(myUserMap.getValues());
+    myLock.readLock().lock();
+    try {
+      return ContainerUtil.newHashSet(myUserMap.getValues());
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 }
