@@ -22,6 +22,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,8 @@ public class JiraRepository extends BaseRepositoryImpl {
   public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
+
+  private static final boolean DEBUG_SOAP = Boolean.getBoolean("tasks.jira.soap");
 
   /**
    * Default JQL query
@@ -78,14 +81,18 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
-    String jqlQuery = mySearchQuery;
-    if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-      jqlQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
+    String resultQuery = query;
+    if (isJqlSupported()) {
+      if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
+        resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
+      }
+      else if (StringUtil.isNotEmpty(query)) {
+        resultQuery = String.format("summary ~ '%s'", query);
+      } else {
+        resultQuery = mySearchQuery;
+      }
     }
-    else if (StringUtil.isNotEmpty(query)) {
-      jqlQuery = String.format("summary ~ '%s'", query);
-    }
-    return ArrayUtil.toObjectArray(myApiVersion.findTasks(jqlQuery, max), Task.class);
+    return ArrayUtil.toObjectArray(myApiVersion.findTasks(resultQuery, max), Task.class);
   }
 
   @Nullable
@@ -103,7 +110,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    // TODO cancellable connection for SOAP?
+    // TODO cancellable connection for XML_RPC?
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
@@ -120,6 +127,10 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @NotNull
   public JiraRemoteApi discoverApiVersion() throws Exception {
+    if (DEBUG_SOAP) {
+      return new JiraSoapApi(this);
+    }
+
     String responseBody;
     GetMethod method = new GetMethod(getRestUrl("serverInfo"));
     try {
@@ -143,16 +154,15 @@ public class JiraRepository extends BaseRepositoryImpl {
       throw new Exception(TaskBundle.message("jira.failure.no.REST"));
     }
     return restApi;
-    //return new JiraSoapApi(this);
   }
 
   private void ensureApiVersionDiscovered() throws Exception {
-    if (myApiVersion == null) {
+    if (myApiVersion == null || DEBUG_SOAP) {
       myApiVersion = discoverApiVersion();
     }
   }
 
-  // Used primarily for SOAP API
+  // Used primarily for XML_RPC API
   @NotNull
   public String executeMethod(@NotNull HttpMethod method) throws Exception {
     return executeMethod(getHttpClient(), method);
@@ -225,12 +235,22 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
+  protected void configureHttpClient(HttpClient client) {
+    super.configureHttpClient(client);
+    client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
+  }
+
+  @Override
   protected int getFeatures() {
     int features = super.getFeatures() | TIME_MANAGEMENT;
-    if (myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.REST_2_0) {
+    if (myApiVersion == null || myApiVersion.getType() == JiraRemoteApi.ApiType.SOAP) {
       return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
     }
     return features;
+  }
+
+  public boolean isJqlSupported() {
+    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.SOAP;
   }
 
   public String getSearchQuery() {

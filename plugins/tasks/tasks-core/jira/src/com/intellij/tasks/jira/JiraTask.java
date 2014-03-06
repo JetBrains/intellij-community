@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  * Base class containing common interpretation of issues object's fields in
- * JIRA's SOAP and REST interfaces.
+ * JIRA's XML-RPC and REST interfaces.
  *
  * @author Mikhail Golubev
  */

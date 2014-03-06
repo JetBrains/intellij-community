@@ -17,7 +17,6 @@ package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
@@ -78,6 +77,6 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   }
 
   private void enableJqlSearchIfSupported() {
-    mySearchQueryField.setEnabled(myRepository.isSupported(TaskRepository.NATIVE_SEARCH));
+    mySearchQueryField.setEnabled(myRepository.isJqlSupported());
   }
 }
