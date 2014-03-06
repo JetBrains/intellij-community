@@ -144,8 +144,9 @@ public class DateFormatUtilTest {
     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
     try {
       String datetime = reader.readLine();
-      int pos = datetime.lastIndexOf(',');
-      if (pos > 0) datetime = datetime.substring(0, pos);
+      if (datetime.matches(".+[.,]\\d\\d")) {
+        datetime = datetime.substring(0, datetime.length() - 3);
+      }
       String[] parts = datetime.split("@");
       assertEquals(2, parts.length);
       return parts;
