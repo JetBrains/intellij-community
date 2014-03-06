@@ -138,8 +138,7 @@ public class VcsLogUI {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
-        updateUI();
+        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND));
         jumpToRow(0);
       }
     });
@@ -149,16 +148,14 @@ public class VcsLogUI {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
-        updateUI();
+        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE));
         jumpToRow(0);
       }
     });
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
-    myDataPack.getGraphFacade().performAction(LongEdgesAction.valueOf(visibility));
-    updateUI();
+    handleAnswer(myDataPack.getGraphFacade().performAction(LongEdgesAction.valueOf(visibility)));
   }
 
   public boolean areLongEdgesHidden() {
@@ -166,8 +163,7 @@ public class VcsLogUI {
   }
 
   public void click(int rowIndex) {
-    myDataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null));
-    updateUI();
+    handleAnswer(myDataPack.getGraphFacade().performAction(new ClickGraphAction(rowIndex, null)));
   }
 
   public void jumpToCommit(@NotNull Hash commitHash) {
