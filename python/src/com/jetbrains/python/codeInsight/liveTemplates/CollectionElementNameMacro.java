@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class CollectionElementNameMacro extends Macro {
       }
     }
     final String result = smartUnpluralize(param);
-    return new TextResult(result);
+    return result != null && PyUtil.isPythonIdentifier(result) ? new TextResult(result) : null;
   }
 
   private static String smartUnpluralize(String param) {
