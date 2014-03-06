@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,12 +35,17 @@ class MergeBuilder {
     LOG = log;
   }
 
+  /*
+   * ASSERT: all unchanged blocks should be squashed
+   *   add(B1, V1 ...); | -> B2.getStartOffset() > B1.getEndOffset() || V2.getStartOffset() > V1.getEndOffset()
+   *   add(B2, V2 ...); |
+   */
   public void add(@NotNull TextRange base, @NotNull TextRange version, @NotNull FragmentSide side) {
     int index = side.getIndex();
     int otherIndex = side.otherSide().getIndex();
     EqualPair pair = new EqualPair(base, version, side);
 
-    LOG.assertTrue(myPairs[index] == null || pair.getBaseStart() - myPairs[index].getBaseEnd() >= 0);
+    LOG.assertTrue(myPairs[index] == null || pair.getBaseStart() - myPairs[index].getBaseEnd() >= 0); // '==' can be in case of insertion
     LOG.assertTrue(myPairs[otherIndex] == null || pair.getBaseStart() >= myPairs[otherIndex].getBaseStart());
 
     myPairs[index] = pair;
@@ -53,7 +57,7 @@ class MergeBuilder {
   @NotNull
   public List<MergeFragment> finish(int leftLength, int baseLength, int rightLength) {
     if (!compare(new int[]{leftLength, rightLength, baseLength}, myProcessed)) {
-      processLastConflict(leftLength, baseLength, rightLength);
+      processConflict(leftLength, baseLength, rightLength);
     }
     return myResult;
   }
@@ -94,58 +98,16 @@ class MergeBuilder {
   }
 
   private void processConflict(int nextLeft, int nextBase, int nextRight) {
-    boolean leftEmpty = myPairs[0].startsFrom(myProcessed);
-    boolean rightEmpty = myPairs[1].startsFrom(myProcessed);
-
-    if (leftEmpty && !rightEmpty) {
-      addConflict(null,
-                  new TextRange(myProcessed[2], nextBase),
-                  new TextRange(myProcessed[1], nextRight));
-    }
-    else if (!leftEmpty && rightEmpty) {
-      addConflict(new TextRange(myProcessed[0], nextLeft),
-                  new TextRange(myProcessed[2], nextBase),
-                  null);
-    }
-    else {
       addConflict(new TextRange(myProcessed[0], nextLeft),
                   new TextRange(myProcessed[2], nextBase),
                   new TextRange(myProcessed[1], nextRight));
-    }
 
     myProcessed[0] = nextLeft;
     myProcessed[1] = nextRight;
     myProcessed[2] = nextBase;
   }
 
-  private void processLastConflict(int nextLeft, int nextBase, int nextRight) {
-    boolean leftEmpty = (myPairs[0] != null && myPairs[0].startsFrom(myProcessed) && myPairs[0].getBaseEnd() == nextLeft) ||
-                        (myPairs[0] == null && nextLeft == myProcessed[0]);
-    boolean rightEmpty = (myPairs[1] != null && myPairs[1].startsFrom(myProcessed) && myPairs[1].getBaseEnd() == nextRight) ||
-                         (myPairs[1] == null && nextRight == myProcessed[1]);
-
-    if (leftEmpty && !rightEmpty) {
-      addConflict(null,
-                  new TextRange(myProcessed[2], nextBase),
-                  new TextRange(myProcessed[1], nextRight));
-    }
-    else if (!leftEmpty && rightEmpty) {
-      addConflict(new TextRange(myProcessed[0], nextLeft),
-                  new TextRange(myProcessed[2], nextBase),
-                  null);
-    }
-    else {
-      addConflict(new TextRange(myProcessed[0], nextLeft),
-                  new TextRange(myProcessed[2], nextBase),
-                  new TextRange(myProcessed[1], nextRight));
-    }
-
-    myProcessed[0] = nextLeft;
-    myProcessed[1] = nextRight;
-    myProcessed[2] = nextBase;
-  }
-
-  private void addConflict(@Nullable TextRange left, @NotNull TextRange base, @Nullable TextRange right) {
+  private void addConflict(@NotNull TextRange left, @NotNull TextRange base, @NotNull TextRange right) {
     myResult.add(new MergeFragment(left, base, right));
   }
 
