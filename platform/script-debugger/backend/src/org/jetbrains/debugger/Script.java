@@ -6,11 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.sourcemap.SourceMap;
 
-/**
- * An objects that holds data for a "script" which is a part of a resource
- * loaded into the browser, identified by its original document URL, line offset
- * in the original document, and the line count this script spans.
- */
 public interface Script extends UserDataHolderEx {
   void setSourceMap(SourceMap sourceMap);
 

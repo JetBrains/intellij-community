@@ -1,16 +1,16 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * An object that matches the execution state of the JavaScript VM while
- * suspended. It reconstructs and provides access to the current state of the
- * JavaScript VM.
+ * An object that matches the execution state of the VM while suspended
  */
 public interface SuspendContext {
+  @NotNull
   SuspendState getState();
 
   @Nullable("if no frames (paused by user)")
@@ -28,9 +28,10 @@ public interface SuspendContext {
   CallFrame getTopFrame();
 
   /**
-   * @return a list of call frames for the current JavaScript suspended state (from the
+   * @return a list of call frames for the current suspended state (from the
    * innermost (top) frame to the main (bottom) frame)
    */
+  @NotNull
   AsyncResult<CallFrame[]> getCallFrames();
 
   /**
@@ -38,16 +39,18 @@ public interface SuspendContext {
    *         context is associated. An empty collection if the suspension was
    *         not related to hitting breakpoints (e.g. a step end)
    */
+  @NotNull
   List<Breakpoint> getBreakpointsHit();
 
   /**
    * @return evaluate context for evaluating expressions in global scope
    */
+  @Nullable
   EvaluateContext getGlobalEvaluateContext();
 
   /**
-   * @return value mapping that all values have by default; typically unique for a particular
-   *     {@link SuspendContext}
+   * @return value mapping that all values have by default; typically unique for a particular {@link SuspendContext}
    */
+  @NotNull
   ValueLoader<?> getValueLoader();
 }
