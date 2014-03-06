@@ -147,6 +147,13 @@ public class IdeaGateway {
   }
 
   @NotNull
+  public static Collection<VirtualFile> loadAndIterateChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
+    NewVirtualFile nf = (NewVirtualFile)f;
+    return Arrays.asList(nf.getChildren());
+  }
+
+  @NotNull
   public RootEntry createTransientRootEntry() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     RootEntry root = new RootEntry();
