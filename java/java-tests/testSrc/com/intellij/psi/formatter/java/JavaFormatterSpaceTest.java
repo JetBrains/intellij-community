@@ -545,11 +545,15 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(
       "class C<@TA(1)T> {\n" +
       "    L<@TA(2)A> f = (@TA(3)  A) new @TA(4)  A() {\n" +
+      "        void m(@TA(6) int  @TA(7)[] p) {\n" +
+      "        }\n" +
       "    };\n" +
       "}",
 
       "class C<@TA(1) T> {\n" +
       "    L<@TA(2) A> f = (@TA(3) A) new @TA(4) A() {\n" +
+      "        void m(@TA(6) int @TA(7) [] p) {\n" +
+      "        }\n" +
       "    };\n" +
       "}"
     );
