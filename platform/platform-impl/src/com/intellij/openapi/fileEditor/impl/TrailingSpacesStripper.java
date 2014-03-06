@@ -133,12 +133,17 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
 
-    List<Integer> caretLines = new ArrayList<Integer>();
+    int[] caretLines;
     if (activeEditor != null && inChangedLinesOnly && doStrip && !isVirtualSpaceEnabled) {
       List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
-      for (Caret caret : carets) {
-        caretLines.add(caret.getLogicalPosition().line);
+      caretLines = new int[carets.size()];
+      for (int i = 0; i < carets.size(); i++) {
+        Caret caret = carets.get(i);
+        caretLines[i] = caret.getLogicalPosition().line;
       }
+    }
+    else {
+      caretLines = new int[0];
     }
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
