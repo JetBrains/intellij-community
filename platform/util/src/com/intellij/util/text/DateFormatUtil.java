@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,17 +42,23 @@ public class DateFormatUtil {
   public static final long YEAR = DAY * 365;
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
 
-  private enum Period {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE}
-  private enum DateType {TIME, DATE, DATETIME}
-
   // do not expose this constants - they are very likely to be changed in future
-  private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
-  private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
-  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
-  private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
-  private static final SyncDateFormat ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
+  private static final SyncDateFormat DATE_FORMAT;
+  private static final SyncDateFormat TIME_FORMAT;
+  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
+  private static final SyncDateFormat DATE_TIME_FORMAT;
+  private static final SyncDateFormat ABOUT_DATE_FORMAT;
+  static {
+    SyncDateFormat[] formats = getDateTimeFormats();
+    DATE_FORMAT = formats[0];
+    TIME_FORMAT = formats[1];
+    TIME_WITH_SECONDS_FORMAT = formats[2];
+    DATE_TIME_FORMAT = formats[3];
+    ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
+  }
 
   private static final long[] DENOMINATORS = {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
+  private enum Period {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE}
   private static final Period[] PERIODS = {Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private DateFormatUtil() { }
@@ -264,44 +270,6 @@ public class DateFormatUtil {
 
   // helpers
 
-  private static SyncDateFormat getFormat(int format, DateType type) {
-    DateFormat result = null;
-
-    if (SystemInfo.isMac) {
-      try {
-        result = getMacTimeFormat(format, type);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    if (SystemInfo.isUnix && !SystemInfo.isMac) {
-      try {
-        result = getUnixTimeFormat(format, type);
-      }
-      catch (Throwable t) {
-        LOG.error(t);
-      }
-    }
-
-    if (result == null) {
-      switch (type) {
-        case TIME:
-          result = DateFormat.getTimeInstance(format);
-          break;
-        case DATE:
-          result = DateFormat.getDateInstance(format);
-          break;
-        case DATETIME:
-          result = DateFormat.getDateTimeInstance(format, format);
-          break;
-      }
-    }
-
-    return new SyncDateFormat(result);
-  }
-
   private static String someTimeAgoMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
@@ -336,69 +304,75 @@ public class DateFormatUtil {
     }
   }
 
-  private static final int MacFormatterNoStyle = 0;
-  private static final int MacFormatterShortStyle = 1;
-  private static final int MacFormatterMediumStyle = 2;
-  private static final int MacFormatterLongStyle = 3;
-  private static final int MacFormatterFullStyle = 4;
-  private static final int MacFormatterBehavior_10_4 = 1040;
+  private static SyncDateFormat[] getDateTimeFormats() {
+    DateFormat[] formats = new DateFormat[4];
 
-  @NotNull
-  private static SimpleDateFormat getMacTimeFormat(final int type, @NotNull final DateType dateType) {
-    final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
+    boolean loaded = false;
+    if (SystemInfo.isMac) {
+      try {
+        loaded = getMacFormats(formats);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      try {
+        loaded = getUnixFormats(formats);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+    }
+
+    if (!loaded) {
+      formats[0] = DateFormat.getDateInstance(DateFormat.SHORT);
+      formats[1] = DateFormat.getTimeInstance(DateFormat.SHORT);
+      formats[2] = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+      formats[3] = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    }
+
+    SyncDateFormat[] synced = new SyncDateFormat[4];
+    for (int i = 0; i < formats.length; i++) {
+      synced[i] = new SyncDateFormat(formats[i]);
+    }
+    return synced;
+  }
+
+  private static boolean getMacFormats(DateFormat[] formats) {
+    final int MacFormatterNoStyle = 0;
+    final int MacFormatterShortStyle = 1;
+    final int MacFormatterMediumStyle = 2;
+    final int MacFormatterBehavior_10_4 = 1040;
+
+    ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
-      final ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
+      ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
       Foundation.invoke(dateFormatter, Foundation.createSelector("setFormatterBehavior:"), MacFormatterBehavior_10_4);
 
-      int style;
-      switch (type) {
-        case DateFormat.SHORT:
-          style = MacFormatterShortStyle;
-          break;
-        case DateFormat.MEDIUM:
-          style = MacFormatterMediumStyle;
-          break;
-        case DateFormat.LONG:
-          style = MacFormatterLongStyle;
-          break;
-        case DateFormat.FULL:
-        default:
-          style = MacFormatterFullStyle;
-          break;
-      }
+      formats[0] = invokeFormatter(dateFormatter, MacFormatterNoStyle, MacFormatterShortStyle);  // short date
+      formats[1] = invokeFormatter(dateFormatter, MacFormatterShortStyle, MacFormatterNoStyle);  // short time
+      formats[2] = invokeFormatter(dateFormatter, MacFormatterMediumStyle, MacFormatterNoStyle);  // medium time
+      formats[3] = invokeFormatter(dateFormatter, MacFormatterShortStyle, MacFormatterShortStyle);  // short date/time
 
-      int timeStyle;
-      int dateStyle;
-      switch (dateType) {
-        case DATE:
-          timeStyle = MacFormatterNoStyle;
-          dateStyle = style;
-          break;
-        case TIME:
-          timeStyle = style;
-          dateStyle = MacFormatterNoStyle;
-          break;
-        case DATETIME:
-        default:
-          timeStyle = style;
-          dateStyle = style;
-          break;
-      }
-
-      Foundation.invoke(dateFormatter, Foundation.createSelector("setTimeStyle:"), timeStyle);
-      Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
-      String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
-      assert format != null;
-      return new SimpleDateFormat(format.trim());
+      return true;
     }
     finally {
       Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
     }
   }
 
-  private static DateFormat getUnixTimeFormat(int format, DateType type) {
+  private static DateFormat invokeFormatter(ID dateFormatter, int timeStyle, int dateStyle) {
+    Foundation.invoke(dateFormatter, Foundation.createSelector("setTimeStyle:"), timeStyle);
+    Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
+    String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
+    assert format != null;
+    return new SimpleDateFormat(format.trim());
+  }
+
+  private static boolean getUnixFormats(DateFormat[] formats) {
     String localeStr = EnvironmentUtil.getValue("LC_TIME");
-    if (localeStr == null) return null;
+    if (localeStr == null) return false;
 
     localeStr = localeStr.trim();
     int p = localeStr.indexOf('.');
@@ -415,15 +389,11 @@ public class DateFormatUtil {
       locale = new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
     }
 
-    switch (type) {
-      case TIME:
-        return DateFormat.getTimeInstance(format, locale);
-      case DATE:
-        return DateFormat.getDateInstance(format, locale);
-      case DATETIME:
-        return DateFormat.getDateTimeInstance(format, format, locale);
-    }
+    formats[0] = DateFormat.getDateInstance(DateFormat.SHORT, locale);
+    formats[1] = DateFormat.getTimeInstance(DateFormat.SHORT, locale);
+    formats[2] = DateFormat.getTimeInstance(DateFormat.MEDIUM, locale);
+    formats[3] = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
 
-    return null;
+    return true;
   }
 }
