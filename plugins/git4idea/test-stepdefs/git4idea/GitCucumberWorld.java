@@ -6,9 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -29,7 +27,6 @@ import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
-import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
@@ -52,8 +49,6 @@ import static org.junit.Assume.assumeTrue;
 /**
  * <p>The container of test environment variables which should be visible from any step definition script.</p>
  * <p>Most of the fields are populated in the Before hook of the {@link GeneralStepdefs}.</p>
- *
- * @author Kirill Likhodedov
  */
 public class GitCucumberWorld {
 
@@ -70,7 +65,7 @@ public class GitCucumberWorld {
   public static GitVcs myVcs;
 
   public static MockVcsHelper myVcsHelper;
-  public static TestNotificator myNotificator;
+  public static TestVcsNotifier myNotificator;
 
   public static GitHttpAuthTestService myHttpAuthService; // only with @remote tag
 
@@ -114,7 +109,7 @@ public class GitCucumberWorld {
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = (ChangeListManagerImpl)myPlatformFacade.getChangeListManager(myProject);
-    myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myNotificator = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
     myVcs = GitVcs.getInstance(myProject);
 
     virtualCommits = new GitTestVirtualCommitsHolder();

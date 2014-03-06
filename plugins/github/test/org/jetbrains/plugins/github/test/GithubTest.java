@@ -19,7 +19,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.TestVcsNotifier;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -28,7 +30,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
-import git4idea.Notificator;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
@@ -39,7 +40,6 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
-import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -63,7 +63,6 @@ import static org.junit.Assume.assumeNotNull;
  *          idea.test.github.password=mypassword</code> // password for test user
  * </p>
  *
- * @author Kirill Likhodedov
  */
 public abstract class GithubTest extends UsefulTestCase {
 
@@ -77,7 +76,7 @@ public abstract class GithubTest extends UsefulTestCase {
   @NotNull private GitHttpAuthTestService myHttpAuthService;
 
   @NotNull protected TestDialogManager myDialogManager;
-  @NotNull protected TestNotificator myNotificator;
+  @NotNull protected TestVcsNotifier myVcsNotifier;
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
 
@@ -104,7 +103,7 @@ public abstract class GithubTest extends UsefulTestCase {
   }
 
   protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {
-    Notification actualNotification = myNotificator.getLastNotification();
+    Notification actualNotification = myVcsNotifier.getLastNotification();
     assertNotNull("No notification was shown", actualNotification);
 
     if (title != null) {
@@ -213,7 +212,7 @@ public abstract class GithubTest extends UsefulTestCase {
     myGitHubSettings.setAuthData(myAuth, false);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-    myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
@@ -240,7 +239,7 @@ public abstract class GithubTest extends UsefulTestCase {
     finally {
       myHttpAuthService.cleanup();
       myDialogManager.cleanup();
-      myNotificator.cleanup();
+      myVcsNotifier.cleanup();
 
       myProjectFixture.tearDown();
       super.tearDown();

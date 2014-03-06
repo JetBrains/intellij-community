@@ -20,11 +20,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.Notificator;
 import git4idea.actions.BasicAction;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -127,7 +127,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     if (result.success()) {
       return true;
     }
-    Notificator.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
+    VcsNotifier.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
     return false;
   }
 

@@ -17,26 +17,27 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import git4idea.*;
+import git4idea.GitCommit;
+import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
+import git4idea.MessageManager;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -46,9 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
@@ -61,26 +59,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     myGit = git;
     myFacade = facade;
     myProgressIndicator = indicator;
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String message) {
-    notifySuccess("", message);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String message) {
-    notifySuccess(title, message, null);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String description, @Nullable NotificationListener listener) {
-    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION, listener);
-  }
-
-  @Override
-  public void notifyError(@NotNull String title, @NotNull String message) {
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @Override
@@ -106,7 +84,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+    VcsNotifier.getInstance(myProject).notifyError(title, description,
       new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
@@ -142,7 +120,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
                                                              untrackedFiles, operationName, null);
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,6 @@ public class HgMerge extends HgAbstractGlobalAction {
   private static void executeMerge(@NotNull final Project project, @NotNull VirtualFile repo, @NotNull String targetValue)
     throws HgCommandException {
     UpdatedFiles updatedFiles = UpdatedFiles.create();
-    HgCommandResultNotifier notifier = new HgCommandResultNotifier(project);
 
     HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repo);
     hgMergeCommand.setRevision(targetValue);
@@ -73,10 +73,10 @@ public class HgMerge extends HgAbstractGlobalAction {
     }
     catch (VcsException e) {
       if (e.isWarning()) {
-        notifier.notifyWarning("Warning during merge", e.getMessage());
+        VcsNotifier.getInstance(project).notifyWarning("Warning during merge", e.getMessage());
       }
       else {
-        notifier.notifyError(null, "Exception during merge", e.getMessage());
+        VcsNotifier.getInstance(project).notifyError("Exception during merge", e.getMessage());
       }
     }
   }

@@ -22,13 +22,13 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.Notificator;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -155,7 +155,7 @@ public class GitPreservingProcess {
       return true;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
-      Notificator.getInstance(myProject).notifyError(
+      VcsNotifier.getInstance(myProject).notifyError(
         "Couldn't save uncommitted changes.",
         String.format("Tried to save uncommitted changes in stash before %s, but failed with an error.<br/>%s",
                       myOperationTitle, join(e.getMessages())));
@@ -174,8 +174,9 @@ public class GitPreservingProcess {
       }
       catch (VcsException e) {
         LOG.info("Couldn't load local changes", e);
-        Notificator.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
-          String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",join(e.getMessages())));
+        VcsNotifier.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
+                                                       String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",
+                                                                     join(e.getMessages())));
       }
     }
   }

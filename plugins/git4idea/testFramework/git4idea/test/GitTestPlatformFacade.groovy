@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 package git4idea.test
-
 import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.GitPlatformFacade
-import git4idea.Notificator
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import org.jetbrains.annotations.NotNull
-/**
- *
- * @author Kirill Likhodedov
- */
+
 class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatformFacade {
 
   private static final GitVcsApplicationSettings ourAppSettings = new GitVcsApplicationSettings()
 
   private GitMockVcs myVcs;
-  private TestNotificator myNotificator;
   private TestDialogManager myTestDialogManager;
   private GitTestRepositoryManager myRepositoryManager;
   private GitMockVcsManager myVcsManager;
@@ -52,15 +46,6 @@ class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatfor
       myVcsManager = new GitMockVcsManager(project, this);
     }
     return myVcsManager;
-  }
-
-  @NotNull
-  @Override
-  public Notificator getNotificator(@NotNull Project project) {
-    if (myNotificator == null) {
-      myNotificator = new TestNotificator(project);
-    }
-    return myNotificator;
   }
 
   @NotNull
