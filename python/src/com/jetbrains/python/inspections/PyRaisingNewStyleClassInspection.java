@@ -67,7 +67,7 @@ public class PyRaisingNewStyleClassInspection extends PyInspection {
       if (expression instanceof PyCallExpression) {
         final PyExpression callee = ((PyCallExpression)expression).getCallee();
         if (callee instanceof PyReferenceExpression) {
-          final PsiElement psiElement = ((PyReferenceExpression)callee).getReference(resolveWithoutImplicits()).resolve();
+          final PsiElement psiElement = ((PyReferenceExpression)callee).getReference(getResolveContext()).resolve();
           if (psiElement instanceof PyClass) {
             if (((PyClass)psiElement).isNewStyleClass()) {
               registerProblem(expression, "Raising a new style class");

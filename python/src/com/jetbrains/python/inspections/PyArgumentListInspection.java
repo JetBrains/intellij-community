@@ -71,7 +71,7 @@ public class PyArgumentListInspection extends PyInspection {
       PyDecorator[] decorators = node.getDecorators();
       for (PyDecorator deco : decorators) {
         if (deco.hasArgumentList()) continue;
-        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(resolveWithoutImplicits());
+        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(getResolveContext());
         if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
           final Callable callable = markedCallee.getCallable();
           int firstParamOffset =  markedCallee.getImplicitOffset();

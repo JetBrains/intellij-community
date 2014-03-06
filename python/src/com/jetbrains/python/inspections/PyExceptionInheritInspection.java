@@ -60,7 +60,7 @@ public class PyExceptionInheritInspection extends PyInspection {
       if (expression instanceof PyCallExpression) {
         PyExpression callee = ((PyCallExpression)expression).getCallee();
         if (callee instanceof PyReferenceExpression) {
-          PsiElement psiElement = ((PyReferenceExpression)callee).getReference(resolveWithoutImplicits()).resolve();
+          PsiElement psiElement = ((PyReferenceExpression)callee).getReference(getResolveContext()).resolve();
           if (psiElement instanceof PyClass) {
             PyClass aClass = (PyClass) psiElement;
             for (PyClassLikeType type : aClass.getAncestorTypes(myTypeEvalContext)) {

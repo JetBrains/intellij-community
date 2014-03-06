@@ -70,18 +70,20 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
-          final PsiReference reference = node.getReference();
-          final PsiElement resolvedExpression = reference.resolve();
-          final PyClass resolvedClass = getClassOwner(resolvedExpression);
-          if (parentClass.isSubclass(resolvedClass))
-            return;
-
-          PyClass outerClass = getClassOwner(parentClass);
-          while (outerClass != null) {
-            if (outerClass.isSubclass(resolvedClass))
+          final PsiReference reference = node.getReference(getResolveContext());
+          if (reference != null) {
+            final PsiElement resolvedExpression = reference.resolve();
+            final PyClass resolvedClass = getClassOwner(resolvedExpression);
+            if (parentClass.isSubclass(resolvedClass))
               return;
 
-            outerClass = getClassOwner(outerClass);
+            PyClass outerClass = getClassOwner(parentClass);
+            while (outerClass != null) {
+              if (outerClass.isSubclass(resolvedClass))
+                return;
+
+              outerClass = getClassOwner(outerClass);
+            }
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
