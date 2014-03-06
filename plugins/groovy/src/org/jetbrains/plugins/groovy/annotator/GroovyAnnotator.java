@@ -1493,13 +1493,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-    final GrAnnotationMemberValue value = defaultAnnotationValue.getDefaultValue();
+  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+    super.visitAnnotationMethod(annotationMethod);
+
+    final GrAnnotationMemberValue value = annotationMethod.getDefaultValue();
     if (value == null) return;
 
-    final PsiElement parent = defaultAnnotationValue.getParent();
-    assert parent instanceof GrAnnotationMethod;
-    final PsiType type = ((GrAnnotationMethod)parent).getReturnType();
+    final PsiType type = annotationMethod.getReturnType();
 
     Map<PsiElement, String> errors = ContainerUtil.newHashMap();
     CustomAnnotationChecker.checkAnnotationValueByType(errors, value, type, false);

@@ -296,10 +296,6 @@ public abstract class GroovyElementVisitor {
     visitMethod(annotationMethod);
   }
 
-  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-    visitElement(defaultAnnotationValue);
-  }
-
   public void visitMethod(GrMethod method) {
     visitElement(method);
   }

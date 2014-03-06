@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -139,13 +138,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider, context);
 
     if (method instanceof GrAnnotationMethod) {
-      GrDefaultAnnotationValue defaultAnnotationValue = ((GrAnnotationMethod)method).getDefaultValue();
-      if (defaultAnnotationValue!=null) {
+      GrAnnotationMemberValue defaultValue = ((GrAnnotationMethod)method).getDefaultValue();
+      if (defaultValue != null) {
         builder.append("default ");
-        GrAnnotationMemberValue defaultValue = defaultAnnotationValue.getDefaultValue();
-        if (defaultValue != null) {
-          defaultValue.accept(new AnnotationGenerator(builder, context));
-        }
+        defaultValue.accept(new AnnotationGenerator(builder, context));
       }
     }
 
