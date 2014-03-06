@@ -19,6 +19,7 @@ public interface Scope {
     UNKNOWN
   }
 
+  @NotNull
   Type getType();
 
   @Nullable
