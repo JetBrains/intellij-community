@@ -63,6 +63,10 @@ public abstract class CompilerManager {
    * @param compiler compiler implementation 
    * @param inputTypes a set of filetypes that compiler accepts as input
    * @param outputTypes a set of filetypes that compiler can generate
+   *
+   * @deprecated this method is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+   * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+   * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
    */
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 

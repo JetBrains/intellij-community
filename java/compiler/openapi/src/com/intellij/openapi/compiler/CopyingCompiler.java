@@ -32,6 +32,10 @@ import java.util.List;
 
 /**
  * Compiler which copies the compiled files to a different directory.
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public abstract class CopyingCompiler implements PackagingCompiler{
   public abstract VirtualFile[] getFilesToCopy(CompileContext context);
