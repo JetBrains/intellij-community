@@ -613,21 +613,6 @@ public class SvnUtil {
     return info == null ? null : info.getURL();
   }
 
-  public static boolean doesRepositorySupportMergeInfo(final SvnVcs vcs, final SVNURL url) {
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      return false;
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
-  }
-
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
     // TODO: Implement with command line client
     SVNRepository repository = null;
