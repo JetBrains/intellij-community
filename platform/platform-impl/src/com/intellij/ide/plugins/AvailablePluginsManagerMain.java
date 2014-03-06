@@ -16,6 +16,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.sorters.SortByDownloadsAction;
+import com.intellij.ide.plugins.sorters.SortByRatingAction;
+import com.intellij.ide.plugins.sorters.SortByUpdatedAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
@@ -196,6 +199,15 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   @Override
   protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
+  }
+
+  @Override
+  protected DefaultActionGroup createSortersGroup() {
+    final DefaultActionGroup group = super.createSortersGroup();
+    group.addAction(new SortByDownloadsAction(pluginTable, pluginsModel));
+    group.addAction(new SortByRatingAction(pluginTable, pluginsModel));
+    group.addAction(new SortByUpdatedAction(pluginTable, pluginsModel));
+    return group;
   }
 
   private class MyFilterCategoryAction extends ComboBoxAction implements DumbAware{
