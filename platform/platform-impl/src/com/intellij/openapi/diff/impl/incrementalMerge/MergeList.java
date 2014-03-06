@@ -114,14 +114,11 @@ public class MergeList implements UserDataHolder {
       TextRange rightRange = mergeFragment.getRight();
 
       if (compareSubstring(leftText, leftRange, rightText, rightRange)) {
-        MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        MergeNoConflict conflict = new MergeNoConflict(baseRange, leftRange, rightRange, mergeList);
         assert conflict.getLeftChange() != null;
         assert conflict.getRightChange() != null;
         leftChanges.add(conflict.getLeftChange());
         rightChanges.add(conflict.getRightChange());
-        // TODO: no conflict
-        //rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
-        //leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myBaseToLeftChangeList));
       }
       else if (compareSubstring(baseText, baseRange, leftText, leftRange)) {
         rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
@@ -130,7 +127,7 @@ public class MergeList implements UserDataHolder {
         leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myBaseToLeftChangeList));
       }
       else {
-        MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        MergeConflict conflict = new MergeConflict(baseRange, leftRange, rightRange, mergeList);
         assert conflict.getLeftChange() != null;
         assert conflict.getRightChange() != null;
         leftChanges.add(conflict.getLeftChange());

@@ -15,120 +15,56 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * One of two conflicting changes.
+ *
  * @see MergeConflict
  */
-class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListener {
+class ConflictChange extends TwoSideChange.SideChange<MergeConflict> {
 
   private static final Logger LOG = Logger.getInstance(ConflictChange.class);
 
-  private SimpleChangeSide myOriginalSide;
-  private MergeConflict myConflict;
-  @NotNull private final ChangeList myChangeList;
-  private ChangeType myType;
   private boolean mySemiApplied;
 
   public ConflictChange(@NotNull MergeConflict conflict,
                         @NotNull FragmentSide mergeSide,
-                        @NotNull TextRange range,
+                        @NotNull TextRange versionRange,
                         @NotNull ChangeList changeList) {
-    myConflict = conflict;
-    myChangeList = changeList;
-    myOriginalSide = new SimpleChangeSide(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
-    myType = ChangeType.CONFLICT;
-  }
-
-  @Override
-  protected void changeSide(ChangeSide sideToChange, DiffRangeMarker newRange) {
-    myConflict.setRange(newRange);
-  }
-
-  protected void removeFromList() {
-    myConflict.conflictRemoved();
-    myConflict = null;
-  }
-
-  @NotNull
-  public ChangeSide getChangeSide(@NotNull FragmentSide side) {
-    return isBranch(side) ? myOriginalSide : myConflict;
-  }
-
-  private static boolean isBranch(@NotNull FragmentSide side) {
-    return MergeList.BRANCH_SIDE == side;
-  }
-
-  public SimpleChangeSide getOriginalSide() {
-    return myOriginalSide;
-  }
-
-  public ChangeType getType() {
-    return myType;
-  }
-
-  public ChangeList getChangeList() {
-    return myConflict.getMergeList().getChanges(myOriginalSide.getFragmentSide());
+    super(conflict, changeList, ChangeType.CONFLICT, mergeSide, versionRange);
   }
 
   @Override
   public void onApplied() {
-    apply();
+    markApplied();
 
     // update the other variant of the conflict to point to the bottom
     if (!mySemiApplied) {
-      ConflictChange otherChange = myConflict.getOtherChange(this);
-      LOG.assertTrue(otherChange != null, String.format("Other change is null. This change: %s Merge conflict: %s", this, myConflict));
+      ConflictChange otherChange = myTwoSideChange.getOtherChange(this);
+      LOG.assertTrue(otherChange != null, String.format("Other change is null. This change: %s Merge conflict: %s", this, myTwoSideChange));
       otherChange.mySemiApplied = true;
       otherChange.updateOtherSideOnConflictApply();
-      myConflict.removeOtherChange(this);
+      myTwoSideChange.removeOtherChange(this);
     }
   }
 
   private void updateOtherSideOnConflictApply() {
     if (myOriginalSide.getStart() == myOriginalSide.getEnd()) {
-      apply();
+      markApplied();
       return;
     }
 
-    int startOffset = myConflict.getRange().getEndOffset();
+    int startOffset = myTwoSideChange.getRange().getEndOffset();
     TextRange emptyRange = new TextRange(startOffset, startOffset);
     ConflictChange leftChange = isBranch(myOriginalSide.getFragmentSide()) ? null : this;
     ConflictChange rightChange = isBranch(myOriginalSide.getFragmentSide()) ? this : null;
-    myConflict = myConflict.deriveSideForNotAppliedChange(emptyRange, leftChange, rightChange);
+    myTwoSideChange = myTwoSideChange.deriveSideForNotAppliedChange(emptyRange, leftChange, rightChange);
     myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
-    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
+    myTwoSideChange.getHighlighterHolder().updateHighlighter(myTwoSideChange, myType);
     myChangeList.fireOnChangeApplied();
-  }
-
-  private void apply() {
-    myType = ChangeType.deriveApplied(myType);
-    myChangeList.apply(this);
-
-    myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
-    myOriginalSide.getHighlighterHolder().setActions(new AnAction[0]);
-
-    // display, what one side of the conflict was resolved to
-    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
-  }
-
-  public void onRemovedFromList() {
-    myOriginalSide.getRange().removeListener(this);
-    myConflict = null;
-    myOriginalSide = null;
-  }
-
-  public boolean isValid() {
-    return myConflict != null;
-  }
-
-  public void onRangeInvalidated() {
-    removeFromList();
   }
 }
