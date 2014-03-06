@@ -69,8 +69,7 @@ public class CollectionElementNameMacro extends Macro {
     if (param.endsWith("_list")) {
       return param.substring(0, param.length()-5);
     }
-    final String result = StringUtil.unpluralize(param);
-    return result == null ? param : result;
+    return StringUtil.unpluralize(param);
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
