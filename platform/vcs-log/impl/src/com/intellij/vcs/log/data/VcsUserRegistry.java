@@ -32,11 +32,11 @@ public class VcsUserRegistry {
 
   @NotNull
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return myUserMap.intern(new VcsUserImpl(name, email));
+    return addUser(new VcsUserImpl(name, email));
   }
 
-  public void addUser(@NotNull VcsUser user) {
-    myUserMap.intern(user);
+  public VcsUser addUser(@NotNull VcsUser user) {
+    return myUserMap.intern(user);
   }
 
   @NotNull
