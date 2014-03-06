@@ -81,7 +81,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   }
 
   @Nullable
-  public <CommitId> T getCommitData(int row, @NotNull AbstractVcsLogTableModel<?, CommitId> tableModel) {
+  public <CommitId> T getCommitData(int row, @NotNull AbstractVcsLogTableModel<?> tableModel) {
     assert EventQueue.isDispatchThread();
     Hash hash = tableModel.getHashAtRow(row);
     if (hash == null) {
@@ -116,7 +116,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     return (T)myDataHolder.getTopCommitDetails(hash);
   }
 
-  private <CommitId> void runLoadAroundCommitData(int row, @NotNull AbstractVcsLogTableModel<?, CommitId> tableModel) {
+  private <CommitId> void runLoadAroundCommitData(int row, @NotNull AbstractVcsLogTableModel<?> tableModel) {
     long taskNumber = myCurrentTaskIndex++;
     MultiMap<VirtualFile, Hash> commits = getCommitsAround(row, tableModel, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT);
     for (Map.Entry<VirtualFile, Collection<Hash>> hashesByRoots : commits.entrySet()) {
@@ -138,7 +138,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
 
   @NotNull
   private static <CommitId> MultiMap<VirtualFile, Hash> getCommitsAround(int selectedRow,
-                                                                         @NotNull AbstractVcsLogTableModel<?, CommitId> model,
+                                                                         @NotNull AbstractVcsLogTableModel<?> model,
                                                                          int above, int below) {
     MultiMap<VirtualFile, Hash> commits = MultiMap.create();
     for (int row = Math.max(0, selectedRow - above); row < selectedRow + below && row < model.getRowCount(); row++) {

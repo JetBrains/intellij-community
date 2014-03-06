@@ -183,7 +183,7 @@ public class GitCherryPicker {
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    VcsNotifier.getInstance(myProject).notifyStrongWarning("Cherry-picked with conflicts", description, resolveLinkListener);
+    VcsNotifier.getInstance(myProject).notifyImportantWarning("Cherry-picked with conflicts", description, resolveLinkListener);
   }
 
   private void notifyCommitCancelled(@NotNull GitCommitWrapper commit, @NotNull List<GitCommitWrapper> successfulCommits) {
@@ -193,7 +193,7 @@ public class GitCherryPicker {
     }
     String description = commitDetails(commit);
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    VcsNotifier.getInstance(myProject).notifyWeakWarning("Cherry-pick cancelled", description, null);
+    VcsNotifier.getInstance(myProject).notifyMinorWarning("Cherry-pick cancelled", description, null);
   }
 
   private CherryPickData updateChangeListManager(@NotNull final VcsFullCommitDetails commit) {

@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graph.render;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.elements.Branch;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -15,12 +14,11 @@ public class ColorGenerator {
   private static final Map<Integer, Color> ourColorMap = ContainerUtil.newHashMap();
 
   @NotNull
-  public static Color getColor(@NotNull Branch branch) {
-    int indexColor = branch.getBranchNumber();
-    Color color = ourColorMap.get(indexColor);
+  public static Color getColor(int branchNumber) {
+    Color color = ourColorMap.get(branchNumber);
     if (color == null) {
-      color = getColor(indexColor);
-      ourColorMap.put(indexColor, color);
+      color = calcColor(branchNumber);
+      ourColorMap.put(branchNumber, color);
     }
     return color;
   }
@@ -30,7 +28,7 @@ public class ColorGenerator {
   }
 
   @NotNull
-  private static Color getColor(int indexColor) {
+  private static Color calcColor(int indexColor) {
     int r = indexColor * 200 + 30;
     int g = indexColor * 130 + 50;
     int b = indexColor * 90 + 100;

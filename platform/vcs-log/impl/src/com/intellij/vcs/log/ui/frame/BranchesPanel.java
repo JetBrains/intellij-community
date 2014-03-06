@@ -16,7 +16,10 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -50,10 +53,10 @@ public class BranchesPanel extends JPanel {
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI) {
+  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI, @NotNull RefsModel initialRefsModel) {
     myDataHolder = dataHolder;
     myUI = UI;
-    myRefGroups = getRefsToDisplayOnPanel();
+    myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myRefPainter = new RefPainter(myUI.getColorManager(), true);
 
     setPreferredSize(new Dimension(-1, HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
@@ -82,10 +85,10 @@ public class BranchesPanel extends JPanel {
     });
 
     Project project = dataHolder.getProject();
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
+    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
       @Override
-      public void run() {
-        rebuild();
+      public void refresh(@NotNull DataPack dataPack) {
+        rebuild(dataPack.getRefsModel());
       }
     });
   }
@@ -116,14 +119,14 @@ public class BranchesPanel extends JPanel {
     }
   }
 
-  public void rebuild() {
-    myRefGroups = getRefsToDisplayOnPanel();
+  public void rebuild(@NotNull RefsModel refsModel) {
+    myRefGroups = getRefsToDisplayOnPanel(refsModel);
     getParent().repaint();
   }
 
   @NotNull
-  private List<RefGroup> getRefsToDisplayOnPanel() {
-    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
+  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull RefsModel refsModel) {
+    Collection<VcsRef> allRefs = refsModel.getBranches();
 
     List<RefGroup> groups = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {

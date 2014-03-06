@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graph.elements;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +15,12 @@ public final class Branch {
   private final int upCommitHash;
   private final int downCommitHash;
   @Nullable private final VcsRef myColoredRef;
-  @NotNull private final VirtualFile myRepositoryRoot;
+  private final int myOneOfHeads;
 
-  public Branch(int upCommitHash, int downCommitHash, @NotNull Collection<VcsRef> refs,
-                @NotNull VirtualFile repositoryRoot) {
+  public Branch(int upCommitHash, int downCommitHash, @NotNull Collection<VcsRef> refs, int oneOfHeads) {
     this.upCommitHash = upCommitHash;
     this.downCommitHash = downCommitHash;
-    myRepositoryRoot = repositoryRoot;
+    myOneOfHeads = oneOfHeads;
     myColoredRef = findRefForBranchColor(refs);
   }
 
@@ -36,8 +34,8 @@ public final class Branch {
     });
   }
 
-  public Branch(int commit, @NotNull Collection<VcsRef> refs, @NotNull VirtualFile repositoryRoot) {
-    this(commit, commit, refs, repositoryRoot);
+  public Branch(int commit, @NotNull Collection<VcsRef> refs, int oneOfHeads) {
+    this(commit, commit, refs, oneOfHeads);
   }
 
   public int getUpCommitHash() {
@@ -79,9 +77,8 @@ public final class Branch {
     }
   }
 
-  @NotNull
-  public VirtualFile getRepositoryRoot() {
-    return myRepositoryRoot;
+  public int getOneOfHeads() {
+    return myOneOfHeads;
   }
 
 }

@@ -69,7 +69,7 @@ public class GitUIUtil {
       notificator.notifyError(title, desc);
     }
     else {
-      notificator.notifyStrongWarning(title, desc, null);
+      notificator.notifyImportantWarning(title, desc, null);
     }
   }
 

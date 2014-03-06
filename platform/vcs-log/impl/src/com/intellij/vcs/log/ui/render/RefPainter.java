@@ -30,7 +30,7 @@ public class RefPainter {
 
   private static final int ROUND_RADIUS = 5;
 
-  private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 12);
+  public static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 12);
   private static final Color DEFAULT_FONT_COLOR = JBColor.BLACK;
 
   @NotNull private final VcsLogColorManager myColorManager;
@@ -85,10 +85,10 @@ public class RefPainter {
     g2.drawPolygon(polygon);
   }
 
-  public int padding(@NotNull Collection<String> refs, @NotNull Graphics2D g2) {
+  public int padding(@NotNull Collection<String> refs, FontMetrics fontMetrics) {
     int p = 0;
     for (String ref : refs) {
-      XAndWidth xAndWidth = getXAndWidth(ref, 0, g2.getFontMetrics(DEFAULT_FONT));
+      XAndWidth xAndWidth = getXAndWidth(ref, 0, fontMetrics);
       p += xAndWidth.x + xAndWidth.width + LABEL_PADDING;
     }
     if (p > 0) { // additional padding after all references looks better

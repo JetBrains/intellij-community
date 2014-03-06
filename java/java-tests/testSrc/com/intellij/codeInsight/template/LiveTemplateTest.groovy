@@ -397,7 +397,7 @@ class Foo {
     assertTrue(isApplicable("class Foo { <caret>xxx void foo(String bar, xxx goo ) {} }", template));
     assertTrue(isApplicable("class Foo { void foo(<caret>String[] bar) {} }", template));
     assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
-    
+
     assertTrue(isApplicable("<caret>xxx package foo; class Foo {}", template));
   }
 
@@ -448,7 +448,7 @@ class Foo {
 
     new ListTemplatesHandler().invoke(project, editor, myFixture.file);
     assert myFixture.lookupElementStrings.containsAll(['iter', 'itco', 'toar'])
-    
+
     myFixture.type('it')
     assert myFixture.lookupElementStrings[0].startsWith('it')
     assert LookupManager.getInstance(project).activeLookup.currentItem == myFixture.getLookupElements()[0]
@@ -559,7 +559,7 @@ class Foo {
     myFixture.type '\t'
     myFixture.checkResult 'class A { void f() { Stri    "; } }'
   }
-  
+
   static void addTemplate(Template template, Disposable parentDisposable) {
     def settings = TemplateSettings.getInstance()
     settings.addTemplate(template);
@@ -589,7 +589,7 @@ class Foo {{
 class Foo {{
   java.util.List<String[]> list;
   String[][] s = list.toArray(new String[list.size()][])<caret>
-}}''' 
+}}'''
   }
 
   public void "test inner class name"() {
@@ -722,4 +722,32 @@ class Foo {
     myFixture.checkResult('-foo-bar_goo- _foo_bar_goo_ c<caret>')
   }
 
+  public void "test use single member static import first"() {
+    myFixture.addClass("""package foo;
+public class Bar {
+  public static void someMethod() {}
+  public static void someMethod(int a) {}
+}""")
+    myFixture.configureByText "a.java", """
+
+class Foo {
+  {
+    <caret>
+  }
+}
+"""
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)');
+    template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true);
+
+    manager.startTemplate(editor, template);
+    myFixture.checkResult """import static foo.Bar.someMethod;
+
+class Foo {
+  {
+    someMethod(<caret>)
+  }
+}
+"""
+  }
 }

@@ -2,6 +2,7 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.data.DataPack;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,5 +22,12 @@ public interface VcsLogFilterUi {
    */
   @NotNull
   VcsLogFilterCollection getFilters();
+
+  /**
+   * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
+   * Components may want to update their fields and/or rebuild.
+   * @param dataPack new data pack.
+   */
+  void updateDataPack(@NotNull DataPack dataPack);
 
 }

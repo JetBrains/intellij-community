@@ -74,14 +74,13 @@ public interface VcsLogProvider {
   void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
-   * <p>Return commits with full details, which correspond to the given filters.</p>
+   * <p>Return commits, which correspond to the given filters.</p>
    *
    * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
-                                                          @NotNull VcsLogFilterCollection filterCollection,
-                                                          int maxCount) throws VcsException;
+  List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection, int maxCount)
+    throws VcsException;
 
   /**
    * Returns the name of current user as specified for the given root,
