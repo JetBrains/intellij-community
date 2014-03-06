@@ -298,8 +298,13 @@ public class VcsLogUI {
     return myProject;
   }
 
-  public void runUnderModalProgress(@NotNull String task, @NotNull Runnable runnable) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, this.getMainFrame().getMainComponent());
+  public void runUnderModalProgress(@NotNull final String task, @NotNull final Runnable runnable) {
+    getTable().executeWithoutRepaint(new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, getMainFrame().getMainComponent());
+      }
+    });
+    repaintUI();
   }
 
   public void setBranchesPanelVisible(boolean visible) {
