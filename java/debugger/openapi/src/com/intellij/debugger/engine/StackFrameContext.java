@@ -16,13 +16,12 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface StackFrameContext {
   @Nullable
   StackFrameProxy getFrameProxy();
 
-  @NotNull
+  @Nullable
   DebugProcess getDebugProcess();
 }

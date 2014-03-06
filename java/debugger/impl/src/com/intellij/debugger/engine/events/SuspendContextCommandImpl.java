@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
   private static final Logger LOG = Logger.getInstance(SuspendContextCommand.class);
+
   private final SuspendContextImpl mySuspendContext;
 
   protected SuspendContextCommandImpl(@Nullable SuspendContextImpl suspendContext) {

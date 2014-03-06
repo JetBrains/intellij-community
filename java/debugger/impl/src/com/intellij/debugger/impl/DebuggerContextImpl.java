@@ -36,7 +36,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -58,7 +57,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   private PsiElement myContextElement;
 
   private DebuggerContextImpl(@Nullable DebuggerSession session,
-                              DebugProcessImpl debugProcess,
+                              @Nullable DebugProcessImpl debugProcess,
                               @Nullable SuspendContextImpl context,
                               ThreadReferenceProxyImpl threadProxy,
                               StackFrameProxyImpl frameProxy,
@@ -82,7 +81,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myDebuggerSession;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
@@ -142,7 +141,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);
   }
 
-  public static DebuggerContextImpl createDebuggerContext(DebuggerSession session,
+  public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
                                                           @Nullable SuspendContextImpl context,
                                                           ThreadReferenceProxyImpl threadProxy,
                                                           StackFrameProxyImpl frameProxy) {

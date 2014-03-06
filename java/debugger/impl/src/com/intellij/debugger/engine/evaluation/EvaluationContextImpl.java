@@ -65,7 +65,7 @@ public final class EvaluationContextImpl implements EvaluationContext{
   @Override
   public Project getProject() {
     DebugProcessImpl debugProcess = getDebugProcess();
-    return debugProcess != null ? debugProcess.getProject() : null;
+    return debugProcess.getProject();
   }
 
   @Override

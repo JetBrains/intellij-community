@@ -122,7 +122,7 @@ public class FrameVariablesTree extends DebuggerTree {
 
 
   @Override
-  protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected DebuggerCommandImpl getBuildNodeCommand(@NotNull DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildFrameTreeVariablesCommand(node);
     }
@@ -192,9 +192,6 @@ public class FrameVariablesTree extends DebuggerTree {
       catch (EvaluateException e) {
         if (e.getCause() instanceof AbsentInformationException) {
           final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-          if (frame == null) {
-            throw e;
-          }
 
           final Collection<Value> argValues = frame.getArgumentValues();
           int index = 0;
@@ -281,9 +278,6 @@ public class FrameVariablesTree extends DebuggerTree {
 
   private static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameDescriptorImpl stackDescriptor) throws EvaluateException {
     final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-    if (frame == null) {
-      return Collections.emptyMap();
-    }
     final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
     for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
       vars.put(localVariableProxy.name(), localVariableProxy);

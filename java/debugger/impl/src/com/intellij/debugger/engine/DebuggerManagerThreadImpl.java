@@ -37,15 +37,16 @@ import org.jetbrains.annotations.TestOnly;
  * @author lex
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
   public static final int COMMAND_TIMEOUT = 3000;
-  private static final int RESTART_TIMEOUT = 500;
+
   private volatile boolean myDisposed;
 
   DebuggerManagerThreadImpl(@NotNull Disposable parent) {
     Disposer.register(parent, this);
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
@@ -63,6 +64,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
   }
 
+  @Override
   public void invokeAndWait(DebuggerCommandImpl managerCommand) {
     LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
     super.invokeAndWait(managerCommand);
@@ -77,6 +79,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
+  @Override
   public boolean pushBack(DebuggerCommandImpl managerCommand) {
     final boolean pushed = super.pushBack(managerCommand);
     if (!pushed) {
@@ -85,6 +88,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     return pushed;
   }
 
+  @Override
   public boolean schedule(DebuggerCommandImpl managerCommand) {
     final boolean scheduled = super.schedule(managerCommand);
     if (!scheduled) {
@@ -106,6 +110,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     if (currentCommand != null) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       alarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           try {
             if (currentCommand == myEvents.getCurrentEvent()) {
@@ -135,10 +140,11 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
 
+  @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
     assertIsManagerThread();
     try {
-      if(myEvents.isClosed()) {
+      if (myEvents.isClosed()) {
         managerCommand.notifyCancelled();
       }
       else {
@@ -161,14 +167,17 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   public void startProgress(final DebuggerCommandImpl command, final ProgressWindowWithNotification progressWindow) {
     progressWindow.addListener(new ProgressIndicatorListenerAdapter() {
+      @Override
       public void cancelled() {
         command.release();
       }
     });
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
+          @Override
           public void run() {
             invokeAndWait(command);
           }
@@ -193,10 +202,12 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       }
 
       super.invokeAndWait(new DebuggerCommandImpl() {
+        @Override
         protected void action() throws Exception {
           switchToRequest(request);
         }
 
+        @Override
         protected void commandCancelled() {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Event queue was closed, killing request");
@@ -207,14 +218,17 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
+  @Override
   public void invokeCommand(final DebuggerCommand command) {
     if(command instanceof SuspendContextCommand) {
       SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
       schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
+          @Override
           public void contextAction() throws Exception {
             command.action();
           }
 
+          @Override
           protected void commandCancelled() {
             command.commandCancelled();
           }
@@ -222,10 +236,12 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
     else {
       schedule(new DebuggerCommandImpl() {
+        @Override
         protected void action() throws Exception {
           command.action();
         }
 
+        @Override
         protected void commandCancelled() {
           command.commandCancelled();
         }
