@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +144,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
       }
     }
     else {
-      caretLines = new int[0];
+      caretLines = ArrayUtil.EMPTY_INT_ARRAY;
     }
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }

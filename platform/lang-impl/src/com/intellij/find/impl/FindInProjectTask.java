@@ -313,7 +313,7 @@ class FindInProjectTask {
     // $ is used to separate words when indexing plain-text files but not when indexing
     // Java identifiers, so we can't consistently break a string containing $ characters into words
 
-    return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0;
+    return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0 && !StringUtil.getWordsInStringLongestFirst(text).isEmpty();
   }
 
 

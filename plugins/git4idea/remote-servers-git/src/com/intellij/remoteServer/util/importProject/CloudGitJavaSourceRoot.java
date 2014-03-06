@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.postfix.templates;
+package com.intellij.remoteServer.util.importProject;
 
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import org.jetbrains.annotations.NotNull;
 
-public class CastPostfixTemplateTest extends PostfixTemplateTestCase {
+/**
+ * @author michael.golubev
+ */
+public class CloudGitJavaSourceRoot extends DetectedSourceRoot {
+
+  private final String myRootTypeName;
+
+  public CloudGitJavaSourceRoot(String rootTypeName, JavaModuleSourceRoot javaSourceRoot) {
+    super(javaSourceRoot.getDirectory(), javaSourceRoot.getPackagePrefix());
+    myRootTypeName = rootTypeName;
+  }
+
   @NotNull
   @Override
-  protected String getSuffix() { return "cast"; }
-
-  public void testSingleExpression() { doTest(); } // jdk mock needed
-  public void testVoidExpression()   { doTest(); }
-  public void testSingleArgument()   { doTest(); }
-  public void testInsideString()     { doTest(); }
+  public String getRootTypeName() {
+    return myRootTypeName;
+  }
 }

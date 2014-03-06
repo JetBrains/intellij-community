@@ -236,6 +236,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       Collection<TextRange> cdataReformatRanges = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
+      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + name + ">", false, 0);
+      
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
@@ -247,13 +249,11 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
           for (Caret caret : editor.getCaretModel().getAllCarets()) {
             int caretOffset = caret.getOffset();
             if (caretOffset >= cDataStart.length()) {
-              cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length()));
+              cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length() + 1));
             }
           }
         }
       }
-
-      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + name + ">", false, 0);
 
       if (cdataReformatRanges != null && !cdataReformatRanges.isEmpty()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

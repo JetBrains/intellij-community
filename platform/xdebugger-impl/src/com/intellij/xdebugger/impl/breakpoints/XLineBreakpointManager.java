@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsAdapter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -49,7 +50,10 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -271,7 +275,20 @@ public class XLineBreakpointManager {
               @Override
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
-                  XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line, mouseEvent.isAltDown());
+                  XLineBreakpoint breakpoint =
+                    XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line, mouseEvent.isAltDown());
+                  if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
+                    breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+                    String selection = editor.getSelectionModel().getSelectedText();
+                    if (selection != null) {
+                      breakpoint.setLogExpression(selection);
+                    }
+                    else {
+                      breakpoint.setLogMessage(true);
+                    }
+                    // edit breakpoint
+                    DebuggerUIUtil.showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(), false, breakpoint);
+                  }
                 }
               }
             });

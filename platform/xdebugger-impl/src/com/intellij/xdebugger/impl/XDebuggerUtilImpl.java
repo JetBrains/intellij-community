@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -74,7 +75,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
+  public XLineBreakpoint toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
     XLineBreakpointType<?> typeWinner = null;
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project) && (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
@@ -82,8 +83,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     if (typeWinner != null) {
-      toggleLineBreakpoint(project, typeWinner, file, line, temporary);
+      return toggleLineBreakpoint(project, typeWinner, file, line, temporary);
     }
+    return null;
   }
 
   @Override
@@ -97,11 +99,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project,
+  public <P extends XBreakpointProperties> XLineBreakpoint toggleLineBreakpoint(@NotNull final Project project,
                                                                      @NotNull final XLineBreakpointType<P> type,
                                                                      @NotNull final VirtualFile file,
                                                                      final int line,
                                                                      final boolean temporary) {
+    final Ref<XLineBreakpoint> res = new Ref<XLineBreakpoint>();
     new WriteAction() {
       @Override
       protected void run(@NotNull final Result result) {
@@ -112,10 +115,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         else {
           P properties = type.createBreakpointProperties(file, line);
-          breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
+          res.set(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
         }
       }
     }.execute();
+    return res.get();
   }
 
   @Override

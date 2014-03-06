@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -593,7 +595,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
-  private class RerunAction extends AnAction {
+  private class RerunAction extends DumbAwareAction {
     private final Runnable myRerunAction;
     private final AnAction myCloseAction;
 
@@ -616,7 +618,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private class StopAction extends AnAction {
+  private class StopAction extends DumbAwareAction {
     public StopAction() {
       super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
     }
@@ -642,7 +644,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return true;
   }
 
-  private class HideWarningsAction extends ToggleAction {
+  private class HideWarningsAction extends ToggleAction implements DumbAware {
     public HideWarningsAction() {
       super(IdeBundle.message("action.hide.warnings"), null, AllIcons.General.HideWarnings);
     }

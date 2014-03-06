@@ -28,6 +28,10 @@
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="InjectSQLLanguage.html" feature-id="db.console.run.intention"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
