@@ -25,16 +25,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,33 +86,27 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     setPlainTextStatus(false, files);
   }
 
-  public void setPlainTextStatus(boolean isPlainText, VirtualFile... files) {
-    List<VirtualFile> filesToSync = new ArrayList<VirtualFile>();
-    for (VirtualFile file : files) {
-      filesToSync.add(file);
-      FileBasedIndex.getInstance().requestReindex(file);
-    }
-    fireRootsChanged(filesToSync, isPlainText);
-  }
-
-  private void fireRootsChanged(final Collection<VirtualFile> files, final boolean isAdded) {
+  private void setPlainTextStatus(final boolean isAdded, final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-          ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
-          for (VirtualFile file : files) {
-            if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-              ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
-              if (isAdded) {
-                projectPlainTextFileTypeManager.addFile(file);
-              }
-              else {
-                projectPlainTextFileTypeManager.removeFile(file);
+        for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(new Runnable() {
+            @Override
+            public void run() {
+              ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+              for (VirtualFile file : files) {
+                if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
+                  ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+                  if (isAdded ?
+                      projectPlainTextFileTypeManager.addFile(file) :
+                      projectPlainTextFileTypeManager.removeFile(file)) {
+                    FileBasedIndex.getInstance().requestReindex(file);
+                  }
+                }
               }
             }
-          }
+          }, false, true);
         }
       }
     });
