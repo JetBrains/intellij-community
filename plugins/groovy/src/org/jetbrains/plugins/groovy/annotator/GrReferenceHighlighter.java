@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,16 +67,10 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
         final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable, null);
         if (attribute != null) {
           final PsiElement nameElement = variable.getNameIdentifierGroovy();
-          assert myInfos != null;
-          HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(nameElement);
-          HighlightInfo info = builder.needsUpdateOnTyping(false).textAttributes(attribute).create();
-          if (info != null) {
-            myInfos.add(info);
-          }
+          addInfo(attribute, nameElement);
         }
       }
     }
-
 
     private void visit(GrReferenceElement element) {
       ProgressManager.checkCanceled();
@@ -84,12 +78,15 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
       final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved, element);
       if (attribute != null) {
         final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
-        assert myInfos != null;
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(refNameElement);
-        HighlightInfo info = builder.needsUpdateOnTyping(false).textAttributes(attribute).create();
-        if (info != null) {
-          myInfos.add(info);
-        }
+        addInfo(attribute, refNameElement);
+      }
+    }
+
+    private void addInfo(TextAttributesKey attribute, PsiElement nameElement) {
+      assert myInfos != null;
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(nameElement).needsUpdateOnTyping(false).textAttributes(attribute).create();
+      if (info != null) {
+        myInfos.add(info);
       }
     }
   };
@@ -100,10 +97,10 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
       final int size = myInfos.size();
       super.visitReferenceExpression(referenceExpression);
       if (size == myInfos.size()) {
-        HighlightInfo info = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
-        if (info != null) {
+        List<HighlightInfo> infos = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
+        if (infos != null) {
           assert myInfos != null;
-          myInfos.add(info);
+          myInfos.addAll(infos);
         }
       }
     }
