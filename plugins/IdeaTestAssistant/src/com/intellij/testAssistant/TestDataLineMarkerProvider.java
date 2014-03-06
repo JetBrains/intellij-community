@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,10 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
 
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null || !ProjectFileIndex.SERVICE.getInstance(element.getProject()).isInTestSourceContent(file)) {
       return null;
     }
     if (element instanceof PsiMethod) {
