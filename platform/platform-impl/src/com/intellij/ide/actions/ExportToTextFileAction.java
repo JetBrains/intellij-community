@@ -18,9 +18,10 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.util.ExportToFileUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
-public class ExportToTextFileAction extends AnAction {
+public class ExportToTextFileAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
