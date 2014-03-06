@@ -61,11 +61,11 @@ public class CollectionElementNameMacro extends Macro {
         param = param.substring(0, lastParen);
       }
     }
-    final String result = smartUnpluralize(param);
+    final String result = smartUnPluralize(param);
     return result != null && PyUtil.isPythonIdentifier(result) ? new TextResult(result) : null;
   }
 
-  private static String smartUnpluralize(String param) {
+  private static String smartUnPluralize(String param) {
     if (param.endsWith("_list")) {
       return param.substring(0, param.length()-5);
     }
