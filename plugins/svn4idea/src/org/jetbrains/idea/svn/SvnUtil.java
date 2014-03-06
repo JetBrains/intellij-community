@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -539,6 +540,12 @@ public class SvnUtil {
   }
 
   public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
+    // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
+    // So by default we assume repository supports merge info tracking.
+    if (!Registry.is("svn.check.repository.supports.merge.info")) {
+      return true;
+    }
+
     SVNRepository repository = null;
     try {
       repository = vcs.createRepository(url);
