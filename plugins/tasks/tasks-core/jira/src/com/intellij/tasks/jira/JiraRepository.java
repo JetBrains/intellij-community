@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -34,15 +35,13 @@ import java.io.InputStream;
 public class JiraRepository extends BaseRepositoryImpl {
 
   public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
-  private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
-  // TODO: move to bundle
-  public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
+  private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
   /**
    * Default JQL query
    */
-  private String mySearchQuery = "assignee = currentUser() and resolution = Unresolved order by updated";
+  private String mySearchQuery = TaskBundle.message("jira.default.query");
 
   private JiraRemoteApi myApiVersion;
 
@@ -141,7 +140,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // may be used instead version string parsing
     JiraRestApi restApi = JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
     if (restApi == null) {
-      throw new Exception("JIRA below 4.2.0 doesn't have REST API and is no longer supported.");
+      throw new Exception(TaskBundle.message("jira.failure.no.REST"));
     }
     return restApi;
     //return new JiraSoapApi(this);
@@ -184,7 +183,7 @@ public class JiraRepository extends BaseRepositoryImpl {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
           // something meaningful to user, e.g. invalid field name in JQL query
           LOG.warn(reason);
-          throw new Exception("Request failed. Reason: " + reason);
+          throw new Exception(TaskBundle.message("failure.server.message", reason));
         }
       }
     }
@@ -192,14 +191,14 @@ public class JiraRepository extends BaseRepositoryImpl {
       Header header = method.getResponseHeader("X-Authentication-Denied-Reason");
       // only in JIRA >= 5.x.x
       if (header.getValue().startsWith("CAPTCHA_CHALLENGE")) {
-        throw new Exception("Login failed. Enter captcha in web-interface.");
+        throw new Exception(TaskBundle.message("jira.failure.captcha"));
       }
     }
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-      throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
+      throw new Exception(TaskBundle.message("failure.login"));
     }
     String statusText = HttpStatus.getStatusText(method.getStatusCode());
-    throw new Exception(String.format("Request failed with HTTP error: %d %s", statusCode, statusText));
+    throw new Exception(TaskBundle.message("failure.http.error", statusCode, statusText));
   }
 
   /*

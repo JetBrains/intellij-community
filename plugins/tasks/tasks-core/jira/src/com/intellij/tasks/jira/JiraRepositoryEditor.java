@@ -16,6 +16,7 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
@@ -62,7 +63,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     enableJqlSearchIfSupported();
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
-    JBLabel note = new JBLabel("JQL search is supported only for JIRA version >= 4.2");
+    JBLabel note = new JBLabel(TaskBundle.message("jira.failure.no.JQL"));
     note.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
