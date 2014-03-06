@@ -161,7 +161,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (containingClass != null) {
       PsiMethod[] methods = null;
       if (element instanceof PsiIdentifier) {
-        methods = containingClass.findMethodsByName(element.getText(), false);
+        methods = containingClass.findMethodsByName(element.getText(), true);
       }
       else if (isConstructor()) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
