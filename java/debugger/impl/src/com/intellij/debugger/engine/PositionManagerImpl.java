@@ -29,7 +29,6 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -258,12 +257,41 @@ public class PositionManagerImpl implements PositionManager {
 
   private static int getNestingDepth(PsiClass aClass) {
     int depth = 0;
-    PsiClass enclosing = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    PsiClass enclosing = getEnclosingClass(aClass);
     while (enclosing != null) {
       depth++;
-      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true);
+      enclosing = getEnclosingClass(enclosing);
     }
     return depth;
+  }
+
+  /**
+   * See IDEA-121739
+   * Anonymous classes inside other anonymous class parameters list should belong to parent class
+   * Inner in = new Inner(new Inner2(){}) {};
+   * Parent of Inner2 sub class here is not Inner sub class
+   */
+  private static PsiClass getEnclosingClass(PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+
+    element = element.getParent();
+    PsiElement previous = null;
+
+    while (element != null) {
+      if (PsiClass.class.isInstance(element) && !(previous instanceof PsiExpressionList)) {
+        //noinspection unchecked
+        return (PsiClass)element;
+      }
+      if (element instanceof PsiFile) {
+        return null;
+      }
+      previous = element;
+      element = element.getParent();
+    }
+
+    return null;
   }
 
   @Nullable
