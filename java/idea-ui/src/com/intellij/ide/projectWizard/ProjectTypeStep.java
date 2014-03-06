@@ -50,10 +50,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.platform.templates.BuilderBasedTemplate;
-import com.intellij.platform.templates.LocalArchivedTemplate;
-import com.intellij.platform.templates.RemoteTemplatesFactory;
+import com.intellij.platform.templates.*;
 import com.intellij.ui.*;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
@@ -377,8 +374,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
     List<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
-    if (group.getModuleBuilder() != null) {
-      list.add(0, new BuilderBasedTemplate(group.getModuleBuilder()));
+    ModuleBuilder moduleBuilder = group.getModuleBuilder();
+    if (moduleBuilder != null && !(moduleBuilder instanceof TemplateModuleBuilder)) {
+      list.add(0, new BuilderBasedTemplate(moduleBuilder));
     }
     if (group.getParentGroup() == null) {
       for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
