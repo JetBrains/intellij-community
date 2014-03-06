@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * One of two conflicting changes.
@@ -31,11 +32,14 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
 
   private SimpleChangeSide myOriginalSide;
   private MergeConflict myConflict;
-  private final ChangeList myChangeList;
+  @NotNull private final ChangeList myChangeList;
   private ChangeType myType;
   private boolean mySemiApplied;
 
-  public ConflictChange(MergeConflict conflict, FragmentSide mergeSide, TextRange range, ChangeList changeList) {
+  public ConflictChange(@NotNull MergeConflict conflict,
+                        @NotNull FragmentSide mergeSide,
+                        @NotNull TextRange range,
+                        @NotNull ChangeList changeList) {
     myConflict = conflict;
     myChangeList = changeList;
     myOriginalSide = new SimpleChangeSide(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
@@ -52,11 +56,12 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     myConflict = null;
   }
 
-  public ChangeSide getChangeSide(FragmentSide side) {
+  @NotNull
+  public ChangeSide getChangeSide(@NotNull FragmentSide side) {
     return isBranch(side) ? myOriginalSide : myConflict;
   }
 
-  private static boolean isBranch(FragmentSide side) {
+  private static boolean isBranch(@NotNull FragmentSide side) {
     return MergeList.BRANCH_SIDE == side;
   }
 
