@@ -189,7 +189,6 @@ public class VcsLogUI {
   }
 
   public void handleAnswer(@Nullable GraphAnswer answer) {
-    myMainFrame.setCursor(Cursor.getDefaultCursor());
     updateUI();
 
     if (answer == null) {
