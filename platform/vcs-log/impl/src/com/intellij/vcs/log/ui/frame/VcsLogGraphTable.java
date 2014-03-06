@@ -286,7 +286,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       Point point = calcPoint4Graph(e.getPoint());
       GraphFacade graphFacade = myDataPack.getGraphFacade();
       GraphAnswer answer = graphFacade.performAction(actionConstructor.fun(row, point));
-      handleAnswer(answer);
+      myUI.handleAnswer(answer);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -301,23 +301,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @Override
     public void mouseExited(MouseEvent e) {
       // Do nothing
-    }
-  }
-
-  private void handleAnswer(@Nullable GraphAnswer answer) {
-    setCursor(Cursor.getDefaultCursor());
-    myUI.updateUI();
-
-    if (answer == null) {
-      return;
-    }
-    GraphActionRequest actionRequest = answer.getActionRequest();
-    if (actionRequest instanceof JumpToRowActionRequest) {
-      int row = ((JumpToRowActionRequest)actionRequest).getRow();
-      jumpToRow(row);
-    }
-    else if (actionRequest instanceof ChangeCursorActionRequest) {
-      setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
     }
   }
 

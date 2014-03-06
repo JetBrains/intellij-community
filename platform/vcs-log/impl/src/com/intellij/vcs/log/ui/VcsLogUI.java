@@ -15,9 +15,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.graph.ClickGraphAction;
-import com.intellij.vcs.log.graph.LinearBranchesExpansionAction;
-import com.intellij.vcs.log.graph.LongEdgesAction;
+import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -188,6 +186,23 @@ public class VcsLogUI {
         return model.getRowOfCommitByPartOfHash(hash);
       }
     });
+  }
+
+  public void handleAnswer(@Nullable GraphAnswer answer) {
+    myMainFrame.setCursor(Cursor.getDefaultCursor());
+    updateUI();
+
+    if (answer == null) {
+      return;
+    }
+    GraphActionRequest actionRequest = answer.getActionRequest();
+    if (actionRequest instanceof JumpToRowActionRequest) {
+      int row = ((JumpToRowActionRequest)actionRequest).getRow();
+      jumpToRow(row);
+    }
+    else if (actionRequest instanceof ChangeCursorActionRequest) {
+      myMainFrame.setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
+    }
   }
 
   private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<AbstractVcsLogTableModel, T, Integer> rowGetter) {
