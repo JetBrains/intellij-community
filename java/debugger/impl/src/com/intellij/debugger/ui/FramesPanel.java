@@ -59,6 +59,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -102,6 +103,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     myFramesList.addListSelectionListener(myFramesListener);
 
     myFramesList.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(final MouseEvent e) {
         int index = myFramesList.locationToIndex(e.getPoint());
         if (index >= 0 && myFramesList.isSelectedIndex(index)) {
@@ -140,6 +142,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     return toolbar;
   }
 
+  @Override
   public DebuggerStateManager getContextManager() {
     return myStateManager;
   }
@@ -151,6 +154,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       myIsEnabled = enabled;
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       if (!myIsEnabled || e.getValueIsAdjusting()) {
         return;
@@ -169,6 +173,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   private void registerThreadsPopupMenu(final JList framesList) {
     final PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.THREADS_PANEL_POPUP);
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
@@ -177,6 +182,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     };
     framesList.addMouseListener(popupHandler);
     registerDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myThreadsCombo.removeItemListener(myThreadsListener);
         framesList.removeMouseListener(popupHandler);
@@ -191,6 +197,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       myIsEnabled = enabled;
     }
 
+    @Override
     public void itemStateChanged(ItemEvent e) {
       if (!myIsEnabled) return;
       if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -202,6 +209,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   private final AtomicBoolean myPerformFullRebuild = new AtomicBoolean(false);
 
+  @Override
   protected void rebuild(int event) {
     myRebuildAlarm.cancelAllRequests();
     final boolean isRefresh = event == DebuggerSession.EVENT_REFRESH ||
@@ -211,12 +219,12 @@ public class FramesPanel extends UpdatableDebuggerView {
       myPerformFullRebuild.set(true);
     }
     myRebuildAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         try {
           doRebuild(!myPerformFullRebuild.getAndSet(false));
         }
-        catch (VMDisconnectedException e) {
-          // ignored
+        catch (VMDisconnectedException ignored) {
         }
       }
     }, 100, ModalityState.NON_MODAL);
@@ -298,6 +306,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       return descriptors;
     }
 
+    @Override
     public void threadAction() {
       if (myRefreshOnly && myThreadDescriptorsToUpdate.length != myThreadsCombo.getItemCount()) {
         // there is no sense in refreshing combobox if thread list has changed since creation of this command
@@ -329,6 +338,7 @@ public class FramesPanel extends UpdatableDebuggerView {
           descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         }
         DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+          @Override
           public void run() {
             try {
               myThreadsListener.setEnabled(false);
@@ -346,6 +356,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
     }
 
+    @Override
     protected void commandCancelled() {
       if (!DebuggerManagerThreadImpl.isManagerThread()) {
         return;
@@ -372,6 +383,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     private void refillThreadsCombo(final ThreadReferenceProxyImpl threadToSelect) {
       final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
       DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        @Override
         public void run() {
           try {
             myThreadsListener.setEnabled(false);
@@ -400,9 +412,11 @@ public class FramesPanel extends UpdatableDebuggerView {
       myDebuggerContext = debuggerContext;
     }
 
+    @Override
     public void contextAction() throws Exception {
       updateFrameList(myDebuggerContext.getThreadProxy());
       DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        @Override
         public void run() {
           try {
             myFramesListener.setEnabled(false);
@@ -425,7 +439,7 @@ public class FramesPanel extends UpdatableDebuggerView {
           return;
         }
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         return;
       }
       
@@ -462,11 +476,13 @@ public class FramesPanel extends UpdatableDebuggerView {
       myDebuggerContext = debuggerContext;
     }
 
+    @Override
     public void contextAction() throws Exception {
       final ThreadReferenceProxyImpl thread = myDebuggerContext.getThreadProxy();
       try {
         if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
           DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+            @Override
             public void run() {
               try {
                 myFramesListener.setEnabled(false);
@@ -491,7 +507,7 @@ public class FramesPanel extends UpdatableDebuggerView {
           return;
         }
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         return;
       }
 
@@ -499,7 +515,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       try {
         frames = thread.frames();
       }
-      catch (EvaluateException e) {
+      catch (EvaluateException ignored) {
         frames = Collections.emptyList();
       }
 
@@ -601,7 +617,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     private final long myTimestamp;
     private final IndexCounter myCounter;
 
-    public AppendFrameCommand(SuspendContextImpl suspendContext, StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
+    public AppendFrameCommand(@NotNull SuspendContextImpl suspendContext, @NotNull StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
                               MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final long timestamp, IndexCounter counter) {
       super(suspendContext);
       myFrame = frame;
@@ -613,12 +629,14 @@ public class FramesPanel extends UpdatableDebuggerView {
       myCounter = counter;
     }
 
+    @Override
     public void contextAction() throws Exception {
       final StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(myFrame, myTracker);
       descriptor.setContext(myEvaluationContext);
       descriptor.updateRepresentation(myEvaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
       final Project project = getProject();
       DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+        @Override
         public void run() {
           try {
             myFramesListener.setEnabled(false);
@@ -650,6 +668,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
+  @Override
   public void requestFocus() {
     myFramesList.requestFocus();
   }
@@ -672,6 +691,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -679,10 +699,12 @@ public class FramesPanel extends UpdatableDebuggerView {
       presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return !myShouldShow;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean enabled) {
       myShouldShow = !enabled;
       DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES = myShouldShow;

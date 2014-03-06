@@ -573,7 +573,7 @@ public final class GitPusher {
         description = "Push has been cancelled, because there were conflicts during update.<br/>" +
                       "Check that conflicts were resolved correctly, and invoke push again.";
       }
-      VcsNotifier.getInstance(myProject).notifyWeakWarning(title, description);
+      VcsNotifier.getInstance(myProject).notifyMinorWarning(title, description);
       return false;
     }
     else {

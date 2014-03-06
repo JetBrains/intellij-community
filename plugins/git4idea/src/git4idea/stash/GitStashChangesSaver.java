@@ -178,29 +178,29 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyStrongWarning("Local changes were restored with conflicts",
-                                                                 "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
-                                                                 "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                                 "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
-                                                                 new NotificationListener() {
-                                                                   @Override
-                                                                   public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                               @NotNull HyperlinkEvent event) {
-                                                                     if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                                       if (event.getDescription().equals("saver")) {
-                                                                         // we don't use #showSavedChanges to specify unmerged root first
-                                                                         GitUnstashDialog.showUnstashDialog(myProject,
-                                                                                                            new ArrayList<VirtualFile>(
-                                                                                                              myStashedRoots),
-                                                                                                            myStashedRoots.iterator().next()
-                                                                         );
-                                                                       }
-                                                                       else if (event.getDescription().equals("resolve")) {
-                                                                         mergeNoProceed();
-                                                                       }
-                                                                     }
-                                                                   }
-                                                                 }
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were restored with conflicts",
+                                                                "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
+                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
+                                                                new NotificationListener() {
+                                                                  @Override
+                                                                  public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                              @NotNull HyperlinkEvent event) {
+                                                                    if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                                      if (event.getDescription().equals("saver")) {
+                                                                        // we don't use #showSavedChanges to specify unmerged root first
+                                                                        GitUnstashDialog.showUnstashDialog(myProject,
+                                                                                                           new ArrayList<VirtualFile>(
+                                                                                                             myStashedRoots),
+                                                                                                           myStashedRoots.iterator().next()
+                                                                        );
+                                                                      }
+                                                                      else if (event.getDescription().equals("resolve")) {
+                                                                        mergeNoProceed();
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
       );
     }
 

@@ -68,7 +68,7 @@ import java.util.*;
 import java.util.List;
 
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTree");
+  private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
   public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
@@ -444,9 +444,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-        if (frame == null) {
-          return;
-        }
 
         final DebuggerContextImpl debuggerContext = getDebuggerContext();
         final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
@@ -538,12 +535,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-      if (frame != null) {
-        for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-          final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
-          final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
-          myChildren.add(variableNode);
-        }
+      for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
+        final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
+        final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
+        myChildren.add(variableNode);
       }
     }
   }

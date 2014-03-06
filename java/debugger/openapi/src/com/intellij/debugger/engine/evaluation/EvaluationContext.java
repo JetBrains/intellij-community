@@ -21,8 +21,10 @@ import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 public interface EvaluationContext extends StackFrameContext{
+  @NotNull
   DebugProcess getDebugProcess();
 
   EvaluationContext createEvaluationContext(Value value);

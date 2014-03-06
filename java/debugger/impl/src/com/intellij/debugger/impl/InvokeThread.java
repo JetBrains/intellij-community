@@ -144,10 +144,10 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
           processEvent(myEvents.get());
         }
-        catch (VMDisconnectedException e) {
+        catch (VMDisconnectedException ignored) {
           break;
         }
-        catch (EventQueueClosedException e) {
+        catch (EventQueueClosedException ignored) {
           break;
         }
         catch (RuntimeException e) {

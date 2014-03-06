@@ -34,7 +34,7 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
     return myRefType;
   }
 
-  protected StaticDescriptorImpl createDescriptorImpl(Project project) {
+  protected StaticDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new StaticDescriptorImpl(myRefType);
   }
 

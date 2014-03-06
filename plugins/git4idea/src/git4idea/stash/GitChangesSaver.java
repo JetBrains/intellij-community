@@ -114,13 +114,13 @@ public abstract class GitChangesSaver {
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
-      VcsNotifier.getInstance(myProject).notifyStrongWarning("Local changes were not restored",
-                                                             "Before update your uncommitted changes were saved to <a href='saver'>" +
-                                                             getSaverName() +
-                                                             "</a>.<br/>" +
-                                                             "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                             "Resolve conflicts, complete update and restore changes manually.",
-                                                             new ShowSavedChangesNotificationListener()
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored",
+                                                                "Before update your uncommitted changes were saved to <a href='saver'>" +
+                                                                getSaverName() +
+                                                                "</a>.<br/>" +
+                                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "Resolve conflicts, complete update and restore changes manually.",
+                                                                new ShowSavedChangesNotificationListener()
       );
     }
   }
