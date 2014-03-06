@@ -153,7 +153,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new THashSet<AbstractProjectViewPane>();
 
   static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
-  @Deprecated static final String PROJECT_VIEW_DATA_CONSTANT = DATA_KEY.getName();
 
   private DefaultActionGroup myActionGroup;
   private String mySavedPaneId = ProjectViewPane.ID;
@@ -1403,10 +1402,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       // ignore
     }
     parentNode.addContent(navigatorElement);
-
-    // for compatibility with idea 5.1
-    @Deprecated @NonNls final String ATTRIBUTE_SPLITTER_PROPORTION = "splitterProportion";
-    navigatorElement.setAttribute(ATTRIBUTE_SPLITTER_PROPORTION, "0.5");
 
     Element panesElement = new Element(ELEMENT_PANES);
     writePaneState(panesElement);
