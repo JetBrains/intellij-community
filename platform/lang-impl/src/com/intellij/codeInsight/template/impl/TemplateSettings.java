@@ -234,7 +234,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   @Nullable
-  private TemplateImpl getDefaultTemplate(TemplateImpl t) {
+  public TemplateImpl getDefaultTemplate(TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
