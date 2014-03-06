@@ -294,13 +294,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           iteration += ").collect(java.util.stream.Collectors.";
 
           String variableName = null;
-          PsiExpression initializer = null;
+          PsiExpression primitiveInitializer = null;
           final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
           if (qualifierExpression instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
             if (resolve instanceof PsiVariable) {
               if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class))) {
-                initializer = ((PsiVariable)resolve).getInitializer();
+                final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
+                if (initializer instanceof PsiNewExpression) {
+                  final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+                  if (argumentList != null && argumentList.getExpressions().length == 0) {
+                    primitiveInitializer = initializer;
+                  }
+                }
               }
               variableName = ((PsiVariable)resolve).getName() + ".";
             }
@@ -309,18 +315,18 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
 
           PsiElement result = null;
-          if (initializer != null) {
-            final PsiType initializerType = initializer.getType();
+          if (primitiveInitializer != null) {
+            final PsiType initializerType = primitiveInitializer.getType();
             final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
             if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST)) {
               iteration += "toList()";
             } else if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET)) {
               iteration += "toSet()";
             } else {
-              iteration += "toCollection(() -> " + initializer.getText() +")";
+              iteration += "toCollection(() -> " + primitiveInitializer.getText() +")";
             }
             iteration += ")";
-            result = initializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
+            result = primitiveInitializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
             foreachStatement.delete();
           } else if (variableName != null){
             iteration += "toList())";
