@@ -282,7 +282,7 @@ class GitPushResult {
       vcsNotifier.notifyError(title, sb.toString(), viewUpdateFilesListener);
     }
     else {
-      vcsNotifier.notifyStrongWarning(title, sb.toString(), viewUpdateFilesListener);
+      vcsNotifier.notifyImportantWarning(title, sb.toString(), viewUpdateFilesListener);
     }
   }
 

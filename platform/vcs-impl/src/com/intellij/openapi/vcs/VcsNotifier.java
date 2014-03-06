@@ -47,12 +47,12 @@ public class VcsNotifier {
   private static Notification createNotification(@NotNull NotificationGroup notificationGroup,
                                                  @NotNull String title, @NotNull String message, @NotNull NotificationType type,
                                                  @Nullable NotificationListener listener) {
-    // title can be empty; description can't be neither null, nor empty
+    // title can be empty; message can't be neither null, nor empty
     if (StringUtil.isEmptyOrSpaces(message)) {
       message = title;
       title = "";
     }
-    // if both title and description were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
+    // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
     return notificationGroup.createNotification(title, message, type, listener);
   }
 
@@ -110,13 +110,13 @@ public class VcsNotifier {
   }
 
   @NotNull
-  public Notification notifyWeakWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
     return notify(MINOR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyWeakWarning(@NotNull String title, @NotNull String description) {
-    return notifyWeakWarning(title, description, null);
+  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message) {
+    return notifyMinorWarning(title, message, null);
   }
 
   @NotNull
@@ -125,8 +125,8 @@ public class VcsNotifier {
   }
 
   @NotNull
-  public Notification notifyStrongWarning(@NotNull String title, @NotNull String content, @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.WARNING, listener);
+  public Notification notifyImportantWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull

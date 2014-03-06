@@ -445,9 +445,9 @@ public class GitUnstashDialog extends DialogWrapper {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyStrongWarning("Conflicts were not resolved during unstash",
-                                                             "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                             "<a href='resolve'>Resolve</a> conflicts.", new NotificationListener() {
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Conflicts were not resolved during unstash",
+                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "<a href='resolve'>Resolve</a> conflicts.", new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {

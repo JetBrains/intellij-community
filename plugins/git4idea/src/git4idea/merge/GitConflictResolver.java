@@ -181,7 +181,7 @@ public class GitConflictResolver {
   }
 
   private void notifyWarning(String title, String content) {
-    VcsNotifier.getInstance(myProject).notifyStrongWarning(title, content, new ResolveNotificationListener());
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(title, content, new ResolveNotificationListener());
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {

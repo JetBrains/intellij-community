@@ -287,7 +287,7 @@ public class GitFetcher {
     if (result.isSuccess()) {
       VcsNotifier.getInstance(project).notifySuccess("Fetched successfully" + result.getAdditionalInfo());
     } else if (result.isCancelled()) {
-      VcsNotifier.getInstance(project).notifyWeakWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
+      VcsNotifier.getInstance(project).notifyMinorWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
     } else if (result.isNotAuthorized()) {
       String title;
       String description;

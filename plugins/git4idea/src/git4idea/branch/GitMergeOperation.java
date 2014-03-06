@@ -364,9 +364,9 @@ class GitMergeOperation extends GitBranchOperation {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyStrongWarning("Merged branch " + myBranchToMerge + " with conflicts",
-                                                             "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>",
-                                                             getResolveLinkListener());
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Merged branch " + myBranchToMerge + " with conflicts",
+                                                                "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>",
+                                                                getResolveLinkListener());
     }
   }
 
