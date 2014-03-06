@@ -498,7 +498,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       if (url != null) {
         LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
         if (ep.category) {
-          TemplateBasedCategory category = new TemplateBasedCategory(template);
+          TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
           myTemplatesMap.putValue(new TemplatesGroup(category), template);
         }
         else {
