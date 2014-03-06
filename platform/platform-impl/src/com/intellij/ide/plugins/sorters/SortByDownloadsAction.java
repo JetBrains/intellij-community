@@ -19,20 +19,20 @@ import com.intellij.ide.plugins.PluginTable;
 import com.intellij.ide.plugins.PluginTableModel;
 
 /**
-* @author Konstantin Bulenkov
-*/
-public class SortByStatusAction extends AbstractSortByAction {
-  public SortByStatusAction(PluginTable pluginTable, PluginTableModel pluginsModel) {
-    super("Status", pluginTable, pluginsModel);
+ * @author Konstantin Bulenkov
+ */
+public class SortByDownloadsAction extends AbstractSortByAction {
+  public SortByDownloadsAction(PluginTable table, PluginTableModel model) {
+    super("Downloads", table, model);
   }
 
   @Override
   public boolean isSelected() {
-    return myModel.isSortByStatus();
+    return myModel.isSortByDownloads();
   }
 
   @Override
-  public void setSelected(boolean state) {
-    myModel.setSortByStatus(state);
+  protected void setSelected(boolean state) {
+    myModel.setSortByDownloads(state);
   }
 }
