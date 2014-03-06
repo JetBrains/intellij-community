@@ -71,7 +71,6 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       if (myTimestamp.isExpired()) {
         return;
       }
-      System.out.println("processRequestFocus");
 
       Component preferredFocusedComponent = myToolWindow.isUseLastFocusedOnActivation() ? myFocusWatcher.getFocusedComponent() : null;
 
