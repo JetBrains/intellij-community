@@ -195,6 +195,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
+          final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
+
+          final PsiElement parent = foreachStatement.getParent();
+          for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
+            parent.addBefore(comment, foreachStatement);
+          }
+
           final PsiParameter parameter = foreachStatement.getIterationParameter();
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
@@ -312,6 +319,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             }
           } else if (qualifierExpression == null) {
             variableName = "";
+          }
+
+          if (variableName != null) {
+            final PsiElement parent = foreachStatement.getParent();
+            for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
+              parent.addBefore(comment, foreachStatement);
+            }
           }
 
           PsiElement result = null;
