@@ -41,6 +41,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JRadioButton myActivateLeftEditorOnCloseRadio;
   private JRadioButton myActivateMRUEditorOnCloseRadio;
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
+  private JCheckBox myShowTabsTooltipsCheckBox;
   private JCheckBox myShowCloseButtonOnCheckBox;
   private JCheckBox myShowDirectoryInTabCheckBox;
   private JRadioButton myActivateRightNeighbouringTabRadioButton;
@@ -71,12 +72,14 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       myHideKnownExtensions.setEnabled(false);
       myScrollTabLayoutInEditorCheckBox.setEnabled(false);
       myCbModifiedTabsMarkedWithAsterisk.setEnabled(false);
+      myShowTabsTooltipsCheckBox.setEnabled(false);
       myShowCloseButtonOnCheckBox.setEnabled(false);
       myShowDirectoryInTabCheckBox.setEnabled(false);
     } else {
       myHideKnownExtensions.setEnabled(true);
       myScrollTabLayoutInEditorCheckBox.setEnabled(true);
       myCbModifiedTabsMarkedWithAsterisk.setEnabled(true);
+      myShowTabsTooltipsCheckBox.setEnabled(true);
       myShowCloseButtonOnCheckBox.setEnabled(true);
       myShowDirectoryInTabCheckBox.setEnabled(true);
     }
@@ -110,6 +113,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     UISettings uiSettings=UISettings.getInstance();
 
     myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
+    myShowTabsTooltipsCheckBox.setSelected(uiSettings.SHOW_TABS_TOOLTIPS);
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
     myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
@@ -140,6 +144,9 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     boolean uiSettingsChanged = uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK != myCbModifiedTabsMarkedWithAsterisk.isSelected();
     uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK = myCbModifiedTabsMarkedWithAsterisk.isSelected();
+
+    if (isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS)) uiSettingsChanged = true;
+    uiSettings.SHOW_TABS_TOOLTIPS = myShowTabsTooltipsCheckBox.isSelected();
 
     if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR)) uiSettingsChanged = true;
     uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
@@ -182,6 +189,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   public boolean isModified() {
     final UISettings uiSettings = UISettings.getInstance();
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
+    isModified |= isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS);
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;

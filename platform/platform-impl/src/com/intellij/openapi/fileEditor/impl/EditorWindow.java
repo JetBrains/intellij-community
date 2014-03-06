@@ -852,7 +852,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, getManager().getFileTooltipText(file));
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS ? getManager().getFileTooltipText(file) : null);
     }
   }
 
