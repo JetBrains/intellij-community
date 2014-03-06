@@ -58,7 +58,7 @@ public abstract class PsiNameHelper {
    * @param languageLevel to check text against. For instance 'assert' or 'enum' might or might not be identifiers depending on language level
    * @return true if the text is an identifier, false otherwise
    */
-  public abstract boolean isIdentifier(@Nullable String text, LanguageLevel languageLevel);
+  public abstract boolean isIdentifier(@Nullable String text, @NotNull LanguageLevel languageLevel);
 
   /**
    * Checks if the specified text is a Java keyword, using the language level of the project
@@ -80,7 +80,9 @@ public abstract class PsiNameHelper {
 
   @NotNull
   public static String getShortClassName(@NotNull String referenceText) {
-    int lessPos = referenceText.length(), bracesBalance = 0, i;
+    int lessPos = referenceText.length();
+    int bracesBalance = 0;
+    int i;
 
     loop:
     for (i = referenceText.length() - 1; i >= 0; i--) {
@@ -137,7 +139,7 @@ public abstract class PsiNameHelper {
   }
 
   @NotNull
-  public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
+  public static String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {
       referenceText = removeWhitespace(referenceText);
     }
@@ -166,7 +168,7 @@ public abstract class PsiNameHelper {
   }
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
-  private static String removeWhitespace(String referenceText) {
+  private static String removeWhitespace(@NotNull String referenceText) {
     return WHITESPACE_PATTERN.matcher(referenceText).replaceAll("");
   }
 
@@ -178,7 +180,8 @@ public abstract class PsiNameHelper {
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
    */
-  public static String[] getClassParametersText(String referenceText) {
+  @NotNull
+  public static String[] getClassParametersText(@NotNull String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     referenceText = removeWhitespace(referenceText);
     final char[] chars = referenceText.toCharArray();
@@ -287,6 +290,6 @@ public abstract class PsiNameHelper {
       }
       sb.append(' ');
     }
-    return annotations.size() > 0;
+    return !annotations.isEmpty();
   }
 }
