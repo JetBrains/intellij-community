@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -29,9 +30,12 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * User: ktisha
@@ -41,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
  * is access outside the class or a descendant of the class where it's defined.
  */
 public class PyProtectedMemberInspection extends PyInspection {
+  public boolean ignoreTestFunctions = true;
+
   @Nls
   @NotNull
   @Override
@@ -57,7 +63,7 @@ public class PyProtectedMemberInspection extends PyInspection {
   }
 
 
-  private static class Visitor extends PyInspectionVisitor {
+  private class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -70,6 +76,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
+          if (PyTestUtil.isPyTestClass(parentClass) && ignoreTestFunctions) return;
           final PsiReference reference = node.getReference(getResolveContext());
           if (reference != null) {
             final PsiElement resolvedExpression = reference.resolve();
@@ -95,7 +102,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Nullable
-    private static PyClass getClassOwner(@Nullable PsiElement element) {
+    private PyClass getClassOwner(@Nullable PsiElement element) {
       for (ScopeOwner owner = ScopeUtil.getScopeOwner(element); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
         if (owner instanceof PyClass) {
           return (PyClass)owner;
@@ -103,5 +110,13 @@ public class PyProtectedMemberInspection extends PyInspection {
       }
       return null;
     }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
+    return panel;
   }
 }
