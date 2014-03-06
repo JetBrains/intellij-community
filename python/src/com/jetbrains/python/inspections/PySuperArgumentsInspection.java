@@ -81,7 +81,7 @@ public class PySuperArgumentsInspection extends PyInspection {
 
     @Nullable
     private PyClass findClassOf(PyExpression argument) {
-      PsiElement firstElement = ((PyReferenceExpression)argument).followAssignmentsChain(resolveWithoutImplicits()).getElement();
+      PsiElement firstElement = ((PyReferenceExpression)argument).followAssignmentsChain(getResolveContext()).getElement();
       PyClass firstClass = null;
       if (firstElement instanceof PyClass) firstClass = (PyClass)firstElement;
       else if (firstElement instanceof PyExpression) {

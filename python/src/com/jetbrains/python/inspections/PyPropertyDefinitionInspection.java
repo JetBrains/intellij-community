@@ -124,7 +124,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             assert call != null : "Property has a null call assigned to it";
             final PyArgumentList arglist = call.getArgumentList();
             assert arglist != null : "Property call has null arglist";
-            CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
+            CallArgumentsMapping analysis = arglist.analyzeCall(getResolveContext());
             // we assume fget, fset, fdel, doc names
             for (Map.Entry<PyExpression, PyNamedParameter> entry: analysis.getPlainMappedParams().entrySet()) {
               final String param_name = entry.getValue().getName();
@@ -150,7 +150,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       assert argument != null : "Parameter mapped to null argument";
       Callable callable = null;
       if (argument instanceof PyReferenceExpression) {
-        PsiElement resolved = ((PyReferenceExpression)argument).getReference(resolveWithoutImplicits()).resolve();
+        PsiElement resolved = ((PyReferenceExpression)argument).getReference(getResolveContext()).resolve();
         if (resolved instanceof Callable) {
           callable = (Callable)resolved;
         }

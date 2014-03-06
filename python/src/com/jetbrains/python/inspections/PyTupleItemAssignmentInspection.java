@@ -59,7 +59,7 @@ public class PyTupleItemAssignmentInspection extends PyInspection {
         PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targets[0];
         if (subscriptionExpression.getOperand() instanceof PyReferenceExpression) {
           PyReferenceExpression referenceExpression = (PyReferenceExpression)subscriptionExpression.getOperand();
-          PsiElement element = referenceExpression.followAssignmentsChain(resolveWithoutImplicits()).getElement();
+          PsiElement element = referenceExpression.followAssignmentsChain(getResolveContext()).getElement();
           if (element instanceof PyExpression) {
             PyExpression expression = (PyExpression)element;
             PyType type = myTypeEvalContext.getType(expression);
