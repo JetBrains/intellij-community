@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
@@ -65,12 +64,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected PtyProcess createProcess() throws ExecutionException {
+  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm-256color");
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
     try {
-      return PtyProcess.exec(getCommand(), envs, currentProjectFolder());
+      return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
