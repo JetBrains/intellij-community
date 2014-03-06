@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 public class NoConflictChange extends TwoSideChange.SideChange<MergeNoConflict> {
   private static final Logger LOG = Logger.getInstance(NoConflictChange.class);
 
+  private boolean myApplied;
+
   public NoConflictChange(@NotNull MergeNoConflict twoSideChange,
                           @NotNull FragmentSide mergeSide,
                           @NotNull TextRange baseRange,
@@ -23,5 +25,13 @@ public class NoConflictChange extends TwoSideChange.SideChange<MergeNoConflict> 
     NoConflictChange otherChange = myTwoSideChange.getOtherChange(this);
     LOG.assertTrue(otherChange != null, String.format("Other change is null. This change: %s Merge conflict: %s", this, myTwoSideChange));
     otherChange.markApplied();
+  }
+
+  @Override
+  protected void markApplied() {
+    if (!myApplied) {
+      myApplied = true;
+      super.markApplied();
+    }
   }
 }
