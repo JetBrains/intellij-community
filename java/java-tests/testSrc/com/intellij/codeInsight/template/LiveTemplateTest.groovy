@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -74,14 +75,49 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     String group = "user";
     final Template template = manager.createTemplate(templateName, group, templateText);
     template.addVariable("ARG", "", "", false);
-    final TemplateContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
+    TemplateContextType contextType = contextType(JavaCodeContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
     addTemplate(template, testRootDisposable)
-    final Editor editor = getEditor();
 
     manager.startTemplate(editor, (char)'\t');
     checkResultByText(expected);
+  }
+  
+  public void testTemplateWithSegmentsAtTheSamePosition_1() {
+    doTestTemplateWithThreeVariables("", "", "", "class A { void test() { for(TestValue1TestValue2TestValue3) {} } }")
+  }
+  
+  public void testTemplateWithSegmentsAtTheSamePosition_2() {
+    doTestTemplateWithThreeVariables("Def1", "Def2", "DefaultValue", "class A { void test() { for(Def1Def2DefaultValue) {} } }")
+  }
+
+  public void testTemplateWithSegmentsAtTheSamePosition_3() {
+    doTestTemplateWithThreeVariables("", "DefaultValue", "", "class A { void test() { for(TestValue1DefaultValueTestValue3) {} } }")
+  }
+
+  private void doTestTemplateWithThreeVariables(String firstDefaultValue, String secondDefaultValue, String thirdDefaultValue,
+                                                String expectedText) {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    def templateName = "tst_template"
+    def templateGroup = "user"
+    final Template template = manager.createTemplate(templateName, templateGroup, 'for($TEST1$$TEST2$$TEST3$) {}')
+    template.addVariable("TEST1", "", StringUtil.wrapWithDoubleQuote(firstDefaultValue), true)
+    template.addVariable("TEST2", "", StringUtil.wrapWithDoubleQuote(secondDefaultValue), true)
+    template.addVariable("TEST3", "", StringUtil.wrapWithDoubleQuote(thirdDefaultValue), true)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
+    addTemplate(template, testRootDisposable)
+
+    startTemplate(templateName, templateGroup)
+    if (firstDefaultValue.empty) myFixture.type("TestValue1")
+    myFixture.type("\t")
+    if (secondDefaultValue.empty) myFixture.type("TestValue2")
+    myFixture.type("\t")
+    if (thirdDefaultValue.empty) myFixture.type("TestValue3")
+    myFixture.type("\t")
+    assert state == null
+    checkResultByText(expectedText);
   }
 
   public void testTemplateWithArg1() throws IOException {
@@ -243,6 +279,10 @@ class Foo {
 
   def startTemplate(String name, String group) {
     TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate(name, group));
+  }
+
+  private static <T extends TemplateContextType> T contextType(Class<T> clazz) {
+    ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz)
   }
 
   private void configure() {
@@ -549,8 +589,7 @@ class Foo {
   public void testTemplateExpandingWithSelection() {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("tpl", "user", 'expanded');
-    final JavaStringContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaStringContextType.class);
+    final JavaStringContextType contextType = contextType(JavaStringContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
 
     myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
