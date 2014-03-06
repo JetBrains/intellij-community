@@ -47,7 +47,7 @@ public abstract class XDebuggerUtil {
     toggleLineBreakpoint(project, file, line, false);
   }
 
-  public abstract void toggleLineBreakpoint(@NotNull Project project,
+  public abstract XLineBreakpoint toggleLineBreakpoint(@NotNull Project project,
                                             @NotNull VirtualFile file,
                                             int line,
                                             boolean temporary);
@@ -59,7 +59,7 @@ public abstract class XDebuggerUtil {
     toggleLineBreakpoint(project, type, file, line, false);
   }
 
-  public abstract <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull Project project,
+  public abstract <P extends XBreakpointProperties> XLineBreakpoint toggleLineBreakpoint(@NotNull Project project,
                                                                               @NotNull XLineBreakpointType<P> type,
                                                                               @NotNull VirtualFile file,
                                                                               int line,
