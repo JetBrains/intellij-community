@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.updater) {
     @Override
-    public void load(ScriptBase script, AsyncResult<String> result) {
+    public void load(@NotNull ScriptBase script, @NotNull AsyncResult<String> result) {
       //noinspection unchecked
       loadScriptSource((SCRIPT)script, result);
     }
