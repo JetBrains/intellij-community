@@ -78,6 +78,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     if (importList == null) return null;
     for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+      if (!statement.isOnDemand()) continue;
       PsiClass staticResolve = statement.resolveTargetClass();
       if (psiClass == staticResolve) return null; //already imported
     }
