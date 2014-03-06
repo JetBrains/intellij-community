@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,6 +106,8 @@ public class CommandExecutor {
       checkNotStarted();
 
       try {
+        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
+
         myProcess = createProcess();
         if (LOG.isDebugEnabled()) {
           LOG.debug(myCommandLine.toString());
