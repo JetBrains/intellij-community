@@ -121,21 +121,40 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         expression = argType instanceof PsiLambdaExpressionType ? ((PsiLambdaExpressionType)argType).getExpression() : null;
       }
 
-      if (expression instanceof PsiLambdaExpression) {
-        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)expression;
-        for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
-          ProgressManager.checkCanceled();
-          final CandidateInfo conflict = iterator.next();
-          final PsiMethod method = (PsiMethod)conflict.getElement();
-          if (method != null) {
-            final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-            if (methodParameters.length == 0) continue;
-            final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
-            final PsiType paramType = param.getType();
-            if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
-              iterator.remove();
-            }
-          }
+      final PsiLambdaExpression lambdaExpression = findNestedLambdaExpression(expression);
+      if (lambdaExpression != null) {
+        checkLambdaApplicable(conflicts, i, lambdaExpression);
+      }
+    }
+  }
+
+  private static PsiLambdaExpression findNestedLambdaExpression(PsiExpression expression) {
+    if (expression instanceof PsiLambdaExpression) {
+      return (PsiLambdaExpression)expression;
+    } else if (expression instanceof PsiParenthesizedExpression) {
+      return findNestedLambdaExpression(((PsiParenthesizedExpression)expression).getExpression());
+    } else if (expression instanceof PsiConditionalExpression) {
+      PsiLambdaExpression lambdaExpression = findNestedLambdaExpression(((PsiConditionalExpression)expression).getThenExpression());
+      if (lambdaExpression != null) {
+        return lambdaExpression;
+      }
+      return findNestedLambdaExpression(((PsiConditionalExpression)expression).getElseExpression());
+    }
+    return null;
+  }
+
+  private static void checkLambdaApplicable(List<CandidateInfo> conflicts, int i, PsiLambdaExpression lambdaExpression) {
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+      ProgressManager.checkCanceled();
+      final CandidateInfo conflict = iterator.next();
+      final PsiMethod method = (PsiMethod)conflict.getElement();
+      if (method != null) {
+        final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+        if (methodParameters.length == 0) continue;
+        final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
+        final PsiType paramType = param.getType();
+        if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
+          iterator.remove();
         }
       }
     }
