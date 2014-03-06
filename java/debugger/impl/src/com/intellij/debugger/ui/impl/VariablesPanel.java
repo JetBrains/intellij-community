@@ -60,6 +60,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
     myCards.add(frameTree, TREE);
 
     myXTree = new MyXVariablesView(project);
+    registerDisposable(myXTree);
     myCards.add(myXTree.getTree(), X_TREE);
 
     add(ScrollPaneFactory.createScrollPane(myCards), BorderLayout.CENTER);
