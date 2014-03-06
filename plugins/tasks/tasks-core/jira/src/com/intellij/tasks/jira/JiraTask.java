@@ -52,7 +52,9 @@ public abstract class JiraTask extends Task {
   public abstract Date getCreated();
 
   @Override
-  public abstract String getIssueUrl();
+  public final String getIssueUrl() {
+    return myRepository.getUrl() + "/browse/" + getId();
+  }
 
   @Override
   @NotNull

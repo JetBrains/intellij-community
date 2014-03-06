@@ -1,6 +1,5 @@
 package com.intellij.tasks.jira.soap;
 
-import com.atlassian.theplugin.jira.api.JIRAIssueBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -73,9 +72,8 @@ public class JiraSoapApi extends JiraRemoteApi {
       List<Element> children = channel.getChildren("item");
       LOG.debug("Total issues in JIRA RSS feed: " + children.size());
       return ContainerUtil.map(children, new Function<Element, Task>() {
-        public Task fun(Element o) {
-          // Delegate RSS parsing to Atlassian plugin
-          return new JiraSoapTask(new JIRAIssueBean(myRepository.getUrl(), o, false), myRepository);
+        public Task fun(Element element) {
+          return new JiraSoapTask(element, myRepository);
         }
       });
     }
