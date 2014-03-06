@@ -998,4 +998,31 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
 
     assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"));
   }
+
+  public void testTwoResourcesMapping() throws Exception {
+    createProjectSubFile("resources/file.properties", "value=${project.version}\n");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>false</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value=1\n");
+  }
+
 }
