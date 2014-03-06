@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class CallFrameBase implements CallFrame {
+  public static final String RECEIVER_NAME = "this";
+
   private final String functionName;
   private final int line;
   private final int column;
