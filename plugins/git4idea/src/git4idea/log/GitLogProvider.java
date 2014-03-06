@@ -87,7 +87,7 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    return GitHistoryUtils.readCommits(myProject, root, userRegistry, Collections.<String>emptyList());
+    return GitHistoryUtils.readCommits(myProject, root, userRegistry, GitHistoryUtils.LOG_ALL);
   }
 
   @NotNull
