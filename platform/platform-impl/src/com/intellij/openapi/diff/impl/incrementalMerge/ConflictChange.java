@@ -79,14 +79,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
 
   @Override
   public void onApplied() {
-    myType = ChangeType.deriveApplied(myType);
-    myChangeList.apply(this);
-
-    myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
-    myOriginalSide.getHighlighterHolder().setActions(new AnAction[0]);
-
-    // display, what one side of the conflict was resolved to
-    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
+    apply();
 
     // update the other variant of the conflict to point to the bottom
     if (!mySemiApplied) {
@@ -99,6 +92,11 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
   }
 
   private void updateOtherSideOnConflictApply() {
+    if (myOriginalSide.getStart() == myOriginalSide.getEnd()) {
+      apply();
+      return;
+    }
+
     int startOffset = myConflict.getRange().getEndOffset();
     TextRange emptyRange = new TextRange(startOffset, startOffset);
     ConflictChange leftChange = isBranch(myOriginalSide.getFragmentSide()) ? null : this;
@@ -107,6 +105,17 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
     myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
     myChangeList.fireOnChangeApplied();
+  }
+
+  private void apply() {
+    myType = ChangeType.deriveApplied(myType);
+    myChangeList.apply(this);
+
+    myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
+    myOriginalSide.getHighlighterHolder().setActions(new AnAction[0]);
+
+    // display, what one side of the conflict was resolved to
+    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
   }
 
   public void onRemovedFromList() {
