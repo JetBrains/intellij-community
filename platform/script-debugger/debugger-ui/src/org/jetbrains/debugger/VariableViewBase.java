@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+// todo remove when Firefox implementation will use SDK
 public abstract class VariableViewBase extends XNamedValue {
   protected VariableViewBase(@NotNull String name) {
     super(name);
