@@ -96,8 +96,8 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
-        final String bundle_key = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
-        registerProblem(node, PyBundle.message(bundle_key, name), new PyRenameElementQuickFix());
+        final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
+        registerProblem(node, PyBundle.message(bundleKey, name), new PyRenameElementQuickFix());
       }
     }
 
