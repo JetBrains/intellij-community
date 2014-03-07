@@ -22,10 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnProgressCanceller;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -204,7 +201,7 @@ public class CommandRuntime {
   private CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
-    if (!Registry.is("svn.use.terminal")) {
+    if (!(Registry.is("svn.use.terminal") && isForSshRepository(command))) {
       command.putIfNotPresent("--non-interactive");
       executor = new CommandExecutor(exePath, command);
     }
@@ -215,6 +212,12 @@ public class CommandRuntime {
     }
 
     return executor;
+  }
+
+  private static boolean isForSshRepository(@NotNull Command command) {
+    SVNURL url = command.getRepositoryUrl();
+
+    return url != null && StringUtil.equalsIgnoreCase(SvnAuthenticationManager.SVN_SSH, url.getProtocol());
   }
 
   @NotNull
