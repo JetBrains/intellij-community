@@ -1,10 +1,10 @@
 package com.intellij.tasks.gitlab;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
@@ -35,7 +35,7 @@ import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDe
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
-  public static final Gson GSON = GsonUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
   public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
@@ -115,7 +115,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
         HttpResponse response = getHttpClient().execute(myRequest);
         StatusLine statusLine = response.getStatusLine();
         if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
-          throw new Exception(statusLine.getReasonPhrase());
+          throw new Exception(TaskBundle.message("failure.http.error", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
         }
       }
 
@@ -183,8 +183,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     };
   }
 
-  public void setCurrentProject(GitlabProject currentProject) {
-    myCurrentProject = currentProject.getId() == -1 ? UNSPECIFIED_PROJECT : currentProject;
+  public void setCurrentProject(@Nullable GitlabProject project) {
+    myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
   }
 
   public GitlabProject getCurrentProject() {

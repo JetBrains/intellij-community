@@ -100,6 +100,9 @@ public abstract class RemoteFetchTask<T> extends Task.Backgroundable {
         if (selected != null) {
           myComboBox.setSelectedItem(selected);
         }
+        else if (myComboBox.getItemCount() > 0) {
+          myComboBox.setSelectedIndex(0);
+        }
       }
       else {
         // Some error occurred

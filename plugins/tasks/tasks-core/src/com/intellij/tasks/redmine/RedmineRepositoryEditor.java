@@ -94,7 +94,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
   private class FetchProjectsTask extends RemoteFetchTask.ComboBoxUpdater<RedmineProject> {
     private FetchProjectsTask() {
-      super(RedmineRepositoryEditor.this.myProject, "Downloading projects from Redmine...", myProjectCombo);
+      super(RedmineRepositoryEditor.this.myProject, "Downloading Redmine projects...", myProjectCombo);
     }
 
     @Override
