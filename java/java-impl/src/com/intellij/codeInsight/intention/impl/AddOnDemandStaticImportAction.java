@@ -72,16 +72,29 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
+    final PsiElement ggParent = gParent.getParent();
+    if (ggParent instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)ggParent.copy();
+      final PsiElement qualifier = call.getMethodExpression().getQualifier();
+      if (qualifier == null) return null;
+      qualifier.delete();
+      final PsiMethod method = call.resolveMethod();
+      if (method != null && method.getContainingClass() != psiClass)  return null;
+    }
+    else {
+      final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)gParent.copy();
+      final PsiElement qualifier = copy.getQualifier();
+      if (qualifier == null) return null;
+      qualifier.delete();
+      final PsiElement target = copy.resolve();
+      if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
+    }
+
     if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.PRIVATE)) return null;
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     if (importList == null) return null;
-    for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-      if (!statement.isOnDemand()) continue;
-      PsiClass staticResolve = statement.resolveTargetClass();
-      if (psiClass == staticResolve) return null; //already imported
-    }
 
     return psiClass;
   }
@@ -106,13 +119,24 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
     if (aClass != containingClass) {
-      PsiImportStaticStatement importStaticStatement =
-        JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
       PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList == null) {
         return;
       }
-      importList.add(importStaticStatement);
+      boolean alreadyImported = false;
+      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+        if (!statement.isOnDemand()) continue;
+        PsiClass staticResolve = statement.resolveTargetClass();
+        if (aClass == staticResolve) {
+          alreadyImported = true;
+          break;
+        }
+      }
+      if (!alreadyImported) {
+        PsiImportStaticStatement importStaticStatement =
+          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
+        importList.add(importStaticStatement);
+      }
     }
 
     List<PsiFile> roots = file.getViewProvider().getAllFiles();
