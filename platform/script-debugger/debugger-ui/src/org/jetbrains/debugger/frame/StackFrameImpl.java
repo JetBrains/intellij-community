@@ -11,18 +11,18 @@ import org.jetbrains.debugger.*;
 
 import java.util.List;
 
-public class ChromeStackFrame extends StackFrameImplBase implements VariableContext {
+public class StackFrameImpl extends StackFrameImplBase implements VariableContext {
   private final DebugProcessEx debugProcess;
   private final CallFrame callFrame;
 
   private final Script script;
 
-  public ChromeStackFrame(@NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
+  public StackFrameImpl(@NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
     this(debugProcess.getSourceInfo(script, callFrame), callFrame, debugProcess, script);
   }
 
   // @todo suspendContext nullable only due to Nashorn
-  public ChromeStackFrame(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, DebugProcessEx debugProcess, @Nullable Script script) {
+  public StackFrameImpl(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, DebugProcessEx debugProcess, @Nullable Script script) {
     super(sourceInfo);
 
     this.debugProcess = debugProcess;

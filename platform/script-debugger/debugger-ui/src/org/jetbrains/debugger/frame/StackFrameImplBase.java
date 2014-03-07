@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.SourceInfo;
 
+// todo remove when Firefox implementation will use SDK
 public abstract class StackFrameImplBase extends XStackFrame {
   protected final SourceInfo sourceInfo;
   protected XDebuggerEvaluator evaluator;
