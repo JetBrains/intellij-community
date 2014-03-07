@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: lex
@@ -35,12 +36,13 @@ public final class EvaluationContextImpl implements EvaluationContext{
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   
-  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, @Nullable Value thisObject) {
     myThisObject = thisObject;
     myFrameProxy = frameProxy;
     mySuspendContext = suspendContext;
   }
 
+  @Nullable
   @Override
   public Value getThisObject() {
     return myThisObject;

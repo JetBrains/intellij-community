@@ -22,8 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface EvaluationContext extends StackFrameContext{
+  @Override
   @NotNull
   DebugProcess getDebugProcess();
 
@@ -35,5 +37,6 @@ public interface EvaluationContext extends StackFrameContext{
 
   ClassLoaderReference getClassLoader() throws EvaluateException;
 
+  @Nullable
   Value getThisObject();
 }

@@ -5,11 +5,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-@SuppressWarnings("unchecked")
 public abstract class AsyncValueLoaderManager<HOST, VALUE> {
-  private final AtomicReferenceFieldUpdater<HOST, AsyncResult> fieldUpdater;
+  private final AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater;
 
-  public AsyncValueLoaderManager(AtomicReferenceFieldUpdater<HOST, AsyncResult> fieldUpdater) {
+  public AsyncValueLoaderManager(@NotNull AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
   }
 
@@ -37,6 +36,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
     return result != null && result.isDone() && result.getResult() != null;
   }
 
+  @NotNull
   public final AsyncResult<VALUE> get(HOST host) {
     return get(host, true);
   }
