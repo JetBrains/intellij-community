@@ -309,6 +309,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
   public void testGettersAndPureNoFlushing() { doTest(); }
 
+  public void testSameComparisonTwice() { doTest(); }
+
   public void testParametersAreNonnullByDefault() {
     myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
     myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
