@@ -14,6 +14,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,6 +43,10 @@ public final class VariableView extends VariableViewBase implements VariableCont
   @NotNull
   public static String getClassName(@NotNull ObjectValue value) {
     return StringUtil.notNullize(value.getClassName(), "Object");
+  }
+
+  public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
+    node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), true);
   }
 
   @Override
