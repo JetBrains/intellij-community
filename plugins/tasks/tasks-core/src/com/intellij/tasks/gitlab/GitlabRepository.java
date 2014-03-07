@@ -8,8 +8,8 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.httpclient.NewBaseRepositoryImpl;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
 
 /**
  * @author Mikhail Golubev
@@ -35,7 +35,7 @@ import static com.intellij.tasks.httpclient.ResponseUtil.GsonSingleObjectDeseria
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
-  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.installDateDeserializer(new GsonBuilder()).create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
   public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
@@ -81,11 +81,6 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     GitlabRepository repository = (GitlabRepository)o;
     if (!Comparing.equal(myCurrentProject, repository.myCurrentProject)) return false;
     return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myCurrentProject != null ? myCurrentProject.hashCode() : 0;
   }
 
   @Override

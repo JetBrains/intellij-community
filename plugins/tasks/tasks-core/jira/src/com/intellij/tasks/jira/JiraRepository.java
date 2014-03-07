@@ -1,7 +1,6 @@
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -14,6 +13,7 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraSoapApi;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +35,7 @@ import java.io.InputStream;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
-  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 

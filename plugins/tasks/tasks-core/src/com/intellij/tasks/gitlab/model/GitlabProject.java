@@ -36,7 +36,7 @@ public class GitlabProject {
   }
 
   /**
-   * For serialization purposed only
+   * For serialization purposes only
    */
   public void setId(int id) {
     this.id = id;
