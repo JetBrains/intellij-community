@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
@@ -20,13 +19,14 @@ import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.Set;
 
 /**
  * @author erokhins
@@ -80,46 +80,44 @@ public class VcsLogUI {
     });
   }
 
-  public void setModel(@NotNull AbstractVcsLogTableModel model) {
-    VcsLogGraphTable table = getTable();
-    int[] selectedRows = table.getSelectedRows();
-    TableModel previousModel = table.getModel();
-
-    table.setModel(model);
-
-    if (previousModel instanceof AbstractVcsLogTableModel) { // initially it is an empty DefaultTableModel
-      restoreSelection(table, (AbstractVcsLogTableModel)previousModel, selectedRows, model);
-    }
+  public void setModel(@NotNull AbstractVcsLogTableModel newModel, @NotNull DataPack newDataPack,
+                       @NotNull TIntHashSet previouslySelectedCommits) {
+    final VcsLogGraphTable table = getTable();
+    table.setModel(newModel);
+    restoreSelection(newModel, newDataPack, previouslySelectedCommits, table);
     table.setPaintBusy(false);
   }
 
-  private static void restoreSelection(@NotNull VcsLogGraphTable table, @NotNull AbstractVcsLogTableModel previousModel,
-                                       int[] previousSelectedRows, @NotNull AbstractVcsLogTableModel newModel) {
-    Set<Hash> selectedHashes = getHashesAtRows(previousModel, previousSelectedRows);
-    Set<Integer> rowsToSelect = findNewRowsToSelect(newModel, selectedHashes);
-    for (Integer row : rowsToSelect) {
-      table.addRowSelectionInterval(row, row);
-    }
-  }
-
-  @NotNull
-  private static Set<Hash> getHashesAtRows(@NotNull AbstractVcsLogTableModel model, int[] rows) {
-    Set<Hash> hashes = ContainerUtil.newHashSet();
-    for (int row : rows) {
-      Hash hash = model.getHashAtRow(row);
-      if (hash != null) {
-        hashes.add(hash);
+  private static void restoreSelection(@NotNull AbstractVcsLogTableModel newModel,
+                                       @NotNull DataPack newDataPack,
+                                       @NotNull TIntHashSet previouslySelectedCommits,
+                                       @NotNull final VcsLogGraphTable table) {
+    TIntHashSet rowsToSelect = findNewRowsToSelect(newModel, newDataPack, previouslySelectedCommits);
+    rowsToSelect.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int row) {
+        table.addRowSelectionInterval(row, row);
+        return true;
       }
-    }
-    return hashes;
+    });
   }
 
   @NotNull
-  private static Set<Integer> findNewRowsToSelect(@NotNull AbstractVcsLogTableModel model, @NotNull Set<Hash> selectedHashes) {
-    Set<Integer> rowsToSelect = ContainerUtil.newHashSet();
-    for (int row = 0; row < model.getRowCount() && rowsToSelect.size() < selectedHashes.size(); row++) {//stop iterating if found all hashes
-      Hash hash = model.getHashAtRow(row);
-      if (hash != null && selectedHashes.contains(hash)) {
+  private static TIntHashSet findNewRowsToSelect(@NotNull AbstractVcsLogTableModel newModel,
+                                                 @NotNull DataPack dataPack,
+                                                 @NotNull TIntHashSet selectedHashes) {
+    TIntHashSet rowsToSelect = new TIntHashSet();
+    if (newModel.getRowCount() == 0) {
+      // this should have been covered by facade.getVisibleCommitCount,
+      // but if the table is empty (no commits match the filter), the GraphFacade is not updated, because it can't handle it
+      // => it has previous values set.
+      return rowsToSelect;
+    }
+    GraphFacade facade = dataPack.getGraphFacade();
+    for (int row = 0; row < facade.getVisibleCommitCount()
+                      && rowsToSelect.size() < selectedHashes.size(); row++) { //stop iterating if found all hashes
+      int commit = facade.getCommitAtRow(row);
+      if (selectedHashes.contains(commit)) {
         rowsToSelect.add(row);
       }
     }
@@ -258,15 +256,35 @@ public class VcsLogUI {
     return myFilterer;
   }
 
+  @NotNull 
+  public TIntHashSet getSelectedCommits() {
+    int[] selectedRows = getTable().getSelectedRows();
+    return getCommitsAtRows(myDataPack.getGraphFacade(), selectedRows);
+  } 
+  
+  @NotNull
+  private static TIntHashSet getCommitsAtRows(@NotNull GraphFacade facade, int[] rows) {
+    TIntHashSet commits = new TIntHashSet();
+    for (int row : rows) {
+      int commit = facade.getCommitAtRow(row);
+      if (commit > 0) {
+        commits.add(commit);
+      }
+    }
+    return commits;
+  }
+
+  
   private void applyFiltersAndUpdateUi(@NotNull final DataPack dataPack) {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
+        final TIntHashSet previouslySelected = getSelectedCommits();
         final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, collectFilters());
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             myDataPack = dataPack;
-            setModel(newModel);
+            setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
             repaintUI();
 

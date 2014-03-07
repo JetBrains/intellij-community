@@ -14,6 +14,7 @@ import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.EmptyTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +83,7 @@ public class VcsLogFilterer {
       @Override
       public void consume(List<Hash> hashes) {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
+        TIntHashSet previouslySelected = myUI.getSelectedCommits();
         AbstractVcsLogTableModel model;
         if (hashes.isEmpty()) {
           model = new EmptyTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
@@ -90,7 +92,7 @@ public class VcsLogFilterer {
           dataPack.getGraphFacade().setFilter(getFilterFromCommits(hashes));
           model = new GraphTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
         }
-        myUI.setModel(model);
+        myUI.setModel(model, dataPack, previouslySelected);
         myUI.repaintUI();
         onSuccess.run();
       }
