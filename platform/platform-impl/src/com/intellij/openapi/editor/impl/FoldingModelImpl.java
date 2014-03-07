@@ -45,7 +45,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
@@ -201,7 +200,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;

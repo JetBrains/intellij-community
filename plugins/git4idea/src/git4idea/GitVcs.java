@@ -18,7 +18,8 @@ package git4idea;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -99,12 +99,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
-  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
-    "Git Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Git Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
-    "Git Minor Notifications", NotificationDisplayType.BALLOON, true);
 
   static {
     NotificationsConfigurationImpl.remove("Git");
@@ -455,18 +449,21 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
                                        "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
                                        myVersion, GitVersion.MIN);
-        IMPORTANT_ERROR_NOTIFICATION.createNotification("Unsupported Git version", message, NotificationType.ERROR,
-          new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              if (SETTINGS_LINK.equals(e.getDescription())) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
-              }
-              else if (UPDATE_LINK.equals(e.getDescription())) {
-                BrowserUtil.browse("http://git-scm.com");
-              }
-            }
-        }).notify(myProject);
+        VcsNotifier.getInstance(myProject).notifyError("Unsupported Git version", message,
+                                                       new NotificationListener.Adapter() {
+                                                         @Override
+                                                         protected void hyperlinkActivated(@NotNull Notification notification,
+                                                                                           @NotNull HyperlinkEvent e) {
+                                                           if (SETTINGS_LINK.equals(e.getDescription())) {
+                                                             ShowSettingsUtil.getInstance()
+                                                               .showSettingsDialog(myProject, getConfigurable().getDisplayName());
+                                                           }
+                                                           else if (UPDATE_LINK.equals(e.getDescription())) {
+                                                             BrowserUtil.browse("http://git-scm.com");
+                                                           }
+                                                         }
+                                                       }
+        );
       }
     } catch (Exception e) {
       if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
@@ -587,7 +584,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(roots);
+        new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
       }
     });
   }

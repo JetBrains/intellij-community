@@ -69,7 +69,7 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
 
   private class MyActionHandler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assertNull(myTracker.getLastActionId());
     }
   }

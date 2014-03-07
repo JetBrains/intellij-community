@@ -87,7 +87,7 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsRef> getAllReferences() {
-    return myDataHolder.getDataPack().getRefsModel().getAllRefs();
+    return myUi.getDataPack().getRefsModel().getAllRefs();
   }
 
   @Override

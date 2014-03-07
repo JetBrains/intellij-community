@@ -24,15 +24,12 @@ public class Runner {
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
-    if (args.length >= 7 && "create".equals(args[0])) {
+    if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
       String newVersionDesc = args[2];
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
-
-//      String logFolder = args[6];
-//      initLogger(logFolder);
       initLogger();
 
       List<String> ignoredFiles = extractFiles(args, "ignored");
@@ -42,9 +39,6 @@ public class Runner {
     }
     else if (args.length >= 2 && "install".equals(args[0])) {
       String destFolder = args[1];
-
-//      String logFolder = args.length >= 3 ? args[2] : null;
-//      initLogger(logFolder);
       initLogger();
       logger.info("destFolder: " + destFolder);
 
@@ -61,7 +55,6 @@ public class Runner {
     return fileLogDir.isDirectory() && fileLogDir.canWrite() && fileLogDir.getUsableSpace() >= 1000000;
   }
 
-//  private static String getLogDir(String logFolder) {
   private static String getLogDir() {
     String logFolder = System.getProperty("idea.updater.log");
     if (logFolder == null || !isValidLogDir(logFolder)) {
@@ -73,13 +66,9 @@ public class Runner {
     return logFolder;
   }
 
-//  public static void initLogger(String logFolder) {
   public static void initLogger() {
     if (logger == null) {
-//      String logFolder = System.getProperty("idea.updater.log");
-//      String logFolder = getLogDir(System.getProperty("idea.updater.log"));
       String logFolder = getLogDir();
-      System.out.println("Log dir: " + logFolder);
       FileAppender update = new FileAppender();
 
       update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
@@ -92,7 +81,6 @@ public class Runner {
       updateError.setFile(new File(logFolder, "idea_updater_error.log").getAbsolutePath());
       updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
-      // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
       updateError.setAppend(false);
       updateError.activateOptions();
 
@@ -208,17 +196,20 @@ public class Runner {
       in.close();
     }
 
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    // todo[r.sh] to delete in IDEA 14 (after a full circle of platform updates)
+    if (System.getProperty("swing.defaultlaf") == null) {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+          }
+          catch (Exception ignore) {
+            printStackTrace(ignore);
+          }
         }
-        catch (Exception ignore) {
-          printStackTrace(ignore);
-        }
-      }
-    });
+      });
+    }
 
     new SwingUpdaterUI(props.getProperty(OLD_BUILD_DESCRIPTION),
                   props.getProperty(NEW_BUILD_DESCRIPTION),

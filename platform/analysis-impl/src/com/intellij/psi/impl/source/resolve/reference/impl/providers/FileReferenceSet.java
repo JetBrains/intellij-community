@@ -83,7 +83,7 @@ public class FileReferenceSet {
   @Nullable private FileType[] mySuitableFileTypes;
 
   public FileReferenceSet(String str,
-                          PsiElement element,
+                          @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
@@ -93,7 +93,7 @@ public class FileReferenceSet {
   }
 
   public FileReferenceSet(String str,
-                          PsiElement element,
+                          @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
@@ -131,19 +131,16 @@ public class FileReferenceSet {
     return Collections.emptyList();
   }
 
-  public static FileReferenceSet createSet(PsiElement element,
+  public static FileReferenceSet createSet(@NotNull PsiElement element,
                                            final boolean soft,
                                            boolean endingSlashNotAllowed,
                                            final boolean urlEncoded) {
 
-    String text;
-    int offset;
-
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     assert manipulator != null;
     final TextRange range = manipulator.getRangeInElement(element);
-    offset = range.getStartOffset();
-    text = range.substring(element.getText());
+    int offset = range.getStartOffset();
+    String text = range.substring(element.getText());
     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       text = helper.trimUrl(text);
     }
@@ -163,7 +160,7 @@ public class FileReferenceSet {
 
 
   public FileReferenceSet(String str,
-                          PsiElement element,
+                          @NotNull PsiElement element,
                           int startInElement,
                           @Nullable PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
@@ -172,7 +169,7 @@ public class FileReferenceSet {
 
 
   public FileReferenceSet(@NotNull String str,
-                          PsiElement element,
+                          @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
@@ -181,7 +178,6 @@ public class FileReferenceSet {
   }
 
   public FileReferenceSet(@NotNull final PsiElement element) {
-
     myElement = element;
     TextRange range = ElementManipulators.getValueTextRange(element);
     myStartInElement = range.getStartOffset();

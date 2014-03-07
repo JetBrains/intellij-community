@@ -18,16 +18,11 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.graph.GraphFacade;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class VcsLogUtil {
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -47,4 +42,20 @@ public class VcsLogUtil {
     }
     return map;
   }
+
+  @NotNull
+  public static List<Integer> getVisibleCommits(@NotNull final GraphFacade facade) {
+    return new AbstractList<Integer>() {
+      @Override
+      public Integer get(int index) {
+        return facade.getCommitAtRow(index);
+      }
+
+      @Override
+      public int size() {
+        return facade.getVisibleCommitCount();
+      }
+    };
+  }
+
 }

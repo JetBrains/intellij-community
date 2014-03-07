@@ -43,7 +43,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   private final CheckedTreeNode myRoot;
   private final Map<BreakpointItem, BreakpointItemNode> myNodes = new HashMap<BreakpointItem, BreakpointItemNode>();
   private List<XBreakpointGroupingRule> myGroupingRules;
-  private final Map<XBreakpointGroup, BreakpointsGroupNode> myGroupNodes = new HashMap<XBreakpointGroup, BreakpointsGroupNode>();
 
   private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup>();
 
@@ -110,7 +109,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     final TreeState state = TreeState.createOn(myTreeView, myRoot);
     myRoot.removeAllChildren();
     myNodes.clear();
-    myGroupNodes.clear();
     myGroups.clear();
     for (BreakpointItem breakpoint : breakpoints) {
       BreakpointItemNode node = new BreakpointItemNode(breakpoint);
@@ -130,53 +128,42 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   @NotNull
   private CheckedTreeNode getParentNode(final BreakpointItem breakpoint) {
     CheckedTreeNode parent = myRoot;
-    XBreakpointGroup parentGroup = null;
     for (int i = 0; i < myGroupingRules.size(); i++) {
-      XBreakpointGroup group = getGroup(parentGroup, breakpoint, myGroupingRules.get(i));
+      Collection<XBreakpointGroup> existingGroups = getGroupNodes(parent);
+      XBreakpointGroup group = myGroupingRules.get(i).getGroup(breakpoint.getBreakpoint(), existingGroups);
       if (group != null) {
         parent = getOrCreateGroupNode(parent, group, i);
-        parentGroup = group;
       }
     }
     return parent;
   }
 
-  @Nullable
-  private XBreakpointGroup getGroup(XBreakpointGroup parentGroup, final BreakpointItem breakpoint, final XBreakpointGroupingRule groupingRule) {
-    //noinspection unchecked
-    Collection<XBreakpointGroup> groups = myGroups.get(groupingRule);
-    if (groups == null) {
-      groups = Collections.emptyList();
-    }
-
-    XBreakpointGroup group = groupingRule.getGroup(breakpoint.getBreakpoint(), filterByParent(parentGroup, groups));
-    if (group != null) {
-      myGroups.put(groupingRule, group);
-    }
-    return group;
-  }
-
-  private Collection<XBreakpointGroup> filterByParent(XBreakpointGroup parentGroup, Collection<XBreakpointGroup> groups) {
-    Collection<XBreakpointGroup> filtered = new ArrayList<XBreakpointGroup>();
-    for (XBreakpointGroup group : groups) {
-      TreeNode parentNode = myGroupNodes.get(group).getParent();
-      BreakpointsGroupNode parent = parentNode instanceof BreakpointsGroupNode ? (BreakpointsGroupNode)parentNode : null;
-      if ((parentGroup == null && parentNode == myRoot) || (parent != null && parent.getGroup() == parentGroup)) {
-        filtered.add(group);
+  private static Collection<XBreakpointGroup> getGroupNodes(CheckedTreeNode parent) {
+    Collection<XBreakpointGroup> nodes = new ArrayList<XBreakpointGroup>();
+    Enumeration children = parent.children();
+    while (children.hasMoreElements()) {
+      Object element = children.nextElement();
+      if (element instanceof BreakpointsGroupNode) {
+        nodes.add(((BreakpointsGroupNode)element).getGroup());
       }
     }
-    return filtered;
+    return nodes;
   }
 
-  private <G extends XBreakpointGroup> BreakpointsGroupNode<G> getOrCreateGroupNode(CheckedTreeNode parent, final G group,
+  private static BreakpointsGroupNode getOrCreateGroupNode(CheckedTreeNode parent, final XBreakpointGroup group,
                                                                                        final int level) {
-    //noinspection unchecked
-    BreakpointsGroupNode<G> groupNode = (BreakpointsGroupNode<G>)myGroupNodes.get(group);
-    if (groupNode == null) {
-      groupNode = new BreakpointsGroupNode<G>(group, level);
-      myGroupNodes.put(group, groupNode);
-      parent.add(groupNode);
+    Enumeration children = parent.children();
+    while (children.hasMoreElements()) {
+      Object element = children.nextElement();
+      if (element instanceof BreakpointsGroupNode) {
+        XBreakpointGroup groupFound = ((BreakpointsGroupNode)element).getGroup();
+        if (groupFound.equals(group)) {
+          return (BreakpointsGroupNode)element;
+        }
+      }
     }
+    BreakpointsGroupNode groupNode = new BreakpointsGroupNode<XBreakpointGroup>(group, level);
+    parent.add(groupNode);
     return groupNode;
   }
 

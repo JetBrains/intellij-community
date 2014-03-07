@@ -60,16 +60,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public Object clone() throws CloneNotSupportedException {
-    try {
-      final PythonSdkAdditionalData copy = (PythonSdkAdditionalData)super.clone();
-      copy.setAddedPaths(getAddedPaths());
-      copy.setExcludedPaths(getExcludedPaths());
-      copy.setAssociatedProjectPath(getAssociatedProjectPath());
-      return copy;
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+    final PythonSdkAdditionalData copy = new PythonSdkAdditionalData(myFlavor);
+    copy.setAddedPaths(getAddedPaths());
+    copy.setExcludedPaths(getExcludedPaths());
+    copy.setAssociatedProjectPath(getAssociatedProjectPath());
+    return copy;
   }
 
   public Set<SimpleProjectRoot> getAddedPaths() {
@@ -182,7 +177,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
     return files;
   }
-
 
 
   public Set<VirtualFile> getAddedPathFiles() {

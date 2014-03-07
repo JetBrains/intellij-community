@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,13 +52,20 @@ import java.util.Map;
  * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
-
   @NotNull
-  public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) throws IOException {
+  public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) {
     StringBuilder result = new StringBuilder(initial.length());
-    LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes()));
+    List<byte[]> lines;
+    try {
+      LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes("UTF-8")));
+      lines = reader.readLines();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     boolean first = true;
-    for (byte[] line : reader.readLines()) {
+    for (byte[] line : lines) {
       try {
         if (!first) result.append('\n');
         if (line.length > 0 || shiftEmptyLines) {
@@ -74,7 +82,6 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   protected enum Action {REFORMAT, INDENT}
-
 
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
@@ -116,20 +123,15 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  //public static JavaCodeStyleSettings getJavaSettings() {
-  //  CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(getProject());
-  //  return rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
-  //}
-  //
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }
 
-  public void doTest() throws Exception {
+  public void doTest() {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
 
-  public void doTest(@NonNls String fileNameBefore, @NonNls String fileNameAfter) throws Exception {
+  public void doTest(@NonNls String fileNameBefore, @NonNls String fileNameAfter) {
     doTextTest(Action.REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
   }
 
@@ -137,7 +139,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     doTextTest(Action.REFORMAT, text, textAfter);
   }
 
-  public void doTextTest(@NotNull final Action action, @NotNull final String text, @NotNull String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@NotNull final Action action, @NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
     final PsiFile file = createFile("A.java", text);
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
@@ -204,7 +206,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return document.getText();
   }
 
-  public void doMethodTest(@NonNls final String before, @NonNls final String after) throws Exception {
+  public void doMethodTest(@NonNls final String before, @NonNls final String after) {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
@@ -212,7 +214,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     );
   }
 
-  public void doClassTest(@NonNls final String before, @NonNls final String after) throws Exception {
+  public void doClassTest(@NonNls final String before, @NonNls final String after) {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + before + '\n' + "}",
@@ -220,10 +222,14 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     );
   }
 
-  private static String loadFile(String name) throws Exception {
+  private static String loadFile(String name) {
     String fullName = BASE_PATH + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName));
-    text = StringUtil.convertLineSeparators(text);
-    return text;
+    try {
+      String text = FileUtil.loadFile(new File(fullName));
+      return StringUtil.convertLineSeparators(text);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -21,9 +21,9 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * This action works only in the variables view, it is not generic action like {@see com.intellij.xdebugger.impl.actions.AddToWatchesAction}
  */
-public class XAddToWatchesAction extends XDebuggerTreeActionBase {
+class XAddToWatchesAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull final XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && node.getValueContainer().getEvaluationExpression() != null && e.getData(XWatchesView.DATA_KEY) != null;

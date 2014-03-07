@@ -57,8 +57,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String TYPE_ID                         = "text-editor";
   @NonNls private static final String LINE_ATTR                       = "line";
   @NonNls private static final String COLUMN_ATTR                     = "column";
-  @NonNls private static final String SELECTION_START_ATTR            = "selection-start";
-  @NonNls private static final String SELECTION_END_ATTR              = "selection-end";
+  @NonNls private static final String SELECTION_START_LINE_ATTR       = "selection-start-line";
+  @NonNls private static final String SELECTION_START_COLUMN_ATTR     = "selection-start-column";
+  @NonNls private static final String SELECTION_END_LINE_ATTR         = "selection-end-line";
+  @NonNls private static final String SELECTION_END_COLUMN_ATTR       = "selection-end-column";
   @NonNls private static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
   @NonNls private static final String VERTICAL_OFFSET_ATTR            = "vertical-offset";
   @NonNls private static final String MAX_VERTICAL_OFFSET_ATTR        = "max-vertical-offset";
@@ -100,10 +102,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     try {
       List<Element> caretElements = element.getChildren(CARET_ELEMENT);
-      if (caretElements.isEmpty()) { // legacy format
+      if (caretElements.isEmpty()) {
         state.CARETS = new TextEditorState.CaretState[] {readCaretInfo(element)};
       }
-      else { // new format
+      else {
         state.CARETS = new TextEditorState.CaretState[caretElements.size()];
         for (int i = 0; i < caretElements.size(); i++) {
           state.CARETS[i] = readCaretInfo(caretElements.get(i));
@@ -129,8 +131,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     TextEditorState.CaretState caretState = new TextEditorState.CaretState();
     caretState.LINE = parseWithDefault(element, LINE_ATTR);
     caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR);
-    caretState.SELECTION_START = parseWithDefault(element, SELECTION_START_ATTR);
-    caretState.SELECTION_END = parseWithDefault(element, SELECTION_END_ATTR);
+    caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR);
+    caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR);
+    caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR);
+    caretState.SELECTION_END_COLUMN = parseWithDefault(element, SELECTION_END_COLUMN_ATTR);
     return caretState;
   }
 
@@ -151,8 +155,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         Element e = new Element(CARET_ELEMENT);
         e.setAttribute(LINE_ATTR, Integer.toString(caretState.LINE));
         e.setAttribute(COLUMN_ATTR, Integer.toString(caretState.COLUMN));
-        e.setAttribute(SELECTION_START_ATTR, Integer.toString(caretState.SELECTION_START));
-        e.setAttribute(SELECTION_END_ATTR, Integer.toString(caretState.SELECTION_END));
+        e.setAttribute(SELECTION_START_LINE_ATTR, Integer.toString(caretState.SELECTION_START_LINE));
+        e.setAttribute(SELECTION_START_COLUMN_ATTR, Integer.toString(caretState.SELECTION_START_COLUMN));
+        e.setAttribute(SELECTION_END_LINE_ATTR, Integer.toString(caretState.SELECTION_END_LINE));
+        e.setAttribute(SELECTION_END_COLUMN_ATTR, Integer.toString(caretState.SELECTION_END_COLUMN));
         element.addContent(e);
       }
     }
@@ -227,8 +233,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       state.CARETS[i] = new TextEditorState.CaretState();
       state.CARETS[i].LINE = caret.getLogicalPosition().line;
       state.CARETS[i].COLUMN = caret.getLogicalPosition().column;
-      state.CARETS[i].SELECTION_START = caret.getSelectionStart();
-      state.CARETS[i++].SELECTION_END = caret.getSelectionEnd();
+      LogicalPosition selectionStartPosition = editor.visualToLogicalPosition(caret.getSelectionStartPosition());
+      LogicalPosition selectionEndPosition = editor.visualToLogicalPosition(caret.getSelectionEndPosition());
+      state.CARETS[i].SELECTION_START_LINE = selectionStartPosition.line;
+      state.CARETS[i].SELECTION_START_COLUMN = selectionStartPosition.column;
+      state.CARETS[i].SELECTION_END_LINE = selectionEndPosition.line;
+      state.CARETS[i++].SELECTION_END_COLUMN = selectionEndPosition.column;
     }
 
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
@@ -246,13 +256,13 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
     if (editor.getCaretModel().supportsMultipleCarets()) {
       CaretModel caretModel = editor.getCaretModel();
-      ArrayList<LogicalPosition> positions = new ArrayList<LogicalPosition>();
-      ArrayList<Segment> selections = new ArrayList<Segment>();
+      List<CaretState> states = new ArrayList<CaretState>(state.CARETS.length);
       for (TextEditorState.CaretState caretState : state.CARETS) {
-        positions.add(new LogicalPosition(caretState.LINE, caretState.COLUMN));
-        selections.add(new TextRange(caretState.SELECTION_START, caretState.SELECTION_END));
+        states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN),
+                                  new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
+                                  new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
       }
-      caretModel.setCaretsAndSelections(positions, selections);
+      caretModel.setCaretsAndSelections(states);
     } else {
       LogicalPosition pos = new LogicalPosition(state.CARETS[0].LINE, state.CARETS[0].COLUMN);
       editor.getCaretModel().moveToLogicalPosition(pos);
@@ -275,15 +285,14 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       }
     }
 
-    final Document document = editor.getDocument();
-
     if (!editor.getCaretModel().supportsMultipleCarets()) {
-      if (state.CARETS[0].SELECTION_START == state.CARETS[0].SELECTION_END) {
+      if (state.CARETS[0].SELECTION_START_LINE == state.CARETS[0].SELECTION_END_LINE
+          && state.CARETS[0].SELECTION_START_COLUMN == state.CARETS[0].SELECTION_END_COLUMN) {
         editor.getSelectionModel().removeSelection();
       }
       else {
-        int startOffset = Math.min(state.CARETS[0].SELECTION_START, document.getTextLength());
-        int endOffset = Math.min(state.CARETS[0].SELECTION_END, document.getTextLength());
+        int startOffset = editor.logicalPositionToOffset(new LogicalPosition(state.CARETS[0].SELECTION_START_LINE, state.CARETS[0].SELECTION_START_COLUMN));
+        int endOffset = editor.logicalPositionToOffset(new LogicalPosition(state.CARETS[0].SELECTION_END_LINE, state.CARETS[0].SELECTION_END_COLUMN));
         editor.getSelectionModel().setSelection(startOffset, endOffset);
       }
     }

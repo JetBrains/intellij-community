@@ -116,6 +116,10 @@ public final class ExecutionHandler {
         return true;
       }
 
+      public void onCancel() {
+        antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+      }
+
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           runBuild(indicator, messageView, buildFile, antBuildListener, commandLine);

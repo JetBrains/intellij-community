@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (PsiTreeUtil.isAncestor(this, place, false)) {
+    if (isAncestor(place)) {
       return true;
     }
     if (isStatic() && lastParent instanceof GrImportStatement) return true;
@@ -91,6 +90,15 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     }
 
     return true;
+  }
+
+  private boolean isAncestor(@Nullable PsiElement place) {
+    while (place instanceof GrCodeReferenceElement) {
+      PsiElement parent = place.getParent();
+      if (parent == this) return true;
+      place = parent;
+    }
+    return false;
   }
 
   private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, ResolveState state) {

@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.Gray;
@@ -93,6 +94,11 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       }
       if (myPluginDescriptor.isBundled()) {
         myCategory.setText(myCategory.getText() + "[Bundled]");
+        myStatus.setIcon(AllIcons.Nodes.PluginJB);
+      }
+      final String vendor = myPluginDescriptor.getVendor();
+      if (vendor != null && vendor.toLowerCase().contains("jetbrains")) {
+        myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
 
       myPanel.setBackground(bg);
@@ -120,6 +126,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
         //todo[kb] set proper icon
         //myStatus.setText("[Downloaded]");
+        myStatus.setIcon(AllIcons.Nodes.PluginRestart);
         //myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
         //myStatus.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
       }
@@ -135,6 +142,16 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         }
         //todo[kb] set proper icon
         //myStatus.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
+      }
+
+      if (InstalledPluginsTableModel.hasNewerVersion(myPluginDescriptor.getPluginId())) {
+        myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
+        if (!isSelected) {
+          myName.setForeground(JBColor.RED);
+        }
+      }
+      if (!myPluginDescriptor.isEnabled()) {
+        myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
       }
     }
 

@@ -436,13 +436,13 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static String getStringAttributeValue(PsiAnnotation anno, @Nullable final String attributeName) {
+  public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
     Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
     return constValue instanceof String ? (String)constValue : null;
   }
   @Nullable
-  public static Boolean getBooleanAttributeValue(PsiAnnotation anno, @Nullable final String attributeName) {
+  public static Boolean getBooleanAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
     Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
     return constValue instanceof Boolean ? (Boolean)constValue : null;

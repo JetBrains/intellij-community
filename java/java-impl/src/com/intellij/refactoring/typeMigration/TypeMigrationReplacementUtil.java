@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -109,18 +110,19 @@ public class TypeMigrationReplacementUtil {
       if (!migratedType.isValid()) {
         migratedType = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(migratedType.getCanonicalText());
       }
-      final PsiTypeElement typeElement =
-          JavaPsiFacade.getInstance(project).getElementFactory().createTypeElement(migratedType);
+      final PsiTypeElement typeElement = JavaPsiFacade.getInstance(project).getElementFactory().createTypeElement(migratedType);
       if (element instanceof PsiMethod) {
         final PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();
         if (returnTypeElement != null) {
-          returnTypeElement.replace(typeElement);
+          final PsiElement replaced = returnTypeElement.replace(typeElement);
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
         }
       }
       else if (element instanceof PsiVariable) {
         final PsiTypeElement varTypeElement = ((PsiVariable)element).getTypeElement();
         if (varTypeElement != null) {
-          varTypeElement.replace(typeElement);
+          final PsiElement replaced = varTypeElement.replace(typeElement);
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
         }
       }
       else {

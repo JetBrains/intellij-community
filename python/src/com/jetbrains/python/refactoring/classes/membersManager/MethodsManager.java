@@ -1,7 +1,8 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
+import com.google.common.collect.FluentIterable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,6 +36,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     {PyNames.PROPERTY, PyNames.CLASSMETHOD, PyNames.STATICMETHOD};
 
   public static final String ABC_META_PACKAGE = "abc";
+  private static final NoPropertiesPredicate NO_PROPERTIES = new NoPropertiesPredicate();
 
   MethodsManager() {
     super(PyFunction.class);
@@ -54,16 +56,15 @@ class MethodsManager extends MembersManager<PyFunction> {
   @NotNull
   @Override
   protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
-    final MultiMap<PyClass, PyElement> result = new MultiMap<PyClass, PyElement>();
-    member.accept(new MyPyRecursiveElementVisitor(result));
-
-    return result;
+    final MyPyRecursiveElementVisitor visitor = new MyPyRecursiveElementVisitor();
+    member.accept(visitor);
+    return visitor.myResult;
   }
 
   @NotNull
   @Override
-  protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.<PyElement>newArrayList(filterNameless(Arrays.asList(pyClass.getMethods())));
+  protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
+    return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<PyFunction>()).filter(NO_PROPERTIES).toList();
   }
 
   @Override
@@ -74,7 +75,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     final Collection<PyFunction> methodsToAbstract = fetchElements(Collections2.filter(members, new AbstractFilter(true)));
 
     makeMethodsAbstract(methodsToAbstract, to);
-    return moveMethods(from, methodsToMove, to);
+    return moveMethods(from, methodsToMove, true, to);
   }
 
   /**
@@ -156,9 +157,10 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param from          source
    * @param methodsToMove what to move
    * @param to            where
+   * @param skipIfExist skip (do not add) if method already exists
    * @return newly added methods
    */
-  private static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final PyClass... to) {
+  static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
     final List<PyElement> result = new ArrayList<PyElement>();
     for (final PyClass destClass : to) {
       //We move copies here because there may be several destinations
@@ -168,7 +170,7 @@ class MethodsManager extends MembersManager<PyFunction> {
         copies.add(newMethod);
       }
 
-      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass));
+      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass, skipIfExist));
     }
     deleteElements(methodsToMove);
 
@@ -251,14 +253,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     }
   }
 
-  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitor {
-    @NotNull
-    private final MultiMap<PyClass, PyElement> myResult;
-
-    private MyPyRecursiveElementVisitor(@NotNull final MultiMap<PyClass, PyElement> result) {
-      myResult = result;
-    }
-
+  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitorWithResult {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       // TODO: refactor, messy code
@@ -279,6 +274,16 @@ class MethodsManager extends MembersManager<PyFunction> {
           }
         }
       }
+    }
+  }
+
+  /**
+   * Filter out property setters and getters
+   */
+  private static class NoPropertiesPredicate implements Predicate<PyFunction> {
+    @Override
+    public boolean apply(@NotNull PyFunction input) {
+      return input.getProperty() == null;
     }
   }
 }

@@ -38,6 +38,18 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="module-library">
+      <library name="trilead-ssh2">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/trileadsrc.zip!/trilead-ssh2/src/main/java" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
 

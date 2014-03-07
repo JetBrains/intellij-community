@@ -21,6 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -28,6 +29,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   private CurrentEditorProvider mySavedCurrentEditorProvider;
@@ -58,9 +61,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   public void testUndoRedo() throws Exception {
     init("some<caret> text<caret>\n" +
          "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-         "<selection>ano<caret>ther</selection> line",
-         TestFileType.TEXT);
-    setupEditorProvider();
+         "<selection>ano<caret>ther</selection> line");
     type('A');
     executeAction("EditorDelete");
     mouse().clickAt(0, 1);
@@ -78,6 +79,25 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     checkResult("someA<caret> textA<caret>\n" +
                       "some A<caret> A<caret>\n" +
                       "A<caret> line");
+  }
+
+  public void testBlockSelectionStateAfterUndo() throws Exception {
+    init("a");
+    ((EditorEx)myEditor).setColumnMode(true);
+    mouse().clickAt(0, 2);
+    type('b');
+    undo();
+    executeAction("EditorRightWithSelection");
+    verifyCaretsAndSelections(0, 3, 0, 2, 0, 3);
+  }
+
+  public void testBlockSelectionStateAfterUndo2() throws Exception {
+    init("a");
+    ((EditorEx)myEditor).setColumnMode(true);
+    mouse().clickAt(0, 0).dragTo(0, 2).release();
+    type('b');
+    undo();
+    verifyCaretsAndSelections(0, 2, 0, 0, 0, 2);
   }
 
   private void checkResult(final String text) {
@@ -105,7 +125,9 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     return TextEditorProvider.getInstance().getTextEditor(myEditor);
   }
 
-  private static void setupEditorProvider() {
+  private void init(String text) throws IOException {
+    init(text, TestFileType.TEXT);
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
     getUndoManager().setEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor() {

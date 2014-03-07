@@ -16,13 +16,13 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.PsiAnnotation.TargetType;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SplitMultiCatchIntention extends Intention {
 
@@ -52,25 +52,17 @@ public class SplitMultiCatchIntention extends Intention {
       return;
     }
 
-    final PsiModifierList modifierList = parameter.getModifierList();
-    if (modifierList != null) {
-      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        if (PsiImplUtil.findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
-          annotation.delete();
-        }
-      }
-    }
-
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(element.getProject());
     for (PsiType disjunction : ((PsiDisjunctionType)type).getDisjunctions()) {
       final PsiCatchSection copy = (PsiCatchSection)catchSection.copy();
-      final PsiParameter copyParameter = copy.getParameter();
-      assert copyParameter != null : copy.getText();
-      final PsiTypeElement typeElement = copyParameter.getTypeElement();
-      assert typeElement != null : copyParameter.getText();
-      final PsiTypeElement newTypeElement = factory.createTypeElement(disjunction);
-      typeElement.replace(newTypeElement);
+
+      final PsiTypeElement typeElement = assertNotNull(assertNotNull(copy.getParameter()).getTypeElement());
+      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(disjunction.getCanonicalText(true), catchSection);
+      final PsiElement replaced = typeElement.replace(newTypeElement);
+
       grandParent.addBefore(copy, catchSection);
+      styleManager.shortenClassReferences(replaced);
     }
 
     catchSection.delete();

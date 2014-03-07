@@ -102,7 +102,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
           final PyType argType = myTypeEvalContext.getType(entry.getKey());
           if (!genericsCollected) {
-            substitutions.putAll(PyTypeChecker.collectCallGenerics(results.getCallable(), results.getReceiver(), myTypeEvalContext));
+            substitutions.putAll(PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext));
             genericsCollected = true;
           }
           checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);

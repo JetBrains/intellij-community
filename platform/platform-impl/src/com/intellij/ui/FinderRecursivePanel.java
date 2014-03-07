@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -423,7 +424,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+            DumbService.getInstance(getProject()).runReadActionInSmartMode(new Runnable() {
               @Override
               public void run() {
                 try {

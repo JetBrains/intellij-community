@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,11 +107,12 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     };
   }
 
+  @NotNull
   @Override
   public DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
     return new DataExternalizer<XsdNamespaceBuilder>() {
       @Override
-      public void save(DataOutput out, XsdNamespaceBuilder value) throws IOException {
+      public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
         out.writeUTF(value.getNamespace() == null ? "" : value.getNamespace());
         out.writeUTF(value.getVersion() == null ? "" : value.getVersion());
         out.writeInt(value.getTags().size());
@@ -121,7 +122,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       }
 
       @Override
-      public XsdNamespaceBuilder read(DataInput in) throws IOException {
+      public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
 
         int count;
         XsdNamespaceBuilder builder = new XsdNamespaceBuilder(in.readUTF(), in.readUTF(), new ArrayList<String>(count = in.readInt()));

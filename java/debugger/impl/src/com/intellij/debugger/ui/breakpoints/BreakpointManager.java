@@ -54,9 +54,9 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.breakpoints.BreakpointState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
@@ -174,13 +174,16 @@ public class BreakpointManager {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
-        if (highlighter != null) {
-          final GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-          if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-              myProject, editor, breakpoint, renderer
-            );
+        XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
+        if (xBreakpoint instanceof XLineBreakpointImpl) {
+          RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
+          if (highlighter != null) {
+            GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+            if (renderer != null) {
+              DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+                myProject, editor, breakpoint.myXBreakpoint, renderer
+              );
+            }
           }
         }
       }
@@ -445,7 +448,6 @@ public class BreakpointManager {
                   //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
                   Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
                   breakpoint.readExternal(breakpointNode);
-                  addBreakpoint(breakpoint);
                   nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
                 }
               //}
@@ -527,23 +529,28 @@ public class BreakpointManager {
   }
 
   private Breakpoint createBreakpoint(String category, Element breakpointNode) throws InvalidDataException {
+    XBreakpoint xBreakpoint = null;
     if (category.equals(LineBreakpoint.CATEGORY.toString())) {
-      XLineBreakpoint xBreakpoint = createXLineBreakpoint(JavaLineBreakpointType.class, breakpointNode);
-      return LineBreakpoint.create(myProject, xBreakpoint);
+      xBreakpoint = createXLineBreakpoint(JavaLineBreakpointType.class, breakpointNode);
     }
     else if (category.equals(MethodBreakpoint.CATEGORY.toString())) {
-      XLineBreakpoint xBreakpoint =  createXLineBreakpoint(JavaMethodBreakpointType.class, breakpointNode);
-      return MethodBreakpoint.create(myProject, xBreakpoint);
+      if (breakpointNode.getAttribute("url") != null) {
+        xBreakpoint = createXLineBreakpoint(JavaMethodBreakpointType.class, breakpointNode);
+      }
+      else {
+        xBreakpoint = createXBreakpoint(JavaWildcardMethodBreakpointType.class, breakpointNode);
+      }
     }
     else if (category.equals(FieldBreakpoint.CATEGORY.toString())) {
-      XLineBreakpoint xBreakpoint =  createXLineBreakpoint(JavaFieldBreakpointType.class, breakpointNode);
-      return FieldBreakpoint.create(myProject, "", xBreakpoint);
+      xBreakpoint = createXLineBreakpoint(JavaFieldBreakpointType.class, breakpointNode);
     }
     else if (category.equals(ExceptionBreakpoint.CATEGORY.toString())) {
-      XBreakpoint xBreakpoint =  createXBreakpoint(JavaExceptionBreakpointType.class, breakpointNode);
-      return new ExceptionBreakpoint(myProject, xBreakpoint);
+      xBreakpoint =  createXBreakpoint(JavaExceptionBreakpointType.class, breakpointNode);
     }
-    throw new IllegalStateException("Unknown breakpoint category " + category);
+    if (xBreakpoint == null) {
+      throw new IllegalStateException("Unknown breakpoint category " + category);
+    }
+    return myBreakpoints.get(xBreakpoint);
   }
 
   private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls,

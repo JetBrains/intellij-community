@@ -168,8 +168,6 @@
     <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService serviceInterface="git4idea.Notificator"
-                    serviceImplementation="git4idea.Notificator"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"

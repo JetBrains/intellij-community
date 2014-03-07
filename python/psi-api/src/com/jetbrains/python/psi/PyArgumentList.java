@@ -20,12 +20,20 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * Represents an argument list of a function call.
  *
  * @author yole
  */
 public interface PyArgumentList extends PyElement {
+
+  /**
+   * @return all argument list param expressions (keyword argument or nameless)
+   */
+  @NotNull
+  Collection<PyExpression> getArgumentExpressions();
 
   @NotNull
   PyExpression[] getArguments();

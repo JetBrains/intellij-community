@@ -84,4 +84,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
   public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new LineBreakpoint(project, breakpoint);
   }
+
+  @Override
+  public int getPriority() {
+    return 100;
+  }
 }

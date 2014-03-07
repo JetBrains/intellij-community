@@ -21,6 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * A base interface for all compilers that generate new files. The generated files may be processed by other compilers.
  * Actual implementation should implement one of its subinterfaces. Currently only {@link SourceGeneratingCompiler} is available.
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public interface GeneratingCompiler extends Compiler, ValidityStateFactory, IntermediateOutputCompiler {
   /**

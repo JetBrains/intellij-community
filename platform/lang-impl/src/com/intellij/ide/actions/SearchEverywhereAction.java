@@ -143,7 +143,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private TitleIndexes myTitleIndexes;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
@@ -608,6 +608,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void rebuildList(final String pattern) {
+    assert EventQueue.isDispatchThread() : "Must be EDT";
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
     }

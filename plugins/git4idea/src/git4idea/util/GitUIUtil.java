@@ -15,19 +15,16 @@
  */
 package git4idea.util;
 
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
@@ -55,51 +52,55 @@ public class GitUIUtil {
   /**
    * A private constructor for utility class
    */
-  private GitUIUtil() { }
-  
-  public static void notify(@NotNull NotificationGroup group, @NotNull  Project project, @Nullable String title, @Nullable String description, @NotNull NotificationType type, @Nullable NotificationListener listener) {
-    // title can't be null, but can be empty; description can't be neither null, nor empty
-    if (title == null) {
-      title = "";
-    }
-    if (StringUtil.isEmptyOrSpaces(description)) {
-      description = title; 
-      title = "";
-    }
-    // if both title and description were empty, then it is a problem in the calling code => let assertion notify about that.
-    assert description != null : "description is null after StringUtil.isEmptyOrSpaces(). title: " + title;
-    group.createNotification(title, description, type, listener).notify(project.isDefault() ? null : project);    
+  private GitUIUtil() {
   }
 
-  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
+  public static void notifyMessages(@NotNull Project project,
+                                    @NotNull String title,
+                                    @Nullable String description,
+                                    boolean important,
+                                    @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
       desc += StringUtil.join(messages, "<hr/><br/>");
     }
-    NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
-    notify(group, project, title, desc, type, null);
+    VcsNotifier notificator = VcsNotifier.getInstance(project);
+    if (important) {
+      notificator.notifyError(title, desc);
+    }
+    else {
+      notificator.notifyImportantWarning(title, desc, null);
+    }
   }
 
-  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<? extends Exception> errors) {
+  public static void notifyMessage(Project project,
+                                   @NotNull String title,
+                                   @Nullable String description,
+                                   boolean important,
+                                   @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
     if (errors == null) {
       errorMessages = null;
-    } else {
+    }
+    else {
       errorMessages = new HashSet<String>(errors.size());
       for (Exception error : errors) {
         if (error instanceof VcsException) {
           for (String message : ((VcsException)error).getMessages()) {
             errorMessages.add(message.replace("\n", "<br/>"));
           }
-        } else {
+        }
+        else {
           errorMessages.add(error.toString().replace("\n", "<br/>"));
         }
       }
     }
-    notifyMessages(project, title, description, type, important, errorMessages);
+    notifyMessages(project, title, description, important, errorMessages);
   }
 
-  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
+  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {
+    notifyMessage(
+      project, title, description, important, Collections.singleton(error));
   }
 
   /**
@@ -119,19 +120,8 @@ public class GitUIUtil {
     return content.toString();
   }
 
-  /**
-   * Displays a "success"-notification.
-   */
-  public static void notifySuccess(Project project, String title, String description) {
-    GitVcs.NOTIFICATION_GROUP_ID.createNotification(title, description, NotificationType.INFORMATION, null).notify(project);
-  }
-
-  public static void notifyError(Project project, String title, String description) {
-    notifyMessage(project, title, description, NotificationType.ERROR, false, null);
-  }
-
   public static void notifyImportantError(Project project, String title, String description) {
-    notifyMessage(project, title, description, NotificationType.ERROR, true, null);
+    notifyMessage(project, title, description, true, null);
   }
 
   public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
@@ -145,7 +135,7 @@ public class GitUIUtil {
     for (VcsException e : gitErrors) {
       content.append(e.getLocalizedMessage()).append("<br/>");
     }
-    notifyError(project, title, content.toString());
+    notifyMessage(project, title, content.toString(), false, null);
   }
 
   /**

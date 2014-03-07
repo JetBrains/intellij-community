@@ -88,6 +88,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.STATIC;
@@ -173,9 +176,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   @Nullable
-  public static HighlightInfo checkReferenceExpression(GrReferenceExpression ref) {
-    HighlightInfo info = checkRefInner(ref);
-    addEmptyIntentionIfNeeded(info);
+  public static List<HighlightInfo> checkReferenceExpression(GrReferenceExpression ref) {
+    List<HighlightInfo> info = checkRefInner(ref);
+    addEmptyIntentionIfNeeded(ContainerUtil.getFirstItem(info));
     return info;
   }
 
@@ -251,7 +254,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   @Nullable
-  private static HighlightInfo checkRefInner(GrReferenceExpression ref) {
+  private static List<HighlightInfo> checkRefInner(GrReferenceExpression ref) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
@@ -263,7 +266,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
       if (!isStaticOk(resolveResult)) {
         String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
-        return createAnnotationForRef(ref, inStaticContext, message);
+        return Collections.singletonList(createAnnotationForRef(ref, inStaticContext, message));
       }
 
       return null;
@@ -288,9 +291,11 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       HighlightInfo info = createAnnotationForRef(ref, inStaticContext, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
       if (info == null) return null;
 
+      ArrayList<HighlightInfo> result = ContainerUtil.newArrayList();
+      result.add(info);
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
       if (ref.getParent() instanceof GrMethodCall) {
-        registerStaticImportFix(ref, info, displayKey);
+        ContainerUtil.addIfNotNull(result, registerStaticImportFix(ref, displayKey));
       }
       else {
         registerCreateClassByTypeFix(ref, info, displayKey);
@@ -300,7 +305,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       registerReferenceFixes(ref, info, inStaticContext, displayKey);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarAdapter(info, displayKey));
       OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(info, displayKey), ref);
-      return info;
+      return result;
     }
 
     return null;
@@ -534,14 +539,16 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
   }
 
-  private static void registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression,
-                                              @Nullable HighlightInfo info,
-                                              @Nullable final HighlightDisplayKey key) {
+  private static HighlightInfo registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression,
+                                                       @Nullable final HighlightDisplayKey key) {
     final String referenceName = referenceExpression.getReferenceName();
-    if (StringUtil.isEmpty(referenceName)) return;
-    if (referenceExpression.getQualifier() != null) return;
+    if (StringUtil.isEmpty(referenceName)) return null;
+    if (referenceExpression.getQualifier() != null) return null;
 
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(
+      referenceExpression.getParent()).createUnconditionally();
     QuickFixAction.registerQuickFixAction(info, new GroovyStaticImportMethodFix((GrMethodCall)referenceExpression.getParent()), key);
+    return info;
   }
 
   private static void registerReferenceFixes(GrReferenceExpression refExpr,

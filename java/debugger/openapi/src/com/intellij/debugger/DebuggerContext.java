@@ -18,8 +18,10 @@ package com.intellij.debugger;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
-public interface DebuggerContext extends StackFrameContext{
+public interface DebuggerContext extends StackFrameContext {
+  @Nullable
   SuspendContext getSuspendContext();
 
   Project getProject();

@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -55,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -407,8 +405,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-    myResult = Indent.getContinuationIndent();
+  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+    if (myChild instanceof GrAnnotationMemberValue) {
+      myResult = Indent.getContinuationIndent();
+    }
+    else {
+      super.visitAnnotationMethod(annotationMethod);
+    }
   }
 
   @Override

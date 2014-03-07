@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -184,7 +185,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         document = (DocumentEx)getCachedDocument(file);
         if (document != null) return document; // Double checking
 
-        document = (DocumentEx)createDocument(text);
+        document = (DocumentEx)createDocument(text, file);
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
         document.setReadOnly(!file.isWritable() || fileType.isBinary());
@@ -229,8 +230,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return false;
   }
 
-  private static Document createDocument(final CharSequence text) {
-    return EditorFactory.getInstance().createDocument(text);
+  private static Document createDocument(final CharSequence text, VirtualFile file) {
+    boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
+    return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, false);
   }
 
   @Override

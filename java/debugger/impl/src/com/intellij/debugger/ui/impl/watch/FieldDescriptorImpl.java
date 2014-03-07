@@ -59,10 +59,12 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     setLvalue(!field.isFinal());
   }
 
+  @Override
   public Field getField() {
     return myField;
   }
 
+  @Override
   public ObjectReference getObject() {
     return myObject;
   }
@@ -131,6 +133,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     final Boolean isPrimitive = ((FieldDescriptorImpl)oldDescriptor).myIsPrimitive;
@@ -141,6 +144,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
 
+  @Override
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
       final Value value = getValue();
@@ -154,12 +158,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     return myIsPrimitive.booleanValue();
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       return (myObject != null) ? myObject.getValue(myField) : myField.declaringType().getValue(myField);
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
@@ -168,6 +173,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     return myIsStatic;
   }
 
+  @Override
   public String getName() {
     final String fieldName = myField.name();
     if (isOuterLocalVariableValue() && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
@@ -180,11 +186,12 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     try {
       return DebuggerUtils.isSynthetic(myField) && myField.name().startsWith(OUTER_LOCAL_VAR_FIELD_PREFIX);
     }
-    catch (UnsupportedOperationException e) {
+    catch (UnsupportedOperationException ignored) {
       return false;
     }
   }
 
+  @Override
   public String calcValueName() {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
@@ -201,6 +208,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     String fieldName;

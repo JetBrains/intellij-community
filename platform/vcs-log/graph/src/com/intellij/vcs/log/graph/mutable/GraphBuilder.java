@@ -1,8 +1,6 @@
 package com.intellij.vcs.log.graph.mutable;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
@@ -14,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.graph.elements.Node.NodeType.*;
+import static com.intellij.vcs.log.graph.elements.Node.NodeType.COMMIT_NODE;
+import static com.intellij.vcs.log.graph.elements.Node.NodeType.END_COMMIT_NODE;
 
 /**
  * @author erokhins
@@ -90,16 +89,16 @@ public class GraphBuilder {
 
   @NotNull
   protected Branch createBranch(int commitHash, @NotNull Collection<VcsRef> refs) {
-    VirtualFile repositoryRoot;
+    int oneOfHeads;
     if (refs.isEmpty()) {
       // should never happen, but fallback gently.
       LOG.error("Ref should exist for this node. Hash: " + commitHash);
-      repositoryRoot = NullVirtualFile.INSTANCE;
+      oneOfHeads = -1;
     }
     else {
-      repositoryRoot = refs.iterator().next().getRoot();
+      oneOfHeads = refs.iterator().next().getCommitIndex();
     }
-    return new Branch(commitHash, refs, repositoryRoot);
+    return new Branch(commitHash, refs, oneOfHeads);
   }
 
   private void addParent(MutableNode node, int parentHash, Branch branch) {
@@ -126,7 +125,7 @@ public class GraphBuilder {
     else {
       for (int parentHash : parents) {
         Collection<VcsRef> refs = findRefForHash(node.getCommitIndex());
-        addParent(node, parentHash, new Branch(node.getCommitIndex(), parentHash, refs, branch.getRepositoryRoot()));
+        addParent(node, parentHash, new Branch(node.getCommitIndex(), parentHash, refs, branch.getOneOfHeads()));
       }
     }
   }

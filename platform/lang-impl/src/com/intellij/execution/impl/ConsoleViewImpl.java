@@ -386,17 +386,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void requestScrollingToEnd() {
-    if (myEditor == null || myFlushAlarm.isDisposed()) return;
-    final MyFlushRunnable scrollRunnable = new MyFlushRunnable() {
+    if (myEditor == null || myFlushAlarm.isDisposed()) {
+      return;
+    }
+
+    addFlushRequest(new MyFlushRunnable() {
       @Override
       public void doRun() {
         flushDeferredText();
-        if (myEditor == null || myFlushAlarm.isDisposed()) return;
+        if (myEditor == null || myFlushAlarm.isDisposed()) {
+          return;
+        }
+
         myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-    };
-    addFlushRequest(scrollRunnable);
+    });
   }
 
   private void addFlushRequest(MyFlushRunnable scrollRunnable) {
@@ -480,13 +485,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
           // are soft wrapped. We want to update viewport position then when the console becomes visible.
           final Rectangle oldRectangle = e.getOldRectangle();
-          final Rectangle newRectangle = e.getNewRectangle();
           if (oldRectangle == null) {
             return;
           }
 
           Editor myEditor = e.getEditor();
-          if (oldRectangle.height <= 0 && newRectangle.height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
+          if (oldRectangle.height <= 0 && e.getNewRectangle().height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
               && myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength()) {
             EditorUtil.scrollToTheEnd(myEditor);
           }
@@ -834,19 +838,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return ApplicationManager.getApplication().runReadAction(new Computable<EditorEx>() {
       @Override
       public EditorEx compute() {
-        final EditorEx editor = createRealEditor();
-
+        EditorEx editor = createRealEditor();
         editor.addEditorMouseListener(new EditorPopupHandler() {
           @Override
           public void invokePopup(final EditorMouseEvent event) {
             popupInvoked(event.getMouseEvent());
           }
         });
-        editor.getDocument().addDocumentListener(new DocumentListener() {
-          @Override
-          public void beforeDocumentChange(DocumentEvent event) {
-          }
-
+        editor.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
           public void documentChanged(DocumentEvent event) {
             onDocumentChanged(event);

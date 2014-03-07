@@ -91,6 +91,7 @@ public class RequestHint {
               }
             }
 
+            @NotNull
             public DebugProcess getDebugProcess() {
               return suspendContext.getDebugProcess();
             }

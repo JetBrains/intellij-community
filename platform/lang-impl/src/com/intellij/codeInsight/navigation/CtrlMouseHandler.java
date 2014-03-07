@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
-        eventMulticaster.addCaretListener(new CaretListener() {
+        eventMulticaster.addCaretListener(new CaretAdapter() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             if (myHint != null) {

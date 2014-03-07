@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
@@ -26,8 +27,8 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  * @since Apr 29, 2010 4:06:15 PM
  */
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
-
-  public void testWrappingAnnotationArrayParameters() throws Exception {
+  @SuppressWarnings("SpellCheckingInspection")
+  public void testWrappingAnnotationArrayParameters() {
     getSettings().getRootSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest(
@@ -42,7 +43,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
       "class Foo {\n" +
       "}",
-      
+
       "@AttributeOverrides({\n" +
       "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
       "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
@@ -58,7 +59,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAnnotationParamValueExceedingRightMargin() throws Exception {
+  public void testAnnotationParamValueExceedingRightMargin() {
     // Inspired by IDEA-18051
     getSettings().getRootSettings().RIGHT_MARGIN = 80;
     doTextTest(
@@ -83,7 +84,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "\n" +
       "\n" +
-      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
+      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment =" +
+      " \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
       "    public class Test {\n" +
       "\n" +
       "    }\n" +
@@ -110,7 +112,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "\n" +
       "\n" +
-      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
+      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment =" +
+      " \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
       "    public class Test {\n" +
       "\n" +
       "    }\n" +
@@ -118,6 +121,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}");
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public void testEnumConstantsWrapping() {
     // Inspired by IDEA-54667
     getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -139,15 +143,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testMethodAnnotationFollowedBySingleLineComment() throws Exception {
+  public void testMethodAnnotationFollowedBySingleLineComment() {
     // Inspired by IDEA-22808
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     String text =
-      "@Test//mycomment\n" +
+      "@Test//my_comment\n" +
       "public void foo() {\n" +
       "}";
-    
+
     // Expecting the code to be left as-is
     doClassTest(text, text);
   }
@@ -163,7 +167,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                         "}";
     doTextTest(text, text);
   }
-  
+
   public void testWrapLongLine() {
     // Inspired by IDEA-55782
     getSettings().getRootSettings().RIGHT_MARGIN = 50;
@@ -237,13 +241,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
-  public void testWrapMethodAnnotationBeforeParams() throws Exception {
+
+  public void testWrapMethodAnnotationBeforeParams() {
     // Inspired by IDEA-59536
     getSettings().getRootSettings().RIGHT_MARGIN = 90;
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    
+
     doClassTest(
       "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
       "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
@@ -251,10 +255,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "\n}"
     );
   }
-  
-  public void testMultipleExpressionInSameLine() throws Exception {
+
+  public void testMultipleExpressionInSameLine() {
     // Inspired by IDEA-64975.
-    
+
     getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
     doMethodTest(
       "int i = 1; int j = 2;",
@@ -268,10 +272,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "int j = 2;"
     );
   }
-  
-  public void testIncompleteFieldAndAnnotationWrap() throws Exception {
+
+  public void testIncompleteFieldAndAnnotationWrap() {
     // Inspired by IDEA-64725
-    
+
     getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doClassTest(
       "@NotNull Comparable<String>",
@@ -279,7 +283,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testResourceListWrap() throws Exception {
+  public void testResourceListWrap() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 40;
     getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -296,7 +300,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  ") { }");
   }
 
-  public void testLineLongEnoughToExceedAfterFirstWrapping() throws Exception {
+  @SuppressWarnings("SpellCheckingInspection")
+  public void testLineLongEnoughToExceedAfterFirstWrapping() {
     // Inspired by IDEA-103624
     getSettings().WRAP_LONG_LINES = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 40;
@@ -316,7 +321,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testNoUnnecessaryWrappingIsPerformedForLongLine() throws Exception {
+  @SuppressWarnings("SpellCheckingInspection")
+  public void testNoUnnecessaryWrappingIsPerformedForLongLine() {
     // Inspired by IDEA-103624
     getSettings().WRAP_LONG_LINES = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 40;
@@ -332,13 +338,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doMethodTest(text, text);
   }
 
-  public void testEnforceIndent_MethodCallParamWrap() throws Exception {
+  public void testEnforceIndentMethodCallParamWrap() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 140;
     getSettings().PREFER_PARAMETERS_WRAP = true;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
-    String before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString()));";
+    String before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, " +
+                    "String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString()));";
 
     String afterFirstReformat = "processingEnv.getMessenger().printMessage(\n" +
                                 "        Diagnostic.Kind.ERROR, String.format(\n" +
@@ -362,17 +369,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
     doMethodTest(before, after);
 
-    before = "processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, call(\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"));\n";
-    after = "processingEnv.getMessager().printMessage(\n" +
+    String literal = "\"" + StringUtil.repeatSymbol('A', 128) + "\"";
+    before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, call(" + literal + "));\n";
+    after = "processingEnv.getMessenger().printMessage(\n" +
             "        Diagnostic.Kind.ERROR, call(\n" +
-            "                \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"\n" +
+            "                " + literal + "\n" +
             "        )\n" +
             ");\n";
 
     doMethodTest(before, after);
   }
 
-  public void testDoNotWrap_MethodsWithMethodCallAsParameters() throws Exception {
+  @SuppressWarnings("SpellCheckingInspection")
+  public void testDoNotWrapMethodsWithMethodCallAsParameters() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 140;
     getSettings().PREFER_PARAMETERS_WRAP = true;
@@ -390,7 +399,4 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     doMethodTest(before, after);
   }
-
-
-
 }

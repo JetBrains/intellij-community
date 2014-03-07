@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.*;
  *
  * @author ven
  */
-public class PsiIntersectionType extends PsiType {
+public class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
@@ -111,19 +111,19 @@ public class PsiIntersectionType extends PsiType {
 
   @NotNull
   @Override
-  public String getCanonicalText() {
-    return myConjuncts[0].getCanonicalText();
+  public String getCanonicalText(boolean annotated) {
+    return myConjuncts[0].getCanonicalText(annotated);
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < myConjuncts.length; i++) {
-      buffer.append(myConjuncts[i].getInternalCanonicalText());
-      if (i < myConjuncts.length - 1) buffer.append(" & ");
-    }
-    return buffer.toString();
+    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getInternalCanonicalText();
+      }
+    }, " & ");
   }
 
   @Override

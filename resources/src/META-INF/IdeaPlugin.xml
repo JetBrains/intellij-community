@@ -624,7 +624,7 @@
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
     <localInspection language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with stream api"
-                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
     <localInspection language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />

@@ -116,6 +116,7 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   /**
    * Returns the special action that indicates that no filtering is selected in this component.
    */
+  @NotNull
   protected AnAction createAllAction() {
     return new AllAction(this);
   }

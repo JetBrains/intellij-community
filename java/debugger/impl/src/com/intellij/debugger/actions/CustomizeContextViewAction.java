@@ -45,11 +45,13 @@ import java.util.List;
  * Time: 4:39:53 PM
  */
 public class CustomizeContextViewAction extends DebuggerAction{
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
     Disposable disposable = Disposer.newDisposable();
     final CompositeConfigurable configurable = new TabbedConfigurable(disposable) {
+      @Override
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
         array.add(new DebuggerDataViewsConfigurable(project));
@@ -57,15 +59,18 @@ public class CustomizeContextViewAction extends DebuggerAction{
         return array;
       }
 
+      @Override
       public void apply() throws ConfigurationException {
         super.apply();
         NodeRendererSettings.getInstance().fireRenderersChanged();
       }
 
+      @Override
       public String getDisplayName() {
         return DebuggerBundle.message("title.customize.data.views");
       }
 
+      @Override
       public String getHelpTopic() {
         return null;
       }
@@ -85,6 +90,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
     editor.show();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     DebuggerTree tree = getTree(e.getDataContext());
     e.getPresentation().setVisible(tree instanceof FrameVariablesTree || tree instanceof WatchDebuggerTree);

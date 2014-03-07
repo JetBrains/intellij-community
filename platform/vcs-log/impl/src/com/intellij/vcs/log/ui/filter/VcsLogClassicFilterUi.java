@@ -26,6 +26,9 @@ import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +50,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final DateFilterPopupComponent myDateFilterComponent;
   @NotNull private final StructureFilterPopupComponent myStructureFilterComponent;
 
-  public VcsLogClassicFilterUi(@NotNull VcsLogUI ui) {
+  public VcsLogClassicFilterUi(@NotNull VcsLogUI ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
+                               @NotNull DataPack initialDataPack) {
     myUi = ui;
 
     myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History");
@@ -59,10 +63,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     });
 
-    myBranchFilterComponent = new BranchFilterPopupComponent(this, ui);
-    myUserFilterComponent = new UserFilterPopupComponent(this, ui.getLogDataHolder(), ui.getUiProperties());
+    myBranchFilterComponent = new BranchFilterPopupComponent(this, logDataHolder, initialDataPack.getRefsModel(), uiProperties);
+    myUserFilterComponent = new UserFilterPopupComponent(this, logDataHolder, uiProperties);
     myDateFilterComponent  = new DateFilterPopupComponent(this);
-    myStructureFilterComponent = new StructureFilterPopupComponent(this, ui.getLogDataHolder().getRoots());
+    myStructureFilterComponent = new StructureFilterPopupComponent(this, logDataHolder.getRoots());
 
     myActionGroup = new DefaultActionGroup();
     myActionGroup.add(new TextFilterComponent(myTextFilter));
@@ -70,6 +74,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myActionGroup.add(new FilterActionComponent(myUserFilterComponent));
     myActionGroup.add(new FilterActionComponent(myDateFilterComponent));
     myActionGroup.add(new FilterActionComponent(myStructureFilterComponent));
+  }
+
+  @Override
+  public void updateDataPack(@NotNull DataPack dataPack) {
+    myBranchFilterComponent.updateRefsModel(dataPack.getRefsModel());
   }
 
   @Override

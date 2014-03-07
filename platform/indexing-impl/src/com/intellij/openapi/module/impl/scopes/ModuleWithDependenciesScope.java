@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final Set<Module> myModules;
   private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<VirtualFile>();
 
-  public ModuleWithDependenciesScope(Module module, @ScopeConstant int options) {
+  public ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
     myModule = module;
     myOptions = options;

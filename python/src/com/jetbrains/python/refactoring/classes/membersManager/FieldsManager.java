@@ -43,9 +43,9 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   @NotNull
   @Override
   protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
-    final MultiMap<PyClass, PyElement> result = new MultiMap<PyClass, PyElement>();
-    member.accept(new MyPyRecursiveElementVisitor(result));
-    return result;
+    final PyRecursiveElementVisitorWithResult visitor = new MyPyRecursiveElementVisitor();
+    member.accept(visitor);
+    return visitor.myResult;
   }
 
   @Override
@@ -89,7 +89,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
    * @return list of fields in target expression (declaration) form
    */
   @NotNull
-  protected abstract List<PyTargetExpression> getFieldsByClass(@NotNull PyClass pyClass);
+  protected abstract Collection<PyTargetExpression> getFieldsByClass(@NotNull PyClass pyClass);
 
 
   @NotNull
@@ -135,13 +135,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   /**
    * Fetches field declarations
    */
-  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitor {
-    @NotNull
-    private final MultiMap<PyClass, PyElement> myResult;
-
-    private MyPyRecursiveElementVisitor(@NotNull final MultiMap<PyClass, PyElement> result) {
-      myResult = result;
-    }
+  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitorWithResult {
 
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {

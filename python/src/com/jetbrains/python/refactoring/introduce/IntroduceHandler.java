@@ -207,7 +207,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (type != null && type != PyNoneType.INSTANCE) {
       String typeName = type.getName();
       if (typeName != null) {
-        if (type.isBuiltin(context)) {
+        if (type.isBuiltin()) {
           typeName = typeName.substring(0, 1);
         }
         candidates.addAll(NameSuggesterUtil.generateNamesByType(typeName));

@@ -117,10 +117,15 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String newFileName =
       StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+
+    // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
-    myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
+    myNewVirtualFile = ObjectUtils.assertNotNull((LightVirtualFile)myNewFile.getVirtualFile());
     myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
-    assert myNewVirtualFile != null;
+
+    assert myNewFile != null : "PSI file is null";
+    assert myNewFile.getTextLength() == myNewVirtualFile.getLength() : "PSI / Virtual file text mismatch";
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));

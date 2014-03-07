@@ -96,8 +96,10 @@ public class DomApplicationComponent {
   public int getCumulativeVersion() {
     int result = 0;
     for (DomFileDescription description : getAllFileDescriptions()) {
-      result += description.getVersion();
-      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+      if (description.hasStubs()) {
+        result += description.getStubVersion();
+        result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+      }
     }
     return result;
   }

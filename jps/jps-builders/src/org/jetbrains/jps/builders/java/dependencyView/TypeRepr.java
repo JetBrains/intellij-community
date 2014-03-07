@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.Type;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -280,12 +281,12 @@ class TypeRepr {
   public static DataExternalizer<AbstractType> externalizer(final DependencyContext context) {
     return new DataExternalizer<AbstractType>() {
       @Override
-      public void save(final DataOutput out, final AbstractType value) throws IOException {
+      public void save(@NotNull final DataOutput out, final AbstractType value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public AbstractType read(final DataInput in) throws IOException {
+      public AbstractType read(@NotNull final DataInput in) throws IOException {
         AbstractType elementType;
         int level = 0;
 

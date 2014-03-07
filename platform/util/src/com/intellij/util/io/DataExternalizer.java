@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public interface DataExternalizer<T> {
-  void save(DataOutput out, T value) throws IOException;
+  void save(@NotNull DataOutput out, T value) throws IOException;
 
-  T read(DataInput in) throws IOException;
+  T read(@NotNull DataInput in) throws IOException;
 }

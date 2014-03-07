@@ -21,29 +21,24 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPushDialog;
-import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Kirill Likhodedov
- */
 public class HgPusher {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
@@ -59,52 +54,27 @@ public class HgPusher {
     myProject = project;
   }
 
-  public void showDialogAndPush(@Nullable final VirtualFile selectedRepo) {
-    HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
-      public void run() {
-        final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
-        if (repositories.isEmpty()) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
-          return;
-        }
-        VirtualFile firstRepo = repositories.get(0);
-        final List<HgTagBranch> branches = getBranches(myProject, firstRepo);
-        if (branches.isEmpty()) {
-          return;
-        }
-        final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, branches, selectedRepo);
-            dialog.show();
-            if (dialog.isOK()) {
-              dialog.rememberSettings();
-              pushCommand.set(preparePushCommand(myProject, dialog));
-              new Task.Backgroundable(myProject, "Pushing...", false) {
-                @Override
-                public void run(@NotNull ProgressIndicator indicator) {
-                  if (pushCommand.get() != null) {
-                    push(myProject, pushCommand.get());
-                  }
-                }
-              }.queue();
-            }
-          }
-        });
-      }
-    });
-  }
+  public void showDialogAndPush (@NotNull Collection<HgRepository> repositories,@Nullable final HgRepository selectedRepo) {
 
-  @NotNull
-  public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
-    HgCommandResult branchesResult = new HgTagBranchCommand(project, root).collectBranches();
-    if (branchesResult == null) {
-      new HgCommandResultNotifier(project)
-        .notifyError(branchesResult, "Mercurial command failed", HgVcsMessages.message("hg4idea.branches.error.description"));
-      return Collections.emptyList();
+    if (repositories.isEmpty()) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
+      return;
     }
-    return HgTagBranchCommand.parseResult(branchesResult);
+    final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
+    final HgPushDialog dialog = new HgPushDialog(myProject, repositories, selectedRepo);
+    dialog.show();
+    if (dialog.isOK()) {
+      dialog.rememberSettings();
+      pushCommand.set(preparePushCommand(myProject, dialog));
+      new Task.Backgroundable(myProject, "Pushing...", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          if (pushCommand.get() != null) {
+            push(myProject, pushCommand.get());
+          }
+        }
+      }.queue();
+    }
   }
 
   private static void push(final Project project, HgPushCommand command) {
@@ -121,9 +91,9 @@ public class HgPusher {
           String successTitle = "Pushed successfully";
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
-          new HgCommandResultNotifier(project).notifySuccess(successTitle, successDescription);
+          VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
         } else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-          new HgCommandResultNotifier(project).notifySuccess("", "Nothing to push");
+          VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
         } else {
           new HgCommandResultNotifier(project).notifyError(result, "Push failed",
                                                            "Failed to push to [" + repo.getPresentableName() + "]");
@@ -133,10 +103,11 @@ public class HgPusher {
   }
 
   private static HgPushCommand preparePushCommand(Project project, HgPushDialog dialog) {
-    final HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
+    final HgPushCommand command = new HgPushCommand(project, dialog.getRepository().getRoot(), dialog.getTarget());
     command.setRevision(dialog.getRevision());
     command.setForce(dialog.isForce());
-    command.setBranch(dialog.getBranch());
+    command.setBranchName(dialog.getBranch());
+    command.setBookmarkName(dialog.getBookmarkName());
     command.setIsNewBranch(dialog.isNewBranch());
     return command;
   }
@@ -159,5 +130,4 @@ public class HgPusher {
     }
     return numberOfCommitsInAllSubrepos;
   }
-
 }

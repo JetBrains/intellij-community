@@ -23,11 +23,11 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.WindowWatcher;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -154,28 +154,42 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
 
   private ActionCallback requestFocus(final Component c) {
-    ActionCallback result = new ActionCallback();
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
-    if (owner != null && owner == c) {
-      myManager.getFocusManager().requestFocus(new FocusCommand() {
-        @NotNull
-        public ActionCallback run() {
-          return new ActionCallback.Done();
+    final ActionCallback result = new ActionCallback();
+    final Alarm checkerAlarm = new Alarm(result);
+    Runnable checker = new Runnable() {
+      final long startTime = System.currentTimeMillis();
+      @Override
+      public void run() {
+        if (System.currentTimeMillis() - startTime > 10000) return;
+        if (c.isShowing()) {
+          final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+          if (owner != null && owner == c) {
+            myManager.getFocusManager().requestFocus(new FocusCommand() {
+              @NotNull
+              public ActionCallback run() {
+                return new ActionCallback.Done();
+              }
+            }, myForced).doWhenProcessed(new Runnable() {
+              public void run() {
+                updateToolWindow(c);
+              }
+            }).notify(result);
+          }
+          else {
+            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced)
+              .doWhenProcessed(new Runnable() {
+                public void run() {
+                  updateToolWindow(c);
+                }
+              }).notify(result);
+          }
         }
-      }, myForced).doWhenProcessed(new Runnable() {
-        public void run() {
-          updateToolWindow(c);
+        else {
+          checkerAlarm.addRequest(this, 100);
         }
-      }).notify(result);
-    }
-    else {
-      myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced).doWhenProcessed(new Runnable() {
-        public void run() {
-          updateToolWindow(c);
-        }
-      }).notify(result);
-    }
-
+      }
+    };
+    checkerAlarm.addRequest(checker, 0);
     return result;
   }
 

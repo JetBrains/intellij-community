@@ -32,6 +32,7 @@ import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -97,6 +98,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     final MarkedDescriptorTree displayDescriptorTree = new MarkedDescriptorTree();
 
     tree.dfst(new DescriptorTree.DFSTWalker() {
+      @Override
       public void visit(NodeDescriptor parent, NodeDescriptor child) {
         final DescriptorData<NodeDescriptor> descriptorData = DescriptorData.getDescriptorData(child);
         descriptorTree.addChild(parent, child, descriptorData);
@@ -130,10 +132,12 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return descriptorTree;
   }
 
+  @Override
   public ArrayElementDescriptorImpl getArrayItemDescriptor(NodeDescriptor parent, ArrayReference array, int index) {
     return getDescriptor(parent, new ArrayItemData(array, index));
   }
 
+  @Override
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;
     if (objRef == null ) {
@@ -148,6 +152,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, descriptorData);
   }
 
+  @Override
   public LocalVariableDescriptorImpl getLocalVariableDescriptor(NodeDescriptor parent, LocalVariableProxy local) {
     return getDescriptor(parent, new LocalData((LocalVariableProxyImpl)local));
   }
@@ -156,7 +161,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ArgValueData(index, value, name));
   }
 
-  public StackFrameDescriptorImpl getStackFrameDescriptor(NodeDescriptorImpl parent, StackFrameProxyImpl frameProxy) {
+  public StackFrameDescriptorImpl getStackFrameDescriptor(@Nullable NodeDescriptorImpl parent, @NotNull StackFrameProxyImpl frameProxy) {
     return getDescriptor(parent, new StackFrameData(frameProxy));
   }
 
@@ -184,6 +189,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ThreadGroupData(group));
   }
 
+  @Override
   public UserExpressionDescriptor getUserExpressionDescriptor(NodeDescriptor parent, final DescriptorData<UserExpressionDescriptor> data) {
     return getDescriptor(parent, data);
   }
@@ -232,6 +238,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       super(descriportTree);
     }
 
+    @Override
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
       NodeDescriptor searched = super.getSearched(parent);
       if(searched == null) {

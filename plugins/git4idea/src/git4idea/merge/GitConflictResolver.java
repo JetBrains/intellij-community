@@ -17,13 +17,13 @@ package git4idea.merge;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -179,9 +179,9 @@ public class GitConflictResolver {
                   "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
                   myParams.myErrorNotificationAdditionalDescription);
   }
-  
+
   private void notifyWarning(String title, String content) {
-    myPlatformFacade.getNotificator(myProject).notifyStrongWarning(title, content, new ResolveNotificationListener());
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(title, content, new ResolveNotificationListener());
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
@@ -229,11 +229,11 @@ public class GitConflictResolver {
   private void notifyException(VcsException e) {
     LOG.info("mergeFiles ", e);
     final String description = "Couldn't check the working tree for unmerged files because of an error.";
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(myParams.myErrorNotificationTitle,
-                                                           description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                           e.getLocalizedMessage(),
-                                                           NotificationType.ERROR,
-                                                           new ResolveNotificationListener()).notify(myProject);
+    VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
+                                                   description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
+                                                   e.getLocalizedMessage(),
+                                                   new ResolveNotificationListener()
+    );
   }
 
 

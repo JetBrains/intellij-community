@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Segment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,6 +150,11 @@ public class TextComponentCaretModel implements CaretModel {
     return myCaret;
   }
 
+  @Override
+  public int getCaretCount() {
+    return 1;
+  }
+
   @NotNull
   @Override
   public List<Caret> getAllCarets() {
@@ -179,7 +183,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
     throw new UnsupportedOperationException("Multiple carets are not supported");
   }
 

@@ -202,6 +202,11 @@ public final class LanguageConsoleBuilder {
       return gutterContentProvider == null;
     }
 
+    @Override
+    int getMinHistoryLineCount() {
+      return 1;
+    }
+
     @NotNull
     @Override
     protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
@@ -225,8 +230,8 @@ public final class LanguageConsoleBuilder {
         return;
       }
 
-      final ConsoleIconGutterComponent lineStartGutter = new ConsoleIconGutterComponent(editor, gutterContentProvider);
-      final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider);
+      final ConsoleGutterComponent lineStartGutter = new ConsoleGutterComponent(editor, gutterContentProvider, true);
+      final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider, false);
       JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
         public Dimension getPreferredSize() {
@@ -246,7 +251,7 @@ public final class LanguageConsoleBuilder {
           int w = getWidth();
           int h = getHeight();
           int lineStartGutterWidth = lineStartGutter.getPreferredSize().width;
-          lineStartGutter.setBounds(0, 0, lineStartGutterWidth, h);
+          lineStartGutter.setBounds(0, 0, lineStartGutterWidth + gutterContentProvider.getLineStartGutterOverlap(editor.getEditor()), h);
 
           editor.setBounds(lineStartGutterWidth, 0, w - lineStartGutterWidth, h);
 
@@ -266,7 +271,7 @@ public final class LanguageConsoleBuilder {
         }
       };
 
-      layeredPane.add(lineStartGutter, JLayeredPane.DEFAULT_LAYER);
+      layeredPane.add(lineStartGutter, JLayeredPane.PALETTE_LAYER);
 
       JScrollPane scrollPane = editor.getScrollPane();
       layeredPane.add(scrollPane.getViewport().getView(), JLayeredPane.DEFAULT_LAYER);
@@ -291,13 +296,13 @@ public final class LanguageConsoleBuilder {
     }
 
     private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
-      private final ConsoleIconGutterComponent lineStartGutter;
+      private final ConsoleGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
       private RangeHighlighterEx lineSeparatorPainter;
 
-      public GutterUpdateScheduler(@NotNull ConsoleIconGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
+      public GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
         this.lineEndGutter = lineEndGutter;
 
@@ -394,7 +399,7 @@ public final class LanguageConsoleBuilder {
         @Override
         public void run() {
           if (!getHistoryViewer().isDisposed()) {
-            lineStartGutter.updateSize();
+            lineStartGutter.updateSize(start, end);
             lineEndGutter.updateSize(start, end);
           }
           gutterSizeUpdater = null;

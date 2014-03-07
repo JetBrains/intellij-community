@@ -37,6 +37,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -72,6 +73,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private JButton myDetailsButton;
   private static final String SHOW_ALL = "Show All";
   private NullableConsumer<Sdk> myDetailsCallback;
+  private PythonSdkDetailsDialog myMoreDialog;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -127,19 +129,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
       }
     };
-
+    myMoreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                   new PythonSdkDetailsDialog(myModule, myDetailsCallback);
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          PythonSdkDetailsStep
-                                            .show(myProject, myProjectSdksModel.getSdks(),
-                                                  myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                                                  new PythonSdkDetailsDialog(myModule, myDetailsCallback), myMainPanel,
-                                                  myDetailsButton.getLocationOnScreen(), true,
+                                          PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(),
+                                                                    myMoreDialog, myMainPanel,
+                                                  myDetailsButton.getLocationOnScreen(),
                                                   new NullableConsumer<Sdk>() {
                                                     @Override
                                                     public void consume(Sdk sdk) {
                                                       if (sdk == null) return;
+                                                      final PyRemovedSdkService sdkService = PyRemovedSdkService.getInstance();
+                                                      sdkService.restoreSdk(sdk);
                                                       if (myProjectSdksModel.findSdk(sdk) == null) {
                                                         myProjectSdksModel.addSdk(sdk);
                                                         myAddedSdks.add(sdk);
@@ -405,6 +408,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public void disposeUIResources() {
     myProjectSdksModel.removeListener(mySdkModelListener);
     myInterpreterList.disposeModel();
+    Disposer.dispose(myMoreDialog.getDisposable());
   }
 
   private static class MySdkModelListener implements SdkModel.Listener {

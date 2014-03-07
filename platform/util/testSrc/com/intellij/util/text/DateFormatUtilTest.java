@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,12 @@ public class DateFormatUtilTest {
     else if (SystemInfo.isUnix) {
       assertEquals("5:10:15 PM", printTimeForLocale("en_US.UTF-8"));
       assertEquals("17:10:15", printTimeForLocale("de_DE.UTF-8"));
+    }
+    else if (SystemInfo.isWinVistaOrNewer) {
+      String[] system = getWindowsTime();
+      Date now = new Date();
+      assertEquals(system[0], DateFormatUtil.formatDate(now));
+      assertEquals(system[1], DateFormatUtil.formatTimeWithSeconds(now));
     }
     else {
       assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
@@ -126,6 +132,24 @@ public class DateFormatUtilTest {
     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
     try {
       return reader.readLine();
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  private static String[] getWindowsTime() throws IOException {
+    Process process = new ProcessBuilder("cmd", "/c", "echo %DATE%@%TIME%").start();
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    try {
+      String datetime = reader.readLine();
+      if (datetime.matches(".+[.,]\\d\\d")) {
+        datetime = datetime.substring(0, datetime.length() - 3);
+      }
+      String[] parts = datetime.split("@");
+      assertEquals(2, parts.length);
+      return parts;
     }
     finally {
       reader.close();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -156,7 +158,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return true;
     }
   }

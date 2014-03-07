@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -617,7 +617,7 @@ public class GrClassImplUtil {
 
   private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {
     final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "interfaces");
-    return result != null ? result.booleanValue() : true;
+    return result == null || result.booleanValue();
   }
 
   public static void addExpandingReflectedMethods(List<PsiMethod> result, PsiMethod method) {
@@ -631,12 +631,12 @@ public class GrClassImplUtil {
     result.add(method);
   }
 
-  public static void collectMethodsFromBody(@NotNull GrTypeDefinitionBody body, List<PsiMethod> result) {
-    for (GrMethod method : body.getMethods()) {
+  public static void collectMethodsFromBody(@NotNull GrTypeDefinition definition, List<PsiMethod> result) {
+    for (GrMethod method : definition.getCodeMethods()) {
       addExpandingReflectedMethods(result, method);
     }
 
-    for (GrField field : body.getFields()) {
+    for (GrField field : definition.getFields()) {
       if (!field.isProperty()) continue;
       ContainerUtil.addAll(result, field.getGetters());
       ContainerUtil.addIfNotNull(result, field.getSetter());

@@ -32,15 +32,14 @@ import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.JavacServer;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -177,7 +176,7 @@ public class ClasspathBootstrap {
     }
   }
 
-  public static List<File> getJavacServerClasspath(String sdkHome, boolean useEclipseCompiler) {
+  public static List<File> getJavacServerClasspath(String sdkHome, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourceFile(JavacServer.class)); // self
     // util
@@ -236,16 +235,7 @@ public class ClasspathBootstrap {
       }
     }
 
-    if (useEclipseCompiler) {
-      // eclipse compiler
-      for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
-        final File compilerResource = getResourceFile(javaCompiler.getClass());
-        final String name = compilerResource.getName();
-        if (name.startsWith("ecj-") && name.endsWith(".jar")) {
-          cp.add(compilerResource);
-        }
-      }
-    }
+    cp.addAll(compilingTool.getAdditionalClasspath());
 
     final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
     final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());

@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -387,11 +386,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         for (int j = 0; j < numParams; j++) {
           PsiParameter param = params[j];
 
-          int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+          int startOffset = buffer.length();
 
           appendParameterText(param, substitutor, buffer);
 
-          int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+          int endOffset = buffer.length();
 
           if (j < numParams - 1) {
             buffer.append(", ");
@@ -420,7 +419,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         for (int i = 0; i < parameters.length; i++) {
           if (i > 0) buffer.append(", ");
 
-          int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+          int startOffset = buffer.length();
           final PsiType psiType = parameters[i].getType();
           if (psiType == null) {
             buffer.append("def");
@@ -430,7 +429,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           buffer.append(' ').append(parameters[i].getName() != null ? parameters[i].getName() : "<unknown>");
 
-          int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+          int endOffset = buffer.length();
 
           if (context.isUIComponentEnabled() &&
               (i == currentParameter || (i == parameters.length - 1 && ((GrClosureSignature)element).isVarargs() && currentParameter >= parameters.length))) {

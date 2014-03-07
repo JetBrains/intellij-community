@@ -16,11 +16,13 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
+import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
@@ -45,8 +47,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source",
-    /*eclipse options*/"-noExit"
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -57,52 +58,29 @@ public class JavacMain {
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
-                                CanceledStatus canceledStatus, boolean useEclipseCompiler) {
-    JavaCompiler compiler = null;
-    if (useEclipseCompiler) {
-      for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) {
-        compiler = javaCompiler;
-        break;
-      }
-      if (compiler == null) {
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
-        return false;
-      }
+                                CanceledStatus canceledStatus, @NotNull JavaCompilingTool compilingTool) {
+    JavaCompiler compiler;
+    try {
+      compiler = compilingTool.createCompiler();
     }
-
-    final boolean nowUsingJavac;
-    if (compiler == null) {
-      compiler = ToolProvider.getSystemJavaCompiler();
-      if (compiler == null) {
-        String message = "System Java Compiler was not found in classpath";
-        // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
-        try {
-          Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
-        }
-        catch (Throwable ex) {
-          message = message + ":\n" + ExceptionUtil.getThrowableText(ex);
-        }
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-        return false;
-      }
-      nowUsingJavac = true;
-    }
-    else {
-      nowUsingJavac = false;
+    catch (CannotCreateJavaCompilerException e) {
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+      return false;
     }
 
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
-    
+
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
 
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
+    final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, usingJavac), transformers);
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
-    final Collection<String> _options = prepareOptions(options, nowUsingJavac);
+    final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
       fileManager.setOutputDirectories(outputDirToRoots);
@@ -115,7 +93,7 @@ public class JavacMain {
     if (!classpath.isEmpty()) {
       try {
         fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-        if (!nowUsingJavac && !isOptionSet(options, "-processorpath")) {
+        if (!usingJavac && !isOptionSet(options, "-processorpath")) {
           // for non-javac file manager ensure annotation processor path defaults to classpath
           fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
         }
@@ -148,7 +126,7 @@ public class JavacMain {
     //noinspection IOResourceOpenedButNotSafelyClosed
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {
-        if (nowUsingJavac) {
+        if (usingJavac) {
           diagnosticConsumer.outputLineAvailable(line);
         }
         else {
@@ -169,6 +147,7 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
+      compilingTool.prepareCompilationTask(task, _options);
 
       //if (!IS_VM_6_VERSION) { //todo!
       //  // Do not add the processor for JDK 1.6 because of the bugs in javac
@@ -186,7 +165,7 @@ public class JavacMain {
     }
     finally {
       fileManager.close();
-      if (nowUsingJavac) {
+      if (usingJavac) {
         cleanupJavacNameTable();
       }
     }
@@ -221,14 +200,9 @@ public class JavacMain {
     return false;
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
+  private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
     final List<String> result = new ArrayList<String>();
-    if (usingJavac) {
-      result.add("-implicit:class"); // the option supported by javac only
-    }
-    else { // is Eclipse
-      result.add("-noExit");
-    }
+    result.addAll(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {
@@ -236,7 +210,7 @@ public class JavacMain {
         continue;
       }
       if (!skip) {
-        if (!FILTERED_SINGLE_OPTIONS.contains(option)) {
+        if (!FILTERED_SINGLE_OPTIONS.contains(option) && !compilingTool.getDefaultCompilerOptions().contains(option)) {
           result.add(option);
         }
       }

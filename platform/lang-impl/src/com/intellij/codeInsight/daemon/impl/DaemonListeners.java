@@ -176,7 +176,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    eventMulticaster.addCaretListener(new CaretListener() {
+    eventMulticaster.addCaretListener(new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
@@ -184,17 +184,17 @@ public class DaemonListeners implements Disposable {
             !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
-                myProject.isDisposed()) {
-              return;
+        if (!application.isUnitTestMode()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
+                return;
+              }
+              myDaemonCodeAnalyzer.hideLastIntentionHint();
             }
-            myDaemonCodeAnalyzer.hideLastIntentionHint();
-          }
-        }, ModalityState.current());
+          }, ModalityState.current());
+        }
       }
     }, this);
 

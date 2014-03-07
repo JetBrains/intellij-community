@@ -18,12 +18,14 @@ package com.intellij.util;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LocalTimeCounter {
+  /**
+   * VirtualFile.modificationStamp is kept modulo this mask, and is compared with other stamps. Let's avoid accidental stamp inequalities 
+   * by normalizing all of them. 
+   */
+  public static final int TIME_MASK = 0x00ffffff;
   private static final AtomicLong ourCurrentTime = new AtomicLong();
 
-  private LocalTimeCounter() {
-  }
-
   public static long currentTime() {
-    return ourCurrentTime.incrementAndGet();
+    return TIME_MASK & (int)ourCurrentTime.incrementAndGet();
   }
 }

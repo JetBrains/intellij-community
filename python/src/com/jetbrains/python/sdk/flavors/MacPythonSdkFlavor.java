@@ -15,14 +15,14 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -36,14 +36,14 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+    Set<String> candidates = new HashSet<String>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
     UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);
     return candidates;
   }
 
-  private static void collectPythonInstallations(String pythonPath, List<String> candidates) {
+  private static void collectPythonInstallations(String pythonPath, Set<String> candidates) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
     if (rootVDir != null) {
       if (rootVDir instanceof NewVirtualFile) {
@@ -51,15 +51,20 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        final String dir_name = dir.getName().toLowerCase();
+        final String dirName = dir.getName().toLowerCase();
         if (dir.isDirectory()) {
-          if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3")) {
+          if ("Current".equals(dirName) || dirName.startsWith("2") || dirName.startsWith("3")) {
             final VirtualFile binDir = dir.findChild("bin");
             if (binDir != null && binDir.isDirectory()) {
               for (String name : POSSIBLE_BINARY_NAMES) {
                 final VirtualFile child = binDir.findChild(name);
-                if (child != null && !child.is(VFileProperty.SYMLINK)) {
-                  candidates.add(child.getPath());
+                if (child == null) continue;
+                String path = child.getPath();
+                if (FileSystemUtil.isSymLink(path)) {
+                  path = FileSystemUtil.resolveSymLink(path);
+                }
+                if (path != null && !candidates.contains(path)) {
+                  candidates.add(path);
                   break;
                 }
               }

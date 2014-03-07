@@ -89,13 +89,13 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;
   }
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
     if (myDefinitionLevel > 0) {
       return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel-1);
     }

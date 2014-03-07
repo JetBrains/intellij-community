@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,9 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     final PsiClassType superClassFromDSL = GroovyDslFileIndex.pocessScriptSuperClasses(myFile);
-    return new PsiClassType[]{ superClassFromDSL != null ? superClassFromDSL : TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
+    PsiClassType superClass = superClassFromDSL != null ? superClassFromDSL
+                                                        : TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this);
+    return new PsiClassType[]{superClass};
   }
 
   @NotNull

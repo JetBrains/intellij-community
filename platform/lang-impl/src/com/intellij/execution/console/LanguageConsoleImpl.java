@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        if (myForceScrollToEnd.getAndSet(false)) {
+        if (myForceScrollToEnd.compareAndSet(true, false)) {
           scrollHistoryToEnd();
         }
       }
@@ -338,6 +338,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   private void setPromptInner(@Nullable final String prompt) {
+    myUpdateQueue.checkDisposed();
+
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -477,20 +479,17 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public boolean shouldScrollHistoryToEnd() {
     final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
     final Dimension contentSize = myHistoryViewer.getContentSize();
-    return contentSize.getHeight() - visibleArea.getMaxY() < 2 * myHistoryViewer.getLineHeight();
+    return contentSize.getHeight() - visibleArea.getMaxY() < (getMinHistoryLineCount() * myHistoryViewer.getLineHeight());
   }
 
   private void scrollHistoryToEnd() {
-    final int lineCount = myHistoryViewer.getDocument().getLineCount();
-    if (lineCount == 0) {
-      return;
+    if (myHistoryViewer.getDocument().getTextLength() != 0) {
+      EditorUtil.scrollToTheEnd(myHistoryViewer);
     }
-    myHistoryViewer.getCaretModel().moveToOffset(myHistoryViewer.getDocument().getLineStartOffset(lineCount - 1), false);
-    myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
   @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx consoleEditor, boolean preserveMarkup) {
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     doAddPromptToHistory();
 
     final Document history = myHistoryViewer.getDocument();
@@ -498,16 +497,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final int localStartOffset = textRange.getStartOffset();
     String text;
     EditorHighlighter highlighter;
-    if (consoleEditor instanceof EditorWindow) {
-      PsiFile file = ((EditorWindow)consoleEditor).getInjectedFile();
+    if (inputEditor instanceof EditorWindow) {
+      PsiFile file = ((EditorWindow)inputEditor).getInjectedFile();
       highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
       String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
       highlighter.setText(fullText);
       text = textRange.substring(fullText);
     }
     else {
-      text = consoleEditor.getDocument().getText(textRange);
-      highlighter = consoleEditor.getHighlighter();
+      text = inputEditor.getDocument().getText(textRange);
+      highlighter = inputEditor.getHighlighter();
     }
     //offset can be changed after text trimming after insert due to buffer constraints
     int offset = appendToHistoryDocument(history, text);
@@ -529,9 +528,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       iterator.advance();
     }
     if (preserveMarkup) {
-      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(consoleEditor.getDocument(), myProject, true), offset, textRange);
+      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(inputEditor.getDocument(), myProject, true), offset, textRange);
       // don't copy editor markup model, i.e. brace matcher, spell checker, etc.
-      // duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+      // duplicateHighlighters(markupModel, inputEditor.getMarkupModel(), offset, textRange);
     }
     if (!text.endsWith("\n")) {
       appendToHistoryDocument(history, "\n");
@@ -628,7 +627,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
             myCurrentEditor = editor;
           }
           EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
-          editor.getCaretModel().addCaretListener(new CaretListener() {
+          editor.getCaretModel().addCaretListener(new CaretAdapter() {
             @Override
             public void caretPositionChanged(CaretEvent e) {
               queueUiUpdate(false);
@@ -691,6 +690,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return true;
   }
 
+  int getMinHistoryLineCount() {
+    return 2;
+  }
+
   private class MyLayout extends AbstractLayoutManager {
     @Override
     public Dimension preferredLayoutSize(final Container parent) {
@@ -705,8 +708,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
 
       final EditorEx history = myHistoryViewer;
-      final EditorEx editor = componentCount == 2 ? myConsoleEditor : null;
-      if (editor == null) {
+      final EditorEx input = componentCount == 2 ? myConsoleEditor : null;
+      if (input == null) {
         parent.getComponent(0).setBounds(parent.getBounds());
         return;
       }
@@ -716,44 +719,44 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         return;
       }
       final Dimension historySize = history.getContentSize();
-      final Dimension editorSize = editor.getContentSize();
-      final Dimension newEditorSize = new Dimension();
+      final Dimension inputSize = input.getContentSize();
 
+      int newInputHeight;
       // deal with width
-      final int width = Math.max(editorSize.width, historySize.width);
-      newEditorSize.width = width + editor.getScrollPane().getHorizontalScrollBar().getHeight();
+      final int width = Math.max(inputSize.width, historySize.width);
       if (isHistoryViewerForceAdditionalColumnsUsage()) {
         history.getSoftWrapModel().forceAdditionalColumnsUsage();
-        editor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, editor));
+        input.getSettings().setAdditionalColumnsCount(2 + (width - inputSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, input));
         history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
       }
 
-      // deal with height
-      if (historySize.width == 0) {
+      // deal with height, WEB-11122 we cannot trust editor width — it could be 0 in case of soft wrap even if editor has text
+      if (history.getDocument().getLineCount() == 0) {
         historySize.height = 0;
       }
-      final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0) : 0;
-      final int minEditorSize = editor.isViewer() ? 0 : editor.getLineHeight();
-      final int editorPreferred = editor.isViewer() ? 0 : Math.max(minEditorSize, editorSize.height);
-      final int historyPreferred = Math.max(minHistorySize, historySize.height);
-      if (panelSize.height < minEditorSize) {
-        newEditorSize.height = panelSize.height;
+
+      int minHistoryHeight = historySize.height > 0 ? (getMinHistoryLineCount() * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0)) : 0;
+      int minInputHeight = input.isViewer() ? 0 : input.getLineHeight();
+      final int inputPreferredHeight = input.isViewer() ? 0 : Math.max(minInputHeight, inputSize.height);
+      final int historyPreferredHeight = Math.max(minHistoryHeight, historySize.height);
+      if (panelSize.height < minInputHeight) {
+        newInputHeight = panelSize.height;
       }
-      else if (panelSize.height < editorPreferred) {
-        newEditorSize.height = panelSize.height - minHistorySize;
+      else if (panelSize.height < inputPreferredHeight) {
+        newInputHeight = panelSize.height - minHistoryHeight;
       }
-      else if (panelSize.height < editorPreferred + historyPreferred) {
-        newEditorSize.height = editorPreferred;
+      else if (panelSize.height < (inputPreferredHeight + historyPreferredHeight) || inputPreferredHeight == 0) {
+        newInputHeight = inputPreferredHeight;
       }
       else {
-        newEditorSize.height = editorPreferred == 0 ? 0 : panelSize.height - historyPreferred;
+        newInputHeight = panelSize.height - historyPreferredHeight;
       }
-      final Dimension newHistorySize = new Dimension(width, panelSize.height - newEditorSize.height);
 
+      int newHistoryHeight = panelSize.height - newInputHeight;
       // apply
-      editor.getComponent().setBounds(0, newHistorySize.height, panelSize.width, newEditorSize.height);
+      input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
       myForceScrollToEnd.compareAndSet(false, shouldScrollHistoryToEnd());
-      history.getComponent().setBounds(0, 0, panelSize.width, newHistorySize.height);
+      history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
     }
   }
 }

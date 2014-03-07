@@ -860,11 +860,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
         add(fadeIn, FadeInFadeOut.LAYER);
         fadeIn.setBounds(0, 0, getWidth(), getHeight());
         myLayeredPane.remove(myComponent);
-        fadeIn.doAnimation();
-        remove(fadeIn);
-        myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-        repaint();
-        finish();
+        fadeIn.doAnimation(new Runnable() {
+          @Override
+          public void run() {
+            remove(fadeIn);
+            myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
+            //myComponent.requestFocus();
+            repaint();
+            finish();
+          }
+        });
       }
       else { // not animated
         myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
@@ -1037,10 +1042,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
         add(fadeOut, FadeInFadeOut.LAYER);
         fadeOut.setBounds(0, 0, getWidth(), getHeight());
         myLayeredPane.remove(myComponent);
-        fadeOut.doAnimation();
-        remove(fadeOut);
-        repaint();
-        finish();
+        fadeOut.doAnimation(new Runnable() {
+          @Override
+          public void run() {
+            remove(fadeOut);
+            repaint();
+            finish();
+          }
+        });
       }
       else { // not animated
         myLayeredPane.remove(myComponent);

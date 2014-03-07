@@ -596,9 +596,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
-  protected void setLogMessage(TextWithImports logMessage) {
-    if (!logMessage.getText().isEmpty()) {
-      myXBreakpoint.setLogExpression(logMessage.getText());
+  protected void setLogMessage(@Nullable TextWithImports logMessage) {
+    if (logMessage != null && !logMessage.getText().isEmpty()) {
+      myXBreakpoint.setLogExpression(logMessage.toExternalForm());
     }
     else {
       myXBreakpoint.setLogExpression(null);
@@ -613,8 +613,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return !getCondition().isEmpty();
   }
 
-  public void setCondition(String condition) {
-    myXBreakpoint.setCondition(condition);
+  public void setCondition(@Nullable TextWithImports condition) {
+    if (condition != null && !condition.getText().isEmpty()) {
+      myXBreakpoint.setCondition(condition.toExternalForm());
+    }
+    else {
+      myXBreakpoint.setCondition(null);
+    }
   }
 
   protected void addInstanceFilter(long l) {

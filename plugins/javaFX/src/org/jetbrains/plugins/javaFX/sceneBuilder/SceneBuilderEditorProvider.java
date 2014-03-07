@@ -27,7 +27,7 @@ public class SceneBuilderEditorProvider implements FileEditorProvider, DumbAware
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) &&
            SystemInfo.isJavaVersionAtLeast("1.8") &&
-           Registry.is("embed.scene.builder", false);
+           Registry.is("embed.scene.builder", true);
   }
 
   @NotNull

@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.*;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.GROOVY_DOC_COMMENT;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.kDEFAULT;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.kIN;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mCOMMA;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mELVIS;
@@ -684,7 +685,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
-    if (myType2 == DEFAULT_ANNOTATION_VALUE) {
+    if (myType2 == kDEFAULT) {
       createSpaceInCode(true);
     }
     else {

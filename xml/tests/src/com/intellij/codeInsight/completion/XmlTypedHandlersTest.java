@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -24,16 +25,75 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  *         Date: 30.08.13
  */
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    EditorTestUtil.enableMultipleCarets();
+  }
 
-  public void testClosingTag() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
+    EditorTestUtil.disableMultipleCarets();
+    super.tearDown();
+  }
+
+  public void testClosingTag() {
     doTest("<foo><<caret>", '/', "<foo></foo>");
+  }
+
+  public void testValueQuotesWithMultiCarets() {
+    doTest("<foo bar<caret>><foo bar<caret>>", '=', "<foo bar=\"<caret>\"><foo bar=\"<caret>\">");
+  }
+
+  public void testValueQuotesWithMultiCaretsWithDifferentContexts() {
+    doTest("<foo bar <caret>><foo bar<caret>>", '=', "<foo bar =<caret>><foo bar=\"<caret>\">");
+  }
+
+  public void testCloseTagOnSlashWithMultiCarets() {
+    doTest("<bar>\n" +
+           "<foo><<caret>\n" +
+           "<foo><<caret>\n" +
+           "</bar>", '/', "<bar>\n" +
+                          "<foo></foo><caret>\n" +
+                          "<foo></foo><caret>\n" +
+                          "</bar>");
+  }
+
+  public void testCloseTagOnGtWithMultiCarets() {
+    doTest("<bar>\n" +
+           "<foo<caret>\n" +
+           "<foo<caret>\n" +
+           "</bar>", '>', "<bar>\n" +
+                          "<foo><caret></foo>\n" +
+                          "<foo><caret></foo>\n" +
+                          "</bar>");
+  }
+
+  public void _testCloseTagOnSlashWithMultiCaretsInDifferentContexts() {
+    doTest("<bar>\n" +
+           "<foo><<caret>\n" +
+           "<fiz><<caret>\n" +
+           "</bar>", '/', "<bar>\n" +
+                          "<foo></foo><caret>\n" +
+                          "<fiz></fiz><caret>\n" +
+                          "</bar>");
+  }
+
+  public void _testCloseTagOnGtWithMultiCaretsInDifferentContexts() {
+    doTest("<bar>\n" +
+           "<foo<caret>\n" +
+           "<fiz<caret>\n" +
+           "</bar>", '>', "<bar>\n" +
+                          "<foo><caret></foo>\n" +
+                          "<fiz><caret></fiz>\n" +
+                          "</bar>");
   }
 
   public void testGreedyClosing() {
     doTest("<foo><<caret>foo>", '/', "<foo></foo>");
   }
 
-  public void testValueQuotas() throws Exception {
+  public void testValueQuotas() {
     doTest("<foo bar<caret>", '=', "<foo bar=\"<caret>\"");
     WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(false);
     try {

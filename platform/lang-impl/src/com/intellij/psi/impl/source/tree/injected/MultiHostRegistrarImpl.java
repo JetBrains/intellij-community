@@ -55,6 +55,7 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -214,16 +215,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
       myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
 
-      DocumentImpl decodedDocument;
-      if (StringUtil.indexOf(outChars, '\r') == -1) {
-        decodedDocument = new DocumentImpl(outChars);
-      }
-      else {
-        decodedDocument = new DocumentImpl("", true);
-        decodedDocument.setAcceptSlashR(true);
-        decodedDocument.replaceString(0,0,outChars);
-      }
-      FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
+      createDocument(virtualFile);
 
       InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, documentWindow, myLanguage);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
@@ -305,6 +297,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     finally {
       clear();
     }
+  }
+
+  @NotNull
+  private static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
+    CharSequence content = virtualFile.getContent();
+    DocumentImpl document = new DocumentImpl(content, StringUtil.indexOf(content, '\r') >= 0, false);
+    FileDocumentManagerImpl.registerDocument(document, virtualFile);
+    return document;
   }
 
   // returns true if shreds were set, false if old ones were reused

@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class VcsHistoryUtil {
       diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType, filePath.getPath()),
                            createContent(project, content2, revision2, doc, charset, fileType, filePath.getPath()));
     } else {
-      diffData.setContents(new FileContent(project, f1.get()), new FileContent(project, f2.get()));
+      diffData.setContents(createFileContent(project, f1.get(), revision1), createFileContent(project, f2.get(), revision2));
     }
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
@@ -188,13 +189,22 @@ public class VcsHistoryUtil {
 
   private static DiffContent createContent(@NotNull Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
     if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
+    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
     return new BinaryContent(project, content1, charset, fileType, filePath);
+  }
+
+  private static DiffContent createFileContent(@NotNull Project project, VirtualFile file, VcsFileRevision revision) {
+    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
+    return new FileContent(project, file);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {
     return revision instanceof CurrentRevision;
   }
 
+  private static boolean isEmpty(VcsFileRevision revision) {
+    return revision == null || VcsFileRevision.NULL.equals(revision);
+  }
 
   /**
    * Shows difference between two revisions of a file in a diff tool.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
@@ -25,51 +26,61 @@ public class CoreModuleScopeProvider implements ModuleScopeProvider {
   public CoreModuleScopeProvider() {
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     throw new UnsupportedOperationException();

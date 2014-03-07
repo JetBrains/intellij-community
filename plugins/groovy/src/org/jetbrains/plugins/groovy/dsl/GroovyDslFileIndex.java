@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -131,11 +132,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new MyInputFilter();
@@ -438,7 +441,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       @Override
       public Result<List<GroovyDslScript>> compute() {
         if (ourGdslStopped) {
-          return Result.create(Collections.<GroovyDslScript>emptyList(), Collections.emptyList());
+          return Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
         }
 
         int count = 0;
@@ -513,7 +516,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return "gdsl".equals(file.getExtension());
     }
   }

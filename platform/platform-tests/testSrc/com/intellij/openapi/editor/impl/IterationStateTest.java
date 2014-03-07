@@ -15,21 +15,42 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase {
 
+  private Color DEFAULT_BACKGROUND;
+  private Color CARET_ROW_BACKGROUND;
+  private Color SELECTION_BACKGROUND;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    DEFAULT_BACKGROUND = colorsScheme.getDefaultBackground();
+    CARET_ROW_BACKGROUND = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    SELECTION_BACKGROUND = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+    assertEquals(3, new HashSet<Color>(Arrays.asList(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND)).size());
+  }
+
   public void testBlockSelection() {
-    verifySplitting("aa,<block>bb\ncc,d</block>d",
+    init("aa,<block>bb\n" +
+         "cc,d</block>d");
+    verifySplitting(true,
                     new Segment(0, 3, Color.BLACK),
                     new Segment(3, 4, Color.WHITE),
                     new Segment(4, 5, Color.BLACK),
@@ -49,19 +70,105 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     }
   }
 
-  private void verifySplitting(String text, Segment... expectedSegments) {
-    myFixture.configureByText(PlainTextFileType.INSTANCE, text);
+  public void testColumnModeBlockSelection() {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      init("a\n" +
+           "bbb\n" +
+           "ccccc");
+      setColumnModeOn();
+      mouse().clickAt(0, 2).dragTo(2, 4).release();
+      verifySplitting(false,
+                      new Segment(0, 1, DEFAULT_BACKGROUND),
+                      new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(2, SELECTION_BACKGROUND),
+                      new Segment(2, 4, DEFAULT_BACKGROUND),
+                      new Segment(4, 5, SELECTION_BACKGROUND),
+                      new Segment(5, 6, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
+                      new Segment(6, 8, CARET_ROW_BACKGROUND),
+                      new Segment(8, 10, SELECTION_BACKGROUND),
+                      new Segment(10, 11, CARET_ROW_BACKGROUND));
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
+  }
+
+  public void testColumnModeBlockSelectionAtLastNonEmptyLine() {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      init("a\n" +
+           "bbb\n" +
+           "ccccc");
+      setColumnModeOn();
+      mouse().clickAt(0, 2).dragTo(2, 6).release();
+      verifySplitting(false,
+                      new Segment(0, 1, DEFAULT_BACKGROUND),
+                      new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(4, SELECTION_BACKGROUND),
+                      new Segment(2, 4, DEFAULT_BACKGROUND),
+                      new Segment(4, 5, SELECTION_BACKGROUND),
+                      new Segment(5, 6, DEFAULT_BACKGROUND).plus(3, SELECTION_BACKGROUND),
+                      new Segment(6, 8, CARET_ROW_BACKGROUND),
+                      new Segment(8, 11, SELECTION_BACKGROUND),
+                      new Segment(11, 11, null).plus(1, SELECTION_BACKGROUND));
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
+  }
+
+  public void testColumnModeBlockSelectionAtLastEmptyLine() {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      init("a\n" +
+           "");
+      setColumnModeOn();
+      mouse().clickAt(1, 1).dragTo(1, 2).release();
+      verifySplitting(false,
+                      new Segment(0, 1, DEFAULT_BACKGROUND),
+                      new Segment(1, 2, DEFAULT_BACKGROUND),
+                      new Segment(2, 2, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
+  }
+
+  public void testColumnModeBlockSelectionAtEmptyLines() {
+    EditorTestUtil.enableMultipleCarets();
+    try {
+      init("\n");
+      setColumnModeOn();
+      mouse().clickAt(0, 1).dragTo(1, 2).release();
+      verifySplitting(false,
+                      new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
+                      new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets();
+    }
+  }
+
+  private void verifySplitting(boolean checkForegroundColor, Segment... expectedSegments) {
     EditorEx editor = (EditorEx)myFixture.getEditor();
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(), true);
     try {
       List<Segment> actualSegments = new ArrayList<Segment>();
       do {
-        actualSegments.add(new Segment(iterationState.getStartOffset(),
-                                       iterationState.getEndOffset(),
-                                       iterationState.getMergedAttributes().getForegroundColor()));
+        Segment segment = new Segment(iterationState.getStartOffset(),
+                                      iterationState.getEndOffset(),
+                                      checkForegroundColor ? iterationState.getMergedAttributes().getForegroundColor()
+                                                           : iterationState.getMergedAttributes().getBackgroundColor());
+        readPastLineState(iterationState, segment);
+        actualSegments.add(segment);
         iterationState.advance();
       }
       while (!iterationState.atEnd());
+
+      if (iterationState.hasPastFileEndBackgroundSegments()) {
+        Segment segment = new Segment(iterationState.getEndOffset(), iterationState.getEndOffset(), null);
+        readPastLineState(iterationState, segment);
+        actualSegments.add(segment);
+      }
 
       Assert.assertArrayEquals(expectedSegments, actualSegments.toArray());
     }
@@ -70,15 +177,46 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     }
   }
 
+  private static void readPastLineState(IterationState iterationState, Segment segment) {
+    while(iterationState.hasPastLineEndBackgroundSegment()) {
+      segment.plus(iterationState.getPastLineEndBackgroundSegmentWidth(), iterationState.getPastLineEndBackgroundAttributes().getBackgroundColor());
+      iterationState.advanceToNextPastLineEndBackgroundSegment();
+    }
+  }
+
+  private void init(String text) {
+    myFixture.configureByText(PlainTextFileType.INSTANCE, text);
+    EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000);
+  }
+
+  private void setColumnModeOn() {
+    ((EditorEx)myFixture.getEditor()).setColumnMode(true);
+  }
+
+  private EditorMouseFixture mouse() {
+    return new EditorMouseFixture((EditorImpl)myFixture.getEditor());
+  }
+
   private static class Segment {
     private final int start;
     private final int end;
-    private final Color fgColor;
+    private final Color color;
+    private final List<Integer> pastLineEndSegmentWidths = new ArrayList<Integer>();
+    private final List<Color> pastLineEndSegmentColors = new ArrayList<Color>();
 
-    private Segment(int start, int end, @NotNull Color fgColor) {
+    private Segment(int start, int end, Color color) {
       this.start = start;
       this.end = end;
-      this.fgColor = fgColor;
+      this.color = color;
+    }
+
+    /**
+     * Adds a past-line-end background segment
+     */
+    private Segment plus(int width, Color color) {
+      pastLineEndSegmentWidths.add(width);
+      pastLineEndSegmentColors.add(color);
+      return this;
     }
 
     @Override
@@ -90,7 +228,9 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
 
       if (end != segment.end) return false;
       if (start != segment.start) return false;
-      if (!fgColor.equals(segment.fgColor)) return false;
+      if (color != null ? !color.equals(segment.color) : segment.color != null) return false;
+      if (!pastLineEndSegmentColors.equals(segment.pastLineEndSegmentColors)) return false;
+      if (!pastLineEndSegmentWidths.equals(segment.pastLineEndSegmentWidths)) return false;
 
       return true;
     }
@@ -99,7 +239,9 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     public int hashCode() {
       int result = start;
       result = 31 * result + end;
-      result = 31 * result + fgColor.hashCode();
+      result = 31 * result + (color != null ? color.hashCode() : 0);
+      result = 31 * result + pastLineEndSegmentWidths.hashCode();
+      result = 31 * result + pastLineEndSegmentColors.hashCode();
       return result;
     }
 
@@ -108,7 +250,9 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
       return "Segment{" +
              "start=" + start +
              ", end=" + end +
-             ", color=" + fgColor +
+             ", color=" + color +
+             (pastLineEndSegmentWidths.isEmpty() ? "" : ", pastLineEndSegmentWidths=" + pastLineEndSegmentWidths) +
+             (pastLineEndSegmentColors.isEmpty() ? "" : ", pastLineEndSegmentColors=" + pastLineEndSegmentColors) +
              '}';
     }
   }

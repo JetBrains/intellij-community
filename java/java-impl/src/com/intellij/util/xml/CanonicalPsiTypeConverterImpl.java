@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,8 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     final boolean isPrimitiveType = type instanceof PsiPrimitiveType;
 
     return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
-      protected JavaClassReference createReference(int refIndex, String subRefText, TextRange textRange, boolean staticImport) {
+      @NotNull
+      protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
         return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
           public boolean isSoft() {
             return true;

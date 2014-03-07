@@ -144,6 +144,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         if (XWatchesView.DATA_KEY.is(dataId)) {
           return myWatchesView;
         }
+        if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+          return session.getConsoleView();
+        }
         return null;
       }
     });

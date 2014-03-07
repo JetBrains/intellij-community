@@ -806,6 +806,15 @@ public final class EditorUtil {
     int line = y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
+
+  public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
+    Document document = editor.getDocument();
+    if (offset < 0 || offset > document.getTextLength()) {
+      return false;
+    }
+    int line = document.getLineNumber(offset);
+    return offset == document.getLineEndOffset(line);
+  }
 }
 
 

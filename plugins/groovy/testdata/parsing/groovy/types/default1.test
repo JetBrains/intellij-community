@@ -34,15 +34,14 @@ Groovy script
           <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Default annotation value
-          PsiElement(default)('default')
-          PsiWhiteSpace(' ')
-          Annotation
-            PsiElement(@)('@')
-            Reference element
-              PsiElement(identifier)('Bar')
-            Annotation arguments
-              <empty list>
+        PsiElement(default)('default')
+        PsiWhiteSpace(' ')
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Bar')
+          Annotation arguments
+            <empty list>
         Throw clause
           <empty list>
       PsiWhiteSpace(' ')

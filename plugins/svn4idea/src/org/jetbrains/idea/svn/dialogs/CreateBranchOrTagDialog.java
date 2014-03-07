@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -81,6 +82,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private JButton myProjectButton;
   private JLabel myErrorLabel;
   private JLabel myUseThisVariantToLabel;
+  private JBCheckBox mySwitchOnCreate;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
@@ -236,6 +238,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
+    mySwitchOnCreate.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
     myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
     myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
@@ -368,5 +371,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   public String getCopyFromUrl() {
     return myRepositoryField.getText();
+  }
+
+  public boolean isSwitchOnCreate() {
+    return mySwitchOnCreate.isSelected();
   }
 }

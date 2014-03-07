@@ -48,6 +48,23 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     pyVisitor.visitPyArgumentList(this);
   }
 
+  @Override
+  @NotNull
+  public Collection<PyExpression> getArgumentExpressions() {
+    final PyExpression[] arguments = getArguments();
+    final Collection<PyExpression> result = new ArrayList<PyExpression>(arguments.length);
+    for (final PyExpression expression : arguments) {
+      if (expression instanceof PyKeywordArgument) {
+        final PyExpression valueExpression = ((PyKeywordArgument)expression).getValueExpression();
+        result.add(valueExpression);
+      }
+      if (expression instanceof PyReferenceExpression) {
+        result.add(expression);
+      }
+    }
+    return result;
+  }
+
   @NotNull
   public PyExpression[] getArguments() {
     return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);

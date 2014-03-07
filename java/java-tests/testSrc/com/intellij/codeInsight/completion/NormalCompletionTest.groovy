@@ -1403,6 +1403,18 @@ class Foo {{
     }
   }
 
+  public void testPrimitiveSquareBracketWhenMultipleCaretsAreEnabled() {
+    EditorTestUtil.enableMultipleCarets()
+    try {
+      configureByFile("PrimitiveSquareBracket.java");
+      type('[');
+      checkResultByFile("PrimitiveSquareBracket_after.java");
+    }
+    finally {
+      EditorTestUtil.disableMultipleCarets()
+    }
+  }
+
   public void testMulticaretTyping() {
     EditorTestUtil.enableMultipleCarets()
     try {

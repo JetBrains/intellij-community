@@ -85,6 +85,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" filepath="$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" filepath="$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-runtime/java-runtime.iml" filepath="$PROJECT_DIR$/java/java-runtime/java-runtime.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" filepath="$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/java-tests.iml" filepath="$PROJECT_DIR$/java/java-tests/java-tests.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" group="plugins/JavaFX" />
@@ -98,8 +99,8 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/jps-model-api.iml" filepath="$PROJECT_DIR$/jps/model-api/jps-model-api.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml"/>
-      <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps"/>
+      <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />
@@ -157,6 +158,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />
@@ -189,17 +192,14 @@
       <module fileurl="file://$PROJECT_DIR$/xml/openapi/xml-openapi.iml" filepath="$PROJECT_DIR$/xml/openapi/xml-openapi.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/xml-psi-api/xml-psi-api.iml" filepath="$PROJECT_DIR$/xml/xml-psi-api/xml-psi-api.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/xml-psi-impl/xml-psi-impl.iml" filepath="$PROJECT_DIR$/xml/xml-psi-impl/xml-psi-impl.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/tests/xml-tests.iml" filepath="$PROJECT_DIR$/xml/tests/xml-tests.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xpath.iml" filepath="$PROJECT_DIR$/plugins/xpath/xpath.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/xslt-debugger.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/xslt-debugger.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/xslt-debugger-engine.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/xslt-debugger-engine.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" filepath="$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" group="java"/>
-      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-api/xml-structure-view-api.iml" group="xml" />
-      <module fileurl="file://$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" filepath="$PROJECT_DIR$/xml/xml-structure-view-impl/xml-structure-view-impl.iml" group="xml" />
     </modules>
   </component>
 </project>

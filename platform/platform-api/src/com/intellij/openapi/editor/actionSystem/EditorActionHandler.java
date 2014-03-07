@@ -24,9 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for actions activated by keystrokes in the editor.
- * Implementations should override {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.actionSystem.DataContext)} or
+ * Implementations should override
  * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
- * (preferrably).
+ * .
  * <p>
  * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be
  * created using {@link com.intellij.openapi.editor.actionSystem.EditorActionHandler#EditorActionHandler(boolean)} constructor.
@@ -57,14 +57,10 @@ public abstract class EditorActionHandler {
   }
 
   /**
-   * Executes the action in the context of the current caret. This method exists for historical reasons, in most cases you should use
-   * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
-   * instead.
-   *
-   * @param editor      the editor in which the action is invoked.
-   * @param dataContext the data context for the action.
-   *
-   * @see {@link com.intellij.openapi.editor.CaretModel#getCurrentCaret()}
+   * @deprecated To implement action logic, override
+   * {@link #doExecute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)},
+   * to invoke the handler, call
+   * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}.
    */
   public void execute(Editor editor, DataContext dataContext) {
     if (inExecution) {
@@ -80,19 +76,20 @@ public abstract class EditorActionHandler {
   }
 
   /**
-   * Executes the action in the context of given caret
+   * Executes the action in the context of given caret. Subclasses should override this method.
    *
    * @param editor      the editor in which the action is invoked.
-   * @param caret       the caret for which the action is performed at the moment or <code>null</code> if it's a 'one-off' action executed
+   * @param caret       the caret for which the action is performed at the moment, or <code>null</code> if it's a 'one-off' action executed
    *                    without current context
    * @param dataContext the data context for the action.
    */
-  public void execute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (inExecution) {
       return;
     }
     try {
       inExecution = true;
+      //noinspection deprecation
       execute(editor, dataContext);
     }
     finally {
@@ -115,17 +112,17 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public void executeInCaretContext(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
-    if (caret == null && runForAllCarets()) {
+  public final void execute(@NotNull final Editor editor, @Nullable Caret contextCaret, final DataContext dataContext) {
+    if (contextCaret == null && runForAllCarets()) {
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          execute(editor, caret, dataContext);
+          doExecute(editor, caret, dataContext);
         }
       });
     }
     else {
-      execute(editor, caret, dataContext);
+      doExecute(editor, contextCaret, dataContext);
     }
   }
 

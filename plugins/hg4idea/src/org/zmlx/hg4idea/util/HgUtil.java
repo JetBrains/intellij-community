@@ -612,6 +612,11 @@ public abstract class HgUtil {
   }
 
   @Nullable
+  public static String getRepositoryDefaultPushPath(@NotNull HgRepository repository) {
+    return repository.getRepositoryConfig().getDefaultPushPath();
+  }
+
+  @Nullable
   public static String getConfig(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull String section,
@@ -662,6 +667,7 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    Collections.sort(names);
     return names;
   }
 

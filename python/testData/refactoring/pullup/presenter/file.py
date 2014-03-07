@@ -30,14 +30,38 @@ class BadMro(MainParent, object, SubParent1, SubParent2):
     pass
 
 class HugeChild(SubParent1, date): #SubParent1 is disabled
+    __metaclass__ = None # Anyway, this field should be ignored and processed separately as "metaclass", not "class field"
+
     def __init__(self):
         self.instance_field_1 = 42
         self.instance_field_2 = 100500
 
     CLASS_FIELD = 42
     (CLASS_FIELD_A,CLASS_FIELD_B) = (42,100500) #We do not support tuples in class assignments for now (see ClassFieldsManager)
-    def foo(self): #should be disabled
+
+    def _set(self, val): # Should not be treated as method (part of property)
         pass
+
+    def _get(self):  # Should not be treated as method (part of property)
+        return None
+
+    name = property(fget=_get, fset=_set)
+
+
+    @property
+    def some_property(self): # Should not be treated as method (part of property)
+        return None
+
+    @some_property.setter
+    def some_property(self, val): # Should not be treated as method (part of property)
+        pass
+
+
+
+
+
+    def foo(self): #should be disabled
+        self.some_property = 12
     def bar(self):
         pass
 

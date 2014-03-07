@@ -57,9 +57,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -72,6 +72,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -88,7 +89,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class DebugProcessImpl implements DebugProcess {
+public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
 
   @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
@@ -111,26 +112,29 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected static final int STATE_DETACHED  = 3;
   protected final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
-  private ExecutionResult  myExecutionResult;
+  private ExecutionResult myExecutionResult;
   private RemoteConnection myConnection;
 
   private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
-  private final Map<Type, NodeRenderer>  myNodeRederersMap = new com.intellij.util.containers.HashMap<Type, NodeRenderer>();
-  private final NodeRendererSettingsListener  mySettingsListener = new NodeRendererSettingsListener() {
-      public void renderersChanged() {
-        myNodeRederersMap.clear();
-        myRenderers.clear();
-        loadRenderers();
-      }
-    };
+
+  // we use null key here
+  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<Type, NodeRenderer>();
+
+  private final NodeRendererSettingsListener mySettingsListener = new NodeRendererSettingsListener() {
+    @Override
+    public void renderersChanged() {
+      myNodeRenderersMap.clear();
+      myRenderers.clear();
+      loadRenderers();
+    }
+  };
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
-  private final HashMap myUserData = new HashMap();
   private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
@@ -141,9 +145,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
 
-  /** @noinspection FieldCanBeLocal*/
-  private volatile boolean myDebugProcessStarted = false;
-
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myRequestManager = new RequestManagerImpl(this);
@@ -153,6 +154,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private void loadRenderers() {
     getManagerThread().invoke(new DebuggerCommandImpl() {
+      @Override
       protected void action() throws Exception {
         try {
           final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
@@ -164,6 +166,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
         finally {
           DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+            @Override
             public void run() {
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
@@ -215,7 +218,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       return getDefaultRenderer(type);
     }
 
-    NodeRenderer renderer = myNodeRederersMap.get(type);
+    NodeRenderer renderer = myNodeRenderersMap.get(type);
     if(renderer == null) {
       for (final NodeRenderer nodeRenderer : myRenderers) {
         if (nodeRenderer.isApplicable(type)) {
@@ -226,7 +229,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (renderer == null) {
         renderer = getDefaultRenderer(type);
       }
-      myNodeRederersMap.put(type, renderer);
+      myNodeRenderersMap.put(type, renderer);
     }
 
     return renderer;
@@ -308,7 +311,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private void stopConnecting() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    Map arguments = myArguments;
+    Map<String, Connector.Argument> arguments = myArguments;
     try {
       if (arguments == null) {
         return;
@@ -423,7 +426,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final List<StepRequest> toDelete = new ArrayList<StepRequest>(stepRequests.size());
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
-        // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occures
+        // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
         try {
           if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
             toDelete.add(request);
@@ -444,7 +447,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         StackFrameProxyImpl stackFrame = thread.frame(0);
         if (stackFrame != null) {
           Location location = stackFrame.location();
-          ReferenceType referenceType = location.declaringType();
+          ReferenceType referenceType = location == null ? null : location.declaringType();
           if (referenceType != null) {
             return referenceType.name();
           }
@@ -477,7 +480,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (address == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-        // negative port number means the caller leaves to debugger to decide at which hport to listen
+        // negative port number means the caller leaves to debugger to decide at which port to listen
         //noinspection HardCodedStringLiteral
         final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
         if (portArg != null) {
@@ -498,10 +501,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
             try {
               connector.stopListening(myArguments);
             }
-            catch (IllegalArgumentException e) {
+            catch (IllegalArgumentException ignored) {
               // ignored
             }
-            catch (IllegalConnectorArgumentsException e) {
+            catch (IllegalConnectorArgumentsException ignored) {
               // ignored
             }
           }
@@ -572,6 +575,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (!myStatusUpdateAlarm.isDisposed()) {
       myStatusUpdateAlarm.cancelAllRequests();
       myStatusUpdateAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           final WindowManager wm = WindowManager.getInstance();
           if (wm != null) {
@@ -614,6 +618,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final String version = vm.version();
     if ("1.4.0".equals(version)) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showMessageDialog(
             getProject(),
@@ -633,10 +638,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myEvaluationDispatcher.removeListener(evaluationListener);
   }
 
+  @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
     myDebugProcessDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeDebugProcessListener(DebugProcessListener listener) {
     myDebugProcessDispatcher.removeListener(listener);
   }
@@ -668,18 +675,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return myConnection;
   }
 
+  @Override
   public ExecutionResult getExecutionResult() {
     return myExecutionResult;
   }
 
-  public <T> T getUserData(Key<T> key) {
-    return (T)myUserData.get(key);
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    myUserData.put(key, value);
-  }
-
+  @Override
   public Project getProject() {
     return myProject;
   }
@@ -698,22 +699,27 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return myState.get() == STATE_INITIAL;
   }
 
+  @Override
   public boolean isAttached() {
     return myState.get() == STATE_ATTACHED;
   }
 
+  @Override
   public boolean isDetached() {
     return myState.get() == STATE_DETACHED;
   }
 
+  @Override
   public boolean isDetaching() {
     return myState.get() == STATE_DETACHING;
   }
 
+  @Override
   public RequestManagerImpl getRequestsManager() {
     return myRequestManager;
   }
 
+  @Override
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
@@ -723,6 +729,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return vm;
   }
 
+  @Override
   public void appendPositionManager(final PositionManager positionManager) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager.appendPositionManager(positionManager);
@@ -756,7 +763,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         myVirtualMachineProxy = null;
         myPositionManager = null;
         myReturnValueWatcher = null;
-        myNodeRederersMap.clear();
+        myNodeRenderersMap.clear();
         myRenderers.clear();
         DebuggerUtils.cleanupAfterProcessFinish(this);
         myState.set(STATE_DETACHED);
@@ -852,6 +859,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     Disposer.dispose(myDisposable);
   }
 
+  @Override
   public DebuggerManagerThreadImpl getManagerThread() {
     if (myDebuggerManagerThread == null) {
       synchronized (this) {
@@ -868,11 +876,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ObjectReference.INVOKE_SINGLE_THREADED : 0;
   }
 
+  @Override
   public void waitFor() {
     LOG.assertTrue(!DebuggerManagerThreadImpl.isManagerThread());
     myWaitFor.waitFor();
   }
 
+  @Override
   public void waitFor(long timeout) {
     LOG.assertTrue(!DebuggerManagerThreadImpl.isManagerThread());
     myWaitFor.waitFor(timeout);
@@ -1002,6 +1012,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final Exception[] exception = new Exception[1];
       final Value[] result = new Value[1];
       getManagerThread().startLongProcessAndFork(new Runnable() {
+        @Override
         public void run() {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
@@ -1075,14 +1086,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
+  @Override
   public Value invokeMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
     return invokeInstanceMethod(evaluationContext, objRef, method, args, 0);
   }
 
+  @Override
   public Value invokeInstanceMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method,
                                      final List args, final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(args) {
+      @Override
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
@@ -1100,12 +1114,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return evaluationThread.getThreadReference();
   }
 
+  @Override
   public Value invokeMethod(final EvaluationContext evaluationContext, final ClassType classType,
                             final Method method,
                             final List args) throws EvaluateException {
 
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
+      @Override
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                              ClassNotLoadedException,
                                                                              IncompatibleThreadStateException,
@@ -1119,17 +1135,20 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
   }
 
+  @Override
   public ArrayReference newInstance(final ArrayType arrayType,
                                     final int dimension)
     throws EvaluateException {
     return arrayType.newInstance(dimension);
   }
 
+  @Override
   public ObjectReference newInstance(final EvaluationContext evaluationContext, final ClassType classType,
                                      final Method method,
                                      final List args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(args) {
+      @Override
       protected ObjectReference invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                                        ClassNotLoadedException,
                                                                                        IncompatibleThreadStateException,
@@ -1181,6 +1200,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     showStatusText("");
   }
 
+  @Override
   public ReferenceType findClass(EvaluationContext evaluationContext, String className,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
@@ -1255,7 +1275,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings({"HardCodedStringLiteral", "SpellCheckingInspection"})
   public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
@@ -1308,13 +1328,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return mySuspendManager;
   }
 
+  @Override
   public CompoundPositionManager getPositionManager() {
     return myPositionManager;
   }
   //ManagerCommands
 
+  @Override
   public void stop(boolean forceTerminate) {
-    this.getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
+    getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
   public StopCommand createStopCommand(boolean forceTerminate) {
@@ -1328,10 +1350,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myIsTerminateTargetVM = isTerminateTargetVM;
     }
 
+    @Override
     public Priority getPriority() {
       return Priority.HIGH;
     }
 
+    @Override
     protected void action() throws Exception {
       if (isAttached()) {
         final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
@@ -1339,8 +1363,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
           virtualMachineProxy.exit(-1);
         }
         else {
-          // some VM's (like IBM VM 1.4.2 bundled with WebSpere) does not
-          // resume threads on dispose() like it should
+          // some VMs (like IBM VM 1.4.2 bundled with WebSphere) does not resume threads on dispose() like it should
           try {
             virtualMachineProxy.resume();
           }
@@ -1360,6 +1383,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       super(suspendContext);
     }
 
+    @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.out"));
       final SuspendContextImpl suspendContext = getSuspendContext();
@@ -1391,6 +1415,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         null;
     }
 
+    @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
@@ -1426,11 +1451,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myIsIgnoreBreakpoints = ignoreBreakpoints;
     }
 
+    @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.over"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = getContextThread();
-      // need this hint whil stepping over for JSR45 support:
+      // need this hint while stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
       RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_OVER);
@@ -1464,6 +1490,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(document, lineIndex, ignoreBreakpoints);
     }
 
+    @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.run.to.cursor"));
       cancelRunToCursorBreakpoint();
@@ -1493,10 +1520,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
     }
 
+    @Override
     public Priority getPriority() {
       return Priority.HIGH;
     }
 
+    @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.process.resumed"));
       getSuspendManager().resume(getSuspendContext());
@@ -1523,6 +1552,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public PauseCommand() {
     }
 
+    @Override
     public void action() {
       if (!isAttached() || getVirtualMachineProxy().isPausePressed()) {
         return;
@@ -1543,6 +1573,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myThread = thread;
     }
 
+    @Override
     public void contextAction() {
       if (getSuspendManager().isFrozen(myThread)) {
         getSuspendManager().unfreezeThread(myThread);
@@ -1552,7 +1583,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getThread() == myThread) {
-          DebugProcessImpl.this.getManagerThread().invoke(createResumeCommand(suspendContext));
+          getManagerThread().invoke(createResumeCommand(suspendContext));
         }
         else {
           getSuspendManager().resumeThread(suspendContext, myThread);
@@ -1568,6 +1599,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myThread = thread;
     }
 
+    @Override
     protected void action() throws Exception {
       SuspendManager suspendManager = getSuspendManager();
       if (!suspendManager.isFrozen(myThread)) {
@@ -1584,6 +1616,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myStackFrame = frameProxy;
     }
 
+    @Override
     public void contextAction() {
       final ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
       try {
@@ -1592,7 +1625,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
           return;
         }
       }
-      catch (ObjectCollectedException e) {
+      catch (ObjectCollectedException ignored) {
         notifyCancelled();
         return;
       }
@@ -1605,6 +1638,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+          @Override
           public void run() {
             Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
           }
@@ -1617,6 +1651,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       catch (final EvaluateException e) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+          @Override
           public void run() {
             Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
           }
@@ -1629,6 +1664,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getSearchScope() {
     LOG.assertTrue(mySession != null, "Accessing debug session before its initialization");
@@ -1667,7 +1703,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     // writing to volatile field ensures the other threads will see the right values in non-volatile fields
-    myDebugProcessStarted = true;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myExecutionResult;
@@ -1718,6 +1753,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     final Ref<Boolean> connectorIsReady = Ref.create(false);
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+      @Override
       public void connectorIsReady() {
         connectorIsReady.set(true);
         semaphore.up();
@@ -1726,7 +1762,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     });
 
 
-    this.getManagerThread().schedule(new DebuggerCommandImpl() {
+    getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
       protected void action() {
         VirtualMachine vm = null;
 
@@ -1743,7 +1780,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   try {
                     wait(500);
                   }
-                  catch (InterruptedException ie) {
+                  catch (InterruptedException ignored) {
                     break;
                   }
                 }
@@ -1751,10 +1788,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
               else {
                 fail();
                 if (myExecutionResult != null || !connectorIsReady.get()) {
-                  // propagate exception only in case we succeded to obtain execution result,
+                  // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
                   SwingUtilities.invokeLater(new Runnable() {
+                    @Override
                     public void run() {
                       ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                     }
@@ -1772,8 +1810,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (vm != null) {
           final VirtualMachine vm1 = vm;
           afterProcessStarted(new Runnable() {
+            @Override
             public void run() {
               getManagerThread().schedule(new DebuggerCommandImpl() {
+                @Override
                 protected void action() throws Exception {
                   commitVM(vm1);
                 }
@@ -1783,6 +1823,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
       }
 
+      @Override
       protected void commandCancelled() {
         try {
           super.commandCancelled();
@@ -1808,6 +1849,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         removeProcessListener(this);
       }
 
+      @Override
       public void startNotified(ProcessEvent event) {
         run();
       }
@@ -1837,11 +1879,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext, final PrioritizedTask.Priority priority) {
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
     return new ResumeCommand(suspendContext) {
+      @Override
       public void contextAction() {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
         super.contextAction();
       }
 
+      @Override
       public Priority getPriority() {
         return priority;
       }
@@ -1888,6 +1932,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public void setBreakpointsMuted(final boolean muted) {
     if (isAttached()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
         protected void action() throws Exception {
           // set the flag before enabling/disabling cause it affects if breakpoints will create requests
           if (myBreakpointsMuted.getAndSet(muted) != muted) {

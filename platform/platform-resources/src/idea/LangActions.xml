@@ -319,6 +319,10 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.CreateScratchFileAction">
+      <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
+    </action>
+
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
@@ -641,6 +645,7 @@
     </group>
 
     <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+    <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
     <group id="EditorPopupMenuDebug">
       <separator/>
@@ -648,6 +653,7 @@
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
       <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
 
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
@@ -662,7 +668,10 @@
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"/>
       <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
-      <action id="XDebugger.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+
+      <action id="Debugger.Tree.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
+
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"/>
@@ -712,7 +721,8 @@
       <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.JumpToTypeSource"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
@@ -733,7 +743,8 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">

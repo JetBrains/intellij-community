@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStat
 import org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyCatchBlockInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
-import org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnconditionalWaitInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
+
 /**
  * @author Max Medvedev
  */
@@ -144,29 +144,6 @@ boolean bar(def list) {
   if (list) !list && list
 <warning descr="Not all execution paths return a value">}</warning>
 ''', MissingReturnInspection)
-  }
-
-  void testReassignedVarInClosureInspection() {
-    addCompileStatic()
-    testHighlighting("""\
-test() {
-    def var = "abc"
-    def cl = {
-        <warning descr="Local variable 'var' is reassigned">var</warning> = new Date()
-    }
-    cl()
-    var.toUpperCase()
-}
-
-test2() {
-    def var = "abc"
-    def cl = {
-        <warning descr="Local variable 'var' is reassigned">var</warning> = 'cde'
-    }
-    cl()
-    var.toUpperCase()
-}
-""", GrReassignedInClosureLocalVarInspection)
   }
 
   void testPackageDefinition() {

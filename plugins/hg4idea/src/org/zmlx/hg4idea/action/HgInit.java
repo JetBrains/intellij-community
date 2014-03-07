@@ -2,12 +2,12 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -116,15 +116,17 @@ public class HgInit extends DumbAwareAction {
       public void process(@Nullable HgCommandResult result) {
         if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
           updateDirectoryMappings(mapRoot);
-          new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
-            .notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                           HgVcsMessages.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
+          VcsNotifier.getInstance(myProject).notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
+                                                           HgVcsMessages.message("hg4idea.init.created.notification.description",
+                                                                                 selectedRoot.getPresentableUrl())
+          );
         }
         else {
           new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
             .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
                                                                                                           selectedRoot
-                                                                                                            .getPresentableUrl()));
+                                                                                                            .getPresentableUrl()
+            ));
         }
       }
     });

@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -348,7 +349,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
         // File can be invalidated after file changes name (extension also
         // can changes). The editor should be removed if it's invalid.
         updateValidProperty();
-        if (Comparing.equal(e.getFile(), myFile) && !Comparing.equal(e.getOldValue(), e.getNewValue())) {
+        if (Comparing.equal(e.getFile(), myFile) &&
+            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor()) ||
+             !Comparing.equal(e.getOldValue(), e.getNewValue()))) {
           updateHighlighters();
         }
       }

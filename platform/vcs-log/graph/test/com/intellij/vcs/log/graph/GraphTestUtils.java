@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.graph;
 
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Branch;
@@ -60,7 +59,7 @@ public class GraphTestUtils {
 
   @NotNull
   public static Branch createBranchWithFakeRoot(int commitHash, @NotNull Collection<VcsRef> refs) {
-    return new Branch(commitHash, refs, new StubVirtualFile());
+    return new Branch(commitHash, refs, -1);
   }
 
   // "1 20 3" -> {1,20,3}

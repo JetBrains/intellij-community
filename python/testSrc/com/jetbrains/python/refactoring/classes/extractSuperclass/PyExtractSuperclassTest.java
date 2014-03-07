@@ -125,6 +125,11 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doSimpleTest("FromClass", "ToClass", null, true, "#instance_field", "#CLASS_FIELD");
   }
 
+
+  public void testProperties() throws Exception {
+    doSimpleTest("FromClass", "ToClass", null, true, "#C", "#a", "._get", ".foo");
+  }
+
   private void doSimpleTest(final String className,
                             final String superclassName,
                             final String expectedError,

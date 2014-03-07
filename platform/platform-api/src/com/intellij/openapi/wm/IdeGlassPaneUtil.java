@@ -16,11 +16,11 @@
 
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;

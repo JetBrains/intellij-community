@@ -39,6 +39,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNestedLambdaSpecifics() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

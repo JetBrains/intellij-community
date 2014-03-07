@@ -29,6 +29,12 @@ jh.jar
 jna-utils.jar
 jna.jar
 jsch-0.1.50.jar
+jsch.agentproxy.connector-factory.jar
+jsch.agentproxy.core.jar
+jsch.agentproxy.pageant.jar
+jsch.agentproxy.sshagent.jar
+jsch.agentproxy.usocket-jna.jar
+jsch.agentproxy.usocket-nc.jar
 jsr166e.jar
 jsr173_1.0_api.jar
 junit-4.11.jar

@@ -51,8 +51,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remotesdk.RemoteSdkCredentials;
-import com.intellij.remotesdk.RemoteSdkCredentialsHolder;
+import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -282,7 +282,7 @@ public class PythonSdkType extends SdkType {
     final Point point = parentComponent.getMousePosition();
     SwingUtilities.convertPointToScreen(point, parentComponent);
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, false, new NullableConsumer<Sdk>() {
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {
@@ -659,9 +659,9 @@ public class PythonSdkType extends SdkType {
   }
 
   public static void addSdkRoot(SdkModificator sdkModificator, String path) {
-    VirtualFile child = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (child != null) {
-      addSdkRoot(sdkModificator, child);
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    if (file != null) {
+      addSdkRoot(sdkModificator, file);
     }
     else {
       LOG.info("Bogus sys.path entry " + path);
@@ -669,19 +669,26 @@ public class PythonSdkType extends SdkType {
   }
 
   private static void addSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull VirtualFile child) {
-    @NonNls String suffix = child.getExtension();
-    if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
-    VirtualFile toAdd = child;
-    if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
+    // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
+    // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
+    // library sources, only as classes.
+    sdkModificator.addRoot(getSdkRootVirtualFile(child), OrderRootType.CLASSES);
+  }
+
+  @NotNull
+  public static VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
+    String suffix = path.getExtension();
+    if (suffix != null) {
+      suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
+    }
+    if ((!path.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
       // a .zip / .egg file must have its root extracted first
-      toAdd = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+      final VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(path);
+      if (jar != null) {
+        return jar;
+      }
     }
-    if (toAdd != null) {
-      // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
-      // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
-      // library sources, only as classes.
-      sdkModificator.addRoot(toAdd, OrderRootType.CLASSES);
-    }
+    return path;
   }
 
   public static String getSkeletonsPath(String basePath, String sdkHome) {
