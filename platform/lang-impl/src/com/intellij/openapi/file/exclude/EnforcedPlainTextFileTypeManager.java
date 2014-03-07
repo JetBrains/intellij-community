@@ -78,36 +78,34 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
 
-  public void markAsPlainText(VirtualFile... files) {
-    setPlainTextStatus(true, files);
+  public void markAsPlainText(@NotNull Project project, VirtualFile... files) {
+    setPlainTextStatus(project, true, files);
   }
 
-  public void resetOriginalFileType(VirtualFile... files) {
-    setPlainTextStatus(false, files);
+  public void resetOriginalFileType(@NotNull Project project, VirtualFile... files) {
+    setPlainTextStatus(project, false, files);
   }
 
-  private void setPlainTextStatus(final boolean isAdded, final VirtualFile... files) {
+  private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(new Runnable() {
-            @Override
-            public void run() {
-              ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
-              for (VirtualFile file : files) {
-                if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-                  ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
-                  if (isAdded ?
-                      projectPlainTextFileTypeManager.addFile(file) :
-                      projectPlainTextFileTypeManager.removeFile(file)) {
-                    FileBasedIndex.getInstance().requestReindex(file);
-                  }
+        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(new Runnable() {
+          @Override
+          public void run() {
+            ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+            for (VirtualFile file : files) {
+              if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
+                ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+                if (isAdded ?
+                    projectPlainTextFileTypeManager.addFile(file) :
+                    projectPlainTextFileTypeManager.removeFile(file)) {
+                  FileBasedIndex.getInstance().requestReindex(file);
                 }
               }
             }
-          }, false, true);
-        }
+          }
+        }, false, true);
       }
     });
   }
