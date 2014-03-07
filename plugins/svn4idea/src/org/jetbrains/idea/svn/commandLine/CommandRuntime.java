@@ -201,7 +201,7 @@ public class CommandRuntime {
   private CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
-    if (!(Registry.is("svn.use.terminal") && isForSshRepository(command))) {
+    if (!(Registry.is("svn.use.terminal") && isForSshRepository(command)) || isLocal(command)) {
       command.putIfNotPresent("--non-interactive");
       executor = new CommandExecutor(exePath, command);
     }
@@ -212,6 +212,23 @@ public class CommandRuntime {
     }
 
     return executor;
+  }
+
+  private static boolean isLocal(@NotNull Command command) {
+    return SvnCommandName.version.equals(command.getName()) ||
+           SvnCommandName.cleanup.equals(command.getName()) ||
+           SvnCommandName.add.equals(command.getName()) ||
+           // currently "svn delete" is only applied to local files
+           SvnCommandName.delete.equals(command.getName()) ||
+           SvnCommandName.revert.equals(command.getName()) ||
+           SvnCommandName.resolve.equals(command.getName()) ||
+           SvnCommandName.upgrade.equals(command.getName()) ||
+           SvnCommandName.changelist.equals(command.getName()) ||
+           // currently "svn lock" is only applied to local files
+           SvnCommandName.lock.equals(command.getName()) ||
+           // currently "svn unlock" is only applied to local files
+           SvnCommandName.unlock.equals(command.getName()) ||
+           command.isLocalInfo() || command.isLocalStatus() || command.isLocalProperty() || command.isLocalCat();
   }
 
   private static boolean isForSshRepository(@NotNull Command command) {
