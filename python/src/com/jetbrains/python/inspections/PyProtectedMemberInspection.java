@@ -30,12 +30,14 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -89,19 +92,24 @@ public class PyProtectedMemberInspection extends PyInspection {
         final PsiReference reference = node.getReference(getResolveContext());
         if (reference == null) return;
         final PsiElement resolvedExpression = reference.resolve();
+        final PyClass resolvedClass = getClassOwner(resolvedExpression);
         if (resolvedExpression instanceof PyTargetExpression) {
-          final PyClass containingClass = ((PyTargetExpression)resolvedExpression).getContainingClass();
-          if (containingClass != null) {
-            final String qFixName = containingClass.getProperties().containsKey(StringUtil.trimLeading(name, '_')) ?
+          final String newName = StringUtil.trimLeading(name, '_');
+          if (resolvedClass != null) {
+            final String qFixName = resolvedClass.getProperties().containsKey(newName) ?
                               PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
             quickFixes.add(new PyAddPropertyForFieldQuickFix(qFixName));
+
+            final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(resolvedClass);
+            if (!usedNames.contains(newName)) {
+              quickFixes.add(new PyMakePublicQuickFix());
+            }
           }
         }
 
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
           if (PyTestUtil.isPyTestClass(parentClass) && ignoreTestFunctions) return;
-          final PyClass resolvedClass = getClassOwner(resolvedExpression);
           if (parentClass.isSubclass(resolvedClass))
             return;
 
