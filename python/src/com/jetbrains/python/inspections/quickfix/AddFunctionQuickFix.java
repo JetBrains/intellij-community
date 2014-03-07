@@ -102,7 +102,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       // else: no arglist, use empty args
-      PyFunction function = builder.buildFunction(project, LanguageLevel.forFile(myPyFile.getVirtualFile()));
+      PyFunction function = builder.buildFunction(project, myPyFile.getLanguageLevel());
 
       // add to the bottom
       function = (PyFunction) myPyFile.add(function);

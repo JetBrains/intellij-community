@@ -663,10 +663,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
     final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
     if (file != null) {
-      final VirtualFile vfile = file.getVirtualFile();
-      if (vfile != null) {
-        level = LanguageLevel.forFile(vfile);
-      }
+      level = LanguageLevel.forElement(file);
     }
     final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
     final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);

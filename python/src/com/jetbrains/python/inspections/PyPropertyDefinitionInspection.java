@@ -21,19 +21,18 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -79,13 +78,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       super(holder, session);
       PsiFile psiFile = session.getFile();
       // save us continuous checks for level, module, stc
-      LanguageLevel level = null;
-      if (psiFile != null) {
-        VirtualFile vfile = psiFile.getVirtualFile();
-        if (vfile != null) level = LanguageLevel.forFile(vfile);
-      }
-      if (level == null) level = LanguageLevel.getDefault();
-      myLevel = level;
+      myLevel = LanguageLevel.forElement(psiFile);
       // string classes
       final List<PyClass> string_classes = new ArrayList<PyClass>(2);
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psiFile);

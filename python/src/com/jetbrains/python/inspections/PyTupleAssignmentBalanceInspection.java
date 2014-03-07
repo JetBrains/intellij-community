@@ -17,7 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -67,8 +66,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
 
         boolean containsStarExpression = false;
-        VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-        if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
+        if (LanguageLevel.forElement(node).isPy3K()) {
           for (PyExpression target: elements) {
             if (target instanceof PyStarExpression) {
               if (containsStarExpression) {
