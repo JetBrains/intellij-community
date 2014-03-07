@@ -50,12 +50,23 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
+  @Deprecated
   public abstract List<Task> getIssues(@Nullable String query,
                                        int max,
                                        long since,
                                        boolean forceRequest,
                                        final boolean withClosed,
                                        @NotNull final ProgressIndicator cancelled);
+
+  public List<Task> getIssues(@Nullable String query,
+                              int offset,
+                              int limit,
+                              boolean forceRequest,
+                              final boolean withClosed,
+                              @NotNull ProgressIndicator indicator) {
+    return getIssues(query, offset + limit, (long)0, forceRequest, withClosed, indicator);
+  }
+
   /**
    * Returns already cached issues.
    * @return cached issues.
