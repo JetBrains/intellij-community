@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -494,20 +494,19 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (isEnum()) {
-      String name = getName();
-      if (name != null) {
+      String myName = getName();
+      if (myName != null) {
         try {
           final NameHint nameHint = processor.getHint(NameHint.KEY);
           final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-          if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(getValuesMethod(), ResolveState.initial())) return false;
-            }
+          String nameToSearch = nameHint == null ? null : nameHint.getName(state);
+          if (VALUES_METHOD.equals(nameToSearch) &&
+              (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD))) {
+            if (!processor.execute(getValuesMethod(), ResolveState.initial())) return false;
           }
-          if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(getValueOfMethod(), ResolveState.initial())) return false;
-            }
+          if (VALUE_OF_METHOD.equals(nameToSearch) &&
+              (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD))) {
+            if (!processor.execute(getValueOfMethod(), ResolveState.initial())) return false;
           }
         }
         catch (IncorrectOperationException e) {
