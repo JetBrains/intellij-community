@@ -293,14 +293,25 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final XSourcePosition position = myXBreakpoint.getSourcePosition();
-    try {
-      final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(position.getFile());
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    PsiFile psiFile = getPsiFile();
+    if (position != null && psiFile != null) {
       mySourcePosition = SourcePosition.createFromLine(psiFile, position.getLine());
-    } catch (Exception e) {
+      reload(psiFile);
+    }
+    else {
       mySourcePosition = null;
     }
-    reload(BreakpointManager.getPsiFile(myXBreakpoint, myProject));
+  }
+
+  @Nullable
+  public PsiFile getPsiFile() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    if (position != null) {
+      return PsiManager.getInstance(myProject).findFile(position.getFile());
+    }
+    return null;
   }
 
   @Override

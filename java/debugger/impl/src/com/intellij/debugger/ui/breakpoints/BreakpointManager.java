@@ -44,9 +44,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -1059,15 +1057,5 @@ public class BreakpointManager {
   
   public String setProperty(String name, String value) {
     return myUIProperties.put(name, value);
-  }
-
-  public static PsiFile getPsiFile(XBreakpoint xBreakpoint, Project project) {
-    try {
-      final Document document = FileDocumentManager.getInstance().getDocument(xBreakpoint.getSourcePosition().getFile());
-      return PsiDocumentManager.getInstance(project).getPsiFile(document);
-    } catch (Exception e) {
-      LOG.error(e);
-    }
-    return null;
   }
 }
