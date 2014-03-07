@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class JSValue extends XNamedValue {
-  protected JSValue(@NotNull String name) {
+public abstract class VariableViewBase extends XNamedValue {
+  protected VariableViewBase(@NotNull String name) {
     super(name);
   }
 
