@@ -23,11 +23,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,7 +42,7 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
 
   @Override
   public void visitPyElement(PyElement node) {
-    setVersionsToProcess(Arrays.asList(getLanguageLevel(node)));
+    setVersionsToProcess(Arrays.asList(LanguageLevel.forElement(node)));
   }
 
   @Override
@@ -68,15 +66,6 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
         getHolder().createErrorAnnotation(range, message);
       else
         getHolder().createWarningAnnotation(range, message);
-  }
-
-  @NotNull
-  private static LanguageLevel getLanguageLevel(PyElement node) {
-    VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-    if (virtualFile != null) {
-      return LanguageLevel.forFile(virtualFile);
-    }
-    return LanguageLevel.getDefault();
   }
 
   private static IntentionAction createIntention(PsiElement node, String message, LocalQuickFix fix) {
