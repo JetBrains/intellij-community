@@ -1,0 +1,111 @@
+package org.jetbrains.debugger.frame;
+
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.*;
+
+import java.util.List;
+
+public class ChromeStackFrame extends JavaScriptStackFrame implements VariableContext {
+  private final DebugProcessEx debugProcess;
+  private final CallFrame callFrame;
+
+  private final Script script;
+
+  public ChromeStackFrame(@NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
+    this(debugProcess.getSourceInfo(script, callFrame), callFrame, debugProcess, script);
+  }
+
+  // @todo suspendContext nullable only due to Nashorn
+  public ChromeStackFrame(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, DebugProcessEx debugProcess, @Nullable Script script) {
+    super(sourceInfo);
+
+    this.debugProcess = debugProcess;
+    this.callFrame = callFrame;
+    this.script = script;
+  }
+
+  @Override
+  protected boolean isInFileScope() {
+    List<Scope> scopes = callFrame.getVariableScopes();
+    return scopes.size() == 1 && scopes.get(0).isGlobal();
+  }
+
+  @Override
+  protected XDebuggerEvaluator createEvaluator() {
+    return debugProcess.createFrameEvaluator(this);
+  }
+
+  @Override
+  public Object getEqualityObject() {
+    return callFrame;
+  }
+
+  @Override
+  protected void customizeInvalidFramePresentation(ColoredTextContainer component) {
+    assert sourceInfo == null;
+
+    String scriptName = script == null ? "unknown" : script.getUrl().trimParameters().toDecodedForm();
+    int line = callFrame.getLine();
+    component.append(line != -1 ? scriptName + ':' + line : scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+  }
+
+  @Override
+  public void computeChildren(@NotNull XCompositeNode node) {
+    node.setAlreadySorted(true);
+    createAndAddScopeList(node, callFrame.getVariableScopes(), this, callFrame);
+  }
+
+  public static void createAndAddScopeList(XCompositeNode node, List<Scope> scopes, VariableContext context, @Nullable CallFrame callFrame) {
+    XValueChildrenList list = new XValueChildrenList(scopes.size());
+    for (Scope scope : scopes) {
+      list.addTopGroup(new ScopeVariablesGroup(scope, context, callFrame));
+    }
+    node.addChildren(list, true);
+  }
+
+  @NotNull
+  public CallFrame getCallFrame() {
+    return callFrame;
+  }
+
+  @NotNull
+  @Override
+  public EvaluateContext getEvaluateContext() {
+    return callFrame.getEvaluateContext();
+  }
+
+  @Nullable
+  @Override
+  public String getName() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public VariableContext getParent() {
+    return null;
+  }
+
+  @Override
+  public boolean watchableAsEvaluationExpression() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public DebugProcessEx getDebugProcess() {
+    return debugProcess;
+  }
+
+  @NotNull
+  @Override
+  public MemberFilter getMemberFilter() {
+    return debugProcess;
+  }
+}

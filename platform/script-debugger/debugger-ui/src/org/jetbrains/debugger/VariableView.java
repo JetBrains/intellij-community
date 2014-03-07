@@ -1,12 +1,7 @@
 package org.jetbrains.debugger;
 
-import com.intellij.chromeConnector.debugger.ChromeEvaluator;
-import com.intellij.javascript.JSDebuggerSupportUtils;
-import com.intellij.javascript.debugger.settings.JSDebuggerSettings;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.css.impl.util.CssHighlighter;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
@@ -19,15 +14,14 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-public class VariableView extends VariableViewBase implements VariableContext {
+public final class VariableView extends VariableViewBase implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
+
   private final VariableContext context;
 
   private final Variable variable;
@@ -43,6 +37,11 @@ public class VariableView extends VariableViewBase implements VariableContext {
 
     this.context = context;
     this.variable = variable;
+  }
+
+  @NotNull
+  public static String getClassName(@NotNull ObjectValue value) {
+    return StringUtil.notNullize(value.getClassName(), "Object");
   }
 
   @Override
@@ -85,7 +84,7 @@ public class VariableView extends VariableViewBase implements VariableContext {
     }
   }
 
-  static String trimFunctionDescription(Value value) {
+  static String trimFunctionDescription(@NotNull Value value) {
     String presentableValue = value.getValueString();
     int endIndex = 0;
     while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
@@ -97,7 +96,7 @@ public class VariableView extends VariableViewBase implements VariableContext {
     return presentableValue.substring(0, endIndex);
   }
 
-  private void computePresentation(Value value, XValueNode node) {
+  private void computePresentation(@NotNull Value value, @NotNull XValueNode node) {
     String valueString = value.getValueString();
     switch (value.getType()) {
       case OBJECT:
@@ -140,7 +139,7 @@ public class VariableView extends VariableViewBase implements VariableContext {
       case STRING: {
         node.setPresentation(getIcon(), new XStringValuePresentation(valueString), false);
         if (value.isTruncated() || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
-          node.setFullValueEvaluator(new ChromeFullValueEvaluator(value.getActualLength()));
+          node.setFullValueEvaluator(new MyFullValueEvaluator(value.getActualLength()));
         }
       }
       break;
@@ -154,91 +153,10 @@ public class VariableView extends VariableViewBase implements VariableContext {
     return value.equals("NaN") || value.equals("Infinity") ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
   }
 
-  private void computeObjectPresentation(final Value value, XValueNode node) {
-    JSDebuggerSettings.CustomObjectPresentationState presentationState = JSDebuggerSettings.getInstance().getState().getObjectPresentation();
-    final ObjectValue object = presentationState.isEnabled() ? value.asObject() : null;
-    final List<String> propertiesToShow = presentationState.getPropertiesToShow();
-
-    if (object != null && value.getType() == ValueType.NODE) {
-      final String string = value.getValueString();
-      node.setPresentation(getIcon(), new XValuePresentation() {
-        @Override
-        public void renderValue(@NotNull XValueTextRenderer renderer) {
-          int index = string.indexOf('#');
-          if (index > 0) {
-            renderer.renderComment(string.substring(0, index));
-            renderer.renderValue(string.substring(index), CssHighlighter.CSS_IDENT);
-          }
-          else {
-            renderer.renderComment(string);
-          }
-        }
-      }, true);
-      return;
-    }
-
-    if (object == null || propertiesToShow.isEmpty()) {
-      setObjectPresentation(node, value);
-      return;
-    }
-
-    ObsolescentAsyncResults.consume(object.getProperties(), node, new PairConsumer<ObjectPropertyData, XValueNode>() {
-      @Override
-      public void consume(ObjectPropertyData data, final XValueNode node) {
-        final ArrayList<ObjectProperty> properties = new ArrayList<ObjectProperty>(propertiesToShow.size());
-        int getterCount = 0;
-        for (ObjectProperty property : data.getProperties()) {
-          if (!property.isReadable() || !propertiesToShow.contains(property.getName())) {
-            continue;
-          }
-          properties.add(property);
-          if (property.getValue() == null) {
-            getterCount++;
-          }
-        }
-
-        Collections.sort(properties, new Comparator<Variable>() {
-          @Override
-          public int compare(Variable o1, Variable o2) {
-            return propertiesToShow.indexOf(o1.getName()) - propertiesToShow.indexOf(o2.getName());
-          }
-        });
-
-        if (getterCount > 0) {
-          ActionCallback callback = new ActionCallback(getterCount);
-          for (ObjectProperty variable : properties) {
-            if (variable.getValue() == null) {
-              variable.evaluateGet(context.getEvaluateContext()).notify(callback);
-            }
-          }
-          callback.doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              if (!node.isObsolete()) {
-                node.setPresentation(getIcon(), new CustomPropertiesValuePresentation(value, properties), true);
-              }
-            }
-          });
-        }
-        else if (!node.isObsolete()) {
-          if (properties.isEmpty()) {
-            setObjectPresentation(node, value);
-          }
-          else {
-            node.setPresentation(getIcon(), new CustomPropertiesValuePresentation(value, properties), true);
-          }
-        }
-      }
-    });
-  }
-
-  private void setObjectPresentation(XValueNode node, Value value) {
-    node.setPresentation(getIcon(), new ObjectValuePresentation(getClassName(value)), true);
-  }
-
-  public static String getClassName(@NotNull Value value) {
-    //noinspection ConstantConditions
-    return StringUtil.notNullize(value.asObject().getClassName(), "Object");
+  private void computeObjectPresentation(@NotNull Value value, @NotNull XValueNode node) {
+    ObjectValue objectValue = value.asObject();
+    assert objectValue != null;
+    context.getDebugProcess().computeObjectPresentation(objectValue, variable, context, node, getIcon());
   }
 
   @Override
@@ -292,7 +210,6 @@ public class VariableView extends VariableViewBase implements VariableContext {
     });
   }
 
-  @SuppressWarnings("ConstantConditions")
   private void computeArrayRanges(List<? extends ObjectProperty> properties, XCompositeNode node) {
     List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
@@ -375,7 +292,12 @@ public class VariableView extends VariableViewBase implements VariableContext {
       @Override
       public String getInitialValueEditorText() {
         if (value.getType() == ValueType.STRING) {
-          return JSDebuggerSupportUtils.STRING_VALUE_QUOTER.fun(value.getValueString());
+          String string = value.getValueString();
+          StringBuilder builder = new StringBuilder(string.length());
+          builder.append('"');
+          StringUtil.escapeStringCharacters(string.length(), string, builder);
+          builder.append('"');
+          return builder.toString();
         }
         else {
           return value.getType().isObjectType() ? null : value.getValueString();
@@ -392,7 +314,16 @@ public class VariableView extends VariableViewBase implements VariableContext {
             value = null;
             callback.valueModified();
           }
-        }).doWhenRejected(ChromeEvaluator.createErrorMessageConsumer(callback));
+        }).doWhenRejected(createErrorMessageConsumer(callback));
+      }
+    };
+  }
+
+  private static Consumer<String> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
+    return new Consumer<String>() {
+      @Override
+      public void consume(@Nullable String errorMessage) {
+        callback.errorOccurred(errorMessage == null ? "Internal error" : errorMessage);
       }
     };
   }
@@ -442,24 +373,11 @@ public class VariableView extends VariableViewBase implements VariableContext {
       list.add(parent.getName());
       parent = parent.getParent();
     }
-    return JSDebuggerSupportUtils.propertyNamesToString(list, false);
+    return context.getDebugProcess().propertyNamesToString(list, false);
   }
 
-  private static class ObjectValuePresentation extends XValuePresentation {
-    private final String myValue;
-
-    private ObjectValuePresentation(@NotNull String value) {
-      myValue = value;
-    }
-
-    @Override
-    public void renderValue(@NotNull XValueTextRenderer renderer) {
-      renderer.renderComment(myValue);
-    }
-  }
-
-  private class ChromeFullValueEvaluator extends XFullValueEvaluator {
-    public ChromeFullValueEvaluator(int actualLength) {
+  private class MyFullValueEvaluator extends XFullValueEvaluator {
+    public MyFullValueEvaluator(int actualLength) {
       super(actualLength);
     }
 
@@ -478,7 +396,7 @@ public class VariableView extends VariableViewBase implements VariableContext {
             callback.evaluated(value.getValueString());
           }
         }
-      }).doWhenRejected(ChromeEvaluator.createErrorMessageConsumer(callback));
+      }).doWhenRejected(createErrorMessageConsumer(callback));
     }
   }
 }
