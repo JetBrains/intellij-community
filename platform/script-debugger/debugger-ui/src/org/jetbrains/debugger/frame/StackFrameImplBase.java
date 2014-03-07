@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.SourceInfo;
 
-public abstract class JavaScriptStackFrame extends XStackFrame {
+public abstract class StackFrameImplBase extends XStackFrame {
   protected final SourceInfo sourceInfo;
   protected XDebuggerEvaluator evaluator;
 
-  public JavaScriptStackFrame(@Nullable SourceInfo sourceInfo) {
+  public StackFrameImplBase(@Nullable SourceInfo sourceInfo) {
     this.sourceInfo = sourceInfo;
   }
 

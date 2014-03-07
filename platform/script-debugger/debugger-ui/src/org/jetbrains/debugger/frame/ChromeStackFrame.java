@@ -11,7 +11,7 @@ import org.jetbrains.debugger.*;
 
 import java.util.List;
 
-public class ChromeStackFrame extends JavaScriptStackFrame implements VariableContext {
+public class ChromeStackFrame extends StackFrameImplBase implements VariableContext {
   private final DebugProcessEx debugProcess;
   private final CallFrame callFrame;
 
