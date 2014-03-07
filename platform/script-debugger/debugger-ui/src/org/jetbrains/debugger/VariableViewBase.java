@@ -3,7 +3,6 @@ package org.jetbrains.debugger;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XNamedValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -19,7 +18,7 @@ public abstract class VariableViewBase extends XNamedValue {
     return false;
   }
 
-  @Nullable
+  @NotNull
   protected Icon getIcon() {
     ValueType type = getValueType();
     switch (type) {
