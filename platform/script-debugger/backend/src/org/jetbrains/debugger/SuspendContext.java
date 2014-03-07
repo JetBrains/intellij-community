@@ -53,4 +53,7 @@ public interface SuspendContext {
    */
   @NotNull
   ValueLoader<?> getValueLoader();
+
+  @NotNull
+  Vm getVm();
 }

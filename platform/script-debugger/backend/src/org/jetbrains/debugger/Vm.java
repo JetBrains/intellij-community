@@ -4,6 +4,7 @@ import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
 public interface Vm {
+  @NotNull
   ActionCallback detach();
 
   boolean isAttached();
