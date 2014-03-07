@@ -345,13 +345,7 @@ public final class LoadTextUtil {
   @NotNull
   public static CharSequence loadText(@NotNull VirtualFile file) {
     if (file instanceof LightVirtualFile) {
-      CharSequence content = ((LightVirtualFile)file).getContent();
-      if (StringUtil.indexOf(content, '\r') == -1) return content;
-
-      CharBuffer buffer = CharBuffer.allocate(content.length());
-      buffer.append(content);
-      buffer.rewind();
-      return convertLineSeparators(buffer).first;
+      return ((LightVirtualFile)file).getContent();
     }
 
     if (file.isDirectory()) {

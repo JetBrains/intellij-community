@@ -65,7 +65,8 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
     Assert.assertNotNull(breakpoint);
-    Assert.assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    Assert
+      .assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     Assert.assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
@@ -303,7 +304,8 @@ public class XDebuggerTestUtil {
     expectedNames.removeAll(actualNames);
     UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
                               + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
-                              expectedNames.isEmpty());
+                              expectedNames.isEmpty()
+    );
   }
 
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
@@ -366,8 +368,23 @@ public class XDebuggerTestUtil {
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (XBreakpoint b : breakpoints) {
-      breakpointManager.removeBreakpoint(b);
+    for (final XBreakpoint b : breakpoints) {
+      new WriteAction() {
+        @Override
+        protected void run(Result result) throws Throwable {
+          breakpointManager.removeBreakpoint(b);
+        }
+      }.execute();
+    }
+  }
+
+  public static <B extends XBreakpoint<?>>
+  void setDefaultBreakpointEnabled(@NotNull final Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointType<B, ?> bpType = XDebuggerUtil.getInstance().findBreakpointType(bpTypeClass);
+    XBreakpoint<?> bp = breakpointManager.getDefaultBreakpoint(bpType);
+    if (bp != null) {
+      bp.setEnabled(enabled);
     }
   }
 

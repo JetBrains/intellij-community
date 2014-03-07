@@ -65,6 +65,7 @@ import java.util.List;
 
 public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
+  private final Runnable myNodeChanged;
 
   private final JTextField myKeyField;
   private final JTextField myDescription;
@@ -80,19 +81,20 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
-  private final Map<TemplateContextType, Boolean> myContext;
+  private final TemplateContext myContext;
   private JBPopup myContextPopup;
   private Dimension myLastSize;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    Map<TemplateContextType, Boolean> context, final Runnable nodeChanged, boolean allowNoContext) {
+                                    TemplateContext context, final Runnable nodeChanged, boolean allowNoContext) {
     super(new BorderLayout());
     myOptions = options;
     myContext = context;
 
     myTemplate = template;
+    myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
     myKeyField=new JTextField();
@@ -106,14 +108,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(myKeyField.getText().trim());
-        nodeChanged.run();
+        myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText().trim());
-        nodeChanged.run();
+        myNodeChanged.run();
       }
     });
 
@@ -172,6 +174,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
           myTemplate.setString(myTemplateEditor.getDocument().getText());
           applyVariables(updateVariablesByTemplateText());
+          myNodeChanged.run();
         }
       }
     );
@@ -290,8 +293,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private List<TemplateContextType> getApplicableContexts() {
     ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
-    for (TemplateContextType type : myContext.keySet()) {
-      if (myContext.get(type).booleanValue()) {
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      if (myContext.isExplicitlyEnabled(type)) {
         result.add(type);
       }
     }
@@ -379,11 +382,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return false;
   }
 
-  static JPanel createPopupContextPanel(final Runnable onChange, final Map<TemplateContextType, Boolean> context) {
+  static JPanel createPopupContextPanel(final Runnable onChange, final TemplateContext context) {
     JPanel panel = new JPanel(new BorderLayout());
 
     MultiMap<TemplateContextType, TemplateContextType> hierarchy = MultiMap.createLinked();
-    for (TemplateContextType type : context.keySet()) {
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       hierarchy.putValue(type.getBaseContextType(), type);
     }
 
@@ -401,7 +404,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          context.put(type, node.isChecked());
+          context.putValue(type, node.isChecked());
         }
         onChange.run();
 
@@ -434,21 +437,21 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
                                      CheckedTreeNode parent,
-                                     TemplateContextType type, Map<TemplateContextType, Boolean> context) {
+                                     TemplateContextType type, TemplateContext context) {
     final Collection<TemplateContextType> children = hierarchy.get(type);
     final String name = UIUtil.removeMnemonic(type.getPresentableName());
     final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
     if (children.isEmpty()) {
-      node.setChecked(context.get(type));
+      node.setChecked(context.isExplicitlyEnabled(type));
     }
     else {
       for (TemplateContextType child : children) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
-      other.setChecked(context.get(type));
+      other.setChecked(context.isExplicitlyEnabled(type));
       node.add(other);
     }
   }

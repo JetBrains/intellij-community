@@ -17,7 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Segment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,14 +129,14 @@ public interface CaretModel {
   int getOffset();
 
   /**
-   * Adds a listener for receiving notifications about caret movement.
+   * Adds a listener for receiving notifications about caret movement and caret addition/removal
    *
    * @param listener the listener instance.
    */
   void addCaretListener(@NotNull CaretListener listener);
 
   /**
-   * Removes a listener for receiving notifications about caret movement.
+   * Removes a listener for receiving notifications about caret movement and caret addition/removal
    *
    * @param listener the listener instance.
    */
@@ -182,6 +181,11 @@ public interface CaretModel {
   Caret getPrimaryCaret();
 
   /**
+   * Returns number of carets currently existing in the document
+   */
+  int getCaretCount();
+
+  /**
    * Returns all carets currently existing in the document, ordered by their position in the document.
    */
   @NotNull
@@ -214,14 +218,14 @@ public interface CaretModel {
   void removeSecondaryCarets();
 
   /**
-   * Sets the number of carets, their positions and selection ranges according to the provided parameters. Null values in any of the
-   * collections will mean that corresponding caret's position and/or selection won't be changed.
+   * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
+   * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
    * If multiple carets are not supported, the behaviour is unspecified.
    *
    * @see #supportsMultipleCarets()
    */
-  void setCaretsAndSelections(@NotNull List<LogicalPosition> caretPositions, @NotNull List<? extends Segment> selections);
+  void setCaretsAndSelections(@NotNull List<CaretState> caretStates);
 
   /**
    * Executes the given task for each existing caret. Carets are iterated in their position order. Set of carets to iterate over is

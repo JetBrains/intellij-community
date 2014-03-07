@@ -62,6 +62,10 @@ public abstract class LanguageFileType implements FileType{
     return null;
   }
 
+  /**
+   * @deprecated implement own {@link com.intellij.debugger.engine.JVMDebugProvider} instead
+   */
+  @Deprecated
   public boolean isJVMDebuggingSupported() {
     return false;
   }

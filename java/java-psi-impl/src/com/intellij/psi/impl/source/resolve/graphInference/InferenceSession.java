@@ -369,7 +369,7 @@ public class InferenceSession {
           targetType = getTargetType(context);
         }
         if (targetType != null) {
-          registerConstraints(returnType, targetType);
+          registerConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
       }
     }
@@ -400,7 +400,7 @@ public class InferenceSession {
           PsiTypeParameter[] copy = new PsiTypeParameter[typeParameters.length];
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            copy[i] = elementFactory.createTypeParameterFromText(typeParameter.getName(), null);
+            copy[i] = elementFactory.createTypeParameterFromText("rCopy" + typeParameter.getName(), null);
             initBounds(copy[i]);
             subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
           }
@@ -823,15 +823,19 @@ public class InferenceSession {
         MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
       }
 
-      for (ConstraintFormula additionalConstraint : subset) {
-        additionalConstraint.apply(substitutor);
-      }
+      try {
+        for (ConstraintFormula additionalConstraint : subset) {
+          additionalConstraint.apply(substitutor);
+        }
 
-      myConstraints.addAll(subset);
-      if (!repeatInferencePhases(true)) {
-        return false;
+        myConstraints.addAll(subset);
+        if (!repeatInferencePhases(true)) {
+          return false;
+        }
       }
-
+      finally {
+        LambdaUtil.ourFunctionTypes.set(null);
+      }
     }
     return true;
   }
@@ -995,8 +999,9 @@ public class InferenceSession {
         return true;
       }
 
-      if (sReturnType == PsiType.VOID && session != null) {
-        return false;
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
+      if (sReturnType == PsiType.VOID) {
+        return returnExpressions.isEmpty() && session == null;
       }
 
       if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
@@ -1005,15 +1010,14 @@ public class InferenceSession {
 
         //Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, 
         //then these rules are applied recursively to R1 and R2, for each result expression in expi.
-        final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
         if (!isFunctionalTypeMoreSpecific(sReturnType, tReturnType, session, returnExpressions.toArray(new PsiExpression[returnExpressions.size()]))) {
           return false;
         }
       } else {
-        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType;
-        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType;
+        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
+        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
         if (sPrimitive ^ tPrimitive) {
-          for (PsiExpression returnExpression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg)) {
+          for (PsiExpression returnExpression : returnExpressions) {
             if (!PsiPolyExpressionUtil.isPolyExpression(returnExpression)) {
               final PsiType returnExpressionType = returnExpression.getType();
               if (sPrimitive) {

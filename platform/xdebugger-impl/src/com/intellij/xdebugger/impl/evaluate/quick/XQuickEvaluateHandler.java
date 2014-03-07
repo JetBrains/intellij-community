@@ -26,7 +26,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -103,12 +102,9 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   public int getValueLookupDelay(final Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {
-      XStackFrame stackFrame = session.getCurrentStackFrame();
-      if (stackFrame != null) {
-        XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-        if (evaluator != null) {
-          return evaluator.getValuePopupDelay();
-        }
+      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+      if (evaluator != null) {
+        return evaluator.getValuePopupDelay();
       }
     }
     return 700;

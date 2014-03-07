@@ -14,8 +14,8 @@
                         serviceImplementation="git4idea.test.TestDialogManager"
                         overrides="true" />
 
-    <projectService serviceInterface="git4idea.Notificator"
-                    serviceImplementation="git4idea.test.TestNotificator"
+    <projectService serviceInterface="com.intellij.openapi.vcs.VcsNotifier"
+                    serviceImplementation="com.intellij.openapi.vcs.TestVcsNotifier"
                     overrides="true"/>
 
   </extensions>

@@ -1,110 +1,38 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remotesdk;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
+ * @deprecated Remove in IDEA 14
+ * 
  * @author traff
  */
-public class RemoteFile {
-
-  private final boolean myWin;
-  private final String myPath;
+public class RemoteFile extends com.intellij.remote.RemoteFile {
 
   public RemoteFile(@NotNull String path, boolean isWin) {
-    myPath = toSystemDependent(path, isWin);
-    myWin = isWin;
+    super(path, isWin);
   }
 
   public RemoteFile(@NotNull String parent, String child) {
-    this(resolveChild(parent, child, isWindowsPath(parent)), isWindowsPath(parent));
+    super(parent, child);
   }
 
   public RemoteFile(@NotNull String parent, String child, boolean isWin) {
-    this(resolveChild(parent, child, isWin), isWin);
-  }
-
-  @Nullable
-  public String getName() {
-    int ind = myPath.lastIndexOf(getSeparator(myWin));
-    if (ind != -1 && ind < myPath.length() - 1) { //not last char
-      return myPath.substring(ind + 1);
-    }
-    else {
-      return null;
-    }
-  }
-
-  private static String resolveChild(@NotNull String parent, @NotNull String child, boolean win) {
-    String separator = getSeparator(win);
-
-    String path;
-    if (parent.endsWith(separator)) {
-      path = parent + child;
-    }
-    else {
-      path = parent + separator + child;
-    }
-    return path;
-  }
-
-  private static String getSeparator(boolean win) {
-    String separator;
-    if (win) {
-      separator = "\\";
-    }
-    else {
-      separator = "/";
-    }
-    return separator;
-  }
-
-
-  public String getPath() {
-    return myPath;
-  }
-
-  public boolean isWin() {
-    return isWindowsPath(myPath);
-  }
-
-  public static boolean isWindowsPath(@NotNull String path) {
-    path = RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path);
-
-    return (path.length() > 1 && path.charAt(1) == ':');
-  }
-
-  private static String toSystemDependent(@NotNull String path, boolean isWin) {
-    char separator = isWin ? '\\' : '/';
-    return FileUtil.toSystemIndependentName(path).replace('/', separator);
-  }
-
-  public static RemoteFileBuilder detectSystemByPath(@NotNull String path) {
-    return new RemoteFileBuilder(isWindowsPath(path));
-  }
-
-  public static RemoteFile createRemoteFile(String path, String script) {
-    return detectSystemByPath(path).createRemoteFile(path, script);
-  }
-
-  public static RemoteFile createRemoteFile(final String path, final String script, final boolean isWindows) {
-    return new RemoteFileBuilder(isWindows).createRemoteFile(path, script);
-  }
-
-  public static class RemoteFileBuilder {
-    private final boolean isWin;
-
-    private RemoteFileBuilder(boolean win) {
-      isWin = win;
-    }
-
-    public RemoteFile createRemoteFile(String path) {
-      return new RemoteFile(path, isWin);
-    }
-
-    public RemoteFile createRemoteFile(String path, String child) {
-      return new RemoteFile(path, child, isWin);
-    }
+    super(parent, child, isWin);
   }
 }

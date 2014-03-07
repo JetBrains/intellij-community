@@ -142,10 +142,10 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
+                                                   @NotNull final Consumer<VcsUser> userRegistry, List<String> params) throws VcsException {
 
     final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
-    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, Collections.<String>emptyList()), new Function<HgCommittedChangeList, TimedVcsCommit>() {
+    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, params), new Function<HgCommittedChangeList, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(HgCommittedChangeList record) {
         HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();

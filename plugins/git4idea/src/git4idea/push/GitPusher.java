@@ -15,8 +15,6 @@
  */
 package git4idea.push;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -53,8 +52,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Collects information to push and performs the push.
- *
- * @author Kirill Likhodedov
  */
 public final class GitPusher {
 
@@ -356,8 +353,7 @@ public final class GitPusher {
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
                                 source, dest, remote, repository), e);
-        Notificator.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
-                                                        NotificationType.ERROR);
+        VcsNotifier.getInstance(project).notifyWeakError("Couldn't set up branch tracking");
       }
     }
   }
@@ -461,11 +457,11 @@ public final class GitPusher {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Nothing to push", NotificationType.INFORMATION).notify(myProject);
+     VcsNotifier.getInstance(myProject).notifyInfo("Nothing to push");
     }
     else if (result.wasErrorCancelOrNotAuthorized()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
-      result.createNotification().notify(myProject);
+      result.createPushNotificationAndNotify();
     }
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
@@ -504,7 +500,7 @@ public final class GitPusher {
 
       }
 
-      result.createNotification().notify(myProject);
+      result.createPushNotificationAndNotify();
     }
   }
 
@@ -577,7 +573,7 @@ public final class GitPusher {
         description = "Push has been cancelled, because there were conflicts during update.<br/>" +
                       "Check that conflicts were resolved correctly, and invoke push again.";
       }
-      new Notification(GitVcs.MINOR_NOTIFICATION.getDisplayId(), title, description, NotificationType.WARNING).notify(myProject);
+      VcsNotifier.getInstance(myProject).notifyMinorWarning(title, description);
       return false;
     }
     else {

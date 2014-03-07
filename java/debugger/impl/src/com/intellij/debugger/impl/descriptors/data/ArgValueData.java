@@ -18,6 +18,7 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
@@ -33,7 +34,7 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
     myDisplayName = displayName;
   }
 
-  protected ArgumentValueDescriptorImpl createDescriptorImpl(Project project) {
+  protected ArgumentValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myDisplayName);
   }
 

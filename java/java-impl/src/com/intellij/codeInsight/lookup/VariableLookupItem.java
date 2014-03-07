@@ -3,15 +3,22 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
 * @author peter
@@ -115,6 +122,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(ref);
     }
 
+    ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    makeVariableFinalIfNeeded(context, ref);
+
     final char completionChar = context.getCompletionChar();
     if (completionChar == '=') {
       context.setAddCompletionChar(false);
@@ -137,6 +147,25 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       if (ref != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
         document.insertString(ref.getTextRange().getStartOffset(), "!");
+      }
+    }
+  }
+
+  private static void makeVariableFinalIfNeeded(InsertionContext context, @Nullable PsiReferenceExpression ref) {
+    if (!Registry.is("java.completion.make.outer.variables.final") ||
+        ref == null || PsiUtil.isLanguageLevel8OrHigher(ref) || JspPsiUtil.isInJspFile(ref)) {
+      return;
+    }
+
+    PsiElement target = ref.resolve();
+    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+      PsiClass placeClass = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiClass.class, false);
+      if (placeClass != null && !PsiTreeUtil.isAncestor(placeClass, target, true) &&
+          !HighlightControlFlowUtil.isReassigned((PsiVariable)target, new HashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>())) {
+        PsiModifierList modifierList = ((PsiVariable)target).getModifierList();
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        }
       }
     }
   }

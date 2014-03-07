@@ -113,7 +113,7 @@ public class HgRegularUpdater implements HgUpdater {
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
-        HgCommandResult mergeResult = doMerge(updatedFiles, indicator, pulledBranchHeads.get(0));
+        HgCommandResult mergeResult = doMerge(indicator);
 
         if (shouldCommitAfterMerge()) {
           commitOrWarnAboutConflicts(warnings, mergeResult);
@@ -198,15 +198,13 @@ public class HgRegularUpdater implements HgUpdater {
       }
     }
 
-  private HgCommandResult doMerge(UpdatedFiles updatedFiles,
-                                  ProgressIndicator indicator,
-                                  HgRevisionNumber headToMerge) throws VcsException {
+  private HgCommandResult doMerge(ProgressIndicator indicator) throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
     HgMergeCommand mergeCommand = new HgMergeCommand(project, repoRoot);
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
 //    mergeCommand.setRevision(headToMerge.getRevision());
-    return new HgHeadMerger(project, mergeCommand).merge(repoRoot, updatedFiles, headToMerge);
+    return new HgHeadMerger(project, mergeCommand).merge(repoRoot);
   }
 
   private void abortOnLocalChanges() throws VcsException {

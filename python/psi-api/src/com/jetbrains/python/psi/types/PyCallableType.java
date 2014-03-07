@@ -34,14 +34,19 @@ public interface PyCallableType extends PyType {
   boolean isCallable();
 
   /**
-   * Returns the type which is the result of calling an instance of this type.
+   * Returns the return type of a function independent of a call site.
    *
-   * @return the call result type or null if invalid.
+   * For example, it may return a generic type.
    * @param context
-   * @param callSite
    */
   @Nullable
-  PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite);
+  PyType getReturnType(@NotNull TypeEvalContext context);
+
+  /**
+   * Returns the type which is the result of calling an instance of this type.
+   */
+  @Nullable
+  PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite);
 
   /**
    * Returns the list of parameter types.

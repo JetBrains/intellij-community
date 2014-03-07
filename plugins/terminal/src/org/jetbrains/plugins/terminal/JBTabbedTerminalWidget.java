@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,7 +15,11 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.docking.DockManager;
@@ -36,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author traff
  */
-public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable{
+public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable {
 
   private Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
@@ -44,8 +52,13 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
   public JBTabbedTerminalWidget(@NotNull Project project,
                                 @NotNull JBTerminalSystemSettingsProvider settingsProvider,
-                                @NotNull Predicate<TerminalWidget> createNewSessionAction, @NotNull Disposable parent) {
-    super(settingsProvider, createNewSessionAction);
+                                final @NotNull Predicate<Pair<TerminalWidget, String>> createNewSessionAction, @NotNull Disposable parent) {
+    super(settingsProvider, new Predicate<TerminalWidget>() {
+      @Override
+      public boolean apply(TerminalWidget input) {
+        return createNewSessionAction.apply(Pair.<TerminalWidget, String>create(input, null));
+      }
+    });
     myProject = project;
 
     mySettingsProvider = settingsProvider;
@@ -55,6 +68,26 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
     Disposer.register(parent, this);
     Disposer.register(this, settingsProvider);
+
+    DnDSupport.createBuilder(this).setDropHandler(new DnDDropHandler() {
+      @Override
+      public void drop(DnDEvent event) {
+        if (event.getAttachedObject() instanceof TransferableWrapper) {
+          TransferableWrapper ao = (TransferableWrapper)event.getAttachedObject();
+          if (ao != null &&
+              ao.getPsiElements() != null &&
+              ao.getPsiElements().length == 1 &&
+              ao.getPsiElements()[0] instanceof PsiFileSystemItem) {
+            PsiFileSystemItem element = (PsiFileSystemItem)ao.getPsiElements()[0];
+            PsiDirectory dir = element instanceof PsiFile ? ((PsiFile)element).getContainingDirectory() : (PsiDirectory)element;
+
+            createNewSessionAction.apply(Pair.<TerminalWidget, String>create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
+          }
+        }
+      }
+    }
+
+    ).install();
   }
 
   public static void convertActions(@NotNull JComponent component,
@@ -220,7 +253,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     private class TerminalTabLabel extends TabLabel {
-      public TerminalTabLabel(final JBTabsImpl tabs, TabInfo info) {
+      public TerminalTabLabel(final JBTabsImpl tabs, final TabInfo info) {
         super(tabs, info);
 
         setOpaque(false);
@@ -244,17 +277,29 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
             handleMouse(event);
           }
 
-          private void handleMouse(MouseEvent event) {
-            if (event.isPopupTrigger()) {
+          private void handleMouse(MouseEvent e) {
+            if (e.isPopupTrigger()) {
               JPopupMenu menu = createPopup();
-              menu.show(event.getComponent(), event.getX(), event.getY());
+              menu.show(e.getComponent(), e.getX(), e.getY());
             }
-            else {
+            else if (e.getButton() != MouseEvent.BUTTON2) {
               myTabs.select(getInfo(), true);
 
-              if (event.getClickCount() == 2 && !event.isConsumed()) {
-                event.consume();
+              if (e.getClickCount() == 2 && !e.isConsumed()) {
+                e.consume();
                 renameTab();
+              }
+            }
+          }
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON2) {
+              if (myTabs.getSelectedInfo() == info) {
+                closeCurrentSession();
+              }
+              else {
+                myTabs.select(info, true);
               }
             }
           }
@@ -354,14 +399,14 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       @Override
       public void dragOutFinished(MouseEvent event, TabInfo source) {
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
-        
-        
+
+
         myTabs.removeTab(source);
-        
+
         mySession.process(event);
 
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
-        
+
 
         myFile = null;
         mySession = null;

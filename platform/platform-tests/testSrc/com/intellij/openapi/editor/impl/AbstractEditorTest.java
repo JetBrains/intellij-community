@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.util.Pair;
@@ -219,5 +217,19 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   public EditorMouseFixture mouse() {
     return new EditorMouseFixture((EditorImpl)myEditor);
+  }
+
+  // for each caret its visual position and visual positions of selection start an and should be provided in the following order:
+  // caretLine, caretColumn, selectionStartLine, selectionStartColumn, selectionEndLine, selectionEndColumn
+  public static void verifyCaretsAndSelections(int... coordinates) {
+    int caretCount = coordinates.length / 6;
+    List<Caret> carets = myEditor.getCaretModel().getAllCarets();
+    assertEquals("Unexpected caret count", caretCount, carets.size());
+    for (int i = 0; i < caretCount; i++) {
+      Caret caret = carets.get(i);
+      assertEquals("Unexpected position for caret " + (i + 1), new VisualPosition(coordinates[i * 6], coordinates[i * 6 + 1]), caret.getVisualPosition());
+      assertEquals("Unexpected selection start for caret " + (i + 1), new VisualPosition(coordinates[i * 6 + 2], coordinates[i * 6 + 3]), caret.getSelectionStartPosition());
+      assertEquals("Unexpected selection end for caret " + (i + 1), new VisualPosition(coordinates[i * 6 + 4], coordinates[i * 6 + 5]), caret.getSelectionEndPosition());
+    }
   }
 }

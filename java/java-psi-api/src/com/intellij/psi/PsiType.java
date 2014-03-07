@@ -84,6 +84,15 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NonNls
   @NotNull
+  public String getCanonicalText(boolean annotated) {
+    return getCanonicalText();
+  }
+
+  /**
+   * Same as {@code getCanonicalText(false)}.
+   */
+  @NonNls
+  @NotNull
   public abstract String getCanonicalText();
 
   /**
@@ -284,24 +293,15 @@ public abstract class PsiType implements PsiAnnotationOwner {
     return getAnnotations();
   }
 
-  @NotNull
+  /** @deprecated use {@link PsiNameHelper#appendAnnotations(StringBuilder, PsiAnnotation[], boolean)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   protected String getAnnotationsTextPrefix(boolean qualified, boolean leadingSpace, boolean trailingSpace) {
     PsiAnnotation[] annotations = getAnnotations();
     if (annotations.length == 0) return "";
 
     StringBuilder sb = new StringBuilder();
     if (leadingSpace) sb.append(' ');
-    for (int i = 0; i < annotations.length; i++) {
-      if (i > 0) sb.append(' ');
-      PsiAnnotation annotation = annotations[i];
-      if (qualified) {
-        sb.append('@').append(annotation.getQualifiedName()).append(annotation.getParameterList().getText());
-      }
-      else {
-        sb.append(annotation.getText());
-      }
-    }
-    if (trailingSpace) sb.append(' ');
+    if (PsiNameHelper.appendAnnotations(sb, annotations, qualified) &&!trailingSpace) sb.setLength(sb.length() - 1);
     return sb.toString();
   }
 
@@ -309,5 +309,24 @@ public abstract class PsiType implements PsiAnnotationOwner {
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "PsiType:" + getPresentableText();
+  }
+
+  /**
+   * Temporary class to facilitate transition to {@link #getCanonicalText(boolean)}.
+   */
+  protected static abstract class Stub extends PsiType {
+    protected Stub(@NotNull PsiAnnotation[] annotations) {
+      super(annotations);
+    }
+
+    @NotNull
+    @Override
+    public final String getCanonicalText() {
+      return getCanonicalText(false);
+    }
+
+    @NotNull
+    @Override
+    public abstract String getCanonicalText(boolean annotated);
   }
 }

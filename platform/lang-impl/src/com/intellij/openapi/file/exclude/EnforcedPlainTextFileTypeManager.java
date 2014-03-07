@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ import java.util.Map;
  * @author Rustam Vishnyakov
  */
 public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
-  private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = new ConcurrentHashMap<Project, Collection<VirtualFile>>();
+  private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = new ConcurrentWeakHashMap<Project, Collection<VirtualFile>>();
   private volatile boolean mySetsInitialized = false;
   private static final Object LOCK = new Object();
 

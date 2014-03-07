@@ -69,7 +69,7 @@ public class PyStackFrame extends XStackFrame {
   }
 
   @Override
-  public void customizePresentation(ColoredTextContainer component) {
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
     component.setIcon(AllIcons.Debugger.StackFrame);
 
     if (myPosition == null) {

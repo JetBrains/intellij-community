@@ -20,6 +20,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * Something that can be called, passed parameters to, and return something back.
 
@@ -34,10 +36,24 @@ public interface Callable extends PyTypedElement, PyQualifiedNameOwner {
   PyParameterList getParameterList();
 
   /**
-   * @return the type of returned value.
+   * Returns the return type of the callable independent of a call site.
    */
   @Nullable
-  PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite);
+  PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key);
+
+  /**
+   * Returns the type of the call to the callable.
+   */
+  @Nullable
+  PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite);
+
+  /**
+   * Returns the type of the call to the callable where the call site is specified by the optional receiver and the arguments to parameters
+   * mapping.
+   */
+  @Nullable
+  PyType getCallType(@Nullable PyExpression receiver, @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                     @NotNull TypeEvalContext context);
 
   /**
    * @return a methods returns itself, non-method callables return null.

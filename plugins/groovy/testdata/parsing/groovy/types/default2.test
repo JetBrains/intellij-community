@@ -34,11 +34,10 @@ Groovy script
           <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Default annotation value
-          PsiElement(default)('default')
-          PsiWhiteSpace(' ')
-          Literal
-            PsiElement(Integer)('5')
+        PsiElement(default)('default')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('5')
         Throw clause
           <empty list>
       PsiElement(new line)('\n')

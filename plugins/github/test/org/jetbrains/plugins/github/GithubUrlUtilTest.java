@@ -90,7 +90,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     });
   }
 
-  public void testIsGithubUrl() throws Throwable {
+  public void testIsGithubUrl1() throws Throwable {
     TestCase<Boolean> tests = new TestCase<Boolean>();
 
     tests.add("http://github.com/user/repo", true);
@@ -118,13 +118,50 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     runTestCase(tests, new Convertor<String, Boolean>() {
       @Override
       public Boolean convert(String in) {
-        return isGithubUrl(in, removeTrailingSlash(removeProtocolPrefix("https://github.com/")));
+        return isGithubUrl(in, "https://github.com/");
       }
     });
     runTestCase(tests, new Convertor<String, Boolean>() {
       @Override
       public Boolean convert(String in) {
-        return isGithubUrl(in, removeTrailingSlash(removeProtocolPrefix("http://GitHub.com")));
+        return isGithubUrl(in, "http://GitHub.com");
+      }
+    });
+  }
+
+  public void testIsGithubUrl2() throws Throwable {
+    TestCase<Boolean> tests = new TestCase<Boolean>();
+
+    tests.add("http://git.code.example.co.jp/user/repo", true);
+    tests.add("https://git.code.example.co.jp/user/repo", true);
+    tests.add("git://git.code.example.co.jp/user/repo", true);
+    tests.add("git@git.code.example.co.jp:user/repo", true);
+
+    tests.add("http://git.code.example.co/user/repo", false);
+    tests.add("http://code.example.co.jp/user/repo", false);
+
+    runTestCase(tests, new Convertor<String, Boolean>() {
+      @Override
+      public Boolean convert(String in) {
+        return isGithubUrl(in, "git.code.example.co.jp");
+      }
+    });
+    runTestCase(tests, new Convertor<String, Boolean>() {
+      @Override
+      public Boolean convert(String in) {
+        return isGithubUrl(in, "http://git.code.example.co.jp");
+      }
+    });
+    runTestCase(tests, new Convertor<String, Boolean>() {
+      @Override
+      public Boolean convert(String in) {
+        return isGithubUrl(in, "https://git.code.example.co.jp/github/server");
+      }
+    });
+    runTestCase(tests, new Convertor<String, Boolean>() {
+      @Override
+      public Boolean convert(String in) {
+        return isGithubUrl(in, "git.code.example.co.jp/api");
       }
     });
   }

@@ -168,9 +168,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitNamedArgument(GrNamedArgument argument) {
-    final PsiElement parent = argument.getParent().getParent();
-    if (parent instanceof GrIndexProperty) {
-      myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
+    PsiElement parent = argument.getParent();
+    if (parent instanceof GrArgumentList) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrIndexProperty) {
+        myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
+      }
     }
   }
 
@@ -1490,13 +1493,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-    final GrAnnotationMemberValue value = defaultAnnotationValue.getDefaultValue();
+  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+    super.visitAnnotationMethod(annotationMethod);
+
+    final GrAnnotationMemberValue value = annotationMethod.getDefaultValue();
     if (value == null) return;
 
-    final PsiElement parent = defaultAnnotationValue.getParent();
-    assert parent instanceof GrAnnotationMethod;
-    final PsiType type = ((GrAnnotationMethod)parent).getReturnType();
+    final PsiType type = annotationMethod.getReturnType();
 
     Map<PsiElement, String> errors = ContainerUtil.newHashMap();
     CustomAnnotationChecker.checkAnnotationValueByType(errors, value, type, false);

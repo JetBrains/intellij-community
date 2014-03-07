@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,23 +112,39 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler.runExecuteAction(myConsole, myConsoleView);
   }
 
-  protected boolean isEnabled() {
+  public boolean isEnabled() {
     return myEnabledCondition.value(myConsole);
   }
 
+  public void execute(@Nullable TextRange range, @NotNull String text, @Nullable EditorEx editor) {
+    if (range == null) {
+      myConsole.doAddPromptToHistory();
+      DocumentEx document = myConsole.getHistoryViewer().getDocument();
+      document.insertString(document.getTextLength(), text);
+      if (!text.endsWith("\n")) {
+        document.insertString(document.getTextLength(), "\n");
+      }
+    }
+    else {
+      assert editor != null;
+      myConsole.addTextRangeToHistory(range, editor, myExecuteActionHandler.myPreserveMarkup);
+    }
+    myExecuteActionHandler.addToCommandHistoryAndExecute(myConsole, myConsoleView, text);
+  }
+
   static abstract class ConsoleExecuteActionHandler {
-    private final ConsoleHistoryModel myConsoleHistoryModel;
+    private final ConsoleHistoryModel myCommandHistoryModel;
 
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
-      myConsoleHistoryModel = new ConsoleHistoryModel();
+      myCommandHistoryModel = new ConsoleHistoryModel();
       myPreserveMarkup = preserveMarkup;
     }
 
     public ConsoleHistoryModel getConsoleHistoryModel() {
-      return myConsoleHistoryModel;
+      return myCommandHistoryModel;
     }
 
     public boolean isEmptyCommandExecutionAllowed() {
@@ -139,10 +157,12 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
     final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
-
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
+      addToCommandHistoryAndExecute(console, consoleView, text);
+    }
 
-      myConsoleHistoryModel.addToHistory(text);
+    private void addToCommandHistoryAndExecute(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView, @NotNull String text) {
+      myCommandHistoryModel.addToHistory(text);
       doExecute(text, console, consoleView);
     }
 

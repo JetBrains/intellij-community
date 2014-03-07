@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -47,10 +49,11 @@ abstract class HgAbstractGlobalAction extends AnAction {
       return;
     }
     VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
-    VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
-    List<VirtualFile> repos = HgUtil.getHgRepositories(project);
-    if (!repos.isEmpty()) {
-      execute(project, repos, repo);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    HgRepository repo = file != null ? repositoryManager.getRepositoryForFile(file): HgUtil.getCurrentRepository(project);
+    List<HgRepository> repositories = repositoryManager.getRepositories();
+    if (!repositories.isEmpty()) {
+      execute(project, repositories, repo);
     }
   }
 
@@ -62,8 +65,8 @@ abstract class HgAbstractGlobalAction extends AnAction {
   }
 
   protected abstract void execute(@NotNull Project project,
-                                  @NotNull Collection<VirtualFile> repositories,
-                                  @Nullable VirtualFile selectedRepo);
+                                  @NotNull Collection<HgRepository> repositories,
+                                  @Nullable HgRepository selectedRepo);
 
   public static void handleException(@Nullable Project project, @NotNull Exception e) {
     handleException(project, "Error", e);

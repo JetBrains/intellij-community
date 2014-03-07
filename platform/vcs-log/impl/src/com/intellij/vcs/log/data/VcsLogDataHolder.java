@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,6 +34,8 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
+import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,16 +47,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to refresh this data by
  * {@link VcsLogProvider#subscribeToRootRefreshEvents(Collection, VcsLogRefresher) events from the VCS}.</p>
- * <p>If refresh is in progress, {@link #getDataPack()} returns the previous data pack (possibly not actual anymore).
- *    When refresh completes, the data pack instance is updated. Refreshes are chained.</p>
+ * <p>When refresh is completes, a new {@link DataPack} object is generated, and all UI is updated accordingly.</p>
  *
  * <p><b>Thread-safety:</b> the class is thread-safe:
  *   <ul>
  *     <li>All write-operations made to the log and data pack are made sequentially, from the same background queue;</li>
  *     <li>Once a refresh request is received, we read logs and refs from all providers, join refresh data, join repositories,
  *         and build the new data pack sequentially in a single thread. After that we substitute the instance of the LogData object.</li>
- *     <li>Whilst we are in the middle of this refresh process, anyone who requests the data pack (and possibly the log if this would
- *         be available in the future), will get the consistent previous version of it.</li>
  *   </ul></p>
  *
  * <p><b>Initialization:</b><ul>
@@ -87,7 +85,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VcsLogDataHolder implements Disposable {
 
-  public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
+  public static final Topic<VcsLogRefreshListener> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", VcsLogRefreshListener.class);
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
@@ -209,7 +207,8 @@ public class VcsLogDataHolder implements Disposable {
     }
   }
 
-  public void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+  public void initialize(@NotNull final PairConsumer<VcsLogDataHolder, DataPack> onInitialized) {
+    final StopWatch initSw = StopWatch.start("initialize");
     // complete refresh => other scheduled refreshes are not interesting
     // TODO: interrupt the current task as well instead of waiting for it to finish, since the result is invalid anyway
     myDataLoaderQueue.clear();
@@ -225,15 +224,17 @@ public class VcsLogDataHolder implements Disposable {
             myEntireLogLoadWaiter.countDown(); // make sure to release any potential waiters of the previous latch
             myEntireLogLoadWaiter = new CountDownLatch(1);
 
-            onInitialized.consume(VcsLogDataHolder.this);
+            onInitialized.consume(VcsLogDataHolder.this, dataPack);
             loadAllLog(); // after first part is loaded and shown to the user, start loading the whole log in background
           }
         });
+        initSw.report();
       }
     }, "Loading recent history...");
   }
 
   private void readCurrentUser() {
+    StopWatch sw = StopWatch.start("readCurrentUser");
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {
@@ -249,6 +250,7 @@ public class VcsLogDataHolder implements Disposable {
         LOG.warn("Couldn't read the username from root " + root, e);
       }
     }
+    sw.report();
   }
 
   private void resetState() {
@@ -271,6 +273,7 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
+        StopWatch methodLog = StopWatch.start("loadAllLog");
         try {
           Consumer<VcsUser> userRegistry = new Consumer<VcsUser>() {
             @Override
@@ -283,13 +286,17 @@ public class VcsLogDataHolder implements Disposable {
           for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
             VirtualFile root = entry.getKey();
             VcsLogProvider logProvider = entry.getValue();
-            logs.put(root, compactHashes(logProvider.readAllHashes(root, userRegistry)));
+            StopWatch sw = StopWatch.start("readAllHashes for " + root.getName());
+            List<TimedVcsCommit> allCommits = logProvider.readAllHashes(root, userRegistry);
+            sw.report();
+            logs.put(root, compactHashes(allCommits));
             refs.put(root, logProvider.readAllRefs(root));
           }
           DataPack existingDataPack = myLogData.getDataPack();
           // keep existing data pack: we don't want to rebuild the graph,
           // we just make the whole log structure available for our cunning refresh procedure of if user requests the whole graph
           myLogData = new LogData(logs, refs, myLogData.getTopCommits(), existingDataPack, true);
+          methodLog.report();
         }
         finally {
           myEntireLogLoadWaiter.countDown();
@@ -342,13 +349,14 @@ public class VcsLogDataHolder implements Disposable {
 //        }
 
         List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-        DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator, myHashGetter, myIndexGetter);
+        final DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator,
+                                               myIndexGetter, myHashGetter, myLogProviders);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
         invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            notifyAboutDataRefresh();
+            notifyAboutDataRefresh(fullDataPack);
             onSuccess.run();
           }
         });
@@ -372,6 +380,7 @@ public class VcsLogDataHolder implements Disposable {
     if (myLogData == null || !myLogData.isFullLogReady()) {
       LOG.error("The full log is not ready!");
     }
+    StopWatch methodLog = StopWatch.start("smartRefresh");
 
     Map<VirtualFile, List<? extends TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
     Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
@@ -402,11 +411,12 @@ public class VcsLogDataHolder implements Disposable {
 
     List<? extends TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
     DataPack dataPack = DataPack.build(convertToGraphCommits(logToBuild), collectAllRefs(refsByRoot), indicator,
-                                       myHashGetter, myIndexGetter);
+                                       myIndexGetter, myHashGetter, myLogProviders);
 
     myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, true);
 
     handleOnSuccessInEdt(onSuccess, dataPack);
+    methodLog.report();
   }
 
   /**
@@ -420,6 +430,7 @@ public class VcsLogDataHolder implements Disposable {
    * doesn't change the saved log skeleton.
    */
   private void loadFromVcs(int commitCount, ProgressIndicator indicator, final Consumer<DataPack> onSuccess) throws VcsException {
+    StopWatch methodSW = StopWatch.start("loadFromVcs");
     Map<VirtualFile, List<? extends TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
     Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
 
@@ -428,17 +439,22 @@ public class VcsLogDataHolder implements Disposable {
       RecentCommitsInfo info = entry.getValue();
 
       // in this case new commits won't be attached to the log, but will substitute existing ones.
-      logsToBuild.put(root, info.firstBlockCommits);
+      List<TimedVcsCommit> firstBlockCommits = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(info.firstBlockCommits);
+      logsToBuild.put(root, firstBlockCommits);
       refsByRoot.put(root, info.newRefs);
     }
 
+    StopWatch sw = StopWatch.start("multi-repo join");
     List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+    sw.report();
 
     // even if the full log was already loaded (and possibly presented to the user),
     // build only the data that was retrieved from the VCS:
     // if it is not one of the initial refreshes, then it is filtering, and then the DataPack will change anyway.
+    sw = StopWatch.start("DataPack.build");
     DataPack dataPack = DataPack.build(convertToGraphCommits(compoundLog), collectAllRefs(refsByRoot), indicator,
-                                       myHashGetter, myIndexGetter);
+                                       myIndexGetter, myHashGetter, myLogProviders);
+    sw.report();
 
     if (myLogData != null && myLogData.isFullLogReady()) {
       // reuse the skeleton, since it didn't change, because it is not a refresh
@@ -451,22 +467,29 @@ public class VcsLogDataHolder implements Disposable {
 
     myContainingBranchesGetter.clearCache();
     handleOnSuccessInEdt(onSuccess, dataPack);
+    methodSW.report();
   }
 
   private Set<Map.Entry<VirtualFile, RecentCommitsInfo>> collectInfoFromVcs(boolean ordered, int commitsCount) throws VcsException {
+    StopWatch methodTime = StopWatch.start("collectInfoFromVcs");
     Map<VirtualFile, RecentCommitsInfo> infoByRoot = ContainerUtil.newHashMap();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsLogProvider logProvider = entry.getValue();
 
+      StopWatch sw = StopWatch.start("readFirstBlock for " + root.getName());
       List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered, commitsCount);
+      sw.report();
+      sw = StopWatch.start("readAllRefs for" + root.getName());
       Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
+      sw.report();
       storeTopCommitsDetailsInCache(firstBlockDetails);
       storeUsers(firstBlockDetails);
       List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
 
       infoByRoot.put(root, new RecentCommitsInfo(firstBlockCommits, newRefs));
     }
+    methodTime.report();
     return infoByRoot.entrySet();
   }
 
@@ -483,50 +506,40 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   public void getFilteredDetailsFromTheVcs(@NotNull final VcsLogFilterCollection filterCollection, 
-                                           @NotNull final Consumer<List<VcsFullCommitDetails>> success,
+                                           @NotNull final Consumer<List<Pair<Hash, VirtualFile>>> success,
                                            final int maxCount) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
-        final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          VirtualFile root = entry.getKey();
+          final VirtualFile root = entry.getKey();
 
           if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()) {
             // there is a structure filter, but it doesn't match this root
             continue;
           }
 
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(root, filterCollection, maxCount);
-          logs.add(getCommitsFromDetails(details));
-          for (VcsFullCommitDetails detail : details) {
-            allDetails.put(detail.getHash(), detail);
-          }
+          List<CommitWithRoot> details = ContainerUtil.map(entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount),
+                                                           new Function<TimedVcsCommit, CommitWithRoot>() {
+                                                             @Override
+                                                             public CommitWithRoot fun(TimedVcsCommit timedVcsCommit) {
+                                                               return new CommitWithRoot(root, timedVcsCommit.getHash(),
+                                                                                         timedVcsCommit.getParents(),
+                                                                                         timedVcsCommit.getTime());
+                                                             }
+                                                           });
+          logs.add(details);
         }
 
         final List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
 
-        final List<VcsFullCommitDetails> list = ContainerUtil.mapNotNull(compoundLog, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
+        final List<Pair<Hash, VirtualFile>> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Pair<Hash, VirtualFile>>() {
           @Override
-          public VcsFullCommitDetails fun(TimedVcsCommit commit) {
-            VcsFullCommitDetails detail = allDetails.get(commit.getHash());
-            if (detail == null) {
-              String message = "Details not stored for commit " + commit;
-              if (LOG.isDebugEnabled()) {
-                LOG.error(message, new Attachment("filtered_details", allDetails.toString()),
-                                   new Attachment("compound_log", compoundLog.toString()));
-              }
-              else {
-                LOG.error(message);
-              }
-            }
-            return detail;
+          public Pair<Hash, VirtualFile> fun(TimedVcsCommit timedVcsCommit) {
+            return Pair.create(timedVcsCommit.getHash(), ((CommitWithRoot)timedVcsCommit).myRoot);
           }
         });
-
-        myDetailsGetter.saveInCache(list);
-        myMiniDetailsGetter.saveInCache(list);
 
         invokeAndWait(new Runnable() {
           @Override
@@ -536,6 +549,16 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Looking for more results...");
+  }
+
+  private static class CommitWithRoot extends TimedVcsCommitImpl {
+
+    @NotNull private final VirtualFile myRoot;
+
+    public CommitWithRoot(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
+      super(hash, parents, timeStamp);
+      myRoot = root;
+    }
   }
 
   @NotNull
@@ -584,6 +607,23 @@ public class VcsLogDataHolder implements Disposable {
 
   public ContainingBranchesGetter getContainingBranchesGetter() {
     return myContainingBranchesGetter;
+  }
+
+  @Nullable
+  public Hash findHashByString(@NotNull String string) {
+    final String pHash = string.toLowerCase();
+    try {
+      return myHashMap.findHash(new Condition<Hash>() {
+        @Override
+        public boolean value(@NotNull Hash hash) {
+          return hash.toString().toLowerCase().startsWith(pHash);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   private static class RecentCommitsInfo {
@@ -646,14 +686,14 @@ public class VcsLogDataHolder implements Disposable {
     });
   }
 
-  private void refresh(@NotNull final Runnable onSuccess) {
+  private void refresh(@NotNull final Consumer<DataPack> onSuccess) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         Consumer<DataPack> success = new Consumer<DataPack>() {
           @Override
           public void consume(DataPack dataPack) {
-            onSuccess.run();
+            onSuccess.consume(dataPack);
           }
         };
 
@@ -672,10 +712,10 @@ public class VcsLogDataHolder implements Disposable {
    * It fairly retrieves the data from the VCS and rebuilds the whole log.
    */
   public void refreshCompletely() {
-    initialize(new Consumer<VcsLogDataHolder>() {
+    initialize(new PairConsumer<VcsLogDataHolder, DataPack>() {
       @Override
-      public void consume(VcsLogDataHolder holder) {
-        notifyAboutDataRefresh();
+      public void consume(VcsLogDataHolder holder, DataPack dataPack) {
+        notifyAboutDataRefresh(dataPack);
       }
     });
   }
@@ -686,10 +726,10 @@ public class VcsLogDataHolder implements Disposable {
    */
   public void refresh(@NotNull VirtualFile root) {
     // TODO refresh only the given root, not all roots
-    refresh(new Runnable() {
+    refresh(new Consumer<DataPack>() {
       @Override
-      public void run() {
-        notifyAboutDataRefresh();
+      public void consume(@NotNull DataPack dataPack) {
+        notifyAboutDataRefresh(dataPack);
       }
     });
   }
@@ -702,19 +742,14 @@ public class VcsLogDataHolder implements Disposable {
     refresh(root);
   }
 
-  @NotNull
-  public DataPack getDataPack() {
-    return myLogData.getDataPack();
-  }
-
   @Nullable
   public VcsFullCommitDetails getTopCommitDetails(@NotNull Hash hash) {
     return myTopCommitsDetailsCache.get(hash);
   }
 
-  private void notifyAboutDataRefresh() {
+  private void notifyAboutDataRefresh(DataPack dataPack) {
     if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+      myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).refresh(dataPack);
     }
   }
 

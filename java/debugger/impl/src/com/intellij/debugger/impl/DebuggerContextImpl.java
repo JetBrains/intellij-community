@@ -42,23 +42,30 @@ import org.jetbrains.annotations.Nullable;
 public final class DebuggerContextImpl implements DebuggerContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerContextImpl");
 
-  public static final DebuggerContextImpl EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext((DebuggerSession) null, null, null, null);
+  public static final DebuggerContextImpl EMPTY_CONTEXT = createDebuggerContext((DebuggerSession)null, null, null, null);
 
   private boolean myInitialized;
 
   @Nullable
-  private final DebuggerSession      myDebuggerSession;
-  private final DebugProcessImpl     myDebugProcess;
-  private final SuspendContextImpl   mySuspendContext;
+  private final DebuggerSession myDebuggerSession;
+  private final DebugProcessImpl myDebugProcess;
+  private final SuspendContextImpl mySuspendContext;
   private final ThreadReferenceProxyImpl myThreadProxy;
 
-  private       StackFrameProxyImpl  myFrameProxy;
-  private       SourcePosition       mySourcePosition;
-  private       PsiElement           myContextElement;
+  private StackFrameProxyImpl myFrameProxy;
+  private SourcePosition mySourcePosition;
+  private PsiElement myContextElement;
 
-  private DebuggerContextImpl(@Nullable DebuggerSession session, DebugProcessImpl debugProcess, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy, SourcePosition position, PsiElement contextElement, boolean initialized) {
+  private DebuggerContextImpl(@Nullable DebuggerSession session,
+                              @Nullable DebugProcessImpl debugProcess,
+                              @Nullable SuspendContextImpl context,
+                              ThreadReferenceProxyImpl threadProxy,
+                              StackFrameProxyImpl frameProxy,
+                              SourcePosition position,
+                              PsiElement contextElement,
+                              boolean initialized) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
-    LOG.assertTrue(debugProcess == null ? frameProxy == null && threadProxy == null : true);
+    LOG.assertTrue(debugProcess != null || frameProxy == null && threadProxy == null);
     myDebuggerSession = session;
     myThreadProxy = threadProxy;
     myFrameProxy = frameProxy;
@@ -74,6 +81,8 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myDebuggerSession;
   }
 
+  @Nullable
+  @Override
   public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
@@ -82,14 +91,17 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myThreadProxy;
   }
 
+  @Override
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
   }
 
+  @Override
   public Project getProject() {
     return myDebugProcess != null ? myDebugProcess.getProject() : null;
   }
 
+  @Override
   @Nullable
   public StackFrameProxyImpl getFrameProxy() {
     LOG.assertTrue(myInitialized);
@@ -129,7 +141,10 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);
   }
 
-  public static DebuggerContextImpl createDebuggerContext(DebuggerSession session, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy) {
+  public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
+                                                          @Nullable SuspendContextImpl context,
+                                                          ThreadReferenceProxyImpl threadProxy,
+                                                          StackFrameProxyImpl frameProxy) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     LOG.assertTrue(session == null || session.getProcess() != null);
     return new DebuggerContextImpl(session, session != null ? session.getProcess() : null, context, threadProxy, frameProxy, null, null, context == null);
@@ -144,13 +159,14 @@ public final class DebuggerContextImpl implements DebuggerContext {
         try {
           myFrameProxy = myThreadProxy.frameCount() > 0 ? myThreadProxy.frame(0) : null;
         }
-        catch (EvaluateException e) {
+        catch (EvaluateException ignored) {
         }
       }
     }
 
-    if(myFrameProxy != null) {
+    if (myFrameProxy != null) {
       PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Runnable() {
+        @Override
         public void run() {
           if (mySourcePosition == null) {
             mySourcePosition = ContextUtil.getSourcePosition(DebuggerContextImpl.this);

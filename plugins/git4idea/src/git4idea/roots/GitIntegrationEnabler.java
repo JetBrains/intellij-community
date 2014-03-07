@@ -15,132 +15,58 @@
  */
 package git4idea.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.roots.VcsIntegrationEnabler;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.Notificator;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+public class GitIntegrationEnabler extends VcsIntegrationEnabler<GitVcs> {
 
-import static com.intellij.dvcs.DvcsUtil.joinRootsPaths;
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
-
-/**
- * @author Kirill Likhodedov
- */
-public class GitIntegrationEnabler {
-
-  private final @NotNull Project myProject;
   private final @NotNull Git myGit;
-  private final @NotNull GitPlatformFacade myPlatformFacade;
 
   private static final Logger LOG = Logger.getInstance(GitIntegrationEnabler.class);
 
-  public GitIntegrationEnabler(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
-    myProject = project;
+  public GitIntegrationEnabler(@NotNull GitVcs vcs, @NotNull Git git) {
+    super(vcs);
     myGit = git;
-    myPlatformFacade = platformFacade;
   }
 
-  public void enable(@NotNull Collection<VcsRoot> vcsRoots) {
-    Notificator notificator = myPlatformFacade.getNotificator(myProject);
-    Collection<VcsRoot> gitRoots = ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {
-      @Override
-      public boolean value(VcsRoot root) {
-        AbstractVcs vcs = root.getVcs();
-        return vcs != null && vcs.getName().equals(GitVcs.NAME);
-      }
-    });
-    Collection<VirtualFile> roots = VcsRootErrorsFinder.vcsRootsToVirtualFiles(gitRoots);
-    VirtualFile projectDir = myProject.getBaseDir();
-    assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
-
-    if (gitRoots.isEmpty()) {
-      boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
-      if (succeeded) {
-        addVcsRoots(Collections.singleton(projectDir));
-      }
-    }
-    else {
-      assert !roots.isEmpty();
-      if (roots.size() > 1 || isProjectBelowVcs(roots)) {
-        notifyAddedRoots(notificator, roots);
-      }
-      addVcsRoots(roots);
-    }
-  }
-
-  private boolean isProjectBelowVcs(@NotNull Collection<VirtualFile> gitRoots) {
-    //check if there are vcs roots strictly above the project dir
-    VirtualFile baseDir = myProject.getBaseDir();
-    for (VirtualFile root : gitRoots) {
-      if (VfsUtilCore.isAncestor(root, baseDir, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static void notifyAddedRoots(Notificator notificator, Collection<VirtualFile> roots) {
-    notificator.notifySuccess("", String.format("Added Git %s: %s", pluralize("root", roots.size()), joinRootsPaths(roots)));
-  }
-
-  private boolean gitInitOrNotifyError(@NotNull Notificator notificator, @NotNull final VirtualFile projectDir) {
+  protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
+    VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
     GitCommandResult result = myGit.init(myProject, projectDir);
     if (result.success()) {
       refreshGitDir(projectDir);
-      notificator.notifySuccess("", "Created Git repository in " + projectDir.getPresentableUrl());
+      vcsNotifier.notifySuccess("Created Git repository in " + projectDir.getPresentableUrl());
       return true;
     }
     else {
-      if (((GitVcs)myPlatformFacade.getVcs(myProject)).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-        notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
+      if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        vcsNotifier.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
         LOG.info(result.getErrorOutputAsHtmlString());
       }
       return false;
     }
   }
 
-  private void refreshGitDir(final VirtualFile projectDir) {
+  private static void refreshGitDir(final VirtualFile projectDir) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myPlatformFacade.runReadAction(new Runnable() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(projectDir.getPath() + "/.git");
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + GitUtil.DOT_GIT);
           }
         });
       }
     });
-  }
-
-  private void addVcsRoots(@NotNull Collection<VirtualFile> roots) {
-    ProjectLevelVcsManager vcsManager = myPlatformFacade.getVcsManager(myProject);
-    AbstractVcs vcs = myPlatformFacade.getVcs(myProject);
-    List<VirtualFile> currentGitRoots = Arrays.asList(vcsManager.getRootsUnderVcs(vcs));
-
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings(vcs));
-
-    for (VirtualFile root : roots) {
-      if (!currentGitRoots.contains(root)) {
-        mappings.add(new VcsDirectoryMapping(root.getPath(), vcs.getName()));
-      }
-    }
-    vcsManager.setDirectoryMappings(mappings);
   }
 }

@@ -50,7 +50,10 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
   private final XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
+
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
+  private final DebuggerActionHandler myEvaluateInConsoleActionHandler = new XEvaluateInConsoleFromEditorActionHandler();
+
   private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
   private final DebuggerActionHandler mySmartStepIntoHandler;
   private final XMarkObjectActionHandler myMarkObjectActionHandler;
@@ -222,6 +225,12 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myAddToWatchesActionHandler;
   }
 
+  @NotNull
+  @Override
+  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+    return myEvaluateInConsoleActionHandler;
+  }
+
   @Override
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
@@ -250,5 +259,4 @@ public class XDebuggerSupport extends DebuggerSupport {
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return mySettingsPanelProvider;
   }
-
 }

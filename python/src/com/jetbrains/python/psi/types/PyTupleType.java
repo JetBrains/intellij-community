@@ -63,7 +63,7 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return true;
   }
 

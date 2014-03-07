@@ -39,7 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remotesdk.RemoteCredentials;
+import com.intellij.remote.RemoteCredentials;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
@@ -257,7 +257,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
-      .show(myProject, myProjectSdksModel.getSdks(), this, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(), false,
+      .show(myProject, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
             new NullableConsumer<Sdk>() {
               @Override
               public void consume(Sdk sdk) {

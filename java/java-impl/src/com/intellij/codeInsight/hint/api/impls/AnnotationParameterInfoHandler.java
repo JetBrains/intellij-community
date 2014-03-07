@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,9 +118,9 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(p.getReturnType().getPresentableText());
     buffer.append(" ");
-    int highlightStartOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+    int highlightStartOffset = buffer.length();
     buffer.append(p.getName());
-    int highlightEndOffset = XmlStringUtil.escapeString(buffer.toString()).length();
+    int highlightEndOffset = buffer.length();
     buffer.append("()");
 
     if (p.getDefaultValue() != null) {

@@ -25,9 +25,9 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.configuration.PythonSdkDetailsDialog;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkDetailsStep;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,14 +63,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     });
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final List<Sdk> sdks = PythonSdkType.getAllSdks();
-        PythonSdkDetailsDialog dialog = new PythonSdkDetailsDialog(project, new NullableConsumer<Sdk>() {
-          @Override
-          public void consume(@Nullable Sdk sdk) {
-            comboBox.setModel(new CollectionComboBoxModel(sdks, sdk));
-          }
-        });
-        dialog.show();
+        showOptions(project);
         notifyChanged(e);
       }
     });
@@ -79,6 +72,19 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         notifyChanged(e);
       }
     });
+  }
+
+  private void showOptions(final Project project) {
+    final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
+    final Sdk[] sdks = interpreterList.getModel().getSdks();
+    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
+        @Override
+        public void consume(@Nullable Sdk sdk) {
+          //noinspection unchecked
+          getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
+        }
+      }
+    );
   }
 
   private void notifyChanged(ActionEvent e) {

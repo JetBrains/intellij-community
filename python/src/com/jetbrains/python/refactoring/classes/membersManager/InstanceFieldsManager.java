@@ -8,7 +8,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +17,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 class InstanceFieldsManager extends FieldsManager {
+  private static final FieldsOnly FIELDS_ONLY = new FieldsOnly();
 
   // PY-12170
 
@@ -92,8 +92,8 @@ class InstanceFieldsManager extends FieldsManager {
 
   @NotNull
   @Override
-  protected List<PyTargetExpression> getFieldsByClass(@NotNull final PyClass pyClass) {
-    return pyClass.getInstanceAttributes();
+  protected Collection<PyTargetExpression> getFieldsByClass(@NotNull final PyClass pyClass) {
+    return Collections2.filter(pyClass.getInstanceAttributes(), FIELDS_ONLY);
   }
 
   private static class InitsOnly extends NotNullPredicate<PyAssignmentStatement> {
@@ -113,6 +113,13 @@ class InstanceFieldsManager extends FieldsManager {
 
       final PyFunction functionWhereDeclared = PsiTreeUtil.getParentOfType(PyUtil.resolveToTheTop(expression), PyFunction.class);
       return myInitMethod.equals(functionWhereDeclared);
+    }
+  }
+
+  private static class FieldsOnly extends NotNullPredicate<PyTargetExpression> {
+    @Override
+    protected boolean applyNotNull(@NotNull final PyTargetExpression input) {
+      return input.getReference().resolve() instanceof PyTargetExpression;
     }
   }
 }

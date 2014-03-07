@@ -143,7 +143,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true);
       if (replaceParameters) {
         String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.IDEA_INPUT_FIELDS_XML, text, project, dir, stream, false);
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false);
       }
 
       FileIndex index = moduleToSave == null

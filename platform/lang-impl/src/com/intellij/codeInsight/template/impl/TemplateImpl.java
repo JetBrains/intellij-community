@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -176,24 +175,35 @@ public class TemplateImpl extends Template implements SchemeElement {
   @Override
   public TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, myString, myGroupName);
-    template.myId = myId;
-    template.myDescription = myDescription;
-    template.myShortcutChar = myShortcutChar;
-    template.isToReformat = isToReformat;
-    template.isToShortenLongNames = isToShortenLongNames;
-    template.myIsInline = myIsInline;
-    template.myTemplateContext = myTemplateContext.createCopy();
-    template.isDeactivated = isDeactivated;
+    template.resetFrom(this);
+    return template;
+  }
+
+  public void resetFrom(TemplateImpl another) {
+    removeAllParsed();
+    toParseSegments = another.toParseSegments;
+
+    myKey = another.getKey();
+    myString = another.myString;
+    myTemplateText = another.myTemplateText;
+    myGroupName = another.myGroupName;
+    myId = another.myId;
+    myDescription = another.myDescription;
+    myShortcutChar = another.myShortcutChar;
+    isToReformat = another.isToReformat;
+    isToShortenLongNames = another.isToShortenLongNames;
+    myIsInline = another.myIsInline;
+    myTemplateContext = another.myTemplateContext.createCopy();
+    isDeactivated = another.isDeactivated;
     for (Property property : Property.values()) {
-      boolean value = getValue(property);
+      boolean value = another.getValue(property);
       if (value != Template.getDefaultValue(property)) {
-        template.setValue(property, value);
+        setValue(property, value);
       }
     }
-    for (Variable variable : myVariables) {
-      template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
+    for (Variable variable : another.myVariables) {
+      addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
     }
-    return template;
   }
 
   public boolean isToReformat() {
@@ -436,14 +446,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     return context;
   }
 
-  public Map<TemplateContextType, Boolean> createContext(){
-
-    Map<TemplateContextType, Boolean> context = new LinkedHashMap<TemplateContextType, Boolean>();
-    for (TemplateContextType processor : TemplateManagerImpl.getAllContextTypes()) {
-      context.put(processor, getTemplateContext().isEnabled(processor));
-    }
-    return context;
-
+  public TemplateContext createContext() {
+    return getTemplateContext().createCopy();
   }
 
   public boolean contextsEqual(TemplateImpl defaultTemplate) {
@@ -456,10 +460,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
   }
 
-  public void applyContext(final Map<TemplateContextType, Boolean> context) {
-    for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
-      getTemplateContext().setEnabled(entry.getKey(), entry.getValue().booleanValue());
-    }
+  public void applyContext(final TemplateContext context) {
+    myTemplateContext = context.createCopy();
   }
 
   public boolean skipOnStart(int i) {

@@ -205,9 +205,7 @@ public class GroovyExpectedTypesProvider {
     }
 
     @Override
-    public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-      final GrAnnotationMethod method = ((GrAnnotationMethod)defaultAnnotationValue.getParent());
-
+    public void visitAnnotationMethod(GrAnnotationMethod method) {
       PsiType type = method.getReturnType();
       if (type != null && isAcceptableAnnotationValueType(type)) {
         myResult = createSimpleSubTypeResult(type);
@@ -216,7 +214,7 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
-      final GrAnnotationNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationNameValuePair.class, true, GrDefaultAnnotationValue.class);
+      final GrAnnotationNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationNameValuePair.class, true, GrAnnotationMethod.class);
       if (nameValuePair != null) {
 
         final PsiClass annot = ResolveUtil.resolveAnnotation(arrayInitializer);

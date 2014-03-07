@@ -1,5 +1,6 @@
-// "Cast to 'java.lang.Integer'" "true"
+// "Cast to 'java.util.List<java.lang.Integer>'" "true"
 import java.lang.annotation.*;
+import java.util.*;
 import static java.lang.annotation.ElementType.*;
 
 @Target({TYPE_USE}) @interface TA { }
@@ -7,6 +8,6 @@ import static java.lang.annotation.ElementType.*;
 class C {
   {
     Object o = null;
-    @TA <caret>Integer i = o;
+    @TA <caret>List<@TA Integer> i = o;
   }
 }

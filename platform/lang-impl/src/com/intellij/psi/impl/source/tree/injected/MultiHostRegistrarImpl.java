@@ -27,7 +27,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -301,17 +300,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   @NotNull
-  public static Document createDocument(@NotNull LightVirtualFile virtualFile) {
-    DocumentImpl document;
+  private static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
     CharSequence content = virtualFile.getContent();
-    if (StringUtil.indexOf(content, '\r') == -1) {
-      document = new DocumentImpl(content);
-    }
-    else {
-      document = new DocumentImpl("", true);
-      document.setAcceptSlashR(true);
-      document.replaceString(0, 0, content);
-    }
+    DocumentImpl document = new DocumentImpl(content, StringUtil.indexOf(content, '\r') >= 0, false);
     FileDocumentManagerImpl.registerDocument(document, virtualFile);
     return document;
   }

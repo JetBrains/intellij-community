@@ -53,8 +53,8 @@ public class ContextUtil {
     try {
       location = frameProxy.location();
     }
-    catch (Throwable th) {
-      LOG.debug(th);
+    catch (Throwable e) {
+      LOG.debug(e);
     }
     final CompoundPositionManager positionManager = debugProcess.getPositionManager();
     if (positionManager == null) {
@@ -63,7 +63,8 @@ public class ContextUtil {
     }
     try {
       return positionManager.getSourcePosition(location);
-    } catch (IndexNotReadyException e) {
+    }
+    catch (IndexNotReadyException ignored) {
       return null;
     }
   }
@@ -124,10 +125,10 @@ public class ContextUtil {
       }
       return codeBlockFromText;
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
       return element;
     }
-    catch (EvaluateException e) {
+    catch (EvaluateException ignored) {
       return element;
     }
     finally {

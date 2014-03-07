@@ -76,7 +76,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myProject = project;
   }
 
-  public boolean isArray() { 
+  @Override
+  public boolean isArray() {
     return myValue instanceof ArrayReference; 
   }
   
@@ -84,11 +85,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myIsDirty; 
   }
   
-  public boolean isLvalue() { 
+  @Override
+  public boolean isLvalue() {
     return myIsLvalue; 
   }
   
-  public boolean isNull() { 
+  @Override
+  public boolean isNull() {
     return myValue == null; 
   }
 
@@ -97,6 +100,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValue instanceof StringReference;
   }
 
+  @Override
   public boolean isPrimitive() {
     return myValue instanceof PrimitiveValue; 
   }
@@ -113,6 +117,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myShowIdLabel = showIdLabel;
   }
 
+  @Override
   public Value getValue() {
     // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
     // to keep temporary objects
@@ -124,6 +129,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
         evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+          @Override
           public void contextAction() throws Exception {
             // re-setting the context will cause value recalculation
             try {
@@ -134,6 +140,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             }
           }
 
+          @Override
           protected void commandCancelled() {
             semaphore.up();
           }
@@ -145,12 +152,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValue; 
   }
   
+  @Override
   public boolean isExpandable() {
     return myIsExpandable;
   }
 
   public abstract Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
+  @Override
   public final void setContext(EvaluationContextImpl evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myStoredEvaluationContext = evaluationContext;
@@ -170,7 +179,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
           }
         }
-        catch (ObjectCollectedException e) {
+        catch (ObjectCollectedException ignored) {
           myIsDirty = true;
         }
       }
@@ -227,6 +236,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return exceptionObj;
   }
 
+  @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
@@ -237,6 +247,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsLvalue = value;
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
@@ -288,18 +299,21 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
 
+  @Override
   public String setValueLabel(String label) {
     final String customLabel = getCustomLabel(label);
     myValueLabel = customLabel;
     return setLabel(calcValueName() + " = " + customLabel);
   }
 
+  @Override
   public String setValueLabelFailed(EvaluateException e) {
     final String label = setFailed(e);
     setValueLabel(label);
     return label;
   }
 
+  @Override
   public Icon setValueIcon(Icon icon) {
     return myValueIcon = icon;
   }
@@ -311,6 +325,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public abstract String calcValueName();
 
+  @Override
   public void displayAs(NodeDescriptor descriptor) {
     if (descriptor instanceof ValueDescriptorImpl) {
       ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
@@ -370,6 +385,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   //use 'this' to reference parent node
   //for ex. FieldDescriptorImpl should return
   //this.fieldName
+  @Override
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
@@ -425,12 +441,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   //Context is set to null
+  @Override
   public void clear() {
     super.clear();
     setValueLabel("");
     myIsExpandable = false;
   }
 
+  @Override
   @Nullable
   public ValueMarkup getMarkup(final DebugProcess debugProcess) {
     final Value value = getValue();
@@ -444,6 +462,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return null;
   }
 
+  @Override
   public void setMarkup(final DebugProcess debugProcess, @Nullable final ValueMarkup markup) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {

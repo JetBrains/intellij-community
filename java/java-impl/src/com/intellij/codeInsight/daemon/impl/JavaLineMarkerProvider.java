@@ -81,6 +81,13 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
       }
     }
 
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
+    if (interfaceMethod != null) {
+      final Icon icon = AllIcons.Gutter.ImplementingMethod;
+      final MarkerType type = MarkerType.OVERRIDING_METHOD;
+      return new ArrowUpLineMarkerInfo(element, icon, type);
+    }
+
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;

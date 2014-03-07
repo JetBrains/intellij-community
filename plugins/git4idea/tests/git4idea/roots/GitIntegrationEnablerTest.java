@@ -15,110 +15,106 @@
  */
 package git4idea.roots;
 
-import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.test.GitLightTest;
-import git4idea.test.TestNotificator;
+import git4idea.GitVcs;
+import git4idea.commands.Git;
+import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
-import static org.junit.Assert.*;
 
-/**
- * @author Nadya Zabrodina
- */
-public class GitIntegrationEnablerTest extends GitLightTest {
+public class GitIntegrationEnablerTest extends UsefulTestCase {
 
-  public AbstractVcs myVcs;
+  public Project myProject;
+  protected VirtualFile myProjectRoot;
+  protected VirtualFile myTestRoot;
+  public GitVcs myVcs;
+  public Git myGit;
 
-  @Override
-  @Before
-  public void setUp() {
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public GitIntegrationEnablerTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
+  public void setUp() throws Exception {
     super.setUp();
-    myVcs = myPlatformFacade.getVcs(myProject);
+    IdeaProjectTestFixture projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+    projectFixture.setUp();
+    myProject = projectFixture.getProject();
+    myVcs = GitVcs.getInstance(myProject);
+    myProjectRoot = myProject.getBaseDir();
+    myTestRoot = myProjectRoot.getParent();
+    myGit = ServiceManager.getService(myProject, Git.class);
   }
 
-  @After
-  public void tearDown() {
-    super.tearDown();
+  public void testOneRootForTheWholeProjectThenJustAddVcsRoot() {
+    doTest(given("."), null, null);
   }
 
-  @Test
-  public void oneRootForTheWholeProjectThenJustAddVcsrRoot() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Collections.<String>emptyList());
-    doTest(given(Arrays.asList(".")),
-           map, null);
+  public void testNoGitRootsThenInitAndNotify() {
+    doTest(given(),
+           notification("Created Git repository in " + myProjectRoot.getPresentableUrl()), ".", VcsTestUtil.toAbsolute(".", myProject));
   }
 
-  @Test
-  public void noGitRootsThenInitAndNotify() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Arrays.asList("."));
-    map.put("vcs_roots", VcsTestUtil.toAbsolute(Arrays.asList("."), myProject));
-
-
-    doTest(given(Collections.<String>emptyList()),
-           map, notification("Created Git repository in " + myProjectRoot));
+  public void testBelowGitNoInsideThenNotify() {
+    doTest(given(".."),
+           notification("Added Git root: " + myTestRoot.getPresentableUrl()));
   }
 
-  @Test
-  public void belowGitNoInsideThenNotify() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Collections.<String>emptyList());
-
-    doTest(given(Arrays.asList("..")),
-           map, notification("Added Git root: " + myTestRoot));
+  public void testGitForProjectSomeInsideThenNotify() {
+    doTest(given(".", "community"),
+           notification("Added Git roots: " + myProjectRoot.getPresentableUrl() + ", " + getPresentationForRoot("community")));
   }
 
-  @Test
-  public void gitForProjectSomeInsideThenNotify() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Collections.<String>emptyList());
-
-    doTest(given(Arrays.asList(".", "community")),
-           map, notification("Added Git roots: " + myProjectRoot + ", " + getPresentationForRoot("community")));
+  public void testBelowGitSomeInsideThenNotify() {
+    doTest(given("..", "community"),
+           notification("Added Git roots: " + myTestRoot.getPresentableUrl() + ", " + getPresentationForRoot("community")));
   }
 
-  @Test
-  public void belowGitSomeInsideThenNotify() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Collections.<String>emptyList());
-
-    doTest(given(Arrays.asList("..", "community")),
-           map, notification("Added Git roots: " + myTestRoot + ", " + getPresentationForRoot("community")));
+  public void testNotUnderGitSomeInsideThenNotify() {
+    doTest(given("community", "contrib"),
+           notification(
+             "Added Git roots: " + getPresentationForRoot("community") + ", " + getPresentationForRoot("contrib"))
+    );
   }
 
-  @Test
-  public void notUnderGitSomeInsideThenNotify() {
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    map.put("git_init", Collections.<String>emptyList());
+  private void doTest(@NotNull Collection<VcsRoot> vcsRoots,
+                      @Nullable Notification notification
 
-    doTest(given(Arrays.asList("community", "contrib")),
-           map, notification(
-      "Added Git roots: " + getPresentationForRoot("community") + ", " + getPresentationForRoot("contrib")));
+  ) {
+    doTest(vcsRoots, notification, null);
   }
 
-  private void doTest(@NotNull Collection<VcsRoot> vcsRoots, @NotNull Map<String, List<String>> map, @Nullable Notification notification) {
+  private void doTest(@NotNull Collection<VcsRoot> vcsRoots,
+                      @Nullable Notification notification,
+                      @Nullable String git_init,
+                      @NotNull String... vcs_roots) {
 
+    List<String> vcsRootsList = ContainerUtil.newArrayList(vcs_roots);
     //default
-    if (map.get("vcs_roots") == null) {
-      map.put("vcs_roots", ContainerUtil.map(vcsRoots, new Function<VcsRoot, String>() {
+    if (vcsRootsList.isEmpty()) {
+      vcsRootsList.addAll(ContainerUtil.map(vcsRoots, new Function<VcsRoot, String>() {
 
         @Override
         public String fun(VcsRoot root) {
@@ -127,32 +123,30 @@ public class GitIntegrationEnablerTest extends GitLightTest {
         }
       }));
     }
-
-    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(vcsRoots);
-
-    assertVcsRoots(map.get("vcs_roots"));
-    assertGitInit(map.get("git_init"));
-    assertNotificationShown(notification);
+    new GitIntegrationEnabler(myVcs, myGit).enable(vcsRoots);
+    assertVcsRoots(vcsRootsList);
+    if (git_init != null) {
+      assertGitInit(git_init);
+    }
+    GitTestUtil.assertNotificationShown(myProject, notification);
   }
 
-  void assertGitInit(@NotNull Collection<String> roots) {
-    for (String root : roots) {
-      File rootFile = new File(myProjectRoot, root);
-      assertTrue(new File(rootFile.getPath(), GitUtil.DOT_GIT).exists());
-    }
+  void assertGitInit(@NotNull String root) {
+    File rootFile = new File(myProjectRoot.getPath(), root);
+    assertTrue(new File(rootFile.getPath(), GitUtil.DOT_GIT).exists());
   }
 
   void assertVcsRoots(@NotNull Collection<String> expectedVcsRoots) {
-    VirtualFile[] actualRoots = myPlatformFacade.getVcsManager(myProject).getRootsUnderVcs(myPlatformFacade.getVcs(myProject));
+    List<VirtualFile> actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(myVcs);
     VcsTestUtil.assertEqualCollections(expectedVcsRoots, getPaths(actualRoots));
   }
 
-  Collection<VcsRoot> given(@NotNull Collection<String> roots) {
+  private Collection<VcsRoot> given(@NotNull String... roots) {
     return ContainerUtil.map(roots, new Function<String, VcsRoot>() {
 
       @Override
       public VcsRoot fun(String s) {
-        return new VcsRoot(myVcs, new MockVirtualFile(VcsTestUtil.toAbsolute(s, myProject)));
+        return new VcsRoot(myVcs, VcsUtil.getVirtualFile(VcsTestUtil.toAbsolute(s, myProject)));
       }
     });
   }
@@ -161,30 +155,8 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     return new Notification("Test", "", content, NotificationType.INFORMATION);
   }
 
-  void assertNotificationShown(@Nullable Notification expected) {
-    if (expected != null) {
-      Notification actualNotification = ((TestNotificator)myPlatformFacade.getNotificator(myProject)).getLastNotification();
-      assertNotNull("No notification was shown", actualNotification);
-      assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
-      assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
-      assertEquals("Notification has wrong content", adjustTestContent(expected.getContent()), actualNotification.getContent());
-    }
-  }
-
-  // we allow more spaces and line breaks in tests to make them more readable.
-  // After all, notifications display html, so all line breaks and extra spaces are ignored.
-  String adjustTestContent(@NotNull String s) {
-    StringBuilder res = new StringBuilder();
-    String[] splits = s.split("\n");
-    for (String split : splits) {
-      res.append(split.trim());
-    }
-
-    return res.toString();
-  }
-
   @NotNull
-  public static Collection<String> getPaths(@NotNull VirtualFile[] virtualFiles) {
+  public static Collection<String> getPaths(@NotNull List<VirtualFile> virtualFiles) {
     return ContainerUtil.map(virtualFiles, new Function<VirtualFile, String>() {
 
       @Override

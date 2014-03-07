@@ -19,10 +19,10 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -36,14 +36,14 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+    Set<String> candidates = new HashSet<String>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
     UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);
     return candidates;
   }
 
-  private static void collectPythonInstallations(String pythonPath, List<String> candidates) {
+  private static void collectPythonInstallations(String pythonPath, Set<String> candidates) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
     if (rootVDir != null) {
       if (rootVDir instanceof NewVirtualFile) {
@@ -63,7 +63,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
                 if (FileSystemUtil.isSymLink(path)) {
                   path = FileSystemUtil.resolveSymLink(path);
                 }
-                if (path != null) {
+                if (path != null && !candidates.contains(path)) {
                   candidates.add(path);
                   break;
                 }

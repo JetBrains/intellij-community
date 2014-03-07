@@ -36,7 +36,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public final void execute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
+  public final void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
@@ -74,9 +74,9 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   /**
-   * This method exists for historical reasons. For most purposes one should use/override
+   * @deprecated Use/override
    * {@link #executeWriteAction(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
-   * method.
+   * instead.
    */
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     if (inExecution) {
@@ -97,6 +97,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     }
     try {
       inExecution = true;
+      //noinspection deprecation
       executeWriteAction(editor, dataContext);
     }
     finally {

@@ -506,12 +506,16 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
-        holder.registerProblem(expr, text, new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())){
-          @Override
-          public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-            return 1;
-          }
-        });
+        final LocalQuickFix[] fixes =
+          PsiTreeUtil.skipParentsOfType(expr, PsiCodeBlock.class, PsiReturnStatement.class) instanceof PsiLambdaExpression
+          ? LocalQuickFix.EMPTY_ARRAY
+          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())) {
+            @Override
+            public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+              return 1;
+            }
+          }};
+        holder.registerProblem(expr, text, fixes);
       }
     }
   }

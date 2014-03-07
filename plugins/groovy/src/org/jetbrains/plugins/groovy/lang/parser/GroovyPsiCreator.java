@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,8 +103,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == ANNOTATION_ARGUMENTS) return new GrAnnotationArgumentListImpl(node);
     if (elem == ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrayInitializerImpl(node);
     if (elem == ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
-
-    if (elem == DEFAULT_ANNOTATION_VALUE) return new GrDefaultAnnotationValueImpl(node);
 
     //throws
     if (elem == THROW_CLAUSE) return new GrThrowsClauseImpl(node);

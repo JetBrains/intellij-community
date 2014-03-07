@@ -127,8 +127,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   @Override
   public void navigateInPreviewEditor(PreviewEditorState editorState) {
-    myEditorState = editorState;
-
     final VirtualFile file = editorState.getFile();
     final LogicalPosition positionToNavigate = editorState.getNavigate();
     final TextAttributes lineAttributes = editorState.getAttributes();
@@ -136,6 +134,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     Project project = myProject;
 
     clearEditor();
+    myEditorState = editorState;
     remove(myLabel);
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {

@@ -465,7 +465,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      final Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+      final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<RefactoringHelper, Object>();
       final Runnable prepareHelpersRunnable = new Runnable() {
         @Override
         public void run() {

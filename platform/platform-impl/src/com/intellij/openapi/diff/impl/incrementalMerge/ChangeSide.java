@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.impl.util.DocumentUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Kirill Likhodedov
@@ -30,6 +31,7 @@ public abstract class ChangeSide {
     return DocumentUtil.getStartLine(getRange());
   }
 
+  @NotNull
   public String getText() {
     return DocumentUtil.getText(getRange());
   }
@@ -38,6 +40,7 @@ public abstract class ChangeSide {
     return DocumentUtil.getEndLine(getRange());
   }
 
+  @NotNull
   public abstract DiffRangeMarker getRange();
 
   public abstract ChangeHighlighterHolder getHighlighterHolder();

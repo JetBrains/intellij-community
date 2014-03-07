@@ -37,7 +37,7 @@ import java.util.Collection;
  */
 public class RootFileReferenceSet extends FileReferenceSet {
   public RootFileReferenceSet(String str,
-                              PsiElement element,
+                              @NotNull PsiElement element,
                               int startInElement,
                               PsiReferenceProvider provider,
                               boolean caseSensitive,
@@ -46,7 +46,7 @@ public class RootFileReferenceSet extends FileReferenceSet {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes);
   }
 
-  public RootFileReferenceSet(String s, PsiElement element, int offset, PsiReferenceProvider provider, boolean sensitive) {
+  public RootFileReferenceSet(String s, @NotNull PsiElement element, int offset, PsiReferenceProvider provider, boolean sensitive) {
     super(s, element, offset, provider, sensitive);
   }
 

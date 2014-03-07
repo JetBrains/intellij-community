@@ -24,21 +24,12 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 class GitPlatformFacadeImpl extends DvcsPlatformFacadeImpl implements GitPlatformFacade {
 
   @NotNull
   @Override
   public AbstractVcs getVcs(@NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
-  }
-
-  @NotNull
-  @Override
-  public Notificator getNotificator(@NotNull Project project) {
-    return Notificator.getInstance(project);
   }
 
   @NotNull

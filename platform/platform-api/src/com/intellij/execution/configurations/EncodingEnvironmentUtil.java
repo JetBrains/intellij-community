@@ -40,28 +40,44 @@ public class EncodingEnvironmentUtil {
    * Sets default encoding on Mac if it's undefined. <br/>
    * On Mac default character encoding is defined by several environment variables: LC_ALL, LC_CTYPE and LANG.
    * See <a href='http://www.gnu.org/software/gettext/manual/html_node/Locale-Environment-Variables.html'>details</a>.
-   * <p>
+   * <p/>
    * Unfortunately, Mac OSX has a special behavior:<br/>
    * These environment variables aren't passed to an IDE, if the IDE is launched from Spotlight.<br/>
    * Unfortunately, even {@link com.intellij.util.EnvironmentUtil#getEnvironment()} doesn't have these variables.<p/>
    * As a result, no encoding environment variables are passed to Ruby/Node.js/Python/other processes that are launched from IDE.
    * Thus, these processes wrongly assume that the default encoding is US-ASCII.
    * <p/>
-   *
+   * <p/>
    * The workaround this method applies is to set LC_CTYPE environment variable if LC_ALL, LC_CTYPE or LANG aren't set before. <br/>
    * LC_CTYPE value is taken from "Settings | File Encodings".
    *
    * @param commandLine GeneralCommandLine instance
-   * @param project Project instance if any
+   * @param project     Project instance if any
    */
   public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(commandLine)) {
-        Charset charset = getCharset(project);
-        commandLine.getEnvironment().put(LC_CTYPE, charset.name());
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Fixed mac locale: " + charset.name());
-        }
+        fixLocale(commandLine.getEnvironment(), project);
+      }
+    }
+  }
+
+  private static void fixLocale(@NotNull Map<String, String> env, @Nullable Project project) {
+    Charset charset = getCharset(project);
+    env.put(LC_CTYPE, charset.name());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Fixed mac locale: " + charset.name());
+    }
+  }
+
+
+  /**
+   * Sets default encoding on Mac if it's undefined. <br/>
+   */
+  public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
+    if (SystemInfo.isMac) {
+      if (!isLocaleDefined(env)) {
+        fixLocale(env, project);
       }
     }
   }
@@ -100,6 +116,4 @@ public class EncodingEnvironmentUtil {
     }
     return charset;
   }
-
-
 }

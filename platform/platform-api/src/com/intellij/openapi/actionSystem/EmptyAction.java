@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 /**
  * This class purpose is to reserve action-id in a plugin.xml so the action appears in Keymap.
@@ -74,13 +74,8 @@ public final class EmptyAction extends AnAction {
   }
 
   public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
-    @SuppressWarnings("unchecked")
-    final ArrayList<AnAction> actionList =
-    (ArrayList<AnAction>)fromComponent.getClientProperty(ourClientProperty);
-    if (actionList != null) {
-      for (AnAction anAction : actionList) {
-        anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
-      }
+    for (AnAction anAction : ActionUtil.getActions(fromComponent)) {
+      anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
     }
   }
 

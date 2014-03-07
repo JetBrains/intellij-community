@@ -7,6 +7,6 @@ import static java.lang.annotation.ElementType.*;
 class C {
   {
     Object o = null;
-    @TA int @TA [] a = (@TA int @TA[]) o;
+    @TA int @TA [] a = (int[]) o;
   }
 }
