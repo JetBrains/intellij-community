@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
+import com.intellij.util.Range;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,8 +31,8 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
   private final SourcePosition myBreakpointPosition;
   private final int myLastStatementLine;
 
-  public AnonymousClassMethodFilter(PsiMethod psiMethod) {
-    super(psiMethod);
+  public AnonymousClassMethodFilter(PsiMethod psiMethod, Range<Integer> lines) {
+    super(psiMethod, lines);
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
     final PsiCodeBlock body = psiMethod.getBody();

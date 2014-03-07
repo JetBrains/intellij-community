@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
@@ -27,18 +28,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: 10/26/13
  */
-public class BasicStepMethodFilter implements MethodFilter{
+public class BasicStepMethodFilter implements MethodFilter {
   @NotNull
   protected final JVMName myDeclaringClassName;
   @NotNull
   private final String myTargetMethodName;
   @Nullable
   protected final JVMName myTargetMethodSignature;
+  private final Range<Integer> myCallingExpressionLines;
 
-  public BasicStepMethodFilter(PsiMethod psiMethod) {
+  public BasicStepMethodFilter(PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
     myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
     myTargetMethodName = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
     myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
+    myCallingExpressionLines = callingExpressionLines;
   }
 
   @NotNull
@@ -70,5 +73,10 @@ public class BasicStepMethodFilter implements MethodFilter{
       }
     }
     return false;
+  }
+
+  @Override
+  public Range<Integer> getCallingExpressionLines() {
+    return myCallingExpressionLines;
   }
 }
