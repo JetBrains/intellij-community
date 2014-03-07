@@ -33,6 +33,16 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
 
   @NotNull
   @Override
+  public T getContextOrFail() {
+    T context = getContext();
+    if (context == null) {
+      throw new IllegalStateException("No current suspend context");
+    }
+    return context;
+  }
+
+  @NotNull
+  @Override
   public final ActionCallback suspend() {
     ActionCallback callback = suspendCallback.get();
     if (callback != null) {
@@ -61,11 +71,7 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
   @NotNull
   @Override
   public final AsyncResult<Boolean> restartFrame(@NotNull CALL_FRAME callFrame) {
-    final T currentContext = getContext();
-    if (currentContext == null) {
-      throw new IllegalStateException("Restart frame requested, but no current suspend context");
-    }
-    return restartFrame(callFrame, currentContext);
+    return restartFrame(callFrame, getContextOrFail());
   }
 
   @NotNull

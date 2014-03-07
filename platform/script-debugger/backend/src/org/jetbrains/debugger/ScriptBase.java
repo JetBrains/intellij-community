@@ -10,7 +10,7 @@ import org.jetbrains.debugger.sourcemap.SourceMap;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class ScriptBase extends UserDataHolderBase implements Script {
-  static final AtomicReferenceFieldUpdater<ScriptBase, AsyncResult> updater = AtomicReferenceFieldUpdater.newUpdater(ScriptBase.class, AsyncResult.class, "source");
+  static final AtomicReferenceFieldUpdater UPDATER = AtomicReferenceFieldUpdater.newUpdater(ScriptBase.class, AsyncResult.class, "source");
 
   @SuppressWarnings("UnusedDeclaration")
   private volatile AsyncResult<String> source;
