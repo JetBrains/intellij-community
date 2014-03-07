@@ -4,7 +4,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.frame.ChromeStackFrame;
+import org.jetbrains.debugger.frame.StackFrameImpl;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,5 +28,5 @@ public interface DebugProcessEx extends MemberFilter {
   void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
   @NotNull
-  XDebuggerEvaluator createFrameEvaluator(@NotNull ChromeStackFrame frame);
+  XDebuggerEvaluator createFrameEvaluator(@NotNull StackFrameImpl frame);
 }
