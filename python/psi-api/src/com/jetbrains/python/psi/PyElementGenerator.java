@@ -92,6 +92,8 @@ public abstract class PyElementGenerator {
 
   public abstract PyImportElement createImportElement(final LanguageLevel languageLevel, String name);
 
+  public abstract PyFunction createProperty(final LanguageLevel languageLevel, String propertyName, String fieldName, AccessDirection accessDirection);
+
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
 

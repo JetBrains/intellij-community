@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Formatter;
 
@@ -289,6 +288,24 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   @Override
   public PyImportElement createImportElement(final LanguageLevel languageLevel, String name) {
     return createFromText(languageLevel, PyImportElement.class, "from foo import " + name, new int[]{0, 6});
+  }
+
+  @Override
+  public PyFunction createProperty(LanguageLevel languageLevel,
+                                   String propertyName,
+                                   String fieldName,
+                                   AccessDirection accessDirection) {
+    String propertyText;
+    if (accessDirection == AccessDirection.DELETE) {
+      propertyText = "@" + propertyName +".deleter\ndef " + propertyName + "(self):\n  del self." + fieldName;
+    }
+    else if (accessDirection == AccessDirection.WRITE) {
+      propertyText = "@" + propertyName + ".setter\ndef " + propertyName + "(self, value):\n  self." + fieldName + " = value";
+    }
+    else {
+      propertyText = "@property\ndef " + propertyName + "(self):\n  return self." + fieldName;
+    }
+    return createFromText(languageLevel, PyFunction.class, propertyText);
   }
 
   static final int[] FROM_ROOT = new int[]{0};
