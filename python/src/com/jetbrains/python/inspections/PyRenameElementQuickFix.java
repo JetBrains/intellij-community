@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -35,6 +36,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +59,12 @@ public class PyRenameElementQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+    PsiElement element = descriptor.getPsiElement();
+    if (element instanceof PyReferenceExpression) {
+      final PsiReference reference = element.getReference();
+      if (reference == null) return;
+      element = reference.resolve();
+    }
     final PsiNameIdentifierOwner nameOwner = element instanceof PsiNameIdentifierOwner ?
                                              (PsiNameIdentifierOwner)element :
                                              PsiTreeUtil.getParentOfType(element, PsiNameIdentifierOwner.class, true);
