@@ -21,8 +21,7 @@ public class StackFrameImpl extends StackFrameImplBase implements VariableContex
     this(debugProcess.getSourceInfo(script, callFrame), callFrame, debugProcess, script);
   }
 
-  // @todo suspendContext nullable only due to Nashorn
-  public StackFrameImpl(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, DebugProcessEx debugProcess, @Nullable Script script) {
+  public StackFrameImpl(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
     super(sourceInfo);
 
     this.debugProcess = debugProcess;
