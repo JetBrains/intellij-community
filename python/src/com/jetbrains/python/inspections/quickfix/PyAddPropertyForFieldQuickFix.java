@@ -62,9 +62,8 @@ public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
           final Map<String,Property> properties = containingClass.getProperties();
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           if (!properties.containsKey(propertyName)) {
-            String propertyText = "@property\ndef " + propertyName + "(self):\n\t  return self." + name;
-            final PyFunction property = generator.createFromText(LanguageLevel.forElement(containingClass), PyFunction.class, propertyText);
-            PyUtil.addElementToStatementList(property, containingClass.getStatementList());
+            final PyFunction property = generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
+            PyUtil.addElementToStatementList(property, containingClass.getStatementList(), false);
           }
           final PyExpression qualifier = ((PyReferenceExpression)element).getQualifier();
           if (qualifier != null) {
