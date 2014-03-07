@@ -60,7 +60,11 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return new TemplateModuleBuilder(this, getModuleType(), getInputFields());
   }
 
+  @NotNull
   public abstract List<WizardInputField> getInputFields();
+
+  @NotNull
+  public abstract List<String> getFeaturedFrameworks();
 
   @Nullable
   @Override

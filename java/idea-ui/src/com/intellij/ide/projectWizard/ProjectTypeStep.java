@@ -21,6 +21,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
@@ -88,6 +89,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         return o.getId();
       }
     };
+  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = new Function<FrameworkSupportNode, String>() {
+    @Override
+    public String fun(FrameworkSupportNode node) {
+      return node.getId();
+    }
+  };
 
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -424,7 +431,23 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   public Collection<ProjectTemplate> getAvailableTemplates() {
-    return myCurrentCard != FRAMEWORKS_CARD ? Collections.<ProjectTemplate>emptyList() : myTemplatesMap.get(getSelectedGroup());
+    if (myCurrentCard != FRAMEWORKS_CARD) {
+      return Collections.emptyList();
+    }
+    else {
+      Collection<ProjectTemplate> templates = myTemplatesMap.get(getSelectedGroup());
+      List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
+      if (nodes.isEmpty()) return templates;
+      final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
+      return ContainerUtil.filter(templates, new Condition<ProjectTemplate>() {
+        @Override
+        public boolean value(ProjectTemplate template) {
+          if (!(template instanceof ArchivedProjectTemplate)) return true;
+          List<String> frameworks = ((ArchivedProjectTemplate)template).getFeaturedFrameworks();
+          return frameworks.containsAll(selectedFrameworks);
+        }
+      });
+    }
   }
 
   public void onWizardFinished() throws CommitStepException {
@@ -465,19 +488,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myProjectTypeList;
-  }
-
-  @TestOnly
-  public boolean setSelectedTemplate(String group, String name) {
-    ListModel model = myProjectTypeList.getModel();
-    for (int i = 0; i < model.getSize(); i++) {
-      if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
-        myProjectTypeList.setSelectedIndex(i);
-        if (name == null) return getSelectedGroup().getName().equals(group);
-        return myTemplatesList.setSelectedTemplate(name);
-      }
-    }
-    return false;
   }
 
   @Override
@@ -559,5 +569,23 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());
     }
+  }
+
+  @TestOnly
+  public boolean setSelectedTemplate(String group, String name) {
+    ListModel model = myProjectTypeList.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
+        myProjectTypeList.setSelectedIndex(i);
+        if (name == null) return getSelectedGroup().getName().equals(group);
+        return myTemplatesList.setSelectedTemplate(name);
+      }
+    }
+    return false;
+  }
+
+  @TestOnly
+  public AddSupportForFrameworksPanel getFrameworksPanel() {
+    return myFrameworksPanel;
   }
 }
