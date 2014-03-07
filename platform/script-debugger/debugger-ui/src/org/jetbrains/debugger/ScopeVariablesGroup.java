@@ -73,7 +73,7 @@ public class ScopeVariablesGroup extends XValueGroup {
 
   @Override
   public boolean isAutoExpand() {
-    return scope.getType() == Scope.Type.LOCAL || scope.getType() == Scope.Type.CATCH || scope.getType() == Scope.Type.WITH;
+    return scope.getType() == Scope.Type.LOCAL || scope.getType() == Scope.Type.CATCH;
   }
 
   @Nullable
