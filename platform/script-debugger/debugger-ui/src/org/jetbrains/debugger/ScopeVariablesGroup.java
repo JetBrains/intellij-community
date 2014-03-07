@@ -21,7 +21,7 @@ public class ScopeVariablesGroup extends XValueGroup {
     this.callFrame = callFrame;
 
     if (callFrame == null) {
-      this.context = new BaseVariableContext() {
+      this.context = new VariableContextBase() {
         @NotNull
         @Override
         public EvaluateContext getEvaluateContext() {
