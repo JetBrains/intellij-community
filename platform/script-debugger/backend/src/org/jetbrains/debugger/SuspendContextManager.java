@@ -16,6 +16,9 @@ public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   @Nullable
   SuspendContext getContext();
 
+  @NotNull
+  SuspendContext getContextOrFail();
+
   boolean isContextObsolete(@NotNull SuspendContext context);
 
   void setOverlayMessage(@Nullable String message);

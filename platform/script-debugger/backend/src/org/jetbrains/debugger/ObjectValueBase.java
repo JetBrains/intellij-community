@@ -7,8 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends ValueBase implements ObjectValue {
-  public static final AtomicReferenceFieldUpdater<ObjectValueBase, AsyncResult> PROPERTY_DATA_UPDATER =
-    AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData");
+  static final AtomicReferenceFieldUpdater PROPERTY_DATA_UPDATER = AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData");
 
   @SuppressWarnings("UnusedDeclaration")
   private volatile AsyncResult<ObjectPropertyData> propertyData;
@@ -28,7 +27,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends 
   }
 
   @Override
-  public AsyncResult<ObjectPropertyData> getProperties() {
+  public final AsyncResult<ObjectPropertyData> getProperties() {
     //noinspection unchecked
     return valueLoader.getPropertiesLoader().get(this);
   }

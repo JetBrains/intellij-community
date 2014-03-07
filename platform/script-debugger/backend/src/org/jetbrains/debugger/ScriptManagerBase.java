@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
-  private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.updater) {
+  @SuppressWarnings("unchecked")
+  private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.UPDATER) {
     @Override
     public void load(@NotNull ScriptBase script, @NotNull AsyncResult<String> result) {
       //noinspection unchecked
