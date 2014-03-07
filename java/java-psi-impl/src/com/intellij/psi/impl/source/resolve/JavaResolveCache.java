@@ -30,6 +30,7 @@ import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
@@ -90,7 +91,7 @@ public class JavaResolveCache {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow()) {
+      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || !MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
         return type;
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
