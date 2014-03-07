@@ -16,8 +16,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -26,9 +29,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
@@ -37,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: ktisha
@@ -75,29 +82,40 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
       if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
+      final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+      quickFixes.add(new PyRenameElementQuickFix());
+
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
+        final PsiReference reference = node.getReference(getResolveContext());
+        if (reference == null) return;
+        final PsiElement resolvedExpression = reference.resolve();
+        if (resolvedExpression instanceof PyTargetExpression) {
+          final PyClass containingClass = ((PyTargetExpression)resolvedExpression).getContainingClass();
+          if (containingClass != null) {
+            final String qFixName = containingClass.getProperties().containsKey(StringUtil.trimLeading(name, '_')) ?
+                              PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
+            quickFixes.add(new PyAddPropertyForFieldQuickFix(qFixName));
+          }
+        }
+
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
           if (PyTestUtil.isPyTestClass(parentClass) && ignoreTestFunctions) return;
-          final PsiReference reference = node.getReference(getResolveContext());
-          if (reference != null) {
-            final PsiElement resolvedExpression = reference.resolve();
-            final PyClass resolvedClass = getClassOwner(resolvedExpression);
-            if (parentClass.isSubclass(resolvedClass))
+          final PyClass resolvedClass = getClassOwner(resolvedExpression);
+          if (parentClass.isSubclass(resolvedClass))
+            return;
+
+          PyClass outerClass = getClassOwner(parentClass);
+          while (outerClass != null) {
+            if (outerClass.isSubclass(resolvedClass))
               return;
 
-            PyClass outerClass = getClassOwner(parentClass);
-            while (outerClass != null) {
-              if (outerClass.isSubclass(resolvedClass))
-                return;
-
-              outerClass = getClassOwner(outerClass);
-            }
+            outerClass = getClassOwner(outerClass);
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
         final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
-        registerProblem(node, PyBundle.message(bundleKey, name), new PyRenameElementQuickFix());
+        registerProblem(node, PyBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,  null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
       }
     }
 
