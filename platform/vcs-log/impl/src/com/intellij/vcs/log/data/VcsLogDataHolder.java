@@ -562,17 +562,6 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   @NotNull
-  private static List<VcsLogStructureFilter> filterStructureFiltersByRoot(@NotNull final VirtualFile root,
-                                                                          @NotNull List<VcsLogStructureFilter> structureFilters) {
-    return ContainerUtil.filter(structureFilters, new Condition<VcsLogStructureFilter>() {
-      @Override
-      public boolean value(VcsLogStructureFilter filter) {
-        return !filter.getFiles(root).isEmpty();
-      }
-    });
-  }
-
-  @NotNull
   public Map<VirtualFile, VcsUser> getCurrentUser() {
     return myCurrentUser;
   }
