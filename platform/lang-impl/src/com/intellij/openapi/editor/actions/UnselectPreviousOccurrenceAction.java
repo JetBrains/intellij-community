@@ -34,7 +34,7 @@ public class UnselectPreviousOccurrenceAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (editor.getCaretModel().getCaretCount() > 1) {
         editor.getCaretModel().removeCaret(editor.getCaretModel().getPrimaryCaret());
       }

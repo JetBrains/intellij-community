@@ -31,10 +31,10 @@ public class HomeHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, Caret caret, DataContext dataContext){
+  public void doExecute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isFocused()) {
-      myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 

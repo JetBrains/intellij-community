@@ -39,7 +39,7 @@ public class SelectAllOccurrencesAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       if (!caret.hasSelection()) {
