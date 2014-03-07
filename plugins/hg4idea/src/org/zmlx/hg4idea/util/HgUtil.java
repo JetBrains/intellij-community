@@ -571,7 +571,7 @@ public abstract class HgUtil {
   public static String getDisplayableBranchOrBookmarkText(@NotNull HgRepository repository) {
     HgRepository.State state = repository.getState();
     String branchText = "";
-    if (state == HgRepository.State.MERGING) {
+    if (state != HgRepository.State.NORMAL) {
       branchText += state.toString() + " ";
     }
     String branchOrBookMarkName = repository.getCurrentBookmark();

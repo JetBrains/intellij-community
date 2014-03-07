@@ -91,6 +91,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean rebaseFileChanged = false;
     boolean bookmarksFileChanged = false;
     boolean tagsFileChanged = false;
     boolean localTagsFileChanged = false;
@@ -110,6 +111,9 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       }
       else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
+      }
+      else if (myRepositoryFiles.isRebaseFile(filePath)) {
+        rebaseFileChanged = true;
       }
       else if (myRepositoryFiles.isBookmarksFile(filePath)) {
         bookmarksFileChanged = true;
@@ -132,6 +136,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (branchHeadsChanged ||
         branchFileChanged ||
         mergeFileChanged ||
+        rebaseFileChanged ||
         bookmarksFileChanged ||
         currentBookmarkFileChanged ||
         tagsFileChanged ||

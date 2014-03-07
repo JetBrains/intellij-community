@@ -77,6 +77,9 @@
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+      <separator/>
+      <action id="hg4idea.Rebase.Abort" class="org.zmlx.hg4idea.action.HgAbortRebaseAction" text="Abort Rebasing"/>
+      <action id="hg4idea.Rebase.Continue" class="org.zmlx.hg4idea.action.HgContinueRebaseAction" text="Continue Rebasing"/>
 
       <separator/>
       <reference id="ChangesView.Browse"/>
