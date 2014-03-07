@@ -18,6 +18,7 @@ package com.intellij.openapi.file.exclude.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class MarkAsPlainTextAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     assert typeManager != null;
@@ -43,7 +45,9 @@ public class MarkAsPlainTextAction extends AnAction {
         filesToMark.add(file);
       }
     }
-    typeManager.markAsPlainText(filesToMark.toArray(new VirtualFile[filesToMark.size()]));
+    if (project != null) {
+      typeManager.markAsPlainText(project, filesToMark.toArray(new VirtualFile[filesToMark.size()]));
+    }
   }
 
   @Override
