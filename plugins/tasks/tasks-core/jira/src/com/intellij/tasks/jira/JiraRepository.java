@@ -40,6 +40,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   public static final String REST_API_PATH = "/rest/api/latest";
 
   private static final boolean DEBUG_SOAP = Boolean.getBoolean("tasks.jira.soap");
+  private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover");
 
   /**
    * Default JQL query
@@ -88,7 +89,8 @@ public class JiraRepository extends BaseRepositoryImpl {
       }
       else if (StringUtil.isNotEmpty(query)) {
         resultQuery = String.format("summary ~ '%s'", query);
-      } else {
+      }
+      else {
         resultQuery = mySearchQuery;
       }
     }
@@ -138,8 +140,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     catch (Exception e) {
       // probably JIRA version prior 4.2
-      // without isRequestSent() getStatusCode() might throw NPE, if connection was refused
-      if (method.isRequestSent() && method.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      // without hasBeenUsed() check getStatusCode() might throw NPE, if connection was refused
+      if (method.hasBeenUsed() && method.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return new JiraSoapApi(this);
       }
       else {
@@ -157,7 +159,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private void ensureApiVersionDiscovered() throws Exception {
-    if (myApiVersion == null || DEBUG_SOAP) {
+    if (myApiVersion == null || DEBUG_SOAP || REDISCOVER_API) {
       myApiVersion = discoverApiVersion();
     }
   }
@@ -211,15 +213,6 @@ public class JiraRepository extends BaseRepositoryImpl {
     throw new Exception(TaskBundle.message("failure.http.error", statusCode, statusText));
   }
 
-  /*
-  @Override
-  protected void configureHttpClient(HttpClient client) {
-    super.configureHttpClient(client);
-    // TODO: is it really necessary?
-    client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
-  }
-  */
-
   // Made public for SOAP API compatibility
   @Override
   public HttpClient getHttpClient() {
@@ -269,7 +262,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   public void setUrl(String url) {
     // reset remote API version, only if server URL was changed
-     if (!getUrl().equals(url)) {
+    if (!getUrl().equals(url)) {
       myApiVersion = null;
       super.setUrl(url);
     }
@@ -277,12 +270,13 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   /**
    * Used to preserve discovered API version for the next initialization.
+   *
    * @return
    */
   @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public JiraRemoteApi.ApiType getApiType() {
-    return myApiVersion == null? null : myApiVersion.getType();
+    return myApiVersion == null ? null : myApiVersion.getType();
   }
 
   @SuppressWarnings("UnusedDeclaration")
