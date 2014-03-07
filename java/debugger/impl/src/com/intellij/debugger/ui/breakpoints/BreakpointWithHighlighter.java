@@ -296,7 +296,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     final XSourcePosition position = myXBreakpoint.getSourcePosition();
     try {
       final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(position.getFile());
-      mySourcePosition = SourcePosition.createFromOffset(psiFile, position.getOffset());
+      mySourcePosition = SourcePosition.createFromLine(psiFile, position.getLine());
     } catch (Exception e) {
       mySourcePosition = null;
     }
