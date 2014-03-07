@@ -166,9 +166,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.saveTo(myBreakpoint);
     }
-    if (!myCustomPanels.isEmpty()) {
-      ((XBreakpointBase)myBreakpoint).fireBreakpointChanged();
-    }
     myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
   }
 
