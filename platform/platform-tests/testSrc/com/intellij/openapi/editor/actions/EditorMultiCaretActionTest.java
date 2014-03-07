@@ -23,8 +23,6 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,16 +30,6 @@ import org.junit.runner.RunWith;
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/platform-tests/testData/editor/multiCaret/")
 public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
-  @BeforeClass
-  public static void enableMultipleCarets() {
-    EditorTestUtil.enableMultipleCarets();
-  }
-
-  @AfterClass
-  public static void disableMultipleCarets() {
-    EditorTestUtil.disableMultipleCarets();
-  }
-
   @Test
   public void testAction() {
     new WriteCommandAction<Void>(null) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.LightweightHint;
 
@@ -33,7 +32,6 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EditorTestUtil.enableMultipleCarets();
     EditorHintListener listener = new EditorHintListener() {
       @Override
       public void hintShown(Project project, LightweightHint hint, int flags) {
@@ -41,12 +39,6 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
       }
     };
     ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    EditorTestUtil.disableMultipleCarets();
-    super.tearDown();
   }
 
   public void testAllWithoutInitialSelection() throws Exception {

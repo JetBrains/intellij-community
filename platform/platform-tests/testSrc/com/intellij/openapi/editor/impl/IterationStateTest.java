@@ -60,92 +60,58 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                     new Segment(10, 11, Color.BLACK));
   }
 
-  public void testMultiCaretBlockSelection() {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      testBlockSelection();
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
-  }
-
   public void testColumnModeBlockSelection() {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      init("a\n" +
-           "bbb\n" +
-           "ccccc");
-      setColumnModeOn();
-      mouse().clickAt(0, 2).dragTo(2, 4).release();
-      verifySplitting(false,
-                      new Segment(0, 1, DEFAULT_BACKGROUND),
-                      new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(2, SELECTION_BACKGROUND),
-                      new Segment(2, 4, DEFAULT_BACKGROUND),
-                      new Segment(4, 5, SELECTION_BACKGROUND),
-                      new Segment(5, 6, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
-                      new Segment(6, 8, CARET_ROW_BACKGROUND),
-                      new Segment(8, 10, SELECTION_BACKGROUND),
-                      new Segment(10, 11, CARET_ROW_BACKGROUND));
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    setColumnModeOn();
+    mouse().clickAt(0, 2).dragTo(2, 4).release();
+    verifySplitting(false,
+                    new Segment(0, 1, DEFAULT_BACKGROUND),
+                    new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(2, SELECTION_BACKGROUND),
+                    new Segment(2, 4, DEFAULT_BACKGROUND),
+                    new Segment(4, 5, SELECTION_BACKGROUND),
+                    new Segment(5, 6, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
+                    new Segment(6, 8, CARET_ROW_BACKGROUND),
+                    new Segment(8, 10, SELECTION_BACKGROUND),
+                    new Segment(10, 11, CARET_ROW_BACKGROUND));
   }
 
   public void testColumnModeBlockSelectionAtLastNonEmptyLine() {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      init("a\n" +
-           "bbb\n" +
-           "ccccc");
-      setColumnModeOn();
-      mouse().clickAt(0, 2).dragTo(2, 6).release();
-      verifySplitting(false,
-                      new Segment(0, 1, DEFAULT_BACKGROUND),
-                      new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(4, SELECTION_BACKGROUND),
-                      new Segment(2, 4, DEFAULT_BACKGROUND),
-                      new Segment(4, 5, SELECTION_BACKGROUND),
-                      new Segment(5, 6, DEFAULT_BACKGROUND).plus(3, SELECTION_BACKGROUND),
-                      new Segment(6, 8, CARET_ROW_BACKGROUND),
-                      new Segment(8, 11, SELECTION_BACKGROUND),
-                      new Segment(11, 11, null).plus(1, SELECTION_BACKGROUND));
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    setColumnModeOn();
+    mouse().clickAt(0, 2).dragTo(2, 6).release();
+    verifySplitting(false,
+                    new Segment(0, 1, DEFAULT_BACKGROUND),
+                    new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(4, SELECTION_BACKGROUND),
+                    new Segment(2, 4, DEFAULT_BACKGROUND),
+                    new Segment(4, 5, SELECTION_BACKGROUND),
+                    new Segment(5, 6, DEFAULT_BACKGROUND).plus(3, SELECTION_BACKGROUND),
+                    new Segment(6, 8, CARET_ROW_BACKGROUND),
+                    new Segment(8, 11, SELECTION_BACKGROUND),
+                    new Segment(11, 11, null).plus(1, SELECTION_BACKGROUND));
   }
 
   public void testColumnModeBlockSelectionAtLastEmptyLine() {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      init("a\n" +
-           "");
-      setColumnModeOn();
-      mouse().clickAt(1, 1).dragTo(1, 2).release();
-      verifySplitting(false,
-                      new Segment(0, 1, DEFAULT_BACKGROUND),
-                      new Segment(1, 2, DEFAULT_BACKGROUND),
-                      new Segment(2, 2, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    init("a\n" +
+         "");
+    setColumnModeOn();
+    mouse().clickAt(1, 1).dragTo(1, 2).release();
+    verifySplitting(false,
+                    new Segment(0, 1, DEFAULT_BACKGROUND),
+                    new Segment(1, 2, DEFAULT_BACKGROUND),
+                    new Segment(2, 2, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
   }
 
   public void testColumnModeBlockSelectionAtEmptyLines() {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      init("\n");
-      setColumnModeOn();
-      mouse().clickAt(0, 1).dragTo(1, 2).release();
-      verifySplitting(false,
-                      new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
-                      new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    init("\n");
+    setColumnModeOn();
+    mouse().clickAt(0, 1).dragTo(1, 2).release();
+    verifySplitting(false,
+                    new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
+                    new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
   }
 
   private void verifySplitting(boolean checkForegroundColor, Segment... expectedSegments) {

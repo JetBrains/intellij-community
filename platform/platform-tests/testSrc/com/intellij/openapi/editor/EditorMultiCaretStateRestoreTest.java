@@ -26,26 +26,20 @@ import com.intellij.testFramework.EditorTestUtil;
 
 public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTestCase {
   public void testRestoreState() throws Exception {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      String text = "some<caret> text<caret>\n" +
-                    "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-                    "<selection>ano<caret>ther</selection> line";
-      PsiFile psiFile = myFixture.configureByText(PlainTextFileType.INSTANCE, text);
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      assertNotNull(virtualFile);
-      myManager.openFile(virtualFile, false);
-      myManager.closeAllFiles();
-      FileEditor[] fileEditors = myManager.openFile(virtualFile, false);
-      assertNotNull(fileEditors);
-      assertEquals(1, fileEditors.length);
-      Editor editor = ((TextEditor)fileEditors[0]).getEditor();
+    String text = "some<caret> text<caret>\n" +
+                  "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+                  "<selection>ano<caret>ther</selection> line";
+    PsiFile psiFile = myFixture.configureByText(PlainTextFileType.INSTANCE, text);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    assertNotNull(virtualFile);
+    myManager.openFile(virtualFile, false);
+    myManager.closeAllFiles();
+    FileEditor[] fileEditors = myManager.openFile(virtualFile, false);
+    assertNotNull(fileEditors);
+    assertEquals(1, fileEditors.length);
+    Editor editor = ((TextEditor)fileEditors[0]).getEditor();
 
-      verifyEditorState(editor, text);
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    verifyEditorState(editor, text);
   }
 
   private static void verifyEditorState(Editor editor, String textWithMarkup) {
