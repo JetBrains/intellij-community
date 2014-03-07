@@ -23,8 +23,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -733,6 +735,39 @@ public class PyUtil {
     return pyClass.findMethodByName(PyNames.INIT, false);
   }
 
+  /**
+   * Returns Python language level for a virtual file.
+   *
+   * @see {@link LanguageLevel#forElement}
+   */
+  @NotNull
+  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull VirtualFile virtualFile) {
+    if (virtualFile instanceof VirtualFileWindow)
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+
+    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
+    final VirtualFile folder = virtualFile.getParent();
+    if (folder != null) {
+      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+      if (level != null) return level;
+    }
+    else {
+      // However this allows us to setup language level per file manually
+      // in case when it is LightVirtualFile
+      final LanguageLevel level = virtualFile.getUserData(LanguageLevel.KEY);
+      if (level != null) return level;
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final LanguageLevel languageLevel = LanguageLevel.FORCE_LANGUAGE_LEVEL;
+        if (languageLevel != null) {
+          return languageLevel;
+        }
+      }
+    }
+
+    return LanguageLevel.getDefault();
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
@@ -797,7 +832,7 @@ public class PyUtil {
     if (turnDirIntoInit(directory) != null) {
       return true;
     }
-    if (LanguageLevel.forFile(directory.getVirtualFile()).isAtLeast(LanguageLevel.PYTHON33)) {
+    if (getLanguageLevelForVirtualFile(directory.getVirtualFile()).isAtLeast(LanguageLevel.PYTHON33)) {
       return true;
     }
     return hasNamespacePackageFile(directory);

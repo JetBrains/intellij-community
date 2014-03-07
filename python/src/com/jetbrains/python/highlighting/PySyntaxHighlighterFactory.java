@@ -24,6 +24,7 @@ import com.jetbrains.python.console.parsing.PyConsoleHighlightingLexer;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +53,7 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-    LanguageLevel languageLevel = virtualFile != null ? LanguageLevel.forFile(virtualFile) : LanguageLevel.getDefault();
+    LanguageLevel languageLevel = virtualFile != null ? PyUtil.getLanguageLevelForVirtualFile(virtualFile) : LanguageLevel.getDefault();
     if (virtualFile != null && PydevConsoleRunner.isInPydevConsole(virtualFile)) {
       return myConsoleMap.get(languageLevel);
     }
