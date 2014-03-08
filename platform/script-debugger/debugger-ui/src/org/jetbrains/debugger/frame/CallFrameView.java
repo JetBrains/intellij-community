@@ -11,7 +11,7 @@ import org.jetbrains.debugger.*;
 
 import java.util.List;
 
-public class CallFrameView extends StackFrameImplBase implements VariableContext {
+public final class CallFrameView extends StackFrameImplBase implements VariableContext {
   private final DebugProcessEx debugProcess;
   private final CallFrame callFrame;
 
