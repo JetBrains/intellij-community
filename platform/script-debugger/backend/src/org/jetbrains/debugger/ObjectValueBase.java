@@ -1,13 +1,27 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.AsyncValueLoaderManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends ValueBase implements ObjectValue {
-  static final AtomicReferenceFieldUpdater PROPERTY_DATA_UPDATER = AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData");
+  @SuppressWarnings("unchecked")
+  private static final AsyncValueLoaderManager<ObjectValueBase, ObjectPropertyData> PROPERTIES_LOADER =
+    new AsyncValueLoaderManager<ObjectValueBase, ObjectPropertyData>(
+      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData"))) {
+      @Override
+      public boolean checkFreshness(@NotNull ObjectValueBase host, @NotNull ObjectPropertyData data) {
+        return host.valueLoader.getCacheStamp() == data.getCacheState();
+      }
+
+      @Override
+      public void load(@NotNull ObjectValueBase host, @NotNull AsyncResult<ObjectPropertyData> result) {
+        host.loadProperties(result);
+      }
+    };
 
   @SuppressWarnings("UnusedDeclaration")
   private volatile AsyncResult<ObjectPropertyData> propertyData;
@@ -20,6 +34,8 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends 
     this.valueLoader = valueLoader;
   }
 
+  protected abstract void loadProperties(@NotNull AsyncResult<ObjectPropertyData> result);
+
   @NotNull
   @Override
   public ObjectValue asObject() {
@@ -28,8 +44,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends 
 
   @Override
   public final AsyncResult<ObjectPropertyData> getProperties() {
-    //noinspection unchecked
-    return valueLoader.getPropertiesLoader().get(this);
+    return PROPERTIES_LOADER.get(this);
   }
 
   @Nullable
