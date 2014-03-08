@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.AsyncValueLoaderManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,25 +9,46 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class DeclarativeScopeBase<VALUE_LOADER extends ValueLoader> extends ScopeBase {
-  static final AtomicReferenceFieldUpdater VARIABLES_DATA_UPDATER = AtomicReferenceFieldUpdater.newUpdater(DeclarativeScopeBase.class, AsyncResult.class, "variables");
+  @SuppressWarnings("unchecked")
+  private static final AsyncValueLoaderManager<DeclarativeScopeBase, List<? extends Variable>> VARIABLES_LOADER =
+    new AsyncValueLoaderManager<DeclarativeScopeBase, List<? extends Variable>>(
+      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScopeBase.class, AsyncResult.class, "variables"))) {
+      @Override
+      public boolean checkFreshness(@NotNull DeclarativeScopeBase host, @NotNull List<? extends Variable> data) {
+        return host.valueLoader.cacheStampRef.get() == host.cacheStamp;
+      }
+
+      @Override
+      public void load(@NotNull DeclarativeScopeBase host, @NotNull AsyncResult<List<? extends Variable>> result) {
+        host.loadVariables(result);
+      }
+    };
 
   @SuppressWarnings("UnusedDeclaration")
   private volatile AsyncResult<List<? extends Variable>> variables;
 
-  volatile int cacheStamp = -1;
+  private volatile int cacheStamp = -1;
 
   protected final VALUE_LOADER valueLoader;
 
-  protected DeclarativeScopeBase(@NotNull Type type, @Nullable String className, @NotNull VALUE_LOADER loader) {
-    super(type, className);
+  protected DeclarativeScopeBase(@NotNull Type type, @Nullable String description, @NotNull VALUE_LOADER loader) {
+    super(type, description);
 
     valueLoader = loader;
+  }
+
+  /**
+   * You must call {@link #updateCacheStamp()} when data loaded
+   */
+  protected abstract void loadVariables(@NotNull AsyncResult<List<? extends Variable>> result);
+
+  protected final void updateCacheStamp() {
+    cacheStamp = valueLoader.getCacheStamp();
   }
 
   @NotNull
   @Override
   public final AsyncResult<List<? extends Variable>> getVariables() {
-    //noinspection unchecked
-    return valueLoader.declarativeScopeVariablesLoader.get(this);
+    return VARIABLES_LOADER.get(this);
   }
 }

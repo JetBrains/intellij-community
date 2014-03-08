@@ -52,7 +52,7 @@ public interface SuspendContext {
    * @return value mapping that all values have by default; typically unique for a particular {@link SuspendContext}
    */
   @NotNull
-  ValueLoader<?, ?> getValueLoader();
+  ValueLoader<?> getValueLoader();
 
   @NotNull
   Vm getVm();

@@ -7,9 +7,9 @@ public abstract class ScopeBase implements Scope {
   private final Type type;
   private final String className;
 
-  protected ScopeBase(@NotNull Type type, @Nullable String className) {
+  protected ScopeBase(@NotNull Type type, @Nullable String description) {
     this.type = type;
-    this.className = className;
+    this.className = description;
   }
 
   @Nullable
