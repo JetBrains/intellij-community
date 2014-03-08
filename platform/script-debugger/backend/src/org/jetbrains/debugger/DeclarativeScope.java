@@ -8,18 +8,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-public abstract class DeclarativeScopeBase<VALUE_LOADER extends ValueLoader> extends ScopeBase {
+public abstract class DeclarativeScope<VALUE_LOADER extends ValueLoader> extends ScopeBase {
   @SuppressWarnings("unchecked")
-  private static final AsyncValueLoaderManager<DeclarativeScopeBase, List<? extends Variable>> VARIABLES_LOADER =
-    new AsyncValueLoaderManager<DeclarativeScopeBase, List<? extends Variable>>(
-      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScopeBase.class, AsyncResult.class, "variables"))) {
+  private static final AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>> VARIABLES_LOADER =
+    new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(
+      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
       @Override
-      public boolean checkFreshness(@NotNull DeclarativeScopeBase host, @NotNull List<? extends Variable> data) {
+      public boolean checkFreshness(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
         return host.valueLoader.cacheStampRef.get() == host.cacheStamp;
       }
 
       @Override
-      public void load(@NotNull DeclarativeScopeBase host, @NotNull AsyncResult<List<? extends Variable>> result) {
+      public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<? extends Variable>> result) {
         host.loadVariables(result);
       }
     };
@@ -31,7 +31,7 @@ public abstract class DeclarativeScopeBase<VALUE_LOADER extends ValueLoader> ext
 
   protected final VALUE_LOADER valueLoader;
 
-  protected DeclarativeScopeBase(@NotNull Type type, @Nullable String description, @NotNull VALUE_LOADER loader) {
+  protected DeclarativeScope(@NotNull Type type, @Nullable String description, @NotNull VALUE_LOADER loader) {
     super(type, description);
 
     valueLoader = loader;
