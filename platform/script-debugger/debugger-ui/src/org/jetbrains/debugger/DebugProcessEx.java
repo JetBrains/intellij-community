@@ -4,7 +4,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.frame.StackFrameImpl;
+import org.jetbrains.debugger.frame.CallFrameView;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,7 +28,7 @@ public interface DebugProcessEx extends MemberFilter {
   void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
   @NotNull
-  XDebuggerEvaluator createFrameEvaluator(@NotNull StackFrameImpl frame);
+  XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
 
   final class SimpleDebugProcessEx implements DebugProcessEx {
     public static final DebugProcessEx INSTANCE = new SimpleDebugProcessEx();
@@ -86,7 +86,7 @@ public interface DebugProcessEx extends MemberFilter {
 
     @NotNull
     @Override
-    public XDebuggerEvaluator createFrameEvaluator(@NotNull StackFrameImpl frame) {
+    public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame) {
       throw new UnsupportedOperationException();
     }
 

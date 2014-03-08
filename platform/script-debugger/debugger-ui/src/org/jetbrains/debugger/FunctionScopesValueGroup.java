@@ -6,7 +6,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.debugger.frame.StackFrameImpl;
+import org.jetbrains.debugger.frame.CallFrameView;
 
 import java.util.Arrays;
 
@@ -33,7 +33,7 @@ class FunctionScopesValueGroup extends XValueGroup {
           node.addChildren(XValueChildrenList.EMPTY, true);
         }
         else {
-          StackFrameImpl.createAndAddScopeList(node, Arrays.asList(scopes), variableContext, null);
+          CallFrameView.createAndAddScopeList(node, Arrays.asList(scopes), variableContext, null);
         }
       }
     });
