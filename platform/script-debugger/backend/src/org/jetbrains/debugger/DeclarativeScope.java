@@ -15,7 +15,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueLoader> extends
       ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
       @Override
       public boolean checkFreshness(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
-        return host.valueLoader.cacheStampRef.get() == host.cacheStamp;
+        return host.valueLoader.getCacheStamp() == host.cacheStamp;
       }
 
       @Override
