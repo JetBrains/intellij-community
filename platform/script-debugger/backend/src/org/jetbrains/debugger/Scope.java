@@ -23,7 +23,10 @@ public interface Scope {
   Type getType();
 
   @Nullable
-  String getClassName();
+  /**
+   * Class or function or file name.
+   */
+  String getDescription();
 
   @NotNull
   AsyncResult<List<? extends Variable>> getVariables();

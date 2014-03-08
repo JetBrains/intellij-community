@@ -5,17 +5,17 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ScopeBase implements Scope {
   private final Type type;
-  private final String className;
+  private final String description;
 
   protected ScopeBase(@NotNull Type type, @Nullable String description) {
     this.type = type;
-    this.className = description;
+    this.description = description;
   }
 
   @Nullable
   @Override
-  public String getClassName() {
-    return className;
+  public String getDescription() {
+    return description;
   }
 
   @NotNull
