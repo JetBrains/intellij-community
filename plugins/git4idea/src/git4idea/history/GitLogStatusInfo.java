@@ -20,10 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Information about a single file change as returned by {@code git log status --name-status}.
- *
- * @author Kirill Likhodedov
  */
-class GitLogStatusInfo {
+public class GitLogStatusInfo {
   
   private final GitChangeType myType;
   private final String myPath;
