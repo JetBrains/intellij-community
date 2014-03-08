@@ -79,7 +79,7 @@ public class ScopeVariablesGroup extends XValueGroup {
   @Nullable
   @Override
   public String getComment() {
-    String className = scope.getClassName();
+    String className = scope.getDescription();
     return "Object".equals(className) ? null : className;
   }
 
