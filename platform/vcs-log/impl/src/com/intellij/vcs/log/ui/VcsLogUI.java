@@ -9,10 +9,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.impl.VcsLogImpl;
@@ -343,4 +340,13 @@ public class VcsLogUI {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myDataPack;
   }
+
+  public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    getTable().addHighlighter(highlighter);
+  }
+
+  public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    getTable().removeHighlighter(highlighter);
+  }
+
 }

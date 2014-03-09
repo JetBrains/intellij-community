@@ -12,6 +12,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PaintInfo;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   private static final Logger LOG = Logger.getInstance(AbstractPaddingCellRender.class);
 
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final RefPainter myRefPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
@@ -34,8 +36,10 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
 
-  protected AbstractPaddingCellRender(@NotNull VcsLogColorManager colorManager, @NotNull VcsLogDataHolder dataHolder) {
+  protected AbstractPaddingCellRender(@NotNull VcsLogColorManager colorManager, @NotNull VcsLogDataHolder dataHolder,
+                                      @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
+    myGraphTable = table;
     myRefPainter = new RefPainter(colorManager, false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
   }
@@ -67,6 +71,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
 
     append("");
     appendFixedTextFragmentWidth(textPadding);
+    myGraphTable.applyHighlighters(this, row, isSelected);
     myIssueLinkRenderer.appendTextWithLinks(cell.getText());
   }
 
