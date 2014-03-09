@@ -51,7 +51,7 @@ public class UserMapKeys {
     }
   }
 
-  private static final long PRESENT_TIME = TimeUnit.SECONDS.toNanos(1);
+  private static final long PRESENT_TIME = TimeUnit.SECONDS.toNanos(10);
 
   private static class LombokPresentData {
     private final boolean present;
