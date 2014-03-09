@@ -82,7 +82,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Kirill Likhodedov
  */
-public class VcsLogDataHolder implements Disposable {
+public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
   public static final Topic<VcsLogRefreshListener> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", VcsLogRefreshListener.class);
 
@@ -177,12 +177,13 @@ public class VcsLogDataHolder implements Disposable {
       @NotNull
       @Override
       public Integer fun(Hash hash) {
-        return putHash(hash);
+        return getCommitIndex(hash);
       }
     };
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
 
+  @Override
   @NotNull
   public Hash getHash(int commitIndex) {
     try {
@@ -197,7 +198,8 @@ public class VcsLogDataHolder implements Disposable {
     }
   }
 
-  public int putHash(@NotNull Hash hash) {
+  @Override
+  public int getCommitIndex(@NotNull Hash hash) {
     try {
       return myHashMap.getOrPut(hash);
     }
@@ -839,15 +841,15 @@ public class VcsLogDataHolder implements Disposable {
     }
 
     public CompactCommit(Hash hash, List<Hash> parents, long time) {
-      myHashIndex = putHash(hash);
+      myHashIndex = getCommitIndex(hash);
       myTime = time;
 
       if (!parents.isEmpty()) {
-        myParent = putHash(parents.get(0));
+        myParent = getCommitIndex(parents.get(0));
         if (parents.size() > 1) {
           myOtherParents = new int[parents.size() - 1];
           for (int i = 0; i < parents.size() - 1; i++) {
-            myOtherParents[i]= putHash(parents.get(i + 1));
+            myOtherParents[i]= getCommitIndex(parents.get(i + 1));
           }
         }
         else {
