@@ -215,7 +215,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
     });
   }
 
-  private void computeArrayRanges(List<? extends ObjectProperty> properties, XCompositeNode node) {
+  private void computeArrayRanges(List<? extends Variable> properties, XCompositeNode node) {
     List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
