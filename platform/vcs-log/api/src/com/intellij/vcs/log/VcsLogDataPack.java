@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Provides {@link DataKey DataKeys} which can be used by actions to access data available in the VCS log.
- */
-public class VcsLogDataKeys {
+import java.util.Map;
 
-  public static DataKey<VcsLog> VSC_LOG = DataKey.create("Vcs.Log");
-  public static DataKey<VcsLogUi> VCS_LOG_UI = DataKey.create("Vcs.Log.Ui");
+public interface VcsLogDataPack {
+
+  @NotNull
+  Map<VirtualFile, VcsLogProvider> getLogProviders();
 
 }

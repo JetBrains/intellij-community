@@ -22,7 +22,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
-  @NotNull private final VcsLogUI myUI;
+  @NotNull private final VcsLogUiImpl myUI;
   private final VcsLogDataHolder myLogDataHolder;
   private final GraphCommitCellRender myGraphCommitCellRender;
 
@@ -61,7 +61,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull private DataPack myDataPack;
 
-  public VcsLogGraphTable(@NotNull VcsLogUI UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull DataPack initialDataPack) {
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull DataPack initialDataPack) {
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
@@ -90,7 +90,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
 
-    PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
   }
 
   @Override
@@ -252,6 +252,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myHighlighters.remove(highlighter);
   }
 
+  public void removeAllHighlighters() {
+    myHighlighters.clear();
+  }
+
   public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
     boolean fgUpdated = false;
     for (VcsLogHighlighter highlighter : myHighlighters) {
@@ -339,11 +343,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
 
-    @NotNull private final VcsLogUI myUi;
+    @NotNull private final VcsLogUiImpl myUi;
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
 
-    RootCellRenderer(@NotNull VcsLogUI ui) {
+    RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       myUi = ui;
     }
 

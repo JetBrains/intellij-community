@@ -10,7 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.EmptyTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -28,9 +28,9 @@ public class VcsLogFilterer {
   private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 200;
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
-  @NotNull private final VcsLogUI myUI;
+  @NotNull private final VcsLogUiImpl myUI;
 
-  public VcsLogFilterer(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui) {
+  public VcsLogFilterer(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl ui) {
     myLogDataHolder = logDataHolder;
     myUI = ui;
   }

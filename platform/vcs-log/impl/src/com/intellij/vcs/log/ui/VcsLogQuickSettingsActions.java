@@ -38,7 +38,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     }
     VcsLogSettings settings = ServiceManager.getService(project, VcsLogSettings.class);
     VcsLogManager logManager = ServiceManager.getService(project, VcsLogManager.class);
-    VcsLogUI logUi = logManager.getLogUi();
+    VcsLogUiImpl logUi = logManager.getLogUi();
     if (logUi == null) {
       return;
     }
@@ -70,9 +70,9 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
   private static class MySettingsActionGroup extends ActionGroup {
 
     private final VcsLogSettings mySettings;
-    private final VcsLogUI myUi;
+    private final VcsLogUiImpl myUi;
 
-    public MySettingsActionGroup(VcsLogSettings settings, VcsLogUI ui) {
+    public MySettingsActionGroup(VcsLogSettings settings, VcsLogUiImpl ui) {
       mySettings = settings;
       myUi = ui;
     }

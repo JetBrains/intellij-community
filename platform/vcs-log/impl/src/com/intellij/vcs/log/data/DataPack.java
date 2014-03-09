@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.List;
 
-public class DataPack {
-  private static final boolean USE_NEW_FACADE = true;
+public class DataPack implements VcsLogDataPack {
 
+  private static final boolean USE_NEW_FACADE = true;
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final GraphFacade myGraphFacade;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   @NotNull
   public static DataPack build(@NotNull List<? extends GraphCommit> commits,
@@ -25,20 +26,21 @@ public class DataPack {
                                @NotNull ProgressIndicator indicator,
                                @NotNull NotNullFunction<Hash, Integer> indexGetter,
                                @NotNull NotNullFunction<Integer, Hash> hashGetter, 
-                               @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     indicator.setText("Building graph...");
     final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
-    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(logProviders));
+    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
     if (USE_NEW_FACADE) {
       if (!commits.isEmpty()) {
-        return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager));
+        return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager),
+                            providers);
       }
       else {
-        return new DataPack(refsModel, new EmptyGraphFacade());
+        return new DataPack(refsModel, new EmptyGraphFacade(), providers);
       }
     } else {
       GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
-      return new DataPack(refsModel, graphFacade);
+      return new DataPack(refsModel, graphFacade, providers);
     }
   }
 
@@ -62,9 +64,10 @@ public class DataPack {
     return map;
   }
 
-  private DataPack(@NotNull RefsModel refsModel, @NotNull GraphFacade graphFacade) {
+  private DataPack(@NotNull RefsModel refsModel, @NotNull GraphFacade graphFacade, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     myRefsModel = refsModel;
     myGraphFacade = graphFacade;
+    myLogProviders = providers;
   }
 
   @NotNull
@@ -75,6 +78,12 @@ public class DataPack {
   @NotNull
   public RefsModel getRefsModel() {
     return myRefsModel;
+  }
+
+  @NotNull
+  @Override
+  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
+    return myLogProviders;
   }
 
 }

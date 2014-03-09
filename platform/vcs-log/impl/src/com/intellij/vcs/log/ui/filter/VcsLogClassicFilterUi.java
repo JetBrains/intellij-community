@@ -30,7 +30,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +42,7 @@ import java.awt.event.ActionListener;
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private final SearchTextField myTextFilter;
-  @NotNull private final VcsLogUI myUi;
+  @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final DefaultActionGroup myActionGroup;
 
   @NotNull private final BranchFilterPopupComponent myBranchFilterComponent;
@@ -50,7 +50,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final DateFilterPopupComponent myDateFilterComponent;
   @NotNull private final StructureFilterPopupComponent myStructureFilterComponent;
 
-  public VcsLogClassicFilterUi(@NotNull VcsLogUI ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
+  public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
                                @NotNull DataPack initialDataPack) {
     myUi = ui;
 
