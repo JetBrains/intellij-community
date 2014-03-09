@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.2</version>
+  <version>0.8.3</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -152,6 +152,11 @@
   <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.8.3
+				<ol>
+				    <li>TODO...</li>
+				</ol>
+			</li>
 		<li>0.8.2
 				<ol>
 				    <li>Added support for "topic" annotation value of all @Log annotations (Lombok >= 1.12.6)</li>
