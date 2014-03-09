@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ObjectPropertyData {
   @NotNull
-  List<? extends ObjectProperty> getProperties();
+  List<? extends Variable> getProperties();
 
   @NotNull
   List<? extends Variable> getInternalProperties();

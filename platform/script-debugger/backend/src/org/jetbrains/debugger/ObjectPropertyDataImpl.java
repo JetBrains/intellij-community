@@ -1,18 +1,27 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ObjectPropertyDataImpl implements ObjectPropertyData {
+  public static final ObjectPropertyData EMPTY = new ObjectPropertyDataImpl(0, Collections.<VariableImpl>emptyList());
+  public static final AsyncResult<ObjectPropertyData> EMPTY_RESULT = AsyncResult.done(EMPTY);
+
   private final int cacheState;
 
-  protected final List<ObjectProperty> properties;
+  protected final List<? extends Variable> properties;
   protected final List<Variable> internalProperties;
 
-  public ObjectPropertyDataImpl(int cacheState, List<ObjectProperty> properties, List<Variable> internalProperties) {
+  public ObjectPropertyDataImpl(int cacheState, List<? extends Variable> properties) {
+    this(cacheState, properties, Collections.<Variable>emptyList());
+  }
+
+  public ObjectPropertyDataImpl(int cacheState, List<? extends Variable> properties, List<Variable> internalProperties) {
     this.cacheState = cacheState;
     this.properties = properties;
     this.internalProperties = internalProperties;
@@ -20,7 +29,7 @@ public class ObjectPropertyDataImpl implements ObjectPropertyData {
 
   @NotNull
   @Override
-  public List<? extends ObjectProperty> getProperties() {
+  public List<? extends Variable> getProperties() {
     return properties;
   }
 
