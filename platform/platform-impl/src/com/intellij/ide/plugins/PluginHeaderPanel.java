@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBGradientPaint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -174,8 +175,8 @@ public class PluginHeaderPanel {
 
       private Color getButtonForeground() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(Gray._0, Gray._210);
-          case INSTALL: return new JBColor(Gray._255, Gray._210);
+          case UPDATE: return new JBColor(Gray._240, Gray._210);
+          case INSTALL: return new JBColor(Gray._240, Gray._210);
           case UNINSTALL: return new JBColor(Gray._0, Gray._140);
           case RESTART:
             break;
@@ -186,11 +187,14 @@ public class PluginHeaderPanel {
 
       private Paint getBackgroundPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(new Color(209, 190, 114), new Color(49, 98, 49));
-          case INSTALL: return new JBColor(new Color(0x4DA864), new Color(49, 98, 49));
+          case UPDATE: return new JBGradientPaint(this,
+                                                  new JBColor(new Color(98, 158, 225), new Color(98, 158, 225)),
+                                                  new JBColor(new Color(58, 91, 181), new Color(58, 91, 181)));
+          case INSTALL: return new JBGradientPaint(this,
+                                                   new JBColor(new Color(96, 204, 105), new Color(81, 149, 87)),
+                                                   new JBColor(new Color(50, 101, 41), new Color(40, 70, 47)));
           case UNINSTALL: return UIUtil.isUnderDarcula()
-                                 ? new GradientPaint(0, 0, UIManager.getColor("Button.darcula.color1"),
-                                                   0, getHeight(), UIManager.getColor("Button.darcula.color2"))
+                                 ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.color1"), UIManager.getColor("Button.darcula.color2"))
                                  : Gray._240;
           case RESTART:
             break;
@@ -200,8 +204,8 @@ public class PluginHeaderPanel {
 
       private Paint getBackgroundBorderPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(new Color(164, 145, 82), Gray._85);
-          case INSTALL: return new JBColor(new Color(0x337043), Gray._80);
+          case UPDATE: return new JBColor(new Color(166, 180, 205), Gray._85);
+          case INSTALL: return new JBColor(new Color(201, 223, 201), Gray._70);
           case UNINSTALL: return new JBColor(Gray._220, Gray._100.withAlpha(180));
           case RESTART:
         }
