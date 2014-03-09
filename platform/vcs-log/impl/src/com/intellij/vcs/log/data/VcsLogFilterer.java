@@ -64,7 +64,7 @@ public class VcsLogFilterer {
     final Set<Integer> commitSet = ContainerUtil.map2Set(filteredCommits, new Function<Hash, Integer>() {
       @Override
       public Integer fun(Hash hash) {
-        return myLogDataHolder.putHash(hash);
+        return myLogDataHolder.getCommitIndex(hash);
       }
     });
     return new Condition<Integer>() {

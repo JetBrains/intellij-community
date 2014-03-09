@@ -92,7 +92,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
 
   @Override
   public int getRowOfCommit(@NotNull final Hash hash) {
-    final int commitIndex = myDataHolder.putHash(hash);
+    final int commitIndex = myDataHolder.getCommitIndex(hash);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getGraphFacade()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {

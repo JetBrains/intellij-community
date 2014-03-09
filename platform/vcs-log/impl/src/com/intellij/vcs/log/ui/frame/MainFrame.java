@@ -227,6 +227,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     else if (VcsLogDataKeys.VCS_LOG_UI == key) {
       sink.put(key, myUI);
     }
+    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER == key) {
+      sink.put(key, myLogDataHolder);
+    }
     else if (VcsDataKeys.CHANGES.equals(key)) {
       List<Change> selectedChanges = getSelectedChanges();
       if (selectedChanges != null) {
