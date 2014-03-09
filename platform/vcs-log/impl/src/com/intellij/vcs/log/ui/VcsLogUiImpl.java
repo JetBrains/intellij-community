@@ -1,10 +1,12 @@
 package com.intellij.vcs.log.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
@@ -25,16 +27,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 
-/**
- * @author erokhins
- */
-public class VcsLogUI {
+public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
 
-  private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
+  private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
@@ -45,12 +44,14 @@ public class VcsLogUI {
 
   @NotNull private DataPack myDataPack;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
+  public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
+                      @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
     myDataPack = initialDataPack;
+    Disposer.register(logDataHolder, this);
+
     myFilterer = new VcsLogFilterer(logDataHolder, this);
     myLog = new VcsLogImpl(myLogDataHolder, this);
     myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog, initialDataPack);
@@ -235,7 +236,7 @@ public class VcsLogUI {
   }
 
   private void commitNotFound(@NotNull String commitHash) {
-    if (collectFilters().isEmpty()) {
+    if (getFilters().isEmpty()) {
       showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
     }
     else {
@@ -276,7 +277,7 @@ public class VcsLogUI {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
         final TIntHashSet previouslySelected = getSelectedCommits();
-        final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, collectFilters());
+        final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, getFilters());
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -299,8 +300,9 @@ public class VcsLogUI {
     applyFiltersAndUpdateUi(myDataPack);
   }
 
+  @Override
   @NotNull
-  public VcsLogFilterCollection collectFilters() {
+  public VcsLogFilterCollection getFilters() {
     return myMainFrame.getFilterUi().getFilters();
   }
 
@@ -335,18 +337,26 @@ public class VcsLogUI {
     return myLog;
   }
 
+  @Override
   @NotNull
   public DataPack getDataPack() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myDataPack;
   }
 
+  @Override
   public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
     getTable().addHighlighter(highlighter);
   }
 
+  @Override
   public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
     getTable().removeHighlighter(highlighter);
+  }
+
+  @Override
+  public void dispose() {
+    getTable().removeAllHighlighters();
   }
 
 }

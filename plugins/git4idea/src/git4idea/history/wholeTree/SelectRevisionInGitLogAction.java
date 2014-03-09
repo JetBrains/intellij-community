@@ -16,7 +16,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     Runnable selectCommit = new Runnable() {
       @Override
       public void run() {
-        VcsLogUI logUi = log.getLogUi();
+        VcsLogUiImpl logUi = log.getLogUi();
         if (logUi == null) {
           return;
         }

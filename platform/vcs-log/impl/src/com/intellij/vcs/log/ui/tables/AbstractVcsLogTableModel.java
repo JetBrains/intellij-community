@@ -12,7 +12,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,14 +34,14 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends Abstra
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
-  @NotNull protected final VcsLogUI myUi;
+  @NotNull protected final VcsLogUiImpl myUi;
   @NotNull protected final DataPack myDataPack;
   @NotNull private final LoadMoreStage myLoadMoreStage;
 
   @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
 
 
-  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI ui, @NotNull DataPack dataPack,
+  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl ui, @NotNull DataPack dataPack,
                                      @NotNull LoadMoreStage loadMoreStage) {
     myLogDataHolder = logDataHolder;
     myUi = ui;
@@ -72,7 +72,7 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends Abstra
     if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
         && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
       myUi.getTable().setPaintBusy(true);
-      myUi.getFilterer().requestVcs(myDataPack, myUi.collectFilters(), myLoadMoreStage, onLoaded);
+      myUi.getFilterer().requestVcs(myDataPack, myUi.getFilters(), myLoadMoreStage, onLoaded);
     }
   }
 
@@ -112,7 +112,7 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends Abstra
    * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
    */
   public boolean canRequestMore() {
-    return !myUi.collectFilters().isEmpty() && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
+    return !myUi.getFilters().isEmpty() && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
   }
 
   /**
