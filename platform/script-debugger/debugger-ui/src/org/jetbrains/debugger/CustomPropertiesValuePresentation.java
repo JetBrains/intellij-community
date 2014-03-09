@@ -9,9 +9,9 @@ import java.util.List;
 
 public class CustomPropertiesValuePresentation extends XValuePresentation {
   private final ObjectValue value;
-  private final List<ObjectProperty> properties;
+  private final List<Variable> properties;
 
-  public CustomPropertiesValuePresentation(@NotNull ObjectValue value, @NotNull List<ObjectProperty> properties) {
+  public CustomPropertiesValuePresentation(@NotNull ObjectValue value, @NotNull List<Variable> properties) {
     this.value = value;
     this.properties = properties;
   }
@@ -21,7 +21,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
     renderer.renderComment(VariableView.getClassName(value));
     renderer.renderSpecialSymbol(" {");
     boolean isFirst = true;
-    for (ObjectProperty property : properties) {
+    for (Variable property : properties) {
       if (isFirst) {
         isFirst = false;
       }
