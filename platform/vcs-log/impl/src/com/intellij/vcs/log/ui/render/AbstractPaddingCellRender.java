@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PaintInfo;
-import com.intellij.vcs.log.graph.render.CommitCell;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
       return;
     }
 
-    CommitCell cell = getAssertCommitCell(value);
+    GraphCommitCell cell = getAssertCommitCell(value);
     myGraphImage = getGraphImage(row);
     myRefs = cell.getRefsToThisCommit();
 
@@ -82,14 +82,14 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
     if (myGraphImage != null) {
       UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
     }
-    else if (this instanceof GraphCommitCellRender) { // TODO temporary diagnostics: why does graph sometimes disappear
+    else { // TODO temporary diagnostics: why does graph sometimes disappear
       LOG.error("Image is null");
     }
   }
 
-  private static CommitCell getAssertCommitCell(Object value) {
-    assert value instanceof CommitCell : "Value of incorrect class was supplied: " + value;
-    return (CommitCell)value;
+  private static GraphCommitCell getAssertCommitCell(Object value) {
+    assert value instanceof GraphCommitCell : "Value of incorrect class was supplied: " + value;
+    return (GraphCommitCell)value;
   }
 
   protected void drawRefs(@NotNull Graphics2D g2, @NotNull Collection<VcsRef> refs, int padding) {

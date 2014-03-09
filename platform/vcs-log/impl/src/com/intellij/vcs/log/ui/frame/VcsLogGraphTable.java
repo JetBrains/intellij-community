@@ -19,11 +19,9 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
-import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +66,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
-    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);

@@ -5,14 +5,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+public class GraphCommitCell {
 
-/**
- * @author erokhins
- */
-public class GraphCommitCell extends CommitCell {
+  @NotNull private final String myText;
+  @NotNull private final Collection<VcsRef> myRefsToThisCommit;
 
   public GraphCommitCell(@NotNull String text, @NotNull Collection<VcsRef> refsToThisCommit) {
-    super(text, refsToThisCommit);
+    myText = text;
+    myRefsToThisCommit = refsToThisCommit;
+  }
+
+  @NotNull
+  public String getText() {
+    return myText;
+  }
+
+  @NotNull
+  public Collection<VcsRef> getRefsToThisCommit() {
+    return myRefsToThisCommit;
   }
 
 }
