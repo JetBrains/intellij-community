@@ -1297,6 +1297,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     removeTopComponent(editor, annotationComponent);
   }
+  
+  @NotNull
+  public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
+    final EditorComposite composite = getEditorComposite(editor);
+    return composite != null ? composite.getTopComponents(editor) : Collections.<JComponent>emptyList();
+  }
 
   @Override
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
@@ -1312,6 +1318,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (composite != null) {
       composite.removeTopComponent(editor, component);
     }
+  }
+
+  @NotNull
+  public List<JComponent> getBottomComponents(@NotNull FileEditor editor) {
+    final EditorComposite composite = getEditorComposite(editor);
+    return composite != null ? composite.getBottomComponents(editor) : Collections.<JComponent>emptyList();
   }
 
   @Override
