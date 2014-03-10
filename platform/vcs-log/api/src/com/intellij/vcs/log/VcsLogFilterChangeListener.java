@@ -15,20 +15,8 @@
  */
 package com.intellij.vcs.log;
 
-import org.jetbrains.annotations.NotNull;
+public interface VcsLogFilterChangeListener {
 
-public interface VcsLogUi {
-
-  @NotNull
-  VcsLogFilterUi getFilterUi();
-
-  @NotNull
-  VcsLogDataPack getDataPack();
-
-  void addHighlighter(@NotNull VcsLogHighlighter highlighter);
-  void removeHighlighter(@NotNull VcsLogHighlighter highlighter);
-
-  void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
-  void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
+  void filtersPossiblyChanged();
 
 }
