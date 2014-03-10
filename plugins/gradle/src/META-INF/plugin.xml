@@ -41,7 +41,6 @@
   <depends>org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="gradle-scala-integration.xml">org.intellij.scala</depends>
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
@@ -63,6 +62,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.integrations.scala.ScalaGradleProjectResolverExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
