@@ -300,7 +300,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
-      presentation.setDescription("Select " + configuration.getType().getConfigurationTypeDescription() + " '" + name + "'");
+      final ConfigurationType type = configuration.getType();
+      if (type != null) {
+        presentation.setDescription("Select " + type.getConfigurationTypeDescription() + " '" + name + "'");
+      }
       updateIcon(presentation);
     }
 
