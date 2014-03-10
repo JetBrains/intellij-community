@@ -134,7 +134,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private String[] mySymbols;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private SearchListModel myListModel = new SearchListModel();
   private int myMoreClassesIndex = -1;
   private int myMoreFilesIndex = -1;
   private int myMoreActionsIndex = -1;
@@ -337,7 +336,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void updateComponents() {
     myRenderer = new MyListRenderer();
-    myList = new JBList(myListModel) {
+    myList = new JBList() {
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
@@ -510,7 +509,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void clearModel() {
-    myListModel.clear();
     myMoreClassesIndex = -1;
     myMoreFilesIndex = -1;
     myMoreActionsIndex = -1;
@@ -1119,6 +1117,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final String pattern;
     private ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
+    private SearchListModel myListModel = new SearchListModel();
 
     public CalcThread(Project project, String pattern) {
       this.project = project;
@@ -1134,6 +1133,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
+            myList.setModel(myListModel);
             myList.getEmptyText().setText("Searching...");
             myTitleIndexes.clear();
             clearModel();
