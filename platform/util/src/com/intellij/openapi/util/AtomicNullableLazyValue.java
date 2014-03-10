@@ -13,13 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.actions;
 
-import com.intellij.execution.Executor;
+package com.intellij.openapi.util;
 
 /**
-* User: Vassiliy.Kudryashov
-*/
-public interface ExecutorProvider {
-  Executor getExecutor();
+ * @author peter
+ */
+public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
+  private volatile T myValue;
+  private volatile boolean myComputed;
+
+  @Override
+  public final T getValue() {
+    boolean computed = myComputed;
+    T value = myValue;
+    if (computed) {
+      return value;
+    }
+    synchronized (this) {
+      computed = myComputed;
+      value = myValue;
+      if (!computed) {
+        myValue = value = compute();
+        myComputed = true;
+      }
+    }
+    return value;
+  }
 }
