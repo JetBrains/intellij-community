@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.remote;
-
-import com.intellij.remote.RemoteSdkAdditionalData;
+package com.intellij.remote;
 
 /**
  * @author traff
  */
-public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware {
+public enum CredentialsType {
+  VAGRANT, WEB_DEPLOYMENT, SSH_HOST
 }

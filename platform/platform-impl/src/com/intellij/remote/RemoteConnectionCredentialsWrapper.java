@@ -161,10 +161,4 @@ public class RemoteConnectionCredentialsWrapper {
       throw unknownConnectionType();
     }
   }
-
-  public interface RemoteSdkConnectionAcceptor {
-    void ssh(RemoteCredentialsHolder cred);
-    void vagrant(VagrantBasedCredentialsHolder cred);
-    void deployment(WebDeploymentCredentialsHolder cred);
-  }
 }

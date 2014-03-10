@@ -126,7 +126,7 @@ public abstract class PythonRemoteInterpreterManager {
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
   }
 
-  public static void addHelpersMapping(@NotNull RemoteSdkCredentials data, @Nullable PathMappingSettings newMappingSettings) {
+  public static void addHelpersMapping(@NotNull RemoteSdkProperties data, @Nullable PathMappingSettings newMappingSettings) {
     if (newMappingSettings == null) {
       newMappingSettings = new PathMappingSettings();
     }
@@ -134,7 +134,7 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkCredentials data,
+                                                    @NotNull PyRemoteSdkAdditionalDataBase data,
                                                     @Nullable PathMappingSettings mappingSettings);
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
