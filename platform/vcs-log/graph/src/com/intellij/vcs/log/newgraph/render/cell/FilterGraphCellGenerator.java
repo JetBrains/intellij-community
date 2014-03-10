@@ -59,6 +59,9 @@ public class FilterGraphCellGenerator implements GraphCellGenerator {
     if (myFilterMutableGraph.nextRowIsHide(visibleRowIndex))
       newSpecialElements.add(new SpecialRowElement(node, 0, SpecialRowElement.Type.DOWN_HARMONICA));
 
+    if (visibleRowIndex > 0 && myFilterMutableGraph.nextRowIsHide(visibleRowIndex - 1))
+      newSpecialElements.add(new SpecialRowElement(node, 0, SpecialRowElement.Type.UP_HARMONICA));
+
     return new GraphCell(delegateCell.getCountElements(), newSpecialElements, delegateCell.getUpEdges(), delegateCell.getDownEdges());
   }
 

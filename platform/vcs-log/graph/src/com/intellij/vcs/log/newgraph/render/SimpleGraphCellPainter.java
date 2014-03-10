@@ -122,12 +122,27 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
 
-  private void paintDownHarmonica(Color color) {
-    int x0 = 0;
-    int y0 = PrintParameters.HEIGHT_CELL - 1;
+  private void paintTriangle(Color color, int x0, int y0, boolean isMarked) {
+    int R = 4;
+    if (isMarked)
+      R = 7;
+
     g2.setColor(color);
-    g2.drawLine(x0, y0, x0 + PrintParameters.WIDTH_NODE / 2 , y0);
+    Polygon polygon = new Polygon();
+    polygon.addPoint(x0, y0 - R);
+    polygon.addPoint(x0 + R, y0);
+    polygon.addPoint(x0, y0 + R);
+    g2.fill(polygon);
   }
+
+  private void paintDownHarmonica(Color color, boolean isMarked) {
+    paintTriangle(color, 0, PrintParameters.HEIGHT_CELL, isMarked);
+  }
+
+  private void paintUpHarmonica(Color color, boolean isMarked) {
+    paintTriangle(color, 0, 0, isMarked);
+  }
+
 
   private void setStroke(boolean usual, boolean select) {
     if (usual) {
@@ -244,13 +259,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           });
           break;
         case DOWN_HARMONICA:
-          drawLogic(true, false, true, JBColor.BLACK, new LitePrinter() {
-            @Override
-            public void print(Color color) {
-              //paintDownHarmonica(color);
-            }
-          });
+          paintDownHarmonica(JBColor.GRAY, isMarked(rowElement));
           break;
+        case UP_HARMONICA:
+          paintUpHarmonica(JBColor.GRAY, isMarked(rowElement));
+          break;
+
         default:
           throw new IllegalStateException();
       }
@@ -290,6 +304,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         if (PositionUtil.overNode(rowElement.getPosition(), x, y)) {
           return rowElement;
         }
+      }
+      if (rowElement.getType() == SpecialRowElement.Type.DOWN_HARMONICA || rowElement.getType() == SpecialRowElement.Type.UP_HARMONICA) {
+        int correctY = y;
+        if (rowElement.getType() == SpecialRowElement.Type.DOWN_HARMONICA)
+          correctY = PrintParameters.HEIGHT_CELL - y;
+
+        if (x + correctY <= 5)
+          return rowElement;
       }
     }
     return null;

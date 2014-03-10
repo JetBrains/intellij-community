@@ -94,7 +94,7 @@ public class GraphActionDispatcher {
     }
 
     Pair<SpecialRowElement, GraphElement> arrowOrGraphElement = getOverArrowOrGraphElement(visibleRowIndex, clickPoint);
-    if (arrowOrGraphElement.first != null) {
+    if (arrowOrGraphElement.first != null && arrowOrGraphElement.first.isArrow()) {
       int toRow;
       Edge edge = (Edge)arrowOrGraphElement.first.getElement();
 
@@ -121,7 +121,18 @@ public class GraphActionDispatcher {
       }
 
       return ActionRequestGraphAnswer.jumpToRow(toRow);
-    } else {
+    }
+    else if (arrowOrGraphElement.first != null && arrowOrGraphElement.first.isHarmonica()) {
+      int toRow = myGraphData.getMutableGraph().performAction(new ClickToHarmonicaInternalGraphAction(arrowOrGraphElement.first));
+      myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
+      myGraphData.getGraphRender().invalidate();
+
+      if (toRow != -1)
+        return ActionRequestGraphAnswer.jumpToRow(toRow);
+
+      return null;
+    }
+    else {
       int toRow = myGraphData.getMutableGraph().performAction(new ClickInternalGraphAction(arrowOrGraphElement.second));
       myGraphData.getMutableGraph().performAction(new MouseOverGraphElementInternalGraphAction(null));
       myGraphData.getGraphRender().invalidate();

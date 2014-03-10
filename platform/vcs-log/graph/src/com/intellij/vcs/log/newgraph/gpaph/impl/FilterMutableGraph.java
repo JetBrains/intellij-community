@@ -27,7 +27,9 @@ import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
+import com.intellij.vcs.log.newgraph.gpaph.actions.ClickToHarmonicaInternalGraphAction;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
+import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import com.intellij.vcs.log.newgraph.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
 import com.intellij.vcs.log.newgraph.utils.impl.TreeIntToIntMap;
@@ -93,6 +95,21 @@ public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutabl
   @Override
   public int performAction(@NotNull InternalGraphAction action) {
     myThickHoverController.performAction(action);
+
+    if (action instanceof ClickToHarmonicaInternalGraphAction) {
+      SpecialRowElement specialRowElement = ((ClickToHarmonicaInternalGraphAction)action).getInfo();
+      if (specialRowElement == null)
+        return  -1;
+
+      int toRow = ((Node)specialRowElement.getElement()).getVisibleNodeIndex();
+
+      if (specialRowElement.getType() == SpecialRowElement.Type.UP_HARMONICA)
+        toRow--;
+
+      showHideFragment(toRow);
+      return toRow;
+    }
+
 
     return -1;
   }
