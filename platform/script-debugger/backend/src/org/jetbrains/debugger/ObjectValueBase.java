@@ -3,6 +3,7 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
@@ -39,5 +40,11 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   @Override
   public final AsyncResult<ObjectPropertyData> getProperties() {
     return PROPERTIES_LOADER.get(this);
+  }
+
+  @Nullable
+  @Override
+  public String getValueString() {
+    return null;
   }
 }
