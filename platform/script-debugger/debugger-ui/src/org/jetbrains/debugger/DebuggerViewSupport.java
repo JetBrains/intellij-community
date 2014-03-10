@@ -30,7 +30,7 @@ public interface DebuggerViewSupport extends MemberFilter {
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
 
-  final class SimpleDebuggerViewSupport implements DebuggerViewSupport {
+  public class SimpleDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
 
     @Nullable
