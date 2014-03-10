@@ -13,12 +13,4 @@ public interface ObjectValue extends Value {
 
   @NotNull
   AsyncResult<ObjectPropertyData> getProperties();
-
-  /**
-   * Optionally returns unique id for this object. No two distinct objects can have the same id.
-   * Lifetime of id is limited to lifetime of its {@link ValueManager} (typically corresponds
-   * to the lifetime of {@link SuspendContext}.)
-   */
-  @Nullable
-  String getRefId();
 }
