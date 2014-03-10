@@ -25,7 +25,7 @@ class FunctionScopesValueGroup extends XValueGroup {
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    ObsolescentAsyncResults.consume(value.asFunction(), node, new PairConsumer<FunctionValue, XCompositeNode>() {
+    ObsolescentAsyncResults.consume(value.resolve(), node, new PairConsumer<FunctionValue, XCompositeNode>() {
       @Override
       public void consume(FunctionValue value, XCompositeNode node) {
         Scope[] scopes = value.getScopes();

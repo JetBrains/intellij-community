@@ -351,10 +351,9 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
-    AsyncResult<FunctionValue> asFunction = functionValue == null ? null : functionValue.asFunction();
-    if (asFunction != null) {
-      asFunction.doWhenDone(new Consumer<FunctionValue>() {
+    AsyncResult<FunctionValue> fun = value instanceof FunctionValue ? ((FunctionValue)value).resolve() : null;
+    if (fun != null) {
+      fun.doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(FunctionValue function) {
           DebugProcessEx debugProcess = getDebugProcess();
