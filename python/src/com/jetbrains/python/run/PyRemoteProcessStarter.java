@@ -70,8 +70,11 @@ public class PyRemoteProcessStarter {
 
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     assert data instanceof PyRemoteSdkAdditionalDataBase;
+    PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
     try {
-      return manager.startRemoteProcess(project, ((PyRemoteSdkAdditionalDataBase)data).getRemoteSdkCredentials(), commandLine,
+      settings = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, settings);
+
+      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(), commandLine,
                                         settings);
     }
     catch (InterruptedException e) {
