@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PrimitiveValue extends ValueBase {
   private final String valueString;
@@ -19,6 +20,7 @@ public class PrimitiveValue extends ValueBase {
     this(type, Long.toString(value));
   }
 
+  @Nullable
   @Override
   public final String getValueString() {
     return valueString;
