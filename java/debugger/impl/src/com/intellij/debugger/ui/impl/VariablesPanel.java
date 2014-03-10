@@ -75,7 +75,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
 
   @Override
   protected DebuggerTree createTreeView() {
-    return new FrameVariablesTree(getProject(), SystemProperties.getBooleanProperty("java.debugger.xTree", false) ? this : null);
+    return new FrameVariablesTree(getProject(), SystemProperties.getBooleanProperty("java.debugger.xTree", true) ? this : null);
   }
 
   @Override
