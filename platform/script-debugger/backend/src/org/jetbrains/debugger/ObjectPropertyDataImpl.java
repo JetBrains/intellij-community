@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,9 +8,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ObjectPropertyDataImpl implements ObjectPropertyData {
-  public static final ObjectPropertyData EMPTY = new ObjectPropertyDataImpl(0, Collections.<VariableImpl>emptyList());
-  public static final AsyncResult<ObjectPropertyData> EMPTY_RESULT = AsyncResult.done(EMPTY);
-
   private final int cacheState;
 
   protected final List<? extends Variable> properties;
