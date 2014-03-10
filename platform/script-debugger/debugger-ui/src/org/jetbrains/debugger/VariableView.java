@@ -49,6 +49,23 @@ public final class VariableView extends VariableViewBase implements VariableCont
     node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), true);
   }
 
+  public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+    String valueString = value.getValueString();
+    // only WIP reports normal description
+    if (valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
+      node.setPresentation(icon, null, valueString, true);
+    }
+    else {
+      ObsolescentAsyncResults.consume(context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value)), node,
+                                      new PairConsumer<Value, XValueNode>() {
+                                        @Override
+                                        public void consume(Value lengthValue, XValueNode node) {
+                                          node.setPresentation(icon, null, "Array[" + lengthValue.getValueString() + ']', true);
+                                        }
+                                      });
+    }
+  }
+
   @Override
   public boolean watchableAsEvaluationExpression() {
     return true;
@@ -106,30 +123,16 @@ public final class VariableView extends VariableViewBase implements VariableCont
     switch (value.getType()) {
       case OBJECT:
       case NODE:
-        computeObjectPresentation(value, node);
+        context.getDebugProcess().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
         break;
 
-      case FUNCTION: {
+      case FUNCTION:
         node.setPresentation(getIcon(), new ObjectValuePresentation(trimFunctionDescription(value)), true);
-      }
-      break;
+        break;
 
-      case ARRAY: {
-        // only WIP reports normal description
-        if (valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
-          node.setPresentation(getIcon(), null, valueString, true);
-        }
-        else {
-          ObsolescentAsyncResults.consume(context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value)), node,
-                                          new PairConsumer<Value, XValueNode>() {
-                                            @Override
-                                            public void consume(Value lengthValue, XValueNode node) {
-                                              node.setPresentation(getIcon(), null, "Array[" + lengthValue.getValueString() + ']', true);
-                                            }
-                                          });
-        }
-      }
-      break;
+      case ARRAY:
+        context.getDebugProcess().computeArrayPresentation(((ObjectValue)value), variable, context, node, getIcon());
+        break;
 
       case BOOLEAN:
       case NULL:
@@ -156,10 +159,6 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   private static XValuePresentation createNumberPresentation(@NotNull String value) {
     return value.equals("NaN") || value.equals("Infinity") ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
-  }
-
-  private void computeObjectPresentation(@NotNull Value value, @NotNull XValueNode node) {
-    context.getDebugProcess().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
   }
 
   @Override

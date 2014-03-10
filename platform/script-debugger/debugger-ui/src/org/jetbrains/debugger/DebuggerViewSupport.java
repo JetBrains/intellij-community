@@ -25,12 +25,15 @@ public interface DebuggerViewSupport extends MemberFilter {
   @NotNull
   String propertyNamesToString(@NotNull List<String> list, boolean quotedAware);
 
+  // Please, don't hesitate to ask to share some generic implementations. Don't reinvent the wheel and keep in mind - user expects the same UI across all IDEA-based IDEs.
   void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
+
+  void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
 
-  public class SimpleDebuggerViewSupport implements DebuggerViewSupport {
+  class SimpleDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
 
     @Nullable
@@ -82,6 +85,11 @@ public interface DebuggerViewSupport extends MemberFilter {
     @Override
     public void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
       VariableView.setObjectPresentation(value, icon, node);
+    }
+
+    @Override
+    public void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
+      VariableView.setArrayPresentation(value, context, icon, node);
     }
 
     @NotNull
