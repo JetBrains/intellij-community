@@ -1,5 +1,7 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.AsyncResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FunctionValue extends ObjectValue {
@@ -15,4 +17,7 @@ public interface FunctionValue extends ObjectValue {
 
   @Nullable
   Scope[] getScopes();
+
+  @NotNull
+  AsyncResult<FunctionValue> asFunction();
 }
