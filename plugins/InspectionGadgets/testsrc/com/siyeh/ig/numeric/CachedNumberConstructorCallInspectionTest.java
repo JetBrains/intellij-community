@@ -28,6 +28,6 @@ public class CachedNumberConstructorCallInspectionTest extends LightInspectionTe
   }
 
   public void testSimple() { doStatementTest("new /*Number constructor call with primitive argument*/Integer/**/(1);"); }
-  public void testStringArgument() { doStatementTest("new /*Number constructor call with primitive argument*/Double/**/(\"1.0\");"); }
+  public void testStringArgument() { doStatementTest("new /*Number constructor call with primitive argument*/Byte/**/(\"1\");"); }
   public void testNoWarn() { doStatementTest("Long.valueOf(1L);"); }
 }
