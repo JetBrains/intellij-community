@@ -381,7 +381,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
   }
 
-  private void initTooltip(JLabel label) {
+  private static void initTooltip(JLabel label) {
     final String shortcutText;
     shortcutText = getShortcut();
 
@@ -648,7 +648,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    final Project project = e.getProject();
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (wnd == null && myContextComponent instanceof Window) {
@@ -1133,6 +1132,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
+            //noinspection unchecked
             myList.setModel(myListModel);
             myList.getEmptyText().setText("Searching...");
             myTitleIndexes.clear();
