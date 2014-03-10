@@ -1,4 +1,4 @@
-public class Test {
+class Test {
 
         interface II {
             int _();

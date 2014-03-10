@@ -56,7 +56,7 @@ public class JavaMethodResolveHelper {
       @Override
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
-                                                        final boolean accessible) {
+                                                        final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
           .createCandidateInfo(method, substitutor, staticProblem, myCurrentFileContext, !accessible, argumentList, argumentTypes,
                                languageLevel);
