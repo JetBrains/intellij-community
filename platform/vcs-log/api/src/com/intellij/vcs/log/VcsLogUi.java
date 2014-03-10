@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogUi {
 
   @NotNull
-  VcsLogFilterCollection getFilters();
+  VcsLogFilterUi getFilterUi();
 
   @NotNull
   VcsLogDataPack getDataPack();

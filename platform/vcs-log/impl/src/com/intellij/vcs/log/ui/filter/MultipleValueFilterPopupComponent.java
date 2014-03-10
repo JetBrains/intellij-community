@@ -69,7 +69,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     return group;
   }
 
-  private void apply(@Nullable Collection<String> values, String text, String tooltip) {
+  void apply(@Nullable Collection<String> values, @NotNull String text, @NotNull String tooltip) {
     mySelectedValues = values;
     applyFilters();
     setValue(text, tooltip);
@@ -79,7 +79,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  private static String displayableText(@NotNull Collection<String> values) {
+  static String displayableText(@NotNull Collection<String> values) {
     if (values.size() == 1) {
       return values.iterator().next();
     }
@@ -87,7 +87,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  private static String tooltip(@NotNull Collection<String> values) {
+  static String tooltip(@NotNull Collection<String> values) {
     return StringUtil.join(values, ", ");
   }
 
