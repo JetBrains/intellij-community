@@ -91,7 +91,7 @@ public class HashImpl implements Hash {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     HashImpl that = (HashImpl)o;
-    return (myHashCode == that.myHashCode && asString().equals(that.asString()));
+    return myHashCode == that.myHashCode && Arrays.equals(myData, that.myData);
   }
 
   @Override
