@@ -662,7 +662,7 @@ public class EditorWindow {
         if (initialIndex == null) {
           int selectedIndex = myTabbedPane.getSelectedIndex();
           if (selectedIndex >= 0) {
-            indexToInsert = UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE ? selectedIndex : selectedIndex + 1;
+            indexToInsert = selectedIndex + 1;
           }
         } else {
           indexToInsert = initialIndex;

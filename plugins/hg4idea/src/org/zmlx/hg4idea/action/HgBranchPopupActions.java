@@ -221,7 +221,7 @@ public class HgBranchPopupActions {
         e.getPresentation().setEnabled(false);
         e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
       }
-      else if (Repository.State.MERGING.equals(myRepository.getState())) {
+      else if (!Repository.State.NORMAL.equals(myRepository.getState())) {
         e.getPresentation().setEnabled(false);
       }
     }

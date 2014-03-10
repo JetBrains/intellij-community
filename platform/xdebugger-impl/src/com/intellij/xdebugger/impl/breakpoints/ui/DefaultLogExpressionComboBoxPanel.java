@@ -29,13 +29,14 @@ import javax.swing.*;
  * @author egor
  */
 public class DefaultLogExpressionComboBoxPanel<B extends XBreakpoint<?>> extends XBreakpointCustomPropertiesPanel<B> {
+  public static final String HISTORY_KEY = "breakpointLogExpression";
+
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public DefaultLogExpressionComboBoxPanel(Project project,
                                            XDebuggerEditorsProvider debuggerEditorsProvider,
-                                           String historyId,
                                            XSourcePosition sourcePosition) {
-    myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, historyId, sourcePosition);
+    myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, HISTORY_KEY, sourcePosition);
   }
 
   @NotNull

@@ -388,10 +388,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -414,10 +414,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
@@ -447,10 +447,10 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void execute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       else{
         LightweightHint hint = data.hint;

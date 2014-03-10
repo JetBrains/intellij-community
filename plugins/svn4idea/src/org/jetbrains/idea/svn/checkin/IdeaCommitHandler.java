@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
@@ -44,6 +45,8 @@ import java.util.List;
  * Time: 11:13 AM
  */
 public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
+
+  private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);
 
   @Nullable private final ProgressIndicator myProgress;
   @NotNull private final List<VirtualFile> myDeletedFiles = ContainerUtil.newArrayList();
@@ -135,7 +138,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
 
   @NotNull
   private static CommitEventType convert(@NotNull SVNEventAction action) {
-    CommitEventType result = null;
+    CommitEventType result = CommitEventType.unknown;
 
     if (SVNEventAction.COMMIT_ADDED.equals(action)) {
       result = CommitEventType.adding;
@@ -149,10 +152,12 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
       result = CommitEventType.transmittingDeltas;
     } else if (SVNEventAction.SKIP.equals(action)) {
       result = CommitEventType.skipped;
+    } else if (SVNEventAction.FAILED_OUT_OF_DATE.equals(action)) {
+      result = CommitEventType.failedOutOfDate;
     }
 
-    if (result == null) {
-      throw new IllegalArgumentException("Unknown action " + action);
+    if (CommitEventType.unknown.equals(result)) {
+      LOG.warn("Could not create commit event from action " + action);
     }
 
     return result;

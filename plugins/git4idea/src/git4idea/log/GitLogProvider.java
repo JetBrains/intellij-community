@@ -194,7 +194,7 @@ public class GitLogProvider implements VcsLogProvider {
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (repository.getBranches().findBranchByName(branchName) != null) {
+        if (branchName.equals("HEAD") || repository.getBranches().findBranchByName(branchName) != null) {
           filterParameters.add(branchName);
           atLeastOneBranchExists = true;
         }

@@ -22,13 +22,15 @@ package org.jetbrains.idea.svn.commandLine;
  * Time: 6:51 PM
  */
 public enum CommitEventType {
+  unknown("Unknown"),
   adding("Adding"),
   deleting("Deleting"),
   sending("Sending"),
   replacing("Replacing"),
   transmittingDeltas("Transmitting file data"),
   committedRevision("Committed revision"),
-  skipped("Skipped");
+  skipped("Skipped"),
+  failedOutOfDate("Failed out of date");
 
   private final String myText;
 

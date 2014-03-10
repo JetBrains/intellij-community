@@ -37,13 +37,11 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   public void setUp() throws Exception {
     super.setUp();
-    EditorTestUtil.enableMultipleCarets();
     mySavedCurrentEditorProvider = getUndoManager().getEditorProvider();
   }
 
   public void tearDown() throws Exception {
     getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
-    EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
 

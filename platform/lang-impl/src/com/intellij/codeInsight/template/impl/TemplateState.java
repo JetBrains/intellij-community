@@ -618,7 +618,7 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
-  // Hours spent fixing code : 1
+  // Hours spent fixing code : 3
   void calcResults(final boolean isQuick) {
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);

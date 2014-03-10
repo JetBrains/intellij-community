@@ -36,7 +36,6 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -282,9 +281,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   private static String doLoadFile(String myFullDataPath, String name) throws IOException {
-    String text = FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8).trim();
-    text = StringUtil.convertLineSeparators(text);
-    return text;
+    return FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8, true).trim();
   }
 
   public static void ensureParsed(PsiFile file) {

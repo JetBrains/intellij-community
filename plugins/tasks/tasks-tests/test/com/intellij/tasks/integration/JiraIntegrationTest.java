@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskSettings;
@@ -67,7 +68,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     //noinspection ConstantConditions
     Exception exception = myRepository.createCancellableConnection().call();
     assertNotNull(exception);
-    assertEquals(JiraRepository.LOGIN_FAILED_CHECK_YOUR_PERMISSIONS, exception.getMessage());
+    assertEquals(TaskBundle.message("failure.login"), exception.getMessage());
   }
 
   public void testVersionDiscovery() throws Exception {

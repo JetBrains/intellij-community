@@ -59,6 +59,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   public static final String INPUT_FIELD = "input-field";
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
+  public static final Function<Element, String> ELEMENT_STRING_FUNCTION = new Function<Element, String>() {
+    @Override
+    public String fun(Element element) {
+      return element.getText();
+    }
+  };
 
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
@@ -137,15 +143,23 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         final String path = element.getChildText("path", ns);
         final String description = element.getChildTextTrim("description", ns);
         String name = element.getChildTextTrim("name", ns);
+        final List<String> frameworks = getFrameworks(element);
         return new ArchivedProjectTemplate(name, element.getChildTextTrim("category")) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
           }
 
+          @NotNull
           @Override
           public List<WizardInputField> getInputFields() {
             return inputFields;
+          }
+
+          @NotNull
+          @Override
+          public List<String> getFeaturedFrameworks() {
+            return frameworks;
           }
 
           @Override
@@ -168,6 +182,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         };
       }
     });
+  }
+
+  public static List<String> getFrameworks(Element element) {
+    List<Element> frameworks = element.getChildren("framework");
+    return ContainerUtil.map(frameworks, ELEMENT_STRING_FUNCTION);
   }
 
   static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {

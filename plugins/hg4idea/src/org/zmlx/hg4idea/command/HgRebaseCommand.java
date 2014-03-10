@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Arrays;
 
@@ -30,9 +31,15 @@ public class HgRebaseCommand {
     this.repo = repo;
   }
 
-  public void continueRebase() {
-    new HgCommandExecutor(project).execute(repo, "rebase", Arrays.asList("--continue"), null);
+  public HgCommandResult continueRebase() {
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "rebase", Arrays.asList("--continue"), null);
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    return result;
   }
 
+  public HgCommandResult abortRebase() {
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "rebase", Arrays.asList("--abort"), null);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    return result;
+  }
 }

@@ -107,11 +107,11 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
       final XBreakpointCustomPropertiesPanel<B> conditionPanel;
       if (debuggerEditorsProvider instanceof XDebuggerComboBoxProvider) {
         conditionPanel = ((XDebuggerComboBoxProvider<B>)debuggerEditorsProvider).createConditionComboBoxPanel(
-            project, debuggerEditorsProvider, "breakpointCondition", myBreakpoint.getSourcePosition());
+            project, debuggerEditorsProvider, DefaultConditionComboBoxPanel.HISTORY_KEY, myBreakpoint.getSourcePosition());
       }
       else {
         conditionPanel =
-          new DefaultConditionComboBoxPanel<B>(project, debuggerEditorsProvider, "breakpointCondition", myBreakpoint.getSourcePosition());
+          new DefaultConditionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
       }
       myConditionExpressionPanel.add(conditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(conditionPanel);
@@ -165,9 +165,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
 
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.saveTo(myBreakpoint);
-    }
-    if (!myCustomPanels.isEmpty()) {
-      ((XBreakpointBase)myBreakpoint).fireBreakpointChanged();
     }
     myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
   }

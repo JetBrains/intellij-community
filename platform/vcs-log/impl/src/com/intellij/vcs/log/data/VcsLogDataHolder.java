@@ -34,7 +34,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -506,8 +505,7 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   public void getFilteredDetailsFromTheVcs(@NotNull final VcsLogFilterCollection filterCollection, 
-                                           @NotNull final Consumer<List<Pair<Hash, VirtualFile>>> success,
-                                           final int maxCount) {
+                                           @NotNull final Consumer<List<Hash>> success, final int maxCount) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
@@ -520,24 +518,16 @@ public class VcsLogDataHolder implements Disposable {
             continue;
           }
 
-          List<CommitWithRoot> details = ContainerUtil.map(entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount),
-                                                           new Function<TimedVcsCommit, CommitWithRoot>() {
-                                                             @Override
-                                                             public CommitWithRoot fun(TimedVcsCommit timedVcsCommit) {
-                                                               return new CommitWithRoot(root, timedVcsCommit.getHash(),
-                                                                                         timedVcsCommit.getParents(),
-                                                                                         timedVcsCommit.getTime());
-                                                             }
-                                                           });
-          logs.add(details);
+          List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount);
+          logs.add(matchingCommits);
         }
 
         final List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
 
-        final List<Pair<Hash, VirtualFile>> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Pair<Hash, VirtualFile>>() {
+        final List<Hash> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Hash>() {
           @Override
-          public Pair<Hash, VirtualFile> fun(TimedVcsCommit timedVcsCommit) {
-            return Pair.create(timedVcsCommit.getHash(), ((CommitWithRoot)timedVcsCommit).myRoot);
+          public Hash fun(TimedVcsCommit commit) {
+            return commit.getHash();
           }
         });
 
@@ -549,27 +539,6 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Looking for more results...");
-  }
-
-  private static class CommitWithRoot extends TimedVcsCommitImpl {
-
-    @NotNull private final VirtualFile myRoot;
-
-    public CommitWithRoot(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
-      super(hash, parents, timeStamp);
-      myRoot = root;
-    }
-  }
-
-  @NotNull
-  private static List<VcsLogStructureFilter> filterStructureFiltersByRoot(@NotNull final VirtualFile root,
-                                                                          @NotNull List<VcsLogStructureFilter> structureFilters) {
-    return ContainerUtil.filter(structureFilters, new Condition<VcsLogStructureFilter>() {
-      @Override
-      public boolean value(VcsLogStructureFilter filter) {
-        return !filter.getFiles(root).isEmpty();
-      }
-    });
   }
 
   @NotNull

@@ -44,6 +44,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.breakpoints.ui.DefaultLogExpressionComboBoxPanel;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
@@ -428,10 +430,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     } catch (Exception e) {
     }
     try {
-      if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
-        String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
-        if (logMessage != null) {
-          setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage));
+      String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
+      if (logMessage != null && !logMessage.isEmpty()) {
+        TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage);
+        XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultLogExpressionComboBoxPanel.HISTORY_KEY, text.getText());
+        if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
+          setLogMessage(text);
         }
       }
     } catch (Exception e) {

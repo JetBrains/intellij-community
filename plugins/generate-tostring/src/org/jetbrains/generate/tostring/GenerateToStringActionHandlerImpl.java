@@ -22,8 +22,7 @@ import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -32,6 +31,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
@@ -100,7 +100,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         builder.setTitle("Generate toString()");
 
         logger.debug("Displaying member chooser dialog");
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (project.isDisposed()) return;
               final MemberChooser dialog = builder.createBuilder(dialogMembers);
@@ -116,7 +116,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                     TemplatesManager.getInstance().setDefaultTemplate(template);
 
                     if (template.isValidTemplate()) {
-                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template, dialog.isInsertOverrideAnnotation());
+                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
+                                                                          dialog.isInsertOverrideAnnotation());
                     }
                     else {
                         HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
@@ -191,7 +192,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
-            comboBox = new JComboBox(all);
+            comboBox = new ComboBox(all);
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     final TemplatesPanel ui = new TemplatesPanel();

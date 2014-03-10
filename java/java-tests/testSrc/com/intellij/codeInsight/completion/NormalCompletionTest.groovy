@@ -882,16 +882,6 @@ public class ListUtils {
     doAntiTest()
   }
 
-  private void doMultiCaretTest() throws Exception {
-    EditorTestUtil.enableMultipleCarets()
-    try {
-      doTest()
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets()
-    }
-  }
-
   private void doTest() throws Exception {
     configure()
     checkResult();
@@ -1366,68 +1356,44 @@ class XInternalError {}
   }
 
   public void "test block selection from bottom to top with single-item insertion"() {
-    myFixture.configureByText "a.java", """
-class Foo {{
-  ret<caret>;
-  ret;
-}}"""
-    edt {
-      def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-      myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(caret.line + 1, caret.column), caret)
+    EditorTestUtil.disableMultipleCarets()
+    try {
+      myFixture.configureByText "a.java", """
+  class Foo {{
+    ret<caret>;
+    ret;
+  }}"""
+      edt {
+        def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+        myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(caret.line + 1, caret.column), caret)
+      }
+      myFixture.completeBasic()
+      myFixture.checkResult '''
+  class Foo {{
+    return<caret>;
+    return;
+  }}'''
     }
-    myFixture.completeBasic()
-    myFixture.checkResult '''
-class Foo {{
-  return<caret>;
-  return;
-}}'''
+    finally {
+      EditorTestUtil.enableMultipleCarets()
+    }
   }
 
   public void testMulticaretSingleItemInsertion() {
-    doMultiCaretTest()
+    doTest()
   }
 
   public void testMulticaretMethodWithParen() {
-    doMultiCaretTest()
-  }
-
-  public void testFinishWithEqualsWhenMultipleCaretsAreEnabled() {
-    EditorTestUtil.enableMultipleCarets()
-    try {
-      configureByFile("SpacesAroundEq.java");
-      type('=');
-      checkResultByFile("SpacesAroundEq_after.java");
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets()
-    }
-  }
-
-  public void testPrimitiveSquareBracketWhenMultipleCaretsAreEnabled() {
-    EditorTestUtil.enableMultipleCarets()
-    try {
-      configureByFile("PrimitiveSquareBracket.java");
-      type('[');
-      checkResultByFile("PrimitiveSquareBracket_after.java");
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets()
-    }
+    doTest()
   }
 
   public void testMulticaretTyping() {
-    EditorTestUtil.enableMultipleCarets()
-    try {
-      configure()
-      assert lookup
-      type('p')
-      assert lookup
-      type('\n')
-      checkResult()
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets()
-    }
+    configure()
+    assert lookup
+    type('p')
+    assert lookup
+    type('\n')
+    checkResult()
   }
 
   public void "test complete lowercase class name"() {

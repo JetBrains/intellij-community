@@ -37,6 +37,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
+import com.trilead.ssh2.auth.AgentProxy;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
@@ -487,7 +488,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   @Override
-  public void acknowledgeConnectionSuccessful(SVNURL url) {
+  public void acknowledgeConnectionSuccessful(SVNURL url, String method) {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     SSLExceptionsHelper.removeInfo();
     ourThreadLocalProvider.remove();
@@ -509,6 +510,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
+    showSshAgentErrorIfAny(errorMessage, authentication);
+
     SSLExceptionsHelper.removeInfo();
     ourThreadLocalProvider.remove();
     if (url != null) {
@@ -526,6 +529,22 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       if (myArtificialSaving) {
         myArtificialSaving = false;
         throw new CredentialsSavedException(successSaving);
+      }
+    }
+  }
+
+  /**
+   * "Pageant is not running" error thrown in PageantConnector.query() method is caught and "eaten" in SVNKit logic.
+   * So for both cases "Pageant is not running" and "There are no valid keys in agent (both no keys at all and no valid keys for host)"
+   * we will get same "Credentials rejected by SSH server" error.
+   */
+  private void showSshAgentErrorIfAny(@Nullable SVNErrorMessage errorMessage, @Nullable SVNAuthentication authentication) {
+    if (errorMessage != null && authentication instanceof SVNSSHAuthentication) {
+      AgentProxy agentProxy = ((SVNSSHAuthentication)authentication).getAgentProxy();
+
+      if (agentProxy != null) {
+        // TODO: Most likely this should be updated with new VcsNotifier api.
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, errorMessage.getFullMessage(), MessageType.ERROR);
       }
     }
   }

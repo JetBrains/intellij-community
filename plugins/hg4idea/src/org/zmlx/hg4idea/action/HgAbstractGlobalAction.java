@@ -89,7 +89,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
   }
 
-  public static boolean isEnabled(AnActionEvent e) {
+  public boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
@@ -101,4 +101,17 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
     return true;
   }
+
+  @Nullable
+  public static HgRepository getSelectedRepositoryFromEvent(AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return null;
+    }
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    return file != null ? repositoryManager.getRepositoryForFile(file) : HgUtil.getCurrentRepository(project);
+  }
+
 }

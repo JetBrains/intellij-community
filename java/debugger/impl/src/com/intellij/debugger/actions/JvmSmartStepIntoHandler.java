@@ -23,7 +23,6 @@ import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -137,11 +136,12 @@ public abstract class JvmSmartStepIntoHandler {
   protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
     if (stepTarget instanceof MethodSmartStepTarget) {
       final PsiMethod method = ((MethodSmartStepTarget)stepTarget).getMethod();
-      return stepTarget.needsBreakpointRequest()? new AnonymousClassMethodFilter(method) : new BasicStepMethodFilter(method);
+      return stepTarget.needsBreakpointRequest()? new AnonymousClassMethodFilter(method, stepTarget.getCallingExpressionLines()) :
+             new BasicStepMethodFilter(method, stepTarget.getCallingExpressionLines());
     }
     if (stepTarget instanceof LambdaSmartStepTarget) {
       final LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;
-      return new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal());
+      return new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
     }
     return null;
   }

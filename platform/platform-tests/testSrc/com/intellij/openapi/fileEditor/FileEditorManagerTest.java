@@ -80,6 +80,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         "          </provider>\n" +
         "        </entry>\n" +
         "      </file>\n" +
+        "   </leaf>\n" +
         "  </component>\n");
     FileEditor[] selectedEditors = myManager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);

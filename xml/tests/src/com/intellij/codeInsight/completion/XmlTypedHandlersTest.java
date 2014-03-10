@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -25,18 +24,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  *         Date: 30.08.13
  */
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    EditorTestUtil.enableMultipleCarets();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    EditorTestUtil.disableMultipleCarets();
-    super.tearDown();
-  }
-
   public void testClosingTag() {
     doTest("<foo><<caret>", '/', "<foo></foo>");
   }

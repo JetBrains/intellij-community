@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,12 +29,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAction {
+public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<PsiElement>("TEMP_REFERENT_USER_DATA");
 
@@ -51,7 +53,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
    * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getStaticImportClass(@NotNull PsiElement element, boolean useExisting) {
+  public static String getStaticImportClass(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
@@ -60,11 +62,29 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         if (PsiTreeUtil.getParentOfType(parent, PsiImportList.class) != null) return null;
         PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)parent;
         if (checkParameterizedReference(refExpr)) return null;
-        PsiElement resolved = refExpr.resolve();
-        if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
-          if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-            if (findExistingImport(element.getContainingFile(), aClass, refExpr.getReferenceName()) == null || useExisting) {
+        JavaResolveResult[] results = refExpr.multiResolve(false);
+        for (JavaResolveResult result : results) {
+          final PsiElement resolved = result.getElement();
+          if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+            PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
+            if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+              final PsiElement gParent = refExpr.getParent();
+              if (gParent instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression call = (PsiMethodCallExpression)gParent.copy();
+                final PsiElement qualifier = call.getMethodExpression().getQualifier();
+                if (qualifier == null) return null;
+                qualifier.delete();
+                final PsiMethod method = call.resolveMethod();
+                if (method != null && method.getContainingClass() != aClass)  return null;
+              }
+              else {
+                final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refExpr.copy();
+                final PsiElement qualifier = copy.getQualifier();
+                if (qualifier == null) return null;
+                qualifier.delete();
+                final PsiElement target = copy.resolve();
+                if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != aClass) return null;
+              }
               String qName = aClass.getQualifiedName();
               if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
                 return qName + "." +refExpr.getReferenceName();
@@ -123,7 +143,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    String classQName = getStaticImportClass(element, false);
+    String classQName = getStaticImportClass(element);
     if (classQName != null) {
       setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", classQName));
     }
@@ -134,9 +154,15 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-    final PsiElement resolved = refExpr.resolve();
     final String referenceName = refExpr.getReferenceName();
-    bindAllClassRefs(file, resolved, referenceName, resolved != null ? getResolvedClass(element, (PsiMember)resolved) : null);
+    final JavaResolveResult[] targets = refExpr.multiResolve(false);
+    for (JavaResolveResult target : targets) {
+      final PsiElement resolved = target.getElement();
+      if (resolved != null) {
+        bindAllClassRefs(file, resolved, referenceName, getResolvedClass(element, (PsiMember)resolved));
+        return;
+      }
+    }
   }
 
   public static void bindAllClassRefs(final PsiFile file,

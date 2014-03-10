@@ -16,8 +16,10 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +34,16 @@ public class XmlTextContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
+    if (!XmlContextType.isInXml(file, offset)) return false;
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;
     if (PsiTreeUtil.getParentOfType(element, XmlText.class, false) != null) {
       return true;
     }
-    return false;
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiErrorElement) {
+      parent = parent.getParent();
+    }
+    return parent instanceof XmlDocument;
   }
 }

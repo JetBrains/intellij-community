@@ -273,9 +273,6 @@ public class EditorsSplitters extends IdePanePanel {
     LOG.assertTrue(window != null);
 
     @SuppressWarnings("unchecked") final List<Element> children = ContainerUtil.newArrayList(leaf.getChildren("file"));
-    if (UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
-      Collections.reverse(children);
-    }
 
     // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
     for (Iterator<Element> iterator = children.iterator(); iterator.hasNext() && UISettings.getInstance().EDITOR_TAB_LIMIT < children.size(); ) {

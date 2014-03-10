@@ -56,7 +56,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     if (SystemInfo.isMac) {
       smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
     } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 11f));
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 10f));
     }
     myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
     myStatus.setFont(smallFont);
@@ -114,6 +114,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (downloads.length() > 3) {
           downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
         }
+        //if (myDownloads.getFont().canDisplay('\u2193')) {
+        //  downloads += '\u2193';
+        //}
         myDownloads.setText(downloads);
 
         myRating.setRate(pluginNode.getRating());

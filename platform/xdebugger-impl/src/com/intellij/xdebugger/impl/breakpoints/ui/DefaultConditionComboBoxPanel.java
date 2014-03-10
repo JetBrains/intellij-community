@@ -30,13 +30,14 @@ import javax.swing.*;
  * @author egor
  */
 public class DefaultConditionComboBoxPanel<B extends XBreakpoint<?>> extends XBreakpointCustomPropertiesPanel<B> {
+  public static final String HISTORY_KEY = "breakpointCondition";
+
   private XDebuggerExpressionComboBox myConditionComboBox;
 
   public DefaultConditionComboBoxPanel(Project project,
                                        XDebuggerEditorsProvider debuggerEditorsProvider,
-                                       String historyId,
                                        XSourcePosition sourcePosition) {
-    myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, historyId, sourcePosition);
+    myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, HISTORY_KEY, sourcePosition);
   }
 
   @NotNull

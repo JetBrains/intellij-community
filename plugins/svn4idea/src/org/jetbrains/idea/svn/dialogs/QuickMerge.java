@@ -154,20 +154,14 @@ public class QuickMerge {
 
     @Override
     public void run(ContinuationContext context) {
-      try {
-        final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
-        final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() &&
-                                          SvnUtil.doesRepositorySupportMergeInfo(myVcs, SVNURL.parseURIEncoded(mySourceUrl));
-        if (! supportsMergeinfo) {
-          insertMergeAll(tasks);
-        } else {
-          tasks.add(new MergeAllOrSelectedChooser());
-        }
-        context.next(tasks);
+      final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
+      final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() && SvnUtil.checkRepositoryVersion15(myVcs, mySourceUrl);
+      if (! supportsMergeinfo) {
+        insertMergeAll(tasks);
+      } else {
+        tasks.add(new MergeAllOrSelectedChooser());
       }
-      catch (SVNException e) {
-        finishWithError(context, e.getMessage(), true);
-      }
+      context.next(tasks);
     }
   }
 

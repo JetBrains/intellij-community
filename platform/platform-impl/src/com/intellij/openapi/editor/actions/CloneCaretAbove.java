@@ -33,7 +33,7 @@ public class CloneCaretAbove extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
       caret.clone(true);
     }
 

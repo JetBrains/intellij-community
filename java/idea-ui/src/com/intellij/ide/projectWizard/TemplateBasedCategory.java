@@ -27,14 +27,16 @@ import javax.swing.*;
 public class TemplateBasedCategory extends ProjectCategory {
 
   private final ArchivedProjectTemplate myTemplate;
+  private final String myProjectType;
 
-  public TemplateBasedCategory(ArchivedProjectTemplate template) {
+  public TemplateBasedCategory(ArchivedProjectTemplate template, String projectType) {
     myTemplate = template;
+    myProjectType = projectType;
   }
 
   @Override
   public String getDisplayName() {
-    return myTemplate.getName();
+    return myProjectType;
   }
 
   @Override

@@ -779,7 +779,7 @@ public class GitHistoryUtils {
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         record.parseChanges(project, root));
+                         record.getStatusInfos());
   }
 
   /**

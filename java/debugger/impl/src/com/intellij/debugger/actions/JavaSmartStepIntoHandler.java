@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.Range;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
 
+      final Range<Integer> lines = new Range<Integer>(doc.getLineNumber(element.getTextOffset()), doc.getLineNumber(element.getTextOffset() + element.getTextLength()));
+
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
         final Stack<String> myParamNameStack = new Stack<String>();
@@ -92,12 +95,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
+            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, lines));
           }
         }
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
-          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++));
+          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, lines));
         }
 
         @Override
@@ -141,7 +144,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               expression instanceof PsiMethodCallExpression?
                 ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
                 : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
-              false
+              false,
+              lines
             ));
           }
           try {

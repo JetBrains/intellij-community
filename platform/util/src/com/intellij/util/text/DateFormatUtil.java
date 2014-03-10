@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.EnvironmentUtil;
@@ -419,11 +420,11 @@ public class DateFormatUtil {
 
     rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
     assert rv > 1 : rv;
-    String shortTime = new String(data.getCharArray(0, rv - 1));
+    String shortTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
 
     rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
     assert rv > 1 : rv;
-    String mediumTime = new String(data.getCharArray(0, rv - 1));
+    String mediumTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
 
     formats[0] = new SimpleDateFormat(shortDate);
     formats[1] = new SimpleDateFormat(shortTime);

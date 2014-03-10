@@ -368,7 +368,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return !getSelectedNodes().isEmpty();
   }
 
-  private List<FrameworkSupportNode> getSelectedNodes() {
+  public List<FrameworkSupportNode> getSelectedNodes() {
     List<FrameworkSupportNode> list = new ArrayList<FrameworkSupportNode>();
     if (myRoots != null) {
       addChildFrameworks(myRoots, list);

@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -263,8 +264,8 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   }
 
   public void addRecent(TextWithImports text) {
-    if(getRecentsId() != null && text != null && !"".equals(text.getText())){
-      DebuggerRecents.getInstance(getProject()).addRecent(getRecentsId(), text);
+    if(getRecentsId() != null && text != null && !text.isEmpty()){
+      XDebuggerHistoryManager.getInstance(getProject()).addRecentExpression(getRecentsId(), text.getText());
     }
   }
 

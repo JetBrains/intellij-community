@@ -15,17 +15,24 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import javax.swing.*;
 import java.util.LinkedHashMap;
 
 /**
@@ -44,6 +51,16 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     myRoots = roots;
   }
 
+  public static void run(@NotNull AutoSvnUpdater updater, @NotNull String title) {
+    JComponent frame = WindowManager.getInstance().getIdeFrame(updater.myProject).getComponent();
+
+    updater.getTemplatePresentation().setText(title);
+    updater.actionPerformed(
+      new AnActionEvent(null, DataManager.getInstance().getDataContext(frame), ActionPlaces.UNKNOWN, updater.getTemplatePresentation(),
+                        ActionManager.getInstance(), 0)
+    );
+  }
+
   @Override
   protected void actionPerformed(VcsContext context) {
     final SvnConfiguration configuration17 = SvnConfiguration.getInstance(myProject);
@@ -52,11 +69,14 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     configuration17.setUpdateDepth(SVNDepth.INFINITY);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     for (FilePath root : myRoots) {
-      final UpdateRootInfo info = configuration17.getUpdateRootInfo(root.getIOFile(), vcs);
-      info.setRevision(SVNRevision.HEAD);
-      info.setUpdateToRevision(false);
+      configureUpdateRootInfo(root, configuration17.getUpdateRootInfo(root.getIOFile(), vcs));
     }
     super.actionPerformed(context);
+  }
+
+  protected void configureUpdateRootInfo(@NotNull FilePath root, @NotNull UpdateRootInfo info) {
+    info.setRevision(SVNRevision.HEAD);
+    info.setUpdateToRevision(false);
   }
 
   @Override

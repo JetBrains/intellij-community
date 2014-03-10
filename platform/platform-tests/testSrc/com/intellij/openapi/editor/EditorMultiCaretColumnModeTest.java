@@ -22,16 +22,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import java.io.IOException;
 
 public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
-  public void setUp() throws Exception {
-    super.setUp();
-    EditorTestUtil.enableMultipleCarets();
-  }
-
-  public void tearDown() throws Exception {
-    EditorTestUtil.disableMultipleCarets();
-    super.tearDown();
-  }
-
   public void testUpDown() throws Exception {
     init("line1\n" +
          "li<caret>ne2\n" +
