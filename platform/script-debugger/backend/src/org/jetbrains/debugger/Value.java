@@ -6,7 +6,6 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * An object that represents a browser JavaScript VM variable value (compound or atomic).
@@ -22,16 +21,6 @@ public interface Value extends EvaluateContextAdditionalParameter {
    * @return a string representation of this value
    */
   String getValueString();
-
-  /**
-   * Return this value cast to {@link ObjectValue} or {@code null} if this value
-   * is not an object.
-   * See {@link ValueType#isObjectType} method for details.
-   *
-   * @return this or null
-   */
-  @Nullable
-  ObjectValue asObject();
 
   boolean isTruncated();
 
