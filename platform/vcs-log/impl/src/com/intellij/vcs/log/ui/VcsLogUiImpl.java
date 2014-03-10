@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.util.Collection;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
@@ -41,6 +43,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
+
+  @NotNull private final Collection<VcsLogFilterChangeListener> myFilterChangeListeners = ContainerUtil.newArrayList();
 
   @NotNull private DataPack myDataPack;
 
@@ -284,6 +288,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
             myDataPack = dataPack;
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
+            fireFilterChangeEvent();
             repaintUI();
 
             if (newModel.getRowCount() == 0) { // getValueAt won't be called for empty model => need to explicitly request to load more
@@ -359,6 +364,22 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
     getTable().removeHighlighter(highlighter);
     repaintUI();
+  }
+
+  @Override
+  public void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
+    myFilterChangeListeners.add(listener);
+  }
+
+  @Override
+  public void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
+    myFilterChangeListeners.remove(listener);
+  }
+
+  private void fireFilterChangeEvent() {
+    for (VcsLogFilterChangeListener listener : myFilterChangeListeners) {
+      listener.filtersPossiblyChanged();
+    }
   }
 
   @Override
