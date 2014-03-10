@@ -76,6 +76,12 @@ public class DataPack implements VcsLogDataPack {
   }
 
   @NotNull
+  @Override
+  public VcsLogRefs getRefs() {
+    return myRefsModel;
+  }
+
+  @NotNull
   public RefsModel getRefsModel() {
     return myRefsModel;
   }

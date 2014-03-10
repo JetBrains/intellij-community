@@ -15,17 +15,19 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.Collection;
 
-public interface VcsLogDataPack {
+/**
+ * Collection of {@link VcsRef branches & tags references} which are in the log.
+ */
+public interface VcsLogRefs {
 
+  /**
+   * Returns all branches.
+   */
   @NotNull
-  Map<VirtualFile, VcsLogProvider> getLogProviders();
-
-  @NotNull
-  VcsLogRefs getRefs();
+  Collection<VcsRef> getBranches();
 
 }
