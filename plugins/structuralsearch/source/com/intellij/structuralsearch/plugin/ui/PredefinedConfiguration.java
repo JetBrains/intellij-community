@@ -72,6 +72,7 @@ public class PredefinedConfiguration extends Configuration {
     return new PredefinedConfiguration[] {
       // Expression patterns
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"),"'_Instance?.'MethodCall('_Parameter*)",EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"),"'_Instance?.'Field",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"),"'_Field['_Index]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assignments"),"'_Inst = '_Expr",EXPRESSION_TYPE),
