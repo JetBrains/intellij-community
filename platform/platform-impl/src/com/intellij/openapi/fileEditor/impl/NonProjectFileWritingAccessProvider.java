@@ -42,7 +42,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS_STATUS", new NotNullFunction<Project, Map<VirtualFile, AccessStatus>>() {
     @NotNull
     @Override
-    public Map<VirtualFile, AccessStatus> fun(Project dom) {
+    public Map<VirtualFile, AccessStatus> fun(Project project) {
       return new HashMap<VirtualFile, AccessStatus>();
     }
   });
@@ -62,9 +62,13 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         Map<VirtualFile, AccessStatus> files = getRegisteredFiles(project);
+        
+        // reset access status and notifications for files that became project files  
         for (VirtualFile each : new ArrayList<VirtualFile>(files.keySet())) {
-          if (isProjectFile(each)) files.remove(each);
-          EditorNotifications.getInstance(myProject).updateNotifications(each);
+          if (isProjectFile(each)) {
+            files.remove(each);
+            EditorNotifications.getInstance(myProject).updateNotifications(each);
+          }
         }
       }
     });
