@@ -12,7 +12,7 @@ import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI,
+  public GraphTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI,
                          @NotNull LoadMoreStage loadMoreStage) {
     super(dataHolder, UI, dataPack, loadMoreStage);
     myDataPack = dataPack;
@@ -44,7 +44,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     if (!myDataHolder.isFullLogShowing()) {
       myDataHolder.showFullLog(onLoaded);
     }
-    else if (!myUi.collectFilters().isEmpty()) {
+    else if (!myUi.getFilters().isEmpty()) {
       super.requestToLoadMore(onLoaded);
     }
   }
@@ -92,7 +92,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
 
   @Override
   public int getRowOfCommit(@NotNull final Hash hash) {
-    final int commitIndex = myDataHolder.putHash(hash);
+    final int commitIndex = myDataHolder.getCommitIndex(hash);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getGraphFacade()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {

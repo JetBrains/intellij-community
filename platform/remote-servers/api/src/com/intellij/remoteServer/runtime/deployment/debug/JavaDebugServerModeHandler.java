@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.remoteServer.runtime.deployment.debug;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
+import com.intellij.execution.ExecutionException;
 
 /**
- * Tells to filter by some branch name.
+ * @author michael.golubev
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface JavaDebugServerModeHandler {
 
-  @NotNull
-  Collection<String> getBranchNames();
+  void attachRemote() throws ExecutionException;
 
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
-
+  void detachRemote() throws ExecutionException;
 }

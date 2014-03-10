@@ -6,6 +6,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author erokhins
- */
-public class RefsModel {
+public class RefsModel implements VcsLogRefs {
 
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
@@ -80,6 +78,7 @@ public class RefsModel {
     return myRefsToIndices.containsKey(index) ? myRefsToIndices.get(index) : Collections.<VcsRef>emptyList();
   }
 
+  @Override
   @NotNull
   public Collection<VcsRef> getBranches() {
     return myBranches;

@@ -17,18 +17,18 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
-/**
- * Tells to filter by some branch name.
- */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogUi {
 
   @NotNull
-  Collection<String> getBranchNames();
+  VcsLogFilterUi getFilterUi();
 
-  // TODO remove from the API
   @NotNull
-  Collection<Integer> getMatchingHeads();
+  VcsLogDataPack getDataPack();
+
+  void addHighlighter(@NotNull VcsLogHighlighter highlighter);
+  void removeHighlighter(@NotNull VcsLogHighlighter highlighter);
+
+  void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
+  void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
 
 }

@@ -20,15 +20,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * Tells to filter by some branch name.
+ * Collection of {@link VcsRef branches & tags references} which are in the log.
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogRefs {
 
+  /**
+   * Returns all branches.
+   */
   @NotNull
-  Collection<String> getBranchNames();
-
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
+  Collection<VcsRef> getBranches();
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -39,18 +39,17 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private final PsiElement myParent;
   private final String myTypeText;
   private final char myVariance;
-  private final NotNullLazyValue<Ref<ClsElementImpl>> myChild;
+  private final AtomicNullableLazyValue<ClsElementImpl> myChild;
   private final NotNullLazyValue<PsiType> myCachedType;
 
   public ClsTypeElementImpl(@NotNull PsiElement parent, @NotNull String typeText, char variance) {
     myParent = parent;
     myTypeText = TypeInfo.internFrequentType(typeText);
     myVariance = variance;
-    myChild = new AtomicNotNullLazyValue<Ref<ClsElementImpl>>() {
-      @NotNull
+    myChild = new AtomicNullableLazyValue<ClsElementImpl>() {
       @Override
-      protected Ref<ClsElementImpl> compute() {
-        return Ref.create(calculateChild());
+      protected ClsElementImpl compute() {
+        return calculateChild();
       }
     };
     myCachedType = new AtomicNotNullLazyValue<PsiType>() {
@@ -65,7 +64,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    ClsElementImpl child = myChild.getValue().get();
+    ClsElementImpl child = myChild.getValue();
     return child != null ? new PsiElement[]{child} : PsiElement.EMPTY_ARRAY;
   }
 
@@ -109,7 +108,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
 
-    ClsElementImpl child = myChild.getValue().get();
+    ClsElementImpl child = myChild.getValue();
     if (child != null) {
       child.setMirror(element.getFirstChildNode());
     }
@@ -138,24 +137,23 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     if (PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText) != null) {
       return null;
     }
-    else if (isArray()) {
+    if (isArray()) {
       return myVariance == VARIANCE_NONE
              ? new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance)
              : new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE);
     }
-    else if (isVarArgs()) {
+    if (isVarArgs()) {
       return new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance);
     }
-    else {
-      return myVariance != VARIANCE_INVARIANT ? new ClsJavaCodeReferenceElementImpl(this, myTypeText) : null;
-    }
+    return myVariance == VARIANCE_INVARIANT ? null : new ClsJavaCodeReferenceElementImpl(this, myTypeText);
   }
 
+  @NotNull
   private PsiType calculateType() {
     PsiType result = PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText);
     if (result != null) return result;
 
-    ClsElementImpl childElement = myChild.getValue().get();
+    ClsElementImpl childElement = myChild.getValue();
     if (childElement instanceof ClsTypeElementImpl) {
       if (isArray()) {
         switch (myVariance) {
@@ -175,7 +173,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
         return new PsiEllipsisType(((PsiTypeElement)childElement).getType());
       }
     }
-    else if (childElement instanceof ClsJavaCodeReferenceElementImpl) {
+    if (childElement instanceof ClsJavaCodeReferenceElementImpl) {
       PsiClassReferenceType psiClassReferenceType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)childElement, null);
       switch (myVariance) {
         case VARIANCE_NONE:
@@ -191,10 +189,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
           return null;
       }
     }
-    else {
-      assert childElement == null : this;
-      return PsiWildcardType.createUnbounded(getManager());
-    }
+    assert childElement == null : this;
+    return PsiWildcardType.createUnbounded(getManager());
   }
 
   @Override

@@ -15,20 +15,8 @@
  */
 package com.intellij.vcs.log;
 
-import org.jetbrains.annotations.NotNull;
+public interface VcsLogFilterChangeListener {
 
-import java.util.Collection;
-
-/**
- * Tells to filter by some branch name.
- */
-public interface VcsLogBranchFilter extends VcsLogFilter {
-
-  @NotNull
-  Collection<String> getBranchNames();
-
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
+  void filtersPossiblyChanged();
 
 }

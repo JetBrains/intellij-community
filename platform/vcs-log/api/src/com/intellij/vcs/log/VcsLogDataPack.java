@@ -15,20 +15,17 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Map;
 
-/**
- * Tells to filter by some branch name.
- */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogDataPack {
 
   @NotNull
-  Collection<String> getBranchNames();
+  Map<VirtualFile, VcsLogProvider> getLogProviders();
 
-  // TODO remove from the API
   @NotNull
-  Collection<Integer> getMatchingHeads();
+  VcsLogRefs getRefs();
 
 }

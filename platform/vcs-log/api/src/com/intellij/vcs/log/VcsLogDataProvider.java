@@ -17,18 +17,13 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
- * Tells to filter by some branch name.
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogDataProvider {
 
   @NotNull
-  Collection<String> getBranchNames();
+  Hash getHash(int commitIndex);
 
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
+  int getCommitIndex(@NotNull Hash hash);
 
 }

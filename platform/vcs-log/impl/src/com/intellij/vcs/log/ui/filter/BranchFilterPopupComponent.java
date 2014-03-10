@@ -16,14 +16,14 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,25 +31,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
 
-  @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
-  @NotNull private RefsModel myRefsModel;
+  @NotNull private VcsLogDataPack myDataPack;
 
-  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi,
-                             @NotNull VcsLogDataHolder dataHolder,
-                             @NotNull RefsModel refsModel,
-                             @NotNull VcsLogUiProperties uiProperties) {
+  public BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataPack dataPack,
+                                    @NotNull VcsLogUiProperties uiProperties) {
     super(filterUi, "Branch");
-    myDataHolder = dataHolder;
-    myRefsModel = refsModel;
+    myDataPack = dataPack;
     myUiProperties = uiProperties;
   }
 
-  void updateRefsModel(@NotNull RefsModel refsModel) {
-    myRefsModel = refsModel;
+  void updateDataPack(@NotNull DataPack dataPack) {
+    myDataPack = dataPack;
   }
 
   @Override
@@ -59,39 +55,56 @@ class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLo
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
+    actionGroup.add(constructActionGroup(myDataPack, createRecentItemsActionGroup(), new Function<String, AnAction>() {
+      @Override
+      public AnAction fun(String name) {
+        return createPredefinedValueAction(Collections.singleton(name));
+      }
+    }));
+    return actionGroup;
+  }
+
+  public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack, @Nullable ActionGroup recentItemsGroup,
+                                                 @NotNull Function<String, AnAction> actionGetter) {
+    Groups groups = prepareGroups(dataPack);
+    return getFilteredActionGroup(groups, recentItemsGroup, actionGetter);
+  }
+
+  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack) {
     Groups filteredGroups = new Groups();
-    Collection<VcsRef> allRefs = myRefsModel.getBranches();
+    Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
-      VcsLogProvider provider = myDataHolder.getLogProvider(root);
+      VcsLogProvider provider = dataPack.getLogProviders().get(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
       List<RefGroup> refGroups = refManager.group(refs);
 
       orderRefGroups(refGroups, filteredGroups);
     }
-
-    actionGroup.add(getFilteredActionGroup(filteredGroups));
-    return actionGroup;
+    return filteredGroups;
   }
 
-  private DefaultActionGroup getFilteredActionGroup(Groups groups) {
+  private static DefaultActionGroup getFilteredActionGroup(@NotNull Groups groups, @Nullable ActionGroup recentItems,
+                                                           @NotNull Function<String, AnAction> actionGetter) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (String single : groups.singletonGroups) {
-      actionGroup.add(createPredefinedValueAction(Collections.singleton(single)));
+      actionGroup.add(actionGetter.fun(single));
     }
-    actionGroup.add(createRecentItemsActionGroup());
+    if (recentItems != null) {
+      actionGroup.add(recentItems);
+    }
     for (Map.Entry<String, TreeSet<String>> group : groups.expandedGroups.entrySet()) {
       actionGroup.addSeparator(group.getKey());
       for (String action : group.getValue()) {
-        actionGroup.add(createPredefinedValueAction(Collections.singleton(action)));
+        actionGroup.add(actionGetter.fun(action));
       }
     }
     actionGroup.addSeparator();
     for (Map.Entry<String, TreeSet<String>> group : groups.collapsedGroups.entrySet()) {
       DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
       for (String action : group.getValue()) {
-        popupGroup.add(createPredefinedValueAction(Collections.singleton(action)));
+        popupGroup.add(actionGetter.fun(action));
       }
       actionGroup.add(popupGroup);
     }
@@ -145,7 +158,7 @@ class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLo
     if (getSelectedValues() == null) {
       return null;
     }
-    Collection<VcsRef> allBranches = myRefsModel.getBranches();
+    Collection<VcsRef> allBranches = myDataPack.getRefs().getBranches();
     return new VcsLogBranchFilterImpl(allBranches, getSelectedValues());
   }
 
@@ -165,7 +178,7 @@ class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLo
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myRefsModel.getBranches(), new Function<VcsRef, String>() {
+    return ContainerUtil.map(myDataPack.getRefs().getBranches(), new Function<VcsRef, String>() {
       @Override
       public String fun(VcsRef ref) {
         return ref.getName();

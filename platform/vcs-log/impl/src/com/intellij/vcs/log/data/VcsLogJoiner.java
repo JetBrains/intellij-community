@@ -208,54 +208,55 @@ public class VcsLogJoiner {
   /*package*/ static class NewCommitIntegrator<Commit extends TimedVcsCommit> {
     private final List<Commit> list;
     private final Map<Hash, Commit> newCommitsMap;
-    private final Collection<Commit> newCommits;
+
+    private final Stack<Commit> commitsStack;
 
     public NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
       newCommitsMap = ContainerUtil.newHashMap();
-      this.newCommits = newCommits;
       for (Commit commit : newCommits) {
         newCommitsMap.put(commit.getHash(), commit);
       }
+      commitsStack = new Stack<Commit>();
     }
 
-    // return insert Index
-    private void insertToList(@NotNull Commit commit) {
-      if (!newCommitsMap.containsKey(commit.getHash())) {
-        throw new IllegalStateException("Commit was inserted, but insert call again. Commit hash: " + commit.getHash());
-      }
-      //insert all parents commits
-      for (Hash parentHash : commit.getParents()) {
-        Commit parentCommit = newCommitsMap.get(parentHash);
-        if (parentCommit != null) {
-          insertToList(parentCommit);
-        }
-      }
+    private void insertAllUseStack() {
+      while (!newCommitsMap.isEmpty()) {
+        commitsStack.push(newCommitsMap.values().iterator().next());
+        while (!commitsStack.isEmpty()) {
+          Commit currentCommit = commitsStack.peek();
+          boolean allParentsWereAdded = true;
+          for (Hash parentHash : currentCommit.getParents()) {
+            Commit parentCommit = newCommitsMap.get(parentHash);
+            if (parentCommit != null) {
+              commitsStack.push(parentCommit);
+              allParentsWereAdded = false;
+              break;
+            }
+          }
 
-      int insertIndex;
-      HashSet<Hash> parents = new HashSet<Hash>(commit.getParents());
-      for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
-        Commit currentCommit = list.get(insertIndex);
-        if (parents.contains(currentCommit.getHash()))
-          break;
-        if (currentCommit.getTime() < commit.getTime())
-          break;
-      }
+          if (!allParentsWereAdded)
+            continue;
 
-      list.add(insertIndex, commit);
-      newCommitsMap.remove(commit.getHash());
-    }
+          int insertIndex;
+          HashSet<Hash> parents = new HashSet<Hash>(currentCommit.getParents());
+          for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
+            Commit someCommit = list.get(insertIndex);
+            if (parents.contains(someCommit.getHash()))
+              break;
+            if (someCommit.getTime() < currentCommit.getTime())
+              break;
+          }
 
-    private void insertAllCommits() {
-      for (Commit commit : newCommits) {
-        if (newCommitsMap.get(commit.getHash()) != null) {
-          insertToList(commit);
+          list.add(insertIndex, currentCommit);
+          newCommitsMap.remove(currentCommit.getHash());
+          commitsStack.pop();
         }
       }
     }
 
     public List<Commit> getResultList() {
-      insertAllCommits();
+      insertAllUseStack();
       return list;
     }
   }

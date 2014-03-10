@@ -15,20 +15,21 @@
  */
 package com.intellij.vcs.log;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.awt.*;
 
 /**
- * Tells to filter by some branch name.
+ * Allows to add some highlighting to the Vcs Log table entries.
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogHighlighter {
 
-  @NotNull
-  Collection<String> getBranchNames();
-
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
+  /**
+   * Return the color which should be used for the log table entries foreground, or null if default color should be used.
+   * @param commitIndex index of commit (can be transferred to the Hash and vice versa).
+   * @param isSelected  if true, the row currently has selection on it.
+   */
+  @Nullable
+  Color getForeground(int commitIndex, boolean isSelected);
 
 }

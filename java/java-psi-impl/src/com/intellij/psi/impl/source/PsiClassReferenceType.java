@@ -139,7 +139,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public ClassResolveResult resolveGenerics() {
     PsiUtilCore.ensureValid(myReference);
     final JavaResolveResult result = myReference.advancedResolve(false);
-    return new DelegatingClassResolveResult(result);
+    return result.getElement() == null ? ClassResolveResult.EMPTY : new DelegatingClassResolveResult(result);
   }
 
   @Override

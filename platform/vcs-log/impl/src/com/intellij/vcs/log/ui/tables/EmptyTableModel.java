@@ -23,7 +23,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ import java.util.Collections;
 public class EmptyTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
 
   public EmptyTableModel(@NotNull DataPack dataPack, @NotNull VcsLogDataHolder logDataHolder,
-                         @NotNull VcsLogUI ui, @NotNull LoadMoreStage loadMoreStage) {
+                         @NotNull VcsLogUiImpl ui, @NotNull LoadMoreStage loadMoreStage) {
     super(logDataHolder, ui, dataPack, loadMoreStage);
   }
 

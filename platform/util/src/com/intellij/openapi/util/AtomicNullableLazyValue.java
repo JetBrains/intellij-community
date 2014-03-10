@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
+package com.intellij.openapi.util;
 
 /**
- * Tells to filter by some branch name.
+ * @author peter
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
+  private volatile T myValue;
+  private volatile boolean myComputed;
 
-  @NotNull
-  Collection<String> getBranchNames();
-
-  // TODO remove from the API
-  @NotNull
-  Collection<Integer> getMatchingHeads();
-
+  @Override
+  public final T getValue() {
+    boolean computed = myComputed;
+    T value = myValue;
+    if (computed) {
+      return value;
+    }
+    synchronized (this) {
+      computed = myComputed;
+      value = myValue;
+      if (!computed) {
+        myValue = value = compute();
+        myComputed = true;
+      }
+    }
+    return value;
+  }
 }
