@@ -24,7 +24,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUi;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLog myLog;
-  @NotNull private final VcsLogFilterUi myFilterUi;
+  @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogGraphTable myGraphTable;

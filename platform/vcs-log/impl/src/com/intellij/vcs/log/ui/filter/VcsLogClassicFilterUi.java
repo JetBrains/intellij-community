@@ -24,8 +24,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 /**
  */
@@ -76,12 +76,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myActionGroup.add(new FilterActionComponent(myStructureFilterComponent));
   }
 
-  @Override
   public void updateDataPack(@NotNull DataPack dataPack) {
     myBranchFilterComponent.updateRefsModel(dataPack.getRefsModel());
   }
 
-  @Override
+  /**
+   * Returns filter components which will be added to the Log toolbar.
+   */
+  @NotNull
   public ActionGroup getFilterActionComponents() {
     return myActionGroup;
   }
@@ -94,10 +96,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                                           myDateFilterComponent.getFilter(), textFilter, myStructureFilterComponent.getFilter());
   }
 
+  @Override
+  public void setFilter(@NotNull VcsLogFilter filter) {
+    if (filter instanceof VcsLogBranchFilter) {
+      Collection<String> values = ((VcsLogBranchFilter)filter).getBranchNames();
+      myBranchFilterComponent.apply(values, MultipleValueFilterPopupComponent.displayableText(values),
+                                    MultipleValueFilterPopupComponent.tooltip(values));
+    }
+  }
+
   void applyFilters() {
     myUi.applyFiltersAndUpdateUi();
   }
-
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
 

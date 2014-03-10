@@ -300,7 +300,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     applyFiltersAndUpdateUi(myDataPack);
   }
 
-  @Override
   @NotNull
   public VcsLogFilterCollection getFilters() {
     return myMainFrame.getFilterUi().getFilters();
@@ -335,6 +334,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
+  }
+
+  @NotNull
+  @Override
+  public VcsLogFilterUi getFilterUi() {
+    return myMainFrame.getFilterUi();
   }
 
   @Override
