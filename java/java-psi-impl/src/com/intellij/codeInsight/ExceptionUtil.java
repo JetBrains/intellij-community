@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -487,15 +487,17 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getCloserExceptions(@NotNull final PsiResourceVariable resource) {
-    final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-    return method != null ? getExceptionsByMethod(method, PsiSubstitutor.EMPTY) : Collections.<PsiClassType>emptyList();
+  public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceVariable resource) {
+    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
+    PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
+    return method != null ? getExceptionsByMethod(method, substitutor) : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull final PsiResourceVariable resource, @Nullable final PsiElement topElement) {
-    final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-    return method != null ? getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY) : Collections.<PsiClassType>emptyList();
+  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceVariable resource, @Nullable PsiElement topElement) {
+    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
+    PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
+    return method != null ? getUnhandledExceptions(method, resource, topElement, substitutor) : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
