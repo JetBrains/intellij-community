@@ -58,17 +58,18 @@ public class StubTreeBuilder {
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         PsiFile psi = null;
-        CharSequence contentAsText = null;
+        CharSequence contentAsText = inputData.getContentAsText();
         Document document = FileDocumentManager.getInstance().getCachedDocument(inputData.getFile());
         if (document != null) {
-          PsiFile existingPsi = PsiDocumentManager.getInstance(inputData.getProject()).getPsiFile(document);
-          if (existingPsi != null) {
-            contentAsText = existingPsi.getText();
-            psi = existingPsi;
+          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(inputData.getProject());
+          if (psiDocumentManager.isUncommited(document)) {
+            PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
+            if(existingPsi != null) {
+              psi = existingPsi;
+            }
           }
         }
-        if (contentAsText == null) {
-          contentAsText = inputData.getContentAsText();
+        if (psi == null) {
           psi = inputData.getPsiFile();
         }
         psi = psi.getViewProvider().getStubBindingRoot();

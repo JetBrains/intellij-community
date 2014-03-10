@@ -1420,7 +1420,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       return; // no need to index unsaved docs
     }
 
-    Set<Document> documents = myPsiDependentIndices.contains(indexId) ? getTransactedDocuments() : getUnsavedDocuments();
+    Set<Document> documents = getUnsavedDocuments();
+    boolean psiBasedIndex = myPsiDependentIndices.contains(indexId);
+    if(psiBasedIndex) {
+      documents.addAll(getTransactedDocuments());
+    }
 
     if (!documents.isEmpty()) {
       // now index unsaved data
@@ -1434,6 +1438,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         boolean allDocsProcessed = true;
         try {
           for (Document document : documents) {
+            if (psiBasedIndex && project != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
+              continue;
+            }
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
             ProgressManager.checkCanceled();
           }
@@ -1451,9 +1458,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             ProgressManager.checkCanceled();
             // assume all tasks were finished or cancelled in the same time
             // safe to set the flag here, because it will be cleared under the WriteAction
-
-            // if we have uncommitted documents in unsaved documents, we may index old psi with new uncommitted doc,
-            // to properly reindex with new psi / new doc we don't mark index up to date in this case (IDEA-111448)
             myUpToDateIndices.add(indexId);
           }
         }
@@ -2505,17 +2509,25 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             PsiFile file = event.getFile();
             if (file != null) {
               VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile instanceof VirtualFileWithId) {
-                boolean wasIndexed = false;
+              FileDocumentManager instance = FileDocumentManager.getInstance();
+              Document document = instance.getDocument(virtualFile);
+              if (document != null && instance.isDocumentUnsaved(document)) {
                 for(ID<?,?> psiBackedIndex:myPsiDependentIndices) {
-                  if (isFileIndexed(virtualFile, psiBackedIndex)) {
-                    IndexingStamp.update(virtualFile, psiBackedIndex, IndexInfrastructure.INVALID_STAMP2);
-                    wasIndexed = true;
-                  }
+                  myUpToDateIndices.remove(psiBackedIndex);
                 }
-                if (wasIndexed) {
-                  myChangedFilesCollector.scheduleForUpdate(virtualFile);
-                  IndexingStamp.flushCache(virtualFile);
+              } else { // change in persistent file
+                if (virtualFile instanceof VirtualFileWithId) {
+                  boolean wasIndexed = false;
+                  for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+                    if (isFileIndexed(virtualFile, psiBackedIndex)) {
+                      IndexingStamp.update(virtualFile, psiBackedIndex, IndexInfrastructure.INVALID_STAMP2);
+                      wasIndexed = true;
+                    }
+                  }
+                  if (wasIndexed) {
+                    myChangedFilesCollector.scheduleForUpdate(virtualFile);
+                    IndexingStamp.flushCache(virtualFile);
+                  }
                 }
               }
             }
