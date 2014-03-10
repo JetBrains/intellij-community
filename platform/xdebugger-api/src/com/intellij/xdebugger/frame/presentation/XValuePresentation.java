@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.frame.presentation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.xdebugger.frame.XValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,10 @@ public abstract class XValuePresentation {
    * @param renderer {@link XValueTextRenderer} instance which provides methods to
    */
   public abstract void renderValue(@NotNull XValueTextRenderer renderer);
+
+  public void renderValue(@NotNull XValue value, @NotNull XValueTextRenderer renderer) {
+    renderValue(renderer);
+  }
 
   /**
    * @return separator between name and value in a debugger tree
