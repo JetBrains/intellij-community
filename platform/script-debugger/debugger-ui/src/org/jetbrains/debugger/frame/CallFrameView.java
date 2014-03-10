@@ -12,16 +12,16 @@ import org.jetbrains.debugger.*;
 import java.util.List;
 
 public final class CallFrameView extends StackFrameImplBase implements VariableContext {
-  private final DebugProcessEx debugProcess;
+  private final DebuggerViewSupport debugProcess;
   private final CallFrame callFrame;
 
   private final Script script;
 
-  public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
+  public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
     this(debugProcess.getSourceInfo(script, callFrame), callFrame, debugProcess, script);
   }
 
-  public CallFrameView(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, @NotNull DebugProcessEx debugProcess, @Nullable Script script) {
+  public CallFrameView(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
     super(sourceInfo);
 
     this.debugProcess = debugProcess;
@@ -98,7 +98,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   @NotNull
   @Override
-  public DebugProcessEx getDebugProcess() {
+  public DebuggerViewSupport getDebugProcess() {
     return debugProcess;
   }
 

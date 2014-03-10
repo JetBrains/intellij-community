@@ -16,7 +16,7 @@ public interface VariableContext {
   boolean watchableAsEvaluationExpression();
 
   @NotNull
-  DebugProcessEx getDebugProcess();
+  DebuggerViewSupport getDebugProcess();
 
   @NotNull
   MemberFilter getMemberFilter();

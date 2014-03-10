@@ -56,7 +56,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   @NotNull
   @Override
-  public DebugProcessEx getDebugProcess() {
+  public DebuggerViewSupport getDebugProcess() {
     return context.getDebugProcess();
   }
 
@@ -159,9 +159,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
   }
 
   private void computeObjectPresentation(@NotNull Value value, @NotNull XValueNode node) {
-    ObjectValue objectValue = value.asObject();
-    assert objectValue != null;
-    context.getDebugProcess().computeObjectPresentation(objectValue, variable, context, node, getIcon());
+    context.getDebugProcess().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
   }
 
   @Override
@@ -356,7 +354,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
       fun.doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(FunctionValue function) {
-          DebugProcessEx debugProcess = getDebugProcess();
+          DebuggerViewSupport debugProcess = getDebugProcess();
           Script script = debugProcess.getVm().getScriptManager().getScript(function);
           navigatable.setSourcePosition(script == null ? null : debugProcess.getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
         }

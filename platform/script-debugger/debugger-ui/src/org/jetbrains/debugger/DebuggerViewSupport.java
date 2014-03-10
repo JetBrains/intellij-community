@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.util.List;
 
 // todo should not extends MemberFilter
-public interface DebugProcessEx extends MemberFilter {
+public interface DebuggerViewSupport extends MemberFilter {
   @Nullable
   SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame);
 
@@ -30,8 +30,8 @@ public interface DebugProcessEx extends MemberFilter {
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
 
-  final class SimpleDebugProcessEx implements DebugProcessEx {
-    public static final DebugProcessEx INSTANCE = new SimpleDebugProcessEx();
+  final class SimpleDebuggerViewSupport implements DebuggerViewSupport {
+    public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
 
     @Nullable
     @Override

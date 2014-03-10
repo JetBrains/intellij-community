@@ -30,7 +30,7 @@ public class ScopeVariablesGroup extends XValueGroup {
 
         @NotNull
         @Override
-        public DebugProcessEx getDebugProcess() {
+        public DebuggerViewSupport getDebugProcess() {
           return context.getDebugProcess();
         }
 
