@@ -33,8 +33,8 @@ public abstract class AbstractTestWithTextFile {
   }
 
   protected void doTest(String testName) throws IOException {
-    String in = FileUtil.loadFile(new File(myDirectory + testName + IN_POSTFIX));
-    String out = FileUtil.loadFile(new File(myDirectory + testName + OUT_POSTFIX));
+    String in = FileUtil.loadFile(new File(myDirectory + testName + IN_POSTFIX), true);
+    String out = FileUtil.loadFile(new File(myDirectory + testName + OUT_POSTFIX), true);
     runTest(in, out);
   }
 
