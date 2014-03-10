@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ProperTextRange;
@@ -39,6 +40,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
@@ -46,6 +48,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -135,10 +138,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   private static Thread findInNewThread(final FindModel model,
-                                  final FindManager findManager,
-                                  final CharSequence text,
-                                  final int offset,
-                                  final FindResult[] op_result){
+                                        final FindManager findManager,
+                                        final CharSequence text,
+                                        final int offset,
+                                        final FindResult[] op_result){
     op_result[0] = null;
     Thread findThread = new Thread(){
       @Override
@@ -182,7 +185,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(expectedResults, usages.size());
   }
 
-  private List<UsageInfo> findUsages(final FindModel findModel) {
+  private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
@@ -370,7 +373,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReplaceAll() throws FindManager.MalformedReplacementStringException {
-    FindModel findModel = new FindModel();
+    final FindModel findModel = new FindModel();
     String toFind = "xxx";
     @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     findModel.setStringToFind(toFind);
@@ -389,11 +392,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = StringUtil.repeat(toFind + "\n",6);
     configureByText(FileTypes.PLAIN_TEXT, text);
 
-    List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
+    final List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
     assertNotNull(usages);
-    for (Usage usage : usages) {
-      ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
-    }
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        for (Usage usage : usages) {
+          try {
+            ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
+          }
+          catch (FindManager.MalformedReplacementStringException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }, "", null);
     String newText = StringUtil.repeat(toReplace + "\n",6);
     assertEquals(newText, getEditor().getDocument().getText());
   }
@@ -467,6 +480,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text);
   }
 
+  public void testFindInCurrentFileOutsideProject() throws Exception {
+    final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
+    tempDirFixture.setUp();
+    try {
+      VirtualFile file = tempDirFixture.createFile("a.txt", "foo bar foo");
+      FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+      findModel.setWholeWordsOnly(true);
+      findModel.setCustomScope(new LocalSearchScope(PsiManager.getInstance(myProject).findFile(file)));
+      assertSize(2, findUsages(findModel));
+    }
+    finally {
+      tempDirFixture.tearDown();
+    }
+  }
+
   public void testFindInJavaDocs() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     String text = "/** done done done */";
@@ -524,8 +552,23 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setWholeWordsOnly(true);
 
     String text = "/** do ne do ne do ne */";
-
+    
     findModel.setInCommentsOnly(true);
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
+  }
+
+  public void testPlusWholeWordsOnly() throws Exception {
+    createFile(myModule, "A.java", "3 + '+' + 2");
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("'+' +");
+    findModel.setMultipleFiles(true);
+
+    assertSize(1, findUsages(findModel));
+
+    findModel.setCaseSensitive(true);
+    assertSize(1, findUsages(findModel));
+
+    findModel.setWholeWordsOnly(true);
+    assertSize(1, findUsages(findModel));
   }
 }

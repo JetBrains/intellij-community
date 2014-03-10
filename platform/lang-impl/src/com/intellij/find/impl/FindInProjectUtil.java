@@ -511,6 +511,9 @@ public class FindInProjectUtil {
     fast |= findModel.isWholeWordsOnly() && stringToFind.indexOf('$') < 0;
 
     List<String> words = StringUtil.getWordsInStringLongestFirst(stringToFind);
+    if (words.isEmpty()) {
+      return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
+    }
 
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
