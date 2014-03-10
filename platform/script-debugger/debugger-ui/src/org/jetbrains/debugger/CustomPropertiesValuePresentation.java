@@ -58,8 +58,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
           break;
 
         case OBJECT:
-          ObjectValue objectValue = value.asObject();
-          assert objectValue != null;
+          ObjectValue objectValue = (ObjectValue)value;
           renderer.renderComment(VariableView.getClassName(objectValue));
           break;
 

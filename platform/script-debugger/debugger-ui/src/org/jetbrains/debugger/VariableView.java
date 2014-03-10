@@ -166,13 +166,12 @@ public final class VariableView extends VariableViewBase implements VariableCont
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    ObjectValue object = value.asObject();
-    if (object == null) {
+    if (!(value instanceof ObjectValue)) {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
     }
 
-    ObsolescentAsyncResults.consume(object.getProperties(), node, new PairConsumer<ObjectPropertyData, XCompositeNode>() {
+    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<ObjectPropertyData, XCompositeNode>() {
       @Override
       public void consume(ObjectPropertyData data, XCompositeNode node) {
         if (value.getType() == ValueType.ARRAY) {
