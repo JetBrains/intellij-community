@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-public abstract class ValueLoader {
+public abstract class ValueManager {
   private final AtomicInteger cacheStamp = new AtomicInteger();
 
   public void clearCaches() {

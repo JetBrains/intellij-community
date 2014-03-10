@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-public abstract class DeclarativeScope<VALUE_LOADER extends ValueLoader> extends ScopeBase {
+public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
   @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>> VARIABLES_LOADER =
     new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(

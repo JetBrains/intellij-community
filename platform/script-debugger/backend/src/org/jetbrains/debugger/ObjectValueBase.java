@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends ValueBase implements ObjectValue {
+public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends ValueBase implements ObjectValue {
   @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<ObjectValueBase, ObjectPropertyData> PROPERTIES_LOADER =
     new AsyncValueLoaderManager<ObjectValueBase, ObjectPropertyData>(
