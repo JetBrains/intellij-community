@@ -11,11 +11,12 @@ import org.jetbrains.debugger.frame.CallFrameView;
 import java.util.Arrays;
 
 class FunctionScopesValueGroup extends XValueGroup {
-  private final ObjectValue value;
+  private final FunctionValue value;
   private final VariableContext variableContext;
 
-  public FunctionScopesValueGroup(ObjectValue value, VariableContext context) {
+  public FunctionScopesValueGroup(FunctionValue value, VariableContext context) {
     super("Function scopes");
+
     this.value = value;
     variableContext = context;
   }
@@ -24,7 +25,6 @@ class FunctionScopesValueGroup extends XValueGroup {
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    //noinspection ConstantConditions
     ObsolescentAsyncResults.consume(value.asFunction(), node, new PairConsumer<FunctionValue, XCompositeNode>() {
       @Override
       public void consume(FunctionValue value, XCompositeNode node) {

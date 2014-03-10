@@ -209,7 +209,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
         if (value.getType() == ValueType.FUNCTION) {
           // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(value.asObject(), context)), true);
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup((FunctionValue)value, context)), true);
         }
       }
     });
@@ -351,8 +351,8 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    ObjectValue object = value.asObject();
-    AsyncResult<FunctionValue> asFunction = object != null ? object.asFunction() : null;
+    FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+    AsyncResult<FunctionValue> asFunction = functionValue == null ? null : functionValue.asFunction();
     if (asFunction != null) {
       asFunction.doWhenDone(new Consumer<FunctionValue>() {
         @Override
