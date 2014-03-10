@@ -41,6 +41,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
     return this;
   }
 
+  @NotNull
   @Override
   public final AsyncResult<ObjectPropertyData> getProperties() {
     return PROPERTIES_LOADER.get(this);
