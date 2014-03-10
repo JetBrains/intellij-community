@@ -63,7 +63,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     });
 
-    myBranchFilterComponent = new BranchFilterPopupComponent(this, logDataHolder, initialDataPack.getRefsModel(), uiProperties);
+    myBranchFilterComponent = new BranchFilterPopupComponent(this, initialDataPack, uiProperties);
     myUserFilterComponent = new UserFilterPopupComponent(this, logDataHolder, uiProperties);
     myDateFilterComponent  = new DateFilterPopupComponent(this);
     myStructureFilterComponent = new StructureFilterPopupComponent(this, logDataHolder.getRoots());
@@ -77,7 +77,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   public void updateDataPack(@NotNull DataPack dataPack) {
-    myBranchFilterComponent.updateRefsModel(dataPack.getRefsModel());
+    myBranchFilterComponent.updateDataPack(dataPack);
   }
 
   /**
