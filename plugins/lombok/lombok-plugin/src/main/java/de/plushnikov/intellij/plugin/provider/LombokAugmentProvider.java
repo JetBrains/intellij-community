@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provides support for lombok generated elements
@@ -36,6 +38,13 @@ import java.util.List;
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
   private static final String LOMBOK_PREFIX_MARKER = "lombok.";
+
+  private final static ThreadLocal<Set<AugmentCallData>> recursionBreaker = new ThreadLocal<Set<AugmentCallData>>() {
+    @Override
+    protected Set<AugmentCallData> initialValue() {
+      return new HashSet<AugmentCallData>();
+    }
+  };
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
@@ -54,6 +63,13 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     if (!(type.isAssignableFrom(PsiMethod.class) || type.isAssignableFrom(PsiField.class) || type.isAssignableFrom(PsiClass.class))) {
       return emptyResult;
     }
+
+    final AugmentCallData currentAugmentData = new AugmentCallData(element, type);
+    if (recursionBreaker.get().contains(currentAugmentData)) {
+      log.debug("Prevented recursion call");
+      return emptyResult;
+    }
+
     // skip processing during index rebuild
     final Project project = element.getProject();
     if (DumbService.getInstance(project).isDumb()) {
@@ -64,17 +80,22 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return emptyResult;
     }
 
-    final PsiClass psiClass = (PsiClass) element;
+    recursionBreaker.get().add(currentAugmentData);
+    try {
+      final PsiClass psiClass = (PsiClass) element;
 
-    final boolean isLombokPresent = UserMapKeys.isLombokPossiblePresent(element) || checkImportSection(psiClass);
-    if (!isLombokPresent) {
-      if (log.isDebugEnabled()) {
-        log.debug(String.format("Skipped call for type: %s class: %s", type, psiClass.getQualifiedName()));
+      final boolean isLombokPresent = UserMapKeys.isLombokPossiblePresent(element) || checkImportSection(psiClass);
+      if (!isLombokPresent) {
+        if (log.isDebugEnabled()) {
+          log.debug(String.format("Skipped call for type: %s class: %s", type, psiClass.getQualifiedName()));
+        }
+        return emptyResult;
       }
-      return emptyResult;
-    }
 
-    return process(type, project, psiClass);
+      return process(type, project, psiClass);
+    } finally {
+      recursionBreaker.get().remove(currentAugmentData);
+    }
   }
 
   private <Psi extends PsiElement> List<Psi> process(@NotNull Class<Psi> type, @NotNull Project project, @NotNull PsiClass psiClass) {

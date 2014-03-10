@@ -154,7 +154,8 @@
 		<ul>
 		<li>0.8.3
 				<ol>
-				    <li>TODO...</li>
+				    <li>Fixed #17: Cyclic parent child relation</li>
+				    <li>Fixed #34: Lombok plugin crashes</li>
 				</ol>
 			</li>
 		<li>0.8.2
