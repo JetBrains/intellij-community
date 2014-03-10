@@ -113,14 +113,22 @@ public class InferenceSession {
     return null;
   }
 
+  /**
+   * Definition from 15.12.2.2 Phase 1: Identify Matching Arity Methods Applicable by Subtyping Strict Invocation
+   * An argument expression is considered pertinent to applicability for a potentially-applicable method m unless it has one of the following forms:
+
+   1)  An implicitly-typed lambda expression (15.27.1).
+   2) An inexact method reference (15.13.1).
+   3) If m is a generic method and the method invocation does not provide explicit type arguments, an explicitly-typed lambda expression or 
+      an exact method reference for which the corresponding target type (as derived from the signature of m) is a type parameter of m.
+   4) An explicitly-typed lambda expression whose body is an expression that is not pertinent to applicability.
+   5) An explicitly-typed lambda expression whose body is a block, where at least one result expression is not pertinent to applicability.
+   6) A parenthesized expression (15.8.5) whose contained expression is not pertinent to applicability.
+   7) A conditional expression (15.25) whose second or third operand is not pertinent to applicability. 
+  */
   public static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method) {
-    if (expr instanceof PsiLambdaExpression) {
-      if (!((PsiLambdaExpression)expr).hasFormalParameterTypes()) {
-        return false;
-      }
-      for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
-        if (!isPertinentToApplicability(expression, method)) return false;
-      }
+    if (expr instanceof PsiLambdaExpression && ((PsiLambdaExpression)expr).hasFormalParameterTypes() ||
+        expr instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expr).isExact()) {
       if (method != null && method.getTypeParameters().length > 0) {
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
         if (parent instanceof PsiExpressionList) {
@@ -136,16 +144,19 @@ public class InferenceSession {
             else {
               paramType = parameters[idx].getType();
             }
-            final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType);
+            final PsiClass psiClass = PsiUtil.resolveClassInType(paramType); //accept ellipsis here
             if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return false;
           }
         }
-
-        for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
-          if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
-            return false;
-          }
-        }
+      }
+      return true;
+    }
+    if (expr instanceof PsiLambdaExpression) {
+      if (!((PsiLambdaExpression)expr).hasFormalParameterTypes()) {
+        return false;
+      }
+      for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
+        if (!isPertinentToApplicability(expression, method)) return false;
       }
       return true;
     }

@@ -185,6 +185,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testExactMethodReferencePertinentToApplicabilityCheck() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
