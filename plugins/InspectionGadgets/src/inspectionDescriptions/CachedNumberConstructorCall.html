@@ -7,13 +7,13 @@ Reports any attempt to instantiate a new <b>Long</b>,
 <b>byte</b>
 argument. It may be more efficient to use the static method <b>valueOf()</b>
 here (introduced in Java 5), which will cache objects for values between -128 and
-127 inclusive. This inspection ignores calls to number constructors using a
-<b>String</b> argument.
+127 inclusive.
 <p>
 This inspection only reports if the project or module is configured to use a
 language level of 5.0 or higher.
 <!-- tooltip end -->
 <p>
-
+Use the checkbox below to ignore calls to number constructors with a <b>String</b> argument.
+<p>
 </body>
 </html>
