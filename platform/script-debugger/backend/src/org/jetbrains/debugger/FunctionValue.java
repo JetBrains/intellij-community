@@ -6,6 +6,12 @@ import org.jetbrains.annotations.Nullable;
 
 public interface FunctionValue extends ObjectValue {
   /**
+   * You must invoke {@link #resolve} to use any function value methods
+   */
+  @NotNull
+  AsyncResult<FunctionValue> resolve();
+
+  /**
    * Returns position of opening parenthesis of function arguments. Position is absolute
    * within resource (not relative to script start position).
    *
@@ -17,7 +23,4 @@ public interface FunctionValue extends ObjectValue {
 
   @Nullable
   Scope[] getScopes();
-
-  @NotNull
-  AsyncResult<FunctionValue> asFunction();
 }
