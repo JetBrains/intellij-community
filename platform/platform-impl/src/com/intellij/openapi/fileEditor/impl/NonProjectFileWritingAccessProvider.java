@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -28,12 +29,14 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
 public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   public enum AccessStatus {REQUESTED, ALLOWED}
 
+  private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
   private static final Key<Boolean> ALL_ACCESS_ALLOWED = Key.create("NON_PROJECT_FILE_ALL_ACCESS_STATUS");
   private static final NotNullLazyKey<Map<VirtualFile, AccessStatus>, Project> ACCESS_STATUS
     = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS_STATUS", new NotNullFunction<Project, Map<VirtualFile, AccessStatus>>() {
@@ -98,7 +101,17 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(each);
   }
 
+  @TestOnly
+  public static void enableChecksInTests(@NotNull Project project, boolean enable) {
+    project.putUserData(ENABLE_IN_TESTS, enable ? Boolean.TRUE : null);
+  } 
+
   private static boolean allAccessAllowed(@NotNull Project project) {
+    // disable checks in tests, if not asked
+    if (ApplicationManager.getApplication().isUnitTestMode() && project.getUserData(ENABLE_IN_TESTS) != Boolean.TRUE) {
+      return true;
+    }
+    
     return project.getUserData(ALL_ACCESS_ALLOWED) == Boolean.TRUE;
   }
 
