@@ -14,7 +14,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
       ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData"))) {
       @Override
       public boolean checkFreshness(@NotNull ObjectValueBase host, @NotNull ObjectPropertyData data) {
-        return host.valueLoader.getCacheStamp() == data.getCacheState();
+        return host.valueManager.getCacheStamp() == data.getCacheState();
       }
 
       @Override
@@ -26,12 +26,12 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   @SuppressWarnings("UnusedDeclaration")
   private volatile AsyncResult<ObjectPropertyData> propertyData;
 
-  protected final VALUE_LOADER valueLoader;
+  protected final VALUE_LOADER valueManager;
 
-  public ObjectValueBase(@NotNull ValueType type, @NotNull VALUE_LOADER valueLoader) {
+  public ObjectValueBase(@NotNull ValueType type, @NotNull VALUE_LOADER valueManager) {
     super(type);
 
-    this.valueLoader = valueLoader;
+    this.valueManager = valueManager;
   }
 
   protected abstract void loadProperties(@NotNull AsyncResult<ObjectPropertyData> result);
