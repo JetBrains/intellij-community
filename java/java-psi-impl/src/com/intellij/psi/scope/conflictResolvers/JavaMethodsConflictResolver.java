@@ -392,12 +392,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  private static int checkApplicability(List<CandidateInfo> conflicts) {
+  protected int checkApplicability(List<CandidateInfo> conflicts) {
     @MethodCandidateInfo.ApplicabilityLevelConstant int maxApplicabilityLevel = 0;
     boolean toFilter = false;
     for (CandidateInfo conflict : conflicts) {
       ProgressManager.checkCanceled();
-      @MethodCandidateInfo.ApplicabilityLevelConstant final int level = ((MethodCandidateInfo)conflict).getPertinentApplicabilityLevel();
+      @MethodCandidateInfo.ApplicabilityLevelConstant final int level = getPertinentApplicabilityLevel((MethodCandidateInfo)conflict);
       if (maxApplicabilityLevel > 0 && maxApplicabilityLevel != level) {
         toFilter = true;
       }
@@ -410,7 +410,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
         ProgressManager.checkCanceled();
         CandidateInfo info = iterator.next();
-        final int level = ((MethodCandidateInfo)info).getPertinentApplicabilityLevel();
+        final int level = getPertinentApplicabilityLevel((MethodCandidateInfo)info);
         if (level < maxApplicabilityLevel) {
           iterator.remove();
         }
@@ -418,6 +418,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return maxApplicabilityLevel;
+  }
+
+  protected int getPertinentApplicabilityLevel(MethodCandidateInfo conflict) {
+    return conflict.getPertinentApplicabilityLevel();
   }
 
   private static int getCheckAccessLevel(MethodCandidateInfo method){
@@ -570,6 +574,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (abstract2 && !abstract1) {
           return Specifics.FIRST;
         }
+
       }
 
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && myArgumentsList instanceof PsiExpressionList && (typeParameters1.length == 0 || typeParameters2.length == 0)) {
@@ -659,6 +664,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
     if (raw1 ^ raw2) {
       return raw1 ? Specifics.SECOND : Specifics.FIRST;
+    }
+
+    final boolean varargs1 = info1.isVarargs();
+    final boolean varargs2 = info2.isVarargs();
+    if (varargs1 ^ varargs2) {
+      return varargs1 ? Specifics.SECOND : Specifics.FIRST;
     }
 
     return Specifics.NEITHER;

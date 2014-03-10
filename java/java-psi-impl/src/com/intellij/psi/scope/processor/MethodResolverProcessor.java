@@ -63,4 +63,9 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
   }
+
+  @Override
+  protected boolean acceptVarargs() {
+    return true;
+  }
 }
