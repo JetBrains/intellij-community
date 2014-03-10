@@ -37,11 +37,17 @@ public class TestVcsNotifier extends VcsNotifier {
     return myLastNotification;
   }
 
+  @Override
   @NotNull
   public Notification notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                              @NotNull NotificationType type, @Nullable NotificationListener listener) {
     myLastNotification = new Notification(TEST_NOTIFICATION_GROUP, title, message, type, listener);
     return myLastNotification;
+  }
+
+  @Override
+  public void notify(@NotNull Notification notification) {
+    myLastNotification = notification;
   }
 
   public void cleanup() {
