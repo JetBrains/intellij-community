@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CharTrie;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,10 +64,9 @@ public class KeywordParser {
     return result;
   }
 
-  public boolean hasToken(int position, CharSequence myBuffer, TokenInfo myTokenInfo) {
+  public boolean hasToken(int position, CharSequence myBuffer, @Nullable TokenInfo tokenInfo) {
     int index = 0;
     int offset = position;
-    boolean found = false;
     while (offset < myBuffer.length()) {
       char c = myBuffer.charAt(offset++);
       int nextIndex = myTrie.findSubNode(index, myIgnoreCase ? Character.toUpperCase(c) : c);
@@ -79,24 +79,29 @@ public class KeywordParser {
         String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
         for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
           if (myKeywordSets.get(i).contains(testKeyword)) {
-            myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
-            found = true;
-            break;
+            if (tokenInfo != null) {
+              tokenInfo.updateData(position, position + keyword.length(), getToken(i));
+            }
+            return true;
           }
         }
       }
     }
 
-    return found;
+    return false;
   }
 
-  private static boolean isWordEnd(int offset, CharSequence myBuffer) {
-    if (offset == myBuffer.length()) {
+  private static boolean isWordEnd(int offset, CharSequence sequence) {
+    if (offset == sequence.length()) {
       return true;
     }
+    
+    return !isWordPart(offset - 1, sequence) || !isWordPart(offset, sequence);
+  }
 
-    char ch = myBuffer.charAt(offset);
-    return ch != '-' && ch != '_' && !Character.isLetterOrDigit(ch);
+  static boolean isWordPart(int offset, CharSequence sequence) {
+    char ch = sequence.charAt(offset);
+    return ch == '-' || Character.isJavaIdentifierPart(ch);
   }
 
   private static IElementType getToken(int keywordSetIndex) {
