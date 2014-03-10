@@ -45,11 +45,6 @@ public class TestVcsNotifier extends VcsNotifier {
     return myLastNotification;
   }
 
-  @Override
-  public void notify(@NotNull Notification notification) {
-    myLastNotification = notification;
-  }
-
   public void cleanup() {
     myLastNotification = null;
   }
