@@ -278,7 +278,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append("{}");
 
     try {
-      return elementFactory.createMethodFromText(buf.toString(), constructor != null ? constructor : containingClass);
+      final PsiNameIdentifierOwner owner = constructor != null ? constructor : containingClass;
+      return elementFactory.createMethodFromText(buf.toString(), owner instanceof PsiCompiledElement ? ((PsiCompiledElement)owner).getMirror() : owner);
     }
     catch (IncorrectOperationException e) {
       return null;
