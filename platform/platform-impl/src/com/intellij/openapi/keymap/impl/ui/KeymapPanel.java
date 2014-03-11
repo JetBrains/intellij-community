@@ -961,7 +961,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);
 
-    if (restrictions.allowKeyboardShortcut()) {
+    if (restrictions.allowKeyboardShortcut) {
       group.add(new DumbAwareAction("Add Keyboard Shortcut") {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -978,7 +978,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       });
     }
 
-    if (restrictions.allowMouseShortcut()) {
+    if (restrictions.allowMouseShortcut) {
       group.add(new DumbAwareAction("Add Mouse Shortcut") {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -994,7 +994,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       });
     }
 
-    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation()) {
+    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
       group.add(new DumbAwareAction("Add Abbreviation") {
         @Override
         public void actionPerformed(AnActionEvent e) {

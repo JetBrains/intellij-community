@@ -101,7 +101,7 @@ class MouseShortcutDialog extends DialogWrapper{
       myModifiers=-1;
     }
 
-    myRbDoubleClick.setEnabled(restrictions.allowMouseDoubleClick());
+    myRbDoubleClick.setEnabled(restrictions.allowMouseDoubleClick);
 
     updatePreviewAndConflicts();
 

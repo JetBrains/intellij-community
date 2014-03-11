@@ -18,31 +18,15 @@ package com.intellij.openapi.keymap.impl;
 public class ShortcutRestrictions {
   public static final ShortcutRestrictions NO_RESTRICTIONS = new ShortcutRestrictions(true, true, true, true);
 
-  private final boolean myAllowMouseShortcut;
-  private final boolean myAllowMouseDoubleClick;
-  private final boolean myAllowKeyboardShortcut;
-  private final boolean myAllowAbbreviation;
+  public final boolean allowMouseShortcut;
+  public final boolean allowMouseDoubleClick;
+  public final boolean allowKeyboardShortcut;
+  public final boolean allowAbbreviation;
 
   public ShortcutRestrictions(boolean allowMouseShortcut, boolean allowMouseDoubleClick, boolean allowKeyboardShortcut, boolean allowAbbreviation) {
-    myAllowMouseShortcut = allowMouseShortcut;
-    myAllowMouseDoubleClick = allowMouseDoubleClick;
-    myAllowKeyboardShortcut = allowKeyboardShortcut;
-    myAllowAbbreviation = allowAbbreviation;
-  }
-
-  public boolean allowMouseShortcut() {
-    return myAllowMouseShortcut;
-  }
-
-  public boolean allowMouseDoubleClick() {
-    return myAllowMouseDoubleClick;
-  }
-
-  public boolean allowKeyboardShortcut() {
-    return myAllowKeyboardShortcut;
-  }
-
-  public boolean allowAbbreviation() {
-    return myAllowAbbreviation;
+    this.allowMouseShortcut = allowMouseShortcut;
+    this.allowMouseDoubleClick = allowMouseDoubleClick;
+    this.allowKeyboardShortcut = allowKeyboardShortcut;
+    this.allowAbbreviation = allowAbbreviation;
   }
 }

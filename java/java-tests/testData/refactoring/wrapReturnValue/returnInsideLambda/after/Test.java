@@ -1,9 +1,9 @@
 class Test {
     Wrapper foo() {
-    return new Wrapper((o) -> {
-        return 0;
-    });
-  }
+        return new Wrapper((o) -> {
+            return 0;
+        });
+    }
 
     public class Wrapper {
         private final Comparable<String> value;
@@ -12,10 +12,8 @@ class Test {
             this.value = value;
         }
 
-
         public Comparable<String> getValue() {
             return value;
         }
-
     }
 }
