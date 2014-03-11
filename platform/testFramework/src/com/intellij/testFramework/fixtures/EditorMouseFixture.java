@@ -29,7 +29,7 @@ public class EditorMouseFixture {
   private int myX;
   private int myY;
   private int myModifiers;
-  private int myButton = MouseEvent.NOBUTTON;
+  private int myButton = MouseEvent.BUTTON1;
   private int myLastId;
 
   public EditorMouseFixture(EditorImpl editor) {
@@ -97,12 +97,12 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture alt() {
-    myModifiers |= InputEvent.ALT_MASK;
+    myModifiers |= InputEvent.ALT_DOWN_MASK;
     return this;
   }
 
   public EditorMouseFixture shift() {
-    myModifiers |= InputEvent.SHIFT_MASK;
+    myModifiers |= InputEvent.SHIFT_DOWN_MASK;
     return this;
   }
 
