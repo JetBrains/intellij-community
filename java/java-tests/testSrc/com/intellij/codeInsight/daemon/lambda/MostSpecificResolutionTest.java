@@ -51,6 +51,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMostSpecificForSameFunctionalTypes() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
