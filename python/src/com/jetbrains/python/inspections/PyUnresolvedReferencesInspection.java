@@ -754,7 +754,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             actions.add(new AddMethodQuickFix(refText, (PyClassType)type, true));
           }
           else if (!(reference instanceof PyOperatorReference)) {
-            actions.add(new AddFieldQuickFix(refText, (PyClassType)type, "None"));
+            actions.add(new AddFieldQuickFix(refText, "None", type.getName()));
           }
         }
       }
