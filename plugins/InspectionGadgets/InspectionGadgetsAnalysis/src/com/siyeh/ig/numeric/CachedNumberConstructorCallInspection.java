@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,6 +46,9 @@ public class CachedNumberConstructorCallInspection
     cachedNumberTypes.add(CommonClassNames.JAVA_LANG_SHORT);
   }
 
+  @SuppressWarnings("PublicField")
+  public static boolean ignoreStringArguments = false;
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -55,6 +61,13 @@ public class CachedNumberConstructorCallInspection
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cached.number.constructor.call.ignore.string.arguments.option"),
+                                          this, "ignoreStringArguments");
   }
 
   @Override
@@ -142,11 +155,10 @@ public class CachedNumberConstructorCallInspection
       final PsiExpression argument = arguments[0];
       final PsiType argumentType = argument.getType();
       if (argumentType == null ||
-          argumentType.equalsToText(
-            CommonClassNames.JAVA_LANG_STRING)) {
+          (ignoreStringArguments && argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
         return;
       }
-      registerError(expression, expression);
+      registerNewExpressionError(expression, expression);
     }
   }
 }

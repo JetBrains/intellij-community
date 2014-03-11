@@ -189,7 +189,16 @@ class Xoo {
 class Xoo {
 }
 '''
+  }
 
+  public void "test cpp indirection"() {
+    myFixture.configureByText "a.c", '''f<caret>
+foo->bar
+'''
+    complete()
+    myFixture.checkResult '''foo<caret>
+foo->bar
+'''
   }
 
   private void complete() {

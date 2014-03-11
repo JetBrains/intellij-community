@@ -85,7 +85,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
           LOG.error("The log data holder should have been initialized at this point");
           return -1;
         }
-        return dataHolder.putHash(hash);
+        return dataHolder.getCommitIndex(hash);
       }
     }, commitHash, name, type, root);
   }

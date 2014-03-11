@@ -30,7 +30,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public class VcsLogManager implements Disposable {
 
   private PostponeableLogRefresher myLogRefresher;
   private volatile VcsLogDataHolder myLogDataHolder;
-  private volatile VcsLogUI myUi;
+  private volatile VcsLogUiImpl myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
                        @NotNull VcsLogSettings settings,
@@ -75,7 +75,7 @@ public class VcsLogManager implements Disposable {
     myLogDataHolder.initialize(new PairConsumer<VcsLogDataHolder, DataPack>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder, DataPack dataPack) {
-        VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
+        VcsLogUiImpl logUI = new VcsLogUiImpl(vcsLogDataHolder, myProject, mySettings,
                                       new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, dataPack);
         myLogDataHolder = vcsLogDataHolder;
         myUi = logUI;
@@ -124,10 +124,10 @@ public class VcsLogManager implements Disposable {
   }
 
   /**
-   * The instance of the {@link VcsLogUI} or null if the log was not initialized yet.
+   * The instance of the {@link com.intellij.vcs.log.ui.VcsLogUiImpl} or null if the log was not initialized yet.
    */
   @Nullable
-  public VcsLogUI getLogUi() {
+  public VcsLogUiImpl getLogUi() {
     return myUi;
   }
 

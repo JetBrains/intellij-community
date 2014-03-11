@@ -10,8 +10,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PaintInfo;
-import com.intellij.vcs.log.graph.render.CommitCell;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   private static final Logger LOG = Logger.getInstance(AbstractPaddingCellRender.class);
 
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final RefPainter myRefPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
@@ -34,8 +36,10 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
 
-  protected AbstractPaddingCellRender(@NotNull VcsLogColorManager colorManager, @NotNull VcsLogDataHolder dataHolder) {
+  protected AbstractPaddingCellRender(@NotNull VcsLogColorManager colorManager, @NotNull VcsLogDataHolder dataHolder,
+                                      @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
+    myGraphTable = table;
     myRefPainter = new RefPainter(colorManager, false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
   }
@@ -49,7 +53,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
       return;
     }
 
-    CommitCell cell = getAssertCommitCell(value);
+    GraphCommitCell cell = getAssertCommitCell(value);
     myGraphImage = getGraphImage(row);
     myRefs = cell.getRefsToThisCommit();
 
@@ -67,6 +71,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
 
     append("");
     appendFixedTextFragmentWidth(textPadding);
+    myGraphTable.applyHighlighters(this, row, isSelected);
     myIssueLinkRenderer.appendTextWithLinks(cell.getText());
   }
 
@@ -82,14 +87,14 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
     if (myGraphImage != null) {
       UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
     }
-    else if (this instanceof GraphCommitCellRender) { // TODO temporary diagnostics: why does graph sometimes disappear
+    else { // TODO temporary diagnostics: why does graph sometimes disappear
       LOG.error("Image is null");
     }
   }
 
-  private static CommitCell getAssertCommitCell(Object value) {
-    assert value instanceof CommitCell : "Value of incorrect class was supplied: " + value;
-    return (CommitCell)value;
+  private static GraphCommitCell getAssertCommitCell(Object value) {
+    assert value instanceof GraphCommitCell : "Value of incorrect class was supplied: " + value;
+    return (GraphCommitCell)value;
   }
 
   protected void drawRefs(@NotNull Graphics2D g2, @NotNull Collection<VcsRef> refs, int padding) {

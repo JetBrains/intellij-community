@@ -50,7 +50,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
       }
     };
     
-    final IdentifierParser identifierParser = new IdentifierParser();
+    final IdentifierParser identifierParser = new IdentifierParser(parser);
 
     final QuotedStringParser quotedStringParser = new QuotedStringParser("\"", CustomHighlighterTokenType.STRING, table.isHasStringEscapes());
 

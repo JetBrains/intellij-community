@@ -1,6 +1,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.xml.ui.DomUIFactory;
 import junit.framework.TestCase;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -165,6 +166,27 @@ public class ProxyTest extends TestCase {
     assertEquals(proxy.sayA(), "a");
     assertEquals(((CovariantFromBaseClassTest.Base)proxy).sayA(), "a");
     assertEquals(((CovariantFromBaseClassTest.Intf)proxy).sayA(), "a");
+  }
+
+  public void testGenericMethodInvocationJava8() throws Throwable {
+    ConcreteInterface proxy = AdvancedProxy.createProxy(new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        return 42;
+      }
+    }, null, ConcreteInterface.class);
+    Method foo = DomUIFactory.findMethod(GenericInterface.class, "foo");
+    assert foo != null;
+    assertEquals(42, proxy.foo("a"));
+    assertEquals(42, foo.invoke(proxy, "a"));
+  }
+
+  interface GenericInterface<T> {
+    Object foo(T t);
+  }
+
+  interface ConcreteInterface extends GenericInterface<String> {
+    Object foo(String t);
   }
 
 

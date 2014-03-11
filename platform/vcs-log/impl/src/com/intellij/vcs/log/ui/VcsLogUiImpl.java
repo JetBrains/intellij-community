@@ -1,18 +1,18 @@
 package com.intellij.vcs.log.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.impl.VcsLogImpl;
@@ -27,17 +27,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.util.Collection;
 
-/**
- * @author erokhins
- */
-public class VcsLogUI {
+public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
 
-  private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
+  private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
@@ -46,14 +44,18 @@ public class VcsLogUI {
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
 
+  @NotNull private final Collection<VcsLogFilterChangeListener> myFilterChangeListeners = ContainerUtil.newArrayList();
+
   @NotNull private DataPack myDataPack;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
+  public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
+                      @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
     myDataPack = initialDataPack;
+    Disposer.register(logDataHolder, this);
+
     myFilterer = new VcsLogFilterer(logDataHolder, this);
     myLog = new VcsLogImpl(myLogDataHolder, this);
     myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog, initialDataPack);
@@ -238,7 +240,7 @@ public class VcsLogUI {
   }
 
   private void commitNotFound(@NotNull String commitHash) {
-    if (collectFilters().isEmpty()) {
+    if (getFilters().isEmpty()) {
       showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
     }
     else {
@@ -279,13 +281,14 @@ public class VcsLogUI {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
         final TIntHashSet previouslySelected = getSelectedCommits();
-        final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, collectFilters());
+        final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, getFilters());
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             myDataPack = dataPack;
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
+            fireFilterChangeEvent();
             repaintUI();
 
             if (newModel.getRowCount() == 0) { // getValueAt won't be called for empty model => need to explicitly request to load more
@@ -303,7 +306,7 @@ public class VcsLogUI {
   }
 
   @NotNull
-  public VcsLogFilterCollection collectFilters() {
+  public VcsLogFilterCollection getFilters() {
     return myMainFrame.getFilterUi().getFilters();
   }
 
@@ -339,8 +342,49 @@ public class VcsLogUI {
   }
 
   @NotNull
+  @Override
+  public VcsLogFilterUi getFilterUi() {
+    return myMainFrame.getFilterUi();
+  }
+
+  @Override
+  @NotNull
   public DataPack getDataPack() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myDataPack;
   }
+
+  @Override
+  public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    getTable().addHighlighter(highlighter);
+    repaintUI();
+  }
+
+  @Override
+  public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    getTable().removeHighlighter(highlighter);
+    repaintUI();
+  }
+
+  @Override
+  public void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
+    myFilterChangeListeners.add(listener);
+  }
+
+  @Override
+  public void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
+    myFilterChangeListeners.remove(listener);
+  }
+
+  private void fireFilterChangeEvent() {
+    for (VcsLogFilterChangeListener listener : myFilterChangeListeners) {
+      listener.filtersPossiblyChanged();
+    }
+  }
+
+  @Override
+  public void dispose() {
+    getTable().removeAllHighlighters();
+  }
+
 }

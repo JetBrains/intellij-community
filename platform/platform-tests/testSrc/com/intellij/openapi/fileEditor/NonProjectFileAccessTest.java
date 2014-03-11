@@ -49,6 +49,13 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     super.setUp();
     EditorNotifications notifications = new EditorNotifications(getProject(), myManager);
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
+    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), false);
+    super.tearDown();
   }
 
   @Override

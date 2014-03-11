@@ -283,6 +283,16 @@ IDENTIFIER ('k')
 '''
   }
 
+  public void testCpp() {
+    SyntaxTable table = new SyntaxTable()
+    table.addKeyword1('->')
+    doTest table, "foo->bar", '''\
+IDENTIFIER ('foo')
+KEYWORD_1 ('->')
+IDENTIFIER ('bar')
+'''
+  }
+
   public void testNumber() {
     doTest createPropTable(), "1.23=1.24", '''\
 NUMBER ('1.23')
