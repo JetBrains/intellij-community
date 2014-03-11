@@ -70,13 +70,13 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     try {
-      final PsiElement problem_elt = descriptor.getPsiElement();
+      final PsiElement problemElement = descriptor.getPsiElement();
       sure(myPyFile);
       sure(FileModificationService.getInstance().preparePsiElementForWrite(myPyFile));
       // try to at least match parameter count
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier);
-      PsiElement problemParent = problem_elt.getParent();
+      PsiElement problemParent = problemElement.getParent();
       if (problemParent instanceof PyCallExpression) {
         PyArgumentList arglist = ((PyCallExpression)problemParent).getArgumentList();
         if (arglist == null) return;
@@ -96,7 +96,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       }
       else if (problemParent != null) {
         for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
-          List<String> params = extension.getFunctionParametersFromUsage(problem_elt);
+          List<String> params = extension.getFunctionParametersFromUsage(problemElement);
           if (params != null) {
             for (String param : params) {
               builder.parameter(param);
