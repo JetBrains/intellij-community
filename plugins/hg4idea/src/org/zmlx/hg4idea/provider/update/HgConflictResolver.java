@@ -40,31 +40,13 @@ public final class HgConflictResolver {
     this(project, null);
   }
 
-  public HgConflictResolver(Project project, UpdatedFiles updatedFiles) {
+  public HgConflictResolver(@NotNull Project project, UpdatedFiles updatedFiles) {
     this.myProject = project;
     this.updatedFiles = updatedFiles;
   }
 
   public void resolve(final VirtualFile repo) {
-    final List<VirtualFile> conflicts = findConflicts(myProject, updatedFiles, repo);
-
-    if (conflicts.isEmpty()) {
-      return;
-    }
-
-    final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) {
-      return;
-    }
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
-      }
-    }, ModalityState.defaultModalityState());
-  }
-
-  public static List<VirtualFile> findConflicts(final Project project, final UpdatedFiles updatedFiles, VirtualFile repo) {
-    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
     final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
     for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
       File file = entry.getKey().getFile();
@@ -84,6 +66,35 @@ public final class HgConflictResolver {
         //TODO get the correct revision to pass to the UpdatedFiles
         updatedFiles.getGroupById(fileGroupId)
           .add(file.getPath(), HgVcs.VCS_NAME, null);
+      }
+    }
+
+    if (conflicts.isEmpty()) {
+      return;
+    }
+
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
+      }
+    }, ModalityState.defaultModalityState());
+  }
+
+  public static List<VirtualFile> findConflicts(final Project project, VirtualFile repo) {
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
+    final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
+    for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
+      File file = entry.getKey().getFile();
+      switch (entry.getValue()) {
+        case UNRESOLVED:
+          conflicts.add(VcsUtil.getVirtualFile(file));
+          break;
+        default:
+          break;
       }
     }
     return conflicts;

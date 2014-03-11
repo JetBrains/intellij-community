@@ -25,10 +25,9 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.command.HgCommandExitCode.*;
+
 public class HgPullCommand {
-  public static int ERROR = -1;
-  public static int UNRESOLVED = 1;
-  public static int SUCCESS = 0;
 
   private final Project project;
   private final VirtualFile repo;
@@ -59,7 +58,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public int execute() {
+  public HgCommandExitCode execute() {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
