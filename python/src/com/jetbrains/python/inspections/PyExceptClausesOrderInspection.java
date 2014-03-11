@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyMoveExceptQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,8 @@ public class PyExceptClausesOrderInspection extends PyInspection {
               } else {
                 for (PyClass superClass: pyClass.getSuperClasses()) {
                   if (exceptClasses.contains(superClass)) {
-                    registerProblem(exceptClass, PyBundle.message("INSP.class.$0.superclass.$1.already.caught", superClass.getName(), pyClass.getName()));
+                    registerProblem(exceptClass, PyBundle.message("INSP.class.$0.superclass.$1.already.caught", superClass.getName(), pyClass.getName()),
+                                    new PyMoveExceptQuickFix());
                   }
                 }
               }
