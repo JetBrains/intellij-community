@@ -21,8 +21,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -153,6 +155,17 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
       return false;
     }
+    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+      if (!hasFormalParameterTypes()) {
+        return true;
+      }
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (candidateProperties != null && !InferenceSession.isPertinentToApplicability(this, candidateProperties.getMethod())) {
+        return true;
+      }
+    }
+
     leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
 
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
