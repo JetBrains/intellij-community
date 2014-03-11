@@ -15,7 +15,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
       ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
       @Override
       public boolean checkFreshness(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
-        return host.valueLoader.getCacheStamp() == host.cacheStamp;
+        return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
       @Override
@@ -29,12 +29,12 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
 
   private volatile int cacheStamp = -1;
 
-  protected final VALUE_LOADER valueLoader;
+  protected final VALUE_LOADER valueManager;
 
-  protected DeclarativeScope(@NotNull Type type, @Nullable String description, @NotNull VALUE_LOADER loader) {
+  protected DeclarativeScope(@NotNull Type type, @Nullable String description, @NotNull VALUE_LOADER valueManager) {
     super(type, description);
 
-    valueLoader = loader;
+    this.valueManager = valueManager;
   }
 
   /**
@@ -43,7 +43,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   protected abstract void loadVariables(@NotNull AsyncResult<List<? extends Variable>> result);
 
   protected final void updateCacheStamp() {
-    cacheStamp = valueLoader.getCacheStamp();
+    cacheStamp = valueManager.getCacheStamp();
   }
 
   @NotNull
