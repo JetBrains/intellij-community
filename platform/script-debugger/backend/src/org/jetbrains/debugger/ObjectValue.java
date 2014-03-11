@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,4 +14,10 @@ public interface ObjectValue extends Value {
 
   @NotNull
   AsyncResult<ObjectPropertyData> getProperties();
+
+  /**
+   * It must return quickly. Return {@link com.intellij.util.ThreeState#UNSURE} otherwise.
+   */
+  @NotNull
+  ThreeState hasProperties();
 }
