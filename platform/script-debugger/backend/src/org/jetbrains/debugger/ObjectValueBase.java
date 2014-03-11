@@ -13,7 +13,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>> PROPERTIES_LOADER =
     new AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>>(
-      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "propertyData"))) {
+      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "properties"))) {
       @Override
       public boolean checkFreshness(@NotNull ObjectValueBase host, @NotNull List<? extends Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
@@ -26,7 +26,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
     };
 
   @SuppressWarnings("UnusedDeclaration")
-  private volatile AsyncResult<List<? extends Variable>> propertyData;
+  private volatile AsyncResult<List<? extends Variable>> properties;
 
   private volatile int cacheStamp = -1;
 
