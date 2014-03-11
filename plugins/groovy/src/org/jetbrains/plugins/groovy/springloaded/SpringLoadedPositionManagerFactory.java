@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.JavaPsiFacade;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory for position manager to debug classes reloaded by com.springsource.springloaded
@@ -14,7 +15,7 @@ import com.intellij.psi.JavaPsiFacade;
 public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
 
   @Override
-  public PositionManager createPositionManager(final DebugProcess process) {
+  public PositionManager createPositionManager(@NotNull final DebugProcess process) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(process.getProject());

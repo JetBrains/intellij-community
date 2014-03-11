@@ -571,7 +571,7 @@ public abstract class HgUtil {
   public static String getDisplayableBranchOrBookmarkText(@NotNull HgRepository repository) {
     HgRepository.State state = repository.getState();
     String branchText = "";
-    if (state == HgRepository.State.MERGING) {
+    if (state != HgRepository.State.NORMAL) {
       branchText += state.toString() + " ";
     }
     String branchOrBookMarkName = repository.getCurrentBookmark();
@@ -609,6 +609,11 @@ public abstract class HgUtil {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getDefaultPushPath();
+  }
+
+  @Nullable
+  public static String getRepositoryDefaultPushPath(@NotNull HgRepository repository) {
+    return repository.getRepositoryConfig().getDefaultPushPath();
   }
 
   @Nullable
@@ -662,6 +667,7 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    Collections.sort(names);
     return names;
   }
 

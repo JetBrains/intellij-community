@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.command.HgBranchesCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -162,13 +162,13 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     // Then blinking and do not work properly;
     if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
-      HgCommandResult branchCommandResult = new HgTagBranchCommand(getProject(), getRoot()).collectBranches();
+      HgCommandResult branchCommandResult = new HgBranchesCommand(getProject(), getRoot()).collectBranches();
       if (branchCommandResult == null || branchCommandResult.getExitValue() != 0) {
         LOG.warn("Could not collect hg opened branches."); // hg executable is not valid
         myOpenedBranches = myInfo.getBranches().keySet();
       }
       else {
-        myOpenedBranches = HgTagBranchCommand.collectNames(branchCommandResult);
+        myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }

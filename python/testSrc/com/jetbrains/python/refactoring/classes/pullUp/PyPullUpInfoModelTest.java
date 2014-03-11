@@ -69,6 +69,27 @@ public class PyPullUpInfoModelTest extends PyTestCase {
     Assert.assertThat("Instance on member dependencies failed", getErrorMemberNames(), Matchers.containsInAnyOrder("self.instance_field_bar"));
   }
 
+  /**
+   * Check dependnecies for properties, declared in old-style
+   *
+   */
+  public void testOldProperty() throws Exception {
+    checkMembers("method_depends_on_old_property(self)");
+    Assert.assertThat("Method on old property dependency failed", getErrorMemberNames(), Matchers.containsInAnyOrder(
+      "old_property",
+      "old_property_2",
+      "old_property_3"));
+  }
+
+  /**
+   *
+   * Check dependnecies for properties, declared in new-style
+   */
+  public void testNewProperty() throws Exception {
+    checkMembers("method_depends_on_new_property(self)");
+    Assert.assertThat("Method on new property dependency failed", getErrorMemberNames(), Matchers.containsInAnyOrder("new_property", "new_property_2"));
+  }
+
 
   /**
    * All dependencies are met: new (destination) class has all of them

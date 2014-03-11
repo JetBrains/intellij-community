@@ -63,7 +63,12 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
                                                     final boolean staticProblem, final boolean accessible) {
     final PsiExpressionList argumentList = getArgumentList();
     return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                   getExpressionTypes(argumentList), getTypeArguments(), getLanguageLevel());
+                                   null, getTypeArguments(), getLanguageLevel()) {
+      @Override
+      public PsiType[] getArgumentTypes() {
+        return getExpressionTypes(argumentList);
+      }
+    };
   }
 
   protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {

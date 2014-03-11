@@ -3,7 +3,7 @@
   <id>org.jetbrains.plugins.rest</id>
   <description>This plugin enables support for reStructuredText files (*.rst)</description>
   <vendor>JetBrains</vendor>
-  <version>134.SNAPSHOT</version>
+  <version>136.SNAPSHOT</version>
   <idea-version since-build="130.1"/>
   <depends>com.intellij.modules.lang</depends>
 

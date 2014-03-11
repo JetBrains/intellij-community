@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
+  public static final ParameterInfoImpl[] EMPTY_ARRAY = {};
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
+
   public int oldParameterIndex;
-  boolean useAnySingleVariable;
+  private boolean useAnySingleVariable;
   private String name = "";
-  public static final ParameterInfoImpl[] EMPTY_ARRAY = new ParameterInfoImpl[0];
 
   private CanonicalTypes.Type myType;
   String defaultValue = "";

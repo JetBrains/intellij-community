@@ -56,10 +56,9 @@ class MethodsManager extends MembersManager<PyFunction> {
   @NotNull
   @Override
   protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
-    final MultiMap<PyClass, PyElement> result = new MultiMap<PyClass, PyElement>();
-    member.accept(new MyPyRecursiveElementVisitor(result));
-
-    return result;
+    final MyPyRecursiveElementVisitor visitor = new MyPyRecursiveElementVisitor();
+    member.accept(visitor);
+    return visitor.myResult;
   }
 
   @NotNull
@@ -254,14 +253,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     }
   }
 
-  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitor {
-    @NotNull
-    private final MultiMap<PyClass, PyElement> myResult;
-
-    private MyPyRecursiveElementVisitor(@NotNull final MultiMap<PyClass, PyElement> result) {
-      myResult = result;
-    }
-
+  private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitorWithResult {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       // TODO: refactor, messy code

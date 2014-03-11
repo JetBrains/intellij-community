@@ -34,7 +34,7 @@ public class CloneCaretBelow extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CaretModel caretModel = editor.getCaretModel();
       if (caretModel.supportsMultipleCarets()) {
         caret.clone(false);

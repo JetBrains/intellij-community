@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -97,8 +98,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                       final String localName = local.getName();
                       if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
                     }
-                    holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
+                    final PsiElement lBrace = aClass.getLBrace();
+                    LOG.assertTrue(lBrace != null);
+                    final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
+                    holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with lambda",
+                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaFix());
                   }
                 }
               }
@@ -125,8 +129,8 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(element, PsiAnonymousClass.class);
+      if (element instanceof PsiNewExpression) {
+        final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
         LOG.assertTrue(anonymousClass != null);
         ChangeContextUtil.encodeContextInfo(anonymousClass, true);
         final PsiElement lambdaContext = anonymousClass.getParent().getParent();

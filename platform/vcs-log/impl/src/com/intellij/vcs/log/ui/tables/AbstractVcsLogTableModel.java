@@ -8,19 +8,20 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.LoadMoreStage;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @param <CommitColumnClass> commit column class
- * @param <CommitId>          Commit identifier, which can be different depending on the model nature,
- *                            for example, a {@link Hash} or an {@link Integer} or a {@link Node}.
- */
-public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> extends AbstractTableModel {
+public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends AbstractTableModel {
 
   public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 
@@ -32,16 +33,48 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
 
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull protected final VcsLogUiImpl myUi;
+  @NotNull protected final DataPack myDataPack;
+  @NotNull private final LoadMoreStage myLoadMoreStage;
+
+  @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
+
+
+  protected AbstractVcsLogTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl ui, @NotNull DataPack dataPack,
+                                     @NotNull LoadMoreStage loadMoreStage) {
+    myLogDataHolder = logDataHolder;
+    myUi = ui;
+    myDataPack = dataPack;
+    myLoadMoreStage = loadMoreStage;
+  }
+
   @Override
   public final int getColumnCount() {
     return COLUMN_COUNT;
   }
 
   @Nullable
-  protected abstract VcsShortCommitDetails getShortDetails(int rowIndex);
+  protected VcsShortCommitDetails getShortDetails(int rowIndex) {
+    return myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
+  }
 
   @Nullable
-  public abstract VcsFullCommitDetails getFullCommitDetails(int row);
+  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
+    return myLogDataHolder.getCommitDetailsGetter().getCommitData(rowIndex, this);
+  }
+
+  /**
+   * Requests the proper data provider to load more data from the log & recreate the model.
+   * @param onLoaded will be called upon task completion on the EDT.
+   */
+  public void requestToLoadMore(@NotNull Runnable onLoaded) {
+    if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
+        && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
+      myUi.getTable().setPaintBusy(true);
+      myUi.getFilterer().requestVcs(myDataPack, myUi.getFilters(), myLoadMoreStage, onLoaded);
+    }
+  }
 
   @NotNull
   @Override
@@ -76,15 +109,11 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   }
 
   /**
-   * Requests the proper data provider to load more data from the log & recreate the model.
-   * @param onLoaded will be called upon task completion on the EDT.
-   */
-  public abstract void requestToLoadMore(@NotNull Runnable onLoaded);
-
-  /**
    * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
    */
-  public abstract boolean canRequestMore();
+  public boolean canRequestMore() {
+    return !myUi.getFilters().isEmpty() && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
+  }
 
   /**
    * Returns Changes for commits at selected rows.<br/>
@@ -93,7 +122,17 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
    * @return Changes selected in all rows, or null if this data is not ready yet.
    */
   @Nullable
-  public abstract List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows);
+  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
+    List<Change> changes = new ArrayList<Change>();
+    for (int row : selectedRows) {
+      VcsFullCommitDetails commitData = getFullCommitDetails(row);
+      if (commitData == null || commitData instanceof LoadingDetails) {
+        return null;
+      }
+      changes.addAll(commitData.getChanges());
+    }
+    return changes;
+  }
 
   @NotNull
   public abstract VirtualFile getRoot(int rowIndex);

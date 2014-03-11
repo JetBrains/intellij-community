@@ -16,14 +16,11 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -56,27 +53,16 @@ public class SplitMultiCatchIntention extends Intention {
     }
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    final List<PsiTypeElement> disjunctions = PsiTreeUtil.getChildrenOfTypeAsList(parameter.getTypeElement(), PsiTypeElement.class);
-    for (int i = 0; i < disjunctions.size(); i++) {
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(element.getProject());
+    for (PsiType disjunction : ((PsiDisjunctionType)type).getDisjunctions()) {
       final PsiCatchSection copy = (PsiCatchSection)catchSection.copy();
 
       final PsiTypeElement typeElement = assertNotNull(assertNotNull(copy.getParameter()).getTypeElement());
-      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(disjunctions.get(i).getText(), catchSection);
-      typeElement.replace(newTypeElement);
+      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(disjunction.getCanonicalText(true), catchSection);
+      final PsiElement replaced = typeElement.replace(newTypeElement);
 
       grandParent.addBefore(copy, catchSection);
-
-      if (i == 0) {
-        // clear the original from type annotations: they belong to the first disjunction and should not appear in others
-        final PsiModifierList modifierList = parameter.getModifierList();
-        if (modifierList != null) {
-          for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-            if (PsiImplUtil.findApplicableTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) == PsiAnnotation.TargetType.TYPE_USE) {
-              annotation.delete();
-            }
-          }
-        }
-      }
+      styleManager.shortenClassReferences(replaced);
     }
 
     catchSection.delete();

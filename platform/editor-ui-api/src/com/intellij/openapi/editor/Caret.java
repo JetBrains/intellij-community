@@ -202,6 +202,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Selects target range providing information about visual boundary of selection end.
    * <p/>
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
+   * <p/>
+   * Also, in column mode this method allows to create selection spanning virtual space after the line end.
    *
    * @param startOffset     start selection offset
    * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
@@ -214,6 +216,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Selects target range based on its visual boundaries.
    * <p/>
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
+   * <p/>
+   * Also, in column mode this method allows to create selection spanning virtual space after the line end.
    *
    * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
    *                        no specific visual position should be used)
@@ -249,8 +253,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * selection will be set for the new caret.
    *
    * @param above if <code>true</code>, new caret will be created at the previous line, if <code>false</code> - on the next line
-   * @return newly created caret instance, or null if the caret cannot be created because it already exists at the new location or caret
-   * model doesn't support multiple carets.
+   * @return newly created caret instance, or <code>null</code> if the caret cannot be created because it already exists at the new location
+   * or caret model doesn't support multiple carets.
    */
   @Nullable
   Caret clone(boolean above);

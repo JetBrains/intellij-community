@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: lex
@@ -35,39 +36,48 @@ public final class EvaluationContextImpl implements EvaluationContext{
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   
-  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, @Nullable Value thisObject) {
     myThisObject = thisObject;
     myFrameProxy = frameProxy;
     mySuspendContext = suspendContext;
   }
 
+  @Nullable
+  @Override
   public Value getThisObject() {
     return myThisObject;
   }
 
+  @Override
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
   }
 
+  @Override
   public StackFrameProxyImpl getFrameProxy() {
     return myFrameProxy;
   }
 
+  @NotNull
+  @Override
   public DebugProcessImpl getDebugProcess() {
     return getSuspendContext().getDebugProcess();
   }
 
+  @Override
   public Project getProject() {
     DebugProcessImpl debugProcess = getDebugProcess();
-    return debugProcess != null ? debugProcess.getProject() : null;
+    return debugProcess.getProject();
   }
 
+  @Override
   public EvaluationContextImpl createEvaluationContext(Value value) {
     final EvaluationContextImpl copy = new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
     copy.setAutoLoadClasses(myAutoLoadClasses);
     return copy;
   }
 
+  @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myFrameProxy != null ? myFrameProxy.getClassLoader() : null;

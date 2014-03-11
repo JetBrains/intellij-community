@@ -73,7 +73,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setPreferredSize(new Dimension(700, 400));
+    setPreferredSize(new Dimension(600, 300));
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
   }
 
@@ -127,8 +127,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   @Override
   public void navigateInPreviewEditor(PreviewEditorState editorState) {
-    myEditorState = editorState;
-
     final VirtualFile file = editorState.getFile();
     final LogicalPosition positionToNavigate = editorState.getNavigate();
     final TextAttributes lineAttributes = editorState.getAttributes();
@@ -136,6 +134,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     Project project = myProject;
 
     clearEditor();
+    myEditorState = editorState;
     remove(myLabel);
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
@@ -197,7 +196,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (panel != null) {
       if (myDetailPanelWrapper == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 5));
+        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
         myDetailPanelWrapper.add(panel);
 
         add(myDetailPanelWrapper, BorderLayout.NORTH);

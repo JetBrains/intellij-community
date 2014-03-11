@@ -113,7 +113,7 @@ public class XValueHint extends AbstractValueHint {
 
             SimpleColoredText text = new SimpleColoredText();
             text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-            XValueNodeImpl.buildText(valuePresenter, text);
+            XValueNodeImpl.buildText(result, valuePresenter, text);
 
             if (!hasChildren) {
               SimpleColoredComponent component = HintUtil.createInformationComponent();

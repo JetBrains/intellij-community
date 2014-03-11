@@ -37,7 +37,11 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
    * This method switches to use of ssh-credentials based data
    * @param credentials credentials that specify connection
    */
-  void setSshCredentials(@NotNull RemoteSdkCredentialsHolder credentials);
+  void setSshCredentials(@NotNull RemoteCredentialsHolder credentials);
 
   void setDeploymentConnectionType(@NotNull WebDeploymentCredentialsHolder credentials);
+
+  CredentialsType getRemoteConnectionType();
+
+  void switchOnConnectionType(RemoteSdkConnectionAcceptor acceptor);
 }

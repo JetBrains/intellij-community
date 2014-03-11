@@ -87,6 +87,21 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testNoWarn() {
+    addEnvironmentClass("package java.awt; public class List extends Component {}");
+    doTest("import javax.swing.*;\n" +
+           "import java.awt.*;\n" +
+           "import java.util.*;\n" +
+           "import java.util.List;\n" +
+           "\n" +
+           "class ImportTest extends Component {\n" +
+           "\n" +
+           "  Collection<String> c;\n" +
+           "  List<Integer> l;\n" +
+           "  JComponent jc;\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnusedImportInspection();

@@ -17,33 +17,32 @@ package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 24, 2004
- * Time: 7:01:31 PM
  * Performs contextAction when evaluation is available in suspend context
  */
 public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextCommand");
+  private static final Logger LOG = Logger.getInstance(SuspendContextCommand.class);
+
   private final SuspendContextImpl mySuspendContext;
 
-  protected SuspendContextCommandImpl(SuspendContextImpl suspendContext) {
+  protected SuspendContextCommandImpl(@Nullable SuspendContextImpl suspendContext) {
     mySuspendContext = suspendContext;
   }
 
   public abstract void contextAction() throws Exception;
 
+  @Override
   public final void action() throws Exception {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("trying " + this);
     }
 
     final SuspendContextImpl suspendContext = getSuspendContext();
-
     if (suspendContext == null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("skip processing - context is null " + this);
@@ -52,12 +51,12 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
       return;
     }
 
-    if(suspendContext.myInProgress) {
+    if (suspendContext.myInProgress) {
       suspendContext.postponeCommand(this);
     }
     else {
       try {
-        if(!suspendContext.isResumed()) {
+        if (!suspendContext.isResumed()) {
           suspendContext.myInProgress = true;
           contextAction();
         }
@@ -65,7 +64,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
           notifyCancelled();
         }
       }
-      finally{
+      finally {
         suspendContext.myInProgress = false;
         if (suspendContext.isResumed()) {
           for (SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand(); postponed != null; postponed = suspendContext.pollPostponedCommand()) {
@@ -90,6 +89,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     }
   }
 
+  @Nullable
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
   }

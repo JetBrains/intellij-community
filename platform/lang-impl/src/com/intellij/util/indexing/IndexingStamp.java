@@ -137,8 +137,7 @@ public class IndexingStamp {
   }
 
   private static final ConcurrentMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
-  private static final int CAPACITY = 100;
-  private static final BlockingQueue<VirtualFile> ourFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
+  private static final BlockingQueue<VirtualFile> ourFinishedFiles = new ArrayBlockingQueue<VirtualFile>(100);
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
@@ -227,12 +226,12 @@ public class IndexingStamp {
   }
 
   public static void flushCache(@Nullable VirtualFile finishedFile) {
-    if (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
+    while (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
       List<VirtualFile> files = new ArrayList<VirtualFile>(ourFinishedFiles.size());
       ourFinishedFiles.drainTo(files);
 
       if (!files.isEmpty()) {
-        for(VirtualFile file:files) {
+        for (VirtualFile file : files) {
           synchronized (getStripedLock(file)) {
             Timestamps timestamp = myTimestampsCache.remove(file);
             if (timestamp == null) continue;
@@ -249,7 +248,8 @@ public class IndexingStamp {
           }
         }
       }
-      if (finishedFile != null) ourFinishedFiles.offer(finishedFile);
+      if (finishedFile == null) break;
+      // else repeat until ourFinishedFiles.offer() succeeds
     }
   }
 

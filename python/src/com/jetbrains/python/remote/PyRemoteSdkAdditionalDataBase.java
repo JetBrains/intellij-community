@@ -20,5 +20,5 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 /**
  * @author traff
  */
-public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PySkeletonsPathAware {
+public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware {
 }

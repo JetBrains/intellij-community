@@ -51,14 +51,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, Caret caret, DataContext dataContext){
+  public void doExecute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
       if (project != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
-      myOriginalHandler.executeInCaretContext(editor, caret, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 
@@ -149,7 +149,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!UISettings.getInstance().CYCLE_SCROLLING && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
-        myOriginalHandler.executeInCaretContext(lookup.getEditor(), caret, context);
+        myOriginalHandler.execute(lookup.getEditor(), caret, context);
         return;
       }
       executeUpOrDown(lookup, true);
@@ -189,7 +189,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!lookup.isCompletion()) {
-        myOriginalHandler.executeInCaretContext(lookup.getEditor(), caret, context);
+        myOriginalHandler.execute(lookup.getEditor(), caret, context);
         return;
       }
 
@@ -216,7 +216,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
       if (seq.length() <= offset || !lookup.isCompletion()) {
-        myOriginalHandler.executeInCaretContext(editor, caret, context);
+        myOriginalHandler.execute(editor, caret, context);
         return;
       }
 
@@ -224,7 +224,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       CharFilter.Result lookupAction = LookupTypedHandler.getLookupAction(c, lookup);
 
       if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
-        myOriginalHandler.executeInCaretContext(editor, caret, context);
+        myOriginalHandler.execute(editor, caret, context);
         return;
       }
 

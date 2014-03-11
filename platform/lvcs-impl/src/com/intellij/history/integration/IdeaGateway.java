@@ -30,7 +30,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -141,6 +144,13 @@ public class IdeaGateway {
     if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
     return nf.getCachedChildren();
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> loadAndIterateChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
+    NewVirtualFile nf = (NewVirtualFile)f;
+    return Arrays.asList(nf.getChildren());
   }
 
   @NotNull

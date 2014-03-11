@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -26,22 +27,17 @@ import java.util.List;
 
 public class HgMergeCommand {
 
-  private final Project project;
-  private final VirtualFile repo;
+  @NotNull private final Project project;
+  @NotNull private final VirtualFile repo;
 
-  private String branch;
   private String revision;
 
-  public HgMergeCommand(Project project, VirtualFile repo) {
+  public HgMergeCommand(@NotNull Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
   }
 
-  public void setBranch(String branch) {
-    this.branch = branch;
-  }
-
-  public void setRevision(String revision) {
+  public void setRevision(@NotNull String revision) {
     this.revision = revision;
   }
 
@@ -53,13 +49,10 @@ public class HgMergeCommand {
     if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
-    } else if (!StringUtil.isEmptyOrSpaces(branch)) {
-      arguments.add(branch);
     }
     final HgCommandResult result =
       commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }
-
 }

@@ -107,6 +107,9 @@
     <group id="Git.Log.Toolbar">
       <reference id="Git.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
+              icon="AllIcons.Diff.Diff"
+              description="Dims those commits which have equivalent changes in the current branch"/>
     </group>
     
 
@@ -168,14 +171,13 @@
     <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService serviceInterface="git4idea.Notificator"
-                    serviceImplementation="git4idea.Notificator"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
 
     <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
+    <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>

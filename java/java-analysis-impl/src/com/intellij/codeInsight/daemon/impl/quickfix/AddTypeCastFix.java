@@ -81,14 +81,15 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     originalExpression.replace(typeCast);
   }
 
-  static PsiExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) {
+  static PsiExpression createCastExpression(PsiExpression original, Project project, PsiType type) {
     // remove nested casts
-    PsiElement expression = PsiUtil.deparenthesizeExpression(originalExpression);
+    PsiElement expression = PsiUtil.deparenthesizeExpression(original);
     if (expression == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
-    PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
-    assertNotNull(typeCast.getCastType()).replace(factory.createTypeElement(type));
+    PsiElementFactory factory = JavaPsiFacade.getInstance(original.getProject()).getElementFactory();
+    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+    String text = "(" + type.getCanonicalText(false) + ")value";
+    PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);
 
     if (expression instanceof PsiConditionalExpression) {
@@ -124,5 +125,4 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   public boolean startInWriteAction() {
     return true;
   }
-
 }

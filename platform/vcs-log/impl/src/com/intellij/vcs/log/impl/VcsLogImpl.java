@@ -20,7 +20,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +35,9 @@ import java.util.List;
 public class VcsLogImpl implements VcsLog {
 
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogUI myUi;
+  @NotNull private final VcsLogUiImpl myUi;
 
-  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUI ui) {
+  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUiImpl ui) {
     myDataHolder = holder;
     myUi = ui;
   }
@@ -87,7 +87,7 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsRef> getAllReferences() {
-    return myDataHolder.getDataPack().getRefsModel().getAllRefs();
+    return myUi.getDataPack().getRefsModel().getAllRefs();
   }
 
   @Override

@@ -211,8 +211,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
@@ -223,6 +221,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (vcs == null) {
       return false;
     }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
     if (sourceVcs == null) {
       return createItem(toDir, file.getName(), file.isDirectory(), true);
     }
@@ -241,12 +241,12 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
     File srcFile = getIOFile(file);
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       myFilesToRefresh.add(file.getParent());
       return doMove(vcs, srcFile, dstFile);
     }

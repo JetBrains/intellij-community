@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -156,13 +155,13 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     buffer.append(p.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");
-    buffer.append(StringUtil.join(Arrays.asList(p.getSuperTypes()), new Function<PsiClassType, String>() {
-        @Override
-        public String fun(final PsiClassType t) {
-          return t.getPresentableText();
-        }
-      }, ", "));
+    buffer.append(StringUtil.join(p.getSuperTypes(), new Function<PsiClassType, String>() {
+      @Override
+      public String fun(final PsiClassType t) {
+        return t.getPresentableText();
+      }
+    }, ", "));
 
-    context.setupUIComponentPresentation(StringUtil.escapeXml(buffer.toString()), 0, highlightEndOffset, false, false, false, context.getDefaultParameterColor());
+    context.setupUIComponentPresentation(buffer.toString(), 0, highlightEndOffset, false, false, false, context.getDefaultParameterColor());
   }
 }

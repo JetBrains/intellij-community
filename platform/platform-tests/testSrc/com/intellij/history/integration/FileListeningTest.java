@@ -25,7 +25,9 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,29 +63,48 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testIgnoringFilesRecursively() throws Exception {
     addExcludedDir(myRoot.getPath() + "/dir/subdir");
-    addContentRoot(createModule("foo"), myRoot.getPath() + "/dir/subdir/subdir2");
+    addContentRoot(createModule("foo"), myRoot.getPath() + "/dir/subdir/subsubdir1");
 
-    String dir1 = createDirectoryExternally("dir");
-    String f1 = createFileExternally("dir/f.txt");
+    String dir = createDirectoryExternally("dir");
+    String dir1_file = createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
     createFileExternally("dir/subdir/f.txt");
-    String dir2 = createDirectoryExternally("dir/subdir/subdir2");
-    String f2 = createFileExternally("dir/subdir/subdir2/f.txt");
-
+    String subsubdir1 = createDirectoryExternally("dir/subdir/subsubdir1");
+    String subsubdir1_file = createFileExternally("dir/subdir/subsubdir1/f.txt");
+    createDirectoryExternally("dir/subdir/subsubdir2");
+    createFileExternally("dir/subdir/subsubdir2/f.txt");
+ 
     myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
-    assertEquals(changes.toString(), 4, changes.size());
     List<String> actual = new SmartList<String>();
     for (Change each : changes) {
       actual.add(((StructuralChange)each).getPath());
     }
 
-    List<String> expected = new ArrayList<String>(Arrays.asList(dir1, dir2, f1, f2));
+    List<String> expected = new ArrayList<String>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
 
     Collections.sort(actual);
     Collections.sort(expected);
     assertOrderedEquals(actual, expected);
+
+    // ignored folders should not be loaded in VFS
+    assertEquals("dir\n" +
+                 " f.txt\n" +
+                 " subdir\n" +
+                 "  subsubdir1\n" +
+                 "   f.txt\n" +
+                 " f.class\n",
+                 buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
+    );
+  }
+
+  private StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
+    for (VirtualFile eachChild : ((NewVirtualFile)from).getCachedChildren()) {
+      builder.append(StringUtil.repeat(" ", level)).append(eachChild.getName()).append("\n");
+      buildDBFileStructure(eachChild, level + 1, builder);
+    }
+    return builder;
   }
 
   public void testChangingFileContent() throws Exception {

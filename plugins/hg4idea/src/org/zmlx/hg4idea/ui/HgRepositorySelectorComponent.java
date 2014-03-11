@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.repo.HgRepository;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -25,54 +25,31 @@ public class HgRepositorySelectorComponent {
   private JComboBox repositorySelector;
   private JPanel mainPanel;
 
-  public void setRoots(Collection<VirtualFile> roots) {
+  public void setRoots(Collection<HgRepository> roots) {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
-    for (VirtualFile repo : roots) {
-      model.addElement(new RepositoryDisplay(repo));
+    for (HgRepository repo : roots) {
+      model.addElement(repo);
     }
     repositorySelector.setModel(model);
     mainPanel.setVisible(roots.size() > 1);
   }
 
-  public void setSelectedRoot(@Nullable VirtualFile repository) {
+  public void setSelectedRoot(@Nullable HgRepository repository) {
     if (repository != null) {
-      repositorySelector.setSelectedItem(new RepositoryDisplay(repository));
+      repositorySelector.setSelectedItem(repository);
     }
   }
 
-  public void addActionListener(ActionListener actionListener) {
+  public void addActionListener(@NotNull ActionListener actionListener) {
     repositorySelector.addActionListener(actionListener);
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NotNull String title) {
     mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
   }
 
-  public VirtualFile getRepository() {
-    return ((RepositoryDisplay) repositorySelector.getSelectedItem()).repo;
+  @NotNull
+  public HgRepository getRepository() {
+    return (HgRepository)repositorySelector.getSelectedItem();
   }
-
-  private class RepositoryDisplay {
-    @NotNull private final VirtualFile repo;
-
-    public RepositoryDisplay(@NotNull VirtualFile repo) {
-      this.repo = repo;
-    }
-
-    @Override
-    public String toString() {
-      return repo.getPresentableUrl();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof RepositoryDisplay && this.repo.equals(((RepositoryDisplay)obj).repo);
-    }
-
-    @Override
-    public int hashCode() {
-      return repo.hashCode();
-    }
-  }
-
 }

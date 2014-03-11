@@ -44,9 +44,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -56,6 +54,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
@@ -173,13 +172,16 @@ public class BreakpointManager {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
-        if (highlighter != null) {
-          final GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-          if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-              myProject, editor, breakpoint, renderer
-            );
+        XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
+        if (xBreakpoint instanceof XLineBreakpointImpl) {
+          RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
+          if (highlighter != null) {
+            GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+            if (renderer != null) {
+              DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+                myProject, editor, breakpoint.myXBreakpoint, renderer
+              );
+            }
           }
         }
       }
@@ -1055,15 +1057,5 @@ public class BreakpointManager {
   
   public String setProperty(String name, String value) {
     return myUIProperties.put(name, value);
-  }
-
-  public static PsiFile getPsiFile(XBreakpoint xBreakpoint, Project project) {
-    try {
-      final Document document = FileDocumentManager.getInstance().getDocument(xBreakpoint.getSourcePosition().getFile());
-      return PsiDocumentManager.getInstance(project).getPsiFile(document);
-    } catch (Exception e) {
-      LOG.error(e);
-    }
-    return null;
   }
 }

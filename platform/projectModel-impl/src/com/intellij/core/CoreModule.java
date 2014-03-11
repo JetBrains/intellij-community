@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,51 +177,61 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope() {
     return myModuleScopeProvider.getModuleScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
     return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
     return myModuleScopeProvider.getModuleContentScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
     return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);

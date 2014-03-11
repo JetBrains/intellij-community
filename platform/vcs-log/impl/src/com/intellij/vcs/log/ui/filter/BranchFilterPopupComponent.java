@@ -16,25 +16,36 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter> {
+public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
 
-  @NotNull private final VcsLogUI myUi;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
-  BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogUI ui) {
+  @NotNull private VcsLogDataPack myDataPack;
+
+  public BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataPack dataPack,
+                                    @NotNull VcsLogUiProperties uiProperties) {
     super(filterUi, "Branch");
-    myUi = ui;
+    myDataPack = dataPack;
+    myUiProperties = uiProperties;
+  }
+
+  void updateDataPack(@NotNull DataPack dataPack) {
+    myDataPack = dataPack;
   }
 
   @Override
@@ -42,39 +53,58 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     actionGroup.add(createAllAction());
+    actionGroup.add(createSelectMultipleValuesAction());
 
+    actionGroup.add(constructActionGroup(myDataPack, createRecentItemsActionGroup(), new Function<String, AnAction>() {
+      @Override
+      public AnAction fun(String name) {
+        return createPredefinedValueAction(Collections.singleton(name));
+      }
+    }));
+    return actionGroup;
+  }
+
+  public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack, @Nullable ActionGroup recentItemsGroup,
+                                                 @NotNull Function<String, AnAction> actionGetter) {
+    Groups groups = prepareGroups(dataPack);
+    return getFilteredActionGroup(groups, recentItemsGroup, actionGetter);
+  }
+
+  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack) {
     Groups filteredGroups = new Groups();
-    Collection<VcsRef> allRefs = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
+    Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
-      VcsLogProvider provider = myUi.getLogDataHolder().getLogProvider(root);
+      VcsLogProvider provider = dataPack.getLogProviders().get(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
       List<RefGroup> refGroups = refManager.group(refs);
 
       orderRefGroups(refGroups, filteredGroups);
     }
-
-    actionGroup.add(getFilteredActionGroup(filteredGroups));
-    return actionGroup;
+    return filteredGroups;
   }
 
-  private DefaultActionGroup getFilteredActionGroup(Groups groups) {
+  private static DefaultActionGroup getFilteredActionGroup(@NotNull Groups groups, @Nullable ActionGroup recentItems,
+                                                           @NotNull Function<String, AnAction> actionGetter) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (String single : groups.singletonGroups) {
-      actionGroup.add(new SetValueAction(single, this));
+      actionGroup.add(actionGetter.fun(single));
+    }
+    if (recentItems != null) {
+      actionGroup.add(recentItems);
     }
     for (Map.Entry<String, TreeSet<String>> group : groups.expandedGroups.entrySet()) {
       actionGroup.addSeparator(group.getKey());
       for (String action : group.getValue()) {
-        actionGroup.add(new SetValueAction(action, this));
+        actionGroup.add(actionGetter.fun(action));
       }
     }
     actionGroup.addSeparator();
     for (Map.Entry<String, TreeSet<String>> group : groups.collapsedGroups.entrySet()) {
       DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
       for (String action : group.getValue()) {
-        popupGroup.add(new SetValueAction(action, this));
+        popupGroup.add(actionGetter.fun(action));
       }
       actionGroup.add(popupGroup);
     }
@@ -125,9 +155,35 @@ class BranchFilterPopupComponent extends FilterPopupComponent<VcsLogBranchFilter
   @Nullable
   @Override
   protected VcsLogBranchFilter getFilter() {
-    String value = getValue();
-    Collection<VcsRef> allBranches = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
-    return value == ALL ? null : new VcsLogBranchFilterImpl(allBranches, Collections.singletonList(value));
+    if (getSelectedValues() == null) {
+      return null;
+    }
+    Collection<VcsRef> allBranches = myDataPack.getRefs().getBranches();
+    return new VcsLogBranchFilterImpl(allBranches, getSelectedValues());
+  }
+
+  @NotNull
+  @Override
+  protected List<List<String>> getRecentValuesFromSettings() {
+    return myUiProperties.getRecentlyFilteredBranchGroups();
+  }
+
+  @Override
+  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
+    if (values.size() > 1) { // all branches are in the popup => no need to save single one, only in case of multiple selection
+      myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
+    }
+  }
+
+  @NotNull
+  @Override
+  protected List<String> getAllValues() {
+    return ContainerUtil.map(myDataPack.getRefs().getBranches(), new Function<VcsRef, String>() {
+      @Override
+      public String fun(VcsRef ref) {
+        return ref.getName();
+      }
+    });
   }
 
 }

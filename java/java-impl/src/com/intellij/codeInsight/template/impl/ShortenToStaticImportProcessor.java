@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -72,6 +73,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
       }
     }
 
+    Collections.reverse(staticImportTargets);
     for (Pair<PsiElement, StaticImporter> pair : staticImportTargets) {
       if (pair.first.isValid()) {
         pair.second.perform(project, file, editor, pair.first);
@@ -117,7 +119,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
   private static class SingleMemberStaticImporter implements StaticImporter {
     @Override
     public boolean canPerform(@NotNull PsiElement element) {
-      return AddSingleMemberStaticImportAction.getStaticImportClass(element, true) != null;
+      return AddSingleMemberStaticImportAction.getStaticImportClass(element) != null;
     }
 
     @Override

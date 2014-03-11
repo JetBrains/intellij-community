@@ -190,6 +190,8 @@ public interface IdeActions {
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
   @NonNls String GROUP_EDITOR = "EditorActions";
   @NonNls String GROUP_DEBUGGER = "DebuggerActions";
+  
+  @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
 
   @NonNls String ACTION_REFRESH = "Refresh";
 

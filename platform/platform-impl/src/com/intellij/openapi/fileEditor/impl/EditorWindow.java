@@ -662,7 +662,7 @@ public class EditorWindow {
         if (initialIndex == null) {
           int selectedIndex = myTabbedPane.getSelectedIndex();
           if (selectedIndex >= 0) {
-            indexToInsert = UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE ? selectedIndex : selectedIndex + 1;
+            indexToInsert = selectedIndex + 1;
           }
         } else {
           indexToInsert = initialIndex;
@@ -852,7 +852,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, getManager().getFileTooltipText(file));
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS ? getManager().getFileTooltipText(file) : null);
     }
   }
 

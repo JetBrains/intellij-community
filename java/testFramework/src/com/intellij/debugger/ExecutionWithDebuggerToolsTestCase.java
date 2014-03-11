@@ -318,7 +318,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           String condition = readValue(comment, "Condition");
           if (condition != null) {
             //breakpoint.CONDITION_ENABLED = true;
-            breakpoint.setCondition(/*new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, */condition/*)*/);
+            breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
             println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
           }
           String passCount = readValue(comment, "Pass count");

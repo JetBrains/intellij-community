@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -65,7 +66,7 @@ public class GroovyStaticImportMethodFix extends Intention {
   public String getText() {
     String text = "Static Import Method";
     if (getCandidates().size() == 1) {
-      final int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME;
+      final int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME;
       text += " '" + PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0) + "'";
     }
     else {
@@ -87,8 +88,7 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myCandidates = null;
-    return myMethodCall != null &&
-           myMethodCall.getElement() != null &&
+    return myMethodCall.getElement() != null &&
            myMethodCall.getElement().isValid() &&
            getMethodExpression(myMethodCall.getElement()) != null &&
            getMethodExpression(myMethodCall.getElement()).getQualifierExpression() == null &&

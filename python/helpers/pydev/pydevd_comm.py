@@ -311,10 +311,12 @@ class ReaderThread(PyDBDaemonThread):
                     break
                 while buffer.find('\n') != -1:
                     command, buffer = buffer.split('\n', 1)
-                    pydev_log.debug('Received command: >>%s<<\n' % (command,))
+
                     args = command.split('\t', 2)
                     try:
-                        self.processCommand(int(args[0]), int(args[1]), args[2])
+                        cmd_id = int(args[0])
+                        pydev_log.debug('Received command: %s %s\n' % (ID_TO_MEANING.get(str(cmd_id), '???'), command,))
+                        self.processCommand(cmd_id, int(args[1]), args[2])
                     except:
                         traceback.print_exc()
                         sys.stderr.write("Can't process net command: %s\n" % command)
@@ -383,7 +385,7 @@ class WriterThread(PyDBDaemonThread):
                 out = cmd.getOutgoing()
 
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
-                    out_message = 'sending cmd: '
+                    out_message = 'Sending cmd: '
                     out_message += ID_TO_MEANING.get(out[:3], 'UNKNOWN')
                     out_message += ' '
                     out_message += out

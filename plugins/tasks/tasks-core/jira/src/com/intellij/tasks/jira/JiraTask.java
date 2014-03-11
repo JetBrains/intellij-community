@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  * Base class containing common interpretation of issues object's fields in
- * JIRA's SOAP and REST interfaces.
+ * JIRA's XML-RPC and REST interfaces.
  *
  * @author Mikhail Golubev
  */
@@ -52,7 +52,9 @@ public abstract class JiraTask extends Task {
   public abstract Date getCreated();
 
   @Override
-  public abstract String getIssueUrl();
+  public final String getIssueUrl() {
+    return myRepository.getUrl() + "/browse/" + getId();
+  }
 
   @Override
   @NotNull

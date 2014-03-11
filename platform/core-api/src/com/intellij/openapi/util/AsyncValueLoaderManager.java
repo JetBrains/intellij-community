@@ -1,23 +1,22 @@
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.AsyncResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-@SuppressWarnings("unchecked")
 public abstract class AsyncValueLoaderManager<HOST, VALUE> {
-  private final AtomicReferenceFieldUpdater<HOST, AsyncResult> fieldUpdater;
+  private final AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater;
 
-  public AsyncValueLoaderManager(AtomicReferenceFieldUpdater<HOST, AsyncResult> fieldUpdater) {
+  public AsyncValueLoaderManager(@NotNull AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
   }
 
-  public boolean checkFreshness(HOST host, VALUE value) {
+  public boolean checkFreshness(@NotNull HOST host, @NotNull VALUE value) {
     return true;
   }
 
-  public abstract void load(HOST host, AsyncResult<VALUE> result);
+  public abstract void load(@NotNull HOST host, @NotNull AsyncResult<VALUE> result);
 
   public final void reset(HOST host) {
     fieldUpdater.set(host, null);
@@ -37,6 +36,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
     return result != null && result.isDone() && result.getResult() != null;
   }
 
+  @NotNull
   public final AsyncResult<VALUE> get(HOST host) {
     return get(host, true);
   }

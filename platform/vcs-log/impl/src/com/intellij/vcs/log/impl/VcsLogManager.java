@@ -20,16 +20,17 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class VcsLogManager implements Disposable {
 
   private PostponeableLogRefresher myLogRefresher;
   private volatile VcsLogDataHolder myLogDataHolder;
-  private volatile VcsLogUI myUi;
+  private volatile VcsLogUiImpl myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
                        @NotNull VcsLogSettings settings,
@@ -71,11 +72,11 @@ public class VcsLogManager implements Disposable {
     final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
 
     myLogDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings);
-    myLogDataHolder.initialize(new Consumer<VcsLogDataHolder>() {
+    myLogDataHolder.initialize(new PairConsumer<VcsLogDataHolder, DataPack>() {
       @Override
-      public void consume(VcsLogDataHolder vcsLogDataHolder) {
-        VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
-                                      new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
+      public void consume(VcsLogDataHolder vcsLogDataHolder, DataPack dataPack) {
+        VcsLogUiImpl logUI = new VcsLogUiImpl(vcsLogDataHolder, myProject, mySettings,
+                                      new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, dataPack);
         myLogDataHolder = vcsLogDataHolder;
         myUi = logUI;
         mainPanel.init(logUI.getMainFrame().getMainComponent());
@@ -123,10 +124,10 @@ public class VcsLogManager implements Disposable {
   }
 
   /**
-   * The instance of the {@link VcsLogUI} or null if the log was not initialized yet.
+   * The instance of the {@link com.intellij.vcs.log.ui.VcsLogUiImpl} or null if the log was not initialized yet.
    */
   @Nullable
-  public VcsLogUI getLogUi() {
+  public VcsLogUiImpl getLogUi() {
     return myUi;
   }
 

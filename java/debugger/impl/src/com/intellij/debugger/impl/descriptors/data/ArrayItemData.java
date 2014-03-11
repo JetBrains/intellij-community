@@ -36,7 +36,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
     myIndex = idx;
   }
 
-  protected ArrayElementDescriptorImpl createDescriptorImpl(Project project) {
+  protected ArrayElementDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ArrayElementDescriptorImpl(project, myArray, myIndex);
   }
 

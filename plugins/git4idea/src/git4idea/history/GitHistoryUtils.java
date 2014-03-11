@@ -42,6 +42,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -512,9 +513,10 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
+  public static List<TimedVcsCommit> readCommits(@NotNull final Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull final Consumer<VcsUser> userRegistry,
+                                                 @NotNull List<String> parameters) throws VcsException {
     final int COMMIT_BUFFER = 1000;
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
@@ -522,9 +524,9 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(LOG_ALL);
     h.addParameters("--full-history", "--sparse");
     h.addParameters("--date-order");
+    h.addParameters(parameters);
     h.endOptions();
 
     final List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
@@ -740,11 +742,16 @@ public class GitHistoryUtils {
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
+    StopWatch sw = StopWatch.start("git log --all-details");
     String output = h.run();
+    sw.report();
 
+    sw = StopWatch.start("parsing");
     List<GitLogRecord> records = parser.parse(output);
+    sw.report();
 
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
+    sw = StopWatch.start("Creating GitCommit objects");
+    List<GitCommit> gitCommits = ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
       @Override
       public GitCommit fun(GitLogRecord record) {
         try {
@@ -756,6 +763,8 @@ public class GitHistoryUtils {
         }
       }
     });
+    sw.report();
+    return gitCommits;
   }
 
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record)
@@ -770,7 +779,7 @@ public class GitHistoryUtils {
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         record.parseChanges(project, root));
+                         record.getStatusInfos());
   }
 
   /**

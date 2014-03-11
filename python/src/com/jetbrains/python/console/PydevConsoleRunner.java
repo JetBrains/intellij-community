@@ -20,6 +20,7 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -67,6 +68,7 @@ import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -288,8 +290,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
     else {
       myCommandLine = myCommandLineArgumentsProvider.getCommandLineString();
+      Map<String, String> envs = myCommandLineArgumentsProvider.getAdditionalEnvs();
+      if (envs != null) {
+        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
+      }
       final Process server = ProcessRunner
-        .createProcess(getWorkingDir(), myCommandLineArgumentsProvider.getAdditionalEnvs(), myCommandLineArgumentsProvider.getArguments());
+        .createProcess(getWorkingDir(), envs, myCommandLineArgumentsProvider.getArguments());
       try {
         myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
       }
@@ -302,7 +308,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
-    RemoteSdkCredentials data = (RemoteSdkCredentials)mySdk.getSdkAdditionalData();
+    PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -320,18 +326,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(3, "0");
 
     myCommandLine = commandLine.getCommandLineString();
-
-    RemoteSshProcess remoteProcess =
-      manager.createRemoteProcess(getProject(), data, commandLine, true);
-
-
-    Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
-
-    remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), remotePorts.first);
-    remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
-
-
+    
     try {
+      RemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
+      
+      RemoteSshProcess remoteProcess =
+        manager.createRemoteProcess(getProject(), remoteCredentials, commandLine, true);
+
+
+      Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
+
+      remoteProcess.addLocalTunnel(myPorts[0], remoteCredentials.getHost(), remotePorts.first);
+      remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+
+      
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
@@ -454,7 +462,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         e.getPresentation().setEnabled(enabled);
       }
     };
-    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
+    anAction
+      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }

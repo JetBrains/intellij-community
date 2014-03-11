@@ -40,6 +40,8 @@ import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
@@ -125,9 +127,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       final VirtualFile preselectedRepo = repositoriesMap.size() == 1 ? repositoriesMap.keySet().iterator().next() : null;
+      HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(myProject);
+      final HgRepository repo = preselectedRepo != null ? repositoryManager.getRepositoryForFile(preselectedRepo) : null;
+      final Collection<HgRepository> repositories = repositoryManager.getRepositories();
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush(preselectedRepo);
+          new HgPusher(myProject).showDialogAndPush(repositories, repo);
         }
       });
     }

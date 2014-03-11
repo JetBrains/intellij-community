@@ -61,7 +61,7 @@ class HugeChild(SubParent1, date): #SubParent1 is disabled
 
 
     def foo(self): #should be disabled
-        pass
+        self.some_property = 12
     def bar(self):
         pass
 

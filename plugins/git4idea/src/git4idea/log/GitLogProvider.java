@@ -72,8 +72,8 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    String[] params = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL),
-                                            "--encoding=UTF-8", "--full-history", "--sparse", "--max-count=" + commitCount);
+    String[] params = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL), "--encoding=UTF-8", "--full-history",
+                                            "--sparse", "--max-count=" + commitCount);
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
@@ -87,7 +87,7 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
+    return GitHistoryUtils.readCommits(myProject, root, userRegistry, GitHistoryUtils.LOG_ALL);
   }
 
   @NotNull
@@ -115,11 +115,12 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+      refs.add(
+        myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
       refs.add(myVcsObjectsFactory.createRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
-                          GitRefManager.REMOTE_BRANCH, root));
+                                             GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
@@ -178,9 +179,9 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull VcsLogFilterCollection filterCollection,
-                                                                 int maxCount) throws VcsException {
+  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
+                                                       @NotNull VcsLogFilterCollection filterCollection,
+                                                       int maxCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
@@ -188,18 +189,19 @@ public class GitLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     if (filterCollection.getBranchFilter() != null) {
-      // git doesn't support filtering by several branches very well (--branches parameter give a weak pattern capabilities)
-      // => by now assuming there is only one branch filter.
-      if (filterCollection.getBranchFilter().getBranchNames().size() > 1) {
-        LOG.warn("More than one branch filter was passed. Using only the first one.");
-      }
-      String branch = filterCollection.getBranchFilter().getBranchNames().iterator().next();
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
-      if (repository.getBranches().findBranchByName(branch) == null) {
+
+      boolean atLeastOneBranchExists = false;
+      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
+        if (branchName.equals("HEAD") || repository.getBranches().findBranchByName(branchName) != null) {
+          filterParameters.add(branchName);
+          atLeastOneBranchExists = true;
+        }
+      }
+      if (!atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
         return Collections.emptyList();
       }
-      filterParameters.add(branch);
     }
     else {
       filterParameters.addAll(GitHistoryUtils.LOG_ALL);
@@ -240,7 +242,7 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
+    return GitHistoryUtils.readCommits(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
   }
 
   @Nullable

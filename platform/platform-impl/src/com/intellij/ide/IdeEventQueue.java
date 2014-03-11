@@ -560,7 +560,7 @@ public class IdeEventQueue extends EventQueue {
 
 
       if (showingWindow != null && showingWindow != wnd) {
-        final Method setActive = ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), resetMethod, Window.class);
+        final Method setActive = ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(KeyboardFocusManager.class, false), resetMethod, Window.class);
         if (setActive != null) {
           try {
             setActive.setAccessible(true);

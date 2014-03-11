@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -33,6 +32,7 @@ import java.util.*;
  * Date: 7/17/12
  */
 public class LambdaUtil {
+  public static ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
   @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
@@ -311,6 +311,14 @@ public class LambdaUtil {
 
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
+          final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
+          if (properties != null && properties.isApplicabilityCheck()) { //todo simplification
+            final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
+            final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
+            if (finalLambdaIdx < parameters.length) {
+              return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
+            }
+          }
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
@@ -318,6 +326,13 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
+                final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+                if (map != null) {
+                  final PsiType type = map.get(expression);
+                  if (type != null) {
+                    return type;
+                  }
+                }
                 return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
@@ -454,8 +469,8 @@ public class LambdaUtil {
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCall) {
-          final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(parent);
-          myMethod = pair != null ? pair.first : null;
+          final MethodCandidateInfo.CurrentCandidateProperties pair = MethodCandidateInfo.getCurrentMethod(parent);
+          myMethod = pair != null ? pair.getMethod() : null;
           if (myMethod == null) {
             myMethod = ((PsiCall)gParent).resolveMethod();
           }

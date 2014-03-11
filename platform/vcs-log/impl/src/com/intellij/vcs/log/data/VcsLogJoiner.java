@@ -71,7 +71,7 @@ public class VcsLogJoiner {
         unsafePartSavedLog.add(commit);
       }
     }
-    unsafePartSavedLog = new NewCommitIntegrator(unsafePartSavedLog, allNewsCommits).getResultList();
+    unsafePartSavedLog = new NewCommitIntegrator<TimedVcsCommit>(unsafePartSavedLog, allNewsCommits).getResultList();
 
     return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
                        unsafePartSavedLog.size() - unsafeBlockSize);
@@ -205,53 +205,58 @@ public class VcsLogJoiner {
   }
 
 
-  private static class NewCommitIntegrator {
-    private final List<TimedVcsCommit> list;
-    private final Map<Hash, TimedVcsCommit> newCommitsMap;
-    private final List<TimedVcsCommit> newSortedCommits;
+  /*package*/ static class NewCommitIntegrator<Commit extends TimedVcsCommit> {
+    private final List<Commit> list;
+    private final Map<Hash, Commit> newCommitsMap;
 
-    private NewCommitIntegrator(@NotNull List<TimedVcsCommit> list, @NotNull Set<TimedVcsCommit> newCommits) {
+    private final Stack<Commit> commitsStack;
+
+    public NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
       newCommitsMap = ContainerUtil.newHashMap();
-      for (TimedVcsCommit commit : newCommits) {
+      for (Commit commit : newCommits) {
         newCommitsMap.put(commit.getHash(), commit);
       }
-      newSortedCommits = new ArrayList<TimedVcsCommit>(newCommits);
-      Collections.sort(newSortedCommits, new Comparator<TimedVcsCommit>() {
-        @Override
-        public int compare(@NotNull TimedVcsCommit o1, @NotNull TimedVcsCommit o2) {
-          return new Long(o1.getTime()).compareTo(o2.getTime());
-        }
-      });
+      commitsStack = new Stack<Commit>();
     }
 
-    // return insert Index
-    private void insertToList(@NotNull TimedVcsCommit commit) {
-      if (!newCommitsMap.containsKey(commit.getHash())) {
-        throw new IllegalStateException("Commit was inserted, but insert call again. Commit hash: " + commit.getHash());
-      }
-      //insert all parents commits
-      for (Hash parentHash : commit.getParents()) {
-        TimedVcsCommit parentCommit = newCommitsMap.get(parentHash);
-        if (parentCommit != null) {
-          insertToList(parentCommit);
+    private void insertAllUseStack() {
+      while (!newCommitsMap.isEmpty()) {
+        commitsStack.push(newCommitsMap.values().iterator().next());
+        while (!commitsStack.isEmpty()) {
+          Commit currentCommit = commitsStack.peek();
+          boolean allParentsWereAdded = true;
+          for (Hash parentHash : currentCommit.getParents()) {
+            Commit parentCommit = newCommitsMap.get(parentHash);
+            if (parentCommit != null) {
+              commitsStack.push(parentCommit);
+              allParentsWereAdded = false;
+              break;
+            }
+          }
+
+          if (!allParentsWereAdded)
+            continue;
+
+          int insertIndex;
+          HashSet<Hash> parents = new HashSet<Hash>(currentCommit.getParents());
+          for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
+            Commit someCommit = list.get(insertIndex);
+            if (parents.contains(someCommit.getHash()))
+              break;
+            if (someCommit.getTime() < currentCommit.getTime())
+              break;
+          }
+
+          list.add(insertIndex, currentCommit);
+          newCommitsMap.remove(currentCommit.getHash());
+          commitsStack.pop();
         }
       }
-
-      list.add(0, commit);
-      newCommitsMap.remove(commit.getHash());
     }
 
-    private void insertAllCommits() {
-      for (TimedVcsCommit commit : newSortedCommits) {
-        if (newCommitsMap.get(commit.getHash()) != null) {
-          insertToList(commit);
-        }
-      }
-    }
-
-    private List<TimedVcsCommit> getResultList() {
-      insertAllCommits();
+    public List<Commit> getResultList() {
+      insertAllUseStack();
       return list;
     }
   }

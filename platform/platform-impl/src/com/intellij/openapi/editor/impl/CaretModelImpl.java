@@ -31,13 +31,11 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MultipleCaretListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +46,7 @@ import java.util.*;
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
   private final EditorImpl myEditor;
   
-  private final EventDispatcher<MultipleCaretListener> myCaretListeners = EventDispatcher.create(MultipleCaretListener.class);
-  private final Map<CaretListener, MultipleCaretListener> myListenerMap = new HashMap<CaretListener, MultipleCaretListener>();
+  private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
   private final boolean mySupportsMultipleCarets = Registry.is("editor.allow.multiple.carets");
 
   private TextAttributes myTextAttributes;
@@ -202,38 +199,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
-    MultipleCaretListener newListener;
-    if (listener instanceof MultipleCaretListener) {
-      newListener = (MultipleCaretListener)listener;
-    }
-    else {
-      newListener = new MultipleCaretListener() {
-        @Override
-        public void caretAdded(CaretEvent e) {
-
-        }
-
-        @Override
-        public void caretRemoved(CaretEvent e) {
-
-        }
-
-        @Override
-        public void caretPositionChanged(CaretEvent e) {
-          listener.caretPositionChanged(e);
-        }
-      };
-    }
-    myListenerMap.put(listener, newListener);
-    myCaretListeners.addListener(newListener);
+    myCaretListeners.addListener(listener);
   }
 
   @Override
   public void removeCaretListener(@NotNull CaretListener listener) {
-    MultipleCaretListener newListener = myListenerMap.remove(listener);
-    if (newListener != null) {
-      myCaretListeners.removeListener(newListener);
-    }
+    myCaretListeners.removeListener(listener);
   }
 
   @Override
@@ -266,6 +237,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public CaretImpl getPrimaryCaret() {
     synchronized (myCarets) {
       return myCarets.get(myCarets.size() - 1);
+    }
+  }
+
+  @Override
+  public int getCaretCount() {
+    synchronized (myCarets) {
+      return myCarets.size();
     }
   }
 
@@ -403,8 +381,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       CaretImpl currCaret = it.next();
       if (prevCaret != null && (currCaret.getVisualPosition().equals(prevCaret.getVisualPosition())
-                                || regionsIntersect(currCaret.getSelectionStart(), currCaret.getSelectionEnd(),
-                                                    prevCaret.getSelectionStart(), prevCaret.getSelectionEnd()))) {
+                                || selectionsIntersect(currCaret, prevCaret))) {
         int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
         int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
         CaretImpl toRetain, toRemove;
@@ -429,10 +406,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  private static boolean regionsIntersect(int firstStart, int firstEnd, int secondStart, int secondEnd) {
-    return firstStart < secondStart && firstEnd > secondStart
-      || firstStart > secondStart && firstStart < secondEnd
-      || firstStart == secondStart && secondEnd > secondStart && firstEnd > firstStart;
+  private static boolean selectionsIntersect(CaretImpl firstCaret, CaretImpl secondCaret) {
+    return firstCaret.getSelectionStart() < secondCaret.getSelectionStart() && firstCaret.getSelectionEnd() > secondCaret.getSelectionStart()
+      || firstCaret.getSelectionStart() > secondCaret.getSelectionStart() && firstCaret.getSelectionStart() < secondCaret.getSelectionEnd()
+      || firstCaret.getSelectionStart() == secondCaret.getSelectionStart() && secondCaret.getSelectionEnd() > secondCaret.getSelectionStart() && firstCaret.getSelectionEnd() > firstCaret.getSelectionStart()
+      || (firstCaret.getSelectionStart() == firstCaret.getSelectionEnd() && firstCaret.hasVirtualSelection() || secondCaret.getSelectionStart() == secondCaret.getSelectionEnd() && secondCaret.hasVirtualSelection())
+         && (firstCaret.getSelectionStart() == secondCaret.getSelectionStart() || firstCaret.getSelectionEnd() == secondCaret.getSelectionEnd());
   }
 
   void doWithCaretMerging(Runnable runnable) {
@@ -452,21 +431,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull final List<LogicalPosition> caretPositions, @NotNull final List<? extends Segment> selections) {
+  public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates) {
     myEditor.assertIsDispatchThread();
-    if (caretPositions.isEmpty()) {
+    if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
-    }
-    if (caretPositions.size() != selections.size()) {
-      throw new IllegalArgumentException("Position and selection lists are of different size");
     }
     doWithCaretMerging(new Runnable() {
       public void run() {
         int index = 0;
         int oldCaretCount = myCarets.size();
         Iterator<CaretImpl> caretIterator = myCarets.iterator();
-        Iterator<? extends Segment> selectionIterator = selections.iterator();
-        for (LogicalPosition caretPosition : caretPositions) {
+        for (CaretState caretState : caretStates) {
           CaretImpl caret;
           boolean caretAdded;
           if (index++ < oldCaretCount) {
@@ -475,8 +450,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           }
           else {
             caret = new CaretImpl(myEditor);
-            if (caretPosition != null) {
-              caret.moveToLogicalPosition(caretPosition, false, null, false);
+            if (caretState != null && caretState.getCaretPosition() != null) {
+              caret.moveToLogicalPosition(caretState.getCaretPosition(), false, null, false);
             }
             synchronized (myCarets) {
               myCarets.add(caret);
@@ -484,15 +459,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             fireCaretAdded(caret);
             caretAdded = true;
           }
-          if (caretPosition != null && !caretAdded) {
-            caret.moveToLogicalPosition(caretPosition);
+          if (caretState != null && caretState.getCaretPosition() != null && !caretAdded) {
+            caret.moveToLogicalPosition(caretState.getCaretPosition());
           }
-          Segment selection = selectionIterator.next();
-          if (selection != null) {
-            caret.setSelection(selection.getStartOffset(), selection.getEndOffset());
+          if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
+            caret.setSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()), myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
+                               myEditor.logicalToVisualPosition(caretState.getSelectionEnd()), myEditor.logicalPositionToOffset(
+              caretState.getSelectionEnd()));
           }
         }
-        int caretsToRemove = myCarets.size() - caretPositions.size();
+        int caretsToRemove = myCarets.size() - caretStates.size();
         for (int i = 0; i < caretsToRemove; i++) {
           CaretImpl caret;
           synchronized (myCarets) {

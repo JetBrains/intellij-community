@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -752,7 +753,7 @@ public class FindUtil {
     return result;
   }
 
-  private static class MyListener implements CaretListener {
+  private static class MyListener extends CaretAdapter {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
@@ -818,7 +819,7 @@ public class FindUtil {
           position = HintManager.ABOVE;
         }
       }
-      CaretListener listener = new CaretListener() {
+      CaretListener listener = new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           editor.putUserData(KEY, null);

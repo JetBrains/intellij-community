@@ -80,6 +80,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return myStratumId;
   }
 
+  @Override
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     SourcePosition sourcePosition = null;
 
@@ -110,6 +111,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return location.lineNumber(myStratumId);
   }
 
+  @Override
   @NotNull
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException {
     checkSourcePositionFileType(classPosition);
@@ -138,6 +140,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     }
   }
 
+  @Override
   @NotNull
   public List<Location> locationsOfLine(final ReferenceType type, final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
@@ -149,6 +152,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     checkSourcePositionFileType(position);
 
     return ApplicationManager.getApplication().runReadAction(new Computable<List<Location>>() {
+      @Override
       public List<Location> compute() {
         try {
           final List<String> relativePaths = getRelativeSourePathsByType(type);
@@ -165,7 +169,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
         }
         catch(ClassNotPreparedException ignored) {                                                                                                           
         }
-        catch (InternalError e) {
+        catch (InternalError ignored) {
           myDebugProcess.getExecutionResult().getProcessHandler().notifyTextAvailable(
             DebuggerBundle.message("internal.error.locations.of.line", type.name()), ProcessOutputTypes.SYSTEM);
         }
@@ -176,7 +180,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
       private String getSourceName(final String name, final ReferenceType type) throws AbsentInformationException {
         for(String sourceNameFromType: type.sourceNames(myStratumId)) {
-          if (sourceNameFromType.indexOf(name) >= 0) {
+          if (sourceNameFromType.contains(name)) {
             return sourceNameFromType;
           }
         }
@@ -199,11 +203,13 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return type.locationsOfLine(myStratumId, fileName, lineNumber);
   }
 
+  @Override
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
     throws NoDataException {
     checkSourcePositionFileType(position);
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(new ClassPrepareRequestor() {
+      @Override
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         onClassPrepare(debuggerProcess, referenceType, position, requestor);
       }
@@ -217,7 +223,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
         requestor.processClassPrepare(debuggerProcess, referenceType);
       }
     }
-    catch (NoDataException e) {
+    catch (NoDataException ignored) {
     }
   }
 

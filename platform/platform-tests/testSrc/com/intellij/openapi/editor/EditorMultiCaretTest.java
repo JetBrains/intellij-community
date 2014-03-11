@@ -25,14 +25,12 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
 
   public void setUp() throws Exception {
     super.setUp();
-    EditorTestUtil.enableMultipleCarets();
     myStoredVirtualSpaceSetting = EditorSettingsExternalizable.getInstance().isVirtualSpace();
     EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
   }
 
   public void tearDown() throws Exception {
     EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
-    EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
 

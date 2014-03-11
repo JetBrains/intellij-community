@@ -79,6 +79,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testIDEA84489() throws Throwable { doTest(); }
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
+  public void testComparingToNullableShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
   public void testStringConcatAlwaysNotNull() throws Throwable { doTest(); }
 
@@ -304,6 +305,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testNotEqualsTypo() { doTest(); }
   public void testAndEquals() { doTest(); }
+
+  public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
+  public void testGettersAndPureNoFlushing() { doTest(); }
+
+  public void testSameComparisonTwice() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {
     myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");

@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * User: ktisha
  *
@@ -66,10 +64,10 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
-      final Collection<PsiElement> supers = PySuperMethodsSearch.search(node).findAll();
-      if (!supers.isEmpty()) return;
-      final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
-      if (!overrides.isEmpty()) return;
+      final PsiElement firstSuper = PySuperMethodsSearch.search(node).findFirst();
+      if (firstSuper != null) return;
+      final PyFunction firstOverride = PyOverridingMethodsSearch.search(node, true).findFirst();
+      if (firstOverride != null) return;
       final PyDecoratorList decoratorList = node.getDecoratorList();
       if (decoratorList != null) return;
       if (node.getModifier() != null) return;

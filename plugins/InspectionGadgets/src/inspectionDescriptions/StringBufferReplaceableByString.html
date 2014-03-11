@@ -1,8 +1,10 @@
 <html>
 <body>
 Reports any variables declared as or uses of <b>java.lang.StringBuffer</b> and <b>java.lang.StringBuilder</b>
-which are effectively constant. These may be replaced with <b>java.lang.String</b> expressions which results in simpler and possibly
-more efficient code.
+which can be replaced with a single <b>java.lang.String</b> concatenation. Using a <b>String</b> concatenation
+makes the code shorter and simpler.
+This inspection only reports when the resulting concatenation is at least as efficient or more efficient than the original
+<b>StringBuffer</b> or <b>StringBuilder</b> use.
 <!-- tooltip end -->
 <p>
 

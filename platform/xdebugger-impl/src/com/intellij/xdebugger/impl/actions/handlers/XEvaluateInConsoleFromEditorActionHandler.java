@@ -2,6 +2,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,10 +28,16 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
 
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSession session) {
-    if (!(session.getConsoleView() instanceof LanguageConsoleView)) {
+    return getConsoleExecuteAction(session.getConsoleView());
+  }
+
+  @Nullable
+  public static ConsoleExecuteAction getConsoleExecuteAction(@Nullable ConsoleView consoleView) {
+    if (!(consoleView instanceof LanguageConsoleView)) {
       return null;
     }
-    List<AnAction> actions = ActionUtil.getActions(((LanguageConsoleView)session.getConsoleView()).getConsole().getConsoleEditor().getComponent());
+
+    List<AnAction> actions = ActionUtil.getActions(((LanguageConsoleView)consoleView).getConsole().getConsoleEditor().getComponent());
     ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
     return action == null || !action.isEnabled() ? null : action;
   }

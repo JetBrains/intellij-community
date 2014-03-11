@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -309,13 +308,13 @@ public class EditorTestUtil {
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.supportsMultipleCarets()) {
-      List<LogicalPosition> caretPositions = new ArrayList<LogicalPosition>();
-      List<Segment> selections = new ArrayList<Segment>();
+      List<CaretState> states = new ArrayList<CaretState>(caretsState.carets.size());
       for (CaretInfo caret : caretsState.carets) {
-        caretPositions.add(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())));
-        selections.add(caret.selection == null ? null : caret.selection);
+        states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
+                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
+                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
       }
-      caretModel.setCaretsAndSelections(caretPositions, selections);
+      caretModel.setCaretsAndSelections(states);
     }
     else {
       assertEquals("Multiple carets are not supported by the model", 1, caretsState.carets.size());

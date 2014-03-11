@@ -1602,6 +1602,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return Collections.emptyList();
   }
 
+  @Nullable
   public static PsiAnnotation findContractAnnotation(PsiMethod method) {
     return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   }
@@ -1741,6 +1742,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (psiVariable != null) {
         DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(psiVariable, false);
         addInstruction(new FlushVariableInstruction(dfaVariable));
+        if (psiVariable instanceof PsiField) {
+          addInstruction(new FlushVariableInstruction(null));
+        }
       }
     }
 
@@ -1774,6 +1778,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             if (psiVariable != null) {
               DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(psiVariable, false);
               addInstruction(new FlushVariableInstruction(dfaVariable));
+              if (psiVariable instanceof PsiField) {
+                addInstruction(new FlushVariableInstruction(null));
+              }
             }
           }
         }

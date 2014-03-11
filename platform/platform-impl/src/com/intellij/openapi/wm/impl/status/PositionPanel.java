@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -33,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
   private String myText;
@@ -124,6 +122,16 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     updatePosition(e.getEditor());
   }
 
+  @Override
+  public void caretAdded(CaretEvent e) {
+    updatePosition(e.getEditor());
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
+    updatePosition(e.getEditor());
+  }
+
   private void updatePosition(final Editor editor) {
     if (editor == null) {
       myText = "";
@@ -157,12 +165,23 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
         );
       }
       else {
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        List<Caret> carets = editor.getCaretModel().getAllCarets();
+        if (carets.size() > 1) {
+          message.append(carets.size()).append(" carets (");
+          appendLogicalPosition(carets.get(0).getLogicalPosition(), message);
+          message.append('-');
+          appendLogicalPosition(carets.get(carets.size() - 1).getLogicalPosition(), message);
+          message.append(')');
+        }
+        else {
+          Caret caret = carets.get(0);
+          LogicalPosition caretPosition = caret.getLogicalPosition();
 
-        appendLogicalPosition(caret, message);
-        if (selectionModel.hasSelection()) {
-          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-          if (len != 0) message.append("/").append(len);
+          appendLogicalPosition(caretPosition, message);
+          if (caret.hasSelection()) {
+            int len = Math.abs(caret.getSelectionStart() - caret.getSelectionEnd());
+            if (len != 0) message.append("/").append(len);
+          }
         }
       }
 

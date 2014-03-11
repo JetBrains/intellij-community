@@ -19,9 +19,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +30,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * @author Kirill Likhodedov
- */
 public class UntrackedFilesNotifier {
 
   private UntrackedFilesNotifier() {
@@ -44,13 +41,13 @@ public class UntrackedFilesNotifier {
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the deafult content is to be used.
    */
-  public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project, @NotNull GitPlatformFacade platformFacade,
+  public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
                                                        @NotNull final Collection<VirtualFile> untrackedFiles,
                                                        @NotNull final String operation, @Nullable String description) {
     final String notificationTitle = StringUtil.capitalize(operation) + " failed";
     final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, true) : description;
 
-    platformFacade.getNotificator(project).notifyError(notificationTitle, notificationDesc,
+    VcsNotifier.getInstance(project).notifyError(notificationTitle, notificationDesc,
                                                   new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

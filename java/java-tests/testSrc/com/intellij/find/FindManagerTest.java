@@ -600,4 +600,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setInCommentsOnly(true);
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
   }
+
+  public void testPlusWholeWordsOnly() throws Exception {
+    createFile(myModule, "A.java", "3 + '+' + 2");
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("'+' +");
+    findModel.setMultipleFiles(true);
+
+    assertSize(1, findUsages(findModel));
+
+    findModel.setCaseSensitive(true);
+    assertSize(1, findUsages(findModel));
+
+    findModel.setWholeWordsOnly(true);
+    assertSize(1, findUsages(findModel));
+  }
 }

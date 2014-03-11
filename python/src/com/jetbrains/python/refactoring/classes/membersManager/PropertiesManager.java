@@ -1,5 +1,7 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
@@ -151,12 +153,58 @@ class PropertiesManager extends MembersManager<PyElement> {
   @NotNull
   @Override
   protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
-    return new MultiMap<PyClass, PyElement>();
+    final PyRecursiveElementVisitorWithResult visitor = new PyReferenceVisitor();
+    member.accept(visitor);
+
+    return visitor.myResult;
   }
 
   @NotNull
   @Override
   protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
     return Collections.emptyList();
+  }
+
+  private static class PyReferenceVisitor extends PyRecursiveElementVisitorWithResult {
+
+
+    @Override
+    public void visitPyExpression(final PyExpression node) {
+      final PsiReference reference = node.getReference();
+      if (reference == null) {
+        return;
+      }
+
+      final PsiElement declaration = reference.resolve();
+      if (!(declaration instanceof PyFunction)) {
+        return;
+      }
+
+      final PyFunction function = (PyFunction)declaration;
+      final Property property = function.getProperty();
+      if (property == null) {
+        return;
+      }
+
+      final PyClass aClass = function.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final Collection<PyFunction> functions = getAllFunctions(property);
+      for (final PyFunction pyFunction : functions) {
+        final PyClass functionClass = pyFunction.getContainingClass();
+        if (functionClass != null) {
+          myResult.putValue(functionClass, pyFunction);
+        }
+      }
+
+      final PyTargetExpression definitionSite = property.getDefinitionSite();
+      if (definitionSite != null) {
+        final PyClass pyClass = PsiTreeUtil.getParentOfType(definitionSite, PyClass.class);
+        if (pyClass != null) {
+          myResult.putValue(pyClass, definitionSite);
+        }
+      }
+    }
   }
 }

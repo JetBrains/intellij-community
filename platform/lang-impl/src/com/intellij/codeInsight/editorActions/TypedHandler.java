@@ -191,7 +191,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
     }
 
-    if (!editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getAllCarets().size() == 1) {
+    if (!editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getCaretCount() == 1) {
       if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
         if (FileTypes.PLAIN_TEXT != fileType) {
           if (handleRParen(editor, fileType, charTyped)) return;
@@ -210,7 +210,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
     if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
         CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-        !editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getAllCarets().size() == 1 && fileType != FileTypes.PLAIN_TEXT) {
+        !editor.getSelectionModel().hasBlockSelection() && editor.getCaretModel().getCaretCount() == 1 && fileType != FileTypes.PLAIN_TEXT) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {

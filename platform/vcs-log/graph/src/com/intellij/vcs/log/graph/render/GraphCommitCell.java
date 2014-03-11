@@ -1,26 +1,28 @@
 package com.intellij.vcs.log.graph.render;
 
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+public class GraphCommitCell {
 
-/**
- * @author erokhins
- */
-public class GraphCommitCell extends CommitCell {
+  @NotNull private final String myText;
+  @NotNull private final Collection<VcsRef> myRefsToThisCommit;
 
-  private final GraphPrintCell row;
-
-  public GraphCommitCell(@NotNull GraphPrintCell row, @NotNull String text,
-                         @NotNull Collection<VcsRef> refsToThisCommit) {
-    super(text, refsToThisCommit);
-    this.row = row;
+  public GraphCommitCell(@NotNull String text, @NotNull Collection<VcsRef> refsToThisCommit) {
+    myText = text;
+    myRefsToThisCommit = refsToThisCommit;
   }
 
-  public GraphPrintCell getPrintCell() {
-    return row;
+  @NotNull
+  public String getText() {
+    return myText;
   }
+
+  @NotNull
+  public Collection<VcsRef> getRefsToThisCommit() {
+    return myRefsToThisCommit;
+  }
+
 }

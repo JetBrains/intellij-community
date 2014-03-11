@@ -20,11 +20,11 @@ import com.intellij.history.LocalHistory;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
@@ -45,9 +44,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* @author Kirill Likhodedov
-*/
 class GitPushResult {
 
   private static final Logger LOG = Logger.getInstance(GitPushResult.class);
@@ -221,15 +217,14 @@ class GitPushResult {
   }
 
   /**
-   * Constructs the HTML-formatted message from error outputs of failed repositories.
+   * Constructs the HTML-formatted message from error outputs of failed repositories and notify.
    * If there is only 1 repository in the project, just returns the error without writing the repository url (to avoid confusion for people
    * with only 1 root ever).
    * Otherwise adds repository URL to the error that repository produced.
    * 
    * The procedure also includes collecting for updated files (if an auto-update was performed during the push), which may be lengthy.
    */
-  @NotNull
-  Notification createNotification() {
+  void createPushNotificationAndNotify() {
     final UpdatedFiles updatedFiles = collectUpdatedFiles();
 
     GroupedResult groupedResult = group();
@@ -245,7 +240,6 @@ class GitPushResult {
     int pushedCommitsNumber = calcPushedCommitTotalNumber(myResults);
     
     String title;
-    NotificationType notificationType;
     if (error) {
       if (onlyError) {
         title = "Push failed";
@@ -255,16 +249,13 @@ class GitPushResult {
           title += ", " + commits(pushedCommitsNumber) + " pushed";
         }
       }
-      notificationType = NotificationType.ERROR;
     } else if (rejected) {
       if (onlyRejected) {
         title = "Push rejected";
       } else {
         title = "Push partially rejected, " + commits(pushedCommitsNumber) + " pushed";
       }
-      notificationType = NotificationType.WARNING;
     } else {
-      notificationType = NotificationType.INFORMATION;
       title = "Push successful";
     }
     
@@ -276,18 +267,23 @@ class GitPushResult {
     sb.append(errorReport);
     sb.append(rejectedReport);
     sb.append(successReport);
-    
+
     if (!updatedFiles.isEmpty()) {
       sb.append("<a href='UpdatedFiles'>View files updated during the push</a>");
     }
 
     NotificationListener viewUpdateFilesListener = new ViewUpdatedFilesNotificationListener(updatedFiles);
+    VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
 
     if (onlySuccess) {
-      return new Notification(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener).setImportant(false);
+      vcsNotifier.notifySuccess(title, sb.toString(), viewUpdateFilesListener);
     }
-
-    return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener);
+    else if (error) {
+      vcsNotifier.notifyError(title, sb.toString(), viewUpdateFilesListener);
+    }
+    else {
+      vcsNotifier.notifyImportantWarning(title, sb.toString(), viewUpdateFilesListener);
+    }
   }
 
   @NotNull

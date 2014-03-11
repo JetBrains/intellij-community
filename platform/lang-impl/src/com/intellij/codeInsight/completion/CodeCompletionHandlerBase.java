@@ -622,20 +622,26 @@ public class CodeCompletionHandlerBase {
         marker.dispose();
       }
 
-    } else {
-      final Ref<CompletionAssertions.WatchingInsertionContext> contextRef = new Ref<CompletionAssertions.WatchingInsertionContext>();
-      final Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
+    } else if (editor.getCaretModel().supportsMultipleCarets()) {
+      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<CompletionAssertions.WatchingInsertionContext>();
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
           CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update, editor,
                                                                                     caret.getOffset(), caret.getOffset() + idEndOffsetDelta);
-          if (caret == primaryCaret) {
-            contextRef.set(currentContext);
-          }
+          contexts.add(currentContext);
         }
       });
-      context = contextRef.get();
+      context = contexts.get(contexts.size() - 1);
+      if (context.shouldAddCompletionChar() && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+        EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+      }
+      for (CompletionAssertions.WatchingInsertionContext insertionContext : contexts) {
+        insertionContext.stopWatching();
+      }
+    } else {
+      context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idEndOffset);
     }
     return context;
   }
@@ -719,7 +725,9 @@ public class CodeCompletionHandlerBase {
         if (context.shouldAddCompletionChar()) {
           addCompletionChar(project, context, item, editor, indicator, completionChar);
         }
-        context.stopWatching();
+        if (!editor.getCaretModel().supportsMultipleCarets()) { // done later, outside of this method
+          context.stopWatching();
+        }
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
@@ -747,7 +755,7 @@ public class CodeCompletionHandlerBase {
         }
       }
     }
-    else {
+    else if (!editor.getCaretModel().supportsMultipleCarets()) { // this will be done outside of runForEach caret context
       DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
       EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
     }

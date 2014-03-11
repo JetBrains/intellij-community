@@ -318,7 +318,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
     VirtualFile parent = vFile.getParent();
     final PsiDirectory parentDir = getCachedDirectory(parent);
 
-    if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
+    if (oldFileViewProvider != null // there is no need to rebuild if there were no PSI in the first place
+        && FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
       forceReload(vFile, oldPsiFile, parentDir);
       return;
     }

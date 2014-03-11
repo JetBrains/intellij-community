@@ -31,6 +31,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
@@ -41,6 +42,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -194,7 +196,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
-    return DISABLED_EDIT;
+    return X_EDIT;
   }
 
   @Override
@@ -374,10 +376,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
   };
 
-  private static final EditBreakpointActionHandler DISABLED_EDIT = new EditBreakpointActionHandler() {
+  private static final EditBreakpointActionHandler X_EDIT = new EditBreakpointActionHandler() {
     @Override
     protected void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint) {
-
+      DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, (XBreakpoint)breakpoint);
     }
 
     @Override

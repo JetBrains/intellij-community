@@ -16,7 +16,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -29,14 +28,11 @@ import com.intellij.remoteServer.configuration.ServerConfigurationBase;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 /**
  * @author michael.golubev
@@ -47,21 +43,23 @@ public class CloudGitDeploymentChecker<
   SR extends CloudMultiSourceServerRuntimeInstance<T, ?, ?, ?>> {
 
   private GitRepositoryManager myGitRepositoryManager;
-  private Git myGit;
 
   private final DeploymentSource myDeploymentSource;
   private final RemoteServer<SC> myServer;
   private final CloudDeploymentNameEditor<T> mySettingsEditor;
+  private final CloudGitDeploymentDetector myDetector;
 
   public CloudGitDeploymentChecker(DeploymentSource deploymentSource,
                                    RemoteServer<SC> server,
-                                   CloudDeploymentNameEditor<T> settingsEditor) {
+                                   CloudDeploymentNameEditor<T> settingsEditor,
+                                   CloudGitDeploymentDetector detector) {
     myDeploymentSource = deploymentSource;
     myServer = server;
     mySettingsEditor = settingsEditor;
+    myDetector = detector;
   }
 
-  public void checkGitUrl(final T settings, Pattern gitUrlPattern) throws ConfigurationException {
+  public void checkGitUrl(final T settings) throws ConfigurationException {
     if (!(myDeploymentSource instanceof ModuleDeploymentSource)) {
       return;
     }
@@ -82,12 +80,6 @@ public class CloudGitDeploymentChecker<
     if (myGitRepositoryManager == null) {
       myGitRepositoryManager = GitUtil.getRepositoryManager(project);
     }
-    if (myGit == null) {
-      myGit = ServiceManager.getService(Git.class);
-      if (myGit == null) {
-        return;
-      }
-    }
 
     VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRootFile);
     if (contentRoot == null) {
@@ -102,27 +94,10 @@ public class CloudGitDeploymentChecker<
 
     String expectedName = settings.getDeploymentSourceName(myDeploymentSource);
 
-    boolean unexpectedNameFound = false;
-    for (GitRemote remote : repository.getRemotes()) {
-      for (String url : remote.getUrls()) {
-        Matcher matcher = gitUrlPattern.matcher(url);
-        if (matcher.matches()) {
-          String matchedName = matcher.group(1);
-          if (matchedName.equals(expectedName)) {
-            return;
-          }
-          else {
-            unexpectedNameFound = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!unexpectedNameFound) {
+    List<String> appNames = myDetector.collectApplicationNames(repository);
+    if (appNames.isEmpty() || appNames.contains(expectedName)) {
       return;
     }
-
 
     RuntimeConfigurationWarning warning =
       new RuntimeConfigurationWarning("Cloud Git URL found in repository, but it doesn't match the run configuration");

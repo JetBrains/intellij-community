@@ -37,7 +37,7 @@ public class MoveCaretUpWithSelectionAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getCaretModel().supportsMultipleCarets()) {
         editor.getCaretModel().moveCaretRelatively(0, -1, true, editor.isColumnMode(), true);
         return;

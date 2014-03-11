@@ -107,9 +107,9 @@ public abstract class AsyncValueLoader<T> {
     }
   }
 
-  protected abstract void load(AsyncResult<T> asyncResult) throws IOException;
+  protected abstract void load(@NotNull AsyncResult<T> result) throws IOException;
 
-  protected boolean checkFreshness(T asyncResult) {
+  protected boolean checkFreshness(@NotNull T result) {
     return true;
   }
 }

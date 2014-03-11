@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -51,7 +50,10 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
@@ -161,7 +163,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (containingClass != null) {
       PsiMethod[] methods = null;
       if (element instanceof PsiIdentifier) {
-        methods = containingClass.findMethodsByName(element.getText(), false);
+        methods = containingClass.findMethodsByName(element.getText(), true);
       }
       else if (isConstructor()) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -456,7 +458,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                   @NotNull
                   @Override
                   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                    return inferTypeArguments(false);
+                    return inferTypeArguments(false); //includeReturnConstraint == vararg todo
                   }
 
                   public PsiSubstitutor inferTypeArguments(boolean varargs) {
@@ -465,9 +467,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                     final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, getManager(), reference);
 
                     //lift parameters from outer call
-                    final Pair<PsiMethod,PsiSubstitutor> methodSubstitutorPair = MethodCandidateInfo.getCurrentMethod(reference.getParent());
+                    final CurrentCandidateProperties methodSubstitutorPair = MethodCandidateInfo.getCurrentMethod(reference.getParent());
                     if (methodSubstitutorPair != null) {
-                      session.initBounds(methodSubstitutorPair.first.getTypeParameters());
+                      session.initBounds(methodSubstitutorPair.getMethod().getTypeParameters());
                     }
 
                     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();

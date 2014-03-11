@@ -40,7 +40,7 @@ public class SvnConfigurationState {
   public int maxAnnotateRevisions = SvnConfiguration.ourMaxAnnotateRevisionsDefault;
 
   @Attribute("myUseAcceleration")
-  public SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.UseAcceleration.nothing;
+  public SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.UseAcceleration.commandLine;
 
   @Attribute("myAutoUpdateAfterCommit")
   public boolean autoUpdateAfterCommit;
@@ -53,9 +53,7 @@ public class SvnConfigurationState {
 
   @Attribute("SSL_PROTOCOLS")
   public SvnConfiguration.SSLProtocols sslProtocols =
-    SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") || SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.8")
-    ? SvnConfiguration.SSLProtocols.all
-    : SvnConfiguration.SSLProtocols.sslv3;
+    SystemInfo.isJavaVersionAtLeast("1.7") ? SvnConfiguration.SSLProtocols.all : SvnConfiguration.SSLProtocols.sslv3;
 
   @OptionTag("mySSHConnectionTimeout")
   public long sshConnectionTimeout = 30 * 1000;

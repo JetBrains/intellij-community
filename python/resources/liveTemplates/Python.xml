@@ -205,7 +205,7 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template name="compd" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$}" description="Generator comprehension" toReformat="false" toShortenFQNames="true">
+  <template name="compd" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$}" description="Dict comprehension" toReformat="false" toShortenFQNames="true">
     <variable name="ITERABLE" expression="pyIterableVariable()" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="KEY_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
@@ -228,7 +228,7 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template name="compdi" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$}" description="Generator comprehension with 'if'" toReformat="false" toShortenFQNames="true">
+  <template name="compdi" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$}" description="Dict comprehension with 'if'" toReformat="false" toShortenFQNames="true">
     <variable name="ITERABLE" expression="pyIterableVariable()" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="KEY_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />

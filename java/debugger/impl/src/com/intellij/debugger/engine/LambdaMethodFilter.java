@@ -22,6 +22,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiStatement;
+import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,11 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
   @Nullable
   private final SourcePosition myFirstStatementPosition;
   private final int myLastStatementLine;
+  private final Range<Integer> myCallingExpressionLines;
 
-  public LambdaMethodFilter(PsiLambdaExpression lambda, int expressionOrdinal) {
+  public LambdaMethodFilter(PsiLambdaExpression lambda, int expressionOrdinal, Range<Integer> callingExpressionLines) {
     myLambdaOrdinal = expressionOrdinal;
+    myCallingExpressionLines = callingExpressionLines;
 
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
@@ -77,5 +80,10 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
     return method.name().startsWith(LAMBDA_METHOD_PREFIX) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
+  }
+
+  @Override
+  public Range<Integer> getCallingExpressionLines() {
+    return myCallingExpressionLines;
   }
 }

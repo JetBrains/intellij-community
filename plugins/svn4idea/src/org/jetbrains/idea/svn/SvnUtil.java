@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -539,6 +540,12 @@ public class SvnUtil {
   }
 
   public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
+    // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
+    // So by default we assume repository supports merge info tracking.
+    if (!Registry.is("svn.check.repository.supports.merge.info")) {
+      return true;
+    }
+
     SVNRepository repository = null;
     try {
       repository = vcs.createRepository(url);
@@ -611,21 +618,6 @@ public class SvnUtil {
     final SVNInfo info = vcs.getInfo(file);
 
     return info == null ? null : info.getURL();
-  }
-
-  public static boolean doesRepositorySupportMergeInfo(final SvnVcs vcs, final SVNURL url) {
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      return false;
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
   }
 
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {

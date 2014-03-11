@@ -60,7 +60,6 @@ public class HgUpdateTest extends HgCollaborativeTest {
     //do a simple pull without an update
     HgPullCommand pull = new HgPullCommand(myProject, projectRepoVirtualFile);
     pull.setSource(HgUtil.getRepositoryDefaultPath(myProject, projectRepoVirtualFile));
-    pull.setUpdate(false);
     pull.execute();
 
     assertEquals( determineNumberOfIncomingChanges( projectRepo ), 0,

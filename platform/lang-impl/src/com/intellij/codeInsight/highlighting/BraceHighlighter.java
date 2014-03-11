@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class BraceHighlighter implements StartupActivity {
   public void runActivity(@NotNull final Project project) {
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    CaretListener myCaretListener = new CaretListener() {
+    CaretListener myCaretListener = new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();

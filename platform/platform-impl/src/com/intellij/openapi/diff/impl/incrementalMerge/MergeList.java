@@ -24,11 +24,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -108,32 +108,26 @@ public class MergeList implements UserDataHolder {
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    for (Iterator<MergeFragment> fragmentIterator = fragmentList.iterator(); fragmentIterator.hasNext(); ) {
-      final MergeFragment mergeFragment = fragmentIterator.next();
+    for (MergeFragment mergeFragment : fragmentList) {
       TextRange baseRange = mergeFragment.getBase();
       TextRange leftRange = mergeFragment.getLeft();
       TextRange rightRange = mergeFragment.getRight();
 
-      if (leftRange == null) {
-        if (rightRange == null) {
-          if (!fragmentIterator.hasNext() && baseRange.getEndOffset() == baseText.length()) {
-            // the very end, both local and remote revisions does not contain latest base fragment
-            final int rightTextLength = rightText.length();
-            final int leftTextLength = leftText.length();
-            rightChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(rightTextLength, rightTextLength), mergeList.myBaseToRightChangeList));
-            leftChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(leftTextLength, leftTextLength), mergeList.myBaseToLeftChangeList));
-          } else {
-            LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
-          }
-        } else {
-          rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
-        }
+      if (compareSubstring(leftText, leftRange, rightText, rightRange)) {
+        MergeNoConflict conflict = new MergeNoConflict(baseRange, leftRange, rightRange, mergeList);
+        assert conflict.getLeftChange() != null;
+        assert conflict.getRightChange() != null;
+        leftChanges.add(conflict.getLeftChange());
+        rightChanges.add(conflict.getRightChange());
       }
-      else if (rightRange == null) {
+      else if (compareSubstring(baseText, baseRange, leftText, leftRange)) {
+        rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
+      }
+      else if (compareSubstring(baseText, baseRange, rightText, rightRange)) {
         leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myBaseToLeftChangeList));
       }
       else {
-        MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        MergeConflict conflict = new MergeConflict(baseRange, leftRange, rightRange, mergeList);
         assert conflict.getLeftChange() != null;
         assert conflict.getRightChange() != null;
         leftChanges.add(conflict.getLeftChange());
@@ -145,7 +139,23 @@ public class MergeList implements UserDataHolder {
     return mergeList;
   }
 
-  @Nullable
+  private static boolean compareSubstring(@NotNull String text1,
+                                          @NotNull TextRange range1,
+                                          @NotNull String text2,
+                                          @NotNull TextRange range2) {
+    if (range1.getLength() != range2.getLength()) return false;
+
+    int index1 = range1.getStartOffset();
+    int index2 = range2.getStartOffset();
+    while (index1 < range1.getEndOffset()) {
+      if (text1.charAt(index1) != text2.charAt(index2)) return false;
+      index1++;
+      index2++;
+    }
+    return true;
+  }
+
+  @NotNull
   private static List<MergeFragment> processText(@NotNull String leftText,
                                                  @NotNull String baseText,
                                                  @NotNull String rightText,

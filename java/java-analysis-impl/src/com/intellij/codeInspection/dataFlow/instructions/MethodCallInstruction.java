@@ -24,12 +24,11 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,15 +55,24 @@ public class MethodCallInstruction extends Instruction {
     myPrecalculatedReturnValue = null;
   }
 
-  public MethodCallInstruction(@NotNull PsiCallExpression context, @Nullable DfaValue precalculatedReturnValue) {
-    myContext = context;
+  public MethodCallInstruction(@NotNull PsiCallExpression call, @Nullable DfaValue precalculatedReturnValue) {
+    myContext = call;
     myMethodType = MethodType.REGULAR_METHOD_CALL;
-    myCall = context;
-    final PsiExpressionList argList = context.getArgumentList();
+    myCall = call;
+    final PsiExpressionList argList = call.getArgumentList();
     myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
     myType = myCall.getType();
-    myShouldFlushFields = !(myCall instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0);
+
+    myShouldFlushFields = !(myCall instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall(call);
     myPrecalculatedReturnValue = precalculatedReturnValue;
+  }
+
+  private static boolean isPureCall(PsiCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return false;
+    PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+    if (anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) return true;
+    return PropertyUtil.isSimplePropertyGetter(method);
   }
 
   @Nullable

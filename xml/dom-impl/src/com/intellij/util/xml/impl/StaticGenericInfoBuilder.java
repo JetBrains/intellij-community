@@ -67,7 +67,7 @@ public class StaticGenericInfoBuilder {
 
     final Set<JavaMethod> methods = new LinkedHashSet<JavaMethod>();
     InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
-    for (final Method method : myClass.getMethods()) {
+    for (final Method method : ReflectionUtil.getClassPublicMethods(myClass)) {
       methods.add(invocationCache.getInternedMethod(method));
     }
     for (final JavaMethod method : methods) {
@@ -80,7 +80,7 @@ public class StaticGenericInfoBuilder {
     {
       final Class implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
       if (implClass != null) {
-        for (Method method : implClass.getMethods()) {
+        for (Method method : ReflectionUtil.getClassPublicMethods(implClass)) {
           final int modifiers = method.getModifiers();
           if (!Modifier.isAbstract(modifiers) &&
               !Modifier.isVolatile(modifiers) &&

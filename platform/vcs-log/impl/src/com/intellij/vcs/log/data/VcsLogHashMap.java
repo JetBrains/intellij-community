@@ -19,7 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
@@ -75,6 +78,22 @@ class VcsLogHashMap implements Disposable {
     catch (IOException e) {
       LOG.warn(e);
     }
+  }
+
+  @Nullable
+  Hash findHash(@NotNull final Condition<Hash> condition) throws IOException {
+    final Ref<Hash> hashRef = Ref.create();
+    myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<Hash>() {
+      @Override
+      protected boolean accept(Hash hash) {
+        boolean matches = condition.value(hash);
+        if (matches) {
+          hashRef.set(hash);
+        }
+        return matches;
+      }
+    });
+    return hashRef.get();
   }
 
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {

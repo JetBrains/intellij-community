@@ -35,7 +35,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSdkCredentials;
+import com.jetbrains.python.remote.PyRemoteSdkSkeletonsPathAware;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -153,7 +155,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         mappingSettings =
-          instance.setupMappings(project, (PyRemoteSdkCredentials)sdk.getSdkAdditionalData(), null);
+          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
       }
     }
     return mappingSettings;

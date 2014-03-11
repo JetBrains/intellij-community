@@ -142,8 +142,15 @@ public class HgRepositoryReader {
     return new File(myHgDir, "merge").exists();
   }
 
+  public boolean isRebaseInProgress() {
+    return new File(myHgDir, "rebasestate").exists();
+  }
+
   @NotNull
   public Repository.State readState() {
+    if (isRebaseInProgress()) {
+      return Repository.State.REBASING;
+    }
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -80,14 +79,8 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testStrippingWithMultipleCarets() throws Exception {
-    EditorTestUtil.enableMultipleCarets();
-    try {
-      doTest("xxx\n   <caret>\nyyy<caret>  ",
-             "xxx\n   <caret>\nyyy<caret>");
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets();
-    }
+    doTest("xxx\n   <caret>\nyyy<caret>  ",
+           "xxx\n   <caret>\nyyy<caret>");
   }
 
   public void testModifyAndAltTabAway() throws IOException {

@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class GutterContentProvider {
+  protected static final int MAX_LINE_END_GUTTER_WIDTH_IN_CHAR = 2;
+
   public void beforeUiComponentUpdate(@NotNull Editor editor) {
   }
 
@@ -30,5 +32,9 @@ public abstract class GutterContentProvider {
 
   public boolean isShowSeparatorLine(int line, @NotNull Editor editor) {
     return true;
+  }
+
+  public int getLineStartGutterOverlap(@NotNull Editor editor) {
+    return 0;
   }
 }

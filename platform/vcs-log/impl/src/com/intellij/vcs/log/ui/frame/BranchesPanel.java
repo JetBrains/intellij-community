@@ -16,10 +16,13 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,17 +46,17 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 public class BranchesPanel extends JPanel {
 
   private final VcsLogDataHolder myDataHolder;
-  private final VcsLogUI myUI;
+  private final VcsLogUiImpl myUI;
 
   private List<RefGroup> myRefGroups;
   private final RefPainter myRefPainter;
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI) {
+  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI, @NotNull RefsModel initialRefsModel) {
     myDataHolder = dataHolder;
     myUI = UI;
-    myRefGroups = getRefsToDisplayOnPanel();
+    myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myRefPainter = new RefPainter(myUI.getColorManager(), true);
 
     setPreferredSize(new Dimension(-1, HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
@@ -82,10 +85,10 @@ public class BranchesPanel extends JPanel {
     });
 
     Project project = dataHolder.getProject();
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
+    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
       @Override
-      public void run() {
-        rebuild();
+      public void refresh(@NotNull DataPack dataPack) {
+        rebuild(dataPack.getRefsModel());
       }
     });
   }
@@ -116,14 +119,14 @@ public class BranchesPanel extends JPanel {
     }
   }
 
-  public void rebuild() {
-    myRefGroups = getRefsToDisplayOnPanel();
+  public void rebuild(@NotNull RefsModel refsModel) {
+    myRefGroups = getRefsToDisplayOnPanel(refsModel);
     getParent().repaint();
   }
 
   @NotNull
-  private List<RefGroup> getRefsToDisplayOnPanel() {
-    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
+  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull RefsModel refsModel) {
+    Collection<VcsRef> allRefs = refsModel.getBranches();
 
     List<RefGroup> groups = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
@@ -159,14 +162,14 @@ public class BranchesPanel extends JPanel {
 
     private final JBPopup myPopup;
     private final JBList myList;
-    private final VcsLogUI myUi;
+    private final VcsLogUiImpl myUi;
     private final RefPainter myRefPainter;
 
     private final SingleRefComponent myRendererComponent;
 
     private final ListCellRenderer myCellRenderer;
 
-    RefPopupComponent(RefGroup group, VcsLogUI ui, RefPainter refPainter) {
+    RefPopupComponent(RefGroup group, VcsLogUiImpl ui, RefPainter refPainter) {
       super(new BorderLayout());
       myUi = ui;
       myRefPainter = refPainter;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ConcurrentMap;
 
 
 /**
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-  private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
     @Nullable
     @Override
@@ -58,7 +61,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   @NotNull
   public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    return ourRegistry.cacheOrGet(externalName, new TextAttributesKey(externalName));
+    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, new TextAttributesKey(externalName));
   }
 
   public String toString() {

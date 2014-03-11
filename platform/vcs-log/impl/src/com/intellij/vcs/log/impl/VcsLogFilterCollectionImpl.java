@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
@@ -76,13 +75,7 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
 
   @Override
   public boolean isEmpty() {
-    return getGraphFilters().isEmpty() && getDetailsFilters().isEmpty();
-  }
-
-  @NotNull
-  @Override
-  public List<VcsLogGraphFilter> getGraphFilters() {
-    return ContainerUtil.skipNulls(Collections.<VcsLogGraphFilter>singletonList(myBranchFilter));
+    return myBranchFilter == null && getDetailsFilters().isEmpty();
   }
 
   @NotNull

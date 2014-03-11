@@ -91,6 +91,7 @@ public class RequestHint {
               }
             }
 
+            @NotNull
             public DebugProcess getDebugProcess() {
               return suspendContext.getDebugProcess();
             }
@@ -136,6 +137,16 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
+  private boolean isOnTheSameLine(SourcePosition locationPosition) {
+    if (myMethodFilter == null) {
+      return myPosition.getLine() == locationPosition.getLine();
+    }
+    else {
+      return locationPosition.getLine() >= myMethodFilter.getCallingExpressionLines().getFrom() &&
+             locationPosition.getLine() <= myMethodFilter.getCallingExpressionLines().getTo();
+    }
+  }
+
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
@@ -155,7 +166,7 @@ public class RequestHint {
               }
             }
             final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
-            if (filesEqual && myPosition.getLine() == locationPosition.getLine() && myFrameCount == frameCount) {
+            if (filesEqual && isOnTheSameLine(locationPosition) && myFrameCount == frameCount) {
               return myDepth;
             }
             if (myDepth == StepRequest.STEP_INTO) {
@@ -165,7 +176,7 @@ public class RequestHint {
                   return STOP;
                 }
                 // check if we are still at the line from which the stepping begun
-                if (myFrameCount == frameCount && myPosition.getLine() != locationPosition.getLine()) {
+                if (myFrameCount == frameCount && !isOnTheSameLine(locationPosition)) {
                   return STOP;
                 }
               }

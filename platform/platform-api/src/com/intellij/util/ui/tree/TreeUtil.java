@@ -215,9 +215,13 @@ public final class TreeUtil {
    * @param tree to remove selected node from.
    */
   public static void removeSelected(@NotNull final JTree tree) {
-    final TreePath selectionPath = tree.getSelectionPath();
-    if (selectionPath == null) return;
-    removeLastPathComponent((DefaultTreeModel) tree.getModel(), selectionPath).restoreSelection(tree);
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null) {
+      return;
+    }
+    for (TreePath path : paths) {
+      removeLastPathComponent((DefaultTreeModel) tree.getModel(), path).restoreSelection(tree);
+    }
   }
 
   public static void removeLastPathComponent(@NotNull final JTree tree, @NotNull final TreePath pathToBeRemoved){

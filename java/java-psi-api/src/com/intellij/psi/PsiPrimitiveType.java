@@ -115,11 +115,19 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
-    assert type.isValid();
-    if (!((PsiClassType)type).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return null;
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    LanguageLevel languageLevel = ((PsiClassType)type).getLanguageLevel();
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
+
+    assert type.isValid() : type;
+    PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
-    return ourQNameToUnboxed.get(psiClass.getQualifiedName());
+
+    PsiPrimitiveType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
+    PsiAnnotation[] annotations = type.getAnnotations();
+    if (unboxed != null && annotations.length > 0) {
+      unboxed = new PsiPrimitiveType(unboxed.myName, annotations);
+    }
+    return unboxed;
   }
 
   public String getBoxedTypeName() {
@@ -137,15 +145,15 @@ public class PsiPrimitiveType extends PsiType.Stub {
   public PsiClassType getBoxedType(PsiElement context) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
-    final String boxedQName = getBoxedTypeName();
 
+    String boxedQName = getBoxedTypeName();
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
-
-    PsiManager manager = context.getManager();
-    final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, context.getResolveScope());
+    PsiClass aClass = JavaPsiFacade.getInstance(context.getProject()).findClass(boxedQName, context.getResolveScope());
     if (aClass == null) return null;
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass, PsiSubstitutor.EMPTY, languageLevel);
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel, getAnnotations());
   }
 
   @Nullable

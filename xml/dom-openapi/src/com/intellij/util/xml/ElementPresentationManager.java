@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public abstract class ElementPresentationManager {
   private static final ConcurrentFactoryMap<Class,Method> ourNameValueMethods = new ConcurrentFactoryMap<Class, Method>() {
     @Nullable
     protected Method create(final Class key) {
-      for (final Method method : key.getMethods()) {
+      for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
       if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
         return method;
       }

@@ -15,15 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
-public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implements VcsFullCommitDetails {
-
-  @NotNull private final String myFullMessage;
-
-  @NotNull private final VcsUser myCommitter;
-  private final long myAuthorTime;
+public class VcsFullCommitDetailsImpl extends VcsCommitDetailsExceptChanges implements VcsFullCommitDetails {
 
   @NotNull private final Collection<LightChange> myChanges;
 
@@ -31,22 +23,13 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
                                   @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                   @NotNull VcsUser committer, long authorTime,
                                   @NotNull List<Change> changes, @NotNull final ContentRevisionFactory contentRevisionFactory) {
-    super(hash, parents, time, root, subject, author);
-    myCommitter = committer;
-    myAuthorTime = authorTime;
-    myFullMessage = message;
+    super(hash, parents, time, root, subject, author, message, committer, authorTime);
     myChanges = ContainerUtil.map(changes, new Function<Change, LightChange>() {
       @Override
       public LightChange fun(Change change) {
         return LightChange.create(contentRevisionFactory, VcsFullCommitDetailsImpl.this, change);
       }
     });
-  }
-
-  @Override
-  @NotNull
-  public final String getFullMessage() {
-    return myFullMessage;
   }
 
   @Override
@@ -58,17 +41,6 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
         return change.toChange();
       }
     });
-  }
-
-  @NotNull
-  @Override
-  public VcsUser getCommitter() {
-    return myCommitter;
-  }
-
-  @Override
-  public long getAuthorTime() {
-    return myAuthorTime;
   }
 
   private static class LightChange {

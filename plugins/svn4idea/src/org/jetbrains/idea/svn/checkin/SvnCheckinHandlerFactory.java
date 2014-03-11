@@ -15,10 +15,6 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -38,14 +34,12 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,12 +120,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              final JComponent frame = WindowManager.getInstance().getIdeFrame(project).getComponent();
-              final AutoSvnUpdater updater = new AutoSvnUpdater(project, paths.toArray(new FilePath[paths.size()]));
-              updater.getTemplatePresentation().setText(ActionInfo.UPDATE.getActionName());
-              updater.actionPerformed(
-                new AnActionEvent(null, DataManager.getInstance().getDataContext(frame), ActionPlaces.UNKNOWN,
-                                  updater.getTemplatePresentation(), ActionManager.getInstance(), 0));
+              AutoSvnUpdater.run(new AutoSvnUpdater(project, paths.toArray(new FilePath[paths.size()])), ActionInfo.UPDATE.getActionName());
             }
           }, ModalityState.NON_MODAL);
         }

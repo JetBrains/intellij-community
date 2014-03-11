@@ -44,6 +44,12 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightInspec
            "}");
   }
 
+  public void testAlreadyAnnotated() {
+    doTest("@FunctionalInterface interface Asd {" +
+           "    boolean doSmth();" +
+           "}");
+  }
+
   public void testAnnotationType() {
     doTest("@interface A {}");
   }

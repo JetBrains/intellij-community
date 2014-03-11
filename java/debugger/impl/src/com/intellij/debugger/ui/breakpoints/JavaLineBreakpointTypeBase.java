@@ -88,7 +88,8 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   public final boolean canPutAt(@NotNull VirtualFile file, final int line, @NotNull Project project) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     // JSPX supports jvm debugging, but not in XHTML files
-    if (psiFile == null || psiFile.getVirtualFile().getFileType() == StdFileTypes.XHTML) {
+    // JS has it's own breakpoints
+    if (psiFile == null || psiFile.getVirtualFile().getFileType() == StdFileTypes.XHTML || psiFile.getVirtualFile().getFileType() == StdFileTypes.JS) {
       return false;
     }
 
