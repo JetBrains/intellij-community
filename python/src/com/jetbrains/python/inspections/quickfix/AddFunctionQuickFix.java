@@ -21,9 +21,13 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -75,7 +79,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       PsiElement problemParent = problem_elt.getParent();
       if (problemParent instanceof PyCallExpression) {
         PyArgumentList arglist = ((PyCallExpression)problemParent).getArgumentList();
-        sure(arglist);
+        if (arglist == null) return;
         final PyExpression[] args = arglist.getArguments();
         for (PyExpression arg : args) {
           if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
@@ -106,7 +110,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
       // add to the bottom
       function = (PyFunction) myPyFile.add(function);
-      showTemplateBuilder(function);
+      showTemplateBuilder(function, myPyFile);
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
@@ -114,7 +118,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     }
   }
 
-  private static void showTemplateBuilder(PyFunction method) {
+  private static void showTemplateBuilder(PyFunction method, @NotNull final PyFile file) {
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);
@@ -129,7 +133,11 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
     // TODO: detect expected return type from call site context: PY-1863
     builder.replaceElement(method.getStatementList(), "return None");
-
-    builder.run();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+    final Editor editor = FileEditorManager.getInstance(file.getProject()).openTextEditor(
+      new OpenFileDescriptor(file.getProject(), virtualFile), true);
+    if (editor == null) return;
+    builder.run(editor, false);
   }
 }
