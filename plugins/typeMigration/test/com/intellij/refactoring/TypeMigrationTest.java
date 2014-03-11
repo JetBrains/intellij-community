@@ -10,9 +10,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
- * Date: 22.07.2003
+ * @since 22.07.2003
  */
 public class TypeMigrationTest extends TypeMigrationTestBase {
+  private PsiElementFactory myFactory;
+
   @NotNull
   @Override
   public String getTestRoot() {
@@ -23,773 +25,776 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    myFactory = myJavaFacade.getElementFactory();
   }
 
-  public void testT07() throws Exception {
+  public void testT07() {
     doTestFieldType("f",
                     PsiType.INT.createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
-  }
-  
-  public void testT08() throws Exception {
-    doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                    myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
-  public void testT09() throws Exception {
+  public void testT08() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                    myFactory.createTypeFromText("java.lang.Integer", null).createArrayType(),
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT10() throws Exception {
+  public void testT09() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                    myFactory.createTypeFromText("java.lang.Integer", null).createArrayType(),
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT11() throws Exception {
+  public void testT10() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.Integer, java.lang.Integer>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String, java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null),
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-  public void testT12() throws Exception {
+  public void testT11() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                    myFactory.createTypeFromText("java.util.Map<java.lang.Integer, java.lang.Integer>", null),
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String, java.lang.Integer>", null));
   }
 
-  public void testT13() throws Exception {
+  public void testT12() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null),
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-  public void testT14() throws Exception {
+  public void testT13() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("B", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("A", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null));
+  }
+
+  public void testT14() {
+    doTestFieldType("f",
+                    myFactory.createTypeFromText("B", null),
+                    myFactory.createTypeFromText("A", null));
   }
 
   //do not touch javadoc refs etc
-  public void testT15() throws Exception {
+  public void testT15() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("B", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("A", null));
+                    myFactory.createTypeFromText("B", null),
+                    myFactory.createTypeFromText("A", null));
   }
 
-  //do not touch signature with method type parameters 
-  public void testT16() throws Exception {
+  //do not touch signature with method type parameters
+  public void testT16() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("A", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("B", null));
+                    myFactory.createTypeFromText("A", null),
+                    myFactory.createTypeFromText("B", null));
   }
 
   //change method signature inspired by call on parameters
-  public void testT17() throws Exception {
+  public void testT17() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("A", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("B", null));
+                    myFactory.createTypeFromText("A", null),
+                    myFactory.createTypeFromText("B", null));
   }
 
   //extending iterable -> used in foreach statement
-  public void testT18() throws Exception {
+  public void testT18() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("A", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("B", null));
+                    myFactory.createTypeFromText("A", null),
+                    myFactory.createTypeFromText("B", null));
   }
 
-  public void testT19() throws Exception {
+  public void testT19() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String, java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.HashMap<java.lang.Integer, java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String, java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.HashMap<java.lang.Integer, java.lang.Integer>", null));
   }
 
-  public void testT20() throws Exception {
+  public void testT20() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.HashMap<java.lang.Integer, java.lang.Integer>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String, java.lang.String>", null));
+                    myFactory.createTypeFromText("java.util.HashMap<java.lang.Integer, java.lang.Integer>", null),
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String, java.lang.String>", null));
   }
 
-  public void testT21() throws Exception {
+  public void testT21() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String, java.util.List<java.lang.String>>",
-                                                                        null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String, java.util.Set<java.lang.String>>",
-                                                                        null));
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String, java.util.List<java.lang.String>>",
+                                                 null),
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String, java.util.Set<java.lang.String>>",
+                                                 null)
+    );
   }
 
   //varargs : removed after migration?!
-  public void testT22() throws Exception {
+  public void testT22() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                    myFactory.createTypeFromText("java.lang.String", null),
+                    myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
   //substitution from super class: type params substitution needed
-  public void testT23() throws Exception {
+  public void testT23() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("HashMap<java.lang.String, java.util.Set<java.lang.String>>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("HashMap<java.lang.String, java.util.List<java.lang.String>>", null));
+                    myFactory.createTypeFromText("HashMap<java.lang.String, java.util.Set<java.lang.String>>", null),
+                    myFactory.createTypeFromText("HashMap<java.lang.String, java.util.List<java.lang.String>>", null));
   }
 
   //check return type unchanged when it is possible
-  public void testT24() throws Exception {
+  public void testT24() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("C", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("D", null));
+                    myFactory.createTypeFromText("C", null),
+                    myFactory.createTypeFromText("D", null));
   }
 
-  public void testT25() throws Exception {
+  public void testT25() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("C", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("D", null));
+                    myFactory.createTypeFromText("C", null),
+                    myFactory.createTypeFromText("D", null));
   }
 
   //check param type change
-  public void testT26() throws Exception {
+  public void testT26() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("C", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("D", null));
+                    myFactory.createTypeFromText("C", null),
+                    myFactory.createTypeFromText("D", null));
   }
 
-  public void testT27() throws Exception {
+  public void testT27() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("C", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("D", null));
+                    myFactory.createTypeFromText("C", null),
+                    myFactory.createTypeFromText("D", null));
   }
 
   //list --> array
-  public void testT28() throws Exception {
+  public void testT28() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT29() throws Exception {
+  public void testT29() {
     doTestMethodType("get",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-  public void testT30() throws Exception {
+  public void testT30() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  
-  public void testT31() throws Exception {
+
+  public void testT31() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("Test", null),
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                    myFactory.createTypeFromText("Test", null),
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //non code usages
-  public void testT32() throws Exception {
+  public void testT32() {
     doTestFirstParamType("bar",
-                         myJavaFacade.getElementFactory().createTypeFromText("long", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("int", null));
+                         myFactory.createTypeFromText("long", null),
+                         myFactory.createTypeFromText("int", null));
   }
 
   //change type arguments for new expressions: l = new ArrayList<String>() -> l = new ArrayList<Integer>()
-  public void testT33() throws Exception {
+  public void testT33() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null));
   }
 
   //new expression new ArrayList<String>() should be left without modifications
-  public void testT34() throws Exception {
+  public void testT34() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.AbstractList<java.lang.String>", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.AbstractList<java.lang.String>", null));
   }
 
-  public void testT35() throws Exception {
+  public void testT35() {
     doTestFieldType("myParent",
-                    myJavaFacade.getElementFactory().createTypeFromText("Test", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("TestImpl", null));
+                    myFactory.createTypeFromText("Test", null),
+                    myFactory.createTypeFromText("TestImpl", null));
   }
 
   //co-variant/contra-variant positions for primitive types 36-39
-  public void testT36() throws Exception {
+  public void testT36() {
     doTestFirstParamType("foo", PsiType.INT, PsiType.BYTE);
   }
 
-  public void testT37() throws Exception {
+  public void testT37() {
     doTestFirstParamType("foo", PsiType.SHORT, PsiType.INT);
   }
 
-  public void testT38() throws Exception {
+  public void testT38() {
     doTestFirstParamType("foo", PsiType.SHORT, PsiType.LONG);
   }
 
-  public void testT39() throws Exception {
+  public void testT39() {
     doTestFirstParamType("foo", PsiType.SHORT, PsiType.BYTE);
   }
 
   //Set s = new HashSet() -> HashSet s = new HashSet();
-  public void testT40() throws Exception {
+  public void testT40() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
+                    myFactory.createTypeFromText("java.util.ArrayList", null));
   }
 
   //Set s = new HashSet<String>() -> HashSet s = new HashSet<String>();
-  public void testT41() throws Exception {
+  public void testT41() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
+                    myFactory.createTypeFromText("java.util.ArrayList", null));
   }
 
   //Set s = new HashSet() -> HashSet<String> s = new HashSet();
-  public void testT42() throws Exception {
+  public void testT42() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.String>", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
+                    myFactory.createTypeFromText("java.util.ArrayList<java.lang.String>", null));
   }
 
   //long l; Object o = l -> long l; Long o = l;
-  public void testT43() throws Exception {
+  public void testT43() {
     doTestFieldType("o",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Long", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
+                    myFactory.createTypeFromText("java.lang.Long", null));
   }
 
   //long l; int  i; l = i; -> long l; byte i; l = i;
-  public void testT44() throws Exception {
+  public void testT44() {
     doTestFieldType("i", PsiType.INT, PsiType.BYTE);
   }
 
   //long l; int i; l = i; -> byte l; -> byte i; l = i;
-  public void testT45() throws Exception {
+  public void testT45() {
     doTestFieldType("l", PsiType.LONG, PsiType.BYTE);
   }
 
   //byte i; long j = i; -> byte i; int j = i;
-  public void testT46() throws Exception {
+  public void testT46() {
     doTestFieldType("j", PsiType.LONG, PsiType.INT);
   }
 
   //o = null -? int o = null
-  public void testT47() throws Exception {
-    doTestFieldType("o", myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), PsiType.INT);
+  public void testT47() {
+    doTestFieldType("o", myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), PsiType.INT);
   }
 
   //co-variant/contra-variant assignments: leave types if possible change generics signature only  48-49
   // foo(AbstractSet<String> s){Set<String> ss = s} -> foo(AbstractSet<Integer> s){Set<Integer> ss = s}
-  public void testT48() throws Exception {
+  public void testT48() {
     doTestFirstParamType("foo",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.AbstractSet<A>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.AbstractSet<B>", null));
+                         myFactory.createTypeFromText("java.util.AbstractSet<A>", null),
+                         myFactory.createTypeFromText("java.util.AbstractSet<B>", null));
   }
 
   // Set<String> f; foo(AbstractSet<String> s){f = s} -> Set<Integer>f; foo(AbstractSet<Integer> s){f = s}
-  public void testT49() throws Exception {
+  public void testT49() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<A>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<B>", null));
+                    myFactory.createTypeFromText("java.util.Set<A>", null),
+                    myFactory.createTypeFromText("java.util.Set<B>", null));
   }
 
-  //captured wildcard: Set<? extends JComponent> s; Set<? extends JComponet>  c1 = s; -> Set<? extends JButton> s; Set<? extends JButton> c1 = s;
-  public void testT50() throws Exception {
+  //captured wildcard: Set<? extends JComponent> s; Set<? extends JComponent> c1 = s; ->
+  //  Set<? extends JButton> s; Set<? extends JButton> c1 = s;
+  public void testT50() {
     doTestFieldType("c1",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends JComponent>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends JButton>", null));
+                    myFactory.createTypeFromText("java.util.Set<? extends JComponent>", null),
+                    myFactory.createTypeFromText("java.util.Set<? extends JButton>", null));
   }
 
   //array initialization: 51-52
-  public void testT51() throws Exception {
+  public void testT51() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
-  public void testT52() throws Exception {
+  public void testT52() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null).createArrayType(),
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
   //generic type promotion to array initializer
-  public void testT53() throws Exception {
+  public void testT53() {
     doTestFieldType("f",
                     PsiType.DOUBLE.createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.String>", null).createArrayType());
+                    myFactory.createTypeFromText("java.util.Set<java.lang.String>", null).createArrayType());
   }
 
   //wildcard type promotion to expressions 54-55
-  public void testT54() throws Exception {
+  public void testT54() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.Object>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.Set<java.lang.Object>", null),
+                    myFactory.createTypeFromText("java.util.Set<? extends java.lang.Integer>", null));
   }
 
-  public void testT55() throws Exception {
+  public void testT55() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.Object>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<?>", null));
+                    myFactory.createTypeFromText("java.util.Set<java.lang.Object>", null),
+                    myFactory.createTypeFromText("java.util.Set<?>", null));
   }
 
   //array index should be integer 56-57
-  public void testT56() throws Exception {
+  public void testT56() {
     doTestFirstParamType("foo", PsiType.INT, PsiType.DOUBLE);
   }
 
-  public void testT57() throws Exception {
+  public void testT57() {
     doTestFirstParamType("foo", PsiType.INT, PsiType.BYTE);
   }
 
   //Arrays can be assignable to Object/Serializable/Cloneable 58-59; ~ 60 varargs
-  public void testT58() throws Exception {
+  public void testT58() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
-  public void testT59() throws Exception {
+  public void testT59() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Cloneable", null));
+                    myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                    myFactory.createTypeFromText("java.lang.Cloneable", null));
   }
 
-  public void testT60() throws Exception {
+  public void testT60() {
     doTestFieldType("p",
                     PsiType.INT.createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //change parameter type -> vararg; assignment changed to array
-  public void testT61() throws Exception {
+  public void testT61() {
     doTestFirstParamType("foo", PsiType.INT, new PsiEllipsisType(PsiType.INT));
   }
 
   //change field type -> change vararg parameter type due to assignment: 62-63
-  public void testT62() throws Exception {
-    doTestFieldType("p", PsiType.INT.createArrayType(), myJavaFacade.getElementFactory().createTypeFromText(
+  public void testT62() {
+    doTestFieldType("p", PsiType.INT.createArrayType(), myFactory.createTypeFromText(
       CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
-  public void testT63() throws Exception {
+  public void testT63() {
     doTestFieldType("p", PsiType.INT.createArrayType(), PsiType.DOUBLE.createArrayType());
   }
 
-  //remove vararg type: 64-66 
-  public void testT64() throws Exception {
+  //remove vararg type: 64-66
+  public void testT64() {
     doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT), PsiType.INT);
   }
 
-  public void testT65() throws Exception {
+  public void testT65() {
     doTestFirstParamType("foo",
                          new PsiEllipsisType(PsiType.INT),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT115() throws Exception {
+  public void testT115() {
     doTestFirstParamType("foo",
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)),
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+                         new PsiEllipsisType(myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)),
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
   }
 
-  public void testT66() throws Exception {
+  public void testT66() {
     doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT), PsiType.INT);
   }
 
-  public void testT67() throws Exception {
+  public void testT67() {
     doTestFirstParamType("methMemAcc",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
+                         myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT68() throws Exception {
+  public void testT68() {
     doTestFirstParamType("foo", PsiType.INT, PsiType.DOUBLE);
   }
 
-  public void testT69() throws Exception {
+  public void testT69() {
     doTestFirstParamType("foo", PsiType.INT, PsiType.BYTE);
   }
 
-  public void testT70() throws Exception {
+  public void testT70() {
     doTestFieldType("a", PsiType.INT.createArrayType().createArrayType(), PsiType.FLOAT.createArrayType().createArrayType());
   }
 
-  public void testT71() throws Exception {
+  public void testT71() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_CLASS, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<? extends java.lang.Number>", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS, null),
+                    myFactory.createTypeFromText("java.lang.Class<? extends java.lang.Number>", null));
   }
 
-  public void testT72() throws Exception {
+  public void testT72() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_CLASS, null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<java.lang.Integer>", null));
+                    myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS, null),
+                    myFactory.createTypeFromText("java.lang.Class<java.lang.Integer>", null));
   }
 
-  public void testT73() throws Exception {
+  public void testT73() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<javax.swing.JComponent>", null).createArrayType().createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.awt.Component>", null).createArrayType().createArrayType());
+                    myFactory.createTypeFromText("java.util.Set<javax.swing.JComponent>", null).createArrayType().createArrayType(),
+                    myFactory.createTypeFromText("java.util.Set<java.awt.Component>", null).createArrayType().createArrayType());
   }
 
   //prefix/postfix expression; binary expressions 74-76
-  public void testT74() throws Exception {
+  public void testT74() {
     doTestFirstParamType("meth", PsiType.INT, PsiType.FLOAT);
   }
 
-  public void testT75() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  public void testT75() {
+    doTestFirstParamType("meth", PsiType.INT, myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT76() throws Exception {
+  public void testT76() {
     doTestFirstParamType("meth", PsiType.BYTE, PsiType.FLOAT);
   }
 
   //+= , etc 77-78
-  public void testT77() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+  public void testT77() {
+    doTestFirstParamType("meth", PsiType.INT, myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
-  public void testT78() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  public void testT78() {
+    doTestFirstParamType("meth", PsiType.INT, myFactory.createTypeFromText("java.lang.String", null));
   }
 
   //casts 79-80,83
-  public void testT79() throws Exception {
+  public void testT79() {
     doTestFirstParamType("meth", PsiType.INT, PsiType.BYTE);
   }
 
-  public void testT80() throws Exception {
+  public void testT80() {
     doTestFirstParamType("meth", PsiType.INT, PsiType.DOUBLE);
   }
 
-  public void testT83() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+  public void testT83() {
+    doTestFirstParamType("meth", PsiType.INT, myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //instanceofs 81-82
-  public void testT81() throws Exception {
+  public void testT81() {
     doTestFirstParamType("foo",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
-                         myJavaFacade.getElementFactory().createTypeFromText("A", null));
+                         myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
+                         myFactory.createTypeFromText("A", null));
   }
 
-  public void testT82() throws Exception {
+  public void testT82() {
     doTestFirstParamType("foo",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
-                         myJavaFacade.getElementFactory().createTypeFromText("C", null));
+                         myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
+                         myFactory.createTypeFromText("C", null));
   }
 
-  public void testT84() throws Exception {
+  public void testT84() {
     doTestFirstParamType("meth",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.util.Set>", null));
+                         myFactory.createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
+                         myFactory.createTypeFromText("java.util.Set<? extends java.util.Set>", null));
   }
 
-  public void testT85() throws Exception {
+  public void testT85() {
     doTestFieldType("str",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                    myFactory.createTypeFromText("java.lang.String", null),
+                    myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
   //array <-> list 86-89;94;95
-  public void testT86() throws Exception {
+  public void testT86() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-   public void testT87() throws Exception {
+   public void testT87() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT88() throws Exception {
+  public void testT88() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-  public void testT89() throws Exception {
+  public void testT89() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT94() throws Exception {
+  public void testT94() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  public void testT95() throws Exception {
+  public void testT95() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
 
-  public void testT90() throws Exception {
+  public void testT90() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<B>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<A>", null));
+                    myFactory.createTypeFromText("java.util.List<B>", null),
+                    myFactory.createTypeFromText("java.util.List<A>", null));
   }
 
   //element type -> element type array
-  public void testT91() throws Exception {
+  public void testT91() {
     doTestMethodType("foo",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                     myFactory.createTypeFromText("java.lang.String", null),
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
-  //List<S>=new ArrayList<S>{}; -> List<I>=new ArrayList<I>{}; anonymous 
-  public void testT92() throws Exception {
+  //List<S>=new ArrayList<S>{}; -> List<I>=new ArrayList<I>{}; anonymous
+  public void testT92() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null));
   }
 
   //generics signature do not support primitives: Map<Boolean, String> - Map<boolean, String>
-  public void testT93() throws Exception {
-    doTestFirstParamType("foo", myJavaFacade.getElementFactory().createTypeFromText("java.lang.Boolean", null), PsiType.BOOLEAN);
+  public void testT93() {
+    doTestFirstParamType("foo", myFactory.createTypeFromText("java.lang.Boolean", null), PsiType.BOOLEAN);
   }
 
   //field initializers procession
-  public void testT96() throws Exception {
+  public void testT96() {
     doTestFieldType("f1",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    myFactory.createTypeFromText("java.lang.Integer", null),
+                    myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT97() throws Exception {
-    doTestFieldType("f1", myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType(), PsiType.INT);
+  public void testT97() {
+    doTestFieldType("f1", myFactory.createTypeFromText("java.lang.Integer", null).createArrayType(), PsiType.INT);
   }
 
-  //list <-> array conversion in assighnemt statements
-  public void testT98() throws Exception {
+  //list <-> array conversion in assignment statements
+  public void testT98() {
     doTestMethodType("getArray",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null));
+                     myFactory.createTypeFromText("java.lang.String", null).createArrayType(),
+                     myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
   //escape pattern from []
-  public void testT99() throws Exception {
+  public void testT99() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.util.List<char[]>>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.util.List<int[]>>", null));
+                    myFactory.createTypeFromText("java.util.Set<java.util.List<char[]>>", null),
+                    myFactory.createTypeFromText("java.util.Set<java.util.List<int[]>>", null));
   }
 
   //non formatted type
-  public void testT100() throws Exception {
+  public void testT100() {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.String>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.Integer>", null));
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String,java.lang.String>", null),
+                    myFactory.createTypeFromText("java.util.Map<java.lang.String,java.lang.Integer>", null));
   }
 
   //param List -> Array[]
-  public void testT101() throws Exception {
+  public void testT101() {
     doTestFirstParamType("meth",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Integer>[]", null));
+                         myFactory.createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
+                         myFactory.createTypeFromText("java.util.ArrayList<java.lang.Integer>[]", null));
   }
 
   //param Set.add() -> Array[] with conflict
-  public void testT102() throws Exception {
+  public void testT102() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.lang.Object>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object[]", null));
+                         myFactory.createTypeFromText("java.util.Set<? extends java.lang.Object>", null),
+                         myFactory.createTypeFromText("java.lang.Object[]", null));
   }
 
   //set(1, "") should be assignment-checked over String
-  public void testT103() throws Exception {
+  public void testT103() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.String>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+                         myFactory.createTypeFromText("java.util.ArrayList<java.lang.String>", null),
+                         myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
    //raw list type now should not be changed
-  public void testT104() throws Exception {
+  public void testT104() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                         myFactory.createTypeFromText("java.util.ArrayList", null),
+                         myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
 
   //implicit type parameter change 105-107
-  public void testT105() throws Exception {
+  public void testT105() {
     doTestFieldType("t",
-                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    myFactory.createTypeFromText("T", null),
+                    myFactory.createTypeFromText("java.lang.String", null));
   }
 
 
-  public void testT106() throws Exception {
+  public void testT106() {
     doTestFieldType("t",
-                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    myFactory.createTypeFromText("T", null),
+                    myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT107() throws Exception {
+  public void testT107() {
     doTestFieldType("t",
-                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                    myFactory.createTypeFromText("T", null),
+                    myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
   //foreach && wildcards: 108-110
-  public void testT108() throws Exception {
+  public void testT108() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? extends java.lang.Number>", null));
+                         myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myFactory.createTypeFromText("java.util.List<? extends java.lang.Number>", null));
   }
 
-  public void testT109() throws Exception {
+  public void testT109() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? super java.lang.Number>", null));
+                         myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myFactory.createTypeFromText("java.util.List<? super java.lang.Number>", null));
   }
 
-  public void testT110() throws Exception {
+  public void testT110() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? extends java.lang.String>", null));
+                         myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myFactory.createTypeFromText("java.util.List<? extends java.lang.String>", null));
   }
 
-  //wrap with array creation only literals and refs outside of binary/unary expressions 
-  public void testT111() throws Exception {
+  //wrap with array creation only literals and refs outside of binary/unary expressions
+  public void testT111() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+                         myFactory.createTypeFromText("java.lang.Integer", null),
+                         myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
-  public void testT112() throws Exception {
+  public void testT112() {
     doTestMethodType("method",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+                     myFactory.createTypeFromText("java.lang.Integer", null),
+                     myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
   //varargs
-  public void testT113() throws Exception {
+  public void testT113() {
     doTestFirstParamType("method",
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)),
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null)));
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.Integer", null)),
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.Number", null)));
   }
 
-  public void testT114() throws Exception {
+  public void testT114() {
       doTestFirstParamType("method",
-                           new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)),
-                           new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+                           new PsiEllipsisType(myFactory.createTypeFromText("java.lang.Integer", null)),
+                           new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
     }
 
   //varargs && ArrayList
-  public void testT118() throws Exception {
+  public void testT118() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)));
+                         myFactory.createTypeFromText("java.lang.Integer", null),
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.Integer", null)));
   }
 
   //varargs && arrays
-  public void testT119() throws Exception {
+  public void testT119() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)));
+                         myFactory.createTypeFromText("java.lang.Integer", null),
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.Integer", null)));
   }
 
-  public void testT120() throws Exception {
+  public void testT120() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+                         myFactory.createTypeFromText("java.lang.Integer", null),
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
   }
 
   //change parameter type in foreach statement: 116 - array, 117 - list
-  public void testT116() throws Exception {
+  public void testT116() {
     doTestFieldType("str",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    myFactory.createTypeFromText("java.lang.Number", null),
+                    myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT117() throws Exception {
+  public void testT117() {
     doTestFieldType("str",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    myFactory.createTypeFromText("java.lang.Number", null),
+                    myFactory.createTypeFromText("java.lang.String", null));
   }
 
 
-  public void testT121() throws Exception {
+  public void testT121() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Number>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Float>", null));
+                         myFactory.createTypeFromText("java.util.ArrayList<java.lang.Number>", null),
+                         myFactory.createTypeFromText("java.util.ArrayList<java.lang.Float>", null));
   }
 
-  public void testT122() throws Exception {
+  public void testT122() {
     doTestFirstParamType("method",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null).createArrayType());
+                         myFactory.createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
+                         myFactory.createTypeFromText("java.util.List<java.lang.Integer>", null).createArrayType());
   }
 
-  public void testT123() throws Exception {
+  public void testT123() {
     doTestFieldType("n",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                    myFactory.createTypeFromText("java.lang.Number", null),
+                    myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
   //124,125 - do not change formal method return type
-  public void testT124() throws Exception {
+  public void testT124() {
     doTestFirstParamType("meth",
-                         myJavaFacade.getElementFactory().createTypeFromText("T", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                         myFactory.createTypeFromText("T", null),
+                         myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
-  public void testT125() throws Exception {
+  public void testT125() {
     doTestFirstParamType("meth",
-                         myJavaFacade.getElementFactory().createTypeFromText("T", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                         myFactory.createTypeFromText("T", null),
+                         myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
-  public void testT126() throws Exception {
+  public void testT126() {
     doTestMethodType("meth",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("T", null));
+                     myFactory.createTypeFromText("java.lang.String", null),
+                     myFactory.createTypeFromText("T", null));
   }
 
   // Checking preserving method parameters alignment
-  public void testT127() throws Exception {
+  public void testT127() {
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",
-                     myJavaFacade.getElementFactory().createTypeFromText("int", null),
-                     myJavaFacade.getElementFactory().createTypeFromText("long", null));
+                     myFactory.createTypeFromText("int", null),
+                     myFactory.createTypeFromText("long", null));
   }
 
   // test type migration from disjunction type
-  public void testT128() throws Exception {
-    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("Test.E", null));
+  public void testT128() {
+    doTestCatchParameter(myFactory.createTypeFromText("Test.E1 | Test.E2", null),
+                         myFactory.createTypeFromText("Test.E", null));
   }
 
   // test type migration to disjunction type
-  public void testT129() throws Exception {
-    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null));
+  public void testT129() {
+    doTestCatchParameter(myFactory.createTypeFromText("Test.E", null),
+                         myFactory.createTypeFromText("Test.E1 | Test.E2", null));
   }
 
   // test type migration from disjunction type with interfaces
-  public void testT130() throws Exception {
-    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("Test.E", null));
+  public void testT130() {
+    doTestCatchParameter(myFactory.createTypeFromText("Test.E1 | Test.E2", null),
+                         myFactory.createTypeFromText("Test.E", null));
   }
 
   // test type migration between disjunction types
-  public void testT131() throws Exception {
-    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("Test.E2 | Test.E1", null));
+  public void testT131() {
+    doTestCatchParameter(myFactory.createTypeFromText("Test.E1 | Test.E2", null),
+                         myFactory.createTypeFromText("Test.E2 | Test.E1", null));
   }
 
-  private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) throws Exception {
+  private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
+      public TypeMigrationRules provide() {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
         rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
@@ -808,43 +813,43 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   // IDEA-72420
-  public void testT132() throws Exception {
+  public void testT132() {
     doTestFirstParamType("h", "Test",
-                         myJavaFacade.getElementFactory().createTypeFromText("J", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("I", null));
+                         myFactory.createTypeFromText("J", null),
+                         myFactory.createTypeFromText("I", null));
   }
 
-  public void testT133() throws Exception {
+  public void testT133() {
     doTestFirstParamType("h", "Test",
-                         myJavaFacade.getElementFactory().createTypeFromText("J", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("I", null));
+                         myFactory.createTypeFromText("J", null),
+                         myFactory.createTypeFromText("I", null));
   }
 
-  public void testT134() throws Exception {
+  public void testT134() {
     doTestFirstParamType("buzz", "Test",
                          PsiType.INT,
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         myFactory.createTypeFromText("java.lang.String", null));
   }
-  
-  public void testT135() throws Exception {
+
+  public void testT135() {
     doTestFieldType("foo", "Test", PsiType.LONG, PsiType.INT);
   }
 
-  public void testT136() throws Exception {
+  public void testT136() {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-    doTestFirstParamType("foo", "Test", 
-                         JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, scope),
+    doTestFirstParamType("foo", "Test",
+                         myFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, scope),
                          PsiType.getJavaLangString(myPsiManager, scope));
   }
 
-  public void testT137() throws Exception {
-    doTestFirstParamType("foo", "Test", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  public void testT137() {
+    doTestFirstParamType("foo", "Test", PsiType.INT, myFactory.createTypeFromText("java.lang.String", null));
   }
 
-  public void testT138() throws Exception {
-    doTestFirstParamType("foo", "Test", 
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.String>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Collection<java.lang.String>", null));
+  public void testT138() {
+    doTestFirstParamType("foo", "Test",
+                         myFactory.createTypeFromText("java.util.Set<java.lang.String>", null),
+                         myFactory.createTypeFromText("java.util.Collection<java.lang.String>", null));
   }
 
   public void testTypeAnno() {
