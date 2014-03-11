@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -359,21 +360,21 @@ public abstract class DebuggerUtils {
       return null;
     }
     final String _className = className.replace('$', '.');
-    PsiClass aClass = javaPsiFacade.findClass(_className, scope);
+    PsiClass aClass = ClassUtil.findPsiClass(psiManager, _className, null, true, scope);
     if (aClass == null) {
       if (!_className.equals(className)) {
         // try original name if it differs from the normalized name
-        aClass = javaPsiFacade.findClass(className, scope);
+        aClass = ClassUtil.findPsiClass(psiManager, className, null, true, scope);
       }
     }
     if (aClass == null) {
       final GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
       if (!globalScope.equals(scope)) {
-        aClass = javaPsiFacade.findClass(_className, globalScope);
+        aClass = ClassUtil.findPsiClass(psiManager, _className, null, true, globalScope);
         if (aClass == null) {
           if (!_className.equals(className)) {
             // try original name with global scope if the original differs from the normalized name
-            aClass = javaPsiFacade.findClass(className, globalScope);
+            aClass = ClassUtil.findPsiClass(psiManager, className, null, true, globalScope);
           }
         }
       }
