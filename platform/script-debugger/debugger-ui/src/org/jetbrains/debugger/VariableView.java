@@ -55,7 +55,8 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   @NotNull
   public static String getClassName(@NotNull ObjectValue value) {
-    return StringUtil.notNullize(value.getClassName(), "Object");
+    String className = value.getClassName();
+    return StringUtil.isEmpty(className) ? "Object" : className;
   }
 
   public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
