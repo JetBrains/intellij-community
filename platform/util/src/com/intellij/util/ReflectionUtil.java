@@ -18,6 +18,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class ReflectionUtil {
@@ -251,7 +253,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method findMethod(@NotNull Method[] methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
+  public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
     for (final Method method : methods) {
       if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) return method;
     }
@@ -260,12 +262,40 @@ public class ReflectionUtil {
 
   @Nullable
   public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    return findMethod(aClass.getMethods(), name, parameters);
+    return findMethod(getClassPublicMethods(aClass, false), name, parameters);
   }
 
   @Nullable
   public static Method getDeclaredMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    return findMethod(aClass.getDeclaredMethods(), name, parameters);
+    return findMethod(getClassDeclaredMethods(aClass, false), name, parameters);
+  }
+
+  public static List<Method> getClassPublicMethods(@NotNull Class aClass) {
+    return getClassPublicMethods(aClass, false);
+  }
+  
+  public static List<Method> getClassPublicMethods(@NotNull Class aClass, boolean includeSynthetic) {
+    Method[] methods = aClass.getMethods();
+    return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
+  }
+
+  public static List<Method> getClassDeclaredMethods(@NotNull Class aClass) {
+    return getClassDeclaredMethods(aClass, false);
+  }
+  
+  public static List<Method> getClassDeclaredMethods(@NotNull Class aClass, boolean includeSynthetic) {
+    Method[] methods = aClass.getDeclaredMethods();
+    return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
+  }
+
+  private static List<Method> filterRealMethods(Method[] methods) {
+    List<Method> result = ContainerUtil.newArrayList();
+    for (Method method : methods) {
+      if (!method.isSynthetic()) {
+        result.add(method);
+      }
+    }
+    return result;
   }
 
   @Nullable

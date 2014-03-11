@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public class InvocationCache {
   }
 
   private static void addCoreInvocations(final Class<?> aClass) {
-    for (final Method method : aClass.getDeclaredMethods()) {
+    for (final Method method : ReflectionUtil.getClassDeclaredMethods(aClass)) {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
