@@ -14,6 +14,10 @@
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 
 
+//static NSString *const JVMOptions = @"JVMOptions";
+NSString *JVMOptions;
+
+
 @interface NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
 
@@ -84,6 +88,25 @@ void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     }
 }
 
+
+NSString *getJavaKey(){
+    NSArray *JavaKeysArray = [[NSArray alloc] initWithObjects:@"Java", @"JVMOptions", nil];
+    NSLog(@"%@", JavaKeysArray);
+ 
+    for (NSString *javaKey in JavaKeysArray) {
+        NSLog(@"check javakey: %@", javaKey);
+
+        NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:javaKey];
+        
+        if (jvmInfo != NULL) {
+            NSLog(@"found javakey: %@", javaKey);
+            return javaKey;
+        }
+    }
+    NSLog(@"Info.plist is corrupted, Absent Java/JVMOptions key.");
+    exit(-1);
+}
+
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
@@ -112,7 +135,7 @@ NSString *jvmVersion(NSBundle *bundle) {
 }
 
 NSString *requiredJvmVersion() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary:@"Java" defaultObject:@"1.7*"];
+    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
@@ -145,12 +168,17 @@ NSBundle *findMatchingVm() {
     NSString *required = requiredJvmVersion();
     debugLog([NSString stringWithFormat:@"Required VM: %@", required]);
 
-    for (NSBundle *vm in vmBundles) {
-        if (satisfies(jvmVersion(vm), required)) {
-            debugLog(@"Chosen VM:");
-            debugLog([vm bundlePath]);
-            return vm;
-        }
+    if (required != NULL) {
+      for (NSBundle *vm in vmBundles) {
+          if (satisfies(jvmVersion(vm), required)) {
+              debugLog(@"Chosen VM:");
+              debugLog([vm bundlePath]);
+              return vm;
+          }
+      }
+    } else {
+      NSLog(@"Info.plist is corrupted, Absent JVMVersion key.");
+      exit(-1);
     }
 
     debugLog(@"No matching VM found");
@@ -170,7 +198,7 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 }
 
 - (NSMutableString *)buildClasspath:(NSBundle *)jvm {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSMutableString *classpathOption = [NSMutableString stringWithString:@"-Djava.class.path="];
     [classpathOption appendString:[jvmInfo objectForKey:@"ClassPath"]];
 
@@ -184,7 +212,7 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 
 
 NSString *getSelector() {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSDictionary *properties = [jvmInfo dictionaryForKey:@"Properties"];
     if (properties != nil) {
         return [properties objectForKey:@"idea.paths.selector"];
@@ -235,7 +263,7 @@ NSDictionary *parseProperties() {
 - (JavaVMInitArgs)buildArgsFor:(NSBundle *)jvm {
     NSMutableString *classpathOption = [self buildClasspath:jvm];
 
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
@@ -260,7 +288,7 @@ NSDictionary *parseProperties() {
 }
 
 - (const char *)mainClassName {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
     
     char *cur = answer;
@@ -275,7 +303,7 @@ NSDictionary *parseProperties() {
 }
 
 - (void)process_cwd {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSString *cwd = [jvmInfo objectForKey:@"WorkingDirectory"];
     if (cwd != nil) {
         cwd = [self expandMacros:cwd];
@@ -287,7 +315,7 @@ NSDictionary *parseProperties() {
 
 - (void)launch {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
+    JVMOptions = getJavaKey();
     NSBundle *vm = findMatchingVm();
     if (vm == nil) {
         NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
