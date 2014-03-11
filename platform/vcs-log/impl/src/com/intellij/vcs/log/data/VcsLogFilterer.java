@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +19,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
@@ -43,15 +45,22 @@ public class VcsLogFilterer {
     return applyDetailsFilter(dataPack, detailsFilters);
   }
 
-  private AbstractVcsLogTableModel applyDetailsFilter(DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
+  private AbstractVcsLogTableModel applyDetailsFilter(final DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
     if (!detailsFilters.isEmpty()) {
       List<Hash> filteredCommits = filterByDetails(dataPack, detailsFilters);
       if (filteredCommits.isEmpty()) {
         return new EmptyTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
       }
       else{
-        Condition<Integer> filter = getFilterFromCommits(filteredCommits);
+        final Condition<Integer> filter = getFilterFromCommits(filteredCommits);
         dataPack.getGraphFacade().setFilter(filter);
+        myUI.addHighlighter(new VcsLogHighlighter() {
+          @Nullable
+          @Override
+          public Color getForeground(int commitIndex, boolean isSelected) {
+            return !filter.value(commitIndex) ? JBColor.GRAY : JBColor.BLUE;
+          }
+        });
       }
     }
     else {
@@ -89,7 +98,15 @@ public class VcsLogFilterer {
           model = new EmptyTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
         }
         else {
-          dataPack.getGraphFacade().setFilter(getFilterFromCommits(hashes));
+          final Condition<Integer> filter = getFilterFromCommits(hashes);
+          dataPack.getGraphFacade().setFilter(filter);
+          myUI.addHighlighter(new VcsLogHighlighter() {
+            @Nullable
+            @Override
+            public Color getForeground(int commitIndex, boolean isSelected) {
+              return !filter.value(commitIndex) ? JBColor.GRAY : JBColor.BLUE;
+            }
+          });
           model = new GraphTableModel(dataPack, myLogDataHolder, myUI, newLoadMoreStage);
         }
         myUI.setModel(model, dataPack, previouslySelected);

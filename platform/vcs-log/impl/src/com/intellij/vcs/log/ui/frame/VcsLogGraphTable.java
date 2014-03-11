@@ -245,6 +245,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    myHighlighters.clear();
     myHighlighters.add(highlighter);
   }
 
