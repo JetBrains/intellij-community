@@ -15,22 +15,18 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author vlan
  */
 public class PyPackage extends InstalledPackage {
-  private static final Pattern DIGITS = Pattern.compile("^([0-9]+).*$");
-  private static final Pattern VERSION_PART_SEPARATOR = Pattern.compile("\\.");
   private final String myLocation;
   private final List<PyRequirement> myRequirements;
 
@@ -47,36 +43,14 @@ public class PyPackage extends InstalledPackage {
 
 
   /**
-   * Checks package version (it should be in [PEP-386] format), but only digits (not letters) are supported.
+   * Checks if package meets requirement, descriped in [PEP-0386] format using {@link com.jetbrains.python.packaging.PyRequirement}
    *
-   * @param expectedVersionParts Digits from major to minor: 1.2.42 version should be checked as "1,2,42".
-   * @return true if package version is greater or equals.
+   * @param requirement to check if package matches
+   * @return true if matches.
    */
-  public boolean isVersionAtLeast(@NotNull final int... expectedVersionParts) {
-    final String version = getVersion();
-    if (version == null) {
-      throw new IllegalStateException("Package has no version");
-    }
-    Preconditions.checkArgument(expectedVersionParts.length > 0, "At least one version part should be provided");
-
-    final String[] versionParts = VERSION_PART_SEPARATOR.split(version);
-
-    for (int i = 0; i < expectedVersionParts.length; i++) {
-      if ((versionParts.length - 1) < i) {
-        return false;
-      }
-      final Matcher matcher = DIGITS.matcher(versionParts[i]);
-      if (!(matcher.find() && (matcher.groupCount() == 1))) {
-        throw new IllegalArgumentException("Can't parse " + versionParts[i]);
-      }
-      final int versionPart = Integer.parseInt(matcher.group(1));
-      if (versionPart < expectedVersionParts[i]) {
-        return false;
-      }
-    }
-    return true;
+  public boolean matches(@NotNull final PyRequirement requirement) {
+    return requirement.match(Lists.newArrayList(this)) != null;
   }
-
 
   @Nullable
   public String getLocation() {
