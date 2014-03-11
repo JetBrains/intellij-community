@@ -108,7 +108,7 @@
       <reference id="Git.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />
       <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
-              icon="AllIcons.Diff.Diff"
+              icon="Git4ideaIcons.DeepCompare"
               description="Dims those commits which have equivalent changes in the current branch"/>
     </group>
     
