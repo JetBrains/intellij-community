@@ -440,7 +440,12 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       RecentCommitsInfo info = entry.getValue();
 
       // in this case new commits won't be attached to the log, but will substitute existing ones.
-      List<TimedVcsCommit> firstBlockCommits = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(info.firstBlockCommits);
+      List<TimedVcsCommit> firstBlockCommits = info.firstBlockCommits;
+      if (getLogProvider(root).supportsFastUnorderedCommits()) {
+        // => we requested unordered => have to order them ourselves
+        firstBlockCommits = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(firstBlockCommits);
+        firstBlockCommits = new ArrayList<TimedVcsCommit>(firstBlockCommits.subList(0, Math.min(firstBlockCommits.size(), commitCount)));
+      }
       logsToBuild.put(root, firstBlockCommits);
       refsByRoot.put(root, info.newRefs);
     }
@@ -479,7 +484,11 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       VcsLogProvider logProvider = entry.getValue();
 
       StopWatch sw = StopWatch.start("readFirstBlock for " + root.getName());
-      List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered, commitsCount);
+
+      boolean orderedForRepo = ordered && !logProvider.supportsFastUnorderedCommits(); // will order manually
+      int commitCountForRepo = orderedForRepo ? commitsCount : commitsCount * 2; // but need to request more commits
+
+      List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, orderedForRepo, commitCountForRepo);
       sw.report();
       sw = StopWatch.start("readAllRefs for" + root.getName());
       Collection<VcsRef> newRefs = logProvider.readAllRefs(root);

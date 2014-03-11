@@ -246,6 +246,11 @@ public class HgLogProvider implements VcsLogProvider {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
   }
 
+  @Override
+  public boolean supportsFastUnorderedCommits() {
+    return false;
+  }
+
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
