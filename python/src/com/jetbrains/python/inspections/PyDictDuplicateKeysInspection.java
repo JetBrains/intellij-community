@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -64,8 +65,8 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
           if (key instanceof PyNumericLiteralExpression
                   || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {
             if (map.keySet().contains(key.getText())) {
-              registerProblem(key, "Dictionary contains duplicate keys " + key.getText());
-              registerProblem(map.get(key.getText()), "Dictionary contains duplicate keys " + key.getText());
+              registerProblem(key, "Dictionary contains duplicate keys " + key.getText(), new PyRemoveDictKeyQuickFix());
+              registerProblem(map.get(key.getText()), "Dictionary contains duplicate keys " + key.getText(), new PyRemoveDictKeyQuickFix());
             }
             map.put(key.getText(), key);
           }
