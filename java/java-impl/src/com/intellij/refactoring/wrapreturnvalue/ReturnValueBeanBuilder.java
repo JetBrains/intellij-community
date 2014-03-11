@@ -63,8 +63,10 @@ class ReturnValueBeanBuilder {
   public String buildBeanClass() throws IOException {
     final StringBuilder out = new StringBuilder(1024);
 
-    if (myPackageName.length() > 0) out.append("package ").append(myPackageName).append(';');
-    out.append('\n');
+    if (myPackageName.length() > 0) {
+      out.append("package ").append(myPackageName).append(";\n\n");
+    }
+
     out.append("public ");
     if (myStatic) out.append("static ");
     out.append("class ").append(myClassName);
@@ -81,54 +83,49 @@ class ReturnValueBeanBuilder {
       }
       out.append('>');
     }
-    out.append('\n');
 
-    out.append('{');
+    out.append(" {\n");
     outputField(out);
-    out.append('\n');
+    out.append("\n\n");
     outputConstructor(out);
-    out.append('\n');
+    out.append("\n\n");
     outputGetter(out);
-    out.append("}\n");
-    return out.toString();
-  }
+    out.append("\n}\n");
 
-  private void outputGetter(StringBuilder out) {
-    final String typeText = myValueType.getCanonicalText();
-    final String name = "value";
-    final String capitalizedName = StringUtil.capitalize(name);
-    out.append("\tpublic ").append(typeText).append(" get").append(capitalizedName).append("()\n");
-    out.append("\t{\n");
-    final String fieldName = getFieldName(name);
-    out.append("\t\treturn ").append(fieldName).append(";\n");
-    out.append("\t}\n");
-    out.append('\n');
+    return out.toString();
   }
 
   private void outputField(StringBuilder out) {
     final String typeText = myValueType.getCanonicalText();
-    out.append('\t' + "private final ").append(typeText).append(' ').append(getFieldName("value")).append(";\n");
+    out.append('\t' + "private final ").append(typeText).append(' ').append(getFieldName("value")).append(";");
   }
 
   private void outputConstructor(StringBuilder out) {
-    out.append("\tpublic ").append(myClassName).append('(');
     final String typeText = myValueType.getCanonicalText();
     final String name = "value";
-    final String parameterName =
-      JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
+    final String parameterName = JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
+    final String fieldName = getFieldName(name);
+    out.append("\tpublic ").append(myClassName).append('(');
     out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
     out.append(typeText).append(' ').append(parameterName);
-    out.append(")\n");
-    out.append("\t{\n");
-    final String fieldName = getFieldName(name);
+    out.append(") {\n");
     if (fieldName.equals(parameterName)) {
       out.append("\t\tthis.").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
     else {
       out.append("\t\t").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
-    out.append("\t}\n");
-    out.append('\n');
+    out.append("\t}");
+  }
+
+  private void outputGetter(StringBuilder out) {
+    final String typeText = myValueType.getCanonicalText();
+    final String name = "value";
+    final String capitalizedName = StringUtil.capitalize(name);
+    final String fieldName = getFieldName(name);
+    out.append("\tpublic ").append(typeText).append(" get").append(capitalizedName).append("() {\n");
+    out.append("\t\treturn ").append(fieldName).append(";\n");
+    out.append("\t}");
   }
 
   private String getFieldName(final String name) {
