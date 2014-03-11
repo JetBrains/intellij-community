@@ -65,8 +65,11 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   public List<MavenResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<MavenResourceRootDescriptor>();
+
+    int i = 0;
+
     for (ResourceRootConfiguration resource : getRootConfigurations(dataPaths)) {
-      result.add(new MavenResourceRootDescriptor(this, resource));
+      result.add(new MavenResourceRootDescriptor(this, resource, i++));
     }
     return result;
   }

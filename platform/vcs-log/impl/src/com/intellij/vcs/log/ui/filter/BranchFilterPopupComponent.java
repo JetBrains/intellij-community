@@ -158,8 +158,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     if (getSelectedValues() == null) {
       return null;
     }
-    Collection<VcsRef> allBranches = myDataPack.getRefs().getBranches();
-    return new VcsLogBranchFilterImpl(allBranches, getSelectedValues());
+    return new VcsLogBranchFilterImpl(getSelectedValues());
   }
 
   @NotNull

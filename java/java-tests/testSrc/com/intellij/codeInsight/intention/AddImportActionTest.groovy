@@ -133,8 +133,7 @@ import java.util.Collection;
 @Target(ElementType.TYPE_USE) @interface TA { }
 
 class Test {
-    @TA
-    Collection<caret> c;
+    @TA Collection<caret> c;
 }
 '''
   }
@@ -157,8 +156,7 @@ import java.util.Collection;
 @Target(ElementType.TYPE_USE) @interface TA { }
 
 class Test {
-    @TA
-    Collection<caret> c;
+    @TA Collection<caret> c;
 }
 '''
   }

@@ -18,6 +18,8 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -119,7 +121,21 @@ public class VcsLogFilterer {
     myUI.getTable().executeWithoutRepaint(new Runnable() {
       @Override
       public void run() {
-        dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? branchFilter.getMatchingHeads() : null);
+        dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+      }
+    });
+  }
+
+  @NotNull
+  private static Collection<Integer> getMatchingHeads(@NotNull DataPack dataPack, @NotNull VcsLogBranchFilter branchFilter) {
+    final Collection<String> branchNames = new HashSet<String>(branchFilter.getBranchNames());
+    return ContainerUtil.mapNotNull(dataPack.getRefsModel().getAllRefs(), new Function<VcsRef, Integer>() {
+      @Override
+      public Integer fun(VcsRef ref) {
+        if (branchNames.contains(ref.getName())) {
+          return ref.getCommitIndex();
+        }
+        return null;
       }
     });
   }

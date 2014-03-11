@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.idea.Bombed;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+
+import java.util.Calendar;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
@@ -242,6 +245,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.MARCH, day = 14)
   public void testWrapMethodAnnotationBeforeParams() {
     // Inspired by IDEA-59536
     getSettings().getRootSettings().RIGHT_MARGIN = 90;
@@ -251,8 +255,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doClassTest(
       "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
       "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
-      "public void doSomething(int x, int y) {" +
-      "\n}"
+      "public void doSomething(int x, int y) {\n}"
     );
   }
 
@@ -398,5 +401,35 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     after = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage(loooooooooooooooooongParamName));";
 
     doMethodTest(before, after);
+  }
+
+  public void testFieldAnnotationWithoutModifier() {
+    doClassTest("@NotNull String myFoo = null;", "@NotNull\nString myFoo = null;");
+  }
+
+  public void testTypeAnnotationsInModifierList() {
+    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+
+    String prefix =
+      "import java.lang.annotation.*;\n\n" +
+      "//@formatter:off\n" +
+      "@interface A { }\n" +
+      "@Target({ElementType.TYPE_USE}) @interface TA { int value() default 0; }\n" +
+      "//@formatter:on\n\n";
+
+    doTextTest(
+      prefix + "interface C {\n" +
+      "    @TA(0)String m();\n" +
+      "    @A  @TA(1)  @TA(2)String m();\n" +
+      "    @A  public  @TA String m();\n" +
+      "}",
+
+      prefix + "interface C {\n" +
+      "    @TA(0) String m();\n\n" +
+      "    @A\n" +
+      "    @TA(1) @TA(2) String m();\n\n" +
+      "    @A\n" +
+      "    public @TA String m();\n" +
+      "}");
   }
 }
