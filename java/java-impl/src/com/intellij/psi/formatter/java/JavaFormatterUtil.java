@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -39,8 +40,7 @@ public class JavaFormatterUtil {
     JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD
   ));
 
-  private JavaFormatterUtil() {
-  }
+  private JavaFormatterUtil() { }
 
   /**
    * Allows to answer if given node wraps assignment operation.
@@ -119,4 +119,17 @@ public class JavaFormatterUtil {
            && node.textContains('\n');
   }
 
+  @NotNull
+  public static WrapType getWrapType(int wrap) {
+    switch (wrap) {
+      case CommonCodeStyleSettings.WRAP_ALWAYS:
+        return WrapType.ALWAYS;
+      case CommonCodeStyleSettings.WRAP_AS_NEEDED:
+        return WrapType.NORMAL;
+      case CommonCodeStyleSettings.DO_NOT_WRAP:
+        return WrapType.NONE;
+      default:
+        return WrapType.CHOP_DOWN_IF_LONG;
+    }
+  }
 }

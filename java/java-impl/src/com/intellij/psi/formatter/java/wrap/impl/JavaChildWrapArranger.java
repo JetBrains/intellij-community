@@ -18,9 +18,7 @@ package com.intellij.psi.formatter.java.wrap.impl;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
@@ -33,6 +31,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
+import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
+
 /**
  * Encapsulates the implementation of
  * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, Wrap, ReservedWrapsProvider)}.
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
  * @since Apr 21, 2010
  */
 public class JavaChildWrapArranger {
-
   /**
    * Provides implementation of {@link JavaWrapManager#arrangeChildWrap} method.
    *
@@ -116,7 +116,7 @@ public class JavaChildWrapArranger {
       return suggestedWrap;
     }
 
-    else if (JavaFormatterUtil.isAssignment(parent)) {
+    else if (JavaFormatterUtil.isAssignment(parent) && role != ChildRole.TYPE) {
       if (role == ChildRole.INITIALIZER_EQ) return settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE ? suggestedWrap : null;
       if (role == ChildRole.OPERATION_SIGN) return settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE ? suggestedWrap : null;
       if (role == ChildRole.INITIALIZER) return settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE ? null : suggestedWrap;
@@ -148,29 +148,44 @@ public class JavaChildWrapArranger {
       }
     }
 
-    else if (nodeType == JavaElementType.METHOD) {
-      if (role == ChildRole.THROWS_LIST) {
-        return suggestedWrap;
+    else if (parent.getPsi() instanceof PsiModifierListOwner) {
+      ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+      if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
+        ASTNode last = prev.getLastChildNode();
+        if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
+          if (isTypeAnnotation(last.getPsi())) {
+            return Wrap.createWrap(WrapType.NONE, false);
+          }
+          else {
+            return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent, child, settings)), true);
+          }
+        }
       }
-      else {
-        return null;
-      }
+
+      return null;
     }
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
-        return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
+        if (isTypeAnnotation(child.getPsi())) {
+          ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotation(prev.getPsi())) {
+            return Wrap.createWrap(WrapType.NONE, false);
+          }
+        }
+
+        return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
       }
       else if (childType == JavaTokenType.END_OF_LINE_COMMENT) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
-      ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
-      if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {
-        return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
+
+      ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+      if (prev != null && prev.getElementType() == JavaElementType.ANNOTATION) {
+        return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
       }
-      else {
-        return null;
-      }
+
+      return null;
     }
 
     else if (nodeType == JavaElementType.ASSERT_STATEMENT) {
@@ -239,5 +254,48 @@ public class JavaChildWrapArranger {
     }
 
     return suggestedWrap;
+  }
+
+  private static int getAnnotationWrapType(ASTNode parent, ASTNode child, CommonCodeStyleSettings settings) {
+    IElementType nodeType = parent.getElementType();
+
+    if (nodeType == JavaElementType.METHOD) {
+      return settings.METHOD_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.CLASS) {
+      // There is a possible case that current document state is invalid from language syntax point of view, e.g. the user starts
+      // typing field definition and re-formatting is triggered by 'auto insert javadoc' processing. Example:
+      //     class Test {
+      //         @NotNull Object
+      //     }
+      // Here '@NotNull' has a 'class' node as a parent but we want to use field annotation setting value.
+      // Hence we check if subsequent parsed info is valid.
+      for (ASTNode node = child.getTreeNext(); node != null; node = node.getTreeNext()) {
+        if (node.getElementType() == TokenType.WHITE_SPACE || node instanceof PsiTypeElement) {
+          continue;
+        }
+        if (node instanceof PsiErrorElement) {
+          return settings.FIELD_ANNOTATION_WRAP;
+        }
+      }
+      return settings.CLASS_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.FIELD) {
+      return settings.FIELD_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.PARAMETER ||
+        nodeType == JavaElementType.RECEIVER_PARAMETER ||
+        nodeType == JavaElementType.RESOURCE_VARIABLE) {
+      return settings.PARAMETER_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.LOCAL_VARIABLE) {
+      return settings.VARIABLE_ANNOTATION_WRAP;
+    }
+
+    return CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 }
