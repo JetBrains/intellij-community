@@ -44,6 +44,7 @@ public class JBLoadingPanel extends JPanel {
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
     super(new BorderLayout());
     myPanel = manager == null ? new JPanel() : new JPanel(manager);
+    myPanel.setOpaque(false);
     myDecorator = new LoadingDecorator(myPanel, parent, startDelayMs) {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {

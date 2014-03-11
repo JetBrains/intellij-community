@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -224,7 +226,13 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   @Override
   public void setGlobalScheme(EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
+    String newValue = scheme == null ? getDefaultScheme().getName() : scheme.getName();
+    EditorColorsScheme oldValue = mySchemesManager.getCurrentScheme();
+    mySchemesManager.setCurrentSchemeName(newValue);
+    if (oldValue != null && !Comparing.equal(newValue, oldValue.getName())) {
+      LafManager.getInstance().updateUI();
+      EditorFactory.getInstance().refreshAllEditors();
+    }
     fireChanges(scheme);
   }
 

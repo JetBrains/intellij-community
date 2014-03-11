@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -685,7 +686,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if(!window.isDisplayable()){
       return;
     }
-    SwingUtilities.updateComponentTreeUI(window);
+    IJSwingUtilities.updateComponentTreeUI(window);
     Window[] children=window.getOwnedWindows();
     for (Window aChildren : children) {
       updateUI(aChildren);
