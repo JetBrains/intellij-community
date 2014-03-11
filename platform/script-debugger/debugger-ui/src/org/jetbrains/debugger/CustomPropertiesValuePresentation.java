@@ -49,7 +49,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
         case STRING:
           String string = value.getValueString();
           renderer.renderStringValue(string, "\"\\", XValueNode.MAX_VALUE_LENGTH);
-          int actualStringLength = value instanceof StringValue ? ((StringValue)value).getActualLength() : string.length();
+          int actualStringLength = value instanceof StringValue ? ((StringValue)value).getLength() : string.length();
           if (actualStringLength > XValueNode.MAX_VALUE_LENGTH) {
             renderer.renderComment(XDebuggerBundle.message("node.text.ellipsis.truncated", actualStringLength));
           }
