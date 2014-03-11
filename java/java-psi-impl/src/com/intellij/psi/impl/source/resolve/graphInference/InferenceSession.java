@@ -928,7 +928,7 @@ public class InferenceSession {
     }
 
     if (varargs) {
-      PsiType sType = siteSubstitutor2.substitute(parameters1[paramsLength].getType());
+      PsiType sType = siteSubstitutor2.substitute(getVarargParameterType(true, paramsLength, parameters1));
       PsiType tType = siteSubstitutor2.substitute(getVarargParameterType(true, paramsLength, parameters2));
       session.addConstraint(new StrictSubtypingConstraint(tType, sType));
     }
@@ -939,8 +939,9 @@ public class InferenceSession {
   public static PsiType getVarargParameterType(boolean varargs, int i, PsiParameter[] parameters2) {
     if (varargs && i >= parameters2.length - 1) {
       final PsiType lastParamType = parameters2[parameters2.length - 1].getType();
-      LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-      return ((PsiEllipsisType)lastParamType).getComponentType();
+      if (lastParamType instanceof PsiEllipsisType) {
+        return ((PsiEllipsisType)lastParamType).getComponentType();
+      }
     }
     return parameters2[i].getType();
   }
