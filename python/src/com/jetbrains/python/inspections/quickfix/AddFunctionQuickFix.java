@@ -29,12 +29,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -51,16 +55,16 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class AddFunctionQuickFix  implements LocalQuickFix {
 
   private final String myIdentifier;
-  private PyFile myPyFile;
+  private final String myModuleName;
 
-  public AddFunctionQuickFix(@NotNull String identifier, PyFile module) {
+  public AddFunctionQuickFix(@NotNull String identifier, String moduleName) {
     myIdentifier = identifier;
-    myPyFile = module;
+    myModuleName = moduleName;
   }
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.NAME.add.function.$0.to.module.$1", myIdentifier, myPyFile.getName());
+    return PyBundle.message("QFIX.NAME.add.function.$0.to.module.$1", myIdentifier, myModuleName);
   }
 
   @NotNull
@@ -71,8 +75,14 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     try {
       final PsiElement problemElement = descriptor.getPsiElement();
-      sure(myPyFile);
-      sure(FileModificationService.getInstance().preparePsiElementForWrite(myPyFile));
+      if (!(problemElement instanceof PyQualifiedExpression)) return;
+      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+      if (qualifier == null) return;
+      final PyType type = TypeEvalContext.userInitiated(problemElement.getContainingFile()).getType(qualifier);
+      if (!(type instanceof PyModuleType)) return;
+      final PyFile file = ((PyModuleType)type).getModule();
+      sure(file);
+      sure(FileModificationService.getInstance().preparePsiElementForWrite(file));
       // try to at least match parameter count
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier);
@@ -106,11 +116,11 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       // else: no arglist, use empty args
-      PyFunction function = builder.buildFunction(project, LanguageLevel.forFile(myPyFile.getVirtualFile()));
+      PyFunction function = builder.buildFunction(project, LanguageLevel.forFile(file.getVirtualFile()));
 
       // add to the bottom
-      function = (PyFunction) myPyFile.add(function);
-      showTemplateBuilder(function, myPyFile);
+      function = (PyFunction) file.add(function);
+      showTemplateBuilder(function, file);
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
@@ -118,7 +128,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     }
   }
 
-  private static void showTemplateBuilder(PyFunction method, @NotNull final PyFile file) {
+  private static void showTemplateBuilder(PyFunction method, @NotNull final PsiFile file) {
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);

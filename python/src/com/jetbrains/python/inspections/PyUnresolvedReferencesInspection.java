@@ -760,7 +760,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       else if (type instanceof PyModuleType) {
         PyFile file = ((PyModuleType)type).getModule();
-        actions.add(new AddFunctionQuickFix(refText, file));
+        actions.add(new AddFunctionQuickFix(refText, file.getName()));
       }
     }
 
