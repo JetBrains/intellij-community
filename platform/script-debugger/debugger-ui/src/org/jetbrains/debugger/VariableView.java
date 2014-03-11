@@ -23,6 +23,18 @@ import java.util.regex.Pattern;
 
 public final class VariableView extends VariableViewBase implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
+  private static final XValuePresentation ARRAY_VALUE_PRESENTATION = new XValuePresentation() {
+    @Override
+    public void renderValue(@NotNull XValueTextRenderer renderer) {
+    }
+
+    @Override
+    public void renderValue(@NotNull XValue value, @NotNull XValueTextRenderer renderer) {
+      renderer.renderSpecialSymbol("Array[");
+      renderer.renderSpecialSymbol(Integer.toString(((ArrayValue)((VariableView)value).getValue()).getLength()));
+      renderer.renderSpecialSymbol("]");
+    }
+  };
 
   private final VariableContext context;
 
@@ -51,10 +63,15 @@ public final class VariableView extends VariableViewBase implements VariableCont
   }
 
   public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+    if (value instanceof ArrayValue) {
+      node.setPresentation(icon, ARRAY_VALUE_PRESENTATION, ((ArrayValue)value).getLength() > 0);
+      return;
+    }
+
     String valueString = value.getValueString();
     // only WIP reports normal description
     if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
-      node.setPresentation(icon, null, valueString, true);
+      node.setPresentation(icon, ARRAY_VALUE_PRESENTATION, true);
     }
     else {
       ObsolescentAsyncResults.consume(context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value)), node,
@@ -150,7 +167,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
         if (value instanceof StringValue) {
           StringValue stringValue = (StringValue)value;
           if (stringValue.isTruncated() || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
-            node.setFullValueEvaluator(new MyFullValueEvaluator(stringValue.getActualLength()));
+            node.setFullValueEvaluator(new MyFullValueEvaluator(stringValue.getLength()));
           }
         }
         else if (valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
@@ -172,7 +189,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    if (!(value instanceof ObjectValue)) {
+    if (!(value instanceof ObjectValue) || ((ObjectValue)value).hasProperties() == ThreeState.NO) {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
     }
