@@ -15,10 +15,16 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
+
+import java.awt.event.InputEvent;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -62,6 +68,21 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     mouse().clickAt(0, 0); // plain mouse click
     checkResultByText("<caret>some text\n" +
                       "another line");
+  }
+
+  public void testCustomShortcut() throws Exception {
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    MouseShortcut shortcut = new MouseShortcut(1, InputEvent.ALT_DOWN_MASK, 1);
+    try {
+      keymap.addShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+
+      init("<caret>text", TestFileType.TEXT);
+      mouse().alt().clickAt(0, 2);
+      checkResultByText("<caret>te<caret>xt");
+    }
+    finally {
+      keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+    }
   }
 
   public void testAltDragStartingFromWithinLine() throws Exception {
