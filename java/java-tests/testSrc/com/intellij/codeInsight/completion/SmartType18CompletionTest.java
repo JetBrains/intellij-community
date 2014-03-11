@@ -73,6 +73,14 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testInLambdaPositionSingleParam() throws Exception {
+    doTest();
+  }
+
+  public void testInLambdaPositionNameSubstitution() throws Exception {
+    doTest();
+  }
+
   public void testFilteredMethodReference() throws Exception {
     doTest();
   }

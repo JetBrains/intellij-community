@@ -385,10 +385,25 @@ public class GenerateMembersUtil {
                                            @NotNull PsiParameterList sourceParameterList,
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor, PsiElement target) {
-    PsiParameter[] parameters = sourceParameterList.getParameters();
+    final PsiParameter[] parameters = sourceParameterList.getParameters();
+    final PsiParameter[] newParameters = overriddenParameters(parameters, factory, codeStyleManager, substitutor, target);
+    for (int i = 0; i < newParameters.length; i++) {
+      final PsiParameter newParameter = newParameters[i];
+      copyOrReplaceModifierList(parameters[i], newParameter);
+      targetParameterList.add(newParameter);
+    }
+  }
+
+  public static PsiParameter[] overriddenParameters(PsiParameter[] parameters,
+                                                    @NotNull JVMElementFactory factory,
+                                                    @NotNull JavaCodeStyleManager codeStyleManager,
+                                                    @NotNull PsiSubstitutor substitutor,
+                                                    PsiElement target) {
+    PsiParameter[] result = new PsiParameter[parameters.length];
     UniqueNameGenerator generator = new UniqueNameGenerator();
 
-    for (PsiParameter parameter : parameters) {
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
       final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
       @NonNls String paramName = parameter.getName();
@@ -413,10 +428,9 @@ public class GenerateMembersUtil {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
-      final PsiParameter newParameter = factory.createParameter(paramName, substituted, target);
-      copyOrReplaceModifierList(parameter, newParameter);
-      targetParameterList.add(newParameter);
+      result[i] = factory.createParameter(paramName, substituted, target);
     }
+    return result;
   }
 
   private static void substituteThrows(@NotNull JVMElementFactory factory,
