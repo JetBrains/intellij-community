@@ -21,9 +21,14 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -67,7 +72,6 @@ public class AddFieldQuickFix implements LocalQuickFix {
   public static PsiElement appendToMethod(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList statementList = init.getStatementList();
-    assert statementList != null;
     // name of 'self' may be different for fancier styles
     PyParameter[] params = init.getParameterList().getParameters();
     String selfName = PyNames.CANONICAL_SELF;
@@ -94,21 +98,26 @@ public class AddFieldQuickFix implements LocalQuickFix {
       initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
     }
     if (initStatement != null) {
-      showTemplateBuilder(initStatement);
+      showTemplateBuilder(initStatement, cls.getContainingFile());
       return;
     }
     // somehow we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
   }
 
-  private void showTemplateBuilder(PsiElement initStatement) {
+  private void showTemplateBuilder(PsiElement initStatement, @NotNull final PsiFile file) {
     initStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
       final PyExpression assignedValue = ((PyAssignmentStatement)initStatement).getAssignedValue();
       if (assignedValue != null) {
         builder.replaceElement(assignedValue, myInitializer);
-        builder.run();
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) return;
+        final Editor editor = FileEditorManager.getInstance(file.getProject()).openTextEditor(
+                  new OpenFileDescriptor(file.getProject(), virtualFile), true);
+        if (editor == null) return;
+        builder.run(editor, false);
       }
     }
   }
@@ -140,9 +149,8 @@ public class AddFieldQuickFix implements LocalQuickFix {
 
         PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName), MessageType.INFO);
         final PyStatementList statementList = newInit.getStatementList();
-        assert statementList != null;
-        return statementList.getStatements()[0];
-        //else  // well, that can't be
+        final PyStatement[] statements = statementList.getStatements();
+        return statements.length != 0 ? statements[0] : null;
       }
     }
     return null;
