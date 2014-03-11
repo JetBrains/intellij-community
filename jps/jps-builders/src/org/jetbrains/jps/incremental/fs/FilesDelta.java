@@ -30,14 +30,17 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
 final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
 
   private final Set<String> myDeletedPaths = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
-  private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new LinkedHashMap<BuildRootDescriptor, Set<File>>());
+  private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new HashMap<BuildRootDescriptor, Set<File>>());
 
   public void save(DataOutput out) throws IOException {
     out.writeInt(myDeletedPaths.size());
