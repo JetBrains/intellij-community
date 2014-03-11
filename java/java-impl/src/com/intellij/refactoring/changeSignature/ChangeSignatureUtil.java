@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -32,16 +33,19 @@ import java.util.List;
  * @author dsl
  */
 public class ChangeSignatureUtil {
-  private ChangeSignatureUtil() {
+  private ChangeSignatureUtil() { }
+
+  public interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {
+    List<Child> getChildren(Parent parent);
   }
 
-  public static <Parent extends PsiElement, Child extends PsiElement> void synchronizeList(Parent list,
-                                                                                           final List<Child> newElements,
-                                                                                           ChildrenGenerator<Parent, Child> generator,
-                                                                                           final boolean[] shouldRemoveChild)
-    throws IncorrectOperationException {
-
-    ArrayList<Child> elementsToRemove = null;
+  public static <Parent extends PsiElement, Child extends PsiElement> void synchronizeList(
+    Parent list,
+    List<Child> newElements,
+    ChildrenGenerator<Parent, Child> generator,
+    boolean[] shouldRemoveChild) throws IncorrectOperationException
+  {
+    List<Child> elementsToRemove = null;
     List<Child> elements;
 
     int index = 0;
@@ -67,33 +71,36 @@ public class ChangeSignatureUtil {
             index--;
           }
           else {
-            assert list.isWritable() : PsiUtilBase.getVirtualFile(list);
+            assert list.isWritable() : PsiUtilCore.getVirtualFile(list);
             list.addBefore(newElement, oldElement);
             if (list.equals(newElement.getParent())) {
               newElement.delete();
             }
           }
         }
-      } else {
+      }
+      else {
         if (newElements.size() > 1 && (!elements.isEmpty() || index < newElements.size() - 1)) {
           PsiElement anchor;
           if (index == 0) {
             anchor = list.getFirstChild();
-          } else {
+          }
+          else {
             anchor = index - 1 < elements.size() ? elements.get(index - 1) : null;
           }
-          final PsiElement psi = Factory
-            .createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(list.getNode()), list.getManager())
-            .getPsi();
+          CharTable charTable = SharedImplUtil.findCharTableByTree(list.getNode());
+          PsiElement psi = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, charTable, list.getManager()).getPsi();
           if (anchor != null) {
             list.addAfter(psi, anchor);
-          } else {
+          }
+          else {
             list.add(psi);
           }
         }
       }
       index++;
     }
+
     for (int i = newElements.size(); i < elements.size(); i++) {
       Child element = elements.get(i);
       element.delete();
@@ -101,12 +108,9 @@ public class ChangeSignatureUtil {
   }
 
   public static void invokeChangeSignatureOn(PsiMethod method, Project project) {
-    final ChangeSignatureHandler handler =
-      LanguageRefactoringSupport.INSTANCE.forLanguage(method.getLanguage()).getChangeSignatureHandler();
-    handler.invoke(project, new PsiElement[]{method}, null);
-  }
-
-  public interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {
-    List<Child> getChildren(Parent parent);
+    ChangeSignatureHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(method.getLanguage()).getChangeSignatureHandler();
+    if (handler != null) {
+      handler.invoke(project, new PsiElement[]{method}, null);
+    }
   }
 }
