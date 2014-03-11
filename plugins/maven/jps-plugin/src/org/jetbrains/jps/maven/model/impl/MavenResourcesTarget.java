@@ -66,10 +66,14 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<MavenResourceRootDescriptor>();
 
+    MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
+    MavenModuleResourceConfiguration moduleConfig = projectConfig.moduleConfigurations.get(myModule.getName());
+    if (moduleConfig == null) return Collections.emptyList();
+
     int i = 0;
 
-    for (ResourceRootConfiguration resource : getRootConfigurations(dataPaths)) {
-      result.add(new MavenResourceRootDescriptor(this, resource, i++));
+    for (ResourceRootConfiguration resource : getRootConfigurations(moduleConfig)) {
+      result.add(new MavenResourceRootDescriptor(this, resource, i++, moduleConfig.overwrite));
     }
     return result;
   }

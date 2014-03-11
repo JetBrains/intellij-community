@@ -64,16 +64,22 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     Arrays.sort(roots, new Comparator<MavenResourceRootDescriptor>() {
       @Override
       public int compare(MavenResourceRootDescriptor r1, MavenResourceRootDescriptor r2) {
-        if (r1.getConfiguration().isFiltered) {
-          if (!r2.getConfiguration().isFiltered) return 1;
+        int res = r1.getIndexInPom() - r2.getIndexInPom();
 
-          return r1.getIndexInPom() - r2.getIndexInPom();
-        }
-        else {
-          if (r2.getConfiguration().isFiltered) return -1;
+        if (r1.isOverwrite()) {
+          assert r2.isOverwrite(); // 'overwrite' parameters is common for all roots in module.
 
-          return r2.getIndexInPom() - r1.getIndexInPom();
+          return res;
         }
+
+        if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
+        if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
+
+        if (!r1.getConfiguration().isFiltered) {
+          res = -res;
+        }
+
+        return res;
       }
     });
 

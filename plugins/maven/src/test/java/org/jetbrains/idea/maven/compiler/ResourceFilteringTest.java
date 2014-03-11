@@ -1107,4 +1107,77 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/a.txt", "2"); // For the filtered files last file override other files.
   }
 
+  public void testOverwriteParameter1() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <overwrite>true</overwrite>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "2");
+  }
+
+  public void testOverwriteParameter2() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <overwrite>true</overwrite>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "2");
+  }
+
 }

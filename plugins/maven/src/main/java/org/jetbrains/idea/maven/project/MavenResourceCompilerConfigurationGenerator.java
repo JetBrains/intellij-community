@@ -135,6 +135,11 @@ public class MavenResourceCompilerConfigurationGenerator {
         resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
       }
 
+      String overwrite = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "overwrite");
+      if (overwrite != null) {
+        resourceConfig.overwrite = Boolean.parseBoolean(overwrite);
+      }
+
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
