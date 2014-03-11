@@ -84,8 +84,12 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
       String text = element.getText();
       int commentStart = text.indexOf('#');
       if (commentStart != -1 && (commentStart + 1) < text.length()) {
-        if (text.charAt(commentStart+1) == '!') {
+        char charAfterDash = text.charAt(commentStart + 1);
+        if (charAfterDash == '!' && element.getTextRange().getStartOffset() == 0) {
           return; //shebang
+        }
+        if (charAfterDash == '#' || charAfterDash == ':') {
+          return;
         }
         String commentText = StringUtil.trimLeading(text.substring(commentStart + 1));
 
