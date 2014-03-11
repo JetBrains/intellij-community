@@ -342,6 +342,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
+  public void testTypeAnnotation() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
+  }
+
   private void doTest(int replaceFieldsWithGetters,
                       boolean removeUnusedParameters,
                       boolean searchForSuper,
