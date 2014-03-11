@@ -147,8 +147,14 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
       case STRING: {
         node.setPresentation(getIcon(), new XStringValuePresentation(valueString), false);
-        if (value.isTruncated() || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
-          node.setFullValueEvaluator(new MyFullValueEvaluator(value.getActualLength()));
+        if (value instanceof StringValue) {
+          StringValue stringValue = (StringValue)value;
+          if (stringValue.isTruncated() || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
+            node.setFullValueEvaluator(new MyFullValueEvaluator(stringValue.getActualLength()));
+          }
+        }
+        else if (valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
+          node.setFullValueEvaluator(new MyFullValueEvaluator(valueString.length()));
         }
       }
       break;
@@ -384,13 +390,13 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
     @Override
     public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-      if (!value.isTruncated()) {
+      if (!(value instanceof StringValue) || ((StringValue)value).isTruncated()) {
         callback.evaluated(value.getValueString());
         return;
       }
 
       final AtomicBoolean evaluated = new AtomicBoolean();
-      value.reloadHeavyValue().doWhenDone(new Runnable() {
+      ((StringValue)value).reloadHeavyValue().doWhenDone(new Runnable() {
         @Override
         public void run() {
           if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
