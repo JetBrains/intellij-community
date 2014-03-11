@@ -95,4 +95,10 @@ public interface VcsLogProvider {
   @NotNull
   Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
 
+  /**
+   * Return true if the VCS supports some mode in which commits can be received faster, but unordered. <br/>
+   * In this case the VCS Log will order commits manually
+   */
+  boolean supportsFastUnorderedCommits();
+
 }

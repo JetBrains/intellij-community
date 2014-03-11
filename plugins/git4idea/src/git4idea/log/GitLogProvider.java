@@ -259,6 +259,11 @@ public class GitLogProvider implements VcsLogProvider {
     return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
   }
 
+  @Override
+  public boolean supportsFastUnorderedCommits() {
+    return true;
+  }
+
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
   }
