@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.ObsolescentAsyncResults;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation;
@@ -46,13 +47,13 @@ public final class VariableView extends VariableViewBase implements VariableCont
   }
 
   public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
-    node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), true);
+    node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), value.hasProperties() != ThreeState.NO);
   }
 
   public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
     String valueString = value.getValueString();
     // only WIP reports normal description
-    if (valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
+    if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
       node.setPresentation(icon, null, valueString, true);
     }
     else {
