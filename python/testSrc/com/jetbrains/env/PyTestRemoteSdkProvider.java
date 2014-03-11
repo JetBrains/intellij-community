@@ -11,7 +11,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteCredentialsHolder;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
@@ -81,7 +80,7 @@ public class PyTestRemoteSdkProvider {
     }
   }
 
-  private static RemoteCredentialsHolder getTestSdkCredentials(String path) {
+  private static RemoteCredentialsHolder getTestSdkCredentials() {
     RemoteCredentialsHolder data = new RemoteCredentialsHolder();
     data.setHost("localhost");
     data.setPort(22);
@@ -92,7 +91,7 @@ public class PyTestRemoteSdkProvider {
 
   private static PyRemoteSdkAdditionalData createRemoteSdkData(final String path) throws IOException {
     PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(path);
-    data.setSshCredentials(getTestSdkCredentials(path));
+    data.setSshCredentials(getTestSdkCredentials());
     data.setInterpreterPath(path);
     try {
       data.setHelpersPath(getTempHelpersPath(path));
