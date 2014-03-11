@@ -764,14 +764,22 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return false;
     }
 
+    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
+    final boolean isExact = isExact();
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && isExact) {
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (candidateProperties != null && !InferenceSession.isPertinentToApplicability(this, candidateProperties.getMethod())) {
+        return true;
+      }
+    }
+
     left = FunctionalInterfaceParameterizationUtil.getGroundTargetType(left);
     if (!isPotentiallyCompatible(left)) {
       return false;
     }
 
-    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      if (!isExact()) {
+      if (!isExact) {
         return true;
       }
     }

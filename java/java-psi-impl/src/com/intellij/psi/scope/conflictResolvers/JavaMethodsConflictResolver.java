@@ -351,7 +351,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static boolean areTypeParametersAgree(CandidateInfo info) {
-    return ((MethodCandidateInfo)info).isApplicable();
+    return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   private static boolean checkParametersNumber(final List<CandidateInfo> conflicts,
