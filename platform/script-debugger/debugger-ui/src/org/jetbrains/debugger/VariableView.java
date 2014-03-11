@@ -71,7 +71,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
     String valueString = value.getValueString();
     // only WIP reports normal description
     if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
-      node.setPresentation(icon, ARRAY_VALUE_PRESENTATION, true);
+      node.setPresentation(icon, null, valueString, true);
     }
     else {
       ObsolescentAsyncResults.consume(context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value)), node,
@@ -194,11 +194,11 @@ public final class VariableView extends VariableViewBase implements VariableCont
       return;
     }
 
-    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<ObjectPropertyData, XCompositeNode>() {
+    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
       @Override
-      public void consume(ObjectPropertyData data, XCompositeNode node) {
+      public void consume(List<? extends Variable> variables, XCompositeNode node) {
         if (value.getType() == ValueType.ARRAY) {
-          computeArrayRanges(data.getProperties(), node);
+          computeArrayRanges(variables, node);
           return;
         }
 
@@ -209,7 +209,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
         else {
           maxPropertiesToShow = XCompositeNode.MAX_CHILDREN_TO_SHOW;
           List<Variable> list = remainingChildren;
-          if (list != null && childrenModificationStamp == data.getCacheState()) {
+          if (list != null && childrenModificationStamp == ((ObjectValue)value).getCacheState()) {
             int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
             boolean isLast = to == list.size();
             node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, VariableView.this), isLast);
@@ -221,10 +221,10 @@ public final class VariableView extends VariableViewBase implements VariableCont
           }
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(data.getProperties(), node, VariableView.this, maxPropertiesToShow, value.getType() != ValueType.FUNCTION);
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, value.getType() != ValueType.FUNCTION);
         if (remainingChildren != null) {
           remainingChildrenOffset = maxPropertiesToShow;
-          childrenModificationStamp = data.getCacheState();
+          childrenModificationStamp = ((ObjectValue)value).getCacheState();
         }
 
         if (value.getType() == ValueType.FUNCTION) {
