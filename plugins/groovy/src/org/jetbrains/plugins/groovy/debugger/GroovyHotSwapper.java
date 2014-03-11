@@ -41,7 +41,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
 
-  private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-core-[^/\\\\]+\\.jar");
+  private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-[^/\\\\]+\\.jar");
   
   private static boolean containsGroovyClasses(final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
