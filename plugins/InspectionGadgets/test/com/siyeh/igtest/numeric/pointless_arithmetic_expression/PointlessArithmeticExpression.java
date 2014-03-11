@@ -110,4 +110,6 @@ class Main {
     final Main main = new Main(12);
     return (CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8));
   }
+
+  int one = 5/5;
 }
