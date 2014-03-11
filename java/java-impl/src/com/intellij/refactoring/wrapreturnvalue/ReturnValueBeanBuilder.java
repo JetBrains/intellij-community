@@ -96,12 +96,12 @@ class ReturnValueBeanBuilder {
   }
 
   private void outputField(StringBuilder out) {
-    final String typeText = myValueType.getCanonicalText();
+    final String typeText = myValueType.getCanonicalText(false);
     out.append('\t' + "private final ").append(typeText).append(' ').append(getFieldName("value")).append(";");
   }
 
   private void outputConstructor(StringBuilder out) {
-    final String typeText = myValueType.getCanonicalText();
+    final String typeText = myValueType.getCanonicalText(true);
     final String name = "value";
     final String parameterName = JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
     final String fieldName = getFieldName(name);
@@ -119,7 +119,7 @@ class ReturnValueBeanBuilder {
   }
 
   private void outputGetter(StringBuilder out) {
-    final String typeText = myValueType.getCanonicalText();
+    final String typeText = myValueType.getCanonicalText(true);
     final String name = "value";
     final String capitalizedName = StringUtil.capitalize(name);
     final String fieldName = getFieldName(name);
