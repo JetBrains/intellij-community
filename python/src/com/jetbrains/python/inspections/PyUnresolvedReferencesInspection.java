@@ -506,7 +506,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         description = ((PsiReferenceEx)reference).getUnresolvedDescription();
       }
       if (description == null) {
-        boolean marked_qualified = false;
+        boolean markedQualified = false;
         if (element instanceof PyQualifiedExpression) {
           // TODO: Add __qualname__ for Python 3.3 to the skeleton of <class 'object'>, introduce a pseudo-class skeleton for
           // <class 'function'>
@@ -534,16 +534,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 else {
                   description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
                 }
-                marked_qualified = true;
+                markedQualified = true;
               }
               else {
                 description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
-                marked_qualified = true;
+                markedQualified = true;
               }
             }
           }
         }
-        if (!marked_qualified) {
+        if (!markedQualified) {
           description = PyBundle.message("INSP.unresolved.ref.$0", refText);
 
           // look in other imported modules for this whole name
