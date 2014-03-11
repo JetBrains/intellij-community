@@ -24,9 +24,9 @@ public class VariablesGroup extends XValueGroup {
     this.variableContext = variableContext;
   }
 
-  public static VariablesGroup createArrayRangeGroup(int from, int to, List<Variable> variables, VariableContext variableContext) {
-    String name = "[" + variables.get(from).getName() + " \u2026 " + variables.get(to - 1).getName() + "]";
-    return new VariablesGroup(from, to, variables, variableContext, name);
+  public static VariablesGroup createArrayRangeGroup(int start, int end, List<Variable> variables, VariableContext variableContext) {
+    String name = "[" + variables.get(start).getName() + " \u2026 " + variables.get(end - 1).getName() + "]";
+    return new VariablesGroup(start, end, variables, variableContext, name);
   }
 
   @Override

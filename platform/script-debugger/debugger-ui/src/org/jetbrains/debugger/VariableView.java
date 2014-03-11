@@ -198,6 +198,11 @@ public final class VariableView extends VariableViewBase implements VariableCont
     ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
       @Override
       public void consume(List<? extends Variable> variables, XCompositeNode node) {
+        if (value instanceof ArrayValue) {
+          // todo arrays could have not only indexes values
+          return;
+        }
+
         if (value.getType() == ValueType.ARRAY) {
           computeArrayRanges(variables, node);
           return;
@@ -234,9 +239,31 @@ public final class VariableView extends VariableViewBase implements VariableCont
         }
       }
     });
+
+    if (value instanceof ArrayValue) {
+      ObsolescentAsyncResults.consume(((ArrayValue)value).getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+        @Override
+        public void consume(List<Variable> variables, XCompositeNode node) {
+          computeIndexedValuesRanges(variables, node);
+        }
+      });
+    }
   }
 
-  private void computeArrayRanges(List<? extends Variable> properties, XCompositeNode node) {
+  private void computeIndexedValuesRanges(@NotNull List<Variable> variables, @NotNull XCompositeNode node) {
+    int totalLength = variables.size();
+    int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
+    if (totalLength <= bucketSize) {
+      node.addChildren(Variables.createVariablesList(variables, this), true);
+      return;
+    }
+
+    XValueChildrenList groupList = new XValueChildrenList();
+    addGroups(variables, groupList, 0, totalLength, bucketSize);
+    node.addChildren(groupList, true);
+  }
+
+  private void computeArrayRanges(@NotNull List<? extends Variable> properties, @NotNull XCompositeNode node) {
     List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;

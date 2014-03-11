@@ -140,7 +140,7 @@ public final class Variables {
     });
   }
 
-  public static XValueChildrenList createVariablesList(List<Variable> variables, VariableContext variableContext) {
+  public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, @NotNull VariableContext variableContext) {
     return createVariablesList(variables, 0, variables.size(), variableContext);
   }
 
