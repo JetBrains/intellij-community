@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -87,15 +88,14 @@ public class HgRegularUpdater implements HgUpdater {
 //    }
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repoRoot);
-    int pullResult = pull(repoRoot, indicator, shouldRebase());
-    if (pullResult == HgPullCommand.ERROR) {
+    HgCommandExitCode pullResult = pull(repoRoot, indicator, shouldRebase());
+    if (pullResult == HgCommandExitCode.ERROR) {
       return false;
     }
 
-    HgRevisionNumber paretnAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repoRoot);
-
-    if (pullResult == HgPullCommand.SUCCESS) {
-      addUpdatedFiles(repoRoot, updatedFiles, parentBeforeUpdate, paretnAfterUpdate);
+    if (pullResult == HgCommandExitCode.SUCCESS) {
+      HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repoRoot);
+      addUpdatedFiles(repoRoot, updatedFiles, parentBeforeUpdate, parentAfterUpdate);
       return true;
     }
 
@@ -208,14 +208,14 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void processRebase(final UpdatedFiles updatedFiles) throws VcsException {
-
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
     HgCommandResult result;
     do {
       resolvePossibleConflicts(updatedFiles);
-      if (!HgConflictResolver.findConflicts(project, updatedFiles, repoRoot).isEmpty()) {
+      if (repository == null || !HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
         return;
       }
-      HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repoRoot);
+      HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
         new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
@@ -240,7 +240,7 @@ public class HgRegularUpdater implements HgUpdater {
     return statusCommand.execute(repoRoot);
   }
 
-  private int pull(VirtualFile repo, ProgressIndicator indicator, boolean isRebase)
+  private HgCommandExitCode pull(VirtualFile repo, ProgressIndicator indicator, boolean isRebase)
     throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);

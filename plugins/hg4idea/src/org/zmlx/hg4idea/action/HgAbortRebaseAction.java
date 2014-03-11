@@ -38,11 +38,12 @@ public class HgAbortRebaseAction extends HgProcessRebaseAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (selectedRepo != null) {
-          HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo.getRoot());
+          HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.abortRebase();
           if (HgErrorUtil.isAbort(result)) {
             new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't abort rebasing");
           }
+          markDirtyAndHandleErrors(project, selectedRepo.getRoot());
         }
       }
     }.queue();
