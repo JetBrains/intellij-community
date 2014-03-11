@@ -846,4 +846,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.String>", null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Collection<java.lang.String>", null));
   }
+
+  public void testTypeAnno() {
+    doTestFieldType("list", "Test",
+                    myFactory.createTypeFromText("java.util.ArrayList<java.lang.@TA Integer>", null),
+                    myFactory.createTypeFromText("java.util.Collection<java.lang.@TA Integer>", null));
+  }
 }
