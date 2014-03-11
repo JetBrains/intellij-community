@@ -777,11 +777,7 @@ public final class EditorUtil {
   }
 
   public static void reinitSettings() {
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor instanceof EditorEx) {
-        ((EditorEx)editor).reinitSettings();
-      }
-    }
+    EditorFactory.getInstance().refreshAllEditors();
   }
 
   @NotNull
