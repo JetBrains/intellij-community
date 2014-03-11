@@ -17,8 +17,8 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -26,6 +26,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -45,7 +46,6 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercent
  * @author Alexey.Ivanov
  */
 public class PyStringFormatInspection extends PyInspection {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.inspections.PyStringFormatInspection");
 
   @Nls
   @NotNull
@@ -110,7 +110,10 @@ public class PyStringFormatInspection extends PyInspection {
             PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)binaryExpression.getLeftExpression();
             if (parenthesizedExpression.getContainedExpression() instanceof PyTupleExpression) {
               PyExpression[] tupleElements = ((PyTupleExpression)parenthesizedExpression.getContainedExpression()).getElements();
-              return ((PyNumericLiteralExpression)((PyBinaryExpression)rightExpression).getRightExpression()).getBigIntegerValue().intValue() * tupleElements.length;
+              final PyExpression expression = ((PyBinaryExpression)rightExpression).getRightExpression();
+              if (expression != null) {
+                return ((PyNumericLiteralExpression)expression).getBigIntegerValue().intValue() * tupleElements.length;
+              }
             }
           }
         }
@@ -150,11 +153,8 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyCallExpression) {
           final Callable callable = ((PyCallExpression)rightExpression).resolveCalleeFunction(resolveContext);
           // TODO: Switch to Callable.getCallType()
-          if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
+          if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST(callable)) {
             PyStatementList statementList = ((PyFunction)callable).getStatementList();
-            if (statementList == null) {
-              return -1;
-            }
             PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
             int expressionsSize = -1;
             for (PyReturnStatement returnStatement : returnStatements) {
@@ -272,7 +272,7 @@ public class PyStringFormatInspection extends PyInspection {
           additionalExpressions = new HashMap<PyExpression,PyExpression>();
           pyElement = rightExpression;
         }
-
+        if (pyElement == null) return 0;
         final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)pyElement).getElements();
         if (myUsedMappingKeys.isEmpty()) {
           if (myExpectedArguments > 0) {
@@ -323,6 +323,11 @@ public class PyStringFormatInspection extends PyInspection {
           }
         }
         return (expressions.length + additionalExpressions.size());
+      }
+
+      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message, @NotNull LocalQuickFix quickFix) {
+        myProblemRegister = true;
+        myVisitor.registerProblem(problemTarget, message, quickFix);
       }
 
       private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {
@@ -385,7 +390,8 @@ public class PyStringFormatInspection extends PyInspection {
             myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(chunk.getConversionType()));
             continue;
           }
-          registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"));
+          registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"), new PyAddSpecifierToFormatQuickFix());
+          return;
         }
       }
 

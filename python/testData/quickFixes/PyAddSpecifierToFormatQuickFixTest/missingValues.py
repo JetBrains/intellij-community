@@ -1,0 +1,1 @@
+a = <warning descr="Format specifier character missing">"% tes<caret>t %"</warning> % "x"

@@ -181,10 +181,7 @@ public class PyStringFormatParser {
       final String group = matcher.group();
       final int start = matcher.start();
       final int end = matcher.end();
-      if ("{{".equals(group)) {
-        results.add(new ConstantChunk(start, end));
-      }
-      else if ("}}".equals(group)) {
+      if ("{{".equals(group) || "}}".equals(group)) {
         results.add(new ConstantChunk(start, end));
       }
       else if (group.startsWith("{") && group.endsWith("}")) {
@@ -303,6 +300,7 @@ public class PyStringFormatParser {
     return results;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
     final ArrayList<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
@@ -314,6 +312,7 @@ public class PyStringFormatParser {
     return result;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
     final Map<String, SubstitutionChunk> result = new HashMap<String, SubstitutionChunk>();
