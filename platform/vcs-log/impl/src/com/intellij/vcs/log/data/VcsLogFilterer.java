@@ -2,11 +2,14 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -19,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -121,7 +123,18 @@ public class VcsLogFilterer {
     myUI.getTable().executeWithoutRepaint(new Runnable() {
       @Override
       public void run() {
-        dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+        try {
+          dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+        }
+        catch (InvalidRequestException e) {
+          if (!myLogDataHolder.isFullLogShowing()) {
+            myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
+            throw new ProcessCanceledException();
+          }
+          else {
+            throw e;
+          }
+        }
       }
     });
   }

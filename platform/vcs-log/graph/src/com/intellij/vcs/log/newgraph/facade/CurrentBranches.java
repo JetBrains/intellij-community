@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcs.log.InvalidRequestException;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
@@ -54,7 +55,9 @@ public class CurrentBranches {
       if (heads.contains(myPermanentGraph.getHashIndex(i)))
         startedNodes.add(i);
     }
-    assert !startedNodes.isEmpty();
+    if (startedNodes.size() != heads.size() || heads.isEmpty()) {
+      throw new InvalidRequestException("Heads size is invalid! startedNodes " + startedNodes + "; heads: " + heads);
+    }
     selectAllVisibleNodes(startedNodes);
   }
 
