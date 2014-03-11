@@ -133,6 +133,7 @@ public abstract class PythonRemoteInterpreterManager {
     newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath());
   }
 
+  @NotNull
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
                                                     @NotNull PyRemoteSdkAdditionalDataBase data,
                                                     @Nullable PathMappingSettings mappingSettings);
