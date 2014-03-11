@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,5 +47,11 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   @Override
   public String getValueString() {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public ThreeState hasProperties() {
+    return ThreeState.UNSURE;
   }
 }
