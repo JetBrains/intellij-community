@@ -96,6 +96,11 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testDiamondsInsideMethodCall() throws Exception {
+    configureByFile("/" + getTestName(false) + ".java");
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   private void doTest() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
