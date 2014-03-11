@@ -14,7 +14,7 @@ public interface RemoteConnector {
   @NotNull
   String getName();
 
-  @Nullable
+  @NotNull
   RemoteConnectionType getType();
 
   void produceRemoteCredentials(Consumer<RemoteCredentials> remoteCredentialsConsumer);
