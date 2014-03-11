@@ -15,11 +15,8 @@
  */
 package git4idea.test;
 
-import com.intellij.notification.Notification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TestVcsNotifier;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +24,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 
 import java.io.File;
@@ -40,7 +36,6 @@ import static com.intellij.openapi.vcs.VcsTestUtil.createDir;
 import static com.intellij.openapi.vcs.VcsTestUtil.createFile;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
-import static junit.framework.TestCase.assertEquals;
 
 public class GitTestUtil {
 
@@ -109,29 +104,6 @@ public class GitTestUtil {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
-  }
-
-  public static void assertNotificationShown(@NotNull Project project, @Nullable Notification expected) {
-    if (expected != null) {
-      Notification actualNotification =
-        ((TestVcsNotifier)VcsNotifier.getInstance(project)).getLastNotification();
-      assertNotNull("No notification was shown", actualNotification);
-      assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
-      assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
-      assertEquals("Notification has wrong content", adjustTestContent(expected.getContent()), actualNotification.getContent());
-    }
-  }
-
-  // we allow more spaces and line breaks in tests to make them more readable.
-  // After all, notifications display html, so all line breaks and extra spaces are ignored.
-  private static String adjustTestContent(@NotNull String s) {
-    StringBuilder res = new StringBuilder();
-    String[] splits = s.split("\n");
-    for (String split : splits) {
-      res.append(split.trim());
-    }
-
-    return res.toString();
   }
 
   /**
