@@ -92,8 +92,7 @@ public class DjangoPathTest extends PyEnvTestCase {
         try {
           final PyPackage django = ((PyPackageManagerImpl)PyPackageManager.getInstance(config.getSdk())).findPackage("django");
           if (django != null) {
-            final List<String> version = StringUtil.split(django.getVersion(), ".");
-            if (Integer.parseInt(version.get(1)) >= 6)
+            if (django.isVersionAtLeast(1,6))
               target = "mysite.tests.SimpleTest";
           }
         }
