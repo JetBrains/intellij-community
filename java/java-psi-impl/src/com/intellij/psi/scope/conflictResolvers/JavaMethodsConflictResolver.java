@@ -579,12 +579,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && myArgumentsList instanceof PsiExpressionList && (typeParameters1.length == 0 || typeParameters2.length == 0)) {
         boolean toCompareFunctional = false;
-        for (int i = 0; i < getActualParametersLength(); i++) {
-          if (types1.length > 0 && LambdaUtil.isFunctionalType(types1[Math.min(i, types1.length - 1)]) &&
-              types2.length > 0 && LambdaUtil.isFunctionalType(types2[Math.min(i, types2.length - 1)])) {
-            types1AtSite[Math.min(i, types1.length - 1)] = PsiType.NULL;
-            types2AtSite[Math.min(i, types2.length - 1)] = PsiType.NULL;
-            toCompareFunctional = true;
+        if (types1.length > 0 && types2.length > 0) {
+          for (int i = 0; i < getActualParametersLength(); i++) {
+            final PsiType type1 = types1[Math.min(i, types1.length - 1)];
+            final PsiType type2 = types2[Math.min(i, types2.length - 1)];
+            //from 15.12.2.5 Choosing the Most Specific Method
+            //In addition, a functional interface type S is more specific than a functional interface type T for an expression exp 
+            // if T is not a subtype of S and one of the following conditions apply.
+            if (LambdaUtil.isFunctionalType(type1) && !type1.isAssignableFrom(type2) &&
+                LambdaUtil.isFunctionalType(type2) && !type2.isAssignableFrom(type1)) {
+              types1AtSite[Math.min(i, types1.length - 1)] = PsiType.NULL;
+              types2AtSite[Math.min(i, types2.length - 1)] = PsiType.NULL;
+              toCompareFunctional = true;
+            }
           }
         }
 
@@ -597,8 +604,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           if (applicable12ignoreFunctionalType || applicable21ignoreFunctionalType) {
             Specifics specifics = null;
             for (int i = 0; i < getActualParametersLength(); i++) {
-              if (types1.length > 0 && types1AtSite[Math.min(i, types1.length - 1)] == PsiType.NULL && 
-                  types2.length > 0 && types2AtSite[Math.min(i, types2.length - 1)] == PsiType.NULL) {
+              if (types1AtSite[Math.min(i, types1.length - 1)] == PsiType.NULL && 
+                  types2AtSite[Math.min(i, types2.length - 1)] == PsiType.NULL) {
                 Specifics specific = isFunctionalTypeMoreSpecific(info1, info2, ((PsiExpressionList)myArgumentsList).getExpressions()[i], i);
                 if (specific == Specifics.NEITHER) {
                   specifics = Specifics.NEITHER;
