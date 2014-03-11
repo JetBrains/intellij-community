@@ -29,7 +29,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
-public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs<?>> {
+public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
 
   protected final @NotNull Project myProject;
   protected final @NotNull VcsT myVcs;
