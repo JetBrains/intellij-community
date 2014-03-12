@@ -114,9 +114,9 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
 
     myTerminateSemaphore = new Semaphore(0);
     
-    ExecutionResult result = new WriteAction<ExecutionResult>() {
+    new WriteAction<ExecutionResult>() {
       @Override
-      protected void run(Result<ExecutionResult> result) throws Throwable {
+      protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
         final ExecutionResult res =
           pyState.execute(executor, PyDebugRunner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
