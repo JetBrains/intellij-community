@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
         else {
-          Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
       }
       return;
@@ -239,7 +239,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
         else {
-          Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(),
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(),
                                      Messages.getErrorIcon());
         }
       } finally {
