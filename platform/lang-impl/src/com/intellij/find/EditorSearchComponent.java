@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -32,6 +34,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -61,7 +64,8 @@ import java.util.regex.Pattern;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchComponent extends EditorHeaderComponent implements DataProvider, SelectionListener, SearchResults.SearchResultsListener {
+public class EditorSearchComponent extends EditorHeaderComponent implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
+                                                                            Disposable, UISettingsListener {
 
   private JLabel myMatchInfoLabel;
   private LinkLabel myClickToHighlightLabel;
@@ -270,6 +274,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       initLivePreview();
     }
+    UISettings.getInstance().addUISettingsListener(this, this);
   }
 
   private void configureLeadPanel() {
@@ -818,6 +823,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       myReplaceUndo.dispose();
     }
     myEditor.setHeaderComponent(null);
+    Disposer.dispose(this);
   }
 
   @Override
@@ -968,5 +974,15 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   public void clearUndoInTextFields() {
     myReplaceUndo.disable();
     mySearchUndo.disable();
+  }
+
+  @Override
+  public void dispose() {
+    UISettings.getInstance().removeUISettingsListener(this);
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    close();
   }
 }

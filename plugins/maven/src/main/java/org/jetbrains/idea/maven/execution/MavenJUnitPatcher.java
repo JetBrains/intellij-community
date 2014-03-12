@@ -56,7 +56,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
           path = MavenPropertyResolver.resolve(path, domModel);
         }
 
-        javaParameters.getClassPath().add(path);
+        javaParameters.getClassPath().add(resolveSurefireProperties(path));
       }
     }
 
@@ -66,7 +66,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         String propertyName = element.getName();
 
         if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
-          javaParameters.getVMParametersList().addProperty(propertyName, element.getValue());
+          javaParameters.getVMParametersList().addProperty(propertyName, resolveSurefireProperties(element.getValue()));
         }
       }
     }
@@ -77,7 +77,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         String variableName = element.getName();
 
         if (javaParameters.getEnv() == null || !javaParameters.getEnv().containsKey(variableName)) {
-          javaParameters.addEnv(variableName, element.getValue());
+          javaParameters.addEnv(variableName, resolveSurefireProperties(element.getValue()));
         }
       }
     }
@@ -86,9 +86,13 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (argLine != null && isEnabled("argLine")) {
       String value = argLine.getTextTrim();
       if (StringUtil.isNotEmpty(value)) {
-        javaParameters.getVMParametersList().addParametersString(value);
+        javaParameters.getVMParametersList().addParametersString(resolveSurefireProperties(value));
       }
     }
+  }
+
+  private static String resolveSurefireProperties(String value) {
+    return value.replaceAll("\\$\\{surefire\\.(forkNumber|threadNumber)\\}", "1");
   }
 
   private static boolean isEnabled(String s) {
