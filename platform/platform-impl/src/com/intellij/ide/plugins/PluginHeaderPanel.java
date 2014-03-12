@@ -89,8 +89,6 @@ public class PluginHeaderPanel {
     final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId());
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
-
-
       myRating.setRate(node.getRating());
       myDownloads.setText(node.getDownloads() + " downloads");
       myVersion.setText(" ver " + node.getVersion());
@@ -110,6 +108,11 @@ public class PluginHeaderPanel {
         myDownloadsPanel.setVisible(false);
         myUpdated.setVisible(false);
       }
+
+      final IdeaPluginDescriptor installed = PluginManager.getPlugin(plugin.getPluginId());
+       if ((PluginManagerColumnInfo.isDownloaded(node)) || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
+         myActionId = ACTION_ID.RESTART;
+       }
     } else {
       myActionId = null;
       myVersionInfoPanel.remove(myUpdated);
