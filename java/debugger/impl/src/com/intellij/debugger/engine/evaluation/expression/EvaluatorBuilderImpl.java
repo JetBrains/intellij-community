@@ -59,7 +59,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public static ExpressionEvaluator build(final TextWithImports text, final PsiElement contextElement, final SourcePosition position) throws EvaluateException {
+  public static ExpressionEvaluator build(final TextWithImports text, @Nullable PsiElement contextElement, final SourcePosition position) throws EvaluateException {
     if (contextElement == null) {
       throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
     }
@@ -68,17 +68,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     CodeFragmentFactory factory = DebuggerEditorImpl.findAppropriateFactory(text, contextElement);
     PsiCodeFragment codeFragment = new CodeFragmentFactoryContextWrapper(factory).createCodeFragment(text, contextElement, project);
-    if(codeFragment == null) {
+    if (codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
     DebuggerUtils.checkSyntax(codeFragment);
 
-    EvaluatorBuilder evaluatorBuilder = factory.getEvaluatorBuilder();
-
-    return evaluatorBuilder.build(codeFragment, position);
+    return factory.getEvaluatorBuilder().build(codeFragment, position);
   }
 
+  @Override
   public ExpressionEvaluator build(final PsiElement codeFragment, final SourcePosition position) throws EvaluateException {
     return new Builder(position).buildElement(codeFragment);
   }
@@ -339,7 +338,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                                                    @NotNull PsiType rType,
                                                                    @NotNull IElementType operation,
                                                                    @NotNull PsiType expressionExpectedType) {
-      // handle unboxing if neccesary
+      // handle unboxing if necessary
       if (isUnboxingInBinaryExpressionApplicable(lType, rType, operation)) {
         if (rType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(rType.getCanonicalText())) {
           rResult = new UnBoxingEvaluator(rResult);
@@ -995,12 +994,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     /**
      * Handles unboxing and numeric promotion issues for
-     * - array diumention expressions
+     * - array dimension expressions
      * - array index expression
      * - unary +, -, and ~ operations
      * @param operandExpressionType
-     * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with neccesary unboxing and type-casting evaluators to make returning value
-     * sutable for mentioned contexts
+     * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with necessary unboxing and type-casting evaluators to make returning value
+     * suitable for mentioned contexts
      */
     private static Evaluator handleUnaryNumericPromotion(final PsiType operandExpressionType, Evaluator operandEvaluator) {
       final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(operandExpressionType);

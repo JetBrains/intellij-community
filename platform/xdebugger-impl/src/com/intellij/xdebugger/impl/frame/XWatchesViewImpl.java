@@ -111,7 +111,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
     DnDManager.getInstance().unregisterTarget(this, myTreePanel.getTree());
   }
 
-  private void executeAction(final String watch) {
+  private void executeAction(@NotNull String watch) {
     AnAction action = ActionManager.getInstance().getAction(watch);
     Presentation presentation = action.getTemplatePresentation().clone();
     DataContext context = DataManager.getInstance().getDataContext(myTreePanel.getTree());
