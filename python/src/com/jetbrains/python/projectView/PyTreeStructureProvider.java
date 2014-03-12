@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -70,6 +71,9 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiDirectoryNode) {
           PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
+          if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+            continue;
+          }
           PsiDirectory dirParent = directory.getParent();
           if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
             continue;
