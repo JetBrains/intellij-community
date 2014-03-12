@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.FunctionValue;
 
 public interface ScriptManager {
+  String VM_SCHEME = "vm";
+
   @NotNull
   AsyncResult<String> getSource(@NotNull Script script);
 
