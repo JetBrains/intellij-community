@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyReplaceTupleWithListQuickFix;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -64,7 +65,7 @@ public class PyTupleItemAssignmentInspection extends PyInspection {
             PyExpression expression = (PyExpression)element;
             PyType type = myTypeEvalContext.getType(expression);
             if (type instanceof PyTupleType) {
-              registerProblem(node, PyBundle.message("INSP.tuples.never.assign.items")); 
+              registerProblem(node, PyBundle.message("INSP.tuples.never.assign.items"), new PyReplaceTupleWithListQuickFix());
             }
           }
         }
