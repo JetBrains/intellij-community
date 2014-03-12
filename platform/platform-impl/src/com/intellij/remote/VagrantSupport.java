@@ -29,12 +29,10 @@ import java.util.Collection;
  * @author traff
  */
 public abstract class VagrantSupport {
+  @Nullable
   public static VagrantSupport getInstance() {
     return ServiceManager.getService(VagrantSupport.class);
   }
-  
-  @Nullable
-  public abstract Pair<String, String> getVagrantInstanceParameters(@NotNull Project project);
 
   @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
