@@ -378,6 +378,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
+      setBorder(null);
       applyHighlighters(rendererComponent, row, isSelected);
       return rendererComponent;
     }

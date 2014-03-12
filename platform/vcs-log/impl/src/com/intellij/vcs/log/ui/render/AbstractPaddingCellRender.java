@@ -69,6 +69,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
     }
     int textPadding = graphPadding + calcRefsPadding(myRefs);
 
+    setBorder(null);
     append("");
     appendFixedTextFragmentWidth(textPadding);
     myGraphTable.applyHighlighters(this, row, isSelected);
