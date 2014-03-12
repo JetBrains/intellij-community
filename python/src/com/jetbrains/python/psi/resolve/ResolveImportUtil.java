@@ -132,7 +132,7 @@ public class ResolveImportUtil {
         throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
       }
       if (candidate instanceof PsiDirectory) {
-        candidate = PyUtil.getPackageElement((PsiDirectory)candidate);
+        candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
       PsiElement result = resolveChild(candidate, name, file, false, true);
       if (result != null) {
@@ -326,7 +326,7 @@ public class ResolveImportUtil {
     if (referencedName == null) return null;
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir))) {
+    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
       return subdir;
     }
 
@@ -358,7 +358,7 @@ public class ResolveImportUtil {
     ResolveResultList ret = new ResolveResultList();
     for (PsiElement target : targets) {
       if (target instanceof PsiDirectory) {
-        target = PyUtil.getPackageElement((PsiDirectory)target);
+        target = PyUtil.getPackageElement((PsiDirectory)target, null);
       }
       if (target != null) {   // Ignore non-package dirs, worthless
         int rate = RatedResolveResult.RATE_HIGH;

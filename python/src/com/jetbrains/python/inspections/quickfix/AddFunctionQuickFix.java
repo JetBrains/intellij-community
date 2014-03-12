@@ -116,7 +116,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       // else: no arglist, use empty args
-      PyFunction function = builder.buildFunction(project, LanguageLevel.forFile(file.getVirtualFile()));
+      PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
 
       // add to the bottom
       function = (PyFunction) file.add(function);
