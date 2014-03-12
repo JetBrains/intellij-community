@@ -39,7 +39,7 @@ public class GraphFacadeImpl implements GraphFacade {
   public static GraphFacadeImpl newInstance(@NotNull List<? extends GraphCommit> commits,
                                             @NotNull Set<Integer> branchCommitHashIndexes,
                                             @NotNull final GraphColorManager colorManager) {
-    if (commits.size() > 1001 && false)
+    if (commits.size() > 1001)
       commits = FocusOnBranchSorter.sortCommits(commits, colorManager);
 
     GraphFlags flags = new GraphFlags(commits.size());
