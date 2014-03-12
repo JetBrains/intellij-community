@@ -51,14 +51,14 @@ public class AddSelfQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PsiElement problem_elt = descriptor.getPsiElement();
-    if (problem_elt instanceof PyParameterList) {
-      final PyParameterList param_list = (PyParameterList)problem_elt;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(problem_elt)) {
+    PsiElement element = descriptor.getPsiElement();
+    if (element instanceof PyParameterList) {
+      final PyParameterList parameterList = (PyParameterList)element;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
         return;
       }
-      PyNamedParameter new_param = PyElementGenerator.getInstance(project).createParameter(myParamName);
-      param_list.addParameter(new_param);
+      PyNamedParameter newParameter = PyElementGenerator.getInstance(project).createParameter(myParamName);
+      parameterList.addParameter(newParameter);
     }
   }
 }
