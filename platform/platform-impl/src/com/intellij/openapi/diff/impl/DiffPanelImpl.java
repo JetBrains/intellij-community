@@ -140,7 +140,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final Project myProject;
   private final boolean myIsHorizontal;
   private final DiffTool myParentTool;
-  private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
+  private EditorNotificationPanel myTopMessageDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
 
   public DiffPanelImpl(final Window owner,
@@ -286,6 +286,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public void setContents(DiffContent content1, DiffContent content2) {
+    LOG.assertTrue(content1 != null && content2 != null);
     LOG.assertTrue(!myDisposed);
     myData.setContents(content1, content2);
     Project project = myData.getProject();
@@ -342,10 +343,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   void rediff() {
     try {
-      if (myNotCalculateDiffPanel != null) {
-        myPanel.removeTopComponent(myNotCalculateDiffPanel);
+      if (myTopMessageDiffPanel != null) {
+        myPanel.removeTopComponent(myTopMessageDiffPanel);
       }
-      setLineBlocks(myData.updateEditors());
+      LineBlocks blocks = myData.updateEditors();
+      setLineBlocks(blocks);
+      if (blocks.getCount() == 0) {
+        if (myData.isContentsEqual()) {
+          setFileContentsAreIdentical();
+        }
+      }
     }
     catch (FilesTooBigForDiffException e) {
       setTooBigFileErrorContents();
@@ -354,13 +361,29 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void setTooBigFileErrorContents() {
     setLineBlocks(LineBlocks.EMPTY);
-    myNotCalculateDiffPanel = new CanNotCalculateDiffPanel();
-    myPanel.insertTopComponent(myNotCalculateDiffPanel);
+    myTopMessageDiffPanel = new CanNotCalculateDiffPanel();
+    myPanel.insertTopComponent(myTopMessageDiffPanel);
   }
 
   public void setPatchAppliedApproximately() {
-    if (myNotCalculateDiffPanel == null) {
-      myPanel.insertTopComponent(new DiffIsApproximate());
+    if (!(myTopMessageDiffPanel instanceof CanNotCalculateDiffPanel)) {
+      myTopMessageDiffPanel = new DiffIsApproximate();
+      myPanel.insertTopComponent(myTopMessageDiffPanel);
+    }
+  }
+
+  public void setFileContentsAreIdentical() {
+    if (myTopMessageDiffPanel == null || myTopMessageDiffPanel instanceof FileContentsAreIdenticalDiffPanel) {
+      LineSeparator sep1 = myData.getContent1() == null ? null : myData.getContent1().getLineSeparator();
+      LineSeparator sep2 = myData.getContent2() == null ? null : myData.getContent2().getLineSeparator();
+
+      if (LineSeparator.knownAndDifferent(sep1, sep2)) {
+        myTopMessageDiffPanel = new LineSeparatorsOnlyDiffPanel();
+      }
+      else {
+        myTopMessageDiffPanel = new FileContentsAreIdenticalDiffPanel();
+      }
+      myPanel.insertTopComponent(myTopMessageDiffPanel);
     }
   }
 
@@ -448,7 +471,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public boolean hasDifferences() {
-    return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
+    return getLineBlocks().getCount() > 0 || myTopMessageDiffPanel != null;
   }
 
   @Nullable
@@ -599,16 +622,25 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
-  static JComponent createComponentForTitle(@Nullable String title, @NotNull final LineSeparator separator, boolean left) {
-    JPanel bottomPanel = new JPanel(new BorderLayout());
-    JLabel sepLabel = new JLabel(separator.name());
-    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? JBColor.RED : PlatformColors.BLUE);
-    bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
+  static JComponent createComponentForTitle(@Nullable String title,
+                                            @Nullable final LineSeparator sep1,
+                                            @Nullable final LineSeparator sep2,
+                                            boolean left) {
+    if (sep1 != null && sep2 != null && !sep1.equals(sep2)) {
+      LineSeparator separator = left ? sep1 : sep2;
+      JPanel bottomPanel = new JPanel(new BorderLayout());
+      JLabel sepLabel = new JLabel(separator.name());
+      sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? JBColor.RED : PlatformColors.BLUE);
+      bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(title == null ? "" : title));
-    panel.add(bottomPanel, BorderLayout.SOUTH);
-    return panel;
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(new JLabel(title == null ? "" : title));
+      panel.add(bottomPanel, BorderLayout.SOUTH);
+      return panel;
+    }
+    else {
+      return new JBLabel(title == null ? "" : title);
+    }
   }
 
   @Override
@@ -683,14 +715,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     String title1 = addReadOnly(data.getContentTitles()[0], myLeftSide.getEditor());
     String title2 = addReadOnly(data.getContentTitles()[1], myRightSide.getEditor());
 
-    if (title1 != null && title2 != null && sep1 != null && sep2 != null && !sep1.equals(sep2)) {
-      setTitle1(createComponentForTitle(title1, sep1, true));
-      setTitle2(createComponentForTitle(title2, sep2, false));
-    }
-    else {
-      setTitle1(new JBLabel(title1 == null ? "" : title1));
-      setTitle2(new JBLabel(title2 == null ? "" : title2));
-    }
+    setTitle1(createComponentForTitle(title1, sep1, sep2, true));
+    setTitle2(createComponentForTitle(title2, sep1, sep2, false));
   }
 
   private void setTitle1(JComponent title) {
@@ -925,6 +951,18 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
 
       return super.getData(dataId);
+    }
+  }
+
+  public static class FileContentsAreIdenticalDiffPanel extends EditorNotificationPanel {
+    public FileContentsAreIdenticalDiffPanel() {
+      myLabel.setText(DiffBundle.message("diff.contents.are.identical.message.text"));
+    }
+  }
+
+  public static class LineSeparatorsOnlyDiffPanel extends FileContentsAreIdenticalDiffPanel {
+    public LineSeparatorsOnlyDiffPanel() {
+      myLabel.setText(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"));
     }
   }
 
