@@ -1087,13 +1087,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public Value invokeMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
+  public Value invokeMethod(@NotNull EvaluationContext evaluationContext, @NotNull ObjectReference objRef, @NotNull Method method, final List args) throws EvaluateException {
     return invokeInstanceMethod(evaluationContext, objRef, method, args, 0);
   }
 
   @Override
-  public Value invokeInstanceMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method,
-                                     final List args, final int invocationOptions) throws EvaluateException {
+  public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext, @NotNull final ObjectReference objRef, final Method method,
+                                    final List args, final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(args) {
       @Override

@@ -41,6 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -322,41 +323,52 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       if (!typeMatchesClassFilters(typeName)) return false;
     }
 
-    if (isConditionEnabled() && !getCondition().getText().isEmpty()) {
-      try {
-        ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
-          @Override
-          public ExpressionEvaluator compute() throws EvaluateException {
-            final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
-            // IMPORTANT: calculate context psi element basing on the location where the exception
-            // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
-            // for method, exception and field breakpoints these locations differ)
-            PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
-            if (contextPsiElement == null) {
-              contextPsiElement = getEvaluationElement(); // as a last resort
-            }
-            return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
-          }
-        });
-        final Value value = evaluator.evaluate(context);
-        if (!(value instanceof BooleanValue)) {
-          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
-        }
-        if (!((BooleanValue)value).booleanValue()) {
-          return false;
-        }
-      }
-      catch (EvaluateException ex) {
-        if (ex.getCause() instanceof VMDisconnectedException) {
-          return false;
-        }
-        throw EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
-        );
-      }
+    if (!isConditionEnabled() || getCondition().getText().isEmpty()) {
       return true;
     }
 
+    StackFrameProxyImpl frame = context.getFrameProxy();
+    if (frame != null) {
+      Location location = frame.location();
+      if (location != null) {
+        ThreeState result = debugProcess.getPositionManager().evaluateCondition(context, frame, location, getCondition().getText());
+        if (result != ThreeState.UNSURE) {
+          return result == ThreeState.YES;
+        }
+      }
+    }
+
+    try {
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+        @Override
+        public ExpressionEvaluator compute() throws EvaluateException {
+          final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
+          // IMPORTANT: calculate context psi element basing on the location where the exception
+          // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
+          // for method, exception and field breakpoints these locations differ)
+          PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
+          if (contextPsiElement == null) {
+            contextPsiElement = getEvaluationElement(); // as a last resort
+          }
+          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
+        }
+      });
+      final Value value = evaluator.evaluate(context);
+      if (!(value instanceof BooleanValue)) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+      }
+      if (!((BooleanValue)value).booleanValue()) {
+        return false;
+      }
+    }
+    catch (EvaluateException ex) {
+      if (ex.getCause() instanceof VMDisconnectedException) {
+        return false;
+      }
+      throw EvaluateExceptionUtil.createEvaluateException(
+        DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
+      );
+    }
     return true;
   }
 
