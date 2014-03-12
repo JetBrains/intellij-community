@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
@@ -127,19 +128,19 @@ public class PyArgumentListInspection extends PyInspection {
       if (!flags.isEmpty()) { // something's wrong
         PyExpression arg = argEntry.getKey();
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR);
+          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR, new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
           final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
