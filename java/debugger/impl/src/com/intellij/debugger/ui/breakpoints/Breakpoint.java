@@ -311,7 +311,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       Value value = context.getThisObject();
       if (value != null) {  // non-static
         ObjectReference reference = (ObjectReference)value;
-        if(!hasObjectID(reference.uniqueID())) {
+        if (!hasObjectID(reference.uniqueID())) {
           return false;
         }
       }
@@ -342,12 +342,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         if (!(value instanceof BooleanValue)) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
         }
-        if(!((BooleanValue)value).booleanValue()) {
+        if (!((BooleanValue)value).booleanValue()) {
           return false;
         }
       }
       catch (EvaluateException ex) {
-        if(ex.getCause() instanceof VMDisconnectedException) {
+        if (ex.getCause() instanceof VMDisconnectedException) {
           return false;
         }
         throw EvaluateExceptionUtil.createEvaluateException(
