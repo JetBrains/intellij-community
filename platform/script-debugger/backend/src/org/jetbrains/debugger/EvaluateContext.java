@@ -13,12 +13,9 @@ import java.util.Map;
  */
 public interface EvaluateContext {
   /**
-   * Evaluates an arbitrary JavaScript {@code expression} in the particular context.
+   * Evaluates an arbitrary {@code expression} in the particular context.
    * Previously loaded {@link org.jetbrains.debugger.values.ObjectValue}s can be addressed from the expression if listed in
    * additionalContext parameter.
-   *
-   * @param expression        to evaluate
-   * @param additionalContext a name-to-value map that adds new values to an expression scope; may be null
    */
   @NotNull
   AsyncResult<Value> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext);
