@@ -80,11 +80,32 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
         final Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
         final PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
         if ((firstParent != null) && isRequiredStatement(firstParent)) {
+          // If parent is "for", we need to check that statement not declared in "else": PY-12367
+          if ((firstParent instanceof PyForStatement) && isDeclaredInElse(statement, (PyForStatement)firstParent)) {
+            continue;
+          }
           registerProblem(declaredVar,
                           PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.message", declaredVar.getText()));
         }
       }
     }
+  }
+
+  /**
+   * Checks that element is declared in "else" statement of "for" statement
+   *
+   * @param elementToCheck element to check
+   * @param forStatement   statement to obtain "else" part from
+   * @return true if declated in "Else" block
+   */
+  private static boolean isDeclaredInElse(@NotNull final PsiElement elementToCheck, @NotNull final PyForStatement forStatement) {
+    final PyElsePart elsePart = forStatement.getElsePart();
+    if (elsePart != null) {
+      if (PsiTreeUtil.isAncestor(elsePart, elementToCheck, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -117,7 +138,6 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
       }
       return false;
     }
-
   }
 
   /**
