@@ -17,7 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.testFramework.EditorTestUtil;
 
 import java.io.IOException;
 
@@ -66,7 +65,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line<caret>5\n" +
          "line6\n" +
          "line7");
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 3);
+    setEditorVisibleSize(1000, 3);
 
     executeAction("EditorPageUpWithSelection");
     checkResultByText("line1\n" +
@@ -274,7 +273,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
 
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
     ((EditorEx)myEditor).setColumnMode(true);
   }
 }
