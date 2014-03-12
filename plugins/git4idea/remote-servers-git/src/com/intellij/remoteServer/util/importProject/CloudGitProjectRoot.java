@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,12 +28,18 @@ public class CloudGitProjectRoot extends DetectedProjectRoot {
 
   private final String myRootTypeName;
   private final String myJavaSourceRootTypeName;
+  private final VirtualFile myRepositoryRoot;
   private final String myApplicationName;
 
-  public CloudGitProjectRoot(String rootTypeName, String javaSourceRootTypeName, @NotNull File directory, String applicationName) {
+  public CloudGitProjectRoot(String rootTypeName,
+                             String javaSourceRootTypeName,
+                             @NotNull File directory,
+                             @NotNull VirtualFile repositoryRoot,
+                             String applicationName) {
     super(directory);
     myRootTypeName = rootTypeName;
     myJavaSourceRootTypeName = javaSourceRootTypeName;
+    myRepositoryRoot = repositoryRoot;
     myApplicationName = applicationName;
   }
 
@@ -49,5 +56,9 @@ public class CloudGitProjectRoot extends DetectedProjectRoot {
 
   public String getApplicationName() {
     return myApplicationName;
+  }
+
+  public VirtualFile getRepositoryRoot() {
+    return myRepositoryRoot;
   }
 }
