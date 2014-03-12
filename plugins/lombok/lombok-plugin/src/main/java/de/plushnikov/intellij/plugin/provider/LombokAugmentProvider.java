@@ -126,15 +126,17 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   private boolean checkImportSection(@NotNull PsiClass psiClass) {
-    PsiJavaFile psiFile = (PsiJavaFile) psiClass.getContainingFile();
+    if (psiClass instanceof PsiJavaFile) {
+      PsiJavaFile psiFile = (PsiJavaFile) psiClass.getContainingFile();
 
-    PsiImportList psiImportList = psiFile.getImportList();
-    if (null != psiImportList) {
-      for (PsiImportStatementBase psiImportStatementBase : psiImportList.getAllImportStatements()) {
-        PsiJavaCodeReferenceElement importReference = psiImportStatementBase.getImportReference();
-        String qualifiedName = StringUtil.notNullize(null == importReference ? "" : importReference.getQualifiedName());
-        if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER)) {
-          return true;
+      PsiImportList psiImportList = psiFile.getImportList();
+      if (null != psiImportList) {
+        for (PsiImportStatementBase psiImportStatementBase : psiImportList.getAllImportStatements()) {
+          PsiJavaCodeReferenceElement importReference = psiImportStatementBase.getImportReference();
+          String qualifiedName = StringUtil.notNullize(null == importReference ? "" : importReference.getQualifiedName());
+          if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER)) {
+            return true;
+          }
         }
       }
     }
