@@ -170,7 +170,7 @@ public class HgLogProvider implements VcsLogProvider {
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchExists(repository, branchName)) {
+        if (branchName.equals("tip") ||  branchExists(repository, branchName)) {
           filterParameters.add(prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
