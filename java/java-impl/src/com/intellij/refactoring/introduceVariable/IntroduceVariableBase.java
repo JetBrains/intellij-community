@@ -37,7 +37,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -49,7 +52,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -466,7 +468,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final String[] varargsExpressions = text.split("s*,s*");
     if (varargsExpressions.length > 1) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parent.getProject());
-      final PsiMethod psiMethod = parent.resolveMethod();
+      final JavaResolveResult resolveResult = parent.resolveMethodGenerics();
+      final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
       if (psiMethod == null || !psiMethod.isVarArgs()) return null;
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
       final PsiParameter varargParameter = parameters[parameters.length - 1];
@@ -474,10 +477,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       LOG.assertTrue(type instanceof PsiEllipsisType);
       final PsiArrayType psiType = (PsiArrayType)((PsiEllipsisType)type).toArrayType();
       final PsiExpression[] args = parent.getArgumentList().getExpressions();
-      final PsiSubstitutor psiSubstitutor =
-        JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().inferTypeArguments(psiMethod.getTypeParameters(), parameters,
-                                                                                             args, PsiSubstitutor.EMPTY, parent,
-                                                                                             DefaultParameterTypeInferencePolicy.INSTANCE);
+      final PsiSubstitutor psiSubstitutor = resolveResult.getSubstitutor();
 
       if (args.length < parameters.length || startOffset < args[parameters.length - 1].getTextRange().getStartOffset()) return null;
 

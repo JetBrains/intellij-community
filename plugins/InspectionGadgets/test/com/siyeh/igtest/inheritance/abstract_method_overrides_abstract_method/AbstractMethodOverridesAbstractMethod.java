@@ -79,3 +79,16 @@ class Java8DefaultMethods {
       }
   }
 }
+
+class CovariantReturnTypes {
+  interface A<T> {}
+  interface Foo {
+    A<? extends Number> test();
+  }
+
+  interface Bar extends Foo {
+    @Override
+    A<Integer> test();
+  }
+}
+

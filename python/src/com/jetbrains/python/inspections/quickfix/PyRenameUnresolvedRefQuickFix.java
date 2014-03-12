@@ -128,12 +128,9 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   @Nullable
   private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file, int offset) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-    return FileEditorManager.getInstance(project).openTextEditor(
+    return virtualFile != null ? FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, virtualFile, offset), true
-    );
-    }
-    return null;
+    ) : null;
   }
 
   private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {

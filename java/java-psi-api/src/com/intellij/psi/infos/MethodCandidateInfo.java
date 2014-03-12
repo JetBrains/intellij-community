@@ -75,6 +75,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     myLanguageLevel = languageLevel;
   }
 
+  public boolean isVarargs() {
+    return false;
+  }
+
   public boolean isApplicable(){
     return getApplicabilityLevel() != ApplicabilityLevel.NOT_APPLICABLE;
   }
@@ -101,6 +105,9 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
+    if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
+      return getApplicabilityLevel();
+    }
     @ApplicabilityLevelConstant int level;
     Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
       @Override
@@ -113,7 +120,7 @@ public class MethodCandidateInfo extends CandidateInfo{
             CURRENT_CANDIDATE.set(map);
           }
           final PsiMethod method = getElement();
-          final CurrentCandidateProperties properties = new CurrentCandidateProperties(method, substitutor, false, true);
+          final CurrentCandidateProperties properties = new CurrentCandidateProperties(method, substitutor, isVarargs(), true);
           final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(), properties);
           try {
             properties.setSubstitutor(substitutor);
@@ -122,7 +129,11 @@ public class MethodCandidateInfo extends CandidateInfo{
               return ApplicabilityLevel.NOT_APPLICABLE;
             }
 
-            return PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
+            final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
+            if (!isVarargs() && applicabilityLevel < ApplicabilityLevel.FIXED_ARITY) {
+              return ApplicabilityLevel.NOT_APPLICABLE;
+            }
+            return applicabilityLevel;
           }
           finally {
             if (alreadyThere == null) map.remove(getMarkerList());
@@ -242,9 +253,10 @@ public class MethodCandidateInfo extends CandidateInfo{
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();
-    final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(),
-                                                            new CurrentCandidateProperties(method, super.getSubstitutor(), false, //todo
-                                                                                           !includeReturnConstraint));
+    final CurrentCandidateProperties alreadyThere = map.get(getMarkerList());
+    if (alreadyThere == null) {
+      map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), isVarargs(), !includeReturnConstraint));
+    }
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -297,6 +309,16 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myArgumentTypes;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    return super.equals(o) && isVarargs() == ((MethodCandidateInfo)o).isVarargs();
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + (isVarargs() ? 1 : 0);
+  }
+
   public static class CurrentCandidateProperties {
     private final PsiMethod myMethod;
     private PsiSubstitutor mySubstitutor;
@@ -331,7 +353,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     public boolean isApplicabilityCheck() {
-      return myApplicabilityCheck  && !ourOverloadGuard.currentStack().isEmpty();
+      return myApplicabilityCheck;
     }
 
     public void setApplicabilityCheck(boolean applicabilityCheck) {

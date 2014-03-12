@@ -18,10 +18,14 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -74,6 +78,20 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
 
   public void testMethodWithMethodRef() throws Exception {
     doTestInplaceRename("bar");
+  }
+
+  public void testNameSuggestion() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted());
+    assertNotNull(element);
+
+    final Set<String> result = new LinkedHashSet<String>();
+    new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
+
+    CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), result.iterator().next(), getEditor(), element);
+
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
   public void testConflictingMethodName() throws Exception {

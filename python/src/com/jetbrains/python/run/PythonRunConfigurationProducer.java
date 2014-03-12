@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.ide.scratch.ScratchpadManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -75,6 +76,7 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
     if (!isAvailable(location, script)) return false;
     final VirtualFile virtualFile = script.getVirtualFile();
     if (virtualFile == null) return false;
+    if (ScratchpadManager.getInstance(configuration.getProject()).isScratchFile(virtualFile)) return false;
     final String workingDirectory = configuration.getWorkingDirectory();
     final String scriptName = configuration.getScriptName();
     final String path = virtualFile.getPath();
