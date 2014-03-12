@@ -21,10 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.console.parsing.PyConsoleHighlightingLexer;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -51,11 +52,10 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     };
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-    LanguageLevel languageLevel = virtualFile != null ? LanguageLevel.forFile(virtualFile) : LanguageLevel.getDefault();
-    if (virtualFile != null && PydevConsoleRunner.isInPydevConsole(virtualFile)) {
-      return myConsoleMap.get(languageLevel);
-    }
-    return myMap.get(languageLevel);
+  public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
+    final LanguageLevel level = project != null && virtualFile != null ?
+                                PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
+                                LanguageLevel.getDefault();
+    return myMap.get(level);
   }
 }

@@ -129,7 +129,7 @@ public class PyUserSkeletonsUtil {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
         PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
         if (fileSkeleton instanceof PsiDirectory) {
-          fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton);
+          fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton, foothold);
         }
         if (fileSkeleton instanceof PyFile) {
           cache.put(cacheQName, Collections.singletonList(fileSkeleton));
