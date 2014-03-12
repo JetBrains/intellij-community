@@ -30,8 +30,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -68,6 +70,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -741,7 +744,8 @@ public class PyUtil {
    * @see {@link LanguageLevel#forElement}
    */
   @NotNull
-  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull VirtualFile virtualFile) {
+  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
+                                                             @NotNull VirtualFile virtualFile) {
     if (virtualFile instanceof VirtualFileWindow)
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
 
@@ -764,7 +768,19 @@ public class PyUtil {
         }
       }
     }
+    return guessLanguageLevel(project);
+  }
 
+  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    if (moduleManager != null) {
+      for (Module projectModule : moduleManager.getModules()) {
+        final Sdk sdk = PythonSdkType.findPythonSdk(projectModule);
+        if (sdk != null) {
+          return PythonSdkType.getLanguageLevelForSdk(sdk);
+        }
+      }
+    }
     return LanguageLevel.getDefault();
   }
 
@@ -828,11 +844,14 @@ public class PyUtil {
     return target;
   }
 
-  public static boolean isPackage(@NotNull PsiDirectory directory) {
+  public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
     if (turnDirIntoInit(directory) != null) {
       return true;
     }
-    if (getLanguageLevelForVirtualFile(directory.getVirtualFile()).isAtLeast(LanguageLevel.PYTHON33)) {
+    final LanguageLevel level = anchor != null ?
+                                LanguageLevel.forElement(anchor) :
+                                getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
+    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
       return true;
     }
     return hasNamespacePackageFile(directory);
@@ -843,8 +862,8 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PsiElement getPackageElement(@NotNull PsiDirectory directory) {
-    if (isPackage(directory)) {
+  public static PsiElement getPackageElement(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
+    if (isPackage(directory, anchor)) {
       final PsiElement init = turnDirIntoInit(directory);
       if (init != null) {
         return init;
