@@ -1,5 +1,7 @@
 package com.intellij.remote;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 /**
  * This class denotes the type of the source to obtain remote credentials. 
  * 
@@ -27,11 +29,14 @@ public enum RemoteConnectionType {
    */
   NONE;
 
+  private static final Logger LOG = Logger.getInstance(RemoteConnectionType.class);
+
   public static RemoteConnectionType findByName(String name) {
     try {
       return valueOf(name);
     }
     catch (Exception e) {
+      LOG.error("Cant find RemoteConnectionType with the name " + name, e);
       return NONE;
     }
   }
