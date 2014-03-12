@@ -17,9 +17,11 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyConvertToNewStyleQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -60,12 +62,14 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (!node.isNewStyleClass()) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if ("__slots__".equals(attr.getName())) {
-            registerProblem(attr, "Old-style class contains __slots__ definition");
+            registerProblem(attr, "Old-style class contains __slots__ definition", new PyConvertToNewStyleQuickFix());
           }
         }
         for (PyFunction attr : node.getMethods()) {
           if ("__getattribute__".equals(attr.getName())) {
-            registerProblem(attr, "Old-style class contains __getattribute__ definition");
+            final ASTNode nameNode = attr.getNameNode();
+            assert nameNode != null;
+            registerProblem(nameNode.getPsi(), "Old-style class contains __getattribute__ definition", new PyConvertToNewStyleQuickFix());
           }
         }
       }
@@ -84,7 +88,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
         }
 
         if (PyUtil.isSuperCall(node))
-          registerProblem(node.getCallee(), "Old-style class contains call for super method");
+          registerProblem(node.getCallee(), "Old-style class contains call for super method", new PyConvertToNewStyleQuickFix());
       }
     }
   }
