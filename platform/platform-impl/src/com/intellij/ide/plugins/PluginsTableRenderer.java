@@ -139,7 +139,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
         if (hasNewerVersion) {
           if (!isSelected) {
-            myName.setForeground(JBColor.RED);
+            myName.setForeground(FileStatus.MODIFIED.getColor());
           }
           myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         }
@@ -150,7 +150,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       if (InstalledPluginsTableModel.hasNewerVersion(myPluginDescriptor.getPluginId())) {
         myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         if (!isSelected) {
-          myName.setForeground(JBColor.RED);
+          myName.setForeground(FileStatus.MODIFIED.getColor());
         }
       }
       if (!myPluginDescriptor.isEnabled()) {

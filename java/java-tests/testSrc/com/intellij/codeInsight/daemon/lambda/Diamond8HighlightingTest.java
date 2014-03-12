@@ -31,6 +31,10 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVarargs() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

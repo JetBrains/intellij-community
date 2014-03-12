@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
+ *
  * @author dcheryasov
  */
 public class PyInitNewSignatureInspection extends PyInspection {
@@ -54,23 +55,22 @@ public class PyInitNewSignatureInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass cls) {
-      if (! cls.isNewStyleClass()) return; // old-style classes don't know about __new__
-      PyFunction init_or_new = cls.findInitOrNew(false); // only local
+      if (!cls.isNewStyleClass()) return; // old-style classes don't know about __new__
+      PyFunction initOrNew = cls.findInitOrNew(false); // only local
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
-      if (init_or_new == null || builtins.isBuiltin(init_or_new.getContainingClass())) return; // nothing is overridden
-      String the_other_name = PyNames.NEW.equals(init_or_new.getName()) ? PyNames.INIT : PyNames.NEW;
+      if (initOrNew == null || builtins.isBuiltin(initOrNew.getContainingClass())) return; // nothing is overridden
+      String the_other_name = PyNames.NEW.equals(initOrNew.getName()) ? PyNames.INIT : PyNames.NEW;
       PyFunction the_other = cls.findMethodByName(the_other_name, true);
       if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
-      if (!PyUtil.isSignatureCompatibleTo(the_other, init_or_new, myTypeEvalContext) &&
-          !PyUtil.isSignatureCompatibleTo(init_or_new, the_other, myTypeEvalContext) &&
-          init_or_new.getContainingFile() == cls.getContainingFile()
-      ) {
-        registerProblem(init_or_new.getParameterList(), PyNames.NEW.equals(init_or_new.getName()) ?
-                                     PyBundle.message("INSP.new.incompatible.to.init") :
-                                     PyBundle.message("INSP.init.incompatible.to.new")
+      if (!PyUtil.isSignatureCompatibleTo(the_other, initOrNew, myTypeEvalContext) &&
+          !PyUtil.isSignatureCompatibleTo(initOrNew, the_other, myTypeEvalContext) &&
+          initOrNew.getContainingFile() == cls.getContainingFile()
+        ) {
+        registerProblem(initOrNew.getParameterList(), PyNames.NEW.equals(initOrNew.getName()) ?
+                                                      PyBundle.message("INSP.new.incompatible.to.init") :
+                                                      PyBundle.message("INSP.init.incompatible.to.new")
         );
       }
     }
   }
-
 }

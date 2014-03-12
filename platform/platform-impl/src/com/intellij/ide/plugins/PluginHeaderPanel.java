@@ -76,10 +76,12 @@ public class PluginHeaderPanel {
   public void setPlugin(IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
     myRoot.setVisible(true);
+    myRoot.setBackground(UIUtil.getTextFieldBackground());
     myCategory.setVisible(true);
     myDownloadsPanel.setVisible(true);
     myButtonPanel.setVisible(true);
     myUpdated.setVisible(true);
+    myName.setFont(UIUtil.getLabelFont().deriveFont(4f + UIUtil.getLabelFont().getSize()));
 
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");

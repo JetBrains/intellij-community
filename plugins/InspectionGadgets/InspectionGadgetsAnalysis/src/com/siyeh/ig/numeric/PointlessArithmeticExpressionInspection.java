@@ -120,7 +120,7 @@ public class PointlessArithmeticExpressionInspection
       }
     }
     else if (tokenType.equals(JavaTokenType.DIV)) {
-      if (ExpressionUtils.isOne(expression)) {
+      if (ExpressionUtils.isOne(rhs)) {
         return lhs.getText();
       }
       return "1";

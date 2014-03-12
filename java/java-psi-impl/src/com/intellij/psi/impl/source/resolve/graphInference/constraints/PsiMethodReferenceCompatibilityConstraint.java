@@ -208,7 +208,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         if (res instanceof PsiClass) {
           PsiClass containingClass = (PsiClass)res;
           final boolean isRawSubst = !myExpression.isConstructor() &&
-                                     PsiTreeUtil.isAncestor(containingClass, myExpression, true) &&
                                      PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor());
           qualifierType = JavaPsiFacade.getElementFactory(res.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor());
         }
