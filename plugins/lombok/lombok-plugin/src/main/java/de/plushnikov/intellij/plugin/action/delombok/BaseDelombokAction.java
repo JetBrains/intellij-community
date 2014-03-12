@@ -198,6 +198,9 @@ public abstract class BaseDelombokAction extends AnAction {
     if (file instanceof PsiCompiledElement) {
       return false;
     }
+    if (!file.isWritable()) {
+      return false;
+    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

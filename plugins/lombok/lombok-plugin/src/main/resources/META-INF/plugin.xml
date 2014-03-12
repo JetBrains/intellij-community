@@ -157,6 +157,7 @@
 				    <li>Fixed #17: Cyclic parent child relation</li>
 				    <li>Fixed #34: Lombok plugin crashes</li>
 				    <li>Fixed #36: Possible class cast exception</li>
+				    <li>Fixed #37: Delombok of files included as library failes</li>
 				</ol>
 			</li>
 		<li>0.8.2

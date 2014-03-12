@@ -40,6 +40,13 @@ public class BaseDelombokHandler {
     this.lombokProcessors = new ArrayList<AbstractProcessor>(Arrays.asList(lombokProcessors));
   }
 
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiClass psiClass) {
+    if (psiFile.isWritable()) {
+      invoke(project, psiClass);
+      finish(project, psiFile);
+    }
+  }
+
   public void invoke(@NotNull Project project, @NotNull PsiJavaFile psiFile) {
     for (PsiClass psiClass : psiFile.getClasses()) {
       invoke(project, psiClass);
@@ -48,11 +55,6 @@ public class BaseDelombokHandler {
         invoke(project, innerClass);
       }
     }
-    finish(project, psiFile);
-  }
-
-  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiClass psiClass) {
-    invoke(project, psiClass);
     finish(project, psiFile);
   }
 

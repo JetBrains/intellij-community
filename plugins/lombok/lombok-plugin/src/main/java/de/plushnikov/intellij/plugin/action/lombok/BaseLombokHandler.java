@@ -34,11 +34,13 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
-    if (null != psiClass) {
-      processClass(psiClass);
+    if (file.isWritable()) {
+      PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+      if (null != psiClass) {
+        processClass(psiClass);
 
-      UndoUtil.markPsiFileForUndo(file);
+        UndoUtil.markPsiFileForUndo(file);
+      }
     }
   }
 
