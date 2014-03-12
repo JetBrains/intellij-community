@@ -8,9 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="gson" level="project" />
-    <orderEntry type="module" module-name="annotations" exported="" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="JavaScriptDebugger" />
     <orderEntry type="module" module-name="util-rt" />
     <orderEntry type="module" module-name="util" />
   </component>
