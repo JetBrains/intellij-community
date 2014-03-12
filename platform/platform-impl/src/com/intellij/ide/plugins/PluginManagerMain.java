@@ -514,6 +514,15 @@ public abstract class PluginManagerMain implements Disposable {
     return null;
   }
 
+  private void createUIComponents() {
+    myHeader = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        return UIUtil.getTextFieldBackground();
+      }
+    };
+  }
+
   public static class MyHyperlinkListener implements HyperlinkListener {
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
