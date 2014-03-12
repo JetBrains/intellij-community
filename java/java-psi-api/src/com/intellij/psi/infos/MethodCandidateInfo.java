@@ -143,7 +143,9 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
 
     });
-    assert boxedLevel != null;
+    if (boxedLevel == null) {
+      return getApplicabilityLevel();
+    }
     level = boxedLevel;
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) level = ApplicabilityLevel.NOT_APPLICABLE;
     return level;
