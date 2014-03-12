@@ -110,7 +110,9 @@ public class PluginHeaderPanel {
       }
 
       final IdeaPluginDescriptor installed = PluginManager.getPlugin(plugin.getPluginId());
-       if ((PluginManagerColumnInfo.isDownloaded(node)) || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
+       if ((PluginManagerColumnInfo.isDownloaded(node))
+         || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))
+         || (installed instanceof IdeaPluginDescriptorImpl && !plugin.isBundled() && ((IdeaPluginDescriptorImpl)installed).isDeleted())) {
          myActionId = ACTION_ID.RESTART;
        }
     } else {
