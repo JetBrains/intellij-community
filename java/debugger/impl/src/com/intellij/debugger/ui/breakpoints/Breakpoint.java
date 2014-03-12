@@ -132,11 +132,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   @Nullable
   public String getShortClassName() {
     final String className = getClassName();
-    if (className != null) {
-      final int dotIndex = className.lastIndexOf('.');
-      return dotIndex >= 0 && dotIndex + 1 < className.length()? className.substring(dotIndex + 1) : className;
+    if (className == null) {
+      return null;
     }
-    return className;
+
+    final int dotIndex = className.lastIndexOf('.');
+    return dotIndex >= 0 && dotIndex + 1 < className.length() ? className.substring(dotIndex + 1) : className;
   }
 
   @Nullable
@@ -324,6 +325,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (isConditionEnabled() && !getCondition().getText().isEmpty()) {
       try {
         ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+          @Override
           public ExpressionEvaluator compute() throws EvaluateException {
             final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
             // IMPORTANT: calculate context psi element basing on the location where the exception
@@ -423,11 +425,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     requestor.readTo(parentNode, this);
     try {
       setEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
-    } catch (Exception e) {
+    }
+    catch (Exception ignored) {
     }
     try {
       setLogEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
-    } catch (Exception e) {
+    }
+    catch (Exception ignored) {
     }
     try {
       String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
@@ -438,11 +442,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           setLogMessage(text);
         }
       }
-    } catch (Exception e) {
+    }
+    catch (Exception ignored) {
     }
     try {
       setRemoveAfterHit(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
-    } catch (Exception e) {
+    }
+    catch (Exception ignored) {
     }
   }
 
