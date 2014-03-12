@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyWrapInExceptionQuickFix;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -56,7 +57,7 @@ public class PyStringExceptionInspection extends PyInspection {
       if (expressions.length > 0) {
         PyExpression expression = expressions[0];
         if (expression instanceof PyStringLiteralExpression) {
-          registerProblem(expression, "Raising a string exception");
+          registerProblem(expression, "Raising a string exception", new PyWrapInExceptionQuickFix());
         }
       }
     }

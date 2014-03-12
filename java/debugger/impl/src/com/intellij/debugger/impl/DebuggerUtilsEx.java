@@ -60,20 +60,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   /**
    * @param context
-   * @return all CodeFragmentFactoryProviders that provide code fragment factories sutable in the context given
+   * @return all CodeFragmentFactoryProviders that provide code fragment factories suitable in the context given
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
-    final DefaultCodeFragmentFactory defaultFactry = DefaultCodeFragmentFactory.getInstance();
+    final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
     final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {
-        if (factory != defaultFactry && factory.isContextAccepted(context)) {
+        if (factory != defaultFactory && factory.isContextAccepted(context)) {
           suitableFactories.add(factory);
         }
       }
     }
-    suitableFactories.add(defaultFactry); // let default factory be the last one
+    suitableFactories.add(defaultFactory); // let default factory be the last one
     return suitableFactories;
   }
 
@@ -122,9 +122,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return superClass;
         }
       }
-      List<InterfaceType> ifaces = classType.allInterfaces();
-      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
-        InterfaceType iface = it.next();
+      List<InterfaceType> interfaces = classType.allInterfaces();
+      for (InterfaceType iface : interfaces) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, iface);
         if (superClass != null) {
           return superClass;
@@ -134,8 +133,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     if (checkedType instanceof InterfaceType) {
       List<InterfaceType> list = ((InterfaceType)checkedType).superinterfaces();
-      for (Iterator<InterfaceType> it = list.iterator(); it.hasNext();) {
-        InterfaceType superInterface = it.next();
+      for (InterfaceType superInterface : list) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, superInterface);
         if (superClass != null) {
           return superClass;
@@ -246,9 +244,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return ClassFilter.EMPTY_ARRAY;
     }
     List<ClassFilter> classFiltersList = new ArrayList<ClassFilter>(children.size());
-    for (Iterator i = children.iterator(); i.hasNext();) {
+    for (Object aChildren : children) {
       final ClassFilter classFilter = new ClassFilter();
-      classFilter.readExternal((Element)i.next());
+      classFilter.readExternal((Element)aChildren);
       classFiltersList.add(classFilter);
     }
     return classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
@@ -268,12 +266,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     final Set<ClassFilter> f1 = new HashSet<ClassFilter>(Math.max((int) (filters1.length/.75f) + 1, 16));
     final Set<ClassFilter> f2 = new HashSet<ClassFilter>(Math.max((int) (filters2.length/.75f) + 1, 16));
-    for (ClassFilter filter : filters1) {
-      f1.add(filter);
-    }
-    for (ClassFilter aFilters2 : filters2) {
-      f2.add(aFilters2);
-    }
+    Collections.addAll(f1, filters1);
+    Collections.addAll(f2, filters2);
     return f2.equals(f1);
   }
 
@@ -284,13 +278,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if(l1.size() != l2.size()) return false;
 
     Iterator<Element> i1 = l1.iterator();
-    Iterator<Element> i2 = l2.iterator();
 
-    while (i2.hasNext()) {
+    for (Element aL2 : l2) {
       Element elem1 = i1.next();
-      Element elem2 = i2.next();
 
-      if(!elementsEqual(elem1, elem2)) return false;
+      if (!elementsEqual(elem1, aL2)) return false;
     }
     return true;
   }
@@ -302,13 +294,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if(l1.size() != l2.size()) return false;
 
     Iterator<Attribute> i1 = l1.iterator();
-    Iterator<Attribute> i2 = l2.iterator();
 
-    while (i2.hasNext()) {
+    for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
-      Attribute attr2 = i2.next();
 
-      if (!Comparing.equal(attr1.getName(), attr2.getName()) || !Comparing.equal(attr1.getValue(), attr2.getValue())) {
+      if (!Comparing.equal(attr1.getName(), aL2.getName()) || !Comparing.equal(attr1.getValue(), aL2.getValue())) {
         return false;
       }
     }
@@ -322,10 +312,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (!Comparing.equal(e1.getName(), e2.getName())) {
       return false;
     }
-    if (!elementListsEqual  ((List<Element>)e1.getChildren(), (List<Element>)e2.getChildren())) {
+    if (!elementListsEqual  (e1.getChildren(), e2.getChildren())) {
       return false;
     }
-    if (!attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes())) {
+    if (!attributeListsEqual(e1.getAttributes(), e2.getAttributes())) {
       return false;
     }
     return true;
@@ -410,6 +400,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
     final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+      @Override
       public CodeFragmentFactory compute() {
         final List<CodeFragmentFactory> codeFragmentFactories = getCodeFragmentFactories(psiContext);
         // the list always contains at least DefaultCodeFragmentFactory
@@ -469,7 +460,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         case '[':
           return getSignature() + "[]";
         case '(':
-          StringBuffer result = new StringBuffer("(");
+          StringBuilder result = new StringBuilder("(");
           String separator = "";
           while (peek() != ')') {
             result.append(separator);
@@ -501,16 +492,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String methodName(final String className, final String methodName, final String signature) {
     try {
       return new SigReader(signature) {
+        @Override
         String getMethodName() {
           return methodName;
         }
 
+        @Override
         String getClassName() {
           return className;
         }
       }.getSignature();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Internal error : unknown signature" + signature);
       }

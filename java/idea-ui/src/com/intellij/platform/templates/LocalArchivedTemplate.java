@@ -69,12 +69,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     if (s != null) {
       try {
         Element templateElement = JDOMUtil.loadDocument(s).getRootElement();
-        myInputFields = RemoteTemplatesFactory.getFields(templateElement, Namespace.NO_NAMESPACE);
+        populateFromElement(templateElement, Namespace.NO_NAMESPACE);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
           myIcon = IconLoader.findIcon(iconPath, classLoader);
         }
-        myFrameworks = RemoteTemplatesFactory.getFrameworks(templateElement);
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -155,7 +154,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @NotNull
   @Override
-  public List<String> getFeaturedFrameworks() {
+  public List<String> getFrameworks() {
     return myFrameworks;
   }
 

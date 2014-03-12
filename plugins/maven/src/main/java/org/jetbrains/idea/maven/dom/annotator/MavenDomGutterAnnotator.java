@@ -31,6 +31,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -40,7 +41,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 public class MavenDomGutterAnnotator implements Annotator {
@@ -66,26 +66,22 @@ public class MavenDomGutterAnnotator implements Annotator {
     final XmlTag tag = dependency.getXmlTag();
     if (tag == null) return;
 
-    final List<MavenDomDependency> children = getManagingDependencies(dependency);
-    if (children.size() > 0) {
+    MavenDomDependency managingDependency = getManagingDependency(dependency);
+    if (managingDependency != null) {
 
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
         NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, DependencyConverter.INSTANCE);
       iconBuilder.
-        setTargets(children).
-        setTooltipText(MavenDomBundle.message("overriden.dependency.title")).
+        setTargets(managingDependency).
+        setTooltipText(generateTooltip(managingDependency)).
         install(holder, tag);
     }
   }
 
-  private static List<MavenDomDependency> getManagingDependencies(@NotNull MavenDomDependency dependency) {
+  @Nullable
+  private static MavenDomDependency getManagingDependency(@NotNull MavenDomDependency dependency) {
     Project project = dependency.getManager().getProject();
-    MavenDomDependency parentDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project);
-
-    if (parentDependency != null) {
-      return Collections.singletonList(parentDependency);
-    }
-    return Collections.emptyList();
+    return MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project);
   }
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
@@ -189,6 +185,38 @@ public class MavenDomGutterAnnotator implements Annotator {
 
   private static boolean isDependencyManagementSection(@NotNull MavenDomDependency dependency) {
     return dependency.getParentOfType(MavenDomDependencyManagement.class, false) != null;
+  }
+
+  private static String generateTooltip(MavenDomDependency dependency) {
+    StringBuilder res = new StringBuilder();
+
+    res.append("&lt;dependency&gt;\n");
+    res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;groupId&gt;").append(dependency.getGroupId().getStringValue()).append("&lt;/groupId&gt;\n");
+    res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;artifactId&gt;").append(dependency.getArtifactId().getStringValue()).append("&lt;/artifactId&gt;\n");
+
+    if (dependency.getType().getXmlElement() != null) {
+      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;type&gt;").append(dependency.getType().getStringValue()).append("&lt;/type&gt;\n");
+    }
+
+    if (dependency.getClassifier().getXmlElement() != null) {
+      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;classifier&gt;").append(dependency.getClassifier().getStringValue()).append("&lt;/classifier&gt;\n");
+    }
+
+    if (dependency.getScope().getXmlElement() != null) {
+      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;scope&gt;").append(dependency.getScope().getStringValue()).append("&lt;/scope&gt;\n");
+    }
+
+    if (dependency.getOptional().getXmlElement() != null) {
+      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;optional&gt;").append(dependency.getOptional().getStringValue()).append("&lt;/optional&gt;\n");
+    }
+
+    if (dependency.getVersion().getXmlElement() != null) {
+      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;version&gt;").append(dependency.getVersion().getStringValue()).append("&lt;/version&gt;\n");
+    }
+
+    res.append("&lt;/dependency&gt;");
+
+    return res.toString();
   }
 
   private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {

@@ -97,10 +97,11 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     if (!(psiElement instanceof PsiNamedElement)) return null;
     String name = ((PsiNamedElement)psiElement).getName();
     if (name == null) return null;
+    String prefix = "";
     if (psiElement instanceof PsiVariable) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiElement.getProject());
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
-      final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
+      prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         final String[] words = NameUtil.splitNameIntoWords(name);
         StringBuilder buffer = new StringBuilder();
@@ -111,19 +112,15 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         }
         return new String[] {buffer.toString()};
       }
-      else {
-        final List<String> result = new ArrayList<String>();
-        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
-        if (name.startsWith(prefix)) {
-          name = name.substring(prefix.length());
-          result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
-        }
-        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
-        return ArrayUtil.toStringArray(result);
-      }
-
     }
-    return new String[]{name};
+    final List<String> result = new ArrayList<String>();
+    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+    if (name.startsWith(prefix)) {
+      name = name.substring(prefix.length());
+      result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+    }
+    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
+    return ArrayUtil.toStringArray(result);
   }
 
   private static String suggestProperlyCasedName(String prefix, String[] words) {

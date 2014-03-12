@@ -53,14 +53,14 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkCredentials data,
                                                     @NotNull GeneralCommandLine commandLine,
-                                                    @Nullable
+                                                    @NotNull
                                                     PathMappingSettings mappingSettings)
     throws RemoteSdkException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
                                                            @NotNull PyRemoteSdkCredentials data,
                                                            @NotNull GeneralCommandLine commandLine,
-                                                           @Nullable
+                                                           @NotNull
                                                            PathMappingSettings mappingSettings)
     throws RemoteSdkException;
 
@@ -133,6 +133,7 @@ public abstract class PythonRemoteInterpreterManager {
     newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath());
   }
 
+  @NotNull
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
                                                     @NotNull PyRemoteSdkAdditionalDataBase data,
                                                     @Nullable PathMappingSettings mappingSettings);

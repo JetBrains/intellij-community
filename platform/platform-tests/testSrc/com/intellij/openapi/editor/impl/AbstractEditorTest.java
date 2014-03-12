@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapp
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
@@ -217,6 +218,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   public EditorMouseFixture mouse() {
     return new EditorMouseFixture((EditorImpl)myEditor);
+  }
+
+  public void setEditorVisibleSize(int widthInChars, int heightInChars) {
+    EditorTestUtil.setEditorVisibleSize(myEditor, widthInChars, heightInChars);
   }
 
   // for each caret its visual position and visual positions of selection start an and should be provided in the following order:

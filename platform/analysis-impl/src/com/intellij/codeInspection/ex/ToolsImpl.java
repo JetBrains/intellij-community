@@ -112,11 +112,6 @@ public class ToolsImpl implements Tools {
         }
       }
 
-      for (ScopeToolState state : getTools()) {
-        if (state.getScope(project) == null) {
-          return state.getTool();
-        }
-      }
     }
     return myDefaultState.getTool();
   }

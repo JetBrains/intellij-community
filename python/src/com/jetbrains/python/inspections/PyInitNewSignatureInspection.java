@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
+ *
  * @author dcheryasov
  */
 public class PyInitNewSignatureInspection extends PyInspection {
@@ -53,24 +55,23 @@ public class PyInitNewSignatureInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass cls) {
-      if (! cls.isNewStyleClass()) return; // old-style classes don't know about __new__
-      PyFunction init_or_new = cls.findInitOrNew(false); // only local
+    public void visitPyFunction(PyFunction node) {
+      final String functionName = node.getName();
+      if (!PyNames.NEW.equals(functionName) && !PyNames.INIT.equals(functionName)) return;
+      final PyClass cls = node.getContainingClass();
+      if (cls == null) return;
+      if (!cls.isNewStyleClass()) return;
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
-      if (init_or_new == null || builtins.isBuiltin(init_or_new.getContainingClass())) return; // nothing is overridden
-      String the_other_name = PyNames.NEW.equals(init_or_new.getName()) ? PyNames.INIT : PyNames.NEW;
-      PyFunction the_other = cls.findMethodByName(the_other_name, true);
-      if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
-      if (!PyUtil.isSignatureCompatibleTo(the_other, init_or_new, myTypeEvalContext) &&
-          !PyUtil.isSignatureCompatibleTo(init_or_new, the_other, myTypeEvalContext) &&
-          init_or_new.getContainingFile() == cls.getContainingFile()
-      ) {
-        registerProblem(init_or_new.getParameterList(), PyNames.NEW.equals(init_or_new.getName()) ?
-                                     PyBundle.message("INSP.new.incompatible.to.init") :
-                                     PyBundle.message("INSP.init.incompatible.to.new")
-        );
+      final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
+      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true);
+      if (complementaryMethod == null || builtins.getClass("object") == complementaryMethod.getContainingClass()) return;
+      if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
+          !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
+          node.getContainingFile() == cls.getContainingFile()) {
+        registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ? PyBundle.message("INSP.new.incompatible.to.init") :
+                                                      PyBundle.message("INSP.init.incompatible.to.new"),
+                        new PyChangeSignatureQuickFix(false));
       }
     }
   }
-
 }

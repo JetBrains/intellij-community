@@ -76,10 +76,12 @@ public class PluginHeaderPanel {
   public void setPlugin(IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
     myRoot.setVisible(true);
+    myRoot.setBackground(UIUtil.getTextFieldBackground());
     myCategory.setVisible(true);
     myDownloadsPanel.setVisible(true);
     myButtonPanel.setVisible(true);
     myUpdated.setVisible(true);
+    myName.setFont(UIUtil.getLabelFont().deriveFont(4f + UIUtil.getLabelFont().getSize()));
 
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
@@ -87,8 +89,6 @@ public class PluginHeaderPanel {
     final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId());
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
-
-
       myRating.setRate(node.getRating());
       myDownloads.setText(node.getDownloads() + " downloads");
       myVersion.setText(" ver " + node.getVersion());
@@ -108,6 +108,13 @@ public class PluginHeaderPanel {
         myDownloadsPanel.setVisible(false);
         myUpdated.setVisible(false);
       }
+
+      final IdeaPluginDescriptor installed = PluginManager.getPlugin(plugin.getPluginId());
+       if ((PluginManagerColumnInfo.isDownloaded(node))
+         || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))
+         || (installed instanceof IdeaPluginDescriptorImpl && !plugin.isBundled() && ((IdeaPluginDescriptorImpl)installed).isDeleted())) {
+         myActionId = ACTION_ID.RESTART;
+       }
     } else {
       myActionId = null;
       myVersionInfoPanel.remove(myUpdated);

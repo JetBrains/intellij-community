@@ -26,7 +26,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -49,7 +48,6 @@ import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;
@@ -71,6 +69,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super(name, new JavaRunConfigurationModule(project, true), factory);
   }
 
+  @Override
   public void setMainClass(final PsiClass psiClass) {
     final Module originalModule = getConfigurationModule().getModule();
     setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
@@ -78,6 +77,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     restoreOriginalModule(originalModule);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLineState state = new JavaApplicationCommandLineState(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
@@ -85,6 +85,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return state;
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
@@ -94,12 +95,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return group;
   }
 
+  @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     final RefactoringElementListener listener = RefactoringListeners.
       getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
+  @Override
   @Nullable
   public PsiClass getMainClass() {
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
@@ -122,10 +125,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
   }
 
+  @Override
   public void setMainClassName(final String qualifiedName) {
     MAIN_CLASS_NAME = qualifiedName;
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
@@ -137,78 +142,96 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
+  @Override
   public void setVMParameters(String value) {
     VM_PARAMETERS = value;
   }
 
+  @Override
   public String getVMParameters() {
     return VM_PARAMETERS;
   }
 
+  @Override
   public void setProgramParameters(String value) {
     PROGRAM_PARAMETERS = value;
   }
 
+  @Override
   public String getProgramParameters() {
     return PROGRAM_PARAMETERS;
   }
 
+  @Override
   public void setWorkingDirectory(String value) {
     WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
   }
 
+  @Override
   public String getWorkingDirectory() {
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
 
+  @Override
   public void setPassParentEnvs(boolean passParentEnvs) {
     PASS_PARENT_ENVS = passParentEnvs;
   }
 
+  @Override
   @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
   }
 
+  @Override
   public void setEnvs(@NotNull final Map<String, String> envs) {
     myEnvs.clear();
     myEnvs.putAll(envs);
   }
 
+  @Override
   public boolean isPassParentEnvs() {
     return PASS_PARENT_ENVS;
   }
 
+  @Override
   @Nullable
   public String getRunClass() {
     return MAIN_CLASS_NAME;
   }
 
+  @Override
   @Nullable
   public String getPackage() {
     return null;
   }
 
+  @Override
   public boolean isAlternativeJrePathEnabled() {
      return ALTERNATIVE_JRE_PATH_ENABLED;
    }
 
+   @Override
    public void setAlternativeJrePathEnabled(boolean enabled) {
-     this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
    }
 
+   @Override
    public String getAlternativeJrePath() {
      return ALTERNATIVE_JRE_PATH;
    }
 
+   @Override
    public void setAlternativeJrePath(String path) {
-     this.ALTERNATIVE_JRE_PATH = path;
+     ALTERNATIVE_JRE_PATH = path;
    }
 
+  @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
@@ -218,6 +241,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
@@ -237,6 +261,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       myConfiguration = configuration;
     }
 
+    @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.event.InputEvent;
@@ -92,7 +91,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
 
     mouse().alt().pressAt(1, 6);
     checkResultByText("line\n" +
@@ -130,7 +129,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
 
     mouse().middle().pressAt(1, 17);
     checkResultByText("line\n" +

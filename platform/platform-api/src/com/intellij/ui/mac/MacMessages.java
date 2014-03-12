@@ -18,6 +18,7 @@ package com.intellij.ui.mac;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public abstract class MacMessages {
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
 
   public static MacMessages getInstance() {
-    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs")
+    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs") && SystemInfo.isJavaVersionAtLeast("1.7")
                   ? ServiceManager.getService(MacMessagesEmulation.class)
                   : ServiceManager.getService(MacMessages.class);
   }

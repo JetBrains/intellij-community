@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +76,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
       final PyFunction init = node.findInitOrNew(true);
       if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
-                        new AddMethodQuickFix("__init__", new PyClassTypeImpl(node, false), false));
+                        new AddMethodQuickFix("__init__", node.getName(), false));
       }
     }
   }

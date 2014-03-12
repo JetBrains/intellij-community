@@ -273,7 +273,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         Document document = myEditor.getDocument();
         if (!editorSettings.isVirtualSpace() && columnShift == 0 && getLogicalPosition().softWrapLinesOnCurrentLogicalLine <= 0) {
-          newColumnNumber = myEditor.getCaretModel().supportsMultipleCarets() ? myLastColumnNumber : myEditor.getLastColumnNumber();
+          newColumnNumber = supportsMultipleCarets() ? myLastColumnNumber : myEditor.getLastColumnNumber();
         }
         else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
           int lastLine = document.getLineCount() - 1;
@@ -307,7 +307,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
         int lastColumnNumber = newColumnNumber;
-        if (!editorSettings.isCaretInsideTabs() && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
+        if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
           LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
           int offset = myEditor.logicalPositionToOffset(log);
           if (offset >= document.getTextLength()) {
@@ -316,21 +316,23 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
             newColumnNumber = lastColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
             desiredX = -1;
           }
-          CharSequence text = document.getCharsSequence();
-          if (offset >= 0 && offset < document.getTextLength()) {
-            if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == myOffset)) {
-              if (columnShift <= 0) {
-                newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
-              }
-              else {
-                SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
-                // There is a possible case that tabulation symbol is the last document symbol represented on a visual line before
-                // soft wrap. We can't just use column from 'offset + 1' because it would point on a next visual line.
-                if (softWrap == null) {
-                  newColumnNumber = myEditor.offsetToVisualPosition(offset + 1).column;
+          if (!editorSettings.isCaretInsideTabs()) {
+            CharSequence text = document.getCharsSequence();
+            if (offset >= 0 && offset < document.getTextLength()) {
+              if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == myOffset)) {
+                if (columnShift <= 0) {
+                  newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
                 }
                 else {
-                  newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+                  SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
+                  // There is a possible case that tabulation symbol is the last document symbol represented on a visual line before
+                  // soft wrap. We can't just use column from 'offset + 1' because it would point on a next visual line.
+                  if (softWrap == null) {
+                    newColumnNumber = myEditor.offsetToVisualPosition(offset + 1).column;
+                  }
+                  else {
+                    newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+                  }
                 }
               }
             }
@@ -357,12 +359,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         }
 
         if (withSelection) {
-          if (blockSelection && !myEditor.getCaretModel().supportsMultipleCarets()) {
+          if (blockSelection && !supportsMultipleCarets()) {
             selectionModel.setBlockSelection(blockSelectionStart, getLogicalPosition());
           }
           else {
             if (selectToDocumentStart) {
-              if (myEditor.getCaretModel().supportsMultipleCarets()) {
+              if (supportsMultipleCarets()) {
                 setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(0), 0);
               }
               else {
@@ -372,7 +374,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
             else if (pos.line >= myEditor.getVisibleLineCount()) {
               int endOffset = document.getTextLength();
               if (leadSelectionOffset < endOffset) {
-                if (myEditor.getCaretModel().supportsMultipleCarets()) {
+                if (supportsMultipleCarets()) {
                   setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(endOffset), endOffset);
                 }
                 else {
@@ -393,7 +395,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
                   selectionStartPositionToUse = getSelectionStartPosition();
                 }
               }
-              if (myEditor.getCaretModel().supportsMultipleCarets()) {
+              if (supportsMultipleCarets()) {
                 setSelection(selectionStartPositionToUse, selectionStartToUse, getVisualPosition(), getOffset());
               }
               else {
@@ -590,7 +592,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
 
     if (!oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
-      CaretEvent event = new CaretEvent(myEditor, myEditor.getCaretModel().supportsMultipleCarets() ? this : null, oldCaretPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(myEditor, supportsMultipleCarets() ? this : null, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
       }
@@ -599,6 +601,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       }
     }
     return null;
+  }
+
+  private boolean supportsMultipleCarets() {
+    return myEditor.getCaretModel().supportsMultipleCarets();
   }
 
   private void updateOffsetsFromLogicalPosition() {
@@ -703,7 +709,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     requestRepaint(oldInfo);
 
     if (fireListeners && !oldPosition.equals(myLogicalCaret)) {
-      CaretEvent event = new CaretEvent(myEditor, myEditor.getCaretModel().supportsMultipleCarets() ? this : null, oldPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(myEditor, supportsMultipleCarets() ? this : null, oldPosition, myLogicalCaret);
       myEditor.getCaretModel().fireCaretPositionChanged(event);
     }
   }
@@ -875,7 +881,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
       newOffset = Math.min(newOffset, document.getTextLength());
 
-      if (myEditor.getCaretModel().supportsMultipleCarets() && myOffset != startOffset) {
+      if (supportsMultipleCarets() && myOffset != startOffset) {
         LogicalPosition pos = myEditor.offsetToLogicalPosition(newOffset);
         moveToLogicalPosition(new LogicalPosition(pos.line, pos.column + myVirtualSpaceOffset), // retain caret in the virtual space
                             performSoftWrapAdjustment, null, true);
@@ -1453,7 +1459,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   }
 
   private boolean isVirtualSelectionEnabled() {
-    return myEditor.isColumnMode() && myEditor.getCaretModel().supportsMultipleCarets();
+    return myEditor.isColumnMode() && supportsMultipleCarets();
   }
 
   boolean hasVirtualSelection() {
