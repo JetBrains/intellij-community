@@ -3,6 +3,7 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
 

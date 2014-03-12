@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.Consumer;
+import org.jetbrains.debugger.values.Value;
 
 public final class ValueModifierUtil {
   public static ActionCallback setValue(final Variable variable, String newValue, EvaluateContext evaluateContext, final ValueModifier modifier) {

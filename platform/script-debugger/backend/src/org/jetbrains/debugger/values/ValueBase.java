@@ -1,4 +1,4 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger.values;
 
 import org.jetbrains.annotations.NotNull;
 

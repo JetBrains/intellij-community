@@ -1,7 +1,8 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger.values;
 
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.debugger.Variable;
 
 import java.util.List;
 

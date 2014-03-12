@@ -6,6 +6,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.FunctionValue;
 
 public interface ScriptManager {
   @NotNull

@@ -3,6 +3,7 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.Value;
 
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 public interface EvaluateContext {
   /**
    * Evaluates an arbitrary JavaScript {@code expression} in the particular context.
-   * Previously loaded {@link ObjectValue}s can be addressed from the expression if listed in
+   * Previously loaded {@link org.jetbrains.debugger.values.ObjectValue}s can be addressed from the expression if listed in
    * additionalContext parameter.
    *
    * @param expression        to evaluate
