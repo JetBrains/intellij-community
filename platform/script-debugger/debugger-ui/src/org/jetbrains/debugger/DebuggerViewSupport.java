@@ -95,7 +95,7 @@ public interface DebuggerViewSupport extends MemberFilter {
 
     @NotNull
     @Override
-    public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame) {
+    public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frameView) {
       throw new UnsupportedOperationException();
     }
 
