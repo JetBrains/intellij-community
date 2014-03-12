@@ -22,6 +22,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -53,10 +54,12 @@ public class MethodEvaluator implements Evaluator {
     myArgumentEvaluators = argumentEvaluators;
   }
 
+  @Override
   public Modifier getModifier() {
     return null;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if(!context.getDebugProcess().isAttached()) return null;
     DebugProcessImpl debugProcess = context.getDebugProcess();
@@ -126,7 +129,7 @@ public class MethodEvaluator implements Evaluator {
       if (requiresSuperObject && (referenceType instanceof ClassType)) {
         _refType = ((ClassType)referenceType).superclass();
       }
-      final Method jdiMethod = DebuggerUtilsEx.findMethod(_refType, myMethodName, signature);
+      final Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }

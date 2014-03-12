@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.UIUtil;
@@ -234,6 +235,13 @@ public class IJSwingUtilities {
     c.repaint();
   }
 
+  private static final Consumer<JComponent> UI_TREE_UPDATER = new Consumer<JComponent>() {
+    @Override
+    public void consume(JComponent component) {
+      updateComponentTreeUI0(component);
+    }
+  };
+
   private static void updateComponentTreeUI0(Component c) {
     Component[] children = null;
     if (c instanceof JMenu) {
@@ -249,6 +257,10 @@ public class IJSwingUtilities {
     }
     if (c instanceof JComponent) {
       JComponent jc = (JComponent)c;
+      OrphanGuardian orphans = (OrphanGuardian)jc.getClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY);
+      if (orphans != null) {
+        orphans.iterateOrphans(UI_TREE_UPDATER);
+      }
       jc.updateUI();
       JPopupMenu jpm = jc.getComponentPopupMenu();
       if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
