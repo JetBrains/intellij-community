@@ -188,6 +188,10 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
+    </extensionPoint>
+
     <extensionPoint name="refactoring.moveClassToInnerHandler"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler"/>
 
@@ -1201,6 +1205,7 @@
     <refactoring.moveClassToInnerHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassToInnerHandler" id="java"/>
     <refactoring.moveMemberHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveMembers.MoveJavaMemberHandler" id="java"/>
     <refactoring.moveInnerHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler" id="java"/>
+    <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
 
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate implementationClass="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegateImpl" language="JAVA"/>
