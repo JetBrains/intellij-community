@@ -26,6 +26,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.testing.pytest.PyTestUtil;

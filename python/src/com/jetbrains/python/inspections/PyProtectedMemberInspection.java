@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
