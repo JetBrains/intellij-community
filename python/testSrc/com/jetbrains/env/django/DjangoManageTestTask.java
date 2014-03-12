@@ -158,7 +158,7 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
 
       task.setParameters(parametersString.build());
 
-      myProcessHandler = task.createProcess();
+      myProcessHandler = task.createProcess(null);
 
       myProcessHandler.addProcessListener(createProcessListener());
 
