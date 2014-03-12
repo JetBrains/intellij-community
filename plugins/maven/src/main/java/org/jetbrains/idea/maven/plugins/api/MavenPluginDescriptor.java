@@ -18,12 +18,19 @@ package org.jetbrains.idea.maven.plugins.api;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.Required;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.HashMap;
@@ -63,6 +70,12 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("name")
     @Required
     public String name;
+
+    @Attribute
+    public String value;
+
+    @Attribute
+    public boolean insideConfigurationOnly;
   }
 
   @Tag("param")
@@ -143,5 +156,40 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     }
 
     return res;
+  }
+
+  public static boolean processDescriptors(Processor<MavenPluginDescriptor> processor, MavenDomConfiguration cfg) {
+    Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> map = getDescriptorsMap();
+
+    DomElement parent = cfg.getParent();
+
+    MavenDomPlugin plugin = DomUtil.getParentOfType(parent, MavenDomPlugin.class, false);
+    if (plugin == null) return true;
+
+    Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = map.get(plugin.getArtifactId().getStringValue());
+    if (groupMap == null) return true;
+
+    Map<String, List<MavenPluginDescriptor>> goalsMap = groupMap.get(plugin.getGroupId().getStringValue());
+    if (goalsMap == null) return true;
+
+    List<MavenPluginDescriptor> descriptorsForAllGoals = goalsMap.get(null);
+    if (descriptorsForAllGoals != null) {
+      for (MavenPluginDescriptor descriptor : descriptorsForAllGoals) {
+        if (!processor.process(descriptor)) return false;
+      }
+    }
+
+    if (parent instanceof MavenDomPluginExecution) {
+      for (MavenDomGoal goal : ((MavenDomPluginExecution)parent).getGoals().getGoals()) {
+        List<MavenPluginDescriptor> descriptors = goalsMap.get(goal.getStringValue());
+        if (descriptors != null) {
+          for (MavenPluginDescriptor descriptor : descriptors) {
+            if (!processor.process(descriptor)) return false;
+          }
+        }
+      }
+    }
+
+    return true;
   }
 }
