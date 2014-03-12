@@ -54,22 +54,22 @@ public class PyInitNewSignatureInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass cls) {
-      if (!cls.isNewStyleClass()) return; // old-style classes don't know about __new__
-      PyFunction initOrNew = cls.findInitOrNew(false); // only local
+    public void visitPyFunction(PyFunction node) {
+      final String functionName = node.getName();
+      if (!PyNames.NEW.equals(functionName) && !PyNames.INIT.equals(functionName)) return;
+      final PyClass cls = node.getContainingClass();
+      if (cls == null) return;
+      if (!cls.isNewStyleClass()) return;
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
-      if (initOrNew == null || builtins.isBuiltin(initOrNew.getContainingClass())) return; // nothing is overridden
-      String the_other_name = PyNames.NEW.equals(initOrNew.getName()) ? PyNames.INIT : PyNames.NEW;
-      PyFunction the_other = cls.findMethodByName(the_other_name, true);
-      if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
-      if (!PyUtil.isSignatureCompatibleTo(the_other, initOrNew, myTypeEvalContext) &&
-          !PyUtil.isSignatureCompatibleTo(initOrNew, the_other, myTypeEvalContext) &&
-          initOrNew.getContainingFile() == cls.getContainingFile()
-        ) {
-        registerProblem(initOrNew.getParameterList(), PyNames.NEW.equals(initOrNew.getName()) ?
+      final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
+      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true);
+      if (complementaryMethod == null || builtins.getClass("object") == complementaryMethod.getContainingClass()) return;
+      if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
+          !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
+          node.getContainingFile() == cls.getContainingFile()) {
+        registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ?
                                                       PyBundle.message("INSP.new.incompatible.to.init") :
-                                                      PyBundle.message("INSP.init.incompatible.to.new")
-        );
+                                                      PyBundle.message("INSP.init.incompatible.to.new"));
       }
     }
   }
