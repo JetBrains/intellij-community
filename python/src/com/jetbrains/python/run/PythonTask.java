@@ -100,8 +100,14 @@ public class PythonTask {
     myAfterCompletion = afterCompletion;
   }
 
-  public ProcessHandler createProcess() throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine();
+  /**
+   * @param env environment variables to be passed to process or null if nothing should be passed
+   */
+  public ProcessHandler createProcess(@Nullable final Map<String, String> env) throws ExecutionException {
+    final GeneralCommandLine commandLine = createCommandLine();
+    if (env != null) {
+       commandLine.getEnvironment().putAll(env);
+    }
 
     ProcessHandler handler;
     if (PySdkUtil.isRemote(mySdk)) {
@@ -160,7 +166,6 @@ public class PythonTask {
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, homePath, true);
     BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);
@@ -179,8 +184,11 @@ public class PythonTask {
     return pythonPath;
   }
 
-  public void run() throws ExecutionException {
-    final ProcessHandler process = createProcess();
+  /**
+   * @param env environment variables to be passed to process or null if nothing should be passed
+   */
+  public void run(@Nullable final Map<String, String> env) throws ExecutionException {
+    final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
@@ -191,7 +199,7 @@ public class PythonTask {
           try {
             process.destroyProcess(); // Stop process before rerunning it
             if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
-              PythonTask.this.run();
+              PythonTask.this.run(env);
             }else {
               Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
             }
