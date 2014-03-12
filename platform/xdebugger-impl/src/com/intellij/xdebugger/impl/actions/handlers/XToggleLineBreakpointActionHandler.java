@@ -70,9 +70,11 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     // for folded text check each line and find out type with the biggest priority
     int lineStart = position.getLine();
     int linesEnd = lineStart;
-    FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, lineStart);
-    if (region != null && !region.isExpanded()) {
-      linesEnd = region.getDocument().getLineNumber(region.getEndOffset());
+    if (editor != null) {
+      FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, lineStart);
+      if (region != null && !region.isExpanded()) {
+        linesEnd = region.getDocument().getLineNumber(region.getEndOffset());
+      }
     }
 
     VirtualFile file = position.getFile();

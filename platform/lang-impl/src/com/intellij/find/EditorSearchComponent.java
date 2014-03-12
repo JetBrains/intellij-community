@@ -19,7 +19,8 @@ package com.intellij.find;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.find.impl.livePreview.*;
+import com.intellij.find.impl.livePreview.LivePreviewController;
+import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -382,7 +383,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     });
     myClickToHighlightLabel.setVisible(false);
 
-    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", actionGroup, true);
+    myActionsToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actionGroup, true);
     myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
 
     actionGroup.addAction(new ToggleWholeWordsOnlyAction(this));

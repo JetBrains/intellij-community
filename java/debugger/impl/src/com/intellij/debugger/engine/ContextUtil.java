@@ -137,8 +137,8 @@ public class ContextUtil {
   }
 
   @Nullable
-  public static PsiElement getContextElement(final SourcePosition position) {
-    return position == null ? null :position.getElementAt();
+  public static PsiElement getContextElement(@Nullable SourcePosition position) {
+    return position == null ? null : position.getElementAt();
   }
 
   public static boolean isJspImplicit(PsiElement element) {

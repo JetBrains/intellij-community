@@ -299,7 +299,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   private static String getInputFieldsText(Map<String, String> parameters) {
     Element element = new Element(RemoteTemplatesFactory.TEMPLATE);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
-      Element field = new Element(RemoteTemplatesFactory.INPUT_FIELD);
+      Element field = new Element(ArchivedProjectTemplate.INPUT_FIELD);
       field.setText(entry.getValue());
       field.setAttribute(RemoteTemplatesFactory.INPUT_DEFAULT, entry.getKey());
       element.addContent(field);

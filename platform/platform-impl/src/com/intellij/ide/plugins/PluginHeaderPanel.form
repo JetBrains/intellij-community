@@ -6,7 +6,7 @@
       <xy x="20" y="20" width="500" height="400"/>
     </constraints>
     <properties>
-      <opaque value="false"/>
+      <opaque value="true"/>
     </properties>
     <border type="none"/>
     <children>

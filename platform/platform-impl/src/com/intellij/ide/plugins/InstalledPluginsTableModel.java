@@ -65,9 +65,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<PluginId, Set<PluginId>>();
 
   private static final String ENABLED_DISABLED = "All plugins";
-  private static final String ENABLED = "Enabled plugins";
-  private static final String DISABLED = "Disabled plugins";
-  public static final String[] ENABLED_VALUES = new String[] {ENABLED_DISABLED, ENABLED, DISABLED};
+  private static final String ENABLED = "Enabled";
+  private static final String DISABLED = "Disabled";
+  private static final String BUNDLED = "Bundled";
+  private static final String CUSTOM = "Custom";
+  public static final String[] ENABLED_VALUES = new String[] {ENABLED_DISABLED, ENABLED, DISABLED, BUNDLED, CUSTOM};
   private String myEnabledFilter = ENABLED_DISABLED;
 
   private final Map<String, String> myPlugin2host = new HashMap<String, String>();
@@ -87,6 +89,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
+  }
+
+  public boolean hasProblematicDependencies(PluginId pluginId) {
+    final Set<PluginId> ids = myDependentToRequiredListMap.get(pluginId);
+    return ids != null && !ids.isEmpty();
   }
 
   public boolean appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
@@ -361,6 +368,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled && myEnabledFilter.equals(DISABLED)) return false;
       if (!enabled && myEnabledFilter.equals(ENABLED)) return false;
+      final boolean bundled = descriptor.isBundled();
+      if (bundled && myEnabledFilter.equals(CUSTOM)) return false;
+      if (!bundled && myEnabledFilter.equals(BUNDLED)) return false;
     }
     return true;
   }

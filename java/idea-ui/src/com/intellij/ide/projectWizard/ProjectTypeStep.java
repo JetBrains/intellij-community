@@ -443,7 +443,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         @Override
         public boolean value(ProjectTemplate template) {
           if (!(template instanceof ArchivedProjectTemplate)) return true;
-          List<String> frameworks = ((ArchivedProjectTemplate)template).getFeaturedFrameworks();
+          List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
           return frameworks.containsAll(selectedFrameworks);
         }
       });
