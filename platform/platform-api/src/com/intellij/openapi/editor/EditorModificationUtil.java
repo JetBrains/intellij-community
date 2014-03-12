@@ -39,6 +39,11 @@ public class EditorModificationUtil {
   private EditorModificationUtil() { }
 
   public static void deleteSelectedText(Editor editor) {
+    deleteSelectedTextNoScrolling(editor);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void deleteSelectedTextNoScrolling(Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasBlockSelection()) deleteBlockSelection(editor);
     if(!selectionModel.hasSelection()) return;
@@ -55,16 +60,16 @@ public class EditorModificationUtil {
     }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
     editor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
-        deleteSelectedText(editor);
+        deleteSelectedTextNoScrolling(editor);
       }
     });
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static void deleteBlockSelection(Editor editor) {
@@ -106,6 +111,14 @@ public class EditorModificationUtil {
   }
 
   public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
+    int result = insertStringAtCaretNoScrolling(editor, s, toProcessOverwriteMode, toMoveCaret, caretShift);
+    if (toMoveCaret) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    return result;
+  }
+
+  private static int insertStringAtCaretNoScrolling(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       VisualPosition startPosition = selectionModel.getSelectionStartPosition();
@@ -139,7 +152,7 @@ public class EditorModificationUtil {
       deleteSelectedText(editor);
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       if (lineNumber >= document.getLineCount()){
-        return insertStringAtCaret(editor, s, false, toMoveCaret);
+        return insertStringAtCaretNoScrolling(editor, s, false, toMoveCaret, s.length());
       }
 
       int endOffset = document.getLineEndOffset(lineNumber);
@@ -149,7 +162,6 @@ public class EditorModificationUtil {
     int offset = oldOffset + filler.length() + caretShift;
     if (toMoveCaret){
       editor.getCaretModel().moveToOffset(offset, true);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       selectionModel.removeSelection();
     }
     else if (editor.getCaretModel().getOffset() != oldOffset) { // handling the case when caret model tracks document changes
@@ -432,9 +444,10 @@ public class EditorModificationUtil {
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          insertStringAtCaret(editor, str, toProcessOverwriteMode, true, caretShift);
+          insertStringAtCaretNoScrolling(editor, str, toProcessOverwriteMode, true, caretShift);
         }
       });
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
