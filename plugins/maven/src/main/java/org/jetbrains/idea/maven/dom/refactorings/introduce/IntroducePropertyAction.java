@@ -146,7 +146,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
       if (model == null ||
           StringUtil.isEmptyOrSpaces(selectedString) ||
-          isInsideTextRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
+          isIntersectWithRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
         return;
       }
 
@@ -332,7 +332,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
             do {
               int end = start + mySelectedString.length();
-              boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
+              boolean isInsideProperty = isIntersectWithRanges(ranges, start, end);
               if (!isInsideProperty) {
                 usages
                   .add(new UsageInfo(containingFile, elementTextRange.getStartOffset() + start, elementTextRange.getStartOffset() + end));
@@ -370,12 +370,21 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return ranges;
   }
 
-  private static boolean isInsideTextRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
+  private static boolean isIntersectWithRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
-      if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
-          (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
-        return true;
+      if (start <= range.getStartOffset() && end >= range.getEndOffset()) {
+        continue; // range is inside [start, end]
       }
+
+      if (end <= range.getStartOffset()) {
+        continue; // range is on right
+      }
+
+      if (start >= range.getEndOffset()) {
+        continue; // range is on right
+      }
+
+      return true;
     }
     return false;
   }
