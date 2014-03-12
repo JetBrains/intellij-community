@@ -1,4 +1,4 @@
-package com.jetbrains.env;
+package com.jetbrains.env.python.testing;
 
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
