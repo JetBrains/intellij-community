@@ -68,7 +68,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myDataPack = initialDataPack;
     myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myDataPack.getGraphFacade(), this);
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI, myLogDataHolder.isMultiRoot()));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -347,8 +347,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
 
-    RootCellRenderer(@NotNull VcsLogUiImpl ui) {
+    RootCellRenderer(@NotNull VcsLogUiImpl ui, boolean multiRoot) {
       myUi = ui;
+      int rootWidth = multiRoot ? ROOT_INDICATOR_WIDTH : 0;
+      setPreferredSize(new Dimension(rootWidth, -1));
     }
 
     @Override
