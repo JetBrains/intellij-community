@@ -18,8 +18,10 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -110,5 +112,21 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
     }
     return null;
+  }
+
+  @Override
+  public ThreeState evaluateCondition(@NotNull EvaluationContext context,
+                                      @NotNull StackFrameProxyImpl frame,
+                                      @NotNull Location location,
+                                      @NotNull String expression) {
+    for (PositionManager positionManager : myPositionManagers) {
+      if (positionManager instanceof PositionManagerEx) {
+        ThreeState result = ((PositionManagerEx)positionManager).evaluateCondition(context, frame, location, expression);
+        if (result != ThreeState.UNSURE) {
+          return result;
+        }
+      }
+    }
+    return ThreeState.UNSURE;
   }
 }
