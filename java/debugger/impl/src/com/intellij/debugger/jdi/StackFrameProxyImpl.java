@@ -26,11 +26,15 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
@@ -43,7 +47,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private ObjectReference myThisReference;
   private ClassLoaderReference myClassLoader;
   private Boolean myIsObsolete = null;
-  private Map<LocalVariable,Value> myAllValues;
+  private Map<LocalVariable, Value> myAllValues;
 
   public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
     super(threadProxy.getVirtualMachine());
@@ -252,6 +256,12 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return variable != null ? new LocalVariableProxyImpl(this, variable) : null;
   }
 
+  @Nullable
+  public Value visibleValueByName(@NotNull String name) throws EvaluateException {
+    LocalVariable variable = visibleVariableByNameInt(name);
+    return variable != null ? getValue(new LocalVariableProxyImpl(this, variable)) : null;
+  }
+
   protected LocalVariable visibleVariableByNameInt(String name) throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     InvalidStackFrameException error = null;
@@ -283,8 +293,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final Map<LocalVariable, Value> allValues = getAllValues();
-        return allValues.get(localVariable.getVariable());
+        return getAllValues().get(localVariable.getVariable());
       }
       catch (InvalidStackFrameException e) {
         error = e;
@@ -332,13 +341,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     checkValid();
     if (myAllValues == null) {
       try {
-        final StackFrame stackFrame = getStackFrame();
-        final Map<LocalVariable, Value> values = stackFrame.getValues(stackFrame.visibleVariables());
-        myAllValues = new HashMap<LocalVariable, Value>(values.size());
-        for (final LocalVariable variable : values.keySet()) {
-          final Value value = values.get(variable);
-          myAllValues.put(variable, value);
-        }
+        StackFrame stackFrame = getStackFrame();
+        myAllValues = new THashMap<LocalVariable, Value>(stackFrame.getValues(stackFrame.visibleVariables()));
       }
       catch (InconsistentDebugInfoException ignored) {
         clearCaches();

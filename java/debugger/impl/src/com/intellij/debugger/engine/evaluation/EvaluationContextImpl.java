@@ -25,11 +25,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Aug 28, 2003
- * Time: 2:02:29 PM
- */
 public final class EvaluationContextImpl implements EvaluationContext{
   private final Value myThisObject;
   private final SuspendContextImpl mySuspendContext;
@@ -48,6 +43,7 @@ public final class EvaluationContextImpl implements EvaluationContext{
     return myThisObject;
   }
 
+  @NotNull
   @Override
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
@@ -77,6 +73,7 @@ public final class EvaluationContextImpl implements EvaluationContext{
     return copy;
   }
 
+  @Nullable
   @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();

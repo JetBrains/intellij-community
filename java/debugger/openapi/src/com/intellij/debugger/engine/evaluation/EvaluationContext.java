@@ -31,10 +31,12 @@ public interface EvaluationContext extends StackFrameContext{
 
   EvaluationContext createEvaluationContext(Value value);
 
+  @NotNull
   SuspendContext getSuspendContext();
 
   Project getProject();
 
+  @Nullable
   ClassLoaderReference getClassLoader() throws EvaluateException;
 
   @Nullable
