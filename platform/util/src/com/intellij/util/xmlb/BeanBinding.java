@@ -183,9 +183,19 @@ class BeanBinding implements Binding {
   }
 
   private static String getTagName(Class<?> aClass) {
+    for (Class<?> c = aClass; c != null; c = c.getSuperclass()) {
+      String name = getTagNameFromAnnotation(c);
+      if (name != null) {
+        return name;
+      }
+    }
+    return aClass.getSimpleName();
+  }
+
+  private static String getTagNameFromAnnotation(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     if (tag != null && !tag.value().isEmpty()) return tag.value();
-    return aClass.getSimpleName();
+    return null;
   }
 
   @NotNull
