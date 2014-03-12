@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.Processor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -43,12 +44,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
@@ -180,6 +183,27 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (profile != null) {
       PsiElement result = MavenDomProjectProcessorUtils.findProperty(profile.getProperties(), myText);
       if (result != null) return result;
+    }
+
+    MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
+    if (pluginCfg != null) {
+      boolean notFound = MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
+        @Override
+        public boolean process(MavenPluginDescriptor descriptor) {
+          if (descriptor.properties != null) {
+            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+              if (property.insideConfigurationOnly && property.name.equals(myText)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }
+      }, pluginCfg);
+
+      if (!notFound) {
+        return myElement;
+      }
     }
 
     if (myProjectDom != null) {
@@ -392,6 +416,23 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
           result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
         }
       }
+    }
+
+    MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
+    if (pluginCfg != null) {
+      MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
+        @Override
+        public boolean process(MavenPluginDescriptor descriptor) {
+          if (descriptor.properties != null) {
+            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+              if (property.insideConfigurationOnly) {
+                result.add(LookupElementBuilder.create(property.name).withIcon(PlatformIcons.PROPERTY_ICON));
+              }
+            }
+          }
+          return true;
+        }
+      }, pluginCfg);
     }
   }
 
