@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
@@ -69,7 +70,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
           node.getContainingFile() == cls.getContainingFile()) {
         registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ?
                                                       PyBundle.message("INSP.new.incompatible.to.init") :
-                                                      PyBundle.message("INSP.init.incompatible.to.new"));
+                                                      PyBundle.message("INSP.init.incompatible.to.new"), new PyChangeSignatureQuickFix());
       }
     }
   }
