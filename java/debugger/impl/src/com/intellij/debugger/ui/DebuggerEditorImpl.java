@@ -75,12 +75,15 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   private WeakReference<ListPopup> myPopup;
 
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
+    @Override
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
+    @Override
     public void childMoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
@@ -179,6 +182,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public abstract JComponent getPreferredFocusedComponent();
 
+  @Override
   public void setContext(@Nullable PsiElement context) {
     myContext = context;
 
@@ -205,6 +209,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   protected abstract void updateEditorUi();
 
+  @Override
   public PsiElement getContext() {
     return myContext;
   }
@@ -213,6 +218,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     return myProject;
   }
 
+  @Override
   public void requestFocus() {
     getPreferredFocusedComponent().requestFocus();
   }
@@ -259,6 +265,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     return myCurrentDocument;
   }
 
+  @Override
   public String getRecentsId() {
     return myRecentsId;
   }
@@ -283,6 +290,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     }
   }
 
+  @Override
   public void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
     myCurrentDocument = null;
