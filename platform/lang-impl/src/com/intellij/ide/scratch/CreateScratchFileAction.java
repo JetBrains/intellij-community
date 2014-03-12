@@ -61,7 +61,6 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
     if (dialog.showAndGet()) {
       Language language = dialog.getType();
       VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
-      if (file == null) return;
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     }
