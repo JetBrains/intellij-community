@@ -157,6 +157,15 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
       }
     }
+    if (!isSelected) {
+      if (PluginManagerCore.isIncompatible(myPluginDescriptor)) {
+        myName.setForeground(JBColor.RED);
+      } else if (myPluginDescriptor != null && table.getModel() instanceof InstalledPluginsTableModel) {
+        if (((InstalledPluginsTableModel)table.getModel()).hasProblematicDependencies(myPluginDescriptor.getPluginId())) {
+          myName.setForeground(JBColor.RED);
+        }
+      }
+    }
 
     return myPanel;
   }

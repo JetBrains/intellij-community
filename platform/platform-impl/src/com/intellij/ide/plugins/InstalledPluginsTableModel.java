@@ -91,6 +91,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
   }
 
+  public boolean hasProblematicDependencies(PluginId pluginId) {
+    final Set<PluginId> ids = myDependentToRequiredListMap.get(pluginId);
+    return ids != null && !ids.isEmpty();
+  }
+
   public boolean appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
     final PluginId descrId = descriptor.getPluginId();
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
