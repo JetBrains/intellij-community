@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -33,10 +49,12 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @param <T> List item type.
+ * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  * @since 13.0
  */
 public abstract class FinderRecursivePanel<T> extends JBSplitter implements DataProvider, Disposable {
@@ -57,6 +75,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   private final CollectionListModel<T> myListModel = new CollectionListModel<T>();
 
   private final MergingUpdateQueue myMergingUpdateQueue = new MergingUpdateQueue("FinderRecursivePanel", 100, true, this, this);
+
+  private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
 
   private final CopyProvider myCopyProvider = new CopyProvider() {
     @Override
@@ -187,6 +207,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       @Override
       public void valueChanged(ListSelectionEvent event) {
         if (event.getValueIsAdjusting()) return;
+        if (myUpdateSelectedPathModeActive.get()) return;
         updateRightComponent(true);
       }
     });
@@ -396,6 +417,54 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Nullable
   public T getSelectedValue() {
     return (T)myList.getSelectedValue();
+  }
+
+  /**
+   * Performs recursive update selecting given values.
+   *
+   * @param pathToSelect Values to select.
+   * @since 14
+   */
+  public void updateSelectedPath(Object... pathToSelect) {
+    if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
+    FinderRecursivePanel panel = this;
+    for (int i = 0; i < pathToSelect.length; i++) {
+      Object selectedValue = pathToSelect[i];
+      panel.setSelectedValue(selectedValue);
+      if (i < pathToSelect.length - 1) {
+        panel = (FinderRecursivePanel)panel.getSecondComponent();
+        assert panel != null : Arrays.toString(pathToSelect);
+      }
+    }
+    myUpdateSelectedPathModeActive.set(false);
+  }
+
+  private void setSelectedValue(final Object value) {
+    if (value.equals(myList.getSelectedValue())) {
+      return;
+    }
+
+    // load list items synchronously
+    myList.setPaintBusy(true);
+    try {
+      final List<T> listItems = ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {
+        @Override
+        public List<T> compute() {
+          return getListItems();
+        }
+      });
+      mergeListItems(myListModel, listItems);
+    }
+    finally {
+      myList.setPaintBusy(false);
+    }
+
+    myList.setSelectedValue(value, true);
+
+    // no existing FRP or detail component
+    if (!(myChild instanceof FinderRecursivePanel)) {
+      updateRightComponent(true);
+    }
   }
 
   @NotNull
