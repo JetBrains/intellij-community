@@ -23,6 +23,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
@@ -32,6 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PyChangeSignatureQuickFix implements LocalQuickFix {
+
+  private final boolean myOverridenMethod;
+
+  public PyChangeSignatureQuickFix(boolean overriddenMethod) {
+    myOverridenMethod = overriddenMethod;
+  }
 
   @NotNull
   public String getName() {
@@ -51,7 +58,9 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     assert cls != null;
     final String functionName = function.getName();
     final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-    final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true);
+    final PyFunction complementaryMethod = myOverridenMethod ? (PyFunction)PySuperMethodsSearch.search(function).findFirst()
+                                                             : cls.findMethodByName(complementaryName, true);
+
     assert complementaryMethod != null;
     final PyMethodDescriptor methodDescriptor = new PyMethodDescriptor(function) {
       @Override

@@ -68,9 +68,9 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
           !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
           node.getContainingFile() == cls.getContainingFile()) {
-        registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ?
-                                                      PyBundle.message("INSP.new.incompatible.to.init") :
-                                                      PyBundle.message("INSP.init.incompatible.to.new"), new PyChangeSignatureQuickFix());
+        registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ? PyBundle.message("INSP.new.incompatible.to.init") :
+                                                      PyBundle.message("INSP.init.incompatible.to.new"),
+                        new PyChangeSignatureQuickFix(false));
       }
     }
   }
