@@ -88,6 +88,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(httpProxySettingsButton, BorderLayout.WEST);
+    myPanelDescription.setVisible(false);
   }
 
   @Override
