@@ -407,11 +407,18 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   private static boolean selectionsIntersect(CaretImpl firstCaret, CaretImpl secondCaret) {
-    return firstCaret.getSelectionStart() < secondCaret.getSelectionStart() && firstCaret.getSelectionEnd() > secondCaret.getSelectionStart()
-      || firstCaret.getSelectionStart() > secondCaret.getSelectionStart() && firstCaret.getSelectionStart() < secondCaret.getSelectionEnd()
-      || firstCaret.getSelectionStart() == secondCaret.getSelectionStart() && secondCaret.getSelectionEnd() > secondCaret.getSelectionStart() && firstCaret.getSelectionEnd() > firstCaret.getSelectionStart()
-      || (firstCaret.getSelectionStart() == firstCaret.getSelectionEnd() && firstCaret.hasVirtualSelection() || secondCaret.getSelectionStart() == secondCaret.getSelectionEnd() && secondCaret.hasVirtualSelection())
-         && (firstCaret.getSelectionStart() == secondCaret.getSelectionStart() || firstCaret.getSelectionEnd() == secondCaret.getSelectionEnd());
+    int firstStart = firstCaret.getSelectionStart();
+    int secondStart = secondCaret.getSelectionStart();
+    int firstEnd = firstCaret.getSelectionEnd();
+    int secondEnd = secondCaret.getSelectionEnd();
+    return firstStart < secondStart && firstEnd > secondStart
+      || firstStart > secondStart && firstStart < secondEnd
+      || firstStart == secondStart && secondEnd != secondStart && firstEnd > firstStart
+      || (hasPureVirtualSelection(firstCaret) || hasPureVirtualSelection(secondCaret)) && (firstStart == secondStart || firstEnd == secondEnd);
+  }
+
+  private static boolean hasPureVirtualSelection(CaretImpl firstCaret) {
+    return firstCaret.getSelectionStart() == firstCaret.getSelectionEnd() && firstCaret.hasVirtualSelection();
   }
 
   void doWithCaretMerging(Runnable runnable) {
