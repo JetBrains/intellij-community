@@ -101,7 +101,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsInLibraryContent = false;
     }
 
-    myXStackFrame = myLocation == null ? null : ((DebugProcessImpl)getDebugProcess()).getPositionManager().createStackFrame(this);
+    myXStackFrame = myLocation == null ? null : ((DebugProcessImpl)getDebugProcess()).getPositionManager().createStackFrame(frame, (DebugProcessImpl)getDebugProcess(), myLocation);
   }
 
   @Nullable
