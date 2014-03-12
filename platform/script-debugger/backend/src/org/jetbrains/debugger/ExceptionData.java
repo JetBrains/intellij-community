@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.util.ThreeState;
+import org.jetbrains.debugger.values.Value;
 
 /**
  * A JavaScript exception data holder for exceptions reported by a JavaScript

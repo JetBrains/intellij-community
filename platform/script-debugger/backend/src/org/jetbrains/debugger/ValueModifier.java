@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.debugger.values.Value;
 
 public interface ValueModifier {
   // expression can contains reference to another variables in current scope, so, we should evaluate it before set

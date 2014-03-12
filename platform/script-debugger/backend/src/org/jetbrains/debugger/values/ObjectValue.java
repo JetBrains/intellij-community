@@ -1,9 +1,10 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger.values;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.Variable;
 
 import java.util.List;
 

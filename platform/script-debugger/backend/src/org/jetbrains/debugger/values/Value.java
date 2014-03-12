@@ -1,6 +1,7 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger.values;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.debugger.EvaluateContextAdditionalParameter;
 
 /**
  * An object that represents a VM variable value (compound or atomic).
