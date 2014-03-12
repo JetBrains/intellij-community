@@ -4,6 +4,9 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.debugger.values.ObjectValue;
+import org.jetbrains.debugger.values.StringValue;
+import org.jetbrains.debugger.values.Value;
 
 import java.util.List;
 

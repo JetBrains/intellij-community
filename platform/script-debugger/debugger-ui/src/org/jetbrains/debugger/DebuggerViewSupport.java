@@ -5,6 +5,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.frame.CallFrameView;
+import org.jetbrains.debugger.values.ObjectValue;
 
 import javax.swing.*;
 import java.util.List;

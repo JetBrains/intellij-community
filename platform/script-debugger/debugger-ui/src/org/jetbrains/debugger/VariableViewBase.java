@@ -3,6 +3,7 @@ package org.jetbrains.debugger;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XNamedValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.debugger.values.ValueType;
 
 import javax.swing.*;
 

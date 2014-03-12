@@ -9,6 +9,8 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.Value;
+import org.jetbrains.debugger.values.ValueType;
 
 import java.util.ArrayList;
 import java.util.Collections;
