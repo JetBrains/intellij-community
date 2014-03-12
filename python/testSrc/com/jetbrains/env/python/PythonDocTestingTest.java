@@ -2,7 +2,6 @@ package com.jetbrains.env.python;
 
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyDocTestTask;
-import junit.framework.Assert;
 
 /**
  * User : catherine
@@ -13,9 +12,42 @@ public class PythonDocTestingTest extends PyEnvTestCase{
 
       @Override
       public void after() {
-        Assert.assertEquals(3, allTestsCount());
-        Assert.assertEquals(3, passedTestsCount());
+        assertEquals(3, allTestsCount());
+        assertEquals(3, passedTestsCount());
         allTestsPassed();
+      }
+    });
+  }
+
+  public void testClass() {
+    runPythonTest(new PyDocTestTask("/testRunner/env/doc", "test1.py::FirstGoodTest") {
+
+      @Override
+      public void after() {
+        assertEquals(1, allTestsCount());
+        assertEquals(1, passedTestsCount());
+      }
+    });
+  }
+
+  public void testMethod() {
+    runPythonTest(new PyDocTestTask("/testRunner/env/doc", "test1.py::SecondGoodTest::test_passes") {
+
+      @Override
+      public void after() {
+        assertEquals(1, allTestsCount());
+        assertEquals(1, passedTestsCount());
+      }
+    });
+  }
+
+  public void testFunction() {
+    runPythonTest(new PyDocTestTask("/testRunner/env/doc", "test1.py::factorial") {
+
+      @Override
+      public void after() {
+        assertEquals(1, allTestsCount());
+        assertEquals(1, passedTestsCount());
       }
     });
   }
