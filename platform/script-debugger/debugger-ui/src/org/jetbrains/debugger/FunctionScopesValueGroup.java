@@ -7,6 +7,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.frame.CallFrameView;
+import org.jetbrains.debugger.values.FunctionValue;
 
 import java.util.Arrays;
 
