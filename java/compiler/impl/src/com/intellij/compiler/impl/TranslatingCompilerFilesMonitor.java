@@ -763,7 +763,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private int getProjectId(Project project) {
+  private static int getProjectId(Project project) {
     try {
       return FSRecords.getNames().enumerate(CompilerPaths.getCompilerSystemDirectoryName(project));
     }
@@ -773,7 +773,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return -1;
   }
 
-  private int getModuleId(Module module) {
+  private static int getModuleId(Module module) {
     try {
       return FSRecords.getNames().enumerate(module.getName().toLowerCase(Locale.US));
     }
@@ -1035,13 +1035,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     void execute(VirtualFile file);
   }
 
-  private static void processRecursively(VirtualFile file, final boolean dbOnly, final FileProcessor processor) {
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+  private static void processRecursively(final VirtualFile fromFile, final boolean dbOnly, final FileProcessor processor) {
+    if (!(fromFile.getFileSystem() instanceof LocalFileSystem)) {
       return;
     }
 
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor() {
       @NotNull @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
         if (fileTypeManager.isFileIgnored(file)) {
@@ -1057,11 +1057,31 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       @Nullable
       @Override
       public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-        return file.isDirectory() && dbOnly ? ((NewVirtualFile)file).iterInDbChildren() : null;
+        if (dbOnly) {
+          return file.isDirectory()? ((NewVirtualFile)file).iterInDbChildren() : null;
+        }
+        if (file.equals(fromFile) || !file.isDirectory()) {
+          return null; // skipping additional checks for the initial file and non-directory files
+        }
+        // optimization: for all files that are not under content of currently opened projects iterate over DB children
+        return isInContentOfOpenedProject(file)? null : ((NewVirtualFile)file).iterInDbChildren();
       }
     });
   }
 
+  private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+            return Boolean.TRUE;
+          }
+        }
+        return Boolean.FALSE;
+      }
+    });
+  }
+  
   // made public for tests
   public void scanSourceContent(final ProjectRef projRef, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
     if (roots.isEmpty()) {
@@ -1622,18 +1642,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               continue; // the content of this project will be scanned during its post-startup activities
             }
             final int projectId = getProjectId(project);
-            final boolean projectSuspended = isSuspended(projectId);
-            final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-            ProjectFileIndex fileIndex = rootManager.getFileIndex();
+            final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             if (fileIndex.isInContent(file)) {
               isInContent.set(true);
             }
-
+            if (isSuspended(projectId)) {
+              continue;
+            }
             if (fileIndex.isInSourceContent(file)) {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
-                  if (!projectSuspended && isCompilable(file)) {
+                  if (isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
                 }
@@ -1649,7 +1669,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               });
             }
             else {
-              if (!projectSuspended && belongsToIntermediateSources(file, project)) {
+              if (belongsToIntermediateSources(file, project)) {
                 processRecursively(file, false, new FileProcessor() {
                   public void execute(final VirtualFile file) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
