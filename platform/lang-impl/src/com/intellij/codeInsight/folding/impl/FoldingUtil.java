@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class FoldingUtil {
   }
 
   @Nullable
-  public static FoldRegion findFoldRegionStartingAtLine(Editor editor, int line){
+  public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
     FoldRegion result = null;
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return result;
