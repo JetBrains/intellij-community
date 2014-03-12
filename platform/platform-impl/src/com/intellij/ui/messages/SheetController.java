@@ -88,7 +88,7 @@ public class SheetController {
       String buttonTitle = buttonTitles[titleIndex];
 
       buttons[i] = new JButton();
-
+      buttons[i].setOpaque(false);
       handleMnemonics(i, buttonTitle);
 
       if (buttonTitle.equals(defaultButtonTitle)) {
@@ -154,18 +154,22 @@ public class SheetController {
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
       @Override
-      protected void paintComponent(Graphics g) {
+      protected void paintComponent(Graphics g2d) {
+        final Graphics2D g = (Graphics2D) g2d.create();
         super.paintComponent(g);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .95f));
 
-        final Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
-
-        g2d.setColor(Gray._225);
+        g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
 
-        paintShadow(g2d);
+        paintShadow(g);
         // draw the sheet background
-        g2d.fill(dialog);
+        if (UIUtil.isUnderDarcula()) {
+          g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
+        } else {
+          //todo make bottom corners
+          g.fill(dialog);
+        }
       }
 
     };
@@ -261,17 +265,17 @@ public class SheetController {
       SHEET_WIDTH, SHEET_HEIGHT);
 
     Graphics2D g2 = bufferedImage.createGraphics();
-    g2.setColor(JBColor.WHITE);
+    g2.setColor(new JBColor(Gray._255, Gray._0));
     g2.fillRoundRect(0, 0, SHEET_WIDTH - 1, SHEET_HEIGHT - 1, SHADOW_BORDER, SHADOW_BORDER);
     g2.dispose();
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(0.95f);
-    renderer.setColor(JBColor.BLACK);
+    renderer.setOpacity(.95f);
+    renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     BufferedImage shadow = renderer.createShadow(bufferedImage);
     g2d.drawImage(shadow, 0, - SHADOW_BORDER, null);
-    g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(255, 255, 255, 0)));
+    g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(110, 110, 110, 0)));
     g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 

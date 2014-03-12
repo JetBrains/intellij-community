@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 20-Aug-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +25,10 @@ import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class WrapReturnValueTest extends MultiFileTestCase{
+/**
+ * @author anna
+ */
+public class WrapReturnValueTest extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -42,39 +40,43 @@ public class WrapReturnValueTest extends MultiFileTestCase{
     return "/refactoring/wrapReturnValue/";
   }
 
-  private void doTest(final boolean existing) throws Exception {
+  public void testSimple() { doTest(false); }
+  public void testGenerics() { doTest(false); }
+  public void testInconsistentWrapper() { doTest(true, "Existing class does not have getter for selected field"); }
+  public void testWrapper() { doTest(true); }
+  public void testStrip() { doTest(true); }
+  public void testNoConstructor() { doTest(true, "Existing class does not have appropriate constructor"); }
+  public void testInnerClass() { doTest(false, null, true); }
+  public void testHierarchy() { doTest(false, null, true); }
+  public void testAnonymous() { doTest(true, null, false); }
+  public void testWrongFieldAssignment() { doTest(true, "Existing class does not have appropriate constructor", false); }
+  public void testWrongFieldType() { doTest(true, "Existing class does not have appropriate constructor", false); }
+  public void testStaticMethodInnerClass() { doTest(false, null, true); }
+  public void testRawReturnType() { doTest(true, "Existing class does not have appropriate constructor"); }
+  public void testReturnInsideLambda() { doTest(false, null, true); }
+  public void testTypeAnnotations() { doTest(false); }
+
+  private void doTest(final boolean existing) {
     doTest(existing, null);
   }
 
-  private void doTest(final boolean existing, @NonNls String exceptionMessage) throws Exception {
+  private void doTest(final boolean existing, @NonNls String exceptionMessage) {
     doTest(existing, exceptionMessage, false);
   }
 
-  private void doTest(final boolean existing, String exceptionMessage, final boolean createInnerClass) throws Exception {
+  private void doTest(final boolean existing, String exceptionMessage, final boolean createInnerClass) {
     try {
       doTest(new PerformAction() {
         @Override
-        public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
           PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
-
           assertNotNull("Class Test not found", aClass);
-
-          final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-
-
-
-          @NonNls final String wrapperClassName = "Wrapper";
-
-          final PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName, GlobalSearchScope.projectScope(getProject()));
-
+          PsiMethod method = aClass.findMethodsByName("foo", false)[0];
+          String wrapperClassName = "Wrapper";
+          PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName, GlobalSearchScope.projectScope(getProject()));
           assertTrue(!existing || wrapperClass != null);
-          final PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
-          WrapReturnValueProcessor processor = new WrapReturnValueProcessor(wrapperClassName, "",
-                                                                            null, method, existing, createInnerClass,
-                                                                            delegateField);
-          processor.run();
-          /*LocalFileSystem.getInstance().refresh(false);
-          FileDocumentManager.getInstance().saveAllDocuments();*/
+          PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
+          new WrapReturnValueProcessor(wrapperClassName, "", null, method, existing, createInnerClass, delegateField).run();
         }
       });
     }
@@ -89,61 +91,4 @@ public class WrapReturnValueTest extends MultiFileTestCase{
       fail("Conflict was not found");
     }
   }
-
-  public void testSimple() throws Exception {
-    doTest(false);
-  }
-
-  public void testGenerics() throws Exception {
-    doTest(false);
-  }
-
-  public void testInconsistentWrapper() throws Exception {
-    doTest(true, "Existing class does not have getter for selected field");
-  }
-
-  public void testWrapper() throws Exception {
-    doTest(true);
-  }
-
-  public void testStrip() throws Exception {
-    doTest(true);
-  }
-
-  public void testNoConstructor() throws Exception {
-    doTest(true, "Existing class does not have appropriate constructor");
-  }
-
-  public void testInnerClass() throws Exception {
-    doTest(false, null, true);
-  }
-
-  public void testHierarchy() throws Exception {
-    doTest(false, null, true);
-  }
-
-  public void testAnonymous() throws Exception {
-    doTest(true, null, false);
-  }
-
-  public void testWrongFieldAssignment() throws Exception {
-    doTest(true, "Existing class does not have appropriate constructor", false);
-  }
-
-  public void testWrongFieldType() throws Exception {
-    doTest(true, "Existing class does not have appropriate constructor", false);
-  }
-
-  public void testStaticMethodInnerClass() throws Exception {
-    doTest(false, null, true);
-  }
-
-  public void testRawReturnType() throws Exception {
-    doTest(true, "Existing class does not have appropriate constructor");
-  }
-
-  public void testReturnInsideLambda() throws Exception {
-    doTest(false, null, true);
-  }
-  
 }

@@ -129,7 +129,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            callSession.initExpressionConstraints(parameters, args, myExpression, method);
+            callSession.initExpressionConstraints(parameters, args, myExpression, method, resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs());
           }
           final boolean accepted = callSession.repeatInferencePhases(true);
           if (!accepted) {

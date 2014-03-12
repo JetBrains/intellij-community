@@ -762,7 +762,7 @@ public class PsiImplUtil {
   private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");
 
   public static void markTypeAnnotations(@NotNull PsiTypeElement typeElement) {
-    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
     if (left instanceof PsiModifierList) {
       for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
         if (isTypeAnnotation(annotation)) {
@@ -773,7 +773,7 @@ public class PsiImplUtil {
   }
 
   public static void deleteTypeAnnotations(@NotNull PsiTypeElement typeElement) {
-    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
     if (left instanceof PsiModifierList) {
       for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
         if (TYPE_ANNO_MARK.get(annotation) == Boolean.TRUE) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
@@ -610,7 +612,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return myQuickLists;
   }
 
-  private void addMouseShortcut(Shortcut shortcut){
+  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions){
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -625,7 +627,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       mouseShortcut,
       mySelectedKeymap,
       actionId,
-      myActionsTree.getMainGroup()
+      myActionsTree.getMainGroup(),
+      restrictions
     );
     dialog.show();
     if (!dialog.isOK()){
@@ -956,36 +959,42 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
     final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
-    group.add(new DumbAwareAction("Add Keyboard Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstKeyboard = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            firstKeyboard = shortcut;
-            break;
+    final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);
+
+    if (restrictions.allowKeyboardShortcut) {
+      group.add(new DumbAwareAction("Add Keyboard Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstKeyboard = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof KeyboardShortcut) {
+              firstKeyboard = shortcut;
+              break;
+            }
           }
+
+          addKeyboardShortcut(firstKeyboard);
         }
+      });
+    }
 
-        addKeyboardShortcut(firstKeyboard);
-      }
-    });
-
-    group.add(new DumbAwareAction("Add Mouse Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstMouse = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof MouseShortcut) {
-            firstMouse = shortcut;
-            break;
+    if (restrictions.allowMouseShortcut) {
+      group.add(new DumbAwareAction("Add Mouse Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstMouse = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof MouseShortcut) {
+              firstMouse = shortcut;
+              break;
+            }
           }
+          addMouseShortcut(firstMouse, restrictions);
         }
-        addMouseShortcut(firstMouse);
-      }
-    });
+      });
+    }
 
-    if (Registry.is("actionSystem.enableAbbreviations")) {
+    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
       group.add(new DumbAwareAction("Add Abbreviation") {
         @Override
         public void actionPerformed(AnActionEvent e) {

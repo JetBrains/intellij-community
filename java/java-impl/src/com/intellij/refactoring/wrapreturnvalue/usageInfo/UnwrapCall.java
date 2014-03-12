@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,21 @@ import com.intellij.psi.PsiCallExpression;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnwrapCall extends FixableUsageInfo {
-    @NotNull
-    private final PsiCallExpression call;
-    @NotNull
-    private final String unwrapMethod;
+  private final PsiCallExpression myCall;
+  private final String myUnwrapMethod;
 
-    public UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
-        super(call);
-        this.call =call;
-        this.unwrapMethod = unwrapMethod;
-    }
+  public UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
+    super(call);
+    myCall = call;
+    myUnwrapMethod = unwrapMethod;
+  }
 
-    public void fixUsage() throws IncorrectOperationException {
-        @NonNls final String newExpression = call.getText() + '.' + unwrapMethod +"()";
-        MutationUtils.replaceExpression(newExpression, call);
-    }
+  @Override
+  public void fixUsage() throws IncorrectOperationException {
+    String newExpression = myCall.getText() + '.' + myUnwrapMethod + "()";
+    MutationUtils.replaceExpression(newExpression, myCall);
+  }
 }

@@ -148,7 +148,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         }
         staticFactoryRef.set(staticFactory);
 
-        return inferTypeParametersForStaticFactory(staticFactory, newExpression, context);
+        return inferTypeParametersForStaticFactory(staticFactory, newExpression, context, false);
       }
     });
     if (inferredSubstitutor == null) {
@@ -278,7 +278,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append("{}");
 
     try {
-      return elementFactory.createMethodFromText(buf.toString(), constructor != null ? constructor : containingClass);
+      final PsiNameIdentifierOwner owner = constructor != null ? constructor : containingClass;
+      return elementFactory.createMethodFromText(buf.toString(), owner instanceof PsiCompiledElement ? ((PsiCompiledElement)owner).getMirror() : owner);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -297,12 +298,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   private static PsiSubstitutor inferTypeParametersForStaticFactory(@NotNull PsiMethod staticFactoryMethod,
                                                                     PsiNewExpression expression,
-                                                                    final PsiElement parent) {
+                                                                    final PsiElement parent,
+                                                                    final boolean varargs) {
     final PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo staticFactoryCandidateInfo =
         new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent,
                                 argumentList.getExpressionTypes(), null) {
+          @Override
+          public boolean isVarargs() {
+            return varargs;
+          }
+
           @Override
           protected PsiElement getParent() {
             return parent;
@@ -313,6 +320,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
             return parent instanceof PsiNewExpression ? ((PsiNewExpression)parent).getArgumentList() : super.getMarkerList();
           }
         };
+      if (!varargs && staticFactoryMethod.isVarArgs() && staticFactoryCandidateInfo.getPertinentApplicabilityLevel() < MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
+        return inferTypeParametersForStaticFactory(staticFactoryMethod, expression, parent, true);
+      }
       return staticFactoryCandidateInfo.getSubstitutor();
     }
     else {

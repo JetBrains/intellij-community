@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs;
 
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -20,8 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author Nadya Zabrodina
@@ -218,4 +218,28 @@ public class VcsTestUtil {
       }
     });
   }
+
+  public static void assertNotificationShown(@NotNull Project project, @Nullable Notification expected) {
+    if (expected != null) {
+      Notification actualNotification =
+        ((TestVcsNotifier)VcsNotifier.getInstance(project)).getLastNotification();
+      assertNotNull("No notification was shown", actualNotification);
+      assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
+      assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
+      assertEquals("Notification has wrong content", adjustTestContent(expected.getContent()), actualNotification.getContent());
+    }
+  }
+
+  // we allow more spaces and line breaks in tests to make them more readable.
+  // After all, notifications display html, so all line breaks and extra spaces are ignored.
+  private static String adjustTestContent(@NotNull String s) {
+    StringBuilder res = new StringBuilder();
+    String[] splits = s.split("\n");
+    for (String split : splits) {
+      res.append(split.trim());
+    }
+
+    return res.toString();
+  }
+
 }

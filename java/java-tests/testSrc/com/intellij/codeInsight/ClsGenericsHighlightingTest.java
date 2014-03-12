@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Jun-2007
- */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -31,6 +27,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -38,7 +35,7 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsGenericsHighlightingTest extends UsefulTestCase {
+public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
 
@@ -54,10 +51,12 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/clsHighlighting");
     JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    builder.setLanguageLevel(getLanguageLevel());
     myFixture.setUp();
     myModule = builder.getFixture().getModule();
   }
+
+  protected abstract LanguageLevel getLanguageLevel();
 
   @Override
   protected void tearDown() throws Exception {
@@ -67,10 +66,7 @@ public class ClsGenericsHighlightingTest extends UsefulTestCase {
     myModule = null;
   }
 
-  public void testIDEA97887() { doTest(); }
-  public void testIDEA118733() { doTest(); }
-
-  private void doTest() {
+  protected void doTest() {
     String name = getTestName(false);
     addLibrary(name + ".jar");
     myFixture.configureByFile(name + ".java");

@@ -31,13 +31,21 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
   private final String myId;
+  private final boolean myOverwrite;
 
-  public MavenResourceRootDescriptor(@NotNull MavenResourcesTarget target, ResourceRootConfiguration config) {
+  private final int myIndexInPom;
+
+  public MavenResourceRootDescriptor(@NotNull MavenResourcesTarget target,
+                                     ResourceRootConfiguration config,
+                                     int indexInPom,
+                                     boolean overwrite) {
     myTarget = target;
     myConfig = config;
     final String path = FileUtil.toCanonicalPath(config.directory);
     myFile = new File(path);
     myId = path;
+    myIndexInPom = indexInPom;
+    myOverwrite = overwrite;
   }
 
   public ResourceRootConfiguration getConfiguration() {
@@ -68,5 +76,13 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public boolean canUseFileCache() {
     return true;
+  }
+
+  public int getIndexInPom() {
+    return myIndexInPom;
+  }
+
+  public boolean isOverwrite() {
+    return myOverwrite;
   }
 }
