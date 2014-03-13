@@ -107,11 +107,11 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
       return ContainerUtil.mapNotNull(myUsers, new Function<String, String>() {
         @Override
         public String fun(String user) {
-          VcsUser vcsUser = myData.get(root);
-          if (vcsUser == null) {
-            return null;
+          if (ME.equals(user)) {
+            VcsUser vcsUser = myData.get(root);
+            return vcsUser == null ? null : vcsUser.getName();
           }
-          return ME.equals(user) ? vcsUser.getName() : user;
+          return user;
         }
       });
     }
