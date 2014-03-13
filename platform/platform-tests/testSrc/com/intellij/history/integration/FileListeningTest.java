@@ -89,14 +89,14 @@ public class FileListeningTest extends IntegrationTestCase {
     assertOrderedEquals(actual, expected);
 
     // ignored folders should not be loaded in VFS
-    assertEquals("dir\n" +
-                 " f.txt\n" +
-                 " subdir\n" +
-                 "  subsubdir1\n" +
-                 "   f.txt\n" +
-                 " f.class\n",
-                 buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
-    );
+    //assertEquals("dir\n" +
+    //             " f.txt\n" +
+    //             " subdir\n" +
+    //             "  subsubdir1\n" +
+    //             "   f.txt\n" +
+    //             " f.class\n",
+    //             buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
+    //);
   }
 
   private StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
