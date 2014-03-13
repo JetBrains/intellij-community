@@ -35,7 +35,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -145,7 +145,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @Override
   @NotNull
   protected ProcessHandler startProcess() throws ExecutionException {
-    return startProcess(null);
+    return startProcess(new CommandLinePatcher[]{});
   }
 
   /**
@@ -347,7 +347,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     if (module != null) {
       Set<Module> dependencies = new HashSet<Module>();
-      ModuleUtil.getDependencies(module, dependencies);
+      ModuleUtilCore.getDependencies(module, dependencies);
 
       if (addContentRoots) {
         addRoots(pythonPathList, ModuleRootManager.getInstance(module).getContentRoots());
