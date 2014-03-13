@@ -108,12 +108,9 @@ public class DeleteAction extends EditorAction {
 
   public static void deleteCharAtCaret(Editor editor) {
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    int offset = editor.getCaretModel().getOffset();
-    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && offset == editor.getDocument().getLineEndOffset(lineNumber)) {
-      return;
-    }
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();
+    int offset = editor.getCaretModel().getOffset();
     if (!EditorActionUtil.canEditAtOffset(editor, offset + 1)) return;
     if (afterLineEnd < 0
         // There is a possible case that caret is located right before the soft wrap position at the last logical line

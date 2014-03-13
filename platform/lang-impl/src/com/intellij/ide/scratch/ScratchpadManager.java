@@ -30,8 +30,6 @@ public abstract class ScratchpadManager {
   @NotNull
   public abstract VirtualFile createScratchFile(@NotNull Language language);
 
-  public abstract boolean isScratchFile(@NotNull final VirtualFile file);
-
   @Nullable
   public abstract Language getLatestLanguage();
 }

@@ -370,6 +370,10 @@ class SvnChangeProviderContext implements StatusReceiver {
       final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
+      // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
+      // <entry path="some_path"> <wc-status item="missing" revision="-1" props="modified"> </wc-status> </entry>
+      // TODO: For such cases in current logic we'll have Change with before revision containing SVNRevision.UNDEFINED
+      // TODO: Analyze if this logic is OK or we should update flow somehow (for instance, to have null before revision)
       final String beforeRevisionNu = change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber().asString();
       final String afterRevisionNu = change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber().asString();
 

@@ -25,10 +25,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
@@ -74,10 +71,7 @@ public class ToggleBreakpointEnabledAction extends AnAction {
       return;
     }
 
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    final VirtualFile virtualFile = file.getVirtualFile();
-    FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
-    if (DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(file)) {
+    if (DebuggerUtils.isBreakpointAware(file)) {
       Breakpoint breakpoint = findBreakpoint(project);
       if (breakpoint == null) {
         presentation.setEnabled(false);

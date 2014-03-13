@@ -34,6 +34,7 @@ import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.ui.SoftWrapsEditorCustomization;
+import com.intellij.util.Function;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,13 @@ class MultilinePopupBuilder {
 
   @NotNull
   Collection<String> getSelectedValues() {
-    return ContainerUtil.toCollection(StringUtil.tokenize(myTextField.getText().trim(), new String(SEPARATORS)));
+    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
+      @Override
+      public String fun(String value) {
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+      }
+    });
   }
 
   private static class MyCompletionProvider extends TextFieldCompletionProviderDumbAware {

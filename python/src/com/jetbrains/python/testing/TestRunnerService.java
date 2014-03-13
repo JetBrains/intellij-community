@@ -34,7 +34,7 @@ import java.util.List;
 )
 public class TestRunnerService implements PersistentStateComponent<TestRunnerService> {
   private List<String> myConfigurations = new ArrayList<String>();
-  public String PROJECT_TEST_RUNNER = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
+  public String PROJECT_TEST_RUNNER = "";
 
   public TestRunnerService() {
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
@@ -66,7 +66,7 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   }
 
   public String getProjectConfiguration() {
-    return PROJECT_TEST_RUNNER;
+    return PROJECT_TEST_RUNNER.isEmpty() ? PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME : PROJECT_TEST_RUNNER;
   }
 
 }

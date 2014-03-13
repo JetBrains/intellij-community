@@ -81,7 +81,10 @@ public class GitCherryPicker {
   public void cherryPick(@NotNull Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
     List<GitCommitWrapper> successfulCommits = new ArrayList<GitCommitWrapper>();
     for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
-      if (!cherryPick(entry.getKey(), entry.getValue(), successfulCommits)) {
+      GitRepository repository = entry.getKey();
+      boolean result = cherryPick(repository, entry.getValue(), successfulCommits);
+      repository.update();
+      if (!result) {
         return;
       }
     }

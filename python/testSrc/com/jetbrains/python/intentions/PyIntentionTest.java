@@ -84,13 +84,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertDictComp() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(PyBundle.message("INTN.convert.dict.comp.to"));
+    doTest(PyBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
   }
 
   public void testConvertSetLiteral() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(PyBundle.message("INTN.convert.set.literal.to"));
+    doTest(PyBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
   }
 
   public void testReplaceExceptPart() {
