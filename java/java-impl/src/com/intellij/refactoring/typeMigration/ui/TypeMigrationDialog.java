@@ -27,7 +27,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -74,8 +74,8 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
     final PsiType migrationRootType = rules != null ? rules.getMigrationRootType() : null;
     final PsiType rootType = getRootType();
-    final String text = migrationRootType != null ? migrationRootType.getPresentableText()
-                                                  : rootType != null ? rootType.getPresentableText() : "";
+    final String text = migrationRootType != null ? migrationRootType.getCanonicalText(true) :
+                        rootType != null ? rootType.getCanonicalText(true) : "";
     int flags = 0;
     if (root instanceof PsiParameter) {
       final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
@@ -93,11 +93,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     assert document != null;
     myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
     final String[] types = getValidTypes(project, root);
-    if (types != null) {
-      myToTypeEditor.setHistory(types);
-    } else {
-      myToTypeEditor.setHistory(new String[]{document.getText()});
-    }
+    myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
     document.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(final DocumentEvent e) {
@@ -158,7 +154,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
         final String[] history = new String[psiTypes.length];
         for (int i = 0; i < psiTypes.length; i++) {
           PsiType psiType = psiTypes[i];
-          history[i] = psiType.getCanonicalText();
+          history[i] = psiType.getCanonicalText(true);
         }
         return history;
       }
@@ -206,7 +202,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     final PsiType rootType = getRootType();
     final PsiType migrationType = getMigrationType();
 
-    if (migrationType == null || Comparing.equal(rootType, migrationType)) {
+    if (migrationType == null || ChangeSignatureUtil.deepTypeEqual(rootType, migrationType)) {
       close(DialogWrapper.OK_EXIT_CODE);
       return;
     }
