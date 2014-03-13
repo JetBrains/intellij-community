@@ -16,7 +16,6 @@
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -25,12 +24,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -41,7 +36,7 @@ public class TipPanel extends JPanel {
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
 
-  private final JEditorPane myBrowserPanel;
+  private final JEditorPane myBrowser;
   private final JLabel myPoweredByLabel;
   private final List<TipAndTrickBean> myTips = ContainerUtil.newArrayList();
 
@@ -58,20 +53,8 @@ public class TipPanel extends JPanel {
     jpanel.add(jlabel1, BorderLayout.CENTER);
     jpanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
     add(jpanel, BorderLayout.NORTH);
-    myBrowserPanel = new JEditorPane();
-    myBrowserPanel.setEditable(false);
-    myBrowserPanel.setEditorKit(new HTMLEditorKit());
-    myBrowserPanel.setBackground(UIUtil.getTextFieldBackground());
-    myBrowserPanel.addHyperlinkListener(
-      new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            BrowserUtil.browse(e.getURL());
-          }
-        }
-      }
-    );
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowserPanel);
+    myBrowser = TipUIUtil.createTipBrowser();
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser);
     add(scrollPane, BorderLayout.CENTER);
 
     JPanel southPanel = new JPanel(new BorderLayout());
@@ -102,7 +85,7 @@ public class TipPanel extends JPanel {
 
   public void prevTip() {
     if (myTips.size() == 0) {
-      myBrowserPanel.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
+      myBrowser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     final GeneralSettings settings = GeneralSettings.getInstance();
@@ -118,10 +101,10 @@ public class TipPanel extends JPanel {
       tip = myTips.get(lastTip - 1);
     }
 
-    setTip(tip, lastTip, myBrowserPanel, settings);
+    setTip(tip, lastTip, myBrowser, settings);
   }
 
-  private void setTip (TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
+  private void setTip(TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
     TipUIUtil.openTipInBrowser(tip, browser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
     settings.setLastTip(lastTip);
@@ -129,7 +112,7 @@ public class TipPanel extends JPanel {
 
   public void nextTip() {
     if (myTips.size() == 0) {
-      myBrowserPanel.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
+      myBrowser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -144,6 +127,6 @@ public class TipPanel extends JPanel {
       tip = myTips.get(lastTip - 1);
     }
 
-    setTip(tip, lastTip, myBrowserPanel, settings);
+    setTip(tip, lastTip, myBrowser, settings);
   }
 }
