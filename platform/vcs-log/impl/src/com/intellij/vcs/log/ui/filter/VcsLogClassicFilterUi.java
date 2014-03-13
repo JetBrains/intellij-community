@@ -91,7 +91,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
-    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText()) : null;
+    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText().trim()) : null;
     return new VcsLogFilterCollectionImpl(myBranchFilterComponent.getFilter(), myUserFilterComponent.getFilter(),
                                           myDateFilterComponent.getFilter(), textFilter, myStructureFilterComponent.getFilter());
   }

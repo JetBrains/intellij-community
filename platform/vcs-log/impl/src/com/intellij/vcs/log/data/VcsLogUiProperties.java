@@ -41,6 +41,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public static class State {
     public boolean SHOW_DETAILS = true;
+    public boolean LONG_EDGES_VISIBLE = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
   }
@@ -106,6 +107,14 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
         return group.users;
       }
     });
+  }
+
+  public boolean areLongEdgesVisible() {
+    return myState.LONG_EDGES_VISIBLE;
+  }
+
+  public void setLongEdgesVisibility(boolean visible) {
+    myState.LONG_EDGES_VISIBLE = visible;
   }
 
   public static class UserGroup {

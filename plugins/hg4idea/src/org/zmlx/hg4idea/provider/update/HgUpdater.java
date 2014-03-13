@@ -26,7 +26,7 @@ public interface HgUpdater {
   class UpdateConfiguration{
     private boolean shouldMerge = true;
     private boolean shouldCommitAfterMerge = true;
-    private boolean shouldRebase = true;
+    private boolean shouldRebase = false;
 
 
     public void setShouldMerge(boolean shouldMerge) {
