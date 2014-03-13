@@ -53,10 +53,12 @@ public abstract class WatchPanel extends DebuggerTreePanel {
     return ScrollPaneFactory.createScrollPane(tree);
   }
 
+  @Override
   protected DebuggerTree createTreeView() {
     return new WatchDebuggerTree(getProject());
   }
 
+  @Override
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
     if (event == DebuggerSession.EVENT_THREADS_REFRESH) {
       return;
@@ -74,10 +76,12 @@ public abstract class WatchPanel extends DebuggerTreePanel {
     rebuildIfVisible(event);
   }
 
+  @Override
   protected ActionPopupMenu createPopupMenu() {
     return null;
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;

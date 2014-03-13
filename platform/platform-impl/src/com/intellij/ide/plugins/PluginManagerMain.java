@@ -46,6 +46,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -105,6 +106,7 @@ public abstract class PluginManagerMain implements Disposable {
   private JPanel myHeader;
   private PluginHeaderPanel myPluginHeaderPanel;
   private JPanel myInfoPanel;
+  protected JBLabel myPanelDescription;
 
 
   protected PluginTableModel pluginsModel;
@@ -131,10 +133,16 @@ public abstract class PluginManagerMain implements Disposable {
     JScrollPane installedScrollPane = createTable();
     myPluginHeaderPanel = new PluginHeaderPanel(this, getPluginTable());
     myHeader.setBackground(UIUtil.getTextFieldBackground());
+    myPluginHeaderPanel.getPanel().setBackground(UIUtil.getTextFieldBackground());
+    myPluginHeaderPanel.getPanel().setOpaque(true);
+
     myHeader.add(myPluginHeaderPanel.getPanel(), BorderLayout.CENTER);
     installTableActions();
 
     myTablePanel.add(installedScrollPane, BorderLayout.CENTER);
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myPanelDescription);
+    myPanelDescription.setBorder(new EmptyBorder(0, 7, 0, 0));
+
     final JPanel header = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -504,6 +512,15 @@ public abstract class PluginManagerMain implements Disposable {
   @Nullable
   protected String canApply() {
     return null;
+  }
+
+  private void createUIComponents() {
+    myHeader = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        return UIUtil.getTextFieldBackground();
+      }
+    };
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {

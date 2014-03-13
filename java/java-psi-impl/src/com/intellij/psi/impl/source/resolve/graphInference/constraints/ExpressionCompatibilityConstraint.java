@@ -133,7 +133,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           }
           final boolean accepted = callSession.repeatInferencePhases(true);
           if (!accepted) {
-            //todo return false;
+            return false;
           }
           callSession.registerConstraints(method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType, substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
@@ -147,6 +147,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               }
             }
             session.liftBounds(inferenceVariables);
+          } else {
+            return false;
           }
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)

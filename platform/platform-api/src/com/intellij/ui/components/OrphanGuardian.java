@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.sun.jdi.Value;
+package com.intellij.ui.components;
 
-public interface ExpressionEvaluator {
-  //call evaluate before
-  Value getValue();
+import com.intellij.openapi.util.Key;
+import com.intellij.util.Consumer;
 
-  //call evaluate before
-  Modifier getModifier();
+import javax.swing.*;
 
-  Value evaluate(final EvaluationContext context) throws EvaluateException;
+/**
+ * @author gregsh
+ */
+public interface OrphanGuardian {
+  Key CLIENT_PROPERTY_KEY = Key.create("OrphanGuardian");
+
+  void iterateOrphans(Consumer<JComponent> processor);
 }

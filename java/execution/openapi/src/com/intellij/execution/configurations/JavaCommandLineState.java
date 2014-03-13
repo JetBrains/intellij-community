@@ -30,6 +30,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     super(environment);
   }
 
+  @Override
   public JavaParameters getJavaParameters() throws ExecutionException {
     if (myParams == null) {
       myParams = createJavaParameters();
@@ -37,6 +38,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myParams;
   }
 
+  @Override
   @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {
     return JavaCommandLineStateUtil.startProcess(createCommandLine(), ansiColoringEnabled());

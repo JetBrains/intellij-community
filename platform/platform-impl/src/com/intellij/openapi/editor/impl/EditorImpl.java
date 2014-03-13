@@ -76,10 +76,8 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
-import com.intellij.util.Producer;
+import com.intellij.ui.components.OrphanGuardian;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
@@ -488,6 +486,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myPanel = new JPanel();
+
+    myPanel.putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
+
+      @Override
+      public void iterateOrphans(Consumer<JComponent> consumer) {
+        JComponent component = getPermanentHeaderComponent();
+        if (component != null && !component.isValid()) {
+          consumer.consume(component);
+        }
+      }
+    });
 
     myHeaderPanel = new MyHeaderPanel();
     myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);

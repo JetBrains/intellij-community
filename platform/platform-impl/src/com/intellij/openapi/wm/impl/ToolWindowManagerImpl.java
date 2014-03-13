@@ -57,6 +57,7 @@ import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.PositionTracker;
@@ -383,17 +384,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void projectOpened() {
-    final MyUIManagerPropertyChangeListener myUIManagerPropertyChangeListener = new MyUIManagerPropertyChangeListener();
-    final MyLafManagerListener myLafManagerListener = new MyLafManagerListener();
+    final MyUIManagerPropertyChangeListener uiManagerPropertyListener = new MyUIManagerPropertyChangeListener();
+    final MyLafManagerListener lafManagerListener = new MyLafManagerListener();
 
-    UIManager.addPropertyChangeListener(myUIManagerPropertyChangeListener);
-    myLafManager.addLafManagerListener(myLafManagerListener);
+    UIManager.addPropertyChangeListener(uiManagerPropertyListener);
+    myLafManager.addLafManagerListener(lafManagerListener);
 
     Disposer.register(myProject, new Disposable() {
       @Override
       public void dispose() {
-        UIManager.removePropertyChangeListener(myUIManagerPropertyChangeListener);
-        myLafManager.removeLafManagerListener(myLafManagerListener);
+        UIManager.removePropertyChangeListener(uiManagerPropertyListener);
+        myLafManager.removeLafManagerListener(lafManagerListener);
       }
     });
     myFrame = myWindowManager.allocateFrame(myProject);
@@ -2254,11 +2255,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void updateComponentTreeUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (final WindowInfoImpl info : infos) {
-      if (info.isVisible()) { // skip visible tool windows (optimization)
-        continue;
-      }
-      SwingUtilities.updateComponentTreeUI(getInternalDecorator(info.getId()));
+    for (WindowInfoImpl info : infos) {
+      // the main goal is to update hidden TW components because they are not in the hierarchy
+      // and will not be updated automatically but unfortunately the visibility of a TW may change
+      // during the same actionPerformed() so we can't optimize and have to process all of them
+      IJSwingUtilities.updateComponentTreeUI(getInternalDecorator(info.getId()));
     }
   }
 

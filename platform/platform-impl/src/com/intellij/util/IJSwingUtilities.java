@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.UIUtil;
@@ -219,5 +220,52 @@ public class IJSwingUtilities {
     catch (MalformedURLException ignored) {
     }
     return new HyperlinkEvent(source, HyperlinkEvent.EventType.ACTIVATED, url, href);
+  }
+
+  /**
+   * A copy of javax.swing.SwingUtilities#updateComponentTreeUI that invokes children updateUI() first
+
+   * @param c component
+   * @see javax.swing.SwingUtilities#updateComponentTreeUI
+   */
+  public static void updateComponentTreeUI(Component c) {
+    updateComponentTreeUI0(c);
+    c.invalidate();
+    c.validate();
+    c.repaint();
+  }
+
+  private static final Consumer<JComponent> UI_TREE_UPDATER = new Consumer<JComponent>() {
+    @Override
+    public void consume(JComponent component) {
+      updateComponentTreeUI0(component);
+    }
+  };
+
+  private static void updateComponentTreeUI0(Component c) {
+    Component[] children = null;
+    if (c instanceof JMenu) {
+      children = ((JMenu)c).getMenuComponents();
+    }
+    else if (c instanceof Container) {
+      children = ((Container)c).getComponents();
+    }
+    if (children != null) {
+      for (Component aChildren : children) {
+        updateComponentTreeUI0(aChildren);
+      }
+    }
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      OrphanGuardian orphans = (OrphanGuardian)jc.getClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY);
+      if (orphans != null) {
+        orphans.iterateOrphans(UI_TREE_UPDATER);
+      }
+      jc.updateUI();
+      JPopupMenu jpm = jc.getComponentPopupMenu();
+      if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+        updateComponentTreeUI(jpm);
+      }
+    }
   }
 }
