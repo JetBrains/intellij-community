@@ -52,7 +52,9 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
-    group.add(createPredefinedValueAction(Collections.singleton(ME)));
+    if (!myDataHolder.getCurrentUser().isEmpty()) {
+      group.add(createPredefinedValueAction(Collections.singleton(ME)));
+    }
     group.addAll(createRecentItemsActionGroup());
     group.add(createSelectMultipleValuesAction());
     return group;
@@ -102,10 +104,14 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     @NotNull
     @Override
     public Collection<String> getUserNames(@NotNull final VirtualFile root) {
-      return ContainerUtil.map(myUsers, new Function<String, String>() {
+      return ContainerUtil.mapNotNull(myUsers, new Function<String, String>() {
         @Override
         public String fun(String user) {
-          return ME.equals(user) ? myData.get(root).getName() : user;
+          VcsUser vcsUser = myData.get(root);
+          if (vcsUser == null) {
+            return null;
+          }
+          return ME.equals(user) ? vcsUser.getName() : user;
         }
       });
     }
