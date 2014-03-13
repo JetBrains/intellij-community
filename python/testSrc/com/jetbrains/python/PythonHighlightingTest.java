@@ -108,7 +108,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testYieldOutsideOfFunction() {
-    doTest();
+    doTest(LanguageLevel.PYTHON27, true, true);
   }
   
   public void testImportStarAtTopLevel() {
