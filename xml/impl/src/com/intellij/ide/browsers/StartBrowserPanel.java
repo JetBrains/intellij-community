@@ -8,6 +8,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -53,7 +54,10 @@ public class StartBrowserPanel {
             @Override
             public void consume(DataContext context) {
               Project project = CommonDataKeys.PROJECT.getData(context);
-              assert project != null;
+              if (project == null) {
+                // IDEA-118202
+                project = ProjectManager.getInstance().getDefaultProject();
+              }
               setupUrlField(myUrlField, project);
             }
           });

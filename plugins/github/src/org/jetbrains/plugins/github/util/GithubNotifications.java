@@ -30,8 +30,6 @@ import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromExcep
 public class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private static final String GITHUB_NOTIFICATION_GROUP = "github";
-
   public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantInfo(title, message);

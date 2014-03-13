@@ -329,11 +329,13 @@ public class Messages {
    * @see #showMessageDialog(Component, String, String, Icon)
    */
   public static void showMessageDialog(String message, @NotNull String title, @Nullable Icon icon) {
-    if (canShowMacSheetPanel()) {
-      MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON);
-      return;
+    try {
+      if (canShowMacSheetPanel()) {
+        MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON);
+        return;
+      }
+    }catch (Exception ignored) {
     }
-
     showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 

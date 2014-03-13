@@ -95,10 +95,11 @@ class MultilinePopupBuilder {
 
   @NotNull
   Collection<String> getSelectedValues() {
-    return ContainerUtil.map(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
+    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
       @Override
       public String fun(String value) {
-        return value.trim();
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
       }
     });
   }
