@@ -260,21 +260,21 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testLangImmutableConstructor() {
-    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTransformImmutableConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTupleConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+    addTupleConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; final int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     def target = ((GrNewExpression) ref.element.parent).advancedResolve().element
@@ -284,14 +284,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testCanonicalConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    addCanonical()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Canonical class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testInheritConstructors() {
-    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+    addInheritConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
     def ref = configureByText('new Cu<caret>stomException("msg")')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
