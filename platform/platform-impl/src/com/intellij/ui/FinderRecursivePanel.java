@@ -461,10 +461,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
     myList.setSelectedValue(value, true);
 
-    // no existing FRP or detail component
-    if (!(myChild instanceof FinderRecursivePanel)) {
-      updateRightComponent(true);
-    }
+    // always recreate since instance might depend on this one's selected value
+    updateRightComponent(true);
   }
 
   @NotNull
