@@ -1,4 +1,4 @@
 class A:
-    <warning descr="Old-style class contains __getattribute__ definition">def __getattribute__(self):
-        pass</warning>
+    def <warning descr="Old-style class contains __getattribute__ definition">__getattribute__</warning>(self):
+        pass
 
