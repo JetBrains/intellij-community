@@ -43,6 +43,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private final Collection<VcsLogFilterChangeListener> myFilterChangeListeners = ContainerUtil.newArrayList();
 
@@ -53,6 +54,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
+    myUiProperties = uiProperties;
     myDataPack = initialDataPack;
     Disposer.register(logDataHolder, this);
 
@@ -152,6 +154,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public void setLongEdgeVisibility(boolean visibility) {
     handleAnswer(myDataPack.getGraphFacade().performAction(LongEdgesAction.valueOf(visibility)));
+    myUiProperties.setLongEdgesVisibility(visibility);
   }
 
   public boolean areLongEdgesHidden() {
@@ -288,6 +291,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
             myDataPack = dataPack;
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
+            setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
             fireFilterChangeEvent();
             repaintUI();
 
