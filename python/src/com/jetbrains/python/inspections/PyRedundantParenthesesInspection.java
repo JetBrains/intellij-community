@@ -73,6 +73,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       if (node.getText().contains("\n")) return;
       PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
       if (yieldExpression != null) return;
+      if (node.getParent() instanceof PyReturnStatement && expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
+        return;
+      }
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();
@@ -84,9 +87,6 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         if (node.getParent() instanceof PyPrintStatement)
           return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
-      }
-      else if (node.getParent() instanceof PyReturnStatement && expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
-        return;
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
