@@ -221,6 +221,19 @@ public class CaretModelWindow implements CaretModel {
     myDelegate.setCaretsAndSelections(convertedStates);
   }
 
+  @NotNull
+  @Override
+  public List<CaretState> getCaretsAndSelections() {
+    List<CaretState> caretsAndSelections = myDelegate.getCaretsAndSelections();
+    List<CaretState> convertedStates = new ArrayList<CaretState>(caretsAndSelections.size());
+    for (CaretState state : caretsAndSelections) {
+      convertedStates.add(new CaretState(state.getCaretPosition() == null ? null : myEditorWindow.hostToInjected(state.getCaretPosition()),
+                                         state.getSelectionStart() == null ? null : myEditorWindow.hostToInjected(state.getSelectionStart()),
+                                         state.getSelectionEnd() == null ? null : myEditorWindow.hostToInjected(state.getSelectionEnd())));
+    }
+    return convertedStates;
+  }
+
   private InjectedCaret createInjectedCaret(Caret caret) {
     if (caret == null) {
       return null;

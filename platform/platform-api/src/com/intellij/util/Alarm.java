@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
@@ -227,23 +228,27 @@ public class Alarm implements Disposable {
   }
 
   public void flush() {
-    List<Request> requests;
+    List<Pair<Request, Runnable>> requests;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
         return;
       }
 
-      requests = new SmartList<Request>();
+      requests = new SmartList<Pair<Request, Runnable>>();
       for (Request request : myRequests) {
-        if (request.cancel()) {
-          requests.add(request);
+        Runnable existingTask = request.cancel();
+        if (existingTask != null) {
+          requests.add(Pair.create(request, existingTask));
         }
       }
       myRequests.clear();
     }
 
-    for (Request request : requests) {
-      request.run();
+    for (Pair<Request, Runnable> request : requests) {
+      synchronized (LOCK) {
+        request.first.myTask = request.second;
+      }
+      request.first.run();
     }
   }
 
@@ -370,21 +375,22 @@ public class Alarm implements Disposable {
       return myModalityState;
     }
 
-    private boolean cancel() {
-      boolean result;
+    /**
+     * @return task if not yet executed
+     */
+    @Nullable
+    private Runnable cancel() {
       synchronized (LOCK) {
         if (myFuture != null) {
-          result = myFuture.cancel(false);
+          myFuture.cancel(false);
           // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
           ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
           myFuture = null;
         }
-        else {
-          result = false;
-        }
+        Runnable task = myTask;
         myTask = null;
+        return task;
       }
-      return result;
     }
 
     @Override
