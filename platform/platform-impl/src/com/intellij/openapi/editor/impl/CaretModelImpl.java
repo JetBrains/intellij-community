@@ -488,6 +488,20 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     });
   }
 
+  @NotNull
+  @Override
+  public List<CaretState> getCaretsAndSelections() {
+    synchronized (myCarets) {
+      List<CaretState> states = new ArrayList<CaretState>(myCarets.size());
+      for (CaretImpl caret : myCarets) {
+        states.add(new CaretState(caret.getLogicalPosition(),
+                                  myEditor.visualToLogicalPosition(caret.getSelectionStartPosition()),
+                                  myEditor.visualToLogicalPosition(caret.getSelectionEndPosition())));
+      }
+      return states;
+    }
+  }
+
   void fireCaretPositionChanged(CaretEvent caretEvent) {
     myCaretListeners.getMulticaster().caretPositionChanged(caretEvent);
   }
