@@ -34,6 +34,8 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -246,14 +248,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
                         PyBundle.message("INSP.unused.locals.local.function.isnot.used",
-                        ((PyFunction)element).getName()));
+                        ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyClass) {
         // Local class
         final PyClass cls = (PyClass)element;
         final PsiElement name = cls.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()));
+                        PyBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
       }
       else {
         // Local variable or parameter
@@ -297,7 +299,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           }
           final LocalQuickFix[] fixes = mayBeField
                                   ? new LocalQuickFix[] { new AddFieldQuickFix(name, name, containingClass.getName()) }
-                                  : LocalQuickFix.EMPTY_ARRAY;
+                                  : new LocalQuickFix[] { new PyRemoveParameterQuickFix() };
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);
         }
         else {
@@ -312,7 +314,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
           else {
-            registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
+            registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
           }
         }
       }
