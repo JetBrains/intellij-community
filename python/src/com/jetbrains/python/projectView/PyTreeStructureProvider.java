@@ -17,11 +17,14 @@ package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.psi.PsiDirectory;
@@ -34,6 +37,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,8 +50,9 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    if (parent instanceof NamedLibraryElementNode) {
-      return hideSkeletons((NamedLibraryElementNode)parent, children);
+    final Sdk sdk = getPythonSdk(parent);
+    if (sdk != null) {
+      return hideSkeletons(children);
     }
     if (settings.isShowMembers()) {
       List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
@@ -64,26 +69,41 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return children;
   }
 
-  protected Collection<AbstractTreeNode> hideSkeletons(NamedLibraryElementNode parent, Collection<AbstractTreeNode> children) {
-    LibraryOrSdkOrderEntry orderEntry = parent.getValue().getOrderEntry();
-    if (orderEntry instanceof JdkOrderEntry) {
-      List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
-      for (AbstractTreeNode child : children) {
-        if (child instanceof PsiDirectoryNode) {
-          PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
-          if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
-            continue;
-          }
-          PsiDirectory dirParent = directory.getParent();
-          if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
-            continue;
+  @Nullable
+  private static Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
+    if (node instanceof NamedLibraryElementNode) {
+      final NamedLibraryElement value = ((NamedLibraryElementNode)node).getValue();
+      if (value != null) {
+        final LibraryOrSdkOrderEntry entry = value.getOrderEntry();
+        if (entry instanceof JdkOrderEntry) {
+          final Sdk sdk = ((JdkOrderEntry)entry).getJdk();
+          final SdkTypeId type = sdk.getSdkType();
+          if (type instanceof PythonSdkType) {
+            return sdk;
           }
         }
-        newChildren.add(child);
       }
-      return newChildren;
     }
-    return children;
+    return null;
+  }
+
+  @NotNull
+  private static Collection<AbstractTreeNode> hideSkeletons(@NotNull Collection<AbstractTreeNode> children) {
+    List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+    for (AbstractTreeNode child : children) {
+      if (child instanceof PsiDirectoryNode) {
+        PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
+        if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+          continue;
+        }
+        PsiDirectory dirParent = directory.getParent();
+        if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+          continue;
+        }
+      }
+      newChildren.add(child);
+    }
+    return newChildren;
   }
 
   @Override
