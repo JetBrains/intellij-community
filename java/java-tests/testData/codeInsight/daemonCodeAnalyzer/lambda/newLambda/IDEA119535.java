@@ -1,9 +1,12 @@
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
+
+import static java.util.stream.Collectors.*;
 
 class Stuff {
   public enum Type { A }
@@ -40,5 +43,32 @@ class FakeErrors {
   Collector<T, ?, Map<K, D>> groupingBy(Function<? super T, ? extends K> classifier,
                                         Collector<? super T, A, D> downstream) {
     return null;
+  }
+}
+
+class FakeErrorsComplete {
+  public static List<Stuff> elems(){
+    return Arrays.asList(
+      new Stuff(800, Stuff.Type.A));
+  }
+
+  public static void main(String ... args){
+
+    Map<Stuff.Type, Optional<Stuff>> bar =
+      elems()
+        .stream()
+        .collect(groupingBy(Stuff::getType,
+                            reducing((d1, d2) -> d1.getValue() > d2.getValue() ? d1 : d2)));
+
+    System.out.println(bar);
+
+    Map<Stuff.Type, Stuff> baz =
+      elems()
+        .stream()
+        .collect(groupingBy(Stuff::getType,
+                            collectingAndThen(reducing((Stuff d1, Stuff d2) -> d1.getValue() > d2.getValue() ? d1 : d2),
+                                              Optional::get)));
+
+    System.out.println(baz);
   }
 }
