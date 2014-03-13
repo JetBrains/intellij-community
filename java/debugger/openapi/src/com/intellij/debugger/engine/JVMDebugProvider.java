@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 
 /**
- * @deprecated Extends {@link com.intellij.debugger.engine.JavaDebugAware}
+ * @deprecated Use {@link com.intellij.debugger.engine.JavaDebugAware}
  * to remove in IDEA 15
  */
 @Deprecated
