@@ -194,7 +194,7 @@ public class HgStatusCommand {
       if (result.getExitValue() != 0) {
         String title = "Could not execute hg status command ";
         LOG.warn(title + errors.toString());
-        new VcsNotifier(myProject).logInfo(title, errors.toString());
+        VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
         return changes;
       }
       LOG.warn(errors.toString());
