@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -29,15 +30,17 @@ import java.util.Map;
 public class ResolveState {
   private static final ResolveState ourInitialState = new ResolveState();
 
+  @NotNull
   public static ResolveState initial() {
     return ourInitialState;
   }
 
-  public <T> ResolveState put(Key<T> key, T value) {
+  @NotNull
+  public <T> ResolveState put(@NotNull Key<T> key, T value) {
     return new OneElementResolveState(key, value);
   }
 
-  public <T> T get(Key<T> key) {
+  public <T> T get(@NotNull Key<T> key) {
     if (key instanceof KeyWithDefaultValue) {
       return ((KeyWithDefaultValue<T>)key).getDefaultValue();
     }
@@ -45,16 +48,18 @@ public class ResolveState {
   }
 
   private static class OneElementResolveState extends ResolveState {
-    final Key myKey;
-    final Object myValue;
+    @NotNull
+    private final Key myKey;
+    private final Object myValue;
 
-    OneElementResolveState(Key key, Object value) {
+    private OneElementResolveState(@NotNull Key key, Object value) {
       myKey = key;
       myValue = value;
     }
 
+    @NotNull
     @Override
-    public <T> ResolveState put(Key<T> key, T value) {
+    public <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey.equals(key)) {
         return new OneElementResolveState(key, value);
       }
@@ -63,7 +68,7 @@ public class ResolveState {
     }
 
     @Override
-    public <T> T get(Key<T> key) {
+    public <T> T get(@NotNull Key<T> key) {
       Object value = myKey.equals(key) ? myValue : null;
       if (value == null && key instanceof KeyWithDefaultValue) {
         return ((KeyWithDefaultValue<T>)key).getDefaultValue();
@@ -73,20 +78,21 @@ public class ResolveState {
   }
 
   private static class TwoElementResolveState extends ResolveState {
-    final Key myKey1;
-    final Object myValue1;
-    final Key myKey2;
-    final Object myValue2;
+    @NotNull private final Key myKey1;
+    private final Object myValue1;
+    @NotNull private final Key myKey2;
+    private final Object myValue2;
 
-    TwoElementResolveState(Key key1, Object value1, Key key2, Object value2) {
+    TwoElementResolveState(@NotNull Key key1, Object value1, @NotNull Key key2, Object value2) {
       myKey1 = key1;
       myValue1 = value1;
       myKey2 = key2;
       myValue2 = value2;
     }
 
+    @NotNull
     @Override
-    public <T> ResolveState put(Key<T> key, T value) {
+    public <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey1.equals(key)) {
         return new TwoElementResolveState(key, value, myKey2, myValue2);
       }
@@ -98,7 +104,7 @@ public class ResolveState {
     }
 
     @Override
-    public <T> T get(Key<T> key) {
+    public <T> T get(@NotNull Key<T> key) {
       Object value;
       if (myKey1.equals(key)) {
         value = myValue1;
@@ -118,27 +124,27 @@ public class ResolveState {
   }
 
   private static class ManyElementResolveState extends ResolveState {
-
     private final Map<Object, Object> myValues = new THashMap<Object, Object>();
 
-    ManyElementResolveState(ManyElementResolveState parent, Key key, Object value) {
+    ManyElementResolveState(@NotNull ManyElementResolveState parent, @NotNull Key key, Object value) {
       myValues.putAll(parent.myValues);
       myValues.put(key, value);
     }
 
-    ManyElementResolveState(TwoElementResolveState twoState, Key key, Object value) {
+    ManyElementResolveState(@NotNull TwoElementResolveState twoState, @NotNull Key key, Object value) {
       myValues.put(twoState.myKey1, twoState.myValue1);
       myValues.put(twoState.myKey2, twoState.myValue2);
       myValues.put(key, value);
     }
 
+    @NotNull
     @Override
-    public <T> ResolveState put(Key<T> key, T value) {
+    public <T> ResolveState put(@NotNull Key<T> key, T value) {
       return new ManyElementResolveState(this, key, value);
     }
 
     @Override
-    public <T> T get(Key<T> key) {
+    public <T> T get(@NotNull Key<T> key) {
       final T value = (T)myValues.get(key);
       if (value == null && key instanceof KeyWithDefaultValue) {
         return ((KeyWithDefaultValue<T>) key).getDefaultValue();

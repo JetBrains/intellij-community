@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,14 +95,14 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     @Override
     public JavaResolveResult[] resolve(@NotNull ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
       final JavaResolveResult resolveResult = ref.advancedResolveImpl();
-      return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
+      return resolveResult == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }
   }
 
   private JavaResolveResult advancedResolveImpl() {
     PsiTypeElement[] typeElements = myRefParameterList == null ? PsiTypeElement.EMPTY_ARRAY : myRefParameterList.getTypeParameterElements();
     PsiElement resolve = resolveElement();
-
+    if (resolve == null) return null;
     if (resolve instanceof PsiClass) {
       Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
       int index = 0;
@@ -129,7 +129,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
         }
         index++;
       }
-      collectOuterClassTypeArgs(((PsiClass)resolve), myCanonicalText, substitutionMap);
+      collectOuterClassTypeArgs((PsiClass)resolve, myCanonicalText, substitutionMap);
       return new CandidateInfo(resolve, PsiSubstitutorImpl.createSubstitutor(substitutionMap));
     }
     else {

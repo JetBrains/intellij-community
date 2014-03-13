@@ -377,7 +377,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   }
 
   @Override
-  public void handleEvent(Event event, Object associated) {
+  public void handleEvent(@NotNull Event event, Object associated) {
     super.handleEvent(event, associated);
     if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && super.hasCandidates()) {
       myStopExecuting = true;

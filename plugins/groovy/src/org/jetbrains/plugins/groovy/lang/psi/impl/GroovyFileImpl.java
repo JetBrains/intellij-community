@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     super(viewProvider, GroovyFileType.GROOVY_LANGUAGE);
   }
 
+  @Override
   @NotNull
   public String getPackageName() {
     GrPackageDefinition packageDef = getPackageDefinition();
@@ -112,6 +113,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return "";
   }
 
+  @Override
   public GrPackageDefinition getPackageDefinition() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
@@ -138,6 +140,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return mySyntheticArgsParameter;
   }
 
+  @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -205,7 +208,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   protected boolean processImports(PsiScopeProcessor processor,
-                                   ResolveState state,
+                                   @NotNull ResolveState state,
                                    PsiElement lastParent,
                                    PsiElement place,
                                    GrImportStatement[] importStatements,
@@ -262,7 +265,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiPackage aPackage = facade.findPackage(packageName);
     if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiPackage) return true;
         return super.execute(element, state);
       }
@@ -294,6 +297,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return !(run instanceof GrTopLevelDefinition || run instanceof GrImportStatement || lastParent instanceof GrMember);
   }
 
+  @Override
   public GrImportStatement[] getImportStatements() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
@@ -303,12 +307,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
   }
 
+  @Override
   @Nullable
   public Icon getIcon(int flags) {
     final Icon baseIcon = isScript() ? GroovyScriptTypeDetector.getScriptType(this).getScriptIcon() : JetgroovyIcons.Groovy.Groovy_16x16;
     return ElementBase.createLayeredIcon(this, baseIcon, ElementBase.transformFlags(this, flags));
   }
 
+  @Override
   public GrImportStatement addImportForClass(PsiClass aClass) {
     try {
       // Calculating position
@@ -367,6 +373,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return anchor;
   }
 
+  @Override
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter(statement);
     final PsiElement result = addAfter(statement, anchor);
@@ -377,6 +384,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return gImport;
   }
 
+  @Override
   public boolean isScript() {
     final StubElement stub = getStub();
     if (stub instanceof GrFileStub) {
@@ -418,6 +426,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     super.subtreeChanged();
   }
 
+  @Override
   public GroovyScriptClass getScriptClass() {
     if (isScript()) {
       if (myScriptClass == null) {
@@ -435,11 +444,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  @Override
   public void setPackageName(String packageName) {
     final ASTNode fileNode = getNode();
     assert fileNode != null;
     final GrPackageDefinition currentPackage = getPackageDefinition();
-    if (packageName == null || packageName.length() == 0) {
+    if (packageName == null || packageName.isEmpty()) {
       if (currentPackage != null) {
         final ASTNode currNode = currentPackage.getNode();
         fileNode.removeChild(currNode);
@@ -511,6 +521,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     });
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     synchronized (lock) {
@@ -519,6 +530,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  @Override
   public PsiElement getContext() {
     if (myContext != null) {
       return myContext;
@@ -526,6 +538,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return super.getContext();
   }
 
+  @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected GroovyFileImpl clone() {
     GroovyFileImpl clone = (GroovyFileImpl)super.clone();
@@ -543,6 +556,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     myContext = context;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses() {
     final PsiClass[] declaredDefs = super.getClasses();
@@ -554,6 +568,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return result;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     final PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {

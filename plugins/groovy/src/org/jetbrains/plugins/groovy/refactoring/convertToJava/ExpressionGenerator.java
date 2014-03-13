@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,8 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.
 public class ExpressionGenerator extends Generator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ExpressionGenerator");
 
-  private StringBuilder builder;
-  private GroovyPsiElementFactory factory;
+  private final StringBuilder builder;
+  private final GroovyPsiElementFactory factory;
 
   private final ExpressionContext context;
 
@@ -129,6 +129,7 @@ public class ExpressionGenerator extends Generator {
   }
 
 
+  @Override
   public void visitExpression(GrExpression expression) {
     LOG.error("this method should not be invoked");
   }
@@ -1411,7 +1412,7 @@ public class ExpressionGenerator extends Generator {
         final CheckProcessElement processor = new CheckProcessElement(method);
         ResolveUtil.processAllDeclarationsSeparately(conjunct, processor, new BaseScopeProcessor() {
           @Override
-          public boolean execute(@NotNull PsiElement element, ResolveState state) {
+          public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
             return false;
           }
         }, ResolveState.initial(), context);

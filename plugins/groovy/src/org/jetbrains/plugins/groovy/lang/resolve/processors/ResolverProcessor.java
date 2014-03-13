@@ -54,8 +54,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   private final EnumSet<ResolveKind> myResolveTargetKinds;
   private Set<String> myProcessedClasses;
   protected PsiElement myPlace;
-  private
-  @NotNull final PsiType[] myTypeArguments;
+  @NotNull private final PsiType[] myTypeArguments;
 
   private List<GroovyResolveResult> myCandidates;
 
@@ -69,6 +68,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     myTypeArguments = typeArguments;
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (element instanceof PsiLocalVariableImpl) { //todo a better hack
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
@@ -173,6 +173,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if ((NameHint.KEY == hintKey && myName != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
@@ -182,17 +183,20 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {
+  @Override
+  public void handleEvent(@NotNull Event event, Object associated) {
   }
 
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean shouldProcess(ResolveKind resolveKind) {
     return myResolveTargetKinds.contains(resolveKind);
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     switch (kind) {
       case CLASS:
@@ -226,7 +230,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return null;
   }
 
-  public String getName(ResolveState state) {
+  @Override
+  public String getName(@NotNull ResolveState state) {
     return myName;
   }
 

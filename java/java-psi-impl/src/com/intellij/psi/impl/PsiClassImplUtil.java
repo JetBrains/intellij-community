@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ public class PsiClassImplUtil {
     FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
       new OrFilter(ElementClassFilter.METHOD, ElementClassFilter.FIELD, ElementClassFilter.CLASS)) {
       @Override
-      protected void add(PsiElement element, PsiSubstitutor substitutor) {
+      protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
           methods.add(Pair.create((PsiMember)element, substitutor));
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class NonCodeMembersContributor {
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull ResolveState state) {
     processDynamicElements(qualifierType, processor, place, state);
   }
 
@@ -115,7 +115,7 @@ public abstract class NonCodeMembersContributor {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (!wantMore) {
         return false;
       }

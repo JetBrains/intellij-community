@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull ResolveState state) {
     Project project = place.getProject();
     GlobalSearchScope resolveScope = place.getResolveScope();
     GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(project);
@@ -54,7 +54,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
 
   private static boolean processCategories(PsiType qualifierType,
                                            PsiScopeProcessor processor,
-                                           ResolveState state,
+                                           @NotNull ResolveState state,
                                            Project project,
                                            GlobalSearchScope resolveScope,
                                            GroovyPsiManager groovyPsiManager, List<String> instanceCategories,

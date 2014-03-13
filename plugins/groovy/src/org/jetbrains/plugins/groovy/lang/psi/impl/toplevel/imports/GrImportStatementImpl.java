@@ -65,6 +65,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return getParentByStub();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitImportStatement(this);
   }
@@ -73,6 +74,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return "Import statement";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
@@ -101,7 +103,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return false;
   }
 
-  private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, ResolveState state) {
+  private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, @NotNull ResolveState state) {
     String name = getImportedName();
     if (name == null) return true;
 
@@ -160,7 +162,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   private boolean processSingleStaticImport(PsiScopeProcessor processor,
-                                            ResolveState state,
+                                            @NotNull ResolveState state,
                                             String importedName,
                                             NameHint nameHint,
                                             GrCodeReferenceElement ref) {
@@ -261,6 +263,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return true;
   }
 
+  @Override
   public GrCodeReferenceElement getImportReference() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
@@ -275,6 +278,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
+  @Override
   @Nullable
   public String getImportedName() {
     if (isOnDemand()) return null;
@@ -302,6 +306,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return ref == null ? null : ref.getReferenceName();
   }
 
+  @Override
   public boolean isStatic() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
@@ -311,6 +316,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return findChildByType(GroovyTokenTypes.kSTATIC) != null;
   }
 
+  @Override
   public boolean isAliasedImport() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
@@ -319,6 +325,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return getAliasNameElement() != null;
   }
 
+  @Override
   public boolean isOnDemand() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
@@ -327,6 +334,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return findChildByType(GroovyTokenTypes.mSTAR) != null;
   }
 
+  @Override
   @NotNull
   public GrModifierList getAnnotationList() {
     GrImportStatementStub stub = getStub();

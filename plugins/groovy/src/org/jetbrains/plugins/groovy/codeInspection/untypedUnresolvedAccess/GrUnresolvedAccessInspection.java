@@ -384,7 +384,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     final Ref<Boolean> result = new Ref<Boolean>(false);
     PsiScopeProcessor processor = new PsiScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod &&
             name.equals(((PsiMethod)element).getName()) &&
             patternMethod.getParameterList().getParametersCount() == ((PsiMethod)element).getParameterList().getParametersCount() &&
@@ -402,7 +402,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       }
 
       @Override
-      public void handleEvent(Event event, @Nullable Object associated) {
+      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
       }
     };
     ResolveUtil.treeWalkUp(container, processor, true);
