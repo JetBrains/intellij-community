@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,10 +44,15 @@ import java.util.Set;
  * @author ignatov
  */
 public class CreateScratchFileAction extends AnAction implements DumbAware {
-  private static final Set<String> FORBIDDEN_LANGUAGES = ContainerUtil.newHashSet("<Generic>", "$XSLT", "JAVA_HOLDER_METHOD_TREE");
+  private static final Set<String> FORBIDDEN_LANGUAGES = ContainerUtil.newHashSet("<Generic>", "$XSLT", "JAVA_HOLDER_METHOD_TREE", "<Freemaker>", "PointcutExpression");
 
   public CreateScratchFileAction() {
     super("Create Scratch File...", "New Scratch File", null);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && Registry.is("ide.scratch.enabled"));
   }
 
   @Override
@@ -87,7 +93,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
       };
 
     Language previous = ScratchpadManager.getInstance(project).getLatestLanguage();
-    final String previousName = previous != null ? previous.getDisplayName() : null;
+    final String previousName = previous != null ? previous.getDisplayName() : "Plain text";
 
     if (previousName != null) {
       int defaultOption = ContainerUtil.indexOf(languages, new Condition<Language>() {
@@ -128,7 +134,10 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
       @Override
       public boolean value(Language lang) {
         String name = lang.getDisplayName();
-        return !StringUtil.isEmpty(name) && !FORBIDDEN_LANGUAGES.contains(name);
+        LanguageFileType type = lang.getAssociatedFileType();
+        if (type == null) return false;
+        String extension = type.getDefaultExtension();
+        return !StringUtil.isEmpty(extension) && !StringUtil.isEmpty(name) && !FORBIDDEN_LANGUAGES.contains(name);
       }
     });
   }

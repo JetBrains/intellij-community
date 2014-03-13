@@ -111,7 +111,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
     setIcon(icon);
     myValuePresentation = valuePresentation;
-    myRawValue = XValuePresentationUtil.computeValueText(myValueContainer, valuePresentation);
+    myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
 
     updateText();
     setLeaf(!hasChildren);
@@ -140,7 +140,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     appendName();
-    buildText(myValueContainer, myValuePresentation, myText);
+    buildText(myValuePresentation, myText);
   }
 
   private void appendName() {
@@ -150,13 +150,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  public static void buildText(@NotNull XValue value, @NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
+  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
     XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
     String type = valuePresenter.getType();
     if (type != null) {
       text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    valuePresenter.renderValue(value, new XValueTextRendererImpl(text));
+    valuePresenter.renderValue(new XValueTextRendererImpl(text));
   }
 
   @Override

@@ -136,8 +136,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND));
-        jumpToRow(0);
+        final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            handleAnswer(answer);
+            jumpToRow(0);
+          }
+        });
       }
     });
   }
@@ -146,8 +152,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE));
-        jumpToRow(0);
+        final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            handleAnswer(answer);
+            jumpToRow(0);
+          }
+        });
       }
     });
   }

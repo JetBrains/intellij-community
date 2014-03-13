@@ -1,7 +1,6 @@
 package com.intellij.xdebugger;
 
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
@@ -21,18 +20,12 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
 
   private final Semaphore myFinished = new Semaphore(0);
 
-  private final XValue myXValue;
-
-  public XTestValueNode(@NotNull XValue value) {
-    myXValue = value;
-  }
-
   @Override
   public void applyPresentation(@Nullable Icon icon,
                                 @NotNull XValuePresentation valuePresentation,
                                 boolean hasChildren) {
     myType = valuePresentation.getType();
-    myValue = XValuePresentationUtil.computeValueText(myXValue, valuePresentation);
+    myValue = XValuePresentationUtil.computeValueText(valuePresentation);
     myHasChildren = hasChildren;
 
     myFinished.release();

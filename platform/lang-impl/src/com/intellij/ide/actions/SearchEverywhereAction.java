@@ -635,6 +635,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void run() {
         myCalcThread = new CalcThread(project, pattern);
+        myPopupActualWidth = 0;
         myCurrentWorker = myCalcThread.start();
       }
     });
@@ -1764,6 +1765,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 myCalcThread = null;
                 myPopup = null;
                 myHistoryIndex = 0;
+                myPopupActualWidth = 0;
                 myCurrentWorker = ActionCallback.DONE;
                 showAll.set(false);
                 myNonProjectCheckBox.setSelected(false);
@@ -1873,6 +1875,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     final Container parent = getField().getParent();
     final Dimension size = myList.getParent().getParent().getPreferredSize();
+    size.width = myPopupActualWidth;
     if (size.width < parent.getWidth()) {
       size.width = parent.getWidth();
     }
