@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     }.processInjections();
   }
 
-  private static String getStringPresentation(PsiElement operand) {
+  @NotNull
+  private static String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }
@@ -115,7 +116,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    public InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
+    public InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, @NotNull PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;
