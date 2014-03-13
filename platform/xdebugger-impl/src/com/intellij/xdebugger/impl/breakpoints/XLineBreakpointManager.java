@@ -275,7 +275,7 @@ public class XLineBreakpointManager {
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
                   XLineBreakpoint breakpoint =
-                      XBreakpointUtil.toggleLineBreakpoint(myProject, file, editor, line, mouseEvent.isAltDown());
+                      XBreakpointUtil.toggleLineBreakpoint(myProject, file, editor, line, mouseEvent.isAltDown(), false);
                   if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
                     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
                     String selection = editor.getSelectionModel().getSelectedText();

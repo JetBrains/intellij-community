@@ -65,6 +65,6 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
     Editor editor = event.getData(CommonDataKeys.EDITOR);
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary);
+    XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
   }
 }
