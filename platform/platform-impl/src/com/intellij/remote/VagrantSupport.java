@@ -34,7 +34,6 @@ public abstract class VagrantSupport {
     return ServiceManager.getService(VagrantSupport.class);
   }
 
-  @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
   public abstract RemoteCredentials getCredentials(@NotNull String folder);
