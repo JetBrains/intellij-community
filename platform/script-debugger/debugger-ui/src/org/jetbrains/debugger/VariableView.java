@@ -24,18 +24,20 @@ import java.util.regex.Pattern;
 
 public final class VariableView extends VariableViewBase implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
-  private static final XValuePresentation ARRAY_VALUE_PRESENTATION = new XValuePresentation() {
-    @Override
-    public void renderValue(@NotNull XValueTextRenderer renderer) {
+  private static final class ArrayPresentation extends XValuePresentation {
+    private final String length;
+
+    private ArrayPresentation(int length) {
+      this.length = Integer.toString(length);
     }
 
     @Override
-    public void renderValue(@NotNull XValue value, @NotNull XValueTextRenderer renderer) {
+    public void renderValue(@NotNull XValueTextRenderer renderer) {
       renderer.renderSpecialSymbol("Array[");
-      renderer.renderSpecialSymbol(Integer.toString(((ArrayValue)((VariableView)value).getValue()).getLength()));
+      renderer.renderSpecialSymbol(length);
       renderer.renderSpecialSymbol("]");
     }
-  };
+  }
 
   private final VariableContext context;
 
@@ -66,7 +68,8 @@ public final class VariableView extends VariableViewBase implements VariableCont
 
   public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
     if (value instanceof ArrayValue) {
-      node.setPresentation(icon, ARRAY_VALUE_PRESENTATION, ((ArrayValue)value).getLength() > 0);
+      int length = ((ArrayValue)value).getLength();
+      node.setPresentation(icon, new ArrayPresentation(length), length > 0);
       return;
     }
 
