@@ -20,9 +20,9 @@ import com.intellij.execution.ExecutionException;
 /**
  * @author michael.golubev
  */
-public interface JavaDebugServerModeHandler {
+public abstract class JavaDebugServerModeHandler {
 
-  void attachRemote() throws ExecutionException;
+  public abstract void attachRemote() throws ExecutionException;
 
-  void detachRemote() throws ExecutionException;
+  public abstract void detachRemote() throws ExecutionException;
 }
