@@ -88,6 +88,8 @@
 
     <extensionPoint name="debugger.jvmDebugProvider"
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
+    <extensionPoint name="debugger.javaDebugAware"
+                    interface="com.intellij.debugger.engine.JavaDebugAware"/>
 
     <extensionPoint name="debugger.positionManagerFactory"
                     interface="com.intellij.debugger.PositionManagerFactory"

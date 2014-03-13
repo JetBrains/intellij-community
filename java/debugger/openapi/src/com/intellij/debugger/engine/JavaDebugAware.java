@@ -16,15 +16,17 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @deprecated Extends {@link com.intellij.debugger.engine.JavaDebugAware}
- * to remove in IDEA 15
- */
-@Deprecated
-public interface JVMDebugProvider {
-  ExtensionPointName<JVMDebugProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmDebugProvider");
+public abstract class JavaDebugAware {
+  static final ExtensionPointName<JavaDebugAware> EP_NAME = ExtensionPointName.create("com.intellij.debugger.javaDebugAware");
 
-  boolean supportsJVMDebugging(PsiFile file);
+  public abstract boolean isBreakpointAware(@NotNull PsiFile psiFile, @NotNull FileType fileType);
+
+  // IDEA-122113, will be removed when Java debugger will be moved to XDebugger API
+  public boolean isActionAware(@NotNull PsiFile psiFile, @NotNull FileType fileType) {
+    return isBreakpointAware(psiFile, fileType);
+  }
 }
