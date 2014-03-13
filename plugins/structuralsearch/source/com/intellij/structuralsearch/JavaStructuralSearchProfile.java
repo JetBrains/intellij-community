@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Document;
@@ -11,12 +12,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.JavaLexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -171,6 +175,52 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   protected PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);
+  }
+
+  @Override
+  public void checkSearchPattern(Project project, MatchOptions options) {
+    class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
+      @Override public void visitAnnotation(PsiAnnotation annotation) {
+        final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+
+        if (nameReferenceElement == null ||
+            !nameReferenceElement.getText().equals(MatchOptions.MODIFIER_ANNOTATION_NAME)) {
+          return;
+        }
+
+        for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
+          final PsiAnnotationMemberValue value = pair.getValue();
+
+          if (value instanceof PsiArrayInitializerMemberValue) {
+            for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+              final String name = StringUtil.stripQuotesAroundValue(v.getText());
+              checkModifier(name);
+            }
+
+          } else if (value != null) {
+            final String name = StringUtil.stripQuotesAroundValue(value.getText());
+            checkModifier(name);
+          }
+        }
+      }
+
+      private void checkModifier(final String name) {
+        if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
+            !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
+            Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
+          ) {
+          throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
+        }
+      }
+    }
+    ValidatingVisitor visitor = new ValidatingVisitor();
+    final NodeIterator nodes = PatternCompiler.compilePattern(project, options).getNodes();
+    while(nodes.hasNext()) {
+      nodes.current().accept( visitor );
+      nodes.advance();
+    }
+    nodes.reset();
+
   }
 
   @Override

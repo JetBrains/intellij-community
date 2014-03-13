@@ -27,7 +27,7 @@ public class StructuralSearchUtil {
 
   static {
     Collections
-      .addAll(myRegisteredProfiles, new JavaStructuralSearchProfile(), new XmlStructuralSearchProfile());
+      .addAll(myRegisteredProfiles, new XmlStructuralSearchProfile());
   }
 
   private StructuralSearchUtil() {

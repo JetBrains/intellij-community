@@ -147,6 +147,9 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
+  public void checkSearchPattern(Project project, MatchOptions options) {
+  }
+
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     String fileType = getTypeName(options.getMatchOptions().getFileType());
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));

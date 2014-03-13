@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +17,6 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -43,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -91,57 +88,16 @@ public class MatcherImpl {
 
   public static void validate(Project project, MatchOptions options) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    CompiledPattern lastPattern;
 
     synchronized(MatcherImpl.class) {
       final LastMatchData data = new LastMatchData();
-      lastPattern = data.lastPattern =  PatternCompiler.compilePattern(project,options);
+      data.lastPattern =  PatternCompiler.compilePattern(project, options);
       data.lastOptions = options;
       lastMatchData = new SoftReference<LastMatchData>(data);
     }
 
-    class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
-      @Override public void visitAnnotation(PsiAnnotation annotation) {
-        final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
-
-        if (nameReferenceElement == null ||
-            !nameReferenceElement.getText().equals(MatchOptions.MODIFIER_ANNOTATION_NAME)) {
-          return;
-        }
-
-        for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
-          final PsiAnnotationMemberValue value = pair.getValue();
-
-          if (value instanceof PsiArrayInitializerMemberValue) {
-            for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-              final String name = StringUtil.stripQuotesAroundValue(v.getText());
-              checkModifier(name);
-            }
-
-          } else if (value != null) {
-            final String name = StringUtil.stripQuotesAroundValue(value.getText());
-            checkModifier(name);
-          }
-        }
-      }
-
-      private void checkModifier(final String name) {
-        if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
-            !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
-            Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
-           ) {
-          throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
-        }
-      }
-    }
-
-    ValidatingVisitor visitor = new ValidatingVisitor();
-    final NodeIterator nodes = lastPattern.getNodes();
-    while(nodes.hasNext()) {
-      nodes.current().accept( visitor );
-      nodes.advance();
-    }
-    nodes.reset();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    profile.checkSearchPattern(project, options);
   }
 
   public static class CompiledOptions {

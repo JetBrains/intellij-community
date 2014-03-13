@@ -50,7 +50,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class SSBasedInspection extends BaseJavaLocalInspectionTool {
+public class SSBasedInspection extends LocalInspectionTool {
   static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
 

@@ -5,6 +5,7 @@
   <version>9.0</version>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="java.xml">com.intellij.java-i18n</depends>
   <depends optional="true" config-file="javascript.xml">JavaScript</depends>
   <depends optional="true" config-file="groovy.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
