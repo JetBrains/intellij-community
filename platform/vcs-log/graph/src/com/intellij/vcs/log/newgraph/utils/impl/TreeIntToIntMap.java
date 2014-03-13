@@ -17,9 +17,10 @@
 package com.intellij.vcs.log.newgraph.utils.impl;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class TreeIntToIntMap extends AbstractIntToIntMap {
+public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
 
   public static TreeIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
     if (longSize < 1)
@@ -90,6 +91,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap {
     return node - myTree.length;
   }
 
+  @Override
   public void update(int startLongIndex, int endLongIndex) {
     if (startLongIndex < 0 || endLongIndex < startLongIndex || endLongIndex >= longSize())
       throw new IllegalArgumentException(

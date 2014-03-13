@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.vcs.log.newgraph.utils;
 
-package com.intellij.vcs.log.newgraph.utils.impl;
-
-import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
-import org.jetbrains.annotations.NotNull;
-
-public class TreeIntToIntMapTest extends UpdatableIntToIntMapTest {
-
-  @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
-    return TreeIntToIntMap.newInstance(thisIsVisible, longSize);
-  }
-
+/**
+ * @author erokhins
+ */
+public interface UpdatableIntToIntMap extends IntToIntMap {
+  void update(int startLongIndex, int endLongIndex);
 }
