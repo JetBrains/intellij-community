@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +123,7 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
 
   @Override
   public void showParameterInfo(@NotNull GrAnnotationArgumentList argumentList, @NotNull CreateParameterInfoContext context) {
-    final GrAnnotation parent = DefaultGroovyMethods.asType(argumentList.getParent(), GrAnnotation.class);
+    final GrAnnotation parent = (GrAnnotation)argumentList.getParent();
 
     final PsiElement resolved = parent.getClassReference().resolve();
     if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
