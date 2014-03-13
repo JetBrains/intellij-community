@@ -17,9 +17,11 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -112,5 +114,11 @@ public class ChangeSignatureUtil {
     if (handler != null) {
       handler.invoke(project, new PsiElement[]{method}, null);
     }
+  }
+
+  public static boolean deepTypeEqual(PsiType type1, PsiType type2) {
+    if (type1 == type2) return true;
+    if (type1 == null || !type1.equals(type2)) return false;
+    return Comparing.equal(type1.getCanonicalText(true), type2.getCanonicalText(true));
   }
 }

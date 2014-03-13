@@ -36,6 +36,13 @@ import java.util.HashSet;
 public class ChangeSignatureTest extends LightRefactoringTestCase {
   private PsiElementFactory myFactory;
 
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -413,7 +420,44 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     checkResultByFile(basePath + "_after.java");
   }
 
+  public void testTypeAnnotationsAllAround() {
+    //String[] ps = {"@TA(1) int @TA(2) []", "java.util.@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
+    //String[] ex = {"@TA(42) IllegalArgumentException", "java.lang.@TA(43) IllegalStateException"};
+    //doTest("java.util.@TA(0) List<@TA(1) C.@TA(1) Inner>", ps, ex, false);
+    String[] ps = {"@TA(2) int @TA(3) []", "@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
+    String[] ex = {};
+    doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
+  }
+
   /* workers */
+
+  private void doTest(@Nullable String returnType, @Nullable final String[] parameters, @Nullable final String[] exceptions, boolean delegate) {
+    GenParams genParams = parameters == null ? new SimpleParameterGen() : new GenParams() {
+      @Override
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+          PsiType type = myFactory.createTypeFromText(parameters[i], method);
+          parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
+        }
+        return parameterInfos;
+      }
+    };
+
+    GenExceptions genExceptions = exceptions == null ? new SimpleExceptionsGen() : new GenExceptions() {
+      @Override
+      public ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException {
+        ThrownExceptionInfo[] exceptionInfos = new ThrownExceptionInfo[exceptions.length];
+        for (int i = 0; i < exceptions.length; i++) {
+          PsiType type = myFactory.createTypeFromText(exceptions[i], method);
+          exceptionInfos[i] = new JavaThrownExceptionInfo(-1, (PsiClassType)type);
+        }
+        return exceptionInfos;
+      }
+    };
+
+    doTest(null, null, returnType, genParams, genExceptions, delegate);
+  }
 
   private void doTest(@Nullable String newReturnType, ParameterInfoImpl[] parameterInfos, boolean generateDelegate) {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
@@ -425,15 +469,17 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
                       ParameterInfoImpl[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       boolean generateDelegate) {
-    doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
+    SimpleParameterGen params = new SimpleParameterGen(parameterInfo);
+    SimpleExceptionsGen exceptions = new SimpleExceptionsGen(exceptionInfo);
+    doTest(newVisibility, newName, newReturnType, params, exceptions, generateDelegate);
   }
 
   private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
                       @Nullable String newName,
                       @Nullable @NonNls String newReturnType,
-                      GenParams gen,
+                      GenParams genParams,
                       boolean generateDelegate) {
-    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
+    doTest(newVisibility, newName, newReturnType, genParams, new SimpleExceptionsGen(), generateDelegate);
   }
 
   private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
@@ -461,9 +507,9 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
   private static class SimpleParameterGen implements GenParams {
     private ParameterInfoImpl[] myInfos;
 
-    private SimpleParameterGen() { }
+    public SimpleParameterGen() { }
 
-    private SimpleParameterGen(ParameterInfoImpl[] infos) {
+    public SimpleParameterGen(ParameterInfoImpl[] infos) {
       myInfos = infos;
     }
 
@@ -493,7 +539,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
       myInfos = new ThrownExceptionInfo[0];
     }
 
-    private SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
+    public SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
       myInfos = infos;
     }
 
@@ -504,11 +550,5 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
       }
       return myInfos;
     }
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
   }
 }
