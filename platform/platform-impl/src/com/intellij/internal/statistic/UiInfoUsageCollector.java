@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -60,6 +61,7 @@ public class UiInfoUsageCollector extends UsagesCollector {
     add(set, "Tabs Left", tabPlace() == SwingConstants.LEFT ? 1 : 0);
     add(set, "Tabs Right", tabPlace() == SwingConstants.RIGHT ? 1 : 0);
     add(set, "Retina", UIUtil.isRetina() ? 1 : 0);
+    add(set, "Show tips on startup", GeneralSettings.getInstance().showTipsOnStartup() ? 1 : 0);
 
     return set;
   }
