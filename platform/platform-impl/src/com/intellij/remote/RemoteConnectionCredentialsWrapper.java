@@ -161,4 +161,12 @@ public class RemoteConnectionCredentialsWrapper {
       throw unknownConnectionType();
     }
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof RemoteConnectionCredentialsWrapper) {
+      return getId().equals(((RemoteConnectionCredentialsWrapper)obj).getId());
+    }
+    return false;
+  }
 }
