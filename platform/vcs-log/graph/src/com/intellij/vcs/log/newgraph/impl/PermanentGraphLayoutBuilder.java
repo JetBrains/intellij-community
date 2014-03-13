@@ -100,6 +100,7 @@ public class PermanentGraphLayoutBuilder {
       dfs(headNodeIndex);
     }
 
+    System.out.println(currentLayoutIndex);
     return new PermanentGraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
 

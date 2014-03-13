@@ -24,14 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class EdgesInRow {
-  private final static int CACHE_SIZE = 100;
+  private final static int CACHE_SIZE = 200;
   private final static int WALK_SIZE = 1000;
 
   @NotNull
   private final MutableGraph myGraph;
 
   @NotNull
-  private final SLRUMap<Integer, Set<Edge>> cache = new SLRUMap<Integer, Set<Edge>>(CACHE_SIZE, CACHE_SIZE * 2);
+  private final Map<Integer, Set<Edge>> cache = new HashMap<Integer, Set<Edge>>();
 
   public EdgesInRow(@NotNull MutableGraph graph) {
     myGraph = graph;
@@ -44,6 +44,8 @@ public class EdgesInRow {
       return edges;
     }
 
+    if (cache.size() > CACHE_SIZE)
+      cache.clear();
     return calculateEdgesAround(visibleRowIndex);
   }
 

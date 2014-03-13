@@ -230,6 +230,15 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     }
 
     public void expandAll() {
+
+      long ms = System.currentTimeMillis();
+      int sum = 0;
+      for (int i = 0; i < myPermanentGraph.nodesCount(); i++) {
+        if (upToEdge.get(i) != null)
+          sum++;
+      }
+      System.out.println(System.currentTimeMillis() - ms);
+
       upToEdge.clear();
       downToEdge.clear();
       setAllValues(visibleNodes, true);
