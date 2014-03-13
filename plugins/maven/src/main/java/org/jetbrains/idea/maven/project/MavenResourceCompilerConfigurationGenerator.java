@@ -168,7 +168,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   private Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
 
-    for (String each : mavenProject.getFilters()) {
+    for (String each : mavenProject.getFilterPropertiesFiles()) {
       try {
         FileInputStream in = new FileInputStream(each);
         try {
