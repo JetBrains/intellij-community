@@ -85,7 +85,7 @@
       <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
       <key>WorkingDirectory</key>
-      <string>$APP_PACKAGE/bin</string>
+      <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
   </dict>
 </plist>
