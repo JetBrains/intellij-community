@@ -26,6 +26,7 @@ import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -35,7 +36,7 @@ import java.io.File;
  */
 public class RncRenameTest extends HighlightingTestBase {
 
-  protected CodeInsightTestFixture createFixture(IdeaTestFixtureFactory factory) {
+  protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     return createContentFixture(factory);
   }
 
