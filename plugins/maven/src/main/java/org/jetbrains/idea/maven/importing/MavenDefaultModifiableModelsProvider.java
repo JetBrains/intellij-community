@@ -119,7 +119,10 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
         for (ModifiableRootModel model : rootModels1) {
           assert !model.isDisposed() : "Already disposed: " + model;
         }
-        ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
+
+        if (myModuleModel != null) {
+          ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
+        }
 
         for (ModifiableFacetModel each : myFacetModels.values()) {
           each.commit();
