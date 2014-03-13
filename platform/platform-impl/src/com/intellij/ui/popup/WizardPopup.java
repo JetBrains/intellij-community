@@ -287,8 +287,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return new MyContainer(resizable, border, isToDrawMacCorner);
   }
 
-  private static class MyContainer extends MyContentPanel {
-
+  private class MyContainer extends MyContentPanel {
     private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
       super(resizable, border, drawMacCorner);
       setOpaque(true);
@@ -303,10 +302,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         p = focusOwner.getLocationOnScreen();
       }
 
-      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
+      Dimension size = WizardPopup.this.getSize();
+      return size == null || size.height == 0 && size.width == 0 ? computeNotBiggerDimension(super.getPreferredSize().getSize(), p) : size;
     }
 
-    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
+    private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
       int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
       if (locationOnScreen != null) {
         final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
