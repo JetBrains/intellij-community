@@ -26,6 +26,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,9 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
     for (VirtualFile virtualFile : files) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PyFile) {
-        results.add((PyFile)psiFile);
+        if (!PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(psiFile)) {
+          results.add((PyFile)psiFile);
+        }
       }
     }
     return results;
