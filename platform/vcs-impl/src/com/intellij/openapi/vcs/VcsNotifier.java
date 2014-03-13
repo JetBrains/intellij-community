@@ -31,6 +31,8 @@ public class VcsNotifier {
     "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
   private static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
     "Vcs Minor Notifications", NotificationDisplayType.BALLOON, true);
+  private static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
+    "Vcs Silent Notifications", NotificationDisplayType.NONE, true);
 
   private final @NotNull Project myProject;
 
@@ -157,5 +159,9 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyMinorInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
     return notify(MINOR_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
+  }
+
+  public Notification logInfo(@NotNull String title, @NotNull String message) {
+    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, null);
   }
 }
