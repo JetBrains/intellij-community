@@ -99,8 +99,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           return;
         if (binaryExpression.getOperator() == PyTokenTypes.AND_KEYWORD ||
             binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
-          if (binaryExpression.getLeftExpression() instanceof PyParenthesizedExpression &&
-            binaryExpression.getRightExpression() instanceof PyParenthesizedExpression) {
+          final PyExpression leftExpression = binaryExpression.getLeftExpression();
+          final PyExpression rightExpression = binaryExpression.getRightExpression();
+          if (leftExpression instanceof PyParenthesizedExpression && rightExpression instanceof PyParenthesizedExpression &&
+            !(((PyParenthesizedExpression)leftExpression).getContainedExpression() instanceof PyBinaryExpression) &&
+            !(((PyParenthesizedExpression)rightExpression).getContainedExpression() instanceof PyBinaryExpression)) {
             registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
           }
         }
